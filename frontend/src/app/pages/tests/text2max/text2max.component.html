@@ -1,0 +1,30 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">
+    Parser de LaTeX a Maxima
+  </h1>
+  
+  <div class="max-w-2xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row gap-4">
+      <input 
+        [(ngModel)]="latexInput" 
+        placeholder="Ingresa una entrada LaTeX" 
+        class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+      />
+      <button 
+        (click)="convertToMaxima()"
+        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        Parsear
+      </button>
+    </div>
+
+    <div class="mt-8">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+        Salida en Maxima
+      </h2>
+      <pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto text-gray-800">{{ maximaOutput }}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- \frac{\left ( -1 \right )^{n}}{n\cdot\pi}\cdot\sin(x\cdot\pi) -->  
