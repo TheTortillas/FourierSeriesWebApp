@@ -1,13 +1,4 @@
-const { exec } = require('child_process');
-
-function execMaxima(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, (error, stdout, stderr) => {
-      if (error) reject(error);
-      else resolve(stdout.trim());
-    });
-  });
-}
+const execMaxima = require('../utils/maxima.util');
 
 exports.computeTrigonometricSeries = async (funcion, periodo) => {
     try {
