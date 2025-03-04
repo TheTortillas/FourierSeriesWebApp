@@ -1,15 +1,5 @@
 import { Injectable } from '@angular/core';
-
-export interface PlotConfig {
-  ctx: CanvasRenderingContext2D | null;
-  width: number;
-  height: number;
-  offsetX: number;
-  offsetY: number;
-  unit: number;
-  origin: { x: number; y: number };
-}
-// Ajusta la ruta según tu estructura de archivos
+import { PlotConfig } from '../../interfaces/plot-config.interface';
 
 @Injectable({
   providedIn: 'root'

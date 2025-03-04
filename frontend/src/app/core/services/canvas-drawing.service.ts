@@ -1,23 +1,6 @@
 import { Injectable } from '@angular/core';
-
-interface Axis {
-  start: { x: number; y: number };
-  end: { x: number; y: number };
-}
-
-export interface DrawScreenConfig {
-  ctx: CanvasRenderingContext2D | null;
-  width: number;
-  height: number;
-  offsetX: number;
-  offsetY: number;
-  origin: { x: number; y: number };
-  bgColor: string;
-  axisColor: string;
-  gridColor: string;
-  fontColor: string;
-  unit: number;
-}
+import { Axis } from '../../interfaces/axis.interface'; 
+import { DrawScreenConfig } from '../../interfaces/draw-screen-config.interface'; 
 
 @Injectable({
   providedIn: 'root',
