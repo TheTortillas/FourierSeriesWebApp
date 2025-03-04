@@ -2,10 +2,9 @@ import { Injectable } from '@angular/core';
 import { PlotConfig } from '../../interfaces/plot-config.interface';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PlottingService {
-
   /**
    * Dibuja una línea discreta con una “bolita hueca” al final.
    * @param startX Coordenada inicial X (espacio matemático)
@@ -29,7 +28,7 @@ export class PlottingService {
     // Convertir coordenadas a píxeles
     const startXPixel = origin.x - offsetX + unit * startX;
     const startYPixel = origin.y - offsetY - unit * startY;
-    const endYPixel   = origin.y - offsetY - unit * endY;
+    const endYPixel = origin.y - offsetY - unit * endY;
 
     // Dibujar la línea
     ctx.strokeStyle = color;
@@ -41,7 +40,7 @@ export class PlottingService {
 
     // Dibujar la bolita hueca al final de la línea
     ctx.beginPath();
-    ctx.arc(startXPixel, endYPixel, 5, 0, 2 * Math.PI); 
+    ctx.arc(startXPixel, endYPixel, 5, 0, 2 * Math.PI);
     ctx.lineWidth = 2.5;
     ctx.stroke();
   }
@@ -64,7 +63,7 @@ export class PlottingService {
 
     for (let px = 0; px < width; px++) {
       // Convertir pixel (px) a coordenada matemática
-      const x = ((px + offsetX) / unit) - ((width / unit) / 2);
+      const x = (px + offsetX) / unit - width / unit / 2;
       const y = mathFunction(x);
 
       // Dibuja línea desde el punto anterior al actual
@@ -143,7 +142,7 @@ export class PlottingService {
 
     for (let px = 0; px < width; px++) {
       // x en espacio matemático
-      const x = ((px + offsetX) / unit) - ((width / unit) / 2);
+      const x = (px + offsetX) / unit - width / unit / 2;
 
       // Suma parcial de la serie
       let sum = 0;

@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const fourierSeriesController = require('../controllers/fourier-series.controller');
+const fourierSeriesController = require("../controllers/fourier-series.controller");
 
 /**
  * @openapi
@@ -26,7 +26,10 @@ const fourierSeriesController = require('../controllers/fourier-series.controlle
  *       500:
  *         description: Error en el servidor
  */
-router.post('/trigonometric', fourierSeriesController.calculateTrigonometricSeries);
+router.post(
+  "/trigonometric",
+  fourierSeriesController.calculateTrigonometricSeries
+);
 
 /**
  * @openapi
@@ -56,6 +59,6 @@ router.post('/trigonometric', fourierSeriesController.calculateTrigonometricSeri
  *         description: Error en el servidor
  */
 
-router.post('/complex', fourierSeriesController.calculateComplexSeries);
+router.post("/complex", fourierSeriesController.calculateComplexSeries);
 
 module.exports = router;

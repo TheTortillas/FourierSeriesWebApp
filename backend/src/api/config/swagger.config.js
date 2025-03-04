@@ -1,16 +1,16 @@
-const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerJsdoc = require("swagger-jsdoc");
 
 const swaggerOptions = {
   definition: {
-    openapi: '3.0.0',
+    openapi: "3.0.0",
     info: {
-      title: 'Mini Fourier API',
-      version: '1.0.0',
-      description: 'API para cálculo de series de Fourier',
+      title: "Mini Fourier API",
+      version: "1.0.0",
+      description: "API para cálculo de series de Fourier",
       contact: {
         name: "Sebastián Morales Palacios",
         email: "sebasthefallen@gmail.com",
-        url: "https://github.com/TheTortillas"
+        url: "https://github.com/TheTortillas",
       },
     },
     // servers: [
@@ -19,7 +19,7 @@ const swaggerOptions = {
     //   }
     // ]
   },
-  apis: ['./api/routes/*.js']
+  apis: ["./api/routes/*.js"],
 };
 
 module.exports = swaggerJsdoc(swaggerOptions);

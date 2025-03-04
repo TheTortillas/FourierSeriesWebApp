@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Axis } from '../../interfaces/axis.interface'; 
-import { DrawScreenConfig } from '../../interfaces/draw-screen-config.interface'; 
+import { Axis } from '../../interfaces/axis.interface';
+import { DrawScreenConfig } from '../../interfaces/draw-screen-config.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -49,7 +49,17 @@ export class CanvasDrawingService {
     this.drawAxes(ctx, XAxis, YAxis, axisColor, offsetX, offsetY);
 
     // Dibuja cuadrícula
-    this.drawGrid(ctx, origin, XAxis, YAxis, unit, gridColor, fontColor, offsetX, offsetY);
+    this.drawGrid(
+      ctx,
+      origin,
+      XAxis,
+      YAxis,
+      unit,
+      gridColor,
+      fontColor,
+      offsetX,
+      offsetY
+    );
   }
 
   /**

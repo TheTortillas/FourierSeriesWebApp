@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { exec } = require("child_process");
 
 function execMaxima(command) {
   return new Promise((resolve, reject) => {
@@ -9,5 +9,4 @@ function execMaxima(command) {
   });
 }
 
-module.exports = execMaxima; 
-
+module.exports = execMaxima;

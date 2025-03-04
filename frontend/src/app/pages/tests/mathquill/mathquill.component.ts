@@ -11,13 +11,12 @@ import { FormsModule } from '@angular/forms';
 import { MathService } from '../../../core/services/math.service';
 import { Piece } from '../../../interfaces/piece.interface';
 
-
 @Component({
   selector: 'app-mathquill',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './mathquill.component.html',
-  styleUrls: ['./mathquill.component.scss'], 
+  styleUrls: ['./mathquill.component.scss'],
 })
 export class MathquillComponent implements AfterViewInit {
   // Referencias a los elementos HTML de cada campo en cada "pieza"
@@ -56,8 +55,8 @@ export class MathquillComponent implements AfterViewInit {
 
   // Para la selección de tipo de serie
   selectedSeriesType: string | null = null;
-  showHalfRangeToggle = false;   // Se muestra si selectedSeriesType = "Trigonometric"
-  useHalfRange = false;          // valor del checkbox
+  showHalfRangeToggle = false; // Se muestra si selectedSeriesType = "Trigonometric"
+  useHalfRange = false; // valor del checkbox
   showHalfRangeExtension = false; // Se muestra si useHalfRange = true
   selectedHalfRange: string | null = null;
 
@@ -106,7 +105,10 @@ export class MathquillComponent implements AfterViewInit {
   }
 
   // Manejo del campo activo: guardamos en qué pieza y qué campo se hace click
-  setActiveField(pieceIndex: number, field: 'funcField' | 'startField' | 'endField') {
+  setActiveField(
+    pieceIndex: number,
+    field: 'funcField' | 'startField' | 'endField'
+  ) {
     this.activePieceIndex = pieceIndex;
     this.activePieceField = field;
   }
@@ -125,7 +127,7 @@ export class MathquillComponent implements AfterViewInit {
       }
     }
   }
-  
+
   // Agregar un nuevo tramo (piece) al final del array
   addPiece() {
     this.pieces.push({
@@ -133,7 +135,7 @@ export class MathquillComponent implements AfterViewInit {
       startField: null,
       endField: null,
     });
-    
+
     // Esto asegura que después de agregar un trozo, el siguiente ciclo de detección de cambios
     // inicializará los campos matemáticos del nuevo elemento
     setTimeout(() => {
@@ -141,7 +143,7 @@ export class MathquillComponent implements AfterViewInit {
       const newFuncField = this.funcFieldElems?.toArray()[newIndex];
       const newStartField = this.startFieldElems?.toArray()[newIndex];
       const newEndField = this.endFieldElems?.toArray()[newIndex];
-      
+
       if (newFuncField && newStartField && newEndField) {
         this.pieces[newIndex].funcField = this.mathService.createMathField(
           newFuncField.nativeElement

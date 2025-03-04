@@ -3,7 +3,7 @@ declare var MathQuill: any;
 declare var MathJax: any;
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MathService {
   private MQ: any;
@@ -27,14 +27,14 @@ export class MathService {
     if (!this.MQ) {
       this.initMathQuill();
     }
-    
+
     if (this.MQ) {
       return this.MQ.MathField(element, {
         spaceBehavesLikeTab: true,
         handlers: {
           edit: () => {},
-          ...config
-        }
+          ...config,
+        },
       });
     }
     return null;
