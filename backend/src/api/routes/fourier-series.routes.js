@@ -15,10 +15,16 @@ const fourierSeriesController = require("../controllers/fourier-series.controlle
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *              - funcion
+ *              - periodo
+ *              - intVar
  *             properties:
  *               funcion:
  *                 type: string
  *               periodo:
+ *                 type: string
+ *               intVar: 
  *                 type: string
  *     responses:
  *       200:
@@ -47,10 +53,13 @@ router.post(
  *             required:
  *              - funcion
  *              - periodo
+ *              - intVar
  *             properties:
  *               funcion:
  *                 type: string
  *               periodo:
+ *                 type: string
+ *               intVar: 
  *                 type: string
  *     responses:
  *       200:
