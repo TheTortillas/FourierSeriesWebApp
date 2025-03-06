@@ -1,8 +1,8 @@
-const maximaService = require("../services/maxima.service");
+const FourierSeriesService = require("../services/fourier-series-maxima.service");
 
 exports.calculateTrigonometricSeries = (req, res) => {
   const { funcion, periodo } = req.body;
-  maximaService
+  FourierSeriesService
     .computeTrigonometricSeries(funcion, periodo)
     .then((result) => res.json(result))
     .catch((err) => res.status(500).json({ error: err.message }));
@@ -10,7 +10,7 @@ exports.calculateTrigonometricSeries = (req, res) => {
 
 exports.calculateComplexSeries = (req, res) => {
   const { funcion, periodo } = req.body;
-  maximaService
+  FourierSeriesService
     .computeComplexSeries(funcion, periodo)
     .then((result) => res.json(result))
     .catch((err) => res.status(500).json({ error: err.message }));
