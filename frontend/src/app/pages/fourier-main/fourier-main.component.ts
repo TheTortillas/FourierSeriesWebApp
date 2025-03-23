@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, Inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
 import { CanvasDrawingService } from '../../core/services/canvas-drawing.service';
 import { PlottingService } from '../../core/services/plotting.service';
@@ -8,11 +8,13 @@ import { PlotConfig } from '../../interfaces/plot-config.interface';
 @Component({
   selector: 'app-fourier-main',
   standalone: true,
-  imports: [],
+  imports: [CommonModule],
   templateUrl: './fourier-main.component.html',
-  styleUrl: './fourier-main.component.scss'
+  styleUrl: './fourier-main.component.scss',
 })
 export class FourierMainComponent implements AfterViewInit {
+  public sidenavOpen: boolean = false;
+
   private isBrowser: boolean;
   private ctx: CanvasRenderingContext2D | null = null;
   private width: number = 0;
@@ -57,18 +59,25 @@ export class FourierMainComponent implements AfterViewInit {
     this.drawScreen();
   }
 
+  // Método para alternar el sidenav
+  public toggleSidenav(): void {
+    this.sidenavOpen = !this.sidenavOpen;
+  }
+
   // ───────────────────────────────
   // Métodos privados de inicialización
   // ───────────────────────────────
 
   private getCanvasElement(): HTMLCanvasElement | null {
-    return this.document.getElementById('fourier-canvas') as HTMLCanvasElement | null;
+    return this.document.getElementById(
+      'fourier-canvas'
+    ) as HTMLCanvasElement | null;
   }
 
   private initCanvasProperties(canvas: HTMLCanvasElement) {
     // Ajustar el tamaño del canvas al tamaño de su contenedor
     this.resizeCanvas(canvas);
-    
+
     this.ctx = canvas.getContext('2d');
     this.width = canvas.width;
     this.height = canvas.height;
@@ -89,7 +98,7 @@ export class FourierMainComponent implements AfterViewInit {
     }
   }
 
-    private initCanvasEvents(canvas: HTMLCanvasElement) {
+  private initCanvasEvents(canvas: HTMLCanvasElement) {
     // Redibujar al cambiar tamaño
     window.addEventListener('resize', () => {
       this.resizeCanvas(canvas);
@@ -98,50 +107,50 @@ export class FourierMainComponent implements AfterViewInit {
       this.origin = { x: this.width / 2, y: this.height / 2 };
       this.drawScreen();
     });
-    
+
     // Implementar zoom dinámico respecto a la posición del cursor
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault(); // Evita el comportamiento de desplazamiento predeterminado
-      
+
       // Almacena el valor antiguo de 'unit'
       const oldUnit = this.unit;
-      
+
       // Calcula el factor de zoom
       const zoomSpeed = 0.001; // Ajusta este valor para cambiar la sensibilidad del zoom
       const zoomFactor = Math.exp(-event.deltaY * zoomSpeed);
-      
+
       // Ajusta 'unit' de forma multiplicativa
       this.unit *= zoomFactor;
-      
+
       // Limita el nivel de zoom
       this.unit = Math.max(8, Math.min(this.unit, 1000));
-      
+
       // Vuelve a calcular el factor de zoom real en caso de que 'unit' haya sido limitado
       const actualZoomFactor = this.unit / oldUnit;
-      
+
       // Obtiene la posición del ratón relativa al canvas
       const rect = canvas.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
-      
+
       // Calcula las coordenadas matemáticas (x0, y0) bajo el cursor antes del zoom
       const x0 = (mouseX - this.origin.x + this.offsetX) / oldUnit;
       const y0 = (mouseY - this.origin.y + this.offsetY) / oldUnit;
-      
+
       // Ajusta 'offsetX' y 'offsetY' para mantener el punto bajo el cursor estacionario
       this.offsetX += x0 * (this.unit - oldUnit);
       this.offsetY += y0 * (this.unit - oldUnit);
-      
+
       this.drawScreen(); // Redibuja el canvas con el nuevo nivel de zoom
     });
-    
+
     // Drag start
     canvas.addEventListener('mousedown', (event) => {
       this.drag = true;
       this.mouseX = event.clientX + this.offsetX;
       this.mouseY = event.clientY + this.offsetY;
     });
-    
+
     // Drag move
     canvas.addEventListener('mousemove', (event) => {
       if (this.drag) {
@@ -150,12 +159,12 @@ export class FourierMainComponent implements AfterViewInit {
         this.drawScreen();
       }
     });
-    
+
     // Drag end
     canvas.addEventListener('mouseup', () => {
       this.drag = false;
     });
-    
+
     // Si el ratón sale del canvas mientras se está arrastrando
     canvas.addEventListener('mouseleave', () => {
       this.drag = false;
@@ -194,7 +203,7 @@ export class FourierMainComponent implements AfterViewInit {
       unit: this.unit,
       origin: this.origin,
     };
-    
+
     this.plottingService.drawFunction(config, fn, color);
   }
 }
