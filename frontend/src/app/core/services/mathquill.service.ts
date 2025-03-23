@@ -1,16 +1,21 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+
 declare var MathQuill: any;
 declare var MathJax: any;
 
 @Injectable({
   providedIn: 'root',
 })
-export class MathService {
+export class MathquillService {
   private MQ: any;
+  private isBrowser: boolean;
 
-  constructor() {
+  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+    this.isBrowser = isPlatformBrowser(platformId);
+
     // Wait for document to be ready
-    if (typeof window !== 'undefined') {
+    if (this.isBrowser) {
       window.addEventListener('DOMContentLoaded', () => {
         this.initMathQuill();
       });
@@ -18,12 +23,14 @@ export class MathService {
   }
 
   private initMathQuill() {
-    if (typeof MathQuill !== 'undefined') {
+    if (this.isBrowser && typeof MathQuill !== 'undefined') {
       this.MQ = MathQuill.getInterface(2);
     }
   }
 
   createMathField(element: HTMLElement, config = {}) {
+    if (!this.isBrowser) return null;
+
     if (!this.MQ) {
       this.initMathQuill();
     }
@@ -41,7 +48,7 @@ export class MathService {
   }
 
   renderMathJax() {
-    if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+    if (this.isBrowser && typeof MathJax !== 'undefined' && MathJax.typeset) {
       MathJax.typeset();
     }
   }
