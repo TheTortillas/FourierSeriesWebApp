@@ -45,10 +45,7 @@ export class CanvasDrawingService {
       end: { x: width / 2, y: height },
     };
 
-    // Dibuja ejes
-    this.drawAxes(ctx, XAxis, YAxis, axisColor, offsetX, offsetY);
-
-    // Dibuja cuadrícula
+    // IMPORTANTE: Cambiamos el orden - Primero dibujamos la cuadrícula
     this.drawGrid(
       ctx,
       origin,
@@ -60,6 +57,9 @@ export class CanvasDrawingService {
       offsetX,
       offsetY
     );
+
+    // Después dibujamos los ejes para que queden por encima
+    this.drawAxes(ctx, XAxis, YAxis, axisColor, offsetX, offsetY);
   }
 
   /**
@@ -73,16 +73,20 @@ export class CanvasDrawingService {
     offsetX: number,
     offsetY: number
   ): void {
+    // Establecer el estilo para ambos ejes - aumentamos el grosor
+    ctx.strokeStyle = axisColor;
+    ctx.lineWidth = 1.5; // Aumentamos el grosor para que destaquen más
+
+    // Dibujar el eje X
     ctx.beginPath();
-    // Eje X
     ctx.moveTo(XAxis.start.x, XAxis.start.y - offsetY);
     ctx.lineTo(XAxis.end.x, XAxis.end.y - offsetY);
-    // Eje Y
+    ctx.stroke();
+
+    // Dibujar el eje Y
+    ctx.beginPath();
     ctx.moveTo(YAxis.start.x - offsetX, YAxis.start.y);
     ctx.lineTo(YAxis.end.x - offsetX, YAxis.end.y);
-
-    ctx.strokeStyle = axisColor;
-    ctx.lineWidth = 1;
     ctx.stroke();
   }
 
