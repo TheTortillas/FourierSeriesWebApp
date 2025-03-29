@@ -7,6 +7,7 @@ const swaggerSpecs = require("./api/config/swagger.config");
 const { corsOptions, setCorsHeaders } = require("./api/config/cors.config");
 
 const fourierSeriesRoutes = require("./api/routes/fourier-series.routes");
+const auxiliarFunctionsRoutes = require("./api/routes/auxiliar-functions.routes");
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
@@ -17,5 +18,6 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // Rutas
 app.use("/fourier-series", fourierSeriesRoutes);
+app.use("/auxiliar-functions", auxiliarFunctionsRoutes);
 
 module.exports = app;
