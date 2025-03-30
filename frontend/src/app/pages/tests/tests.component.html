@@ -1,26 +1,105 @@
 <nav class="bg-gray-800 p-4 mb-6">
-  <div class="container mx-auto">
+  <div class="container mx-auto flex items-center">
     <a
       routerLink="text2max"
       routerLinkActive="bg-blue-600"
-      class="text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors duration-200 inline-block"
+      class="text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors duration-200 inline-block mr-2"
     >
       Text2Max
     </a>
     <a
       routerLink="canva"
       routerLinkActive="bg-blue-600"
-      class="text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors duration-200 inline-block"
+      class="text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors duration-200 inline-block mr-2"
     >
       Canva
     </a>
     <a
       routerLink="mathquill"
       routerLinkActive="bg-blue-600"
-      class="text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors duration-200 inline-block"
+      class="text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors duration-200 inline-block mr-2"
     >
       MathQuill
     </a>
+
+    <!-- Dropdown para opciones de API -->
+    <div class="relative inline-block">
+      <button
+        (click)="toggleApiDropdown()"
+        class="text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors duration-200 inline-flex items-center"
+        [class.bg-blue-600]="apiDropdownOpen"
+      >
+        API Tests
+        <svg
+          class="ml-2 w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          ></path>
+        </svg>
+      </button>
+
+      <div
+        *ngIf="apiDropdownOpen"
+        class="dropdown-menu absolute z-10 left-0 mt-2 py-2 w-56 bg-white rounded-md shadow-xl"
+      >
+        <a
+          routerLink="api-test"
+          routerLinkActive="text-blue-600 bg-gray-100"
+          (click)="closeApiDropdown()"
+          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+        >
+          Test de Integrabilidad
+        </a>
+        <a
+          routerLink="trigonometric-series"
+          routerLinkActive="text-blue-600 bg-gray-100"
+          (click)="closeApiDropdown()"
+          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+        >
+          Serie Trigonométrica Simple
+        </a>
+        <a
+          routerLink="complex-series"
+          routerLinkActive="text-blue-600 bg-gray-100"
+          (click)="closeApiDropdown()"
+          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+        >
+          Serie Compleja Simple
+        </a>
+        <a
+          routerLink="piecewise-trig-series"
+          routerLinkActive="text-blue-600 bg-gray-100"
+          (click)="closeApiDropdown()"
+          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+        >
+          Serie Trigonométrica a Trozos
+        </a>
+        <a
+          routerLink="complex-piecewise-series"
+          routerLinkActive="text-blue-600 bg-gray-100"
+          (click)="closeApiDropdown()"
+          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+        >
+          Serie Compleja a Trozos
+        </a>
+        <a
+          routerLink="half-range-series"
+          routerLinkActive="text-blue-600 bg-gray-100"
+          (click)="closeApiDropdown()"
+          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+        >
+          Serie de Medio Rango
+        </a>
+      </div>
+    </div>
   </div>
 </nav>
 

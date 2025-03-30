@@ -1,0 +1,52 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #f3f4f6;
+}
+
+.results {
+  margin-top: 2rem;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// Estilos para MathJax
+.latex-container {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+  
+  .math-formula {
+    width: 100%;
+    overflow-x: auto;
+    padding: 0.5rem;
+  }
+}
+
+// Mejoras para la visualización de MathJax
+::ng-deep {
+  .MathJax {
+    display: block !important;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+  }
+}
+
+// Estilos para los títulos de coeficientes
+.coefficient-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  
+  sub {
+    font-size: 65%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+    bottom: -0.25em;
+  }
+}

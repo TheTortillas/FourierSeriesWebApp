@@ -1,0 +1,110 @@
+<div class="container mx-auto p-4">
+  <h1 class="text-2xl font-bold mb-6">Cálculo de Serie de Fourier Trigonométrica</h1>
+  
+  <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+    <div class="mb-4">
+      <label class="block text-gray-700 mb-2">Función f(x):</label>
+      <input 
+        [(ngModel)]="function" 
+        class="w-full p-2 border border-gray-300 rounded"
+        placeholder="Ej: x^2"
+      />
+    </div>
+    
+    <div class="mb-4">
+      <label class="block text-gray-700 mb-2">Periodo:</label>
+      <input 
+        [(ngModel)]="period" 
+        class="w-full p-2 border border-gray-300 rounded"
+        placeholder="Ej: 2*pi"
+      />
+    </div>
+    
+    <div class="mb-4">
+      <label class="block text-gray-700 mb-2">Variable:</label>
+      <input 
+        [(ngModel)]="variable" 
+        class="w-full p-2 border border-gray-300 rounded"
+        placeholder="Ej: x"
+      />
+    </div>
+    
+    <button 
+      (click)="calculateSeries()" 
+      class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+      [disabled]="loading"
+    >
+      {{ loading ? 'Calculando...' : 'Calcular Serie' }}
+    </button>
+  </div>
+  
+  <div *ngIf="result" class="results">
+    <h2 class="text-xl font-bold mb-4">Resultados:</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Resultados en formato Maxima -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h3 class="text-lg font-semibold mb-4">Formato Maxima</h3>
+        
+        <div class="mb-4">
+          <p class="font-medium text-gray-700 coefficient-title">Coeficiente a<sub>0</sub>:</p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.simplified.a0 }}</pre>
+        </div>
+        
+        <div class="mb-4">
+          <p class="font-medium text-gray-700 coefficient-title">Coeficiente a<sub>n</sub>:</p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.simplified.an }}</pre>
+        </div>
+        
+        <div class="mb-4">
+          <p class="font-medium text-gray-700 coefficient-title">Coeficiente b<sub>n</sub>:</p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.simplified.bn }}</pre>
+        </div>
+      </div>
+      
+      <!-- Resultados en formato LaTeX -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h3 class="text-lg font-semibold mb-4">Formato LaTeX</h3>
+        
+        <div class="mb-4">
+          <p class="font-medium text-gray-700 coefficient-title">Coeficiente a<sub>0</sub>:</p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.latex.a0 }}</pre>
+        </div>
+        
+        <div class="mb-4">
+          <p class="font-medium text-gray-700 coefficient-title">Coeficiente a<sub>n</sub>:</p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.latex.an }}</pre>
+        </div>
+        
+        <div class="mb-4">
+          <p class="font-medium text-gray-700 coefficient-title">Coeficiente b<sub>n</sub>:</p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.latex.bn }}</pre>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Renderizado de LaTeX con MathJax -->
+    <div *ngIf="latexRendered" class="bg-white p-6 rounded-lg shadow-md mt-8">
+      <h3 class="text-lg font-semibold mb-4">Visualización de Fórmulas</h3>
+      
+      <div class="mb-6">
+        <p class="font-medium text-gray-700 coefficient-title">Coeficiente a<sub>0</sub>:</p>
+        <div [innerHTML]="latexRendered.a0" class="latex-container"></div>
+      </div>
+      
+      <div class="mb-6">
+        <p class="font-medium text-gray-700 coefficient-title">Coeficiente a<sub>n</sub>:</p>
+        <div [innerHTML]="latexRendered.an" class="latex-container"></div>
+      </div>
+      
+      <div class="mb-6">
+        <p class="font-medium text-gray-700 coefficient-title">Coeficiente b<sub>n</sub>:</p>
+        <div [innerHTML]="latexRendered.bn" class="latex-container"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div *ngIf="error" class="mt-6 p-4 bg-red-100 border border-red-200 rounded text-red-800">
+    <p><strong>Error:</strong> {{ error }}</p>
+  </div>
+</div>

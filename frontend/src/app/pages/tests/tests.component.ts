@@ -1,11 +1,22 @@
 import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-tests',
   standalone: true,
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './tests.component.html',
   styleUrl: './tests.component.scss',
 })
-export class TestsComponent {}
+export class TestsComponent {
+  apiDropdownOpen = false;
+  
+  toggleApiDropdown(): void {
+    this.apiDropdownOpen = !this.apiDropdownOpen;
+  }
+  
+  closeApiDropdown(): void {
+    this.apiDropdownOpen = false;
+  }
+}

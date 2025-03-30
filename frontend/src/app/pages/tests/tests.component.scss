@@ -1,0 +1,29 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #f3f4f6;
+}
+
+.dropdown-menu {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Cerrar el dropdown cuando se hace clic fuera
+:host {
+  &:not(:focus-within) {
+    .dropdown-menu {
+      display: none;
+    }
+  }
+}
