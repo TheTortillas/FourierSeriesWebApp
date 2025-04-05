@@ -11,7 +11,7 @@ exports.checkIntegrability = async (funcion, intVar, start, end) => {
     const checkIntegrabilityExpression = `
 
     has_special_functions(expr) := block(
-    [funciones_especiales : ['erf, 'erfi, 'gamma, 'gamma_incomplete, 'bessel_j, 'bessel_y, 'airy_ai, 'airy_bi, 'hypergeometric, 'elliptic_e, 'elliptic_f, 'conjugate]],
+    [funciones_especiales : ['erf, 'erfi, 'gamma, 'gamma_incomplete, 'bessel_j, 'bessel_y, 'airy_ai, 'airy_bi, 'hypergeometric, 'elliptic_e, 'elliptic_f, 'conjugate, 'integrate]],
     some(lambda([f], freeof(f, expr) = false), funciones_especiales)
 )$
 
