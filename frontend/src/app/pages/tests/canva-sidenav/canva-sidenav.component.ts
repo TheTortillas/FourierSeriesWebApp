@@ -1,19 +1,28 @@
 import { AfterViewInit, Component, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
-import { CanvasDrawingService } from '../../core/services/canvas-drawing.service';
-import { PlottingService } from '../../core/services/plotting.service';
-import { PlotConfig } from '../../interfaces/plot-config.interface';
+import { CanvasDrawingService } from '../../../core/services/canvas-drawing.service';
+import { PlottingService } from '../../../core/services/plotting.service';
+import { PlotConfig } from '../../../interfaces/plot-config.interface';
 
 @Component({
-  selector: 'app-fourier-main',
+  selector: 'app-canva-sidenav',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './fourier-main.component.html',
-  styleUrl: './fourier-main.component.scss',
+  templateUrl: './canva-sidenav.component.html',
+  styleUrl: './canva-sidenav.component.scss',
 })
-export class FourierMainComponent implements AfterViewInit {
+export class CanvaSidenavComponent implements AfterViewInit {
   public sidenavOpen: boolean = false;
+
+  // Variables para el input de función
+  public functionInput: string = '';
+  public functionColor: string = '#FF0000';
+
+  // Variables para el input de serie de Fourier
+  public seriesInput: string = '';
+  public seriesTerms: number = 10;
+  public seriesColor: string = '#4287f5';
 
   private isBrowser: boolean;
   private ctx: CanvasRenderingContext2D | null = null;
@@ -46,17 +55,20 @@ export class FourierMainComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     if (!this.isBrowser) return;
 
-    const canvas = this.getCanvasElement();
-    if (!canvas?.getContext) return;
+    // Esperar un momento para asegurarse de que el DOM se ha renderizado
+    setTimeout(() => {
+      const canvas = this.getCanvasElement();
+      if (!canvas?.getContext) return;
 
-    // 1. Inicializar propiedades del canvas
-    this.initCanvasProperties(canvas);
+      // 1. Inicializar propiedades del canvas
+      this.initCanvasProperties(canvas);
 
-    // 2. Inicializar eventos (zoom, drag, resize)
-    this.initCanvasEvents(canvas);
+      // 2. Inicializar eventos (zoom, drag, resize)
+      this.initCanvasEvents(canvas);
 
-    // 3. Dibujar el plano cartesiano vacío
-    this.drawScreen();
+      // 3. Dibujar el plano cartesiano vacío
+      this.drawScreen();
+    }, 0);
   }
 
   // Método para alternar el sidenav

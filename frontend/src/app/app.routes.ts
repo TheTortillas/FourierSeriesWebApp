@@ -3,7 +3,7 @@ import { TestsComponent } from './pages/tests/tests.component';
 import { Text2maxComponent } from './pages/tests/text2max/text2max.component';
 import { CanvaFunctionPlotterComponent } from './pages/tests/canva-function-plotter/canva-function-plotter.component';
 import { MathquillComponent } from './pages/tests/mathquill/mathquill.component';
-import { FourierMainComponent } from './pages/fourier-main/fourier-main.component';
+import { CanvaSidenavComponent } from './pages/tests/canva-sidenav/canva-sidenav.component'; 
 import { ApiTestComponent } from './pages/tests/api-test/api-test.component';
 import { TrigonometricSeriesComponent } from './pages/tests/trigonometric-series/trigonometric-series.component';
 import { ComplexSeriesComponent } from './pages/tests/complex-series/complex-series.component';
@@ -11,10 +11,6 @@ import { TrigonometricPiecewiseSeriesComponent } from './pages/tests/trigonometr
 import { ComplexPiecewiseSeriesComponent } from './pages/tests/complex-piecewise-series/complex-piecewise-series.component';
 import { HalfRangeSeriesComponent } from './pages/tests/half-range-series/half-range-series.component';
 export const routes: Routes = [
-  {
-    path: 'main',
-    component: FourierMainComponent,
-  },
   {
     path: 'tests',
     component: TestsComponent,
@@ -54,6 +50,10 @@ export const routes: Routes = [
       {
         path: 'half-range-series',
         component: HalfRangeSeriesComponent,
+      },
+      {
+        path: 'canva-sidenav',
+        component: CanvaSidenavComponent,
       },
     ],
   },

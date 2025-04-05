@@ -103,6 +103,10 @@
       </div>
     </div>
   </div>
+  <div *ngIf="fullLatexFormula" class="bg-white p-6 rounded-lg shadow-md mt-8">
+    <h3 class="text-lg font-semibold mb-4">Serie de Fourier Trigonométrica Completa</h3>
+    <div [innerHTML]="fullLatexFormula" class="latex-container"></div>
+  </div>
   
   <div *ngIf="error" class="mt-6 p-4 bg-red-100 border border-red-200 rounded text-red-800">
     <p><strong>Error:</strong> {{ error }}</p>

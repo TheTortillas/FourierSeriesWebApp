@@ -23,15 +23,18 @@ export class HalfRangeSeriesComponent implements OnInit, AfterViewChecked {
     function: string;
     start: string;
     end: string;
-  }[] = [{ function: 'x', start: '0', end: 'pi' }];
+  }[] = [{ function: 'x', start: '0', end: '%pi' }];
 
   variable: string = 'x';
+  selectedSeries: string = 'both'; // 'both', 'cosine', 'sine'
 
   // Results
   result: any = null;
   loading: boolean = false;
   error: string | null = null;
   latexRendered: { a0: SafeHtml; an: SafeHtml; bn: SafeHtml } | null = null;
+  fullCosineLatexFormula: SafeHtml | null = null;
+  fullSineLatexFormula: SafeHtml | null = null;
 
   // Flag to track when formulas need rendering
   private formulasNeedRendering = false;
@@ -56,7 +59,7 @@ export class HalfRangeSeriesComponent implements OnInit, AfterViewChecked {
     this.pieces.push({
       function: 'x',
       start: lastPiece.end,
-      end: (parseFloat(lastPiece.end) + 1).toString(),
+      end: (parseFloat(lastPiece.end.replace('%pi', 'Math.PI')) + 1).toString(),
     });
   }
 
@@ -71,6 +74,8 @@ export class HalfRangeSeriesComponent implements OnInit, AfterViewChecked {
     this.error = null;
     this.result = null;
     this.latexRendered = null;
+    this.fullCosineLatexFormula = null;
+    this.fullSineLatexFormula = null;
 
     // Convertir el formato de datos al que espera la API
     const funcionMatrix = this.pieces.map((piece) => [
@@ -87,31 +92,68 @@ export class HalfRangeSeriesComponent implements OnInit, AfterViewChecked {
       .subscribe({
         next: (data) => {
           this.result = data;
+          console.log('API Response:', data);
           this.loading = false;
           this.processLatexResults(data.latex);
           this.formulasNeedRendering = true;
         },
         error: (err) => {
           this.error =
-            err.message || 'Error al calcular la serie de medio rango';
+            err.message || 'Error al calcular las series de medio rango';
           this.loading = false;
           console.error('API Error:', err);
         },
       });
   }
 
+  private stripLatexDelimiters(latex: string): string {
+    return latex
+      .replace(/^\$\$?/, '')
+      .replace(/\$\$?$/, '')
+      .trim();
+  }
+
   processLatexResults(latexResults: any): void {
-    // Preparar el contenido LaTeX para MathJax
+    // Guardamos los coeficientes y núcleos
+    const a0 = this.stripLatexDelimiters(latexResults.a0 || '');
+    const an = this.stripLatexDelimiters(latexResults.an || '');
+    const bn = this.stripLatexDelimiters(latexResults.bn || '');
+    const cosine = this.stripLatexDelimiters(latexResults.cosineCore || '');
+    const sine = this.stripLatexDelimiters(latexResults.sineCore || '');
+
+    // Construimos la serie de cosenos si a0 o an no son cero
+    let cosineLatexFormula = '';
+    if (a0 !== '0' && an !== '0') {
+      cosineLatexFormula = `${a0} + \\sum_{n=1}^{\\infty} ${an} \\cdot ${cosine}`;
+    } else if (a0 !== '0') {
+      cosineLatexFormula = a0;
+    } else if (an !== '0') {
+      cosineLatexFormula = `\\sum_{n=1}^{\\infty} ${an} \\cdot ${cosine}`;
+    } else {
+      cosineLatexFormula = '0';
+    }
+
+    // Construimos la serie de senos si bn no es cero
+    let sineLatexFormula = '';
+    if (bn !== '0') {
+      sineLatexFormula = `\\sum_{n=1}^{\\infty} ${bn} \\cdot ${sine}`;
+    } else {
+      sineLatexFormula = '0';
+    }
+
+    // Guardamos la fórmula renderizada
     this.latexRendered = {
-      a0: this.sanitizer.bypassSecurityTrustHtml(
-        `<div class="math-formula">\\[${latexResults.a0}\\]</div>`
-      ),
-      an: this.sanitizer.bypassSecurityTrustHtml(
-        `<div class="math-formula">\\[${latexResults.an}\\]</div>`
-      ),
-      bn: this.sanitizer.bypassSecurityTrustHtml(
-        `<div class="math-formula">\\[${latexResults.bn}\\]</div>`
-      ),
+      a0: this.sanitizer.bypassSecurityTrustHtml(`\\[${a0}\\]`),
+      an: this.sanitizer.bypassSecurityTrustHtml(`\\[${an}\\]`),
+      bn: this.sanitizer.bypassSecurityTrustHtml(`\\[${bn}\\]`),
     };
+
+    this.fullCosineLatexFormula = this.sanitizer.bypassSecurityTrustHtml(
+      `\\[ f_c(${this.variable}) = ${cosineLatexFormula} \\]`
+    );
+
+    this.fullSineLatexFormula = this.sanitizer.bypassSecurityTrustHtml(
+      `\\[ f_s(${this.variable}) = ${sineLatexFormula} \\]`
+    );
   }
 }

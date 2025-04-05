@@ -26,8 +26,8 @@ export class TrigonometricPiecewiseSeriesComponent
     start: string;
     end: string;
   }[] = [
-    { function: 'x', start: '-pi', end: '0' },
-    { function: 'pi-x', start: '0', end: 'pi' },
+    { function: 'x', start: '-%pi', end: '0' },
+    { function: '%pi-x', start: '0', end: '%pi' },
   ];
 
   variable: string = 'x';
@@ -37,6 +37,7 @@ export class TrigonometricPiecewiseSeriesComponent
   loading: boolean = false;
   error: string | null = null;
   latexRendered: { a0: SafeHtml; an: SafeHtml; bn: SafeHtml } | null = null;
+  fullLatexFormula: SafeHtml | null = null;
 
   // Flag to track when formulas need rendering
   private formulasNeedRendering = false;
@@ -92,6 +93,7 @@ export class TrigonometricPiecewiseSeriesComponent
       .subscribe({
         next: (data) => {
           this.result = data;
+          console.log('API Response:', data);
           this.loading = false;
           this.processLatexResults(data.latex);
           this.formulasNeedRendering = true;
@@ -105,18 +107,55 @@ export class TrigonometricPiecewiseSeriesComponent
       });
   }
 
+  private stripLatexDelimiters(latex: string): string {
+    return latex
+      .replace(/^\$\$?/, '')
+      .replace(/\$\$?$/, '')
+      .trim();
+  }
+
   processLatexResults(latexResults: any): void {
-    // Preparar el contenido LaTeX para MathJax
+    // Guardamos los coeficientes y núcleos
+    const a0 = this.stripLatexDelimiters(latexResults.a0 || '');
+    const an = this.stripLatexDelimiters(latexResults.an || '');
+    const bn = this.stripLatexDelimiters(latexResults.bn || '');
+    const cosine = this.stripLatexDelimiters(latexResults.cosineCore || '');
+    const sine = this.stripLatexDelimiters(latexResults.sineCore || '');
+
+    // Construimos los términos de la suma si no son cero
+    const terms = [];
+
+    if (an !== '0') {
+      terms.push(`${an} \\cdot ${cosine}`);
+    }
+
+    if (bn !== '0') {
+      terms.push(`${bn} \\cdot ${sine}`);
+    }
+
+    let latexFormula = '';
+
+    if (a0 !== '0') {
+      latexFormula = `${a0} + \\sum_{n=1}^{\\infty} \\left( ${terms.join(
+        ' + '
+      )} \\right)`;
+    } else if (terms.length > 0) {
+      latexFormula = `\\sum_{n=1}^{\\infty} \\left( ${terms.join(
+        ' + '
+      )} \\right)`;
+    } else {
+      latexFormula = '0';
+    }
+
+    // Guardamos la fórmula renderizada
     this.latexRendered = {
-      a0: this.sanitizer.bypassSecurityTrustHtml(
-        `<div class="math-formula">\\[${latexResults.a0}\\]</div>`
-      ),
-      an: this.sanitizer.bypassSecurityTrustHtml(
-        `<div class="math-formula">\\[${latexResults.an}\\]</div>`
-      ),
-      bn: this.sanitizer.bypassSecurityTrustHtml(
-        `<div class="math-formula">\\[${latexResults.bn}\\]</div>`
-      ),
+      a0: this.sanitizer.bypassSecurityTrustHtml(`\\[${a0}\\]`),
+      an: this.sanitizer.bypassSecurityTrustHtml(`\\[${an}\\]`),
+      bn: this.sanitizer.bypassSecurityTrustHtml(`\\[${bn}\\]`),
     };
+
+    this.fullLatexFormula = this.sanitizer.bypassSecurityTrustHtml(
+      `\\[ f(${this.variable}) = ${latexFormula} \\]`
+    );
   }
 }

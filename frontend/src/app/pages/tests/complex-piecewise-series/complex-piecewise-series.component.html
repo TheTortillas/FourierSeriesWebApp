@@ -1,64 +1,82 @@
 <div class="container mx-auto p-4">
-  <h1 class="text-2xl font-bold mb-6">Cálculo de Serie de Fourier Compleja a Trozos</h1>
-  
+  <h1 class="text-2xl font-bold mb-6">
+    Cálculo de Serie de Fourier Compleja a Trozos
+  </h1>
+
   <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-    <h2 class="text-lg font-semibold mb-4">Definición de la Función a Trozos</h2>
-    
+    <h2 class="text-lg font-semibold mb-4">
+      Definición de la Función a Trozos
+    </h2>
+
     <div class="mb-4">
       <label class="block text-gray-700 mb-2">Variable:</label>
-      <input 
-        [(ngModel)]="variable" 
+      <input
+        [(ngModel)]="variable"
         class="w-full p-2 border border-gray-300 rounded"
         placeholder="Ej: x"
       />
     </div>
-    
+
     <div class="mb-6">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-md font-medium">Definición de Trozos</h3>
-        <button 
-          (click)="addPiece()" 
+        <button
+          (click)="addPiece()"
           class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
         >
           Añadir Trozo
         </button>
       </div>
-      
-      <div *ngFor="let piece of pieces; let i = index" class="mb-4 p-4 border border-gray-200 rounded">
+
+      <div
+        *ngFor="let piece of pieces; let i = index"
+        class="mb-4 p-4 border border-gray-200 rounded"
+      >
         <div class="flex justify-between items-center mb-2">
           <h4 class="font-medium">Trozo {{ i + 1 }}</h4>
-          <button 
+          <button
             *ngIf="pieces.length > 1"
-            (click)="removePiece(i)" 
+            (click)="removePiece(i)"
             class="text-red-600 hover:text-red-800"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-gray-700 mb-1 text-sm">Función:</label>
-            <input 
-              [(ngModel)]="piece.function" 
+            <input
+              [(ngModel)]="piece.function"
               class="w-full p-2 border border-gray-300 rounded"
               placeholder="Ej: x^2"
             />
           </div>
           <div>
             <label class="block text-gray-700 mb-1 text-sm">Inicio:</label>
-            <input 
-              [(ngModel)]="piece.start" 
+            <input
+              [(ngModel)]="piece.start"
               class="w-full p-2 border border-gray-300 rounded"
               placeholder="Ej: -pi"
             />
           </div>
           <div>
             <label class="block text-gray-700 mb-1 text-sm">Fin:</label>
-            <input 
-              [(ngModel)]="piece.end" 
+            <input
+              [(ngModel)]="piece.end"
               class="w-full p-2 border border-gray-300 rounded"
               placeholder="Ej: pi"
             />
@@ -66,68 +84,99 @@
         </div>
       </div>
     </div>
-    
-    <button 
-      (click)="calculateSeries()" 
+
+    <button
+      (click)="calculateSeries()"
       class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
       [disabled]="loading"
     >
-      {{ loading ? 'Calculando...' : 'Calcular Serie' }}
+      {{ loading ? "Calculando..." : "Calcular Serie" }}
     </button>
   </div>
-  
+
   <div *ngIf="result" class="results">
     <h2 class="text-xl font-bold mb-4">Resultados:</h2>
-    
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <!-- Resultados en formato Maxima -->
       <div class="bg-white p-6 rounded-lg shadow-md">
         <h3 class="text-lg font-semibold mb-4">Formato Maxima</h3>
-        
+
         <div class="mb-4">
-          <p class="font-medium text-gray-700 coefficient-title">Coeficiente c<sub>0</sub>:</p>
-          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.simplified.c0 }}</pre>
+          <p class="font-medium text-gray-700 coefficient-title">
+            Coeficiente c<sub>0</sub>:
+          </p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{
+            result.simplified.c0
+          }}</pre>
         </div>
-        
+
         <div class="mb-4">
-          <p class="font-medium text-gray-700 coefficient-title">Coeficiente c<sub>n</sub>:</p>
-          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.simplified.cn }}</pre>
+          <p class="font-medium text-gray-700 coefficient-title">
+            Coeficiente c<sub>n</sub>:
+          </p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{
+            result.simplified.cn
+          }}</pre>
         </div>
       </div>
-      
+
       <!-- Resultados en formato LaTeX -->
       <div class="bg-white p-6 rounded-lg shadow-md">
         <h3 class="text-lg font-semibold mb-4">Formato LaTeX</h3>
-        
+
         <div class="mb-4">
-          <p class="font-medium text-gray-700 coefficient-title">Coeficiente c<sub>0</sub>:</p>
-          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.latex.c0 }}</pre>
+          <p class="font-medium text-gray-700 coefficient-title">
+            Coeficiente c<sub>0</sub>:
+          </p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{
+            result.latex.c0
+          }}</pre>
         </div>
-        
+
         <div class="mb-4">
-          <p class="font-medium text-gray-700 coefficient-title">Coeficiente c<sub>n</sub>:</p>
-          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{ result.latex.cn }}</pre>
+          <p class="font-medium text-gray-700 coefficient-title">
+            Coeficiente c<sub>n</sub>:
+          </p>
+          <pre class="bg-gray-100 p-3 rounded overflow-x-auto">{{
+            result.latex.cn
+          }}</pre>
         </div>
       </div>
     </div>
-    
+
     <!-- Renderizado de LaTeX con MathJax -->
     <div *ngIf="latexRendered" class="bg-white p-6 rounded-lg shadow-md mt-8">
       <h3 class="text-lg font-semibold mb-4">Visualización de Fórmulas</h3>
-      
+
       <div class="mb-6">
-        <p class="font-medium text-gray-700 coefficient-title">Coeficiente c<sub>0</sub>:</p>
+        <p class="font-medium text-gray-700 coefficient-title">
+          Coeficiente c<sub>0</sub>:
+        </p>
         <div [innerHTML]="latexRendered.c0" class="latex-container"></div>
       </div>
-      
+
       <div class="mb-6">
-        <p class="font-medium text-gray-700 coefficient-title">Coeficiente c<sub>n</sub>:</p>
+        <p class="font-medium text-gray-700 coefficient-title">
+          Coeficiente c<sub>n</sub>:
+        </p>
         <div [innerHTML]="latexRendered.cn" class="latex-container"></div>
       </div>
     </div>
   </div>
-  
-  <div *ngIf="error" class="mt-6 p-4 bg-red-100 border border-red-200 rounded text-red-800">
+
+  <!-- Serie completa -->
+  <div *ngIf="fullLatexFormula" class="bg-white p-6 rounded-lg shadow-md mt-8">
+    <h3 class="text-lg font-semibold mb-4">
+      Serie de Fourier Compleja Completa
+    </h3>
+    <div [innerHTML]="fullLatexFormula" class="latex-container"></div>
+  </div>
+
+  <div
+    *ngIf="error"
+    class="mt-6 p-4 bg-red-100 border border-red-200 rounded text-red-800"
+  >
     <p><strong>Error:</strong> {{ error }}</p>
   </div>
 </div>
