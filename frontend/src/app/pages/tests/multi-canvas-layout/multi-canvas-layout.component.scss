@@ -1,0 +1,304 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.multi-canvas-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  padding: 0;
+  margin: 0;
+}
+
+// Layout de cuadrícula
+.grid-layout {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.25rem; // Reducido de 0.5rem
+
+  // Layout personalizado según cantidad de canvas
+  &.custom-layout {
+    // Si hay solo 1 canvas
+    &.items-1 {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+    }
+    
+    // Si hay 2 canvas (lado a lado)
+    &.items-2 {
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: 1fr;
+      
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(2, 1fr);
+      }
+    }
+    
+    // Si hay 3 canvas (1 a la izquierda, 2 a la derecha)
+    &.items-3 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(2, 1fr);
+      grid-template-areas: 
+        "left right-top"
+        "left right-bottom";
+      
+      .canvas-wrapper:nth-child(1) {
+        grid-area: left;
+      }
+      
+      .canvas-wrapper:nth-child(2) {
+        grid-area: right-top;
+      }
+      
+      .canvas-wrapper:nth-child(3) {
+        grid-area: right-bottom;
+      }
+      
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(3, 1fr);
+        grid-template-areas: 
+          "left"
+          "right-top"
+          "right-bottom";
+      }
+    }
+    
+    // Si hay 4 o más canvas (en columnas de 2)
+    &.items-4-plus {
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: 1fr;
+      
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+
+  // Columnas fijas originales (mantenerlas como alternativa)
+  &.columns-1 {
+    grid-template-columns: 1fr;
+  }
+
+  &.columns-2 {
+    grid-template-columns: repeat(2, 1fr);
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &.columns-3 {
+    grid-template-columns: repeat(3, 1fr);
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &.columns-4 {
+    grid-template-columns: repeat(2, 1fr);
+
+    @media (max-width: 1400px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .canvas-wrapper {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.2);
+    min-height: 0; // Importante para que el grid funcione correctamente
+  }
+
+  .canvas-header {
+    padding: 0.25rem 0.5rem;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    h3 {
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin: 0;
+      color: #eee;
+    }
+  }
+
+  .canvas-container {
+    flex: 1;
+    position: relative;
+    min-height: 0; // Importante para que el flex funcione correctamente
+  }
+}
+
+// Layout de pestañas
+.tabs-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+
+  .tabs-header {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    .tab-button {
+      padding: 0.5rem 0.75rem; // Reducido
+      border: none;
+      background: transparent;
+      color: #ddd;
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-bottom: 2px solid transparent;
+
+      &.active {
+        border-bottom: 2px solid #90DCB5;
+        color: #fff;
+      }
+
+      &:hover:not(.active) {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+    }
+  }
+
+  .tab-content {
+    flex: 1;
+    position: relative;
+
+    .canvas-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s;
+
+      &.active {
+        opacity: 1;
+        visibility: visible;
+      }
+    }
+  }
+}
+
+// Layout dividido mejorado
+.split-layout {
+  width: 100%;
+  height: 100%;
+  padding: 0.25rem;
+
+  &.split-1 .split-container {
+    // 1 panel: ocupar todo el espacio
+    display: block;
+  }
+  
+  &.split-2 .split-container {
+    // 2 paneles: lado a lado
+    display: flex;
+    flex-direction: row;
+    
+    .split-item {
+      flex: 1;
+    }
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+  
+  &.split-3 .split-container {
+    // 3 paneles: 1 a la izquierda (principal) y 2 a la derecha
+    display: flex;
+    flex-direction: row;
+    
+    .split-item {
+      flex: 1;
+      
+      &.main-panel {
+        flex: 1.5;
+      }
+    }
+    
+    .split-item:not(.main-panel) {
+      display: flex;
+      flex-direction: column;
+      
+      .split-item {
+        flex: 1;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+  
+  &.split-4-plus .split-container {
+    // 4 o más paneles: en columnas de 2
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 1fr;
+    height: 100%;
+    gap: 0.5rem;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .split-container {
+    height: 100%;
+    gap: 0.5rem;
+
+    .split-item {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.25rem;
+      overflow: hidden;
+      background-color: rgba(0, 0, 0, 0.2);
+      min-height: 0;
+      margin: 0 0.25rem;
+
+      .canvas-header {
+        padding: 0.25rem 0.5rem;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+        h3 {
+          font-size: 0.875rem;
+          font-weight: 500;
+          margin: 0;
+          color: #eee;
+        }
+      }
+
+      .canvas-container {
+        flex: 1;
+        position: relative;
+        min-height: 0;
+      }
+    }
+  }
+}

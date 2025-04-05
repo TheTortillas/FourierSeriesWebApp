@@ -1,0 +1,105 @@
+<div class="multi-canvas-container overflow-hidden">
+  <!-- Layout de Grid -->
+  <div
+    *ngIf="layout === 'grid'"
+    [ngClass]="[
+      'grid-layout',
+      useCustomLayout
+        ? canvasConfigs.length === 1
+          ? 'custom-layout items-1'
+          : canvasConfigs.length === 2
+          ? 'custom-layout items-2'
+          : canvasConfigs.length === 3
+          ? 'custom-layout items-3'
+          : 'custom-layout items-4-plus'
+        : 'columns-' + columns
+    ]"
+  >
+    <div
+      *ngFor="let config of canvasConfigs; let i = index"
+      class="canvas-wrapper"
+    >
+      <div class="canvas-header">
+        <h3>{{ config.title }}</h3>
+      </div>
+      <div class="canvas-container">
+        <app-cartesian-canvas
+          [canvasId]="config.id"
+          [bgColor]="config.bgColor || '#222'"
+          [axisColor]="config.axisColor || '#90DCB5'"
+          [gridColor]="config.gridColor || '#6BBCAC'"
+          [fontColor]="config.fontColor || '#EBEBEB'"
+          [initialZoom]="config.initialZoom || 75"
+        ></app-cartesian-canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout de Pestañas -->
+  <div *ngIf="layout === 'tabs'" class="tabs-layout">
+    <!-- Sin cambios en el layout de pestañas -->
+    <div class="tabs-header">
+      <button
+        *ngFor="let config of canvasConfigs; let i = index"
+        [class.active]="activeTabIndex === i"
+        (click)="setActiveTab(i)"
+        class="tab-button"
+      >
+        {{ config.title }}
+      </button>
+    </div>
+    <div class="tab-content">
+      <div
+        *ngFor="let config of canvasConfigs; let i = index"
+        class="canvas-container"
+        [class.active]="activeTabIndex === i"
+      >
+        <app-cartesian-canvas
+          [canvasId]="config.id"
+          [bgColor]="config.bgColor || '#222'"
+          [axisColor]="config.axisColor || '#90DCB5'"
+          [gridColor]="config.gridColor || '#6BBCAC'"
+          [fontColor]="config.fontColor || '#EBEBEB'"
+          [initialZoom]="config.initialZoom || 75"
+        ></app-cartesian-canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout Split adaptativo basado en la cantidad de canvas -->
+  <div
+    *ngIf="layout === 'split'"
+    class="split-layout"
+    [ngClass]="
+      canvasConfigs.length === 1
+        ? 'split-1'
+        : canvasConfigs.length === 2
+        ? 'split-2'
+        : canvasConfigs.length === 3
+        ? 'split-3'
+        : 'split-4-plus'
+    "
+  >
+    <div class="split-container">
+      <div
+        *ngFor="let config of canvasConfigs; let i = index"
+        class="split-item"
+        [ngClass]="{ 'main-panel': i === 0 && canvasConfigs.length === 3 }"
+      >
+        <div class="canvas-header">
+          <h3>{{ config.title }}</h3>
+        </div>
+        <div class="canvas-container">
+          <app-cartesian-canvas
+            [canvasId]="config.id"
+            [bgColor]="config.bgColor || '#222'"
+            [axisColor]="config.axisColor || '#90DCB5'"
+            [gridColor]="config.gridColor || '#6BBCAC'"
+            [fontColor]="config.fontColor || '#EBEBEB'"
+            [initialZoom]="config.initialZoom || 75"
+          ></app-cartesian-canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

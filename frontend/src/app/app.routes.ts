@@ -3,13 +3,14 @@ import { TestsComponent } from './pages/tests/tests.component';
 import { Text2maxComponent } from './pages/tests/text2max/text2max.component';
 import { CanvaFunctionPlotterComponent } from './pages/tests/canva-function-plotter/canva-function-plotter.component';
 import { MathquillComponent } from './pages/tests/mathquill/mathquill.component';
-import { CanvaSidenavComponent } from './pages/tests/canva-sidenav/canva-sidenav.component'; 
+import { CanvaSidenavComponent } from './pages/tests/canva-sidenav/canva-sidenav.component';
 import { ApiTestComponent } from './pages/tests/api-test/api-test.component';
 import { TrigonometricSeriesComponent } from './pages/tests/trigonometric-series/trigonometric-series.component';
 import { ComplexSeriesComponent } from './pages/tests/complex-series/complex-series.component';
 import { TrigonometricPiecewiseSeriesComponent } from './pages/tests/trigonometric-piecewise-series/trigonometric-piecewise-series.component';
 import { ComplexPiecewiseSeriesComponent } from './pages/tests/complex-piecewise-series/complex-piecewise-series.component';
 import { HalfRangeSeriesComponent } from './pages/tests/half-range-series/half-range-series.component';
+import { MultiCanvasLayoutComponent } from './pages/tests/multi-canvas-layout/multi-canvas-layout.component';
 export const routes: Routes = [
   {
     path: 'tests',
@@ -54,6 +55,10 @@ export const routes: Routes = [
       {
         path: 'canva-sidenav',
         component: CanvaSidenavComponent,
+      },
+      {
+        path: 'multi-canvas-layout',
+        component: MultiCanvasLayoutComponent,
       },
     ],
   },
