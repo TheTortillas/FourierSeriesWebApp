@@ -128,11 +128,13 @@
 
   <!-- 📌 CANVAS (DERECHA) -->
   <div class="flex-1 flex justify-center items-center bg-gray-900">
-    <canvas
-      id="stage"
-      [width]="1000"
-      [height]="600"
-      class="border border-gray-700 shadow-lg"
-    ></canvas>
+    <app-cartesian-canvas
+      [bgColor]="'#222'"
+      [axisColor]="'#90DCB5'"
+      [gridColor]="'#6BBCAC'"
+      [fontColor]="'#EBEBEB'"
+      [initialZoom]="75"
+    >
+    </app-cartesian-canvas>
   </div>
 </div>

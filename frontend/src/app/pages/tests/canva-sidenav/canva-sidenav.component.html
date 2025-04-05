@@ -1,69 +1,119 @@
 <div class="relative w-screen h-screen overflow-hidden">
   <!-- Side Navigation -->
-  <div 
+  <div
     class="fixed top-0 h-screen bg-gray-900/95 text-gray-100 shadow-lg z-50 transition-all duration-300 overflow-y-auto backdrop-blur-sm w-full md:w-1/4"
-    [ngClass]="sidenavOpen ? 'left-0' : '-left-full md:-left-1/4'">
-    
+    [ngClass]="sidenavOpen ? 'left-0' : '-left-full md:-left-1/4'"
+  >
     <div class="flex justify-between items-center p-4 border-b border-gray-700">
       <h2 class="text-xl font-medium">Panel de Control</h2>
-      <button 
-        class="bg-transparent border-none text-gray-100 text-2xl w-8 h-8 flex items-center justify-center hover:text-green-300 focus:outline-none" 
-        (click)="toggleSidenav()">×</button>
+      <button
+        class="bg-transparent border-none text-gray-100 text-2xl w-8 h-8 flex items-center justify-center hover:text-green-300 focus:outline-none"
+        (click)="toggleSidenav()"
+      >
+        ×
+      </button>
     </div>
-    
+
     <div class="p-5">
       <!-- Graficar Función -->
       <div class="mb-6">
         <h3 class="text-base mb-3 text-green-300">Graficar Función</h3>
-        <input 
-          type="text" 
-          placeholder="Ej: Math.sin(x)" 
-          class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded mb-3 focus:outline-none focus:border-green-300">
-        
+        <input
+          type="text"
+          placeholder="Ej: Math.sin(x)"
+          [(ngModel)]="functionInput"
+          class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded mb-3 focus:outline-none focus:border-green-300"
+        />
+
         <div class="flex items-center mb-3">
           <label class="flex-1">Color:</label>
-          <input type="color" value="#FF0000" class="w-10 h-6 bg-transparent border-none cursor-pointer">
+          <input
+            type="color"
+            [(ngModel)]="functionColor"
+            class="w-10 h-6 bg-transparent border-none cursor-pointer"
+          />
         </div>
-        
-        <button class="w-full bg-teal-600 text-gray-900 border-none py-2 px-4 rounded font-medium hover:bg-teal-500 transition-colors">
+
+        <button
+          (click)="graficarFuncion()"
+          class="w-full bg-teal-600 text-gray-900 border-none py-2 px-4 rounded font-medium hover:bg-teal-500 transition-colors"
+        >
           Graficar
         </button>
       </div>
-      
+
       <!-- Serie de Fourier -->
       <div class="mb-6">
         <h3 class="text-base mb-3 text-green-300">Serie de Fourier</h3>
-        <input 
-          type="text" 
-          placeholder="Función para la serie" 
-          class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded mb-3 focus:outline-none focus:border-green-300">
-        
-        <input 
-          type="number" 
-          placeholder="Número de términos" 
-          class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded mb-3 focus:outline-none focus:border-green-300">
-        
+        <input
+          type="text"
+          placeholder="Función para la serie"
+          [(ngModel)]="seriesInput"
+          class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded mb-3 focus:outline-none focus:border-green-300"
+        />
+
+        <input
+          type="number"
+          placeholder="Número de términos"
+          [(ngModel)]="seriesTerms"
+          class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded mb-3 focus:outline-none focus:border-green-300"
+        />
+
         <div class="flex items-center mb-3">
           <label class="flex-1">Color:</label>
-          <input type="color" value="#4287f5" class="w-10 h-6 bg-transparent border-none cursor-pointer">
+          <input
+            type="color"
+            [(ngModel)]="seriesColor"
+            class="w-10 h-6 bg-transparent border-none cursor-pointer"
+          />
         </div>
-        
-        <button class="w-full bg-teal-600 text-gray-900 border-none py-2 px-4 rounded font-medium hover:bg-teal-500 transition-colors">
+
+        <button
+          (click)="graficarSerie()"
+          class="w-full bg-teal-600 text-gray-900 border-none py-2 px-4 rounded font-medium hover:bg-teal-500 transition-colors"
+        >
           Calcular Serie
+        </button>
+      </div>
+
+      <!-- Controles adicionales -->
+      <div class="mb-6">
+        <button
+          (click)="limpiarCanvas()"
+          class="w-full bg-red-600 text-white border-none py-2 px-4 rounded font-medium hover:bg-red-700 transition-colors mb-3"
+        >
+          Limpiar Canvas
+        </button>
+
+        <button
+          (click)="resetearVista()"
+          class="w-full bg-blue-600 text-white border-none py-2 px-4 rounded font-medium hover:bg-blue-700 transition-colors"
+        >
+          Resetear Vista
         </button>
       </div>
     </div>
   </div>
 
   <!-- Botón para abrir el sidenav -->
-  <button 
+  <button
     class="fixed top-5 left-5 w-10 h-10 rounded-full bg-teal-600/80 text-gray-900 border-none flex items-center justify-center cursor-pointer z-40 shadow-md hover:bg-teal-500 focus:outline-none"
-    (click)="toggleSidenav()">
+    (click)="toggleSidenav()"
+  >
     <span class="text-lg">☰</span>
   </button>
 
   <!-- Canvas Container -->
   <div class="w-full h-full bg-gray-900">
-    <canvas id="fourier-canvas" class="block w-full h-full"></canvas>
+    <app-cartesian-canvas
+      #cartesianCanvas
+      (canvasReady)="setCanvasComponent(cartesianCanvas)"
+      [bgColor]="'#222'"
+      [axisColor]="'#90DCB5'"
+      [gridColor]="'#6BBCAC'"
+      [fontColor]="'#EBEBEB'"
+      [initialZoom]="75"
+    >
+    </app-cartesian-canvas>
   </div>
 </div>
