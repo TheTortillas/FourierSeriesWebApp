@@ -40,6 +40,7 @@
 # System files
 /frontend/.DS_Store
 /frontend/Thumbs.db
+/frontend/package-lock.json
 
 /backend/node_modules
 /backend/package-lock.json
