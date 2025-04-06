@@ -1,103 +1,429 @@
-<div class="multi-canvas-container overflow-hidden">
-  <!-- Layout de Grid -->
+<div class="relative w-screen h-screen overflow-hidden">
+  <!-- Side Navigation -->
   <div
-    *ngIf="layout === 'grid'"
-    [ngClass]="[
-      'grid-layout',
-      useCustomLayout
-        ? canvasConfigs.length === 1
-          ? 'custom-layout items-1'
-          : canvasConfigs.length === 2
-          ? 'custom-layout items-2'
-          : canvasConfigs.length === 3
-          ? 'custom-layout items-3'
-          : 'custom-layout items-4-plus'
-        : 'columns-' + columns
-    ]"
+    class="fixed top-0 h-screen bg-gray-900/95 text-gray-100 shadow-lg z-50 transition-all duration-300 overflow-y-auto backdrop-blur-sm w-full md:w-1/4"
+    [ngClass]="sidenavOpen ? 'left-0' : '-left-full md:-left-1/4'"
   >
-    <div
-      *ngFor="let config of canvasConfigs; let i = index"
-      class="canvas-wrapper"
-    >
-      <div class="canvas-header">
-        <h3>{{ config.title }}</h3>
-      </div>
-      <div class="canvas-container">
-        <app-cartesian-canvas
-          [canvasId]="config.id"
-          [bgColor]="config.bgColor || '#222'"
-          [axisColor]="config.axisColor || '#90DCB5'"
-          [gridColor]="config.gridColor || '#6BBCAC'"
-          [fontColor]="config.fontColor || '#EBEBEB'"
-          [initialZoom]="config.initialZoom || 75"
-        ></app-cartesian-canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Layout de Pestañas -->
-  <div *ngIf="layout === 'tabs'" class="tabs-layout">
-    <!-- Sin cambios en el layout de pestañas -->
-    <div class="tabs-header">
+    <div class="flex justify-between items-center p-4 border-b border-gray-700">
+      <h2 class="text-xl font-medium">Panel de Control</h2>
       <button
-        *ngFor="let config of canvasConfigs; let i = index"
-        [class.active]="activeTabIndex === i"
-        (click)="setActiveTab(i)"
-        class="tab-button"
+        class="bg-transparent border-none text-gray-100 text-2xl w-8 h-8 flex items-center justify-center hover:text-green-300 focus:outline-none"
+        (click)="toggleSidenav()"
       >
-        {{ config.title }}
+        ×
       </button>
     </div>
-    <div class="tab-content">
-      <div
-        *ngFor="let config of canvasConfigs; let i = index"
-        class="canvas-container"
-        [class.active]="activeTabIndex === i"
-      >
-        <app-cartesian-canvas
-          [canvasId]="config.id"
-          [bgColor]="config.bgColor || '#222'"
-          [axisColor]="config.axisColor || '#90DCB5'"
-          [gridColor]="config.gridColor || '#6BBCAC'"
-          [fontColor]="config.fontColor || '#EBEBEB'"
-          [initialZoom]="config.initialZoom || 75"
-        ></app-cartesian-canvas>
+
+    <div class="p-5">
+      <!-- Layout Controls -->
+      <div class="mb-6">
+        <h3 class="text-base mb-3 text-green-300">Opciones de Layout</h3>
+        <div class="mb-3">
+          <label class="block mb-2">Tipo de Layout:</label>
+          <div class="flex gap-2">
+            <button
+              (click)="layout = 'grid'"
+              class="flex-1 py-2 px-4 rounded font-medium transition-colors"
+              [ngClass]="layout === 'grid' ? 'bg-teal-600 text-gray-900' : 'bg-gray-700 text-white'"
+            >
+              Grid
+            </button>
+            <button
+              (click)="layout = 'tabs'"
+              class="flex-1 py-2 px-4 rounded font-medium transition-colors"
+              [ngClass]="layout === 'tabs' ? 'bg-teal-600 text-gray-900' : 'bg-gray-700 text-white'"
+            >
+              Tabs
+            </button>
+            <button
+              (click)="layout = 'split'"
+              class="flex-1 py-2 px-4 rounded font-medium transition-colors"
+              [ngClass]="layout === 'split' ? 'bg-teal-600 text-gray-900' : 'bg-gray-700 text-white'"
+            >
+              Split
+            </button>
+          </div>
+        </div>
+        
+        <div *ngIf="layout === 'grid'" class="mb-3">
+          <label class="block mb-2">Columnas:</label>
+          <input
+            type="range"
+            [(ngModel)]="columns"
+            min="1"
+            max="4"
+            step="1"
+            class="w-full"
+          />
+          <div class="text-center">{{ columns }}</div>
+        </div>
+      </div>
+
+      <!-- Panel para cada canvas con su funcionalidad específica -->
+      <div *ngFor="let config of canvasConfigs; let i = index" class="mb-6 p-3 rounded-md bg-gray-800/50">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-base text-white font-medium" [style.color]="config.axisColor">
+            {{ config.title }}
+          </h3>
+          <div class="flex items-center">
+            <button
+              class="ml-2 p-1 rounded-md hover:bg-gray-700"
+              [ngClass]="{'bg-gray-700': config.id === activeCanvas}"
+              (click)="setActiveCanvas(config.id)"
+              title="Seleccionar canvas"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+            <div class="ml-2 relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+              <input 
+                type="checkbox" 
+                [id]="'toggle-' + config.id" 
+                [checked]="!isCanvasHidden(config.id)"
+                (change)="toggleCanvas(config.id)"
+                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" 
+              />
+              <label 
+                [for]="'toggle-' + config.id" 
+                class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer"
+                [style.background-color]="!isCanvasHidden(config.id) ? config.axisColor + '80' : ''"
+              ></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canal 1: Funciones -->
+        <div *ngIf="i === 0" class="mt-2">
+          <input
+            type="text"
+            placeholder="Ej: Math.sin(x)"
+            [(ngModel)]="canvasInputs[config.id].functionInput"
+            class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded mb-3 focus:outline-none focus:border-green-300"
+          />
+
+          <div class="flex items-center mb-3">
+            <label class="flex-1">Color:</label>
+            <input
+              type="color"
+              [(ngModel)]="canvasInputs[config.id].functionColor"
+              class="w-10 h-6 bg-transparent border-none cursor-pointer"
+            />
+          </div>
+
+          <button
+            (click)="graficarFuncion(config.id)"
+            class="w-full bg-teal-600 text-gray-900 border-none py-2 px-4 rounded font-medium hover:bg-teal-500 transition-colors"
+            [style.background-color]="config.axisColor"
+          >
+            Graficar Función
+          </button>
+        </div>
+
+        <!-- Canal 2: Funciones en Intervalo -->
+        <div *ngIf="i === 1" class="mt-2">
+          <input
+            type="text"
+            placeholder="Ej: Math.sin(x)"
+            [(ngModel)]="canvasInputs[config.id].functionInput"
+            class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded mb-3 focus:outline-none focus:border-green-300"
+          />
+
+          <div class="flex gap-3 mb-3">
+            <div class="flex-1">
+              <label class="block mb-1 text-sm">Desde (a):</label>
+              <input
+                type="number"
+                [(ngModel)]="canvasInputs[config.id].rangeStart"
+                class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded focus:outline-none focus:border-green-300"
+              />
+            </div>
+            <div class="flex-1">
+              <label class="block mb-1 text-sm">Hasta (b):</label>
+              <input
+                type="number"
+                [(ngModel)]="canvasInputs[config.id].rangeEnd"
+                class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded focus:outline-none focus:border-green-300"
+              />
+            </div>
+          </div>
+
+          <div class="flex items-center mb-3">
+            <label class="flex-1">Color:</label>
+            <input
+              type="color"
+              [(ngModel)]="canvasInputs[config.id].functionColor"
+              class="w-10 h-6 bg-transparent border-none cursor-pointer"
+            />
+          </div>
+
+          <button
+            (click)="graficarFuncionEnIntervalo(config.id)"
+            class="w-full text-gray-900 border-none py-2 px-4 rounded font-medium hover:opacity-90 transition-colors"
+            [style.background-color]="config.axisColor"
+          >
+            Graficar en Intervalo
+          </button>
+        </div>
+
+        <!-- Canal 3: Puntos Discretos -->
+        <div *ngIf="i === 2" class="mt-2">
+          <div class="flex gap-3 mb-3">
+            <div class="flex-1">
+              <label class="block mb-1 text-sm">Posición X:</label>
+              <input
+                type="number"
+                [(ngModel)]="canvasInputs[config.id].discreteX"
+                class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded focus:outline-none focus:border-green-300"
+              />
+            </div>
+            <div class="flex-1">
+              <label class="block mb-1 text-sm">Inicio Y:</label>
+              <input
+                type="number"
+                [(ngModel)]="canvasInputs[config.id].discreteY"
+                class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded focus:outline-none focus:border-green-300"
+              />
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="block mb-1 text-sm">Altura:</label>
+            <input
+              type="number"
+              [(ngModel)]="canvasInputs[config.id].discreteHeight"
+              class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded focus:outline-none focus:border-green-300"
+            />
+          </div>
+
+          <div class="flex items-center mb-3">
+            <label class="flex-1">Color:</label>
+            <input
+              type="color"
+              [(ngModel)]="canvasInputs[config.id].functionColor"
+              class="w-10 h-6 bg-transparent border-none cursor-pointer"
+            />
+          </div>
+
+          <button
+            (click)="graficarPuntoDiscreto(config.id)"
+            class="w-full text-gray-900 border-none py-2 px-4 rounded font-medium hover:opacity-90 transition-colors"
+            [style.background-color]="config.axisColor"
+          >
+            Graficar Punto Discreto
+          </button>
+        </div>
+
+        <!-- Canal 4: Series de Funciones -->
+        <div *ngIf="i === 3" class="mt-2">
+          <input
+            type="text"
+            placeholder="Función para la serie (ej: Math.sin(n*x)/n)"
+            [(ngModel)]="canvasInputs[config.id].seriesInput"
+            class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded mb-3 focus:outline-none focus:border-green-300"
+          />
+
+          <div class="mb-3">
+            <label class="block mb-1 text-sm">Número de términos:</label>
+            <input
+              type="number"
+              [(ngModel)]="canvasInputs[config.id].seriesTerms"
+              min="1"
+              max="100"
+              class="w-full bg-white/10 border border-gray-700 text-white p-2 rounded focus:outline-none focus:border-green-300"
+            />
+          </div>
+
+          <div class="flex items-center mb-3">
+            <label class="flex-1">Color:</label>
+            <input
+              type="color"
+              [(ngModel)]="canvasInputs[config.id].seriesColor"
+              class="w-10 h-6 bg-transparent border-none cursor-pointer"
+            />
+          </div>
+
+          <button
+            (click)="graficarSerie(config.id)"
+            class="w-full text-gray-900 border-none py-2 px-4 rounded font-medium hover:opacity-90 transition-colors"
+            [style.background-color]="config.axisColor"
+          >
+            Calcular Serie
+          </button>
+        </div>
+
+        <!-- Botones de limpieza para cualquier canal -->
+        <div class="flex gap-2 mt-3">
+          <button
+            (click)="limpiarCanvas(config.id)"
+            class="flex-1 bg-red-600 text-white border-none py-1 px-2 rounded font-medium hover:bg-red-700 transition-colors text-xs"
+            title="Limpiar este canvas"
+          >
+            Limpiar
+          </button>
+          <button
+            (click)="resetearVista(config.id)"
+            class="flex-1 bg-blue-600 text-white border-none py-1 px-2 rounded font-medium hover:bg-blue-700 transition-colors text-xs"
+            title="Resetear la vista de este canvas"
+          >
+            Resetear
+          </button>
+        </div>
+      </div>
+
+      <!-- Controles adicionales -->
+      <div class="mb-6">
+        <div class="flex gap-2 mb-3">
+          <button
+            (click)="clearAllCanvases()"
+            class="flex-1 bg-red-800 text-white border-none py-2 px-4 rounded font-medium hover:bg-red-900 transition-colors"
+          >
+            Limpiar Todos
+          </button>
+          <button
+            (click)="resetAllCanvasViews()"
+            class="flex-1 bg-blue-800 text-white border-none py-2 px-4 rounded font-medium hover:bg-blue-900 transition-colors"
+          >
+            Resetear Todos
+          </button>
+        </div>
+        
+        <button
+          (click)="showAllCanvas()"
+          class="w-full bg-green-600 text-white border-none py-2 px-4 rounded font-medium hover:bg-green-700 transition-colors mb-3"
+        >
+          Mostrar Todos
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Layout Split adaptativo basado en la cantidad de canvas -->
-  <div
-    *ngIf="layout === 'split'"
-    class="split-layout"
-    [ngClass]="
-      canvasConfigs.length === 1
-        ? 'split-1'
-        : canvasConfigs.length === 2
-        ? 'split-2'
-        : canvasConfigs.length === 3
-        ? 'split-3'
-        : 'split-4-plus'
-    "
+  <!-- Botón para abrir el sidenav -->
+  <button
+    class="fixed top-5 left-5 w-10 h-10 rounded-full bg-teal-600/80 text-gray-900 border-none flex items-center justify-center cursor-pointer z-40 shadow-md hover:bg-teal-500 focus:outline-none"
+    (click)="toggleSidenav()"
   >
-    <div class="split-container">
+    <span class="text-lg">☰</span>
+  </button>
+
+  <!-- Contenedor principal del Canvas -->
+  <div class="w-full h-full">
+    <div class="multi-canvas-container overflow-hidden">
+      <!-- Layout de Grid -->
       <div
-        *ngFor="let config of canvasConfigs; let i = index"
-        class="split-item"
-        [ngClass]="{ 'main-panel': i === 0 && canvasConfigs.length === 3 }"
+        *ngIf="layout === 'grid'"
+        [ngClass]="[
+          'grid-layout',
+          useCustomLayout
+            ? getVisibleCanvasCount() === 1
+              ? 'custom-layout items-1'
+              : getVisibleCanvasCount() === 2
+              ? 'custom-layout items-2'
+              : getVisibleCanvasCount() === 3
+              ? 'custom-layout items-3'
+              : 'custom-layout items-4-plus'
+            : 'columns-' + columns
+        ]"
       >
-        <div class="canvas-header">
-          <h3>{{ config.title }}</h3>
+        <div
+          *ngFor="let config of canvasConfigs; let i = index"
+          class="canvas-wrapper"
+          [class.active-canvas]="config.id === activeCanvas"
+          [class.hidden-canvas]="isCanvasHidden(config.id)"
+          [ngStyle]="{'--axis-color': config.axisColor || '#90DCB5'}"
+        >
+          <div class="canvas-header" [ngStyle]="{'border-bottom-color': config.axisColor + '33' || 'rgba(255, 255, 255, 0.1)'}">
+            <h3>{{ config.title }}</h3>
+            <span class="inline-block w-2 h-2 rounded-full ml-2" [style.background-color]="config.axisColor || '#90DCB5'"></span>
+          </div>
+          <div class="canvas-container">
+            <app-cartesian-canvas
+              [canvasId]="config.id"
+              [bgColor]="config.bgColor || '#222'"
+              [axisColor]="config.axisColor || '#90DCB5'"
+              [gridColor]="config.gridColor || '#6BBCAC'"
+              [fontColor]="config.fontColor || '#EBEBEB'"
+              [initialZoom]="config.initialZoom || 75"
+            ></app-cartesian-canvas>
+          </div>
         </div>
-        <div class="canvas-container">
-          <app-cartesian-canvas
-            [canvasId]="config.id"
-            [bgColor]="config.bgColor || '#222'"
-            [axisColor]="config.axisColor || '#90DCB5'"
-            [gridColor]="config.gridColor || '#6BBCAC'"
-            [fontColor]="config.fontColor || '#EBEBEB'"
-            [initialZoom]="config.initialZoom || 75"
-          ></app-cartesian-canvas>
+      </div>
+
+      <!-- Layout de Pestañas -->
+      <div *ngIf="layout === 'tabs'" class="tabs-layout">
+        <div class="tabs-header">
+          <button
+            *ngFor="let config of canvasConfigs; let i = index"
+            [class.active]="activeTabIndex === i"
+            [class.hidden-tab]="isCanvasHidden(config.id)"
+            (click)="setActiveTab(i)"
+            class="tab-button"
+            [ngStyle]="{'--axis-color': config.axisColor || '#90DCB5'}"
+          >
+            {{ config.title }}
+            <span *ngIf="activeTabIndex === i" class="inline-block w-2 h-2 rounded-full ml-2" [style.background-color]="config.axisColor || '#90DCB5'"></span>
+          </button>
+        </div>
+        <div class="tab-content">
+          <div
+            *ngFor="let config of canvasConfigs; let i = index"
+            class="canvas-container"
+            [class.active]="activeTabIndex === i && !isCanvasHidden(config.id)"
+            [class.hidden-canvas]="isCanvasHidden(config.id)"
+          >
+            <app-cartesian-canvas
+              [canvasId]="config.id"
+              [bgColor]="config.bgColor || '#222'"
+              [axisColor]="config.axisColor || '#90DCB5'"
+              [gridColor]="config.gridColor || '#6BBCAC'"
+              [fontColor]="config.fontColor || '#EBEBEB'"
+              [initialZoom]="config.initialZoom || 75"
+            ></app-cartesian-canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout Split adaptativo -->
+      <div
+        *ngIf="layout === 'split'"
+        class="split-layout"
+        [ngClass]="
+          getVisibleCanvasCount() === 1
+            ? 'split-1'
+            : getVisibleCanvasCount() === 2
+            ? 'split-2'
+            : getVisibleCanvasCount() === 3
+            ? 'split-3'
+            : 'split-4-plus'
+        "
+      >
+        <div class="split-container">
+          <div
+            *ngFor="let config of canvasConfigs; let i = index"
+            class="split-item"
+            [class.hidden-canvas]="isCanvasHidden(config.id)"
+            [ngClass]="{
+              'main-panel': i === 0 && getVisibleCanvasCount() === 3,
+              'active-canvas': config.id === activeCanvas
+            }"
+            [ngStyle]="{'--axis-color': config.axisColor || '#90DCB5'}"
+          >
+            <div class="canvas-header" [ngStyle]="{'border-bottom-color': config.axisColor + '33' || 'rgba(255, 255, 255, 0.1)'}">
+              <h3>{{ config.title }}</h3>
+              <span class="inline-block w-2 h-2 rounded-full ml-2" [style.background-color]="config.axisColor || '#90DCB5'"></span>
+            </div>
+            <div class="canvas-container">
+              <app-cartesian-canvas
+                [canvasId]="config.id"
+                [bgColor]="config.bgColor || '#222'"
+                [axisColor]="config.axisColor || '#90DCB5'"
+                [gridColor]="config.gridColor || '#6BBCAC'"
+                [fontColor]="config.fontColor || '#EBEBEB'"
+                [initialZoom]="config.initialZoom || 75"
+              ></app-cartesian-canvas>
+            </div>
+          </div>
         </div>
       </div>
     </div>
