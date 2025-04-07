@@ -10,8 +10,8 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { CanvasDrawingService } from '../../../core/services/canvas-drawing.service';
-import { PlottingService } from '../../../core/services/plotting.service';
+import { CanvasDrawingService } from '../../../core/services/canvas/canvas-drawing.service';
+import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { PlotConfig } from '../../../interfaces/plot-config.interface';
 
 // Interfaces para almacenar las gráficas

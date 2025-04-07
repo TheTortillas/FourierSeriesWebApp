@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Axis } from '../../interfaces/axis.interface';
-import { DrawScreenConfig } from '../../interfaces/draw-screen-config.interface';
+import { Axis } from '../../../interfaces/axis.interface';
+import { DrawScreenConfig } from '../../../interfaces/draw-screen-config.interface';
 
 @Injectable({
   providedIn: 'root',

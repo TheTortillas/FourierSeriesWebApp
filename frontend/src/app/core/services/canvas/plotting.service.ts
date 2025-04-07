@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { PlotConfig } from '../../interfaces/plot-config.interface';
+import { PlotConfig } from '../../../interfaces/plot-config.interface';
 
 @Injectable({
   providedIn: 'root',

@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../../../core/services/api.service';
+import { ApiService } from '../../../core/services/api/api.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 declare global {
@@ -89,8 +89,13 @@ export class HalfRangeSeriesComponent implements OnInit, AfterViewChecked {
         funcionMatrix,
         intVar: this.variable,
       })
+
       .subscribe({
         next: (data) => {
+          console.log('API Request:', {
+            funcionMatrix,
+            intVar: this.variable,
+          });
           this.result = data;
           console.log('API Response:', data);
           this.loading = false;
