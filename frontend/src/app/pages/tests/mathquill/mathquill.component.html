@@ -6,7 +6,7 @@
       Calculadora de Series de Fourier
     </h1>
 
-        <!-- Math Keyboard Toggle Button -->
+    <!-- Math Keyboard Toggle Button -->
     <div class="flex justify-center mb-2">
       <button
         (click)="toggleKeyboard()"
@@ -14,13 +14,30 @@
         [ngClass]="{ active: keyboardVisible }"
       >
         <div class="keyboard-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-keyboard" viewBox="0 0 16 16">
-            <path d="M2 3h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H2zm1 2h1v1H3V6zm2 0h1v1H5V6zm2 0h1v1H7V6zm2 0h1v1h-1V6zm2 0h1v1h-1V6zM3 8h1v1H3V8zm2 0h1v1H5V8zm2 0h1v1H7V8zm2 0h1v1h-1V8zm2 0h1v1h-1V8zM3 10h1v1H3v-1zm2 0h1v1H5v-1zm2 0h4v1H7v-1z"/>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            fill="currentColor"
+            class="bi bi-keyboard"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M2 3h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H2zm1 2h1v1H3V6zm2 0h1v1H5V6zm2 0h1v1H7V6zm2 0h1v1h-1V6zm2 0h1v1h-1V6zM3 8h1v1H3V8zm2 0h1v1H5V8zm2 0h1v1H7V8zm2 0h1v1h-1V8zm2 0h1v1h-1V8zM3 10h1v1H3v-1zm2 0h1v1H5v-1zm2 0h4v1H7v-1z"
+            />
           </svg>
         </div>
         <div class="arrow-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"
+            />
           </svg>
         </div>
       </button>
@@ -94,12 +111,12 @@
               class="math-field pieceFunc border border-blue-500 bg-white rounded-md min-h-[50px] min-w-[50px] flex items-center justify-center cursor-text"
               style="width: 55%"
             ></div>
-            <span class="mx-2 text-lg">$$,$$</span>
+            <span class="mx-2 text-lg" tabindex="-1">$$,$$</span>
             <div
               class="math-field pieceStart border border-blue-500 bg-white rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text"
               style="width: 15%"
             ></div>
-            <span class="mx-1 text-lg variable-span"
+            <span class="mx-1 text-lg variable-span" tabindex="-1"
               >$$< {{ selectedVariable }} <$$</span
             >
             <div
@@ -133,7 +150,7 @@
       </div>
     </div>
 
-       <!-- Series Type Selection  -->
+    <!-- Series Type Selection  -->
     <div class="mb-6">
       <label for="type" class="block font-bold mb-2 text-gray-700"
         >Elige el tipo de serie:</label
@@ -152,7 +169,7 @@
         <option value="halfrange">Medio Rango</option>
       </select>
     </div>
-    
+
     <!-- Submit Button -->
     <div class="text-center mt-8">
       <button
@@ -163,4 +180,5 @@
         Calcular Serie de Fourier
       </button>
     </div>
+  </div>
 </div>

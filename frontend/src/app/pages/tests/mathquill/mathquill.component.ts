@@ -190,6 +190,62 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // Agregar este método a la clase MathquillComponent
+  setupTabNavigation(): void {
+    if (!this.isBrowser) return;
+
+    setTimeout(() => {
+      // Seleccionar todos los campos math-field
+      const mathFields = document.querySelectorAll('.math-field');
+
+      mathFields.forEach((field, index) => {
+        // Añadir manejo de la tecla Tab
+        (field as HTMLElement).addEventListener(
+          'keydown',
+          (e: KeyboardEvent) => {
+            if (e.key === 'Tab') {
+              e.preventDefault(); // Prevenir el comportamiento por defecto del Tab
+
+              // Determinar el índice del siguiente campo basado en si Shift está presionado
+              const nextIndex = e.shiftKey ? index - 1 : index + 1;
+
+              // Asegurarse de que el índice está dentro de los límites
+              if (nextIndex >= 0 && nextIndex < mathFields.length) {
+                // Enfocar el siguiente campo
+                (mathFields[nextIndex] as HTMLElement).focus();
+
+                // Si el campo tiene un MathQuill asociado, activarlo
+                const pieceIndex = Math.floor(nextIndex / 3);
+                const fieldType = nextIndex % 3;
+
+                if (this.pieces[pieceIndex]) {
+                  let field = null;
+
+                  switch (fieldType) {
+                    case 0: // Campo de función
+                      field = this.pieces[pieceIndex].funcField;
+                      break;
+                    case 1: // Campo de inicio
+                      field = this.pieces[pieceIndex].startField;
+                      break;
+                    case 2: // Campo de fin
+                      field = this.pieces[pieceIndex].endField;
+                      break;
+                  }
+
+                  if (field) {
+                    this.activeMathField = field;
+                    field.focus();
+                  }
+                }
+              }
+            }
+          }
+        );
+      });
+    }, 500); // Dar tiempo para que se inicialicen los campos
+  }
+
   addPiece(): void {
     if (!this.isBrowser) return;
 
@@ -214,7 +270,10 @@ export class MathquillComponent implements OnInit, AfterViewInit {
 
     this.pieces.splice(index, 1);
     this.updateFunctionDisplay();
-    setTimeout(() => this.validateIntervals(), 100);
+    setTimeout(() => {
+      this.validateIntervals();
+      this.setupTabNavigation();
+    }, 100);
   }
 
   initializeMathFields(): void {
@@ -245,6 +304,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     }
 
     this.updateFunctionDisplay();
+    this.setupTabNavigation();
   }
 
   createMathField(element: HTMLElement): any {
@@ -275,8 +335,6 @@ export class MathquillComponent implements OnInit, AfterViewInit {
 
     return mathField;
   }
-
-  // Debounced update function
 
   private updateDisplayDebounced(): void {
     if (!this.isBrowser) return;
@@ -477,6 +535,47 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     }
   }
 
+  validateIntervals(): boolean {
+    if (!this.isBrowser || this.pieces.length <= 1) return false;
+
+    // Clase para marcar campos inválidos
+    const invalidClass = 'border-red-500';
+
+    // Eliminar las marcas de error anteriores
+    document.querySelectorAll('.pieceStart, .pieceEnd').forEach((element) => {
+      element.classList.remove(invalidClass);
+    });
+
+    let hasError = false;
+
+    // Verificar cada par de intervalos adyacentes
+    for (let i = 1; i < this.pieces.length; i++) {
+      const previousEndField = document.querySelectorAll('.pieceEnd')[
+        i - 1
+      ] as HTMLElement;
+      const currentStartField = document.querySelectorAll('.pieceStart')[
+        i
+      ] as HTMLElement;
+
+      if (!previousEndField || !currentStartField) continue;
+
+      const previousEndLatex = this.pieces[i - 1].endField?.latex() || '';
+      const currentStartLatex = this.pieces[i].startField?.latex() || '';
+
+      // Si ambos campos tienen contenido, comparamos
+      if (previousEndLatex && currentStartLatex) {
+        // Verificar si son exactamente iguales
+        if (previousEndLatex !== currentStartLatex) {
+          // Marcar ambos campos como inválidos
+          previousEndField.classList.add(invalidClass);
+          currentStartField.classList.add(invalidClass);
+          hasError = true;
+        }
+      }
+    }
+    return hasError;
+  }
+
   submitData(): void {
     if (!this.isBrowser) return;
 
@@ -608,152 +707,26 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     // Suscribirse a la respuesta de la API
     apiCall.subscribe({
       next: (response: FourierResponse) => {
-        // Cerrar el diálogo de carga
-        Swal.close();
-    
-        console.log(
-          '%c Respuesta del servidor:',
-          'background: #073642; color: #859900; font-size: 12px; padding: 4px 8px; border-radius: 4px;'
-        );
         console.log(response);
-    
-        // Información específica dependiendo del tipo de serie
-        if (this.seriesType === 'trigonometric') {
-          console.log(
-            '%c Serie Trigonométrica:',
-            'background: #002b36; color: #cb4b16; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
-          );
-          console.log('Coeficiente a₀ (cosenos):', response.latex?.a0);
-          console.log('Coeficiente aₙ (cosenos):', response.latex?.an);
-          console.log('Coeficiente bₙ (senos):', response.latex?.bn);
-          console.log('Frecuencia angular (ω₀):', response.latex?.w0);
-          
-          // Agregar información del core
-          if (response.cores?.trigonometric) {
-            console.log(
-              '%c Core Trigonométrico:',
-              'background: #002b36; color: #b58900; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
-            );
-            console.log(response.cores.trigonometric);
-          }
-        } else if (this.seriesType === 'complex') {
-          console.log(
-            '%c Serie Compleja:',
-            'background: #002b36; color: #dc322f; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
-          );
-          console.log('Coeficiente c₀:', response.latex?.c0);
-          console.log('Coeficiente cₙ:', response.latex?.cn);
-          console.log('Frecuencia angular (ω₀):', response.latex?.w0);
-          
-          // Agregar información del core
-          if (response.cores?.complex) {
-            console.log(
-              '%c Core Complejo:',
-              'background: #002b36; color: #b58900; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
-            );
-            console.log(response.cores.complex);
-          }
-        } else if (this.seriesType === 'halfrange') {
-          console.log(
-            '%c Serie de Medio Rango:',
-            'background: #002b36; color: #6c71c4; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
-          );
-          console.log('Coeficiente a₀ (cosenos):', response.latex?.a0);
-          console.log('Coeficiente aₙ (cosenos):', response.latex?.an);
-          console.log('Coeficiente bₙ (senos):', response.latex?.bn);
-          console.log('Frecuencia angular (ω₀):', response.latex?.w0);
-          
-          // Agregar información de los cores de medio rango
-          if (response.cores?.halfRangeCosine) {
-            console.log(
-              '%c Core Medio Rango (Cosenos):',
-              'background: #002b36; color: #b58900; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
-            );
-            console.log(response.cores.halfRangeCosine);
-          }
-          
-          if (response.cores?.halfRangeSine) {
-            console.log(
-              '%c Core Medio Rango (Senos):',
-              'background: #002b36; color: #d33682; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
-            );
-            console.log(response.cores.halfRangeSine);
-          }
-        }
-    
-        // Valores numéricos (si existen)
-        if (response.numeric) {
-          console.log(
-            '%c Valores Numéricos:',
-            'background: #002b36; color: #268bd2; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
-          );
-          console.log(response.numeric);
-        }
-    
-        // Período de la serie (si existe)
-        if (response.period) {
-          console.log(
-            '%c Período de la serie:',
-            'background: #002b36; color: #2aa198; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
-          );
-          console.log(response.period);
-        }
-    
-        // Mostrar notificación simple de éxito (opcional, para UX)
         Swal.fire({
           title: 'Cálculo completado',
           text: 'La serie ha sido calculada exitosamente. Consulta la consola para ver los resultados.',
           icon: 'success',
           confirmButtonText: 'Aceptar',
-          timer: 3000,
           timerProgressBar: true,
         });
       },
       error: (error) => {
-        // Código de manejo de errores existente...
-      }
+        // Mostrar mensaje de error
+        Swal.fire({
+          title: 'Error',
+          text:
+            error.error?.message ||
+            'Ocurrió un error al calcular la serie de Fourier',
+          icon: 'error',
+          confirmButtonText: 'Entendido',
+        });
+      },
     });
-  }
-
-  validateIntervals(): boolean {
-    if (!this.isBrowser || this.pieces.length <= 1) return false;
-
-    // Clase para marcar campos inválidos
-    const invalidClass = 'border-red-500';
-
-    // Eliminar las marcas de error anteriores
-    document.querySelectorAll('.pieceStart, .pieceEnd').forEach((element) => {
-      element.classList.remove(invalidClass);
-    });
-
-    let hasError = false;
-
-    // Verificar cada par de intervalos adyacentes
-    for (let i = 1; i < this.pieces.length; i++) {
-      const previousEndField = document.querySelectorAll('.pieceEnd')[
-        i - 1
-      ] as HTMLElement;
-      const currentStartField = document.querySelectorAll('.pieceStart')[
-        i
-      ] as HTMLElement;
-
-      if (!previousEndField || !currentStartField) continue;
-
-      const previousEndLatex = this.pieces[i - 1].endField?.latex() || '';
-      const currentStartLatex = this.pieces[i].startField?.latex() || '';
-
-      // Si ambos campos tienen contenido, comparamos
-      if (previousEndLatex && currentStartLatex) {
-        // Verificar si son exactamente iguales
-        if (previousEndLatex !== currentStartLatex) {
-          // Marcar ambos campos como inválidos
-          previousEndField.classList.add(invalidClass);
-          currentStartField.classList.add(invalidClass);
-          hasError = true;
-        }
-      }
-    }
-
-    return hasError;
   }
 }
