@@ -6,12 +6,17 @@ import {
   ViewChild,
   PLATFORM_ID,
   Inject,
+  NgZone,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MathquillService } from '../../../core/services/mathquill.service';
 import { Piece } from '../../../interfaces/piece.interface';
 import Swal from 'sweetalert2';
+import { debounceTime, Subject } from 'rxjs';
+import { ApiService } from '../../../core/services/api.service';
+import { FourierRequest } from '../../../interfaces/fourier-request.interface';
+import { FourierResponse } from '../../../interfaces/fourier-response.interface';
 
 @Component({
   selector: 'app-mathquill',
@@ -29,6 +34,9 @@ export class MathquillComponent implements OnInit, AfterViewInit {
   isHalfRange: boolean = false;
   halfRangeType: string = '';
 
+  private updateSubject = new Subject<void>();
+  keyboardVisible: boolean = true;
+
   // Variable selection (new)
   selectedVariable: string = 'x';
 
@@ -36,38 +44,123 @@ export class MathquillComponent implements OnInit, AfterViewInit {
   private isBrowser: boolean;
 
   // MathQuill keyboard buttons configuration
-  mathButtons = [
-    { latex: '\\pi', display: '\\pi' },
-    { latex: 'e', display: 'e' },
-    { latex: '\\left (  \\right )', display: '\\left ( \\square \\right )' },
-    { latex: 'e^{ }', display: 'e^{\\square}' },
-    { latex: '\\frac{ }{ }', display: '\\frac{\\square}{\\square}' },
-    { latex: '\\cdot', display: '*' },
+  // Operadores y funciones básicas
+  mathButtonsBasic = [
+    { latex: '\\pi', display: '\\pi', tooltip: 'Constante Pi (π)' },
+    { latex: 'e', display: 'e', tooltip: 'Constante de Euler (e)' },
+    {
+      latex: '\\left (  \\right )',
+      display: '\\left ( \\square \\right )',
+      tooltip: 'Paréntesis',
+    },
+    { latex: '{}^2', display: '\\square^2', tooltip: 'Cuadrado' },
+    { latex: '{}^{}', display: '{\\square}^{\\square}', tooltip: 'Potencia' },
+    { latex: '\\cdot', display: '*', tooltip: 'Multiplicación' },
+    { latex: '+', display: '+', tooltip: 'Suma' },
+    { latex: '-', display: '-', tooltip: 'Resta' },
+    {
+      latex: '\\frac{ }{ }',
+      display: '\\frac{\\square}{\\square}',
+      tooltip: 'Fracción',
+    },
+    {
+      latex: '\\sqrt{ }',
+      display: '\\sqrt{\\square}',
+      tooltip: 'Raíz Cuadrada',
+    },
+    {
+      latex: '\\ln{ }',
+      display: '\\ln{\\square}',
+      tooltip: 'Logaritmo Natural',
+    },
+    {
+      latex: '\\log_{ }{ }',
+      display: '\\log_{\\square}{\\square}',
+      tooltip: 'Logaritmo en Base',
+    },
+  ];
+
+  // Funciones trigonométricas soportadas por Maxima
+  mathButtonsTrig = [
     {
       latex: '\\sin\\left( \\right )',
       display: '\\sin\\left(\\square\\right)',
+      tooltip: 'Seno',
     },
     {
       latex: '\\cos\\left( \\right )',
       display: '\\cos\\left(\\square\\right)',
+      tooltip: 'Coseno',
+    },
+    {
+      latex: '\\tan\\left( \\right )',
+      display: '\\tan\\left(\\square\\right)',
+      tooltip: 'Tangente',
+    },
+    {
+      latex: '\\cot\\left( \\right )',
+      display: '\\cot\\left(\\square\\right)',
+      tooltip: 'Cotangente',
+    },
+    {
+      latex: '\\sec\\left( \\right )',
+      display: '\\sec\\left(\\square\\right)',
+      tooltip: 'Secante',
+    },
+    {
+      latex: '\\csc\\left( \\right )',
+      display: '\\csc\\left(\\square\\right)',
+      tooltip: 'Cosecante',
+    },
+    {
+      latex: '\\arcsin\\left( \\right )',
+      display: '\\arcsin\\left(\\square\\right)',
+      tooltip: 'Arcoseno (inversa del seno)',
+    },
+    {
+      latex: '\\arccos\\left( \\right )',
+      display: '\\arccos\\left(\\square\\right)',
+      tooltip: 'Arcocoseno (inversa del coseno)',
+    },
+    {
+      latex: '\\arctan\\left( \\right )',
+      display: '\\arctan\\left(\\square\\right)',
+      tooltip: 'Arcotangente (inversa de la tangente)',
     },
     {
       latex: '\\sinh\\left( \\right )',
       display: '\\sinh\\left(\\square\\right)',
+      tooltip: 'Seno hiperbólico',
     },
     {
       latex: '\\cosh\\left( \\right )',
       display: '\\cosh\\left(\\square\\right)',
+      tooltip: 'Coseno hiperbólico',
     },
-    { latex: '{}^2', display: '\\square^2' },
-    { latex: '{}^{}', display: '{\\square}^{\\square}' },
+    {
+      latex: '\\tanh\\left( \\right )',
+      display: '\\tanh\\left(\\square\\right)',
+      tooltip: 'Tangente hiperbólica',
+    },
   ];
 
+  // Array completo para compatibilidad con código existente
+  get mathButtons() {
+    return [...this.mathButtonsBasic, ...this.mathButtonsTrig];
+  }
+
   constructor(
+    private apiService: ApiService,
     private mathquillService: MathquillService,
+    private ngZone: NgZone,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
+
+    // Debounce function updates
+    this.updateSubject.pipe(debounceTime(100)).subscribe(() => {
+      this.ngZone.run(() => this.updateDisplayDebounced());
+    });
   }
 
   ngOnInit(): void {
@@ -86,6 +179,17 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     }
   }
 
+  toggleKeyboard(): void {
+    this.keyboardVisible = !this.keyboardVisible;
+
+    // Dar tiempo para que se complete la animación y luego renderizar MathJax
+    if (this.keyboardVisible) {
+      setTimeout(() => {
+        this.mathquillService.renderMathJax();
+      }, 100);
+    }
+  }
+
   addPiece(): void {
     if (!this.isBrowser) return;
 
@@ -98,7 +202,10 @@ export class MathquillComponent implements OnInit, AfterViewInit {
       });
 
       // Initialize MathQuill fields after DOM updates
-      setTimeout(() => this.initializeMathFields(), 0);
+      setTimeout(() => {
+        this.initializeMathFields();
+        this.validateIntervals();
+      }, 0);
     });
   }
 
@@ -107,6 +214,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
 
     this.pieces.splice(index, 1);
     this.updateFunctionDisplay();
+    setTimeout(() => this.validateIntervals(), 100);
   }
 
   initializeMathFields(): void {
@@ -143,10 +251,20 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     if (!this.isBrowser) return null;
 
     const mathField = this.mathquillService.createMathField(element, {
-      edit: () => this.updateFunctionDisplay(),
+      edit: () => {
+        // Trigger debounced update instead of immediate update
+        this.updateSubject.next();
+
+        // Si el elemento es un campo de inicio o fin, validar los intervalos
+        if (
+          element.classList.contains('pieceStart') ||
+          element.classList.contains('pieceEnd')
+        ) {
+          setTimeout(() => this.validateIntervals(), 100);
+        }
+      },
     });
 
-    // Add focus handling
     element.addEventListener('focus', () => {
       this.activeMathField = mathField;
     });
@@ -158,20 +276,103 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     return mathField;
   }
 
-  insertMath(latex: string): void {
-    if (!this.isBrowser) return;
+  // Debounced update function
 
-    if (this.activeMathField) {
-      this.activeMathField.focus();
-      this.activeMathField.write(latex);
-    } else {
-      alert(
-        'Por favor, selecciona un campo antes de usar el teclado matemático.'
-      );
-    }
+  private updateDisplayDebounced(): void {
+    if (!this.isBrowser) return;
+    this.updateFunctionDisplay(false); // Pass false to avoid recursive updates
+    this.validateIntervals();
   }
 
-  updateFunctionDisplay(): void {
+  insertMath(latex: string): void {
+    if (!this.isBrowser || !this.activeMathField) return;
+
+    // Ejecutar fuera de la detección de cambios de Angular para mejorar el rendimiento
+    this.ngZone.runOutsideAngular(() => {
+      this.activeMathField.focus();
+
+      // Lista de todas las funciones trigonométricas
+      const trigFunctions = [
+        '\\sin',
+        '\\cos',
+        '\\tan',
+        '\\cot',
+        '\\sec',
+        '\\csc',
+        '\\arcsin',
+        '\\arccos',
+        '\\arctan',
+        '\\arccot',
+        '\\arcsec',
+        '\\arccsc',
+        '\\sinh',
+        '\\cosh',
+        '\\tanh',
+        '\\coth',
+        '\\sech',
+        '\\csch',
+        '\\arcsinh',
+        '\\arccosh',
+        '\\arctanh',
+        '\\arccoth',
+        '\\arcsech',
+        '\\arccsch',
+      ];
+
+      // Comprobar si es una función trigonométrica
+      const isTrigFunction = trigFunctions.some((func) => latex.includes(func));
+
+      if (isTrigFunction) {
+        // Extraer el nombre de la función
+        const funcName = latex.match(/\\[a-z]+/)?.[0];
+        if (funcName) {
+          this.activeMathField.cmd(funcName);
+          this.activeMathField.write('\\left( \\right)');
+          this.activeMathField.keystroke('Left');
+        }
+      } else if (latex === '\\left (  \\right )') {
+        // Paréntesis - posicionar cursor dentro
+        this.activeMathField.write('\\left( \\right)');
+        this.activeMathField.keystroke('Left');
+      } else if (latex === '\\frac{ }{ }') {
+        // Fracción - posicionar cursor en el numerador
+        this.activeMathField.cmd('\\frac');
+      } else if (latex === '\\sqrt{ }') {
+        // Raíz cuadrada
+        this.activeMathField.cmd('\\sqrt');
+      } else if (latex === '\\ln{ }') {
+        // Logaritmo natural
+        this.activeMathField.cmd('\\ln');
+        this.activeMathField.write('\\left( \\right)');
+        this.activeMathField.keystroke('Left');
+      } else if (latex === '\\log_{ }{ }') {
+        // Logaritmo en base
+        this.activeMathField.write('\\log_{}{}');
+        this.activeMathField.keystroke('Left Left Left');
+      } else if (latex === '{}^2') {
+        // Cuadrado
+        this.activeMathField.write('{}^2');
+      } else if (latex === '{}^{}') {
+        // Potencia general
+        this.activeMathField.write('{}^{}');
+        this.activeMathField.keystroke('Up');
+      } else {
+        // Otros símbolos o comandos simples
+        this.activeMathField.write(latex);
+      }
+
+      // Permitir un breve tiempo para que MathQuill procese la entrada
+      setTimeout(() => {
+        // Activar la actualización de visualización de forma segura dentro de Angular
+        this.ngZone.run(() => {
+          this.updateSubject.next();
+        });
+      }, 10);
+    });
+  }
+
+  // Modified to accept a parameter to control rendering
+  updateFunctionDisplay(shouldRenderVariableSpans = true): void {
     if (!this.isBrowser) return;
 
     const functionDisplay = document.getElementById('functionDisplay');
@@ -223,8 +424,12 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     functionDisplay.innerHTML = '$$' + latex + '$$';
     this.mathquillService.renderMathJax();
 
-    // Force MathJax update for variable spans
-    this.updateVariableInMathJax();
+    // Only update variable spans when explicitly requested
+    if (shouldRenderVariableSpans) {
+      this.ngZone.runOutsideAngular(() => {
+        setTimeout(() => this.updateVariableInMathJax(), 0);
+      });
+    }
   }
 
   updateVariableInMathJax(): void {
@@ -274,7 +479,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
 
   submitData(): void {
     if (!this.isBrowser) return;
-  
+
     // Validación de tipo de serie
     if (!this.seriesType) {
       Swal.fire({
@@ -285,22 +490,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
       });
       return;
     }
-  
-    // Validación de extensión de medio rango cuando es requerida
-    if (
-      this.seriesType === 'Trigonometric' &&
-      this.isHalfRange &&
-      !this.halfRangeType
-    ) {
-      Swal.fire({
-        title: 'Error',
-        text: 'Por favor, selecciona un tipo de extensión de medio rango',
-        icon: 'error',
-        confirmButtonText: 'Entendido',
-      });
-      return;
-    }
-  
+
     // Verificar si hay piezas definidas
     if (this.pieces.length === 0) {
       Swal.fire({
@@ -311,36 +501,48 @@ export class MathquillComponent implements OnInit, AfterViewInit {
       });
       return;
     }
-  
+
+    // Validar los intervalos contiguos
+    const hasIntervalErrors = this.validateIntervals();
+    if (hasIntervalErrors) {
+      Swal.fire({
+        title: 'Error en los intervalos',
+        html: 'Los intervalos deben ser contiguos. Cada trozo debe empezar donde termina el anterior.',
+        icon: 'error',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
     // Validación de cada pieza de la función (campos no vacíos)
     let hasEmptyFields = false;
     let emptyFieldsMessage = '';
-  
+
     // Validar cada pieza
     for (let i = 0; i < this.pieces.length; i++) {
       const piece = this.pieces[i];
-  
+
       // Revisar si algún campo está vacío
       const funcLatex = piece.funcField?.latex() || '';
       const startLatex = piece.startField?.latex() || '';
       const endLatex = piece.endField?.latex() || '';
-  
+
       if (!funcLatex.trim() || funcLatex === '\\square') {
         hasEmptyFields = true;
         emptyFieldsMessage += `• Función en la pieza ${i + 1}\n`;
       }
-  
+
       if (!startLatex.trim() || startLatex === '\\square') {
         hasEmptyFields = true;
         emptyFieldsMessage += `• Límite inferior en la pieza ${i + 1}\n`;
       }
-  
+
       if (!endLatex.trim() || endLatex === '\\square') {
         hasEmptyFields = true;
         emptyFieldsMessage += `• Límite superior en la pieza ${i + 1}\n`;
       }
     }
-  
+
     // Mostrar error si hay campos vacíos
     if (hasEmptyFields) {
       Swal.fire({
@@ -351,148 +553,207 @@ export class MathquillComponent implements OnInit, AfterViewInit {
       });
       return;
     }
-  
-    // NUEVAS VALIDACIONES PARA INTERVALOS
-    
-    // Para series sin extensión de medio rango (trigonométrica regular o compleja)
-    if (!this.isHalfRange) {
-      // Para funciones de un solo trozo
-      if (this.pieces.length === 1) {
-        const startLatex = this.pieces[0].startField.latex();
-        const endLatex = this.pieces[0].endField.latex();
-        
-        // Intenta determinar si son simétricos
-        // Nota: Esta es una comprobación básica, idealmente necesitaríamos un parser matemático
-        // más sofisticado para evaluar expresiones complejas
-        const isSymmetric = this.checkSymmetry(startLatex, endLatex);
-        
-        if (!isSymmetric) {
-          Swal.fire({
-            title: 'Error en los intervalos',
-            html: `Para series sin extensión de medio rango con un solo trozo, los límites deben ser simétricos (como -3 y 3, o -π y π).<br><br>Actualmente tienes: ${startLatex} y ${endLatex}`,
-            icon: 'error',
-            confirmButtonText: 'Entendido',
-          });
-          return;
-        }
-      }
-      // Para funciones de múltiples trozos
-      else if (this.pieces.length > 1) {
-        const firstStartLatex = this.pieces[0].startField.latex();
-        const lastEndLatex = this.pieces[this.pieces.length - 1].endField.latex();
-        
-        // Verifica simetría entre el primer límite inferior y el último límite superior
-        const isSymmetric = this.checkSymmetry(firstStartLatex, lastEndLatex);
-        
-        if (!isSymmetric) {
-          Swal.fire({
-            title: 'Error en los intervalos',
-            html: `Para series sin extensión de medio rango con múltiples trozos, el primer límite inferior debe ser simétrico al último límite superior.<br><br>Actualmente tienes: ${firstStartLatex} y ${lastEndLatex}`,
-            icon: 'error',
-            confirmButtonText: 'Entendido',
-          });
-          return;
-        }
-      }
-    }
-    // Para series con extensión de medio rango (solo trigonométrica con half range)
-    else {
-      // El primer límite inferior debe ser 0
-      const firstStartLatex = this.pieces[0].startField.latex();
-      
-      if (firstStartLatex !== '0') {
-        Swal.fire({
-          title: 'Error en los intervalos',
-          html: `Para series con extensión de medio rango, el primer límite inferior debe ser 0.<br><br>Actualmente tienes: ${firstStartLatex}`,
-          icon: 'error',
-          confirmButtonText: 'Entendido',
-        });
-        return;
-      }
-      
-      // El límite superior final debe ser mayor que 0
-      const lastEndLatex = this.pieces[this.pieces.length - 1].endField.latex();
-      // Aquí hacemos una comprobación simple, asumiendo que un valor mayor que 0 será 
-      // una expresión explícitamente positiva (no negamos el 0)
-      if (lastEndLatex === '0') {
-        Swal.fire({
-          title: 'Error en los intervalos',
-          html: `Para series con extensión de medio rango, el límite superior debe ser mayor que 0.<br><br>Actualmente tienes: ${lastEndLatex}`,
-          icon: 'error',
-          confirmButtonText: 'Entendido',
-        });
-        return;
-      }
-    }
-  
-    // Si todas las validaciones pasan, recopilar los datos
-    const piecesData = this.pieces.map((piece) => {
-      return {
-        func: piece.funcField.latex(),
-        start: piece.startField.latex(),
-        end: piece.endField.latex(),
-      };
-    });
-  
-    // Crear objeto JSON para enviar
-    const data = {
-      variable: this.selectedVariable,
-      type: this.seriesType,
-      isHalfRange: this.isHalfRange,
-      halfRange: this.isHalfRange ? this.halfRangeType : null,
-      pieces: piecesData,
+
+    // Crear la matriz de función en el formato requerido
+    const funcionMatrix = this.pieces.map((piece) => [
+      piece.funcField.latex(),
+      piece.startField.latex(),
+      piece.endField.latex(),
+    ]);
+
+    // Crear objeto JSON para enviar usando la interfaz
+    const data: FourierRequest = {
+      funcionMatrix,
+      intVar: this.selectedVariable,
     };
-  
-    console.log('Submission data:', JSON.stringify(data, null, 2));
-  
-    // Mostrar mensaje de éxito
+
+    console.log(
+      '%c Datos enviados:',
+      'background: #002b36; color: #2aa198; font-size: 12px; padding: 4px 8px; border-radius: 4px;'
+    );
+    console.log(data);
+
+    // Mostrar indicador de carga (mantenemos esto para UX)
     Swal.fire({
-      title: 'Datos enviados',
-      text: 'La información ha sido enviada correctamente',
-      icon: 'success',
-      confirmButtonText: 'Continuar',
+      title: 'Calculando...',
+      html: 'Espera mientras se calcula la serie de Fourier',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
+    // Llamar al servicio API correspondiente según el tipo de serie seleccionado
+    let apiCall;
+    switch (this.seriesType) {
+      case 'trigonometric':
+        apiCall = this.apiService.calculateTrigonometricSeriesPiecewise(data);
+        break;
+      case 'complex':
+        apiCall = this.apiService.calculateComplexSeriesPiecewise(data);
+        break;
+      case 'halfrange':
+        apiCall = this.apiService.calculateHalfRangeSeries(data);
+        break;
+      default:
+        Swal.fire({
+          title: 'Error',
+          text: 'Tipo de serie no válido',
+          icon: 'error',
+          confirmButtonText: 'Entendido',
+        });
+        return;
+    }
+
+    // Suscribirse a la respuesta de la API
+    apiCall.subscribe({
+      next: (response: FourierResponse) => {
+        // Cerrar el diálogo de carga
+        Swal.close();
+    
+        console.log(
+          '%c Respuesta del servidor:',
+          'background: #073642; color: #859900; font-size: 12px; padding: 4px 8px; border-radius: 4px;'
+        );
+        console.log(response);
+    
+        // Información específica dependiendo del tipo de serie
+        if (this.seriesType === 'trigonometric') {
+          console.log(
+            '%c Serie Trigonométrica:',
+            'background: #002b36; color: #cb4b16; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
+          );
+          console.log('Coeficiente a₀ (cosenos):', response.latex?.a0);
+          console.log('Coeficiente aₙ (cosenos):', response.latex?.an);
+          console.log('Coeficiente bₙ (senos):', response.latex?.bn);
+          console.log('Frecuencia angular (ω₀):', response.latex?.w0);
+          
+          // Agregar información del core
+          if (response.cores?.trigonometric) {
+            console.log(
+              '%c Core Trigonométrico:',
+              'background: #002b36; color: #b58900; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
+            );
+            console.log(response.cores.trigonometric);
+          }
+        } else if (this.seriesType === 'complex') {
+          console.log(
+            '%c Serie Compleja:',
+            'background: #002b36; color: #dc322f; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
+          );
+          console.log('Coeficiente c₀:', response.latex?.c0);
+          console.log('Coeficiente cₙ:', response.latex?.cn);
+          console.log('Frecuencia angular (ω₀):', response.latex?.w0);
+          
+          // Agregar información del core
+          if (response.cores?.complex) {
+            console.log(
+              '%c Core Complejo:',
+              'background: #002b36; color: #b58900; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
+            );
+            console.log(response.cores.complex);
+          }
+        } else if (this.seriesType === 'halfrange') {
+          console.log(
+            '%c Serie de Medio Rango:',
+            'background: #002b36; color: #6c71c4; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
+          );
+          console.log('Coeficiente a₀ (cosenos):', response.latex?.a0);
+          console.log('Coeficiente aₙ (cosenos):', response.latex?.an);
+          console.log('Coeficiente bₙ (senos):', response.latex?.bn);
+          console.log('Frecuencia angular (ω₀):', response.latex?.w0);
+          
+          // Agregar información de los cores de medio rango
+          if (response.cores?.halfRangeCosine) {
+            console.log(
+              '%c Core Medio Rango (Cosenos):',
+              'background: #002b36; color: #b58900; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
+            );
+            console.log(response.cores.halfRangeCosine);
+          }
+          
+          if (response.cores?.halfRangeSine) {
+            console.log(
+              '%c Core Medio Rango (Senos):',
+              'background: #002b36; color: #d33682; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
+            );
+            console.log(response.cores.halfRangeSine);
+          }
+        }
+    
+        // Valores numéricos (si existen)
+        if (response.numeric) {
+          console.log(
+            '%c Valores Numéricos:',
+            'background: #002b36; color: #268bd2; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
+          );
+          console.log(response.numeric);
+        }
+    
+        // Período de la serie (si existe)
+        if (response.period) {
+          console.log(
+            '%c Período de la serie:',
+            'background: #002b36; color: #2aa198; font-size: 14px; padding: 6px 10px; border-radius: 4px;'
+          );
+          console.log(response.period);
+        }
+    
+        // Mostrar notificación simple de éxito (opcional, para UX)
+        Swal.fire({
+          title: 'Cálculo completado',
+          text: 'La serie ha sido calculada exitosamente. Consulta la consola para ver los resultados.',
+          icon: 'success',
+          confirmButtonText: 'Aceptar',
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      },
+      error: (error) => {
+        // Código de manejo de errores existente...
+      }
     });
   }
-  
-  // Método auxiliar para verificar la simetría de dos expresiones LaTeX
-  // Esta es una implementación básica, para expresiones más complejas se necesitaría un parser más sofisticado
-  checkSymmetry(expr1: string, expr2: string): boolean {
-    // Caso simple: números opuestos como -3 y 3
-    if (expr1.startsWith('-') && !expr2.startsWith('-')) {
-      const expr1WithoutMinus = expr1.substring(1);
-      return expr1WithoutMinus === expr2;
+
+  validateIntervals(): boolean {
+    if (!this.isBrowser || this.pieces.length <= 1) return false;
+
+    // Clase para marcar campos inválidos
+    const invalidClass = 'border-red-500';
+
+    // Eliminar las marcas de error anteriores
+    document.querySelectorAll('.pieceStart, .pieceEnd').forEach((element) => {
+      element.classList.remove(invalidClass);
+    });
+
+    let hasError = false;
+
+    // Verificar cada par de intervalos adyacentes
+    for (let i = 1; i < this.pieces.length; i++) {
+      const previousEndField = document.querySelectorAll('.pieceEnd')[
+        i - 1
+      ] as HTMLElement;
+      const currentStartField = document.querySelectorAll('.pieceStart')[
+        i
+      ] as HTMLElement;
+
+      if (!previousEndField || !currentStartField) continue;
+
+      const previousEndLatex = this.pieces[i - 1].endField?.latex() || '';
+      const currentStartLatex = this.pieces[i].startField?.latex() || '';
+
+      // Si ambos campos tienen contenido, comparamos
+      if (previousEndLatex && currentStartLatex) {
+        // Verificar si son exactamente iguales
+        if (previousEndLatex !== currentStartLatex) {
+          // Marcar ambos campos como inválidos
+          previousEndField.classList.add(invalidClass);
+          currentStartField.classList.add(invalidClass);
+          hasError = true;
+        }
+      }
     }
-    
-    // Caso inverso: 3 y -3
-    if (!expr1.startsWith('-') && expr2.startsWith('-')) {
-      const expr2WithoutMinus = expr2.substring(1);
-      return expr1 === expr2WithoutMinus;
-    }
-    
-    // Caso pi: -\pi y \pi
-    if (expr1 === '-\\pi' && expr2 === '\\pi') {
-      return true;
-    }
-    
-    if (expr1 === '\\pi' && expr2 === '-\\pi') {
-      return true;
-    }
-    
-    // Caso fracciones de pi: -\frac{\pi}{2} y \frac{\pi}{2}
-    if (expr1.includes('\\frac{-\\pi}') && expr2.includes('\\frac{\\pi}')) {
-      // Simplificación: verificamos si son iguales tras eliminar el signo negativo
-      const expr1Normalized = expr1.replace('-\\pi', '\\pi');
-      return expr1Normalized === expr2;
-    }
-    
-    if (expr1.includes('\\frac{\\pi}') && expr2.includes('\\frac{-\\pi}')) {
-      const expr2Normalized = expr2.replace('-\\pi', '\\pi');
-      return expr1 === expr2Normalized;
-    }
-    
-    // Si las expresiones son más complejas, esta verificación básica no es suficiente
-    // Aquí podrías agregar más casos específicos o implementar un parser matemático
-    
-    return false;
+
+    return hasError;
   }
 }

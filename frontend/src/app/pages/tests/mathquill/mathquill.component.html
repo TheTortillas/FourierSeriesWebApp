@@ -1,24 +1,71 @@
-<div class="flex justify-center items-center min-h-screen bg-gray-100 font-sans p-4">
+<div
+  class="flex justify-center items-center min-h-screen bg-gray-100 font-sans p-4"
+>
   <div class="max-w-4xl w-full bg-white rounded-lg shadow-md p-8">
-    <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Calculadora de Series de Fourier</h1>
+    <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">
+      Calculadora de Series de Fourier
+    </h1>
 
-    <!-- Math Keyboard -->
-    <div class="flex flex-wrap justify-center mb-6">
-      <button *ngFor="let button of mathButtons" 
-              (click)="insertMath(button.latex)"
-              class="w-[90px] h-[60px] m-1 bg-gray-100 border border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-200 transition-colors">
-        <span [innerHTML]="'$$' + button.display + '$$'"></span>
+        <!-- Math Keyboard Toggle Button -->
+    <div class="flex justify-center mb-2">
+      <button
+        (click)="toggleKeyboard()"
+        class="keyboard-toggle-btn flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        [ngClass]="{ active: keyboardVisible }"
+      >
+        <div class="keyboard-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-keyboard" viewBox="0 0 16 16">
+            <path d="M2 3h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H2zm1 2h1v1H3V6zm2 0h1v1H5V6zm2 0h1v1H7V6zm2 0h1v1h-1V6zm2 0h1v1h-1V6zM3 8h1v1H3V8zm2 0h1v1H5V8zm2 0h1v1H7V8zm2 0h1v1h-1V8zm2 0h1v1h-1V8zM3 10h1v1H3v-1zm2 0h1v1H5v-1zm2 0h4v1H7v-1z"/>
+          </svg>
+        </div>
+        <div class="arrow-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+          </svg>
+        </div>
       </button>
+    </div>
+
+    <!-- Math Keyboard Container with Animation -->
+    <div
+      class="keyboard-container mb-6"
+      [ngClass]="{ visible: keyboardVisible }"
+    >
+      <div class="flex flex-wrap justify-center">
+        <!-- Operadores Básicos -->
+        <button
+          *ngFor="let button of mathButtonsBasic"
+          (click)="insertMath(button.latex)"
+          class="math-keyboard-btn"
+          [title]="button.tooltip"
+        >
+          <span [innerHTML]="'$$' + button.display + '$$'"></span>
+        </button>
+
+        <!-- Funciones Trigonométricas -->
+        <button
+          *ngFor="let button of mathButtonsTrig"
+          (click)="insertMath(button.latex)"
+          class="math-keyboard-btn"
+          [title]="button.tooltip"
+        >
+          <span [innerHTML]="'$$' + button.display + '$$'"></span>
+        </button>
+      </div>
     </div>
 
     <!-- Variable Selection (New) -->
     <div class="mb-6">
-      <label for="variable" class="block font-bold mb-2 text-gray-700">Variable independiente:</label>
-      <select id="variable" 
-              name="variable" 
-              [(ngModel)]="selectedVariable" 
-              (change)="updateFunctionDisplay()"
-              class="w-full p-2 border border-gray-300 rounded-md text-base focus:border-blue-500 focus:ring focus:ring-blue-200 outline-none">
+      <label for="variable" class="block font-bold mb-2 text-gray-700"
+        >Variable de integración:</label
+      >
+      <select
+        id="variable"
+        name="variable"
+        [(ngModel)]="selectedVariable"
+        (change)="updateFunctionDisplay()"
+        class="w-full p-2 border border-gray-300 rounded-md text-base focus:border-blue-500 focus:ring focus:ring-blue-200 outline-none"
+      >
         <option value="x">x (Espacial)</option>
         <option value="t">t (Temporal)</option>
       </select>
@@ -26,73 +73,94 @@
 
     <!-- Piecewise Function Input -->
     <div class="mb-6">
-      <label for="pieces" class="block font-bold mb-2 text-gray-700">Función f({{ selectedVariable }}):</label>
-      <div id="functionDisplay" class="text-lg mb-3 p-2 border border-gray-200 rounded-md min-h-[50px]"></div>
-
-      <div #pieceContainer id="pieceContainer" class="max-h-52 overflow-y-auto border border-gray-300 rounded-md p-3 bg-gray-100">
-        <div class="flex items-center mb-3" *ngFor="let piece of pieces; let i = index">
-          <div class="math-field pieceFunc border border-blue-500 bg-white rounded-md min-h-[40px] min-w-[50px] flex-grow flex items-center justify-center cursor-text"></div>
-          <span class="mx-1 text-lg">$$,$$</span>
-          <div class="math-field pieceStart border border-blue-500 bg-white rounded-md min-h-[40px] min-w-[25px] max-w-[50px] flex items-center justify-center cursor-text"></div>
-          <span class="mx-1 text-lg variable-span">$$< {{ selectedVariable }} <$$</span>
-          <div class="math-field pieceEnd border border-blue-500 bg-white rounded-md min-h-[40px] min-w-[25px] max-w-[50px] flex items-center justify-center cursor-text"></div>
-          <button *ngIf="i === 0" 
-                 (click)="addPiece()"
-                 class="w-8 h-8 ml-2 flex items-center justify-center bg-green-600 text-white rounded-md hover:bg-green-700 hover:scale-110 transition">+</button>
-          <button *ngIf="i > 0" 
-                 (click)="removePiece(i)"
-                 class="w-8 h-8 ml-2 flex items-center justify-center bg-red-600 text-white rounded-md hover:bg-red-700 hover:scale-110 transition">-</button>
+      <label for="pieces" class="block font-bold mb-2 text-gray-700"
+        >Función f({{ selectedVariable }}):</label
+      >
+      <div
+        id="functionDisplay"
+        class="text-lg mb-3 p-2 border border-gray-200 rounded-md"
+      ></div>
+      <div
+        #pieceContainer
+        id="pieceContainer"
+        class="overflow-y-auto border border-gray-300 rounded-md p-3 bg-gray-100"
+      >
+        <div
+          class="flex items-center mb-3"
+          *ngFor="let piece of pieces; let i = index"
+        >
+          <div class="flex-1 flex items-center" style="width: 85%">
+            <div
+              class="math-field pieceFunc border border-blue-500 bg-white rounded-md min-h-[50px] min-w-[50px] flex items-center justify-center cursor-text"
+              style="width: 55%"
+            ></div>
+            <span class="mx-2 text-lg">$$,$$</span>
+            <div
+              class="math-field pieceStart border border-blue-500 bg-white rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text"
+              style="width: 15%"
+            ></div>
+            <span class="mx-1 text-lg variable-span"
+              >$$< {{ selectedVariable }} <$$</span
+            >
+            <div
+              class="math-field pieceEnd border border-blue-500 bg-white rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text"
+              style="width: 15%"
+            ></div>
+          </div>
+          <div
+            class="flex-none flex flex-col items-center justify-center"
+            style="width: 15%"
+          >
+            <button
+              *ngIf="i === 0"
+              (click)="addPiece()"
+              class="font-bold w-8 h-8 mx-auto mb-1 flex items-center justify-center bg-green-600 text-white rounded-md hover:bg-green-700 hover:scale-110 transition"
+            >
+              +
+            </button>
+            <button
+              *ngIf="i > 0"
+              (click)="removePiece(i)"
+              class="font-bold w-8 h-8 mx-auto mb-1 flex items-center justify-center bg-red-600 text-white rounded-md hover:bg-red-700 hover:scale-110 transition"
+            >
+              -
+            </button>
+            <span class="text-xs text-center text-gray-600 w-full font-bold">
+              {{ i === 0 ? "Añadir trozo" : "Quitar trozo" }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Series Type Selection -->
+       <!-- Series Type Selection  -->
     <div class="mb-6">
-      <label for="type" class="block font-bold mb-2 text-gray-700">Elige el tipo de serie:</label>
-      <select id="type" 
-              name="type" 
-              [(ngModel)]="seriesType" 
-              (change)="handleTypeChange()"
-              class="w-full p-2 border border-gray-300 rounded-md text-base focus:border-blue-500 focus:ring focus:ring-blue-200 outline-none">
-        <option value="" disabled selected>Selecciona el tipo de Serie de Fourier</option>
-        <option value="Trigonometric">Trigonométrica</option>
-        <option value="Complex">Compleja</option>
+      <label for="type" class="block font-bold mb-2 text-gray-700"
+        >Elige el tipo de serie:</label
+      >
+      <select
+        id="type"
+        name="type"
+        [(ngModel)]="seriesType"
+        class="w-full p-2 border border-gray-300 rounded-md text-base focus:border-blue-500 focus:ring focus:ring-blue-200 outline-none"
+      >
+        <option value="" disabled selected>
+          Selecciona el tipo de Serie de Fourier
+        </option>
+        <option value="trigonometric">Trigonométrica</option>
+        <option value="complex">Compleja</option>
+        <option value="halfrange">Medio Rango</option>
       </select>
     </div>
-
-    <!-- Half Range Extension Toggle -->
-    <div class="mb-6 hidden" id="toggleContainer">
-      <div class="flex items-center">
-        <input type="checkbox" 
-               id="toggleExtension" 
-               [(ngModel)]="isHalfRange" 
-               (change)="handleToggleChange()"
-               class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mr-2">
-        <label for="toggleExtension" class="font-bold text-gray-700">¿Extensión de Medio Rango?</label>
-      </div>
-    </div>
-
-    <!-- Half Range Extension Options -->
-    <div class="mb-6 hidden" id="halfRangeExtension">
-      <label for="halfRange" class="block font-bold mb-2 text-gray-700">Elige la Extensión de Medio Rango:</label>
-      <select id="halfRange" 
-              name="halfRange" 
-              [(ngModel)]="halfRangeType"
-              class="w-full p-2 border border-gray-300 rounded-md text-base focus:border-blue-500 focus:ring focus:ring-blue-200 outline-none">
-        <option value="" disabled selected>Elige el tipo de extensión</option>
-        <option value="Even">Extensión Par (Serie de Coseno)</option>
-        <option value="Odd">Extensión Impar (Serie de Seno)</option>
-        <option value="Periodic">Extensión Periódica (Serie de Coseno y Seno)</option>
-      </select>
-    </div>
-
+    
     <!-- Submit Button -->
     <div class="text-center mt-8">
-      <button id="submitButton" 
-              (click)="submitData()" 
-              class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-        Enviar
+      <button
+        id="submitButton"
+        (click)="submitData()"
+        class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+      >
+        Calcular Serie de Fourier
       </button>
     </div>
-  </div>
 </div>

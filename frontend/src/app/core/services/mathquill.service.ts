@@ -1,4 +1,4 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
 declare var MathQuill: any;
@@ -10,8 +10,9 @@ declare var MathJax: any;
 export class MathquillService {
   private MQ: any;
   private isBrowser: boolean;
+  private renderPending = false;
 
-  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+  constructor(@Inject(PLATFORM_ID) platformId: Object, private ngZone: NgZone) {
     this.isBrowser = isPlatformBrowser(platformId);
 
     // Wait for document to be ready
@@ -38,6 +39,10 @@ export class MathquillService {
     if (this.MQ) {
       return this.MQ.MathField(element, {
         spaceBehavesLikeTab: true,
+        autoCommands: 'pi theta sqrt sum',
+        // Ampliar la lista de operadores para incluir los hiperbólicos
+        autoOperatorNames:
+          'sin cos tan sinh cosh tanh arcsin arccos arctan arcsinh arccosh arctanh exp ln log',
         handlers: {
           edit: () => {},
           ...config,
@@ -47,9 +52,21 @@ export class MathquillService {
     return null;
   }
 
+  // Optimized version with debouncing
   renderMathJax() {
     if (this.isBrowser && typeof MathJax !== 'undefined' && MathJax.typeset) {
-      MathJax.typeset();
+      // Prevent multiple rapid render calls
+      if (!this.renderPending) {
+        this.renderPending = true;
+
+        // Run outside Angular to avoid unnecessary change detection
+        this.ngZone.runOutsideAngular(() => {
+          requestAnimationFrame(() => {
+            MathJax.typeset();
+            this.renderPending = false;
+          });
+        });
+      }
     }
   }
 }

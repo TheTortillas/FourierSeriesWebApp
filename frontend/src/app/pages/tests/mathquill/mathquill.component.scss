@@ -1,235 +1,140 @@
-/* General styles */
-:host {
-  font-family: 'Arial', sans-serif;
-  background-color: #f4f4f9;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-
-.container {
-  max-width: 800px;
-  width: 100%;
-  background-color: white;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 20px;
-}
-
-/* MathQuill field styles */
 .math-field {
-  border: 2px solid #007bff;
-  background-color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ddd;
-  padding: 5px;
-  min-height: 40px;
-  min-width: 50px;
   font-size: 1.2em;
-  border-radius: 5px;
-  margin-bottom: 10px;
   cursor: text;
   text-align: center;
 }
 
-.math-field.pieceStart,
-.math-field.pieceEnd {
-  min-width: 25px;
-  max-width: 50px;
-}
-
-.math-field:focus {
-  border-color: #ad29b9;
-  box-shadow: 0 0 5px rgba(168, 41, 185, 0.5);
-}
-
-.math-field:hover {
-  border-color: #0056b3;
-  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
-}
-
-/* MathJax text style */
-.mathjax-text {
-  font-size: 1.2em;
-  margin: 0 5px;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-/* Math keyboard styles */
-.math-keyboard {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.math-keyboard button {
-  width: 90px;
-  height: 60px;
-  margin: 5px;
-  font-size: 16px;
-  text-align: center;
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  cursor: pointer;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.math-keyboard button:hover {
-  background-color: #e0e0e0;
-}
-
-/* Form styles */
-.form-group {
-  margin-bottom: 15px;
-  margin-top: 20px;
-}
-
-label {
-  font-weight: bold;
-  margin-bottom: 5px;
-  display: block;
-  color: #34495e;
-}
-
-select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  margin-top: 5px;
-  font-size: 1rem;
-  color: #333;
-}
-
-select:focus {
-  border-color: #2980b9;
-  box-shadow: 0 0 5px rgba(41, 128, 185, 0.5);
+// Estilos para el cursor y hover de campos matemáticos
+.math-field:focus-within {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
   outline: none;
 }
 
-/* Piece container styles */
-.piece {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+.math-field .mq-cursor {
+  border-left: 2px solid black;
+  margin-left: 0.1em;
+  margin-right: -0.1em;
 }
 
-.piece .math-field {
-  width: 30%;
+.math-field:hover {
+  border-color: #3b82f6;
 }
 
-/* Add/remove buttons */
-.piece button {
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 5px;
-}
-
-.piece button:not(.remove-piece) {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  transition: background-color 0.3s ease;
-}
-
-.piece button:not(.remove-piece):hover {
-  background-color: #218838;
-  transform: scale(1.1);
-}
-
-.remove-piece {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  transition: background-color 0.3s ease;
-}
-
-.remove-piece:hover {
-  background-color: #c82333;
-  transform: scale(1.1);
-}
-
-/* Scrollable section */
-.scrollable-section {
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 10px;
-  background-color: #f0f0f0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.scrollable-section::-webkit-scrollbar {
-  width: 8px;
-}
-
-.scrollable-section::-webkit-scrollbar-thumb {
-  background-color: #2980b9;
-  border-radius: 5px;
-}
-
-.scrollable-section::-webkit-scrollbar-thumb:hover {
-  background-color: #1c5d87;
-}
-
-.math-display {
-  font-size: 1.2em;
-  margin-bottom: 10px;
-}
-
-/* Submit button */
-.submit-button {
-  padding: 10px 20px;
-  font-size: 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.submit-button:hover {
-  background-color: #0056b3;
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-  .piece .math-field {
-    width: 28%;
+// Categorías del teclado matemático
+.keyboard-category {
+  margin-bottom: 0.75rem;
+  
+  .category-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+    text-align: left;
+    padding-left: 0.5rem;
   }
-  .math-keyboard button {
-    width: 60px;
-    height: 40px;
-    font-size: 12px;
+}
+
+// Animaciones para mostrar/ocultar teclado
+.keyboard-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-in-out;
+  
+  &.visible {
+    max-height: 500px; // Valor suficientemente grande para contener todo el teclado
   }
+}
+
+// Botón de teclado con animación solo para la flecha
+.keyboard-toggle-btn {
+  position: relative;
+  padding: 8px 16px;
+  
+  // Quitar la rotación general del botón
+  .keyboard-icon {
+    // Mantenemos el icono del teclado estático
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .arrow-icon {
+    // Solo la flecha tiene animación
+    svg {
+      transition: transform 0.2s ease;
+    }
+  }
+  
+  &.active .arrow-icon svg {
+    transform: rotate(180deg);
+  }
+}
+
+// Animaciones para mostrar/ocultar teclado
+.keyboard-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-in-out;
+  
+  &.visible {
+    max-height: 800px; // Valor aumentado para asegurar que quepa todo el teclado
+  }
+}
+
+// Hacemos el botón un poco más grande
+.keyboard-toggle-btn {
+  @apply py-3 px-4;
+  
+  .keyboard-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+// Resto de estilos...
+
+// Estilos mejorados para los botones del teclado
+.math-keyboard-btn {
+  @apply w-[90px] h-[60px] m-1 bg-gray-100 border border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-200 transition-colors;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Mejorar visualización de operadores matemáticos
+.mq-math-mode .mq-operator-name {
+  font-family: "Times New Roman", serif;
+  font-weight: normal;
+}
+
+// Añadir estilo para campos inválidos
+.math-field.border-red-500 {
+  border-color: #ef4444 !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
+  
+  &:focus-within {
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
+  }
+  
+  &:hover {
+    border-color: #ef4444 !important;
+  }
+}
+
+// Animación de parpadeo para enfatizar el error
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.border-red-500 {
+  animation: blink 1s ease-in-out 2;
 }
