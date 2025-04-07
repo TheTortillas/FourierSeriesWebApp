@@ -10,13 +10,16 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MathquillService } from '../../../core/services/mathquill.service';
+import { MathquillService } from '../../../core/services/mathquill/mathquill.service';
+import { MathquillHandlerService } from '../../../core/services/mathquill/mathquill-handler.service';
+import { FourierValidatorService } from '../../../core/services/validation/fourier-validator.service';
+import { MathKeyboardService } from '../../../core/services/mathquill/math-keyboard.service';
 import { Piece } from '../../../interfaces/piece.interface';
-import Swal from 'sweetalert2';
-import { debounceTime, Subject } from 'rxjs';
-import { ApiService } from '../../../core/services/api.service';
+import { ApiService } from '../../../core/services/api/api.service';
 import { FourierRequest } from '../../../interfaces/fourier-request.interface';
 import { FourierResponse } from '../../../interfaces/fourier-response.interface';
+import Swal from 'sweetalert2';
+import { debounceTime, Subject } from 'rxjs';
 
 @Component({
   selector: 'app-mathquill',
@@ -29,129 +32,30 @@ export class MathquillComponent implements OnInit, AfterViewInit {
   @ViewChild('pieceContainer') pieceContainer: ElementRef | undefined;
 
   pieces: Piece[] = [];
-  activeMathField: any = null;
   seriesType: string = '';
-  isHalfRange: boolean = false;
-  halfRangeType: string = '';
-
-  private updateSubject = new Subject<void>();
+  selectedVariable: string = 'x';
   keyboardVisible: boolean = true;
 
-  // Variable selection (new)
-  selectedVariable: string = 'x';
-
-  // Check if we're running in the browser
+  private updateSubject = new Subject<void>();
   private isBrowser: boolean;
 
-  // MathQuill keyboard buttons configuration
-  // Operadores y funciones básicas
-  mathButtonsBasic = [
-    { latex: '\\pi', display: '\\pi', tooltip: 'Constante Pi (π)' },
-    { latex: 'e', display: 'e', tooltip: 'Constante de Euler (e)' },
-    {
-      latex: '\\left (  \\right )',
-      display: '\\left ( \\square \\right )',
-      tooltip: 'Paréntesis',
-    },
-    { latex: '{}^2', display: '\\square^2', tooltip: 'Cuadrado' },
-    { latex: '{}^{}', display: '{\\square}^{\\square}', tooltip: 'Potencia' },
-    { latex: '\\cdot', display: '*', tooltip: 'Multiplicación' },
-    { latex: '+', display: '+', tooltip: 'Suma' },
-    { latex: '-', display: '-', tooltip: 'Resta' },
-    {
-      latex: '\\frac{ }{ }',
-      display: '\\frac{\\square}{\\square}',
-      tooltip: 'Fracción',
-    },
-    {
-      latex: '\\sqrt{ }',
-      display: '\\sqrt{\\square}',
-      tooltip: 'Raíz Cuadrada',
-    },
-    {
-      latex: '\\ln{ }',
-      display: '\\ln{\\square}',
-      tooltip: 'Logaritmo Natural',
-    },
-    {
-      latex: '\\log_{ }{ }',
-      display: '\\log_{\\square}{\\square}',
-      tooltip: 'Logaritmo en Base',
-    },
-  ];
-
-  // Funciones trigonométricas soportadas por Maxima
-  mathButtonsTrig = [
-    {
-      latex: '\\sin\\left( \\right )',
-      display: '\\sin\\left(\\square\\right)',
-      tooltip: 'Seno',
-    },
-    {
-      latex: '\\cos\\left( \\right )',
-      display: '\\cos\\left(\\square\\right)',
-      tooltip: 'Coseno',
-    },
-    {
-      latex: '\\tan\\left( \\right )',
-      display: '\\tan\\left(\\square\\right)',
-      tooltip: 'Tangente',
-    },
-    {
-      latex: '\\cot\\left( \\right )',
-      display: '\\cot\\left(\\square\\right)',
-      tooltip: 'Cotangente',
-    },
-    {
-      latex: '\\sec\\left( \\right )',
-      display: '\\sec\\left(\\square\\right)',
-      tooltip: 'Secante',
-    },
-    {
-      latex: '\\csc\\left( \\right )',
-      display: '\\csc\\left(\\square\\right)',
-      tooltip: 'Cosecante',
-    },
-    {
-      latex: '\\arcsin\\left( \\right )',
-      display: '\\arcsin\\left(\\square\\right)',
-      tooltip: 'Arcoseno (inversa del seno)',
-    },
-    {
-      latex: '\\arccos\\left( \\right )',
-      display: '\\arccos\\left(\\square\\right)',
-      tooltip: 'Arcocoseno (inversa del coseno)',
-    },
-    {
-      latex: '\\arctan\\left( \\right )',
-      display: '\\arctan\\left(\\square\\right)',
-      tooltip: 'Arcotangente (inversa de la tangente)',
-    },
-    {
-      latex: '\\sinh\\left( \\right )',
-      display: '\\sinh\\left(\\square\\right)',
-      tooltip: 'Seno hiperbólico',
-    },
-    {
-      latex: '\\cosh\\left( \\right )',
-      display: '\\cosh\\left(\\square\\right)',
-      tooltip: 'Coseno hiperbólico',
-    },
-    {
-      latex: '\\tanh\\left( \\right )',
-      display: '\\tanh\\left(\\square\\right)',
-      tooltip: 'Tangente hiperbólica',
-    },
-  ];
-
-  // Array completo para compatibilidad con código existente
+  // Obtener botones del teclado del servicio
+  get mathButtonsBasic() {
+    return this.mathKeyboardService.mathButtonsBasic;
+  }
+  get mathButtonsTrig() {
+    return this.mathKeyboardService.mathButtonsTrig;
+  }
   get mathButtons() {
-    return [...this.mathButtonsBasic, ...this.mathButtonsTrig];
+    return this.mathKeyboardService.mathButtons;
   }
 
   constructor(
     private apiService: ApiService,
     private mathquillService: MathquillService,
+    private mathquillHandler: MathquillHandlerService,
+    private validator: FourierValidatorService,
+    private mathKeyboardService: MathKeyboardService,
     private ngZone: NgZone,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
@@ -164,14 +68,12 @@ export class MathquillComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // Add the first piece when component initializes
     if (this.isBrowser) {
       this.addPiece();
     }
   }
 
   ngAfterViewInit(): void {
-    // Render MathJax after view initialization
     if (this.isBrowser) {
       setTimeout(() => {
         this.mathquillService.renderMathJax();
@@ -182,7 +84,6 @@ export class MathquillComponent implements OnInit, AfterViewInit {
   toggleKeyboard(): void {
     this.keyboardVisible = !this.keyboardVisible;
 
-    // Dar tiempo para que se complete la animación y luego renderizar MathJax
     if (this.keyboardVisible) {
       setTimeout(() => {
         this.mathquillService.renderMathJax();
@@ -190,7 +91,6 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Agregar este método a la clase MathquillComponent
   setupTabNavigation(): void {
     if (!this.isBrowser) return;
 
@@ -206,7 +106,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
             if (e.key === 'Tab') {
               e.preventDefault(); // Prevenir el comportamiento por defecto del Tab
 
-              // Determinar el índice del siguiente campo basado en si Shift está presionado
+              // Determinar el índice del siguiente campo
               const nextIndex = e.shiftKey ? index - 1 : index + 1;
 
               // Asegurarse de que el índice está dentro de los límites
@@ -222,19 +122,19 @@ export class MathquillComponent implements OnInit, AfterViewInit {
                   let field = null;
 
                   switch (fieldType) {
-                    case 0: // Campo de función
+                    case 0:
                       field = this.pieces[pieceIndex].funcField;
                       break;
-                    case 1: // Campo de inicio
+                    case 1:
                       field = this.pieces[pieceIndex].startField;
                       break;
-                    case 2: // Campo de fin
+                    case 2:
                       field = this.pieces[pieceIndex].endField;
                       break;
                   }
 
                   if (field) {
-                    this.activeMathField = field;
+                    this.mathquillHandler.setActiveMathField(field);
                     field.focus();
                   }
                 }
@@ -249,7 +149,6 @@ export class MathquillComponent implements OnInit, AfterViewInit {
   addPiece(): void {
     if (!this.isBrowser) return;
 
-    // Create empty fields for a new piece
     setTimeout(() => {
       this.pieces.push({
         funcField: null,
@@ -257,10 +156,9 @@ export class MathquillComponent implements OnInit, AfterViewInit {
         endField: null,
       });
 
-      // Initialize MathQuill fields after DOM updates
       setTimeout(() => {
         this.initializeMathFields();
-        this.validateIntervals();
+        this.validator.validateIntervals(this.pieces);
       }, 0);
     });
   }
@@ -271,7 +169,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     this.pieces.splice(index, 1);
     this.updateFunctionDisplay();
     setTimeout(() => {
-      this.validateIntervals();
+      this.validator.validateIntervals(this.pieces);
       this.setupTabNavigation();
     }, 100);
   }
@@ -310,126 +208,42 @@ export class MathquillComponent implements OnInit, AfterViewInit {
   createMathField(element: HTMLElement): any {
     if (!this.isBrowser) return null;
 
-    const mathField = this.mathquillService.createMathField(element, {
+    return this.mathquillHandler.createMathField(element, {
       edit: () => {
-        // Trigger debounced update instead of immediate update
+        // Trigger debounced update
         this.updateSubject.next();
 
-        // Si el elemento es un campo de inicio o fin, validar los intervalos
+        // Validar intervalos si es necesario
         if (
           element.classList.contains('pieceStart') ||
           element.classList.contains('pieceEnd')
         ) {
-          setTimeout(() => this.validateIntervals(), 100);
+          setTimeout(() => this.validator.validateIntervals(this.pieces), 100);
         }
       },
     });
-
-    element.addEventListener('focus', () => {
-      this.activeMathField = mathField;
-    });
-
-    element.addEventListener('mousedown', () => {
-      this.activeMathField = mathField;
-    });
-
-    return mathField;
   }
 
   private updateDisplayDebounced(): void {
     if (!this.isBrowser) return;
-    this.updateFunctionDisplay(false); // Pass false to avoid recursive updates
-    this.validateIntervals();
+    this.updateFunctionDisplay(false);
+    this.validator.validateIntervals(this.pieces);
   }
 
   insertMath(latex: string): void {
-    if (!this.isBrowser || !this.activeMathField) return;
+    if (!this.isBrowser) return;
 
-    // Ejecutar fuera de la detección de cambios de Angular para mejorar el rendimiento
-    this.ngZone.runOutsideAngular(() => {
-      this.activeMathField.focus();
+    this.mathquillHandler.insertMath(latex);
 
-      // Lista de todas las funciones trigonométricas
-      const trigFunctions = [
-        '\\sin',
-        '\\cos',
-        '\\tan',
-        '\\cot',
-        '\\sec',
-        '\\csc',
-        '\\arcsin',
-        '\\arccos',
-        '\\arctan',
-        '\\arccot',
-        '\\arcsec',
-        '\\arccsc',
-        '\\sinh',
-        '\\cosh',
-        '\\tanh',
-        '\\coth',
-        '\\sech',
-        '\\csch',
-        '\\arcsinh',
-        '\\arccosh',
-        '\\arctanh',
-        '\\arccoth',
-        '\\arcsech',
-        '\\arccsch',
-      ];
-
-      // Comprobar si es una función trigonométrica
-      const isTrigFunction = trigFunctions.some((func) => latex.includes(func));
-
-      if (isTrigFunction) {
-        // Extraer el nombre de la función
-        const funcName = latex.match(/\\[a-z]+/)?.[0];
-        if (funcName) {
-          this.activeMathField.cmd(funcName);
-          this.activeMathField.write('\\left( \\right)');
-          this.activeMathField.keystroke('Left');
-        }
-      } else if (latex === '\\left (  \\right )') {
-        // Paréntesis - posicionar cursor dentro
-        this.activeMathField.write('\\left( \\right)');
-        this.activeMathField.keystroke('Left');
-      } else if (latex === '\\frac{ }{ }') {
-        // Fracción - posicionar cursor en el numerador
-        this.activeMathField.cmd('\\frac');
-      } else if (latex === '\\sqrt{ }') {
-        // Raíz cuadrada
-        this.activeMathField.cmd('\\sqrt');
-      } else if (latex === '\\ln{ }') {
-        // Logaritmo natural
-        this.activeMathField.cmd('\\ln');
-        this.activeMathField.write('\\left( \\right)');
-        this.activeMathField.keystroke('Left');
-      } else if (latex === '\\log_{ }{ }') {
-        // Logaritmo en base
-        this.activeMathField.write('\\log_{}{}');
-        this.activeMathField.keystroke('Left Left Left');
-      } else if (latex === '{}^2') {
-        // Cuadrado
-        this.activeMathField.write('{}^2');
-      } else if (latex === '{}^{}') {
-        // Potencia general
-        this.activeMathField.write('{}^{}');
-        this.activeMathField.keystroke('Up');
-      } else {
-        // Otros símbolos o comandos simples
-        this.activeMathField.write(latex);
-      }
-
-      // Permitir un breve tiempo para que MathQuill procese la entrada
-      setTimeout(() => {
-        // Activar la actualización de visualización de forma segura dentro de Angular
-        this.ngZone.run(() => {
-          this.updateSubject.next();
-        });
-      }, 10);
-    });
+    // Permitir un breve tiempo para que MathQuill procese la entrada
+    setTimeout(() => {
+      // Activar la actualización de visualización dentro de Angular
+      this.ngZone.run(() => {
+        this.updateSubject.next();
+      });
+    }, 10);
   }
 
-  // Modified to accept a parameter to control rendering
   updateFunctionDisplay(shouldRenderVariableSpans = true): void {
     if (!this.isBrowser) return;
 
@@ -503,151 +317,20 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     this.mathquillService.renderMathJax();
   }
 
-  handleTypeChange(): void {
-    if (!this.isBrowser) return;
-
-    const toggleContainer = document.getElementById('toggleContainer');
-    const halfRangeExtension = document.getElementById('halfRangeExtension');
-
-    this.isHalfRange = false;
-    this.halfRangeType = '';
-
-    if (halfRangeExtension) {
-      halfRangeExtension.classList.add('hidden');
-    }
-
-    if (this.seriesType === 'Trigonometric' && toggleContainer) {
-      toggleContainer.classList.remove('hidden');
-    } else if (toggleContainer) {
-      toggleContainer.classList.add('hidden');
-    }
-  }
-
-  handleToggleChange(): void {
-    if (!this.isBrowser) return;
-
-    const halfRangeExtension = document.getElementById('halfRangeExtension');
-
-    if (this.isHalfRange && halfRangeExtension) {
-      halfRangeExtension.classList.remove('hidden');
-    } else if (halfRangeExtension) {
-      halfRangeExtension.classList.add('hidden');
-    }
-  }
-
-  validateIntervals(): boolean {
-    if (!this.isBrowser || this.pieces.length <= 1) return false;
-
-    // Clase para marcar campos inválidos
-    const invalidClass = 'border-red-500';
-
-    // Eliminar las marcas de error anteriores
-    document.querySelectorAll('.pieceStart, .pieceEnd').forEach((element) => {
-      element.classList.remove(invalidClass);
-    });
-
-    let hasError = false;
-
-    // Verificar cada par de intervalos adyacentes
-    for (let i = 1; i < this.pieces.length; i++) {
-      const previousEndField = document.querySelectorAll('.pieceEnd')[
-        i - 1
-      ] as HTMLElement;
-      const currentStartField = document.querySelectorAll('.pieceStart')[
-        i
-      ] as HTMLElement;
-
-      if (!previousEndField || !currentStartField) continue;
-
-      const previousEndLatex = this.pieces[i - 1].endField?.latex() || '';
-      const currentStartLatex = this.pieces[i].startField?.latex() || '';
-
-      // Si ambos campos tienen contenido, comparamos
-      if (previousEndLatex && currentStartLatex) {
-        // Verificar si son exactamente iguales
-        if (previousEndLatex !== currentStartLatex) {
-          // Marcar ambos campos como inválidos
-          previousEndField.classList.add(invalidClass);
-          currentStartField.classList.add(invalidClass);
-          hasError = true;
-        }
-      }
-    }
-    return hasError;
-  }
-
   submitData(): void {
     if (!this.isBrowser) return;
 
-    // Validación de tipo de serie
-    if (!this.seriesType) {
+    // Validación del formulario
+    const validation = this.validator.validateForm(
+      this.seriesType,
+      this.pieces
+    );
+    if (!validation.isValid) {
       Swal.fire({
-        title: 'Error',
-        text: 'Por favor, selecciona un tipo de serie de Fourier',
-        icon: 'error',
-        confirmButtonText: 'Entendido',
-      });
-      return;
-    }
-
-    // Verificar si hay piezas definidas
-    if (this.pieces.length === 0) {
-      Swal.fire({
-        title: 'Error',
-        text: 'Debes definir al menos una parte de la función',
-        icon: 'error',
-        confirmButtonText: 'Entendido',
-      });
-      return;
-    }
-
-    // Validar los intervalos contiguos
-    const hasIntervalErrors = this.validateIntervals();
-    if (hasIntervalErrors) {
-      Swal.fire({
-        title: 'Error en los intervalos',
-        html: 'Los intervalos deben ser contiguos. Cada trozo debe empezar donde termina el anterior.',
-        icon: 'error',
-        confirmButtonText: 'Entendido',
-      });
-      return;
-    }
-
-    // Validación de cada pieza de la función (campos no vacíos)
-    let hasEmptyFields = false;
-    let emptyFieldsMessage = '';
-
-    // Validar cada pieza
-    for (let i = 0; i < this.pieces.length; i++) {
-      const piece = this.pieces[i];
-
-      // Revisar si algún campo está vacío
-      const funcLatex = piece.funcField?.latex() || '';
-      const startLatex = piece.startField?.latex() || '';
-      const endLatex = piece.endField?.latex() || '';
-
-      if (!funcLatex.trim() || funcLatex === '\\square') {
-        hasEmptyFields = true;
-        emptyFieldsMessage += `• Función en la pieza ${i + 1}\n`;
-      }
-
-      if (!startLatex.trim() || startLatex === '\\square') {
-        hasEmptyFields = true;
-        emptyFieldsMessage += `• Límite inferior en la pieza ${i + 1}\n`;
-      }
-
-      if (!endLatex.trim() || endLatex === '\\square') {
-        hasEmptyFields = true;
-        emptyFieldsMessage += `• Límite superior en la pieza ${i + 1}\n`;
-      }
-    }
-
-    // Mostrar error si hay campos vacíos
-    if (hasEmptyFields) {
-      Swal.fire({
-        title: 'Campos vacíos',
-        html: `Por favor, completa los siguientes campos:<pre>${emptyFieldsMessage}</pre>`,
-        icon: 'warning',
+        title: validation.error.title,
+        text: validation.error.text,
+        html: validation.error.html,
+        icon: validation.error.icon,
         confirmButtonText: 'Entendido',
       });
       return;
@@ -660,7 +343,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
       piece.endField.latex(),
     ]);
 
-    // Crear objeto JSON para enviar usando la interfaz
+    // Crear objeto JSON para enviar
     const data: FourierRequest = {
       funcionMatrix,
       intVar: this.selectedVariable,
@@ -672,7 +355,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     );
     console.log(data);
 
-    // Mostrar indicador de carga (mantenemos esto para UX)
+    // Mostrar indicador de carga
     Swal.fire({
       title: 'Calculando...',
       html: 'Espera mientras se calcula la serie de Fourier',
@@ -717,7 +400,6 @@ export class MathquillComponent implements OnInit, AfterViewInit {
         });
       },
       error: (error) => {
-        // Mostrar mensaje de error
         Swal.fire({
           title: 'Error',
           text:
