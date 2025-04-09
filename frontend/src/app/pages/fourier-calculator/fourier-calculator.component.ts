@@ -10,26 +10,27 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MathquillService } from '../../../core/services/mathquill/mathquill.service';
-import { MathquillHandlerService } from '../../../core/services/mathquill/mathquill-handler.service';
-import { FourierValidatorService } from '../../../core/services/validation/fourier-validator.service';
-import { MathKeyboardService } from '../../../core/services/mathquill/math-keyboard.service';
-import { Piece } from '../../../interfaces/piece.interface';
-import { ApiService } from '../../../core/services/api/api.service';
-import { FourierRequest } from '../../../interfaces/fourier-request.interface';
-import { FourierResponse } from '../../../interfaces/fourier-response.interface';
-import { LatexToMaximaService } from '../../../core/services/conversion/latex-to-maxima.service';
+import { MathquillService } from '../../core/services/mathquill/mathquill.service';
+import { MathquillHandlerService } from '../../core/services/mathquill/mathquill-handler.service';
+import { FourierValidatorService } from '../../core/services/validation/fourier-validator.service';
+import { MathKeyboardService } from '../../core/services/mathquill/math-keyboard.service';
+import { Piece } from '../../interfaces/piece.interface';
+import { ApiService } from '../../core/services/api/api.service';
+import { FourierRequest } from '../../interfaces/fourier-request.interface';
+import { FourierResponse } from '../../interfaces/fourier-response.interface';
+import { LatexToMaximaService } from '../../core/services/conversion/latex-to-maxima.service';
 import Swal from 'sweetalert2';
 import { debounceTime, Subject } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-mathquill',
+  selector: 'app-fourier-calculator',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './mathquill.component.html',
-  styleUrls: ['./mathquill.component.scss'],
+  templateUrl: './fourier-calculator.component.html',
+  styleUrl: './fourier-calculator.component.scss',
 })
-export class MathquillComponent implements OnInit, AfterViewInit {
+export class FourierCalculatorComponent implements OnInit, AfterViewInit {
   @ViewChild('pieceContainer') pieceContainer: ElementRef | undefined;
 
   pieces: Piece[] = [];
@@ -59,6 +60,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     private mathKeyboardService: MathKeyboardService,
     private latexToMaximaService: LatexToMaximaService,
     private ngZone: NgZone,
+    private router: Router,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -322,7 +324,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
   submitData(): void {
     if (!this.isBrowser) return;
 
-    // Validación del formulario
+    // Validación del formulario (mantener la validación existente)
     const validation = this.validator.validateForm(
       this.seriesType,
       this.pieces
@@ -338,8 +340,23 @@ export class MathquillComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // Crear la matriz de función en el formato requerido y CONVERTIR A MAXIMA
+    // Crear la matriz de función en el formato requerido y convertir a Maxima
     const funcionMatrix = this.pieces.map((piece) => [
+      this.latexToMaximaService.convertToMaxima(piece.funcField.latex()),
+      this.latexToMaximaService.convertToMaxima(piece.startField.latex()),
+      this.latexToMaximaService.convertToMaxima(piece.endField.latex()),
+    ]);
+
+    // Guardar también las expresiones LaTeX originales para visualización
+    const latexMatrix = this.pieces.map((piece) => [
+      piece.funcField.latex(),
+      piece.startField.latex(),
+      piece.endField.latex(),
+    ]);
+
+    // Guardar las expresiones originales en formato MAXIMA para la visualización
+    // Es importante enviar las expresiones originales de Maxima para que puedan convertirse a JS
+    const maximaMatrix = this.pieces.map((piece) => [
       this.latexToMaximaService.convertToMaxima(piece.funcField.latex()),
       this.latexToMaximaService.convertToMaxima(piece.startField.latex()),
       this.latexToMaximaService.convertToMaxima(piece.endField.latex()),
@@ -350,26 +367,6 @@ export class MathquillComponent implements OnInit, AfterViewInit {
       funcionMatrix,
       intVar: this.selectedVariable,
     };
-
-    // Imprimir datos convertidos para depuración
-    console.log(
-      '%c Datos enviados (convertidos a Maxima):',
-      'background: #002b36; color: #2aa198; font-size: 12px; padding: 4px 8px; border-radius: 4px;'
-    );
-    console.log(data);
-
-    // Mostrar también las expresiones originales LaTeX para comparación
-    console.log(
-      '%c Expresiones LaTeX originales:',
-      'background: #073642; color: #cb4b16; font-size: 12px; padding: 4px 8px; border-radius: 4px;'
-    );
-    console.log(
-      this.pieces.map((piece) => [
-        piece.funcField.latex(),
-        piece.startField.latex(),
-        piece.endField.latex(),
-      ])
-    );
 
     // Mostrar indicador de carga
     Swal.fire({
@@ -406,13 +403,18 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     // Suscribirse a la respuesta de la API
     apiCall.subscribe({
       next: (response: FourierResponse) => {
-        console.log(response);
-        Swal.fire({
-          title: 'Cálculo completado',
-          text: 'La serie ha sido calculada exitosamente. Consulta la consola para ver los resultados.',
-          icon: 'success',
-          confirmButtonText: 'Aceptar',
-          timerProgressBar: true,
+        Swal.close(); // Cerrar el diálogo de carga
+        console.log('Respuesta de la API:', response);
+        // Navegar a la página de visualización con los datos
+        this.router.navigate(['/fourier-series-plot'], {
+          state: {
+            response,
+            seriesType: this.seriesType,
+            intVar: this.selectedVariable,
+            originalLatex: latexMatrix,
+            maximaMatrix: maximaMatrix, // Añadimos las expresiones Maxima originales
+            originalFunction: this.getFunctionLatex(),
+          },
         });
       },
       error: (error) => {
@@ -426,5 +428,49 @@ export class MathquillComponent implements OnInit, AfterViewInit {
         });
       },
     });
+  }
+
+  // Método auxiliar para obtener la representación LaTeX completa de la función
+  getFunctionLatex(): string {
+    let latex = '';
+
+    if (this.pieces.length === 1) {
+      // Función de una sola pieza
+      const funcLatex = this.pieces[0].funcField?.latex() || '\\square';
+      const startLatex = this.pieces[0].startField?.latex() || '\\square';
+      const endLatex = this.pieces[0].endField?.latex() || '\\square';
+
+      latex =
+        funcLatex +
+        ', \\quad ' +
+        startLatex +
+        ' < ' +
+        this.selectedVariable +
+        ' < ' +
+        endLatex;
+    } else if (this.pieces.length > 1) {
+      // Función a trozos
+      latex = '\\begin{cases}';
+      for (let i = 0; i < this.pieces.length; i++) {
+        const funcLatex = this.pieces[i].funcField?.latex() || '\\square';
+        const startLatex = this.pieces[i].startField?.latex() || '\\square';
+        const endLatex = this.pieces[i].endField?.latex() || '\\square';
+
+        latex +=
+          funcLatex +
+          ' & , \\quad ' +
+          startLatex +
+          ' < ' +
+          this.selectedVariable +
+          ' < ' +
+          endLatex;
+        if (i < this.pieces.length - 1) {
+          latex += ' \\\\ '; // Nueva línea en LaTeX
+        }
+      }
+      latex += '\\end{cases}';
+    }
+
+    return latex;
   }
 }

@@ -1,26 +1,21 @@
 export interface FourierResponse {
+  simplified?: {
+    a0?: string;
+    an?: string;
+    bn?: string;
+    T?: string;
+    w0?: string;
+    series_cosine_core?: string;
+    series_sine_core?: string;
+  };
   latex?: {
     a0?: string;
     an?: string;
     bn?: string;
-    c0?: string;
-    cn?: string;
+    T?: string;
     w0?: string;
+    cosineCore?: string;
+    sineCore?: string;
   };
-  numeric?: {
-    a0?: number;
-    a?: number[];
-    b?: number[];
-    c0?: number;
-    c?: number[];
-    w0?: number;
-  };
-  cores?: {
-    trigonometric?: string;
-    complex?: string;
-    halfRangeCosine?: string;
-    halfRangeSine?: string;
-  };
-  period?: number;
   error?: string;
 }

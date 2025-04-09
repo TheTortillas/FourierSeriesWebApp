@@ -1,1 +1,246 @@
-<p>fourier-series-plot works!</p>
+<!-- fourier-series-plot.component.html -->
+<div class="relative w-screen h-screen overflow-hidden">
+  <!-- Side Navigation -->
+  <div
+    class="fixed top-0 h-screen bg-gray-900/95 text-gray-100 shadow-lg z-50 transition-all duration-300 overflow-y-auto backdrop-blur-sm"
+    [ngClass]="
+      sidenavOpen ? 'left-0 w-full md:w-1/3' : '-left-full md:-left-1/3'
+    "
+  >
+    <div class="flex justify-between items-center p-4 border-b border-gray-700">
+      <h2 class="text-xl font-medium">Resultados de la Serie de Fourier</h2>
+      <button
+        class="bg-transparent border-none text-gray-100 text-2xl w-8 h-8 flex items-center justify-center hover:text-green-300 focus:outline-none"
+        (click)="toggleSidenav()"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="p-5 overflow-y-auto max-h-full">
+      <!-- Tipo de serie y función original -->
+      <div class="mb-6">
+        <h3 class="text-base mb-3 text-green-300">Función Original</h3>
+        <div class="bg-white/10 border border-gray-700 text-white p-3 rounded">
+          <div
+            class="latex-container"
+            [innerHTML]="'$$f(' + intVar + ') = ' + originalFunction + '$$'"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Opciones de visualización -->
+      <div class="mb-6">
+        <h3 class="text-base mb-3 text-green-300">Visualización</h3>
+
+        <div class="flex items-center justify-between mb-3">
+          <label class="text-sm">Mostrar función original:</label>
+          <div class="relative inline-block w-12 align-middle select-none">
+            <input
+              type="checkbox"
+              [(ngModel)]="showOriginalFunction"
+              (change)="redrawCanvas()"
+              id="toggleOriginal"
+              class="toggle-checkbox"
+            />
+            <label for="toggleOriginal" class="toggle-label"></label>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-3">
+          <label class="text-sm">Mostrar aproximación:</label>
+          <div class="relative inline-block w-12 align-middle select-none">
+            <input
+              type="checkbox"
+              [(ngModel)]="showSeriesApproximation"
+              (change)="redrawCanvas()"
+              id="toggleSeries"
+              class="toggle-checkbox"
+            />
+            <label for="toggleSeries" class="toggle-label"></label>
+          </div>
+        </div>
+
+        <!-- En el control deslizante del número de términos -->
+        <div class="mb-3">
+          <label class="block text-sm mb-1">Número de términos:</label>
+          <input
+            type="range"
+            min="1"
+            max="50"
+            [(ngModel)]="termCount"
+            (input)="updateTermCount()"
+            class="w-full"
+          />
+          <div class="text-center text-sm mt-1">{{ termCount }}</div>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+          <label class="text-sm">Color función original:</label>
+          <input
+            type="color"
+            [(ngModel)]="functionColor"
+            (change)="initializeCanvas()"
+            class="w-10 h-6 bg-transparent border-none cursor-pointer"
+          />
+        </div>
+
+        <div class="flex items-center justify-between mb-3">
+          <label class="text-sm">Color aproximación:</label>
+          <input
+            type="color"
+            [(ngModel)]="seriesColor"
+            (change)="initializeCanvas()"
+            class="w-10 h-6 bg-transparent border-none cursor-pointer"
+          />
+        </div>
+
+        <!-- Después de los controles de color de la función original -->
+        <div class="flex items-center justify-between mb-3">
+          <label class="text-sm">Grosor función original:</label>
+          <div class="relative inline-block w-24 align-middle select-none">
+            <input
+              type="range"
+              min="1"
+              max="5"
+              [(ngModel)]="functionLineWidth"
+              (input)="redrawCanvas()"
+              class="w-full"
+            />
+            <div class="text-xs text-center">{{ functionLineWidth }}px</div>
+          </div>
+        </div>
+
+        <!-- Después de los controles de color de la aproximación -->
+        <div class="flex items-center justify-between mb-3">
+          <label class="text-sm">Grosor aproximación:</label>
+          <div class="relative inline-block w-24 align-middle select-none">
+            <input
+              type="range"
+              min="1"
+              max="5"
+              [(ngModel)]="seriesLineWidth"
+              (input)="redrawCanvas()"
+              class="w-full"
+            />
+            <div class="text-xs text-center">{{ seriesLineWidth }}px</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados según tipo de serie -->
+
+      <div class="mb-6">
+        <h3 class="text-base mb-3 text-green-300">
+          Coeficientes de la Serie Trigonométrica a Trozos
+        </h3>
+
+        <div class="mb-4" *ngIf="latexRendered.a0">
+          <p class="text-sm font-medium mb-1 coefficient-title">
+            Coeficiente a<sub>0</sub>:
+          </p>
+          <div
+            class="bg-white/10 border border-gray-700 text-white p-2 rounded overflow-x-auto"
+          >
+            <div class="latex-container">
+              <div [innerHTML]="latexRendered.a0" class="math-formula"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4" *ngIf="latexRendered.an">
+          <p class="text-sm font-medium mb-1 coefficient-title">
+            Coeficiente a<sub>n</sub>:
+          </p>
+          <div
+            class="bg-white/10 border border-gray-700 text-white p-2 rounded overflow-x-auto"
+          >
+            <div class="latex-container">
+              <div [innerHTML]="latexRendered.an" class="math-formula"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4" *ngIf="latexRendered.bn">
+          <p class="text-sm font-medium mb-1 coefficient-title">
+            Coeficiente b<sub>n</sub>:
+          </p>
+          <div
+            class="bg-white/10 border border-gray-700 text-white p-2 rounded overflow-x-auto"
+          >
+            <div class="latex-container">
+              <div [innerHTML]="latexRendered.bn" class="math-formula"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Frecuencia angular -->
+        <div class="mb-4" *ngIf="latexRendered.w0">
+          <p class="text-sm font-medium mb-1 coefficient-title">
+            Frecuencia angular (ω<sub>0</sub>):
+          </p>
+          <div
+            class="bg-white/10 border border-gray-700 text-white p-2 rounded overflow-x-auto"
+          >
+            <div class="latex-container">
+              <div [innerHTML]="latexRendered.w0" class="math-formula"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expresión completa de la serie -->
+        <div class="mb-4" *ngIf="fullLatexFormula">
+          <p class="text-sm font-medium mb-1 coefficient-title">
+            Serie completa:
+          </p>
+          <div
+            class="bg-white/10 border border-gray-700 text-white p-2 rounded overflow-x-auto"
+          >
+            <div class="latex-container">
+              <div [innerHTML]="fullLatexFormula" class="math-formula"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button
+          (click)="goBack()"
+          class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors flex-1"
+        >
+          Volver a calculadora
+        </button>
+
+        <button
+          (click)="exportResults()"
+          class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition-colors flex-1"
+        >
+          Exportar resultados
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botón para abrir el sidenav -->
+  <button
+    class="fixed top-5 left-5 w-10 h-10 rounded-full bg-teal-600/80 text-gray-900 border-none flex items-center justify-center cursor-pointer z-40 shadow-md hover:bg-teal-500 focus:outline-none"
+    (click)="toggleSidenav()"
+  >
+    <span class="text-lg">☰</span>
+  </button>
+
+  <!-- Canvas Container -->
+  <div class="w-full h-full bg-gray-900">
+    <app-cartesian-canvas
+      #cartesianCanvas
+      [bgColor]="'#222'"
+      [axisColor]="'#90DCB5'"
+      [gridColor]="'#6BBCAC'"
+      [fontColor]="'#EBEBEB'"
+      [initialZoom]="75"
+      (onViewChanged)="redrawFunctions()"
+      (onZoom)="redrawFunctions()"
+    >
+    </app-cartesian-canvas>
+  </div>
+</div>

@@ -18,6 +18,7 @@ import { PlotConfig } from '../../../interfaces/plot-config.interface';
 interface FunctionPlot {
   fn: (x: number) => number;
   color: string;
+  lineWidth?: number;
 }
 
 interface IntervalPlot {
@@ -25,6 +26,7 @@ interface IntervalPlot {
   color: string;
   a: number;
   b: number;
+  lineWidth?: number;
 }
 
 interface DiscretePlot {
@@ -32,12 +34,14 @@ interface DiscretePlot {
   startY: number;
   n: number;
   color: string;
+  lineWidth?: number;
 }
 
 interface SeriesPlot {
   seriesTerm: (n: number, x: number) => number;
   terms: number;
   color: string;
+  lineWidth?: number;
 }
 
 @Component({
@@ -126,15 +130,15 @@ export class CartesianCanvasComponent implements AfterViewInit {
   /**
    * Dibuja una función en todo el dominio visible
    */
-  public drawFunction(fn: (x: number) => number, color = '#FF0000'): void {
+  public drawFunction(fn: (x: number) => number, color = '#FF0000', lineWidth = 2): void {
     if (!this.isBrowser) return;
-
+  
     // Guardar la función en el historial
-    this.functionPlots.push({ fn, color });
-
+    this.functionPlots.push({ fn, color, lineWidth });
+  
     // Dibujar la función
     const config: PlotConfig = this.getPlotConfig();
-    this.plottingService.drawFunction(config, fn, color);
+    this.plottingService.drawFunction(config, fn, color, lineWidth);
   }
 
   /**
@@ -144,16 +148,17 @@ export class CartesianCanvasComponent implements AfterViewInit {
     fn: (x: number) => number,
     color: string,
     a: number,
-    b: number
+    b: number,
+    lineWidth = 2
   ): void {
     if (!this.isBrowser) return;
-
+  
     // Guardar la función en el historial
-    this.intervalPlots.push({ fn, color, a, b });
-
+    this.intervalPlots.push({ fn, color, a, b, lineWidth });
+  
     // Dibujar la función en el intervalo
     const config: PlotConfig = this.getPlotConfig();
-    this.plottingService.drawFunctionFromAToB(config, fn, color, a, b);
+    this.plottingService.drawFunctionFromAToB(config, fn, color, a, b, lineWidth);
   }
 
   /**
@@ -163,16 +168,17 @@ export class CartesianCanvasComponent implements AfterViewInit {
     startX: number,
     startY: number,
     n: number,
-    color: string
+    color: string,
+    lineWidth = 2
   ): void {
     if (!this.isBrowser) return;
-
+  
     // Guardar el punto discreto en el historial
-    this.discretePlots.push({ startX, startY, n, color });
-
+    this.discretePlots.push({ startX, startY, n, color, lineWidth });
+  
     // Dibujar el punto discreto
     const config: PlotConfig = this.getPlotConfig();
-    this.plottingService.drawDiscreteLine(config, startX, startY, n, color);
+    this.plottingService.drawDiscreteLine(config, startX, startY, n, color, lineWidth);
   }
 
   /**
@@ -181,16 +187,17 @@ export class CartesianCanvasComponent implements AfterViewInit {
   public drawSeries(
     seriesTerm: (n: number, x: number) => number,
     terms: number,
-    color: string
+    color: string,
+    lineWidth = 2
   ): void {
     if (!this.isBrowser) return;
-
+  
     // Guardar la serie en el historial
-    this.seriesPlots.push({ seriesTerm, terms, color });
-
+    this.seriesPlots.push({ seriesTerm, terms, color, lineWidth });
+  
     // Dibujar la serie
     const config: PlotConfig = this.getPlotConfig();
-    this.plottingService.drawSeries(config, seriesTerm, terms, color);
+    this.plottingService.drawSeries(config, seriesTerm, terms, color, lineWidth);
   }
 
   /**
@@ -249,7 +256,7 @@ export class CartesianCanvasComponent implements AfterViewInit {
 
   private drawScreen(): void {
     if (!this.ctx || !this.isBrowser) return;
-
+  
     // 1. Dibujar el plano cartesiano
     this.canvasDrawingService.drawScreen({
       ctx: this.ctx,
@@ -264,15 +271,20 @@ export class CartesianCanvasComponent implements AfterViewInit {
       fontColor: this.fontColor,
       unit: this.unit,
     });
-
+  
     // 2. Configuración para dibujar gráficas
     const config: PlotConfig = this.getPlotConfig();
-
+  
     // 3. Redibujar todas las funciones guardadas
     this.functionPlots.forEach((plot) => {
-      this.plottingService.drawFunction(config, plot.fn, plot.color);
+      this.plottingService.drawFunction(
+        config, 
+        plot.fn, 
+        plot.color,
+        plot.lineWidth || 2  // Usar el grosor guardado o 2 como valor predeterminado
+      );
     });
-
+  
     // 4. Redibujar todas las funciones en intervalo
     this.intervalPlots.forEach((plot) => {
       this.plottingService.drawFunctionFromAToB(
@@ -280,10 +292,11 @@ export class CartesianCanvasComponent implements AfterViewInit {
         plot.fn,
         plot.color,
         plot.a,
-        plot.b
+        plot.b,
+        plot.lineWidth || 2  // Usar el grosor guardado o 2 como valor predeterminado
       );
     });
-
+  
     // 5. Redibujar todos los puntos discretos
     this.discretePlots.forEach((plot) => {
       this.plottingService.drawDiscreteLine(
@@ -291,17 +304,19 @@ export class CartesianCanvasComponent implements AfterViewInit {
         plot.startX,
         plot.startY,
         plot.n,
-        plot.color
+        plot.color,
+        plot.lineWidth || 2.5  // Usar el grosor guardado o 2.5 como valor predeterminado
       );
     });
-
+  
     // 6. Redibujar todas las series
     this.seriesPlots.forEach((plot) => {
       this.plottingService.drawSeries(
         config,
         plot.seriesTerm,
         plot.terms,
-        plot.color
+        plot.color,
+        plot.lineWidth || 2  // Usar el grosor guardado o 2 como valor predeterminado
       );
     });
   }

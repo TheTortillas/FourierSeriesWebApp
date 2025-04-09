@@ -1,0 +1,140 @@
+.math-field {
+    font-size: 1.2em;
+    cursor: text;
+    text-align: center;
+  }
+  
+  // Estilos para el cursor y hover de campos matemáticos
+  .math-field:focus-within {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    outline: none;
+  }
+  
+  .math-field .mq-cursor {
+    border-left: 2px solid black;
+    margin-left: 0.1em;
+    margin-right: -0.1em;
+  }
+  
+  .math-field:hover {
+    border-color: #3b82f6;
+  }
+  
+  // Categorías del teclado matemático
+  .keyboard-category {
+    margin-bottom: 0.75rem;
+    
+    .category-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #4b5563;
+      margin-bottom: 0.5rem;
+      text-align: left;
+      padding-left: 0.5rem;
+    }
+  }
+  
+  // Animaciones para mostrar/ocultar teclado
+  .keyboard-container {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out;
+    
+    &.visible {
+      max-height: 500px; // Valor suficientemente grande para contener todo el teclado
+    }
+  }
+  
+  // Botón de teclado con animación solo para la flecha
+  .keyboard-toggle-btn {
+    position: relative;
+    padding: 8px 16px;
+    
+    // Quitar la rotación general del botón
+    .keyboard-icon {
+      // Mantenemos el icono del teclado estático
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .arrow-icon {
+      // Solo la flecha tiene animación
+      svg {
+        transition: transform 0.2s ease;
+      }
+    }
+    
+    &.active .arrow-icon svg {
+      transform: rotate(180deg);
+    }
+  }
+  
+  // Animaciones para mostrar/ocultar teclado
+  .keyboard-container {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-in-out;
+    
+    &.visible {
+      max-height: 800px; // Valor aumentado para asegurar que quepa todo el teclado
+    }
+  }
+  
+  // Hacemos el botón un poco más grande
+  .keyboard-toggle-btn {
+    @apply py-3 px-4;
+    
+    .keyboard-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+  
+  // Resto de estilos...
+  
+  // Estilos mejorados para los botones del teclado
+  .math-keyboard-btn {
+    @apply w-[90px] h-[60px] m-1 bg-gray-100 border border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-200 transition-colors;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  // Mejorar visualización de operadores matemáticos
+  .mq-math-mode .mq-operator-name {
+    font-family: "Times New Roman", serif;
+    font-weight: normal;
+  }
+  
+  // Añadir estilo para campos inválidos
+  .math-field.border-red-500 {
+    border-color: #ef4444 !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
+    
+    &:focus-within {
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
+    }
+    
+    &:hover {
+      border-color: #ef4444 !important;
+    }
+  }
+  
+  // Animación de parpadeo para enfatizar el error
+  @keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  
+  .border-red-500 {
+    animation: blink 1s ease-in-out 2;
+  }

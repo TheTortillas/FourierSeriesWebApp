@@ -11,7 +11,17 @@ import { TrigonometricPiecewiseSeriesComponent } from './pages/tests/trigonometr
 import { ComplexPiecewiseSeriesComponent } from './pages/tests/complex-piecewise-series/complex-piecewise-series.component';
 import { HalfRangeSeriesComponent } from './pages/tests/half-range-series/half-range-series.component';
 import { MultiCanvasLayoutComponent } from './pages/tests/multi-canvas-layout/multi-canvas-layout.component';
+import { FourierCalculatorComponent } from './pages/fourier-calculator/fourier-calculator.component';
+import { FourierSeriesPlotComponent } from './pages/fourier-series-plot/fourier-series-plot.component';
 export const routes: Routes = [
+  {
+    path: 'fourier-calculator',
+    component: FourierCalculatorComponent,
+  },
+  {
+    path: 'fourier-series-plot',
+    component: FourierSeriesPlotComponent,
+  },
   {
     path: 'tests',
     component: TestsComponent,
