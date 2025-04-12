@@ -93,6 +93,9 @@ async function calculatePiecewiseSeries({
       buildMaximaCommand(`${maximaBaseCode} string(exp_core);`)
     );
 
+    // Find indeterminate values
+    const cnIndeterminateValues = await findIndeterminateValues(cn);
+
     // Generate LaTeX output
     const c0Tex = await execMaxima(
       buildMaximaCommand(
@@ -126,6 +129,9 @@ async function calculatePiecewiseSeries({
         w0: w0Tex,
         T: TTex,
         series_exp_core: expCoreTex,
+      },
+      indeterminateValues: {
+        cn: cnIndeterminateValues,
       },
     };
   } else {
@@ -184,6 +190,10 @@ async function calculatePiecewiseSeries({
       buildMaximaCommand(`${maximaBaseCode} string(sin_core);`)
     );
 
+    // Find indeterminate values for coefficients
+    const anIndeterminateValues = await findIndeterminateValues(an);
+    const bnIndeterminateValues = await findIndeterminateValues(bn);
+
     // Generate LaTeX output
     const a0Tex = await execMaxima(
       buildMaximaCommand(
@@ -228,8 +238,152 @@ async function calculatePiecewiseSeries({
         cosineCore: cosineCoreTex,
         sineCore: sineCoreTex,
       },
+      indeterminateValues: {
+        an: anIndeterminateValues,
+        bn: bnIndeterminateValues,
+      },
     };
   }
+}
+
+/**
+ * Finds indeterminate values in a coefficient expression
+ * @param {string} expr The coefficient expression to analyze
+ * @returns {Promise<Array>} Array of objects with indeterminate points and their limits
+ */
+async function findIndeterminateValues(expr) {
+  if (!expr || expr === "0") return [];
+
+  try {
+    // Command to find indeterminate points and evaluate limits
+    const indeterminateCommand = `
+      buscar_indeterminaciones(expr) := block(
+        [d, soluciones, limites],
+        d: denom(expr),
+        soluciones: solve(d = 0, n),
+        limites: makelist([rhs(sol), limit(expr, n, rhs(sol))], sol, soluciones),
+        return(limites)
+      )$
+      string(buscar_indeterminaciones(${expr}));
+    `;
+
+    const result = await execMaxima(buildMaximaCommand(indeterminateCommand));
+
+    // Parse the result - result may be empty or a list of points
+    if (!result || result === "[]") return [];
+
+    // Extract the points from Maxima's output
+    const points = parseMaximaList(result);
+
+    // Process each point and convert to structured objects
+    return points.map((point) => {
+      // Parse the [n-value, limit-value] pair
+      const [nValue, limitValue] = parseMaximaPair(point);
+
+      // Return as a structured object
+      return {
+        n: parseInt(nValue, 10),
+        limit: limitValue,
+      };
+    });
+  } catch (error) {
+    console.error("Error finding indeterminate values:", error);
+    return [];
+  }
+}
+
+/**
+ * Parse a Maxima list string into an array
+ * @param {string} listStr String representation of a Maxima list
+ * @returns {Array} Array of list items
+ */
+function parseMaximaList(listStr) {
+  if (!listStr.startsWith("[") || !listStr.endsWith("]")) {
+    return [];
+  }
+
+  const content = listStr.substring(1, listStr.length - 1).trim();
+  if (!content) return [];
+
+  // Simplified parsing for comma-separated list items
+  // This is a basic implementation and might need enhancement for complex nested structures
+  const items = [];
+  let currentItem = "";
+  let nestedLevel = 0;
+
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i];
+
+    if (
+      (char === "[" || char === "(") &&
+      (i === 0 || content[i - 1] !== "\\")
+    ) {
+      nestedLevel++;
+      currentItem += char;
+    } else if (
+      (char === "]" || char === ")") &&
+      (i === 0 || content[i - 1] !== "\\")
+    ) {
+      nestedLevel--;
+      currentItem += char;
+    } else if (char === "," && nestedLevel === 0) {
+      items.push(currentItem.trim());
+      currentItem = "";
+    } else {
+      currentItem += char;
+    }
+  }
+
+  if (currentItem) {
+    items.push(currentItem.trim());
+  }
+
+  return items;
+}
+
+/**
+ * Parse a Maxima pair [a, b] into separate components
+ * @param {string} pairStr String representation of a Maxima pair
+ * @returns {Array} Array containing the two parts of the pair
+ */
+function parseMaximaPair(pairStr) {
+  if (!pairStr.startsWith("[") || !pairStr.endsWith("]")) {
+    return ["0", "0"];
+  }
+
+  const content = pairStr.substring(1, pairStr.length - 1).trim();
+
+  // Find the middle comma that separates the values
+  let commaPos = -1;
+  let nestedLevel = 0;
+
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i];
+
+    if (
+      (char === "[" || char === "(") &&
+      (i === 0 || content[i - 1] !== "\\")
+    ) {
+      nestedLevel++;
+    } else if (
+      (char === "]" || char === ")") &&
+      (i === 0 || content[i - 1] !== "\\")
+    ) {
+      nestedLevel--;
+    } else if (char === "," && nestedLevel === 0) {
+      commaPos = i;
+      break;
+    }
+  }
+
+  if (commaPos === -1) {
+    return ["0", "0"];
+  }
+
+  return [
+    content.substring(0, commaPos).trim(),
+    content.substring(commaPos + 1).trim(),
+  ];
 }
 
 /**

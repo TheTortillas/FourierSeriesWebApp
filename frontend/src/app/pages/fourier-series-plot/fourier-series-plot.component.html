@@ -66,30 +66,80 @@
           <label class="block text-sm mb-1">Número de términos:</label>
           <input
             type="range"
-            min="1"
-            max="50"
+            min="0"
+            max="100"
             [(ngModel)]="termCount"
             (input)="updateTermCount()"
             class="w-full"
           />
           <div class="text-center text-sm mt-1">{{ termCount }}</div>
         </div>
+
+        <!-- En la sección de términos individuales -->
+        <div class="mb-6">
+          <h3 class="text-base mb-3 text-green-300">Términos individuales</h3>
+
+          <div class="flex items-center justify-between mb-3">
+            <label class="text-sm">Mostrar términos individuales:</label>
+            <div class="relative inline-block w-12 align-middle select-none">
+              <input
+                type="checkbox"
+                [(ngModel)]="showIndividualTerms"
+                (change)="toggleIndividualTerms(showIndividualTerms)"
+                id="toggleIndividualTerms"
+                class="toggle-checkbox"
+              />
+              <label for="toggleIndividualTerms" class="toggle-label"></label>
+            </div>
+          </div>
+
+          <!-- Añadir este control deslizante para el grosor de las líneas de términos individuales -->
+          <div
+            class="flex items-center justify-between mb-3"
+            *ngIf="showIndividualTerms"
+          >
+            <label class="text-sm">Grosor términos individuales:</label>
+            <div class="relative inline-block w-24 align-middle select-none">
+              <input
+                type="range"
+                min="1"
+                max="5"
+                [(ngModel)]="termsLineWidth"
+                (input)="redrawWithIndividualTerms()"
+                class="w-full"
+              />
+              <div class="text-xs text-center text-white">
+                {{ termsLineWidth }}px
+              </div>
+            </div>
+          </div>
+
+          <!-- Container for individual terms -->
+          <!-- <div
+            id="series-terms-container"
+            class="mt-4"
+            *ngIf="showIndividualTerms"
+          >
+          </div> -->
+        </div>
+
         <div class="flex items-center justify-between mb-3">
           <label class="text-sm">Color función original:</label>
           <input
             type="color"
             [(ngModel)]="functionColor"
-            (change)="initializeCanvas()"
+            (change)="redrawCanvas()"
             class="w-10 h-6 bg-transparent border-none cursor-pointer"
           />
         </div>
 
+        <!-- Selector de color para la aproximación -->
         <div class="flex items-center justify-between mb-3">
           <label class="text-sm">Color aproximación:</label>
           <input
             type="color"
             [(ngModel)]="seriesColor"
-            (change)="initializeCanvas()"
+            (change)="redrawCanvas()"
             class="w-10 h-6 bg-transparent border-none cursor-pointer"
           />
         </div>

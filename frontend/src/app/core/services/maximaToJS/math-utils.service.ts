@@ -12,6 +12,10 @@ export class MathUtilsService {
   maximaToJS(expr: string): string {
     if (!expr) return '';
 
+    // Limpieza de artefactos de salto de línea de Maxima
+    expr = expr.replace(/\\\n/g, '');
+    expr = expr.replace(/\\\s*\n/g, '');
+
     const replacements = [
       // Constants
       { pattern: /%pi/g, replacement: 'Math.PI' },

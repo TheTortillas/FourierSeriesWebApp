@@ -109,8 +109,10 @@ export class TrigonometricPiecewiseSeriesComponent
 
   private stripLatexDelimiters(latex: string): string {
     return latex
-      .replace(/^\$\$?/, '')
-      .replace(/\$\$?$/, '')
+      .replace(/\\\s*\n/g, '') // Elimina backslashes seguidos de nueva línea
+      .replace(/\\\n/g, '') // En caso de que vengan escapados
+      .replace(/^\$\$?/, '') // Elimina delimitador inicial $$ o $
+      .replace(/\$\$?$/, '') // Elimina delimitador final $$ o $
       .trim();
   }
 

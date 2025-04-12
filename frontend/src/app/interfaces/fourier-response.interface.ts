@@ -17,5 +17,9 @@ export interface FourierResponse {
     cosineCore?: string;
     sineCore?: string;
   };
+  indeterminateValues?: {
+    an?: Array<{ n: number; limit: string }>;
+    bn?: Array<{ n: number; limit: string }>;
+  };
   error?: string;
 }

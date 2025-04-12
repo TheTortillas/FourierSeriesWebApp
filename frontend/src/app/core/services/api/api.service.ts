@@ -76,4 +76,49 @@ export class ApiService {
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/fourier-series/half-range`, data);
   }
+
+  // Expandir serie trigonométrica en términos
+  expandTrigonometricSeries(data: {
+    coefficients: {
+      a0: string;
+      an?: string;
+      bn?: string;
+    };
+    w0: string;
+    intVar: string;
+    terms: number;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/series-expansion/trigonometric`,
+      data
+    );
+  }
+
+  // Expandir serie de medio rango en términos
+  expandHalfRangeSeries(data: {
+    coefficients: {
+      a0: string;
+      an?: string;
+      bn?: string;
+    };
+    w0: string;
+    intVar: string;
+    terms: number;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/series-expansion/half-range`, data);
+  }
+
+  // Expandir serie compleja en términos
+  expandComplexSeries(data: {
+    coefficients: {
+      c0?: string;
+      cn?: string;
+    };
+    w0: string;
+    intVar: string;
+    terms: number;
+    demoivre?: boolean;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/series-expansion/complex`, data);
+  }
 }

@@ -32,6 +32,88 @@ async function isZeroCoefficient(coeff) {
 }
 
 /**
+ * Finds indeterminate values in a coefficient expression
+ * @param {string} expr The coefficient expression to analyze
+ * @returns {Promise<Array>} Array of objects with indeterminate points and their limits
+ */
+async function findIndeterminateValues(expr) {
+  if (!expr || expr === "0") return [];
+
+  try {
+    // Command to find indeterminate points and evaluate limits
+    const indeterminateCommand = `
+      buscar_indeterminaciones(expr) := block(
+        [d, soluciones, limites],
+        d: denom(expr),
+        soluciones: solve(d = 0, n),
+        limites: makelist([rhs(sol), limit(expr, n, rhs(sol))], sol, soluciones),
+        return(limites)
+      )$
+      string(buscar_indeterminaciones(${expr}));
+    `;
+
+    const result = await execMaxima(buildMaximaCommand(indeterminateCommand));
+
+    // Parse the result - result may be empty or a list of points
+    if (!result || result === "[]") return [];
+
+    // Extract the points from Maxima's output
+    const points = await extractListItems(result);
+
+    // Process each point and convert to structured objects
+    return points
+      .map((point) => {
+        // Parse the [n-value, limit-value] pair
+        if (!point.startsWith("[") || !point.endsWith("]")) {
+          return null;
+        }
+
+        const content = point.substring(1, point.length - 1).trim();
+
+        // Find the middle comma that separates the values
+        let commaPos = -1;
+        let nestedLevel = 0;
+
+        for (let i = 0; i < content.length; i++) {
+          const char = content[i];
+
+          if (
+            (char === "[" || char === "(") &&
+            (i === 0 || content[i - 1] !== "\\")
+          ) {
+            nestedLevel++;
+          } else if (
+            (char === "]" || char === ")") &&
+            (i === 0 || content[i - 1] !== "\\")
+          ) {
+            nestedLevel--;
+          } else if (char === "," && nestedLevel === 0) {
+            commaPos = i;
+            break;
+          }
+        }
+
+        if (commaPos === -1) {
+          return null;
+        }
+
+        const nValue = content.substring(0, commaPos).trim();
+        const limitValue = content.substring(commaPos + 1).trim();
+
+        // Return as a structured object
+        return {
+          n: parseInt(nValue, 10),
+          limit: limitValue,
+        };
+      })
+      .filter(Boolean); // Remove any null entries
+  } catch (error) {
+    console.error("Error finding indeterminate values:", error);
+    return [];
+  }
+}
+
+/**
  * Expands a Fourier series to obtain individual terms
  * @param {Object} options Configuration options
  * @param {Object} options.coefficients The coefficients of the series (a0/c0, an/cn, bn)
@@ -75,6 +157,11 @@ async function expandSeries({
       const isC0Zero = await isZeroCoefficient(c0);
       const isCnZero = await isZeroCoefficient(cn);
 
+      // Find indeterminate values for cn coefficient
+      const cnIndeterminateValues = !isCnZero
+        ? await findIndeterminateValues(cn)
+        : [];
+
       // If coefficient is zero, return empty arrays
       if (isCnZero) {
         return {
@@ -105,18 +192,42 @@ async function expandSeries({
                 },
               }
             : null,
+          indeterminateValues: {
+            cn: cnIndeterminateValues,
+          },
         };
       }
+
+      // Enhanced safe-substitution function for Maxima
+      const safeCnSubstCode = `
+        /* Safe substitution function that handles indeterminate points */
+        safe_subst(expr, n_val) := block(
+          [result, indet_points, i, limit_val],
+          
+          /* Get denominator and check if n_val makes it zero */
+          d: denom(expr),
+          if is(subst(n=n_val, d) = 0) then (
+            /* Calculate limit at this point */
+            result: limit(expr, n, n_val)
+          ) else (
+            /* Normal substitution */
+            result: subst(n=n_val, expr)
+          ),
+          
+          return(result)
+        )$
+      `;
 
       // Code to generate positive and negative series terms
       const seriesExpansionCode = `
         ${baseCode}
+        ${safeCnSubstCode}
         c0: ${c0}$
         cn: ${cn}$
         
-        /* Generate list of positive and negative terms */
-        lista_positivos: makelist(subst(n=i, cn * exp(%i * i * w0 * ${intVar})), i, n1, n2)$
-        lista_negativos: makelist(subst(n=i, cn * exp(%i * i * w0 * ${intVar})), i, -n2, -n1)$
+        /* Generate list of positive and negative terms using safe substitution */
+        lista_positivos: makelist(safe_subst(cn, i) * exp(%i * i * w0 * ${intVar}), i, n1, n2)$
+        lista_negativos: makelist(safe_subst(cn, -i) * exp(%i * (-i) * w0 * ${intVar}), i, n1, n2)$
         lista_negativos: reverse(lista_negativos)$
         
         c0_term: c0$
@@ -237,6 +348,9 @@ async function expandSeries({
           cnNegative: texNegTerms,
         },
         demoivreExpansion,
+        indeterminateValues: {
+          cn: cnIndeterminateValues,
+        },
       };
     } else {
       // For trigonometric series (normal or half-range)
@@ -246,6 +360,34 @@ async function expandSeries({
       const isA0Zero = await isZeroCoefficient(a0);
       const isAnZero = await isZeroCoefficient(an);
       const isBnZero = await isZeroCoefficient(bn);
+
+      // Find indeterminate values for an and bn coefficients
+      const anIndeterminateValues = !isAnZero
+        ? await findIndeterminateValues(an)
+        : [];
+      const bnIndeterminateValues = !isBnZero
+        ? await findIndeterminateValues(bn)
+        : [];
+
+      // Enhanced safe-substitution function for Maxima
+      const safeSubstCode = `
+        /* Safe substitution function that handles indeterminate points */
+        safe_subst(expr, n_val) := block(
+          [result, indet_points, i, limit_val],
+          
+          /* Get denominator and check if n_val makes it zero */
+          d: denom(expr),
+          if is(subst(n=n_val, d) = 0) then (
+            /* Calculate limit at this point */
+            result: limit(expr, n, n_val)
+          ) else (
+            /* Normal substitution */
+            result: subst(n=n_val, expr)
+          ),
+          
+          return(result)
+        )$
+      `;
 
       // Prepare empty results structures
       const result = {
@@ -259,11 +401,16 @@ async function expandSeries({
           an: isAnZero ? [] : null,
           bn: isBnZero ? [] : null,
         },
+        indeterminateValues: {
+          an: anIndeterminateValues,
+          bn: bnIndeterminateValues,
+        },
       };
 
       // Base code for the series expansion
       const seriesExpansionCode = `
         ${baseCode}
+        ${safeSubstCode}
         a0: ${a0}$
         an: ${an}$
         bn: ${bn}$
@@ -273,11 +420,11 @@ async function expandSeries({
       if (!isA0Zero) {
         const a0Code = `
           ${seriesExpansionCode}
-          a0_term: a0/2$
+          a0_term: a0$
         `;
 
         result.string.a0 = await execMaxima(
-          buildMaximaCommand(`${a0Code} string(a0_term/2);`)
+          buildMaximaCommand(`${a0Code} string(a0_term);`)
         );
 
         result.latex.a0 = await execMaxima(
@@ -289,7 +436,7 @@ async function expandSeries({
       if (!isAnZero) {
         const anCode = `
           ${seriesExpansionCode}
-          an_terms: makelist(subst(n=i, an * cos(i * w0 * ${intVar})), i, n1, n2)$
+          an_terms: makelist(safe_subst(an, i) * cos(i * w0 * ${intVar}), i, n1, n2)$
         `;
 
         const strAnTerms = await execMaxima(
@@ -312,7 +459,7 @@ async function expandSeries({
       if (!isBnZero) {
         const bnCode = `
           ${seriesExpansionCode}
-          bn_terms: makelist(subst(n=i, bn * sin(i * w0 * ${intVar})), i, n1, n2)$
+          bn_terms: makelist(safe_subst(bn, i) * sin(i * w0 * ${intVar}), i, n1, n2)$
         `;
 
         const strBnTerms = await execMaxima(
