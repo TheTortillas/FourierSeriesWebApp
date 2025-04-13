@@ -192,9 +192,7 @@ async function expandSeries({
                 },
               }
             : null,
-          indeterminateValues: {
-            cn: cnIndeterminateValues,
-          },
+
         };
       }
 

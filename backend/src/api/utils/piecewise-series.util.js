@@ -27,54 +27,54 @@ async function calculatePiecewiseSeries({
 
   // Base code common to all types
   let maximaBaseCode = `
-    func : ${maximaMatrix}$
-    
-    ${getMaximaRules({
-      integer: true,
-      trigRules: !isComplex,
-      assumptions: true,
-      expRules: isComplex,
-    })}
-  
-    pieces: length(func)$
-    inicio: func[1][2]$
-    fin: func[pieces][3]$
-    T: fin - inicio$
-    ${w0Definition}
-  `;
+     func : ${maximaMatrix}$
+     
+     ${getMaximaRules({
+       integer: true,
+       trigRules: !isComplex,
+       assumptions: true,
+       expRules: isComplex,
+     })}
+   
+     pieces: length(func)$
+     inicio: func[1][2]$
+     fin: func[pieces][3]$
+     T: fin - inicio$
+     ${w0Definition}
+   `;
 
   // Add series core definitions based on type
   if (isComplex) {
     maximaBaseCode += `
-      exp_core: exp(-(%i * n * w0 * ${intVar}))$
-      
-      c0_acum: 0$
-      cn_acum: 0$
-      
-      for i:1 thru pieces do (
-          trozo: func[i],
-          f_i: trozo[1],
-          a: trozo[2],
-          b: trozo[3],
-          
-          c0: (1/T) * integrate((f_i), ${intVar}, a, b),
-          c0_acum: c0_acum + c0
-      )$
-      
-      for i:1 thru pieces do (
-          trozo: func[i],
-          f_i: trozo[1],
-          a: trozo[2],
-          b: trozo[3],
-          
-          cn: (1/T) * integrate((f_i)* exp_core, ${intVar}, a, b),
-          cn_acum: cn_acum + cn
-      )$
-      
-      Coeff_0: factor(fullratsimp(factor(c0_acum)))$
-      Coeff_n: factor(fullratsimp(factor(cn_acum)))$
-      exp_core: exp((%i * n * w0 * ${intVar}))$
-    `;
+       exp_core: exp(-(%i * n * w0 * ${intVar}))$
+       
+       c0_acum: 0$
+       cn_acum: 0$
+       
+       for i:1 thru pieces do (
+           trozo: func[i],
+           f_i: trozo[1],
+           a: trozo[2],
+           b: trozo[3],
+           
+           c0: (1/T) * integrate((f_i), ${intVar}, a, b),
+           c0_acum: c0_acum + c0
+       )$
+       
+       for i:1 thru pieces do (
+           trozo: func[i],
+           f_i: trozo[1],
+           a: trozo[2],
+           b: trozo[3],
+           
+           cn: (1/T) * integrate((f_i)* exp_core, ${intVar}, a, b),
+           cn_acum: cn_acum + cn
+       )$
+       
+       Coeff_0: factor(fullratsimp(factor(c0_acum)))$
+       Coeff_n: factor(fullratsimp(factor(cn_acum)))$
+       exp_core: exp((%i * n * w0 * ${intVar}))$
+     `;
 
     // Execute Maxima commands for complex series
     const c0 = await execMaxima(
@@ -94,7 +94,13 @@ async function calculatePiecewiseSeries({
     );
 
     // Find indeterminate values
-    const cnIndeterminateValues = await findIndeterminateValues(cn);
+    const cnIndeterminateValues = await findIndeterminateValues(
+      cn,
+      "cn",
+      "complex",
+      funcionMatrix,
+      intVar
+    );
 
     // Generate LaTeX output
     const c0Tex = await execMaxima(
@@ -140,32 +146,32 @@ async function calculatePiecewiseSeries({
     const simplificationMethod = isHalfRange ? "ratsimp" : "fullratsimp";
 
     maximaBaseCode += `
-      cos_core: cos(n * w0 * ${intVar})$
-      sin_core: sin(n * w0 * ${intVar})$
-      
-      a0_acum: 0$
-      an_acum: 0$
-      bn_acum: 0$
-      
-      for i:1 thru pieces do (
-          trozo: func[i],
-          f_i: trozo[1],
-          a: trozo[2],
-          b: trozo[3],
-          
-          a0: ${integralCoefficient} * integrate((f_i), ${intVar}, a, b),
-          an: ${integralCoefficient} * integrate((f_i)* cos_core, ${intVar}, a, b),
-          bn: ${integralCoefficient} * integrate((f_i) * sin_core, ${intVar}, a, b),
-          
-          a0_acum: a0_acum + a0,
-          an_acum: an_acum + an,
-          bn_acum: bn_acum + bn
-      )$
-      
-      Coeff_A0: factor(${simplificationMethod}(factor(a0_acum)))$
-      Coeff_An: factor(${simplificationMethod}(factor(an_acum)))$
-      Coeff_Bn: factor(${simplificationMethod}(factor(bn_acum)))$
-    `;
+       cos_core: cos(n * w0 * ${intVar})$
+       sin_core: sin(n * w0 * ${intVar})$
+       
+       a0_acum: 0$
+       an_acum: 0$
+       bn_acum: 0$
+       
+       for i:1 thru pieces do (
+           trozo: func[i],
+           f_i: trozo[1],
+           a: trozo[2],
+           b: trozo[3],
+           
+           a0: ${integralCoefficient} * integrate((f_i), ${intVar}, a, b),
+           an: ${integralCoefficient} * integrate((f_i)* cos_core, ${intVar}, a, b),
+           bn: ${integralCoefficient} * integrate((f_i) * sin_core, ${intVar}, a, b),
+           
+           a0_acum: a0_acum + a0,
+           an_acum: an_acum + an,
+           bn_acum: bn_acum + bn
+       )$
+       
+       Coeff_A0: factor(${simplificationMethod}(factor(a0_acum)))$
+       Coeff_An: factor(${simplificationMethod}(factor(an_acum)))$
+       Coeff_Bn: factor(${simplificationMethod}(factor(bn_acum)))$
+     `;
 
     // Execute Maxima commands for trigonometric series
     const a0 = await execMaxima(
@@ -191,8 +197,21 @@ async function calculatePiecewiseSeries({
     );
 
     // Find indeterminate values for coefficients
-    const anIndeterminateValues = await findIndeterminateValues(an);
-    const bnIndeterminateValues = await findIndeterminateValues(bn);
+    // En la parte donde calculamos indeterminaciones para series trigonométricas
+    const anIndeterminateValues = await findIndeterminateValues(
+      an,
+      "an",
+      seriesType,
+      funcionMatrix,
+      intVar
+    );
+    const bnIndeterminateValues = await findIndeterminateValues(
+      bn,
+      "bn",
+      seriesType,
+      funcionMatrix,
+      intVar
+    );
 
     // Generate LaTeX output
     const a0Tex = await execMaxima(
@@ -247,45 +266,190 @@ async function calculatePiecewiseSeries({
 }
 
 /**
- * Finds indeterminate values in a coefficient expression
+ * Finds indeterminate values in a coefficient expression (only for integer values)
  * @param {string} expr The coefficient expression to analyze
+ * @param {string} coefType Type of coefficient ('an', 'bn', or 'cn')
+ * @param {string} seriesType Type of series ('trigonometric', 'complex', or 'halfRange')
+ * @param {Array} funcionMatrix Matrix of function pieces
+ * @param {string} intVar Integration variable
  * @returns {Promise<Array>} Array of objects with indeterminate points and their limits
  */
-async function findIndeterminateValues(expr) {
+async function findIndeterminateValues(
+  expr,
+  coefType = "an",
+  seriesType = "trigonometric",
+  funcionMatrix = [],
+  intVar = "x"
+) {
   if (!expr || expr === "0") return [];
 
   try {
-    // Command to find indeterminate points and evaluate limits
-    const indeterminateCommand = `
-      buscar_indeterminaciones(expr) := block(
-        [d, soluciones, limites],
-        d: denom(expr),
-        soluciones: solve(d = 0, n),
-        limites: makelist([rhs(sol), limit(expr, n, rhs(sol))], sol, soluciones),
-        return(limites)
-      )$
-      string(buscar_indeterminaciones(${expr}));
+    // Step 1: Recalculate coefficient WITHOUT integer declaration
+    const maximaMatrix = `matrix(${funcionMatrix
+      .map((row) => `[${row.join(", ")}]`)
+      .join(", ")})`;
+
+    const isComplex = seriesType === "complex";
+    const isHalfRange = seriesType === "halfRange";
+
+    // Base code with NO integer declaration
+    let maximaBaseCode = `
+       func : ${maximaMatrix}$
+       
+       /* We explicitly avoid declaring n as integer */
+       ${getMaximaRules({
+         integer: false,
+         trigRules: !isComplex,
+         assumptions: true,
+         expRules: isComplex,
+       })}
+     
+       pieces: length(func)$
+       inicio: func[1][2]$
+       fin: func[pieces][3]$
+       T: fin - inicio$
+       ${isHalfRange ? "w0: %pi / T$" : "w0: (2 * %pi) / T$"}
     `;
 
-    const result = await execMaxima(buildMaximaCommand(indeterminateCommand));
+    // Add code specific to coefficient type to calculate without integer restriction
+    if (isComplex && coefType === "cn") {
+      maximaBaseCode += `
+         exp_core: exp(-(%i * n * w0 * ${intVar}))$
+         cn_acum: 0$
+         
+         for i:1 thru pieces do (
+             trozo: func[i],
+             f_i: trozo[1],
+             a: trozo[2],
+             b: trozo[3],
+             
+             cn: (1/T) * integrate((f_i)* exp_core, ${intVar}, a, b),
+             cn_acum: cn_acum + cn
+         )$
+         
+         Coeff_n: factor(fullratsimp(factor(cn_acum)))$
+      `;
+    } else if (!isComplex) {
+      const integralCoefficient = isHalfRange ? "(1 / (T/2))" : "(2/T)";
+      const simplificationMethod = isHalfRange ? "ratsimp" : "fullratsimp";
 
-    // Parse the result - result may be empty or a list of points
-    if (!result || result === "[]") return [];
+      if (coefType === "an") {
+        maximaBaseCode += `
+           cos_core: cos(n * w0 * ${intVar})$
+           an_acum: 0$
+           
+           for i:1 thru pieces do (
+               trozo: func[i],
+               f_i: trozo[1],
+               a: trozo[2],
+               b: trozo[3],
+               
+               an: ${integralCoefficient} * integrate((f_i)* cos_core, ${intVar}, a, b),
+               an_acum: an_acum + an
+           )$
+           
+           Coeff_An: factor(${simplificationMethod}(factor(an_acum)))$
+        `;
+      } else if (coefType === "bn") {
+        maximaBaseCode += `
+           sin_core: sin(n * w0 * ${intVar})$
+           bn_acum: 0$
+           
+           for i:1 thru pieces do (
+               trozo: func[i],
+               f_i: trozo[1],
+               a: trozo[2],
+               b: trozo[3],
+               
+               bn: ${integralCoefficient} * integrate((f_i) * sin_core, ${intVar}, a, b),
+               bn_acum: bn_acum + bn
+           )$
+           
+           Coeff_Bn: factor(${simplificationMethod}(factor(bn_acum)))$
+        `;
+      }
+    }
 
-    // Extract the points from Maxima's output
-    const points = parseMaximaList(result);
+    // Get coefficient variable name based on coefficient type
+    const coefVar =
+      coefType === "an"
+        ? "Coeff_An"
+        : coefType === "bn"
+        ? "Coeff_Bn"
+        : "Coeff_n";
 
-    // Process each point and convert to structured objects
-    return points.map((point) => {
-      // Parse the [n-value, limit-value] pair
-      const [nValue, limitValue] = parseMaximaPair(point);
+    // Step 2: Calculate the non-integer coefficient
+    const nonIntegerCoefficientCommand = `
+       ${maximaBaseCode}
+       string(${coefVar});
+    `;
 
-      // Return as a structured object
+    const nonIntegerCoefficient = await execMaxima(
+      buildMaximaCommand(nonIntegerCoefficientCommand)
+    );
+
+    // Step 3: Find integer values where the denominator becomes zero using the non-integer coefficient
+    const findSingularitiesCommand = `
+       declare(n, integer)$
+       buscar_singularidades(expr) := block(
+         [d, soluciones, enteros],
+         d: denom(expr),
+         soluciones: solve(d = 0, n),
+         enteros: [],
+         for sol in soluciones do (
+           if integerp(rhs(sol)) then enteros: cons(sol, enteros)
+         ),
+         return(enteros)
+       )$
+       string(buscar_singularidades(${nonIntegerCoefficient}));
+     `;
+
+    const singularitiesResult = await execMaxima(
+      buildMaximaCommand(findSingularitiesCommand)
+    );
+
+    // If no singularities are found, return empty array
+    if (!singularitiesResult || singularitiesResult === "[]") return [];
+
+    // Parse singularities
+    const singularitiesList = parseMaximaList(
+      singularitiesResult.replace(/n\s*=\s*/g, "")
+    );
+    const singularities = singularitiesList.map((s) => parseInt(s.trim(), 10));
+
+    if (singularities.length === 0) return [];
+
+    // Step 4: Calculate limits for each singularity using the non-integer version of the coefficient
+    const limitsPromises = singularities.map(async (singValue) => {
+      const limitCommand = `
+         ${maximaBaseCode}
+         /* Calculate the limit using the non-integer version of the coefficient */
+         lim_valor: limit(${coefVar}, n, ${singValue})$
+         string(lim_valor);
+      `;
+
+      const limitResult = await execMaxima(buildMaximaCommand(limitCommand));
+
+      // Get LaTeX representation of the limit for display
+      const limitTexCommand = `
+         ${maximaBaseCode}
+         /* Calculate the limit using the non-integer version of the coefficient */
+         lim_valor: limit(${coefVar}, n, ${singValue})$
+         tex(lim_valor, false);
+      `;
+
+      const limitTexResult = await execMaxima(
+        buildMaximaCommand(limitTexCommand)
+      );
+
       return {
-        n: parseInt(nValue, 10),
-        limit: limitValue,
+        n: singValue,
+        limit: limitResult.trim(),
+        limitTex: limitTexResult.trim(),
       };
     });
+
+    return await Promise.all(limitsPromises);
   } catch (error) {
     console.error("Error finding indeterminate values:", error);
     return [];
