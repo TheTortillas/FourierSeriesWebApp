@@ -263,13 +263,14 @@ export class FourierSeriesPlotComponent
       return;
 
     // Si termCount es 0, solo mostramos el término constante (a0/2)
+    // Nos aseguramos de que el arreglo tenga al menos un elemento
     if (this.termCount === 0 && this.individualTermFunctions.length > 0) {
-      // Asumimos que el primer término es a0/2
+      // El primer término siempre es a0/2
       const { fn, color } = this.individualTermFunctions[0];
       this.cartesianCanvas.drawFunction(fn, color, this.termsLineWidth);
     } else {
       // Para termCount > 0, mostramos los términos correspondientes
-      // El primer término siempre es a0/2, luego los siguientes son los términos de la serie
+      // El primer término siempre es a0/2, luego los términos de la serie
       const termsToDraw = this.individualTermFunctions.slice(
         0,
         this.termCount + 1
@@ -794,11 +795,11 @@ export class FourierSeriesPlotComponent
     }, 100);
   }
 
-  // Modificar el método prepareIndividualTermFunctions para manejar valores indeterminados
   prepareIndividualTermFunctions(): void {
     // Reset array of functions
+    // Reset array of functions
     this.individualTermFunctions = [];
-  
+
     // Function to generate colors - a gradient based on the term index
     const getTermColor = (index: number, total: number) => {
       // Start with blue (RGB: 25, 64, 175) and end with red (RGB: 239, 68, 68)
@@ -808,62 +809,71 @@ export class FourierSeriesPlotComponent
       const endR = 239,
         endG = 68,
         endB = 68;
-  
+
       const ratio = index / (total || 2);
-  
+
       const r = Math.round(startR + (endR - startR) * ratio);
       const g = Math.round(startG + (endG - startG) * ratio);
       const b = Math.round(startB + (endB - startB) * ratio);
-  
+
       return `rgb(${r}, ${g}, ${b})`;
     };
-  
-    // Add a0/2 term first if present (término constante)
-    if (this.seriesTerms?.string?.a0 && this.seriesTerms.string.a0 !== '0') {
-      try {
-        const a0 = this.mathUtilsService.evaluateMaximaExpr(
-          this.seriesTerms.string.a0,
-          {}
-        );
-        // The constant term is a0/2
-        const a0Term = (x: number) => a0 / 2;
-        this.individualTermFunctions.push({
-          fn: a0Term,
-          color: getTermColor(
-            0,
-            Math.max(
-              this.seriesTerms.string.an?.length || 0,
-              this.seriesTerms.string.bn?.length || 0
-            ) + 1
-          ),
-        });
-      } catch (error) {
-        console.error('Error creating a0 term function:', error);
-      }
+
+    // Siempre añadir el término a0/2, incluso si a0 es 0
+    // Esto garantiza que cuando termCount=0, siempre se dibuje la línea en cero
+    try {
+      // Si a0 existe y no es cero, usarlo. Si no, usar 0 explícitamente
+      const a0 =
+        this.seriesTerms?.string?.a0 && this.seriesTerms.string.a0 !== '0'
+          ? this.mathUtilsService.evaluateMaximaExpr(
+              this.seriesTerms.string.a0,
+              {}
+            )
+          : 0;
+
+      // El término constante es a0/2
+      const a0Term = (x: number) => a0 / 2;
+      this.individualTermFunctions.push({
+        fn: a0Term,
+        color: getTermColor(
+          0,
+          Math.max(
+            this.seriesTerms?.string?.an?.length || 0,
+            this.seriesTerms?.string?.bn?.length || 0
+          ) + 1
+        ),
+      });
+    } catch (error) {
+      console.error('Error creating a0 term function:', error);
+      // Incluso en caso de error, añadimos un término constante cero
+      this.individualTermFunctions.push({
+        fn: () => 0,
+        color: getTermColor(0, 1),
+      });
     }
-  
+
     // Determinar el número máximo de términos
     const maxTerms = Math.max(
       this.seriesTerms?.string?.an?.length || 0,
       this.seriesTerms?.string?.bn?.length || 0
     );
-  
+
     // Referencias a las indeterminaciones (si existen)
     const indetAN = this.response?.indeterminateValues?.an || [];
     const indetBN = this.response?.indeterminateValues?.bn || [];
-  
+
     // Crear términos combinados (an*cos + bn*sin) para cada n
     for (let n = 1; n <= maxTerms; n++) {
       try {
         const anIndex = n - 1;
         const bnIndex = n - 1;
-  
+
         let anTerm: ((x: number) => number) | null = null;
         let bnTerm: ((x: number) => number) | null = null;
-  
+
         // Verificar si el coeficiente an es indeterminado en este n
         const anIndet = indetAN.find((item) => item.n === n);
-        
+
         // Crear función para el término an*cos si existe o tiene límite
         if (anIndet) {
           // Usar el valor del límite si existe indeterminación
@@ -871,7 +881,10 @@ export class FourierSeriesPlotComponent
           const jsExpr = this.mathUtilsService.maximaToJS(anLimit);
           try {
             // Crear la función combinada con el límite y cos(nx)
-            const limitVal = this.mathUtilsService.evaluateMaximaExpr(anLimit, {});
+            const limitVal = this.mathUtilsService.evaluateMaximaExpr(
+              anLimit,
+              {}
+            );
             anTerm = (x: number) => limitVal * Math.cos(n * this.cachedW0 * x);
           } catch (error) {
             console.error(`Error evaluando límite an para n=${n}:`, error);
@@ -887,10 +900,10 @@ export class FourierSeriesPlotComponent
             x: number
           ) => number;
         }
-  
+
         // Verificar si el coeficiente bn es indeterminado en este n
         const bnIndet = indetBN.find((item) => item.n === n);
-        
+
         // Crear función para el término bn*sin si existe o tiene límite
         if (bnIndet) {
           // Usar el valor del límite si existe indeterminación
@@ -898,7 +911,10 @@ export class FourierSeriesPlotComponent
           const jsExpr = this.mathUtilsService.maximaToJS(bnLimit);
           try {
             // Crear la función combinada con el límite y sin(nx)
-            const limitVal = this.mathUtilsService.evaluateMaximaExpr(bnLimit, {});
+            const limitVal = this.mathUtilsService.evaluateMaximaExpr(
+              bnLimit,
+              {}
+            );
             bnTerm = (x: number) => limitVal * Math.sin(n * this.cachedW0 * x);
           } catch (error) {
             console.error(`Error evaluando límite bn para n=${n}:`, error);
@@ -914,7 +930,7 @@ export class FourierSeriesPlotComponent
             x: number
           ) => number;
         }
-  
+
         // Si al menos uno de los términos existe, crear la función combinada
         if (anTerm || bnTerm) {
           // Función que combina ambos términos
@@ -924,7 +940,7 @@ export class FourierSeriesPlotComponent
             if (bnTerm) result += bnTerm(x);
             return result;
           };
-  
+
           this.individualTermFunctions.push({
             fn: combinedTerm,
             color: getTermColor(n, maxTerms + 1),
