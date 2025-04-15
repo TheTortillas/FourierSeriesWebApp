@@ -29,6 +29,9 @@ export class FourierSeriesPlotComponent
 
   public sidenavOpen = true;
 
+  public xAxisScale: 'integer' | 'pi' | 'e' = 'integer';
+  public xAxisFactor: number = 1;
+
   // Datos de la serie
   public response: FourierResponse | null = null;
   public seriesType: string = '';
@@ -982,6 +985,25 @@ export class FourierSeriesPlotComponent
       offsetX: this.cartesianCanvas.offsetX,
       offsetY: this.cartesianCanvas.offsetY,
       unit: this.cartesianCanvas.unit,
+      xAxisScale: this.xAxisScale,
+      xAxisFactor: this.xAxisFactor
     };
+  }
+
+  updateAxisScale(): void {
+    // Actualiza el factor según la escala seleccionada
+    if (this.xAxisScale === 'pi') {
+      this.xAxisFactor = Math.PI;
+    } else if (this.xAxisScale === 'e') {
+      this.xAxisFactor = Math.E;
+    } else {
+      this.xAxisFactor = 1;
+    }
+  
+    // Actualiza la escala en el componente cartesianCanvas
+    if (this.cartesianCanvas) {
+      this.cartesianCanvas.setXAxisScale(this.xAxisScale);
+      // No necesitas llamar a redrawFunctions porque setXAxisScale ya redibuja el canvas
+    }
   }
 }

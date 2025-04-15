@@ -10,4 +10,6 @@ export interface DrawScreenConfig {
   gridColor: string;
   fontColor: string;
   unit: number;
+  xAxisScale?: 'integer' | 'pi' | 'e';
+  xAxisFactor?: number;
 }

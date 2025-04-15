@@ -22,6 +22,8 @@ export class CanvasDrawingService {
       gridColor,
       fontColor,
       unit,
+      xAxisScale = 'integer', // Default to integer
+      xAxisFactor = 1, // Default factor is 1
     } = config;
 
     // Verifica si el contexto es nulo
@@ -45,7 +47,7 @@ export class CanvasDrawingService {
       end: { x: width / 2, y: height },
     };
 
-    // IMPORTANTE: Cambiamos el orden - Primero dibujamos la cuadrícula
+    // Primero dibujamos la cuadrícula con los parámetros de escala
     this.drawGrid(
       ctx,
       origin,
@@ -55,7 +57,9 @@ export class CanvasDrawingService {
       gridColor,
       fontColor,
       offsetX,
-      offsetY
+      offsetY,
+      xAxisScale,
+      xAxisFactor
     );
 
     // Después dibujamos los ejes para que queden por encima
@@ -102,7 +106,9 @@ export class CanvasDrawingService {
     gridColor: string,
     fontColor: string,
     offsetX: number,
-    offsetY: number
+    offsetY: number,
+    xAxisScale: 'integer' | 'pi' | 'e' = 'integer', // Default to integer
+    xAxisFactor: number = 1 // Default factor is 1
   ): void {
     ctx.strokeStyle = gridColor;
     ctx.fillStyle = fontColor;
@@ -131,13 +137,38 @@ export class CanvasDrawingService {
       ctx.lineWidth = i % cuadrosGrandesFrecuencia === 0 ? 1 : 0.25;
       ctx.stroke();
 
-      // Números en el eje X
+      // Generar etiquetas para el eje X según la escala seleccionada
+      let label;
+      if (xAxisScale === 'pi') {
+        if (i === 0) {
+          label = '0';
+        } else if (i === 1) {
+          label = 'π'; // Para i = 1, solo mostramos "π"
+        } else if (i === -1) {
+          label = '-π'; // Para i = -1, solo mostramos "-π"
+        } else {
+          label = `${i}π`; // Para otros valores de i, mostrar el múltiplo
+        }
+      } else if (xAxisScale === 'e') {
+        if (i === 0) {
+          label = '0';
+        } else if (i === 1) {
+          label = 'e'; // Para i = 1, solo mostramos "e"
+        } else if (i === -1) {
+          label = '-e'; // Para i = -1, solo mostramos "-e"
+        } else {
+          label = `${i}e`; // Para otros valores de i, mostrar el múltiplo
+        }
+      } else {
+        label = i; // Escala normal en unidades enteras
+      }
+
       if (i !== 0 && i % cuadrosGrandesFrecuencia === 0) {
-        ctx.fillText(i.toString(), x, origin.y - offsetY);
+        ctx.fillText(label.toString(), x, origin.y - offsetY + 15);
       }
     }
 
-    // Líneas horizontales
+    // Líneas horizontales (sin cambios)
     for (let i = -1000; i < 1000; i++) {
       const y = origin.y + unit * i - offsetY;
 

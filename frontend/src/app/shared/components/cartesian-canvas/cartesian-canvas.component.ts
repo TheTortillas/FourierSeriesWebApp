@@ -63,6 +63,8 @@ export class CartesianCanvasComponent implements AfterViewInit {
   @Input() initialZoom = 75;
   @Input() minZoom = 8;
   @Input() maxZoom = 1000;
+  @Input() xAxisScale: 'integer' | 'pi' | 'e' = 'integer';
+  @Input() xAxisFactor = 1;
 
   // Eventos
   @Output() canvasReady = new EventEmitter<CanvasRenderingContext2D>();
@@ -130,12 +132,16 @@ export class CartesianCanvasComponent implements AfterViewInit {
   /**
    * Dibuja una función en todo el dominio visible
    */
-  public drawFunction(fn: (x: number) => number, color = '#FF0000', lineWidth = 2): void {
+  public drawFunction(
+    fn: (x: number) => number,
+    color = '#FF0000',
+    lineWidth = 2
+  ): void {
     if (!this.isBrowser) return;
-  
+
     // Guardar la función en el historial
     this.functionPlots.push({ fn, color, lineWidth });
-  
+
     // Dibujar la función
     const config: PlotConfig = this.getPlotConfig();
     this.plottingService.drawFunction(config, fn, color, lineWidth);
@@ -152,13 +158,20 @@ export class CartesianCanvasComponent implements AfterViewInit {
     lineWidth = 2
   ): void {
     if (!this.isBrowser) return;
-  
+
     // Guardar la función en el historial
     this.intervalPlots.push({ fn, color, a, b, lineWidth });
-  
+
     // Dibujar la función en el intervalo
     const config: PlotConfig = this.getPlotConfig();
-    this.plottingService.drawFunctionFromAToB(config, fn, color, a, b, lineWidth);
+    this.plottingService.drawFunctionFromAToB(
+      config,
+      fn,
+      color,
+      a,
+      b,
+      lineWidth
+    );
   }
 
   /**
@@ -172,13 +185,20 @@ export class CartesianCanvasComponent implements AfterViewInit {
     lineWidth = 2
   ): void {
     if (!this.isBrowser) return;
-  
+
     // Guardar el punto discreto en el historial
     this.discretePlots.push({ startX, startY, n, color, lineWidth });
-  
+
     // Dibujar el punto discreto
     const config: PlotConfig = this.getPlotConfig();
-    this.plottingService.drawDiscreteLine(config, startX, startY, n, color, lineWidth);
+    this.plottingService.drawDiscreteLine(
+      config,
+      startX,
+      startY,
+      n,
+      color,
+      lineWidth
+    );
   }
 
   /**
@@ -191,13 +211,19 @@ export class CartesianCanvasComponent implements AfterViewInit {
     lineWidth = 2
   ): void {
     if (!this.isBrowser) return;
-  
+
     // Guardar la serie en el historial
     this.seriesPlots.push({ seriesTerm, terms, color, lineWidth });
-  
+
     // Dibujar la serie
     const config: PlotConfig = this.getPlotConfig();
-    this.plottingService.drawSeries(config, seriesTerm, terms, color, lineWidth);
+    this.plottingService.drawSeries(
+      config,
+      seriesTerm,
+      terms,
+      color,
+      lineWidth
+    );
   }
 
   /**
@@ -251,12 +277,14 @@ export class CartesianCanvasComponent implements AfterViewInit {
       offsetY: this.offsetY,
       unit: this.unit,
       origin: this.origin,
+      xAxisScale: this.xAxisScale,
+      xAxisFactor: this.xAxisFactor,
     };
   }
 
   private drawScreen(): void {
     if (!this.ctx || !this.isBrowser) return;
-  
+
     // 1. Dibujar el plano cartesiano
     this.canvasDrawingService.drawScreen({
       ctx: this.ctx,
@@ -270,21 +298,23 @@ export class CartesianCanvasComponent implements AfterViewInit {
       gridColor: this.gridColor,
       fontColor: this.fontColor,
       unit: this.unit,
+      xAxisScale: this.xAxisScale,
+      xAxisFactor: this.xAxisFactor,
     });
-  
+
     // 2. Configuración para dibujar gráficas
     const config: PlotConfig = this.getPlotConfig();
-  
+
     // 3. Redibujar todas las funciones guardadas
     this.functionPlots.forEach((plot) => {
       this.plottingService.drawFunction(
-        config, 
-        plot.fn, 
+        config,
+        plot.fn,
         plot.color,
-        plot.lineWidth || 2  // Usar el grosor guardado o 2 como valor predeterminado
+        plot.lineWidth || 2 // Usar el grosor guardado o 2 como valor predeterminado
       );
     });
-  
+
     // 4. Redibujar todas las funciones en intervalo
     this.intervalPlots.forEach((plot) => {
       this.plottingService.drawFunctionFromAToB(
@@ -293,10 +323,10 @@ export class CartesianCanvasComponent implements AfterViewInit {
         plot.color,
         plot.a,
         plot.b,
-        plot.lineWidth || 2  // Usar el grosor guardado o 2 como valor predeterminado
+        plot.lineWidth || 2 // Usar el grosor guardado o 2 como valor predeterminado
       );
     });
-  
+
     // 5. Redibujar todos los puntos discretos
     this.discretePlots.forEach((plot) => {
       this.plottingService.drawDiscreteLine(
@@ -305,10 +335,10 @@ export class CartesianCanvasComponent implements AfterViewInit {
         plot.startY,
         plot.n,
         plot.color,
-        plot.lineWidth || 2.5  // Usar el grosor guardado o 2.5 como valor predeterminado
+        plot.lineWidth || 2.5 // Usar el grosor guardado o 2.5 como valor predeterminado
       );
     });
-  
+
     // 6. Redibujar todas las series
     this.seriesPlots.forEach((plot) => {
       this.plottingService.drawSeries(
@@ -316,7 +346,7 @@ export class CartesianCanvasComponent implements AfterViewInit {
         plot.seriesTerm,
         plot.terms,
         plot.color,
-        plot.lineWidth || 2  // Usar el grosor guardado o 2 como valor predeterminado
+        plot.lineWidth || 2 // Usar el grosor guardado o 2 como valor predeterminado
       );
     });
   }
@@ -417,5 +447,26 @@ export class CartesianCanvasComponent implements AfterViewInit {
     canvas.addEventListener('mouseleave', () => {
       this.drag = false;
     });
+  }
+
+  /**
+   * Establece la escala del eje X
+   * @param scale La escala a establecer ('integer', 'pi', 'e')
+   */
+  public setXAxisScale(scale: 'integer' | 'pi' | 'e'): void {
+    if (!this.isBrowser) return;
+    
+    this.xAxisScale = scale;
+    
+    // Actualizar el factor según la escala seleccionada
+    if (scale === 'pi') {
+      this.xAxisFactor = Math.PI;
+    } else if (scale === 'e') {
+      this.xAxisFactor = Math.E;
+    } else {
+      this.xAxisFactor = 1;
+    }
+    
+    this.drawScreen();
   }
 }

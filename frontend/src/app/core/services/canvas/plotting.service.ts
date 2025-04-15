@@ -21,14 +21,23 @@ export class PlottingService {
     color: string,
     lineWidth: number = 2.5
   ): void {
-    const { ctx, origin, offsetX, offsetY, unit } = config;
+    const {
+      ctx,
+      origin,
+      offsetX,
+      offsetY,
+      unit,
+      xAxisScale = 'integer',
+      xAxisFactor = 1,
+    } = config;
     if (!ctx) return;
 
     // Coordenadas finales en el espacio matemático
     const endY = startY + n;
 
-    // Convertir coordenadas a píxeles
-    const startXPixel = origin.x - offsetX + unit * startX;
+    // Convertir de unidades matemáticas a píxeles, ajustando por factor de escala
+    const xRaw = startX / xAxisFactor; // Convertimos a escala visual
+    const startXPixel = origin.x - offsetX + unit * xRaw;
     const startYPixel = origin.y - offsetY - unit * startY;
     const endYPixel = origin.y - offsetY - unit * endY;
 
@@ -59,31 +68,44 @@ export class PlottingService {
     color: string,
     lineWidth: number = 2
   ): void {
-    const { ctx, width, unit, offsetX, offsetY, origin } = config;
+    const {
+      ctx,
+      width,
+      unit,
+      offsetX,
+      offsetY,
+      origin,
+      xAxisScale = 'integer',
+      xAxisFactor = 1,
+    } = config;
     if (!ctx) return;
 
     let previousX: number | undefined = undefined;
     let previousY: number | undefined = undefined;
 
     for (let px = 0; px < width; px++) {
-      // Convertir pixel (px) a coordenada matemática
-      const x = (px + offsetX) / unit - width / unit / 2;
+      // Convertir pixel (px) a coordenada matemática, ajustando por factor de escala
+      const xRaw = (px + offsetX) / unit - width / unit / 2;
+      // Aplicar factor de escala según el tipo seleccionado
+      const x = xRaw * xAxisFactor;
       const y = mathFunction(x);
+
+      // Calcular la posición en píxeles, teniendo en cuenta el factor de escala
+      const pixelX = origin.x - offsetX + unit * xRaw;
+      const pixelY = origin.y - offsetY - unit * y;
 
       // Dibuja línea desde el punto anterior al actual
       if (previousX !== undefined && previousY !== undefined) {
         ctx.strokeStyle = color;
         ctx.beginPath();
         ctx.moveTo(previousX, previousY);
-        ctx.lineTo(
-          origin.x - offsetX + unit * x,
-          origin.y - offsetY - unit * y
-        );
+        ctx.lineTo(pixelX, pixelY);
         ctx.lineWidth = lineWidth;
         ctx.stroke();
       }
-      previousX = origin.x - offsetX + unit * x;
-      previousY = origin.y - offsetY - unit * y;
+
+      previousX = pixelX;
+      previousY = pixelY;
     }
   }
 
@@ -103,7 +125,15 @@ export class PlottingService {
     b: number,
     lineWidth: number = 2
   ): void {
-    const { ctx, offsetX, offsetY, origin, unit } = config;
+    const {
+      ctx,
+      offsetX,
+      offsetY,
+      origin,
+      unit,
+      xAxisScale = 'integer',
+      xAxisFactor = 1,
+    } = config;
     if (!ctx) return;
 
     let previousX: number | undefined = undefined;
@@ -112,10 +142,14 @@ export class PlottingService {
 
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
+      // Calcular x en unidades matemáticas (ya escaladas con xAxisFactor)
       const x = a + t * (b - a);
       const y = mathFunction(x);
 
-      const canvasX = origin.x - offsetX + unit * x;
+      // Convertir de unidades matemáticas a píxeles
+      // Convertir el valor de x de nuevo a la escala visual
+      const xRaw = x / xAxisFactor;
+      const canvasX = origin.x - offsetX + unit * xRaw;
       const canvasY = origin.y - offsetY - unit * y;
 
       if (previousX !== undefined && previousY !== undefined) {
@@ -146,15 +180,26 @@ export class PlottingService {
     color: string,
     lineWidth: number = 2
   ): void {
-    const { ctx, width, unit, offsetX, offsetY, origin } = config;
+    const {
+      ctx,
+      width,
+      unit,
+      offsetX,
+      offsetY,
+      origin,
+      xAxisScale = 'integer',
+      xAxisFactor = 1,
+    } = config;
     if (!ctx) return;
 
     let previousX: number | undefined = undefined;
     let previousY: number | undefined = undefined;
 
     for (let px = 0; px < width; px++) {
-      // x en espacio matemático
-      const x = (px + offsetX) / unit - width / unit / 2;
+      // Convertir pixel a coordenada matemática
+      const xRaw = (px + offsetX) / unit - width / unit / 2;
+      // Aplicar factor de escala según el tipo seleccionado
+      const x = xRaw * xAxisFactor;
 
       // Suma parcial de la serie
       let sum = 0;
@@ -167,13 +212,13 @@ export class PlottingService {
         ctx.beginPath();
         ctx.moveTo(previousX, previousY);
         ctx.lineTo(
-          origin.x - offsetX + unit * x,
+          origin.x - offsetX + unit * xRaw,
           origin.y - offsetY - unit * sum
         );
         ctx.lineWidth = lineWidth;
         ctx.stroke();
       }
-      previousX = origin.x - offsetX + unit * x;
+      previousX = origin.x - offsetX + unit * xRaw;
       previousY = origin.y - offsetY - unit * sum;
     }
   }
@@ -198,15 +243,26 @@ export class PlottingService {
     color: string,
     lineWidth: number = 2
   ): void {
-    const { ctx, width, unit, offsetX, offsetY, origin } = config;
+    const {
+      ctx,
+      width,
+      unit,
+      offsetX,
+      offsetY,
+      origin,
+      xAxisScale = 'integer',
+      xAxisFactor = 1,
+    } = config;
     if (!ctx) return;
 
     let previousX: number | undefined = undefined;
     let previousY: number | undefined = undefined;
 
     for (let px = 0; px < width; px++) {
-      // x en espacio matemático
-      const x = (px + offsetX) / unit - width / unit / 2;
+      // Convertir pixel a coordenada matemática
+      const xRaw = (px + offsetX) / unit - width / unit / 2;
+      // Aplicar factor de escala según el tipo seleccionado
+      const x = xRaw * xAxisFactor;
 
       // Inicializar la suma con el término constante a0
       let sum = a0;
@@ -238,13 +294,13 @@ export class PlottingService {
         ctx.beginPath();
         ctx.moveTo(previousX, previousY);
         ctx.lineTo(
-          origin.x - offsetX + unit * x,
+          origin.x - offsetX + unit * xRaw,
           origin.y - offsetY - unit * sum
         );
         ctx.lineWidth = lineWidth;
         ctx.stroke();
       }
-      previousX = origin.x - offsetX + unit * x;
+      previousX = origin.x - offsetX + unit * xRaw;
       previousY = origin.y - offsetY - unit * sum;
     }
   }
