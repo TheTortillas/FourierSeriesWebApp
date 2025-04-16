@@ -14,11 +14,19 @@ import { MathquillService } from '../../core/services/mathquill/mathquill.servic
 import { MathUtilsService } from '../../core/services/maximaToJS/math-utils.service';
 import { PlotConfig } from '../../interfaces/plot-config.interface';
 import { ApiService } from '../../core/services/api/api.service';
+import { ThemeService } from '../../core/services/theming/theme.service';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-fourier-series-plot',
   standalone: true,
-  imports: [CommonModule, FormsModule, CartesianCanvasComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CartesianCanvasComponent,
+    ThemeToggleComponent,
+  ],
   templateUrl: './fourier-series-plot.component.html',
   styleUrls: ['./fourier-series-plot.component.scss'],
 })
@@ -28,6 +36,14 @@ export class FourierSeriesPlotComponent
   @ViewChild('cartesianCanvas') cartesianCanvas!: CartesianCanvasComponent;
 
   public sidenavOpen = true;
+  public isDarkMode = true;
+  private themeSubscription: Subscription | null = null;
+
+  // Canvas colors based on theme
+  public bgColor: string = '#222'; // Dark theme default
+  public axisColor: string = '#90DCB5'; // Dark theme default
+  public gridColor: string = '#6BBCAC'; // Dark theme default
+  public fontColor: string = '#EBEBEB'; // Dark theme default
 
   public xAxisScale: 'integer' | 'pi' | 'e' = 'integer';
   public xAxisFactor: number = 1;
@@ -95,7 +111,8 @@ export class FourierSeriesPlotComponent
     private router: Router,
     private mathquillService: MathquillService,
     private mathUtilsService: MathUtilsService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private themeService: ThemeService
   ) {
     // Recuperar los datos pasados por el router
     const navigation = this.router.getCurrentNavigation();
@@ -120,6 +137,27 @@ export class FourierSeriesPlotComponent
     this.precalculateCoefficients();
     this.precalculateOriginalFunctions();
     this.fetchIndividualTerms();
+
+    // Subscribe to theme changes
+    this.themeSubscription = this.themeService.darkMode$.subscribe((isDark) => {
+      this.isDarkMode = isDark;
+      this.updateThemeColors();
+
+      // Directly update the properties instead of calling setter methods
+      if (this.cartesianCanvas) {
+        this.cartesianCanvas.bgColor = this.bgColor;
+        this.cartesianCanvas.axisColor = this.axisColor;
+        this.cartesianCanvas.gridColor = this.gridColor;
+        this.cartesianCanvas.fontColor = this.fontColor;
+
+        // Force a redraw to apply the new colors
+        this.cartesianCanvas.clearCanvas();
+        this.redrawFunctions();
+      }
+    });
+
+    // Initialize colors based on current theme
+    this.updateThemeColors();
   }
 
   ngAfterViewInit(): void {
@@ -131,7 +169,11 @@ export class FourierSeriesPlotComponent
   }
 
   ngOnDestroy(): void {
-    // Limpieza si es necesaria
+    // Clean up the theme subscription
+    if (this.themeSubscription) {
+      this.themeSubscription.unsubscribe();
+      this.themeSubscription = null;
+    }
   }
 
   /* Navigation and UI Control Methods */
@@ -986,7 +1028,7 @@ export class FourierSeriesPlotComponent
       offsetY: this.cartesianCanvas.offsetY,
       unit: this.cartesianCanvas.unit,
       xAxisScale: this.xAxisScale,
-      xAxisFactor: this.xAxisFactor
+      xAxisFactor: this.xAxisFactor,
     };
   }
 
@@ -999,11 +1041,28 @@ export class FourierSeriesPlotComponent
     } else {
       this.xAxisFactor = 1;
     }
-  
+
     // Actualiza la escala en el componente cartesianCanvas
     if (this.cartesianCanvas) {
       this.cartesianCanvas.setXAxisScale(this.xAxisScale);
       // No necesitas llamar a redrawFunctions porque setXAxisScale ya redibuja el canvas
+    }
+  }
+
+  // Update colors based on current theme
+  private updateThemeColors(): void {
+    if (this.isDarkMode) {
+      // Dark theme colors
+      this.bgColor = '#222';
+      this.axisColor = '#90DCB5';
+      this.gridColor = '#6BBCAC';
+      this.fontColor = '#EBEBEB';
+    } else {
+      // Light theme colors
+      this.bgColor = '#f8fafc';
+      this.axisColor = '#3b82f6';
+      this.gridColor = '#93c5fd';
+      this.fontColor = '#334155';
     }
   }
 }

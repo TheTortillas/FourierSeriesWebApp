@@ -2,3 +2,156 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+// Estilos base
+body {
+  @apply transition-colors duration-300;
+}
+
+// Tema oscuro (predeterminado)
+.dark {
+  @apply bg-gray-900 text-gray-100;
+
+  .app-container {
+    @apply bg-gray-900;
+  }
+
+  .card {
+    @apply bg-gradient-to-br from-gray-800/95 via-gray-900/95 to-gray-800/95 border-teal-500/20;
+  }
+
+  .input,
+  select,
+  .select {
+    @apply bg-gray-700/70 border-gray-600 text-white focus:ring-teal-500 focus:border-teal-500;
+  }
+
+  .panel-header {
+    @apply border-teal-500/30 bg-gray-800/60;
+  }
+
+  .main-title {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-green-300;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-teal-500 to-green-500 hover:from-teal-600 hover:to-green-600 text-white shadow-lg hover:shadow-teal-500/30;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-700/50 hover:bg-teal-600/70 text-white focus:ring-teal-400/50;
+  }
+
+  .section-header {
+    @apply text-teal-300;
+  }
+
+  .section-container {
+    @apply bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30;
+  }
+
+  .dot-indicator {
+    @apply bg-teal-400;
+  }
+
+  .latex-container {
+    scrollbar-color: rgba(16, 185, 129, 0.6) rgba(31, 41, 55, 0.3) !important;
+
+    &::-webkit-scrollbar-track {
+      @apply bg-gray-800/50;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      @apply bg-teal-500/60 hover:bg-teal-500/80;
+    }
+  }
+
+  .math-field {
+    @apply border-teal-500/70 bg-gray-800/70 text-gray-100 hover:border-teal-400;
+
+    &:focus-within {
+      @apply shadow-teal-500/50 border-teal-500/80;
+    }
+  }
+
+  .math-keyboard-btn {
+    @apply bg-gray-800/70 border-teal-500/30 text-gray-100 hover:bg-teal-500/20 hover:border-teal-500/60;
+  }
+
+
+  .function-display,
+  .piece-container {
+    @apply border-gray-700/50 bg-gray-800/40;
+  }
+}
+
+// Tema claro
+.light {
+  @apply bg-gray-100 text-gray-800;
+
+  .app-container {
+    @apply bg-blue-50;
+  }
+
+  .card {
+    @apply bg-gradient-to-br from-white/95 via-white/90 to-white/95 border-blue-200 shadow-lg;
+  }
+
+  .input,
+  select,
+  .select {
+    @apply bg-white border-gray-300 text-gray-800 focus:ring-blue-500 focus:border-blue-500;
+  }
+
+  .panel-header {
+    @apply border-blue-200 bg-blue-50;
+  }
+
+  .main-title {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-sky-400;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-500 to-sky-400 hover:from-blue-600 hover:to-sky-500 text-white shadow-lg hover:shadow-blue-500/30;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-blue-400/70 text-gray-700 hover:text-white focus:ring-blue-400/50;
+  }
+
+  .section-header {
+    @apply text-sky-600;
+  }
+
+  .section-container {
+    @apply bg-white border-gray-200 hover:border-blue-300;
+  }
+
+  .dot-indicator {
+    @apply bg-blue-500;
+  }
+
+  .latex-container {
+    scrollbar-color: rgba(59, 130, 246, 0.6) rgba(229, 231, 235, 0.7) !important;
+
+    &::-webkit-scrollbar-track {
+      @apply bg-gray-200;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      @apply bg-blue-500/60 hover:bg-blue-500/80;
+    }
+  }
+
+  .math-field {
+    @apply border-blue-300 bg-white text-gray-800 hover:border-blue-400;
+
+    &:focus-within {
+      @apply shadow-blue-500/50 border-blue-500/80;
+    }
+  }
+
+  .math-keyboard-btn {
+    @apply bg-gray-100 border-blue-200 text-gray-800 hover:bg-blue-100 hover:border-blue-300;
+  }
+}

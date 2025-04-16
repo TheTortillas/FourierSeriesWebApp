@@ -1,16 +1,18 @@
 <div
-  class="flex justify-center items-center min-h-screen bg-gray-100 font-sans p-4"
+  class="min-h-screen app-container font-sans p-4 flex items-center justify-center"
 >
-  <div class="max-w-4xl w-full bg-white rounded-lg shadow-md p-8">
-    <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">
+  <div
+    class="w-full max-w-4xl card rounded-xl shadow-2xl p-8 border text-inherit"
+  >
+    <h1 class="text-2xl font-bold text-center mb-6 main-title">
       Calculadora de Series de Fourier
     </h1>
 
     <!-- Math Keyboard Toggle Button -->
-    <div class="flex justify-center mb-2">
+    <div class="flex justify-center mb-4">
       <button
         (click)="toggleKeyboard()"
-        class="keyboard-toggle-btn flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        class="keyboard-toggle-btn flex items-center justify-center gap-2 px-5 py-2.5 btn-primary rounded-lg transition-all duration-300"
         [ngClass]="{ active: keyboardVisible }"
       >
         <div class="keyboard-icon">
@@ -27,7 +29,8 @@
             />
           </svg>
         </div>
-        <div class="arrow-icon">
+        <span>Teclado Matemático</span>
+        <div class="arrow-icon ml-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -45,10 +48,16 @@
 
     <!-- Math Keyboard Container with Animation -->
     <div
-      class="keyboard-container mb-6"
+      class="keyboard-container mb-6 px-2 py-3 section-container rounded-lg border transition-all"
       [ngClass]="{ visible: keyboardVisible }"
     >
-      <div class="flex flex-wrap justify-center">
+      <!-- Título del teclado -->
+      <h3 class="text-base mb-3 font-medium flex items-center px-2">
+        <span class="w-1 h-1 dot-indicator rounded-full mr-2"></span>
+        <span class="section-header">Funciones Disponibles</span>
+      </h3>
+
+      <div class="flex flex-wrap justify-center gap-1">
         <!-- Operadores Básicos -->
         <button
           *ngFor="let button of mathButtonsBasic"
@@ -71,17 +80,19 @@
       </div>
     </div>
 
-    <!-- Variable Selection (New) -->
-    <div class="mb-6">
-      <label for="variable" class="block font-bold mb-2 text-gray-700"
-        >Variable de integración:</label
-      >
+    <!-- Variable Selection -->
+    <div class="mb-6 section-container p-4 rounded-lg border transition-all">
+      <h3 class="text-base mb-3 font-medium flex items-center">
+        <span class="w-1 h-1 dot-indicator rounded-full mr-2"></span>
+        <span class="section-header">Variable de Integración</span>
+      </h3>
+
       <select
         id="variable"
         name="variable"
         [(ngModel)]="selectedVariable"
         (change)="updateFunctionDisplay()"
-        class="w-full p-2 border border-gray-300 rounded-md text-base focus:border-blue-500 focus:ring focus:ring-blue-200 outline-none"
+        class="w-full p-2.5 select text-sm border rounded-md focus:outline-none"
       >
         <option value="x">x (Espacial)</option>
         <option value="t">t (Temporal)</option>
@@ -89,18 +100,21 @@
     </div>
 
     <!-- Piecewise Function Input -->
-    <div class="mb-6">
-      <label for="pieces" class="block font-bold mb-2 text-gray-700"
-        >Función f({{ selectedVariable }}):</label
-      >
+    <div class="mb-6 section-container p-4 rounded-lg border transition-all">
+      <h3 class="text-base mb-3 font-medium flex items-center">
+        <span class="w-1 h-1 dot-indicator rounded-full mr-2"></span>
+        <span class="section-header">Función f({{ selectedVariable }})</span>
+      </h3>
+
       <div
         id="functionDisplay"
-        class="text-lg mb-3 p-2 border border-gray-200 rounded-md"
+        class="text-lg mb-3 p-2 border function-display rounded-md"
       ></div>
+
       <div
         #pieceContainer
         id="pieceContainer"
-        class="overflow-y-auto border border-gray-300 rounded-md p-3 bg-gray-100"
+        class="overflow-y-auto border piece-container rounded-md p-3"
       >
         <div
           class="flex items-center mb-3"
@@ -108,19 +122,19 @@
         >
           <div class="flex-1 flex items-center" style="width: 85%">
             <div
-              class="math-field pieceFunc border border-blue-500 bg-white rounded-md min-h-[50px] min-w-[50px] flex items-center justify-center cursor-text"
+              class="math-field pieceFunc rounded-md min-h-[50px] min-w-[50px] flex items-center justify-center cursor-text transition-colors"
               style="width: 55%"
             ></div>
-            <span class="mx-2 text-lg" tabindex="-1">$$,$$</span>
+            <span class="mx-2 text-lg math-operator" tabindex="-1">$$,$$</span>
             <div
-              class="math-field pieceStart border border-blue-500 bg-white rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text"
+              class="math-field pieceStart rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text transition-colors"
               style="width: 15%"
             ></div>
             <span class="mx-1 text-lg variable-span" tabindex="-1"
               >$$< {{ selectedVariable }} <$$</span
             >
             <div
-              class="math-field pieceEnd border border-blue-500 bg-white rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text"
+              class="math-field pieceEnd rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text transition-colors"
               style="width: 15%"
             ></div>
           </div>
@@ -131,18 +145,20 @@
             <button
               *ngIf="i === 0"
               (click)="addPiece()"
-              class="font-bold w-8 h-8 mx-auto mb-1 flex items-center justify-center bg-green-600 text-white rounded-md hover:bg-green-700 hover:scale-110 transition"
+              class="font-bold w-8 h-8 mx-auto mb-1 flex items-center justify-center btn-primary rounded-full hover:scale-110 transition-all"
             >
               +
             </button>
             <button
               *ngIf="i > 0"
               (click)="removePiece(i)"
-              class="font-bold w-8 h-8 mx-auto mb-1 flex items-center justify-center bg-red-600 text-white rounded-md hover:bg-red-700 hover:scale-110 transition"
+              class="font-bold w-8 h-8 mx-auto mb-1 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 hover:scale-110 transition-all"
             >
               -
             </button>
-            <span class="text-xs text-center text-gray-600 w-full font-bold">
+            <span
+              class="text-xs text-center text-button-label w-full font-medium"
+            >
               {{ i === 0 ? "Añadir trozo" : "Quitar trozo" }}
             </span>
           </div>
@@ -150,16 +166,18 @@
       </div>
     </div>
 
-    <!-- Series Type Selection  -->
-    <div class="mb-6">
-      <label for="type" class="block font-bold mb-2 text-gray-700"
-        >Elige el tipo de serie:</label
-      >
+    <!-- Series Type Selection -->
+    <div class="mb-8 section-container p-4 rounded-lg border transition-all">
+      <h3 class="text-base mb-3 font-medium flex items-center">
+        <span class="w-1 h-1 dot-indicator rounded-full mr-2"></span>
+        <span class="section-header">Tipo de Serie</span>
+      </h3>
+
       <select
         id="type"
         name="type"
         [(ngModel)]="seriesType"
-        class="w-full p-2 border border-gray-300 rounded-md text-base focus:border-blue-500 focus:ring focus:ring-blue-200 outline-none"
+        class="w-full p-2.5 select text-sm border rounded-md focus:outline-none"
       >
         <option value="" disabled selected>
           Selecciona el tipo de Serie de Fourier
@@ -171,14 +189,17 @@
     </div>
 
     <!-- Submit Button -->
-    <div class="text-center mt-8">
+    <div class="text-center">
       <button
         id="submitButton"
         (click)="submitData()"
-        class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        class="px-6 py-3 btn-primary rounded-lg transition-all duration-300 font-medium"
       >
         Calcular Serie de Fourier
       </button>
     </div>
   </div>
 </div>
+
+<!-- Botón de cambio de tema -->
+<app-theme-toggle></app-theme-toggle>
