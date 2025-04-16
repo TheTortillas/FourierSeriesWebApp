@@ -113,6 +113,7 @@
 // Estilos para los contenedores de LaTeX (MathJax)
 .latex-container {
   overflow-x: auto;
+  overflow-y: hidden; // Elimina el scroll vertical
   max-width: 100%;
   margin-bottom: 0.5rem;
   scrollbar-width: thin;
@@ -142,5 +143,7 @@
     padding: 0.25rem 0;
     display: inline-block;
     min-width: 100%;
+    height: auto;
+    line-height: 1.5;
   }
 }
