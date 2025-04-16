@@ -7,7 +7,7 @@ import { isPlatformBrowser } from '@angular/common';
 })
 export class ThemeService {
   private darkModeKey = 'darkMode';
-  private darkModeSubject = new BehaviorSubject<boolean>(true); // Valor por defecto
+  private darkModeSubject = new BehaviorSubject<boolean>(false); // Valor por defecto
   public darkMode$ = this.darkModeSubject.asObservable();
   private isBrowser: boolean;
 
@@ -38,21 +38,22 @@ export class ThemeService {
   }
 
   private getInitialMode(): boolean {
-    if (!this.isBrowser) return true; // Predeterminado para SSR
+    if (!this.isBrowser) return false; // Predeterminado para SSR
 
     // Verificar si hay una preferencia guardada
     const savedPreference = this.getLocalStorageItem(this.darkModeKey);
     if (savedPreference !== null) {
+      console.log('Preferencia guardada:', savedPreference);
       return savedPreference === 'true';
     }
 
     // Si no hay preferencia guardada, usar la del sistema
     if (window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return window.matchMedia('(prefers-color-scheme: light)').matches;
     }
 
     // Predeterminado: modo oscuro
-    return true;
+    return false;
   }
 
   toggleTheme(): void {
