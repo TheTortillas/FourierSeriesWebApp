@@ -257,29 +257,45 @@
             </div>
           </div>
 
-          <div
-            class="flex items-center justify-between mb-3"
-            *ngIf="showIndividualTerms"
-          >
-            <label
-              class="text-sm font-medium"
-              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
-              >Grosor términos:</label
-            >
-            <div class="relative inline-block w-24 align-middle select-none">
-              <input
-                type="range"
-                min="1"
-                max="5"
-                [(ngModel)]="termsLineWidth"
-                (input)="redrawWithIndividualTerms()"
-                class="w-full accent-teal-500"
-              />
-              <div
-                class="text-xs text-center font-medium mt-1"
-                [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
-              >
-                {{ termsLineWidth }}px
+          <!-- Agregar esto dentro de la sección de términos individuales en el sidenav -->
+          <div class="space-y-3 mt-3" *ngIf="showIndividualTerms">
+            <!-- Color inicial -->
+            <div class="flex items-center justify-between">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Color inicial términos:</label>
+              <div class="flex items-center">
+                <input
+                  type="color"
+                  [(ngModel)]="termsStartColor"
+                  (change)="updateTermColors()"
+                  class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+                />
+                <span
+                  class="ml-2 text-xs font-mono"
+                  [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                >{{ termsStartColor }}</span>
+              </div>
+            </div>
+            
+            <!-- Color final -->
+            <div class="flex items-center justify-between">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Color final términos:</label>
+              <div class="flex items-center">
+                <input
+                  type="color"
+                  [(ngModel)]="termsEndColor"
+                  (change)="updateTermColors()"
+                  class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+                />
+                <span
+                  class="ml-2 text-xs font-mono"
+                  [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                >{{ termsEndColor }}</span>
               </div>
             </div>
           </div>

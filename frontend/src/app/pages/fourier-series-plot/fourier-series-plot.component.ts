@@ -63,6 +63,10 @@ export class FourierSeriesPlotComponent
   public functionColor: string = '#ddb3ff'; // Violeta
   public seriesColor: string = '#ff8585'; // Rojo
 
+  // Propiedades para personalizar los colores de términos individuales
+  public termsStartColor: string = '#1940af'; // Azul inicial (RGB: 25, 64, 175)
+  public termsEndColor: string = '#ef4444'; // Rojo final (RGB: 239, 68, 68)
+
   public functionLineWidth: number = 2; // Grosor para la función original
   public seriesLineWidth: number = 2;
 
@@ -847,19 +851,22 @@ export class FourierSeriesPlotComponent
 
     // Function to generate colors - a gradient based on the term index
     const getTermColor = (index: number, total: number) => {
-      // Start with blue (RGB: 25, 64, 175) and end with red (RGB: 239, 68, 68)
-      const startR = 25,
-        startG = 64,
-        startB = 175;
-      const endR = 239,
-        endG = 68,
-        endB = 68;
+      // Parse the hex colors to RGB components
+      const parseColor = (hexColor: string) => {
+        const r = parseInt(hexColor.slice(1, 3), 16);
+        const g = parseInt(hexColor.slice(3, 5), 16);
+        const b = parseInt(hexColor.slice(5, 7), 16);
+        return { r, g, b };
+      };
+
+      const startColor = parseColor(this.termsStartColor);
+      const endColor = parseColor(this.termsEndColor);
 
       const ratio = index / (total || 2);
 
-      const r = Math.round(startR + (endR - startR) * ratio);
-      const g = Math.round(startG + (endG - startG) * ratio);
-      const b = Math.round(startB + (endB - startB) * ratio);
+      const r = Math.round(startColor.r + (endColor.r - startColor.r) * ratio);
+      const g = Math.round(startColor.g + (endColor.g - startColor.g) * ratio);
+      const b = Math.round(startColor.b + (endColor.b - startColor.b) * ratio);
 
       return `rgb(${r}, ${g}, ${b})`;
     };
@@ -995,6 +1002,11 @@ export class FourierSeriesPlotComponent
         console.error(`Error creating combined term for n=${n}:`, error);
       }
     }
+  }
+
+  updateTermColors(): void {
+    this.prepareIndividualTermFunctions();
+    this.redrawWithIndividualTerms();
   }
 
   toggleIndividualTerms(show: boolean): void {
