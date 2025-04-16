@@ -22,7 +22,7 @@ import { LatexToMaximaService } from '../../core/services/conversion/latex-to-ma
 import Swal from 'sweetalert2';
 import { debounceTime, Subject } from 'rxjs';
 import { Router } from '@angular/router';
-import { ThemeToggleComponent } from "../../shared/components/theme-toggle/theme-toggle.component";
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-fourier-calculator',
