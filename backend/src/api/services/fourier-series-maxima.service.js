@@ -1,6 +1,10 @@
 const execMaxima = require("../utils/maxima.util");
 const getMaximaRules = require("../utils/maxima-rules.util");
 const calculatePiecewiseSeries = require("../utils/piecewise-series.util");
+const {
+  validateFourierSeries,
+  validatePiecewiseFourierSeries,
+} = require("../utils/fourier-validation.util");
 
 // Helper function to build Maxima commands
 function buildMaximaCommand(maximaExpression) {
@@ -9,6 +13,26 @@ function buildMaximaCommand(maximaExpression) {
 
 exports.computeTrigonometricSeries = async (funcion, periodo, intVar) => {
   try {
+    // First, validate the integrability of the function
+    const validation = await validateFourierSeries({
+      func: funcion,
+      intVar,
+      lowerLimit: `-((${periodo})/2)`,
+      upperLimit: `(${periodo})/2`,
+      seriesType: "trigonometric",
+      w0: `(2*(%pi))/(${periodo})`,
+    });
+
+    if (!validation.isValid) {
+      return {
+        success: false,
+        message:
+          "La función no puede ser integrada correctamente o contiene funciones especiales",
+        validationDetails: validation,
+      };
+    }
+
+    // Continue with the calculation if validation passed
     // Define common expressions including core functions
     const commonExprPart = `
       ${getMaximaRules({
@@ -19,7 +43,7 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar) => {
       w0: (2*(%pi))/(${periodo})$          
       series_cosine_core: cos(n*w0*${intVar})$
       series_sine_core: sin(n*w0*${intVar})$
-  `;
+    `;
 
     // Primero obtenemos w0
     const w0Expression = `
@@ -108,6 +132,7 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar) => {
       ]);
 
     return {
+      success: true,
       simplified: { a0, an, bn, w0, series_cosine_core, series_sine_core },
       latex: {
         a0: a0Tex,
@@ -125,6 +150,25 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar) => {
 
 exports.computeComplexSeries = async (funcion, periodo, intVar) => {
   try {
+    // First, validate the integrability of the function
+    const validation = await validateFourierSeries({
+      func: funcion,
+      intVar,
+      lowerLimit: `-((${periodo})/2)`,
+      upperLimit: `(${periodo})/2`,
+      seriesType: "complex",
+      w0: `(2*(%pi))/(${periodo})`,
+    });
+
+    if (!validation.isValid) {
+      return {
+        success: false,
+        message:
+          "La función no puede ser integrada correctamente o contiene funciones especiales",
+        validationDetails: validation,
+      };
+    }
+
     // Define common expressions including core functions
     const commonExprPart = `
       ${getMaximaRules({
@@ -195,6 +239,7 @@ exports.computeComplexSeries = async (funcion, periodo, intVar) => {
     ]);
 
     return {
+      success: true,
       simplified: { c0, cn, w0, series_exp_core },
       latex: { c0: c0Tex, cn: cnTex, w0: w0Tex, series_exp_core: expCoreTex },
     };
@@ -205,11 +250,33 @@ exports.computeComplexSeries = async (funcion, periodo, intVar) => {
 
 exports.computeTrigonometricSeriesPiecewise = async (funcionMatrix, intVar) => {
   try {
-    return await calculatePiecewiseSeries({
+    // First, validate the piecewise function
+    const validation = await validatePiecewiseFourierSeries(
+      funcionMatrix,
+      intVar,
+      "trigonometric"
+    );
+
+    if (!validation.isValid) {
+      return {
+        success: false,
+        message:
+          "La función a trozos no puede ser integrada correctamente o contiene funciones especiales",
+        validationDetails: validation,
+      };
+    }
+
+    // Continue with calculation if validation passed
+    const result = await calculatePiecewiseSeries({
       funcionMatrix,
       intVar,
       seriesType: "trigonometric",
     });
+
+    return {
+      success: true,
+      ...result,
+    };
   } catch (error) {
     throw new Error(
       `Error computing piecewise trigonometric series: ${error.message}`
@@ -219,11 +286,33 @@ exports.computeTrigonometricSeriesPiecewise = async (funcionMatrix, intVar) => {
 
 exports.computeComplexSeriesPiecewise = async (funcionMatrix, intVar) => {
   try {
-    return await calculatePiecewiseSeries({
+    // First, validate the piecewise function
+    const validation = await validatePiecewiseFourierSeries(
+      funcionMatrix,
+      intVar,
+      "complex"
+    );
+
+    if (!validation.isValid) {
+      return {
+        success: false,
+        message:
+          "La función a trozos no puede ser integrada correctamente o contiene funciones especiales",
+        validationDetails: validation,
+      };
+    }
+
+    // Continue with calculation if validation passed
+    const result = await calculatePiecewiseSeries({
       funcionMatrix,
       intVar,
       seriesType: "complex",
     });
+
+    return {
+      success: true,
+      ...result,
+    };
   } catch (error) {
     throw new Error(
       `Error computing piecewise complex series: ${error.message}`
@@ -233,11 +322,33 @@ exports.computeComplexSeriesPiecewise = async (funcionMatrix, intVar) => {
 
 exports.computeHalfRangeSeries = async (funcionMatrix, intVar = "x") => {
   try {
-    return await calculatePiecewiseSeries({
+    // First, validate the piecewise function
+    const validation = await validatePiecewiseFourierSeries(
+      funcionMatrix,
+      intVar,
+      "halfRange"
+    );
+
+    if (!validation.isValid) {
+      return {
+        success: false,
+        message:
+          "La función a trozos no puede ser integrada correctamente o contiene funciones especiales",
+        validationDetails: validation,
+      };
+    }
+
+    // Continue with calculation if validation passed
+    const result = await calculatePiecewiseSeries({
       funcionMatrix,
       intVar,
       seriesType: "halfRange",
     });
+
+    return {
+      success: true,
+      ...result,
+    };
   } catch (error) {
     throw new Error(`Error computing half-range series: ${error.message}`);
   }
