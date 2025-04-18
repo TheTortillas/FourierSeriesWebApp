@@ -1,0 +1,149 @@
+// Estilos para el toggle
+.toggle-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  
+    &:checked + .toggle-label {
+      background: linear-gradient(to right, #10b981, #059669);
+  
+      &:after {
+        left: calc(100% - 2px);
+        transform: translateX(-100%);
+        box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+      }
+    }
+  
+    &:focus + .toggle-label {
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+    }
+  }
+  
+  .toggle-label {
+    display: block;
+    overflow: hidden;
+    cursor: pointer;
+    height: 22px;
+    width: 100%;
+    border-radius: 22px;
+    background-color: rgba(75, 85, 99, 0.5);
+    transition: all 0.3s ease;
+    position: relative;
+  
+    &:after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(to bottom right, #ffffff, #f3f4f6);
+      border-radius: 50%;
+      transition: 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+  
+    &:hover {
+      background-color: rgba(75, 85, 99, 0.7);
+  
+      &:after {
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+      }
+    }
+  }
+  
+  // Estilos para animación del sidenav
+  .sidenav {
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.6s ease;
+    will-change: transform, opacity;
+    transform-origin: left center;
+    overflow: hidden;
+  
+    &.open {
+      transform: translateX(0);
+      opacity: 1;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+    }
+  
+    &.closed {
+      transform: translateX(-110%);
+      opacity: 0;
+      box-shadow: none;
+      backdrop-filter: blur(0);
+    }
+  }
+  
+  // Overlay de fondo
+  .sidenav-overlay {
+    transition: opacity 0.6s ease;
+    will-change: opacity;
+  
+    &.visible {
+      opacity: 1;
+    }
+  
+    &.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+  
+  // Efecto para el botón de apertura
+  .menu-button {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+      box-shadow 0.3s ease;
+  
+    &:hover {
+      transform: scale(1.1) rotate(90deg);
+    }
+  
+    &:active {
+      transform: scale(0.95);
+    }
+  
+    &.open {
+      transform: rotate(90deg);
+    }
+  }
+  
+  // Estilos para los contenedores de LaTeX (MathJax)
+  .latex-container {
+    overflow-x: auto;
+    overflow-y: hidden; // Elimina el scroll vertical
+    max-width: 100%;
+    margin-bottom: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(16, 185, 129, 0.6) rgba(31, 41, 55, 0.3);
+  
+    // Estilo para navegadores basados en WebKit
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+  
+    &::-webkit-scrollbar-track {
+      background: rgba(31, 41, 55, 0.3);
+      border-radius: 3px;
+    }
+  
+    &::-webkit-scrollbar-thumb {
+      background: rgba(16, 185, 129, 0.6);
+      border-radius: 3px;
+  
+      &:hover {
+        background: rgba(16, 185, 129, 0.8);
+      }
+    }
+  
+    .math-formula {
+      white-space: nowrap;
+      padding: 0.25rem 0;
+      display: inline-block;
+      min-width: 100%;
+      height: auto;
+      line-height: 1.5;
+    }
+  }

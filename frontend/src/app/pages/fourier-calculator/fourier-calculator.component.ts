@@ -380,15 +380,21 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
 
     // Llamar al servicio API correspondiente según el tipo de serie seleccionado
     let apiCall;
+    // Determinar la ruta de navegación según el tipo de serie
+    let targetRoute: string;
+
     switch (this.seriesType) {
       case 'trigonometric':
         apiCall = this.apiService.calculateTrigonometricSeriesPiecewise(data);
+        targetRoute = '/fourier-series-plot/trig';
         break;
       case 'complex':
         apiCall = this.apiService.calculateComplexSeriesPiecewise(data);
+        targetRoute = '/fourier-series-plot/trig'; // Por ahora usamos el mismo componente
         break;
       case 'halfrange':
         apiCall = this.apiService.calculateHalfRangeSeries(data);
+        targetRoute = '/fourier-series-plot/half-range'; // Navegar al componente de medio rango
         break;
       default:
         Swal.fire({
@@ -408,7 +414,8 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
 
         // Navegar a la página de visualización con los datos solo si hay éxito
         if (response.success) {
-          this.router.navigate(['/fourier-series-plot'], {
+          // Navegar directamente al componente hijo específico
+          this.router.navigate([targetRoute], {
             state: {
               response,
               seriesType: this.seriesType,

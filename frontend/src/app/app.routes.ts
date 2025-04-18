@@ -13,6 +13,8 @@ import { HalfRangeSeriesComponent } from './pages/tests/half-range-series/half-r
 import { MultiCanvasLayoutComponent } from './pages/tests/multi-canvas-layout/multi-canvas-layout.component';
 import { FourierCalculatorComponent } from './pages/fourier-calculator/fourier-calculator.component';
 import { FourierSeriesPlotComponent } from './pages/fourier-series-plot/fourier-series-plot.component';
+import { TrigComponent } from './pages/fourier-series-plot/trig/trig.component';
+import { HalfRangeComponent } from './pages/fourier-series-plot/half-range/half-range.component';
 export const routes: Routes = [
   {
     path: 'fourier-calculator',
@@ -20,7 +22,21 @@ export const routes: Routes = [
   },
   {
     path: 'fourier-series-plot',
-    component: FourierSeriesPlotComponent,
+    children: [
+      {
+        path: 'trig',
+        component: TrigComponent,
+      },
+      {
+        path: 'half-range',
+        component: HalfRangeComponent,
+      },
+      {
+        path: '',
+        redirectTo: 'trig',
+        pathMatch: 'full',
+      },
+    ],
   },
   {
     path: 'tests',
