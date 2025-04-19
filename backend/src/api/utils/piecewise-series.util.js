@@ -1,4 +1,4 @@
-const execMaxima = require("./maxima.util");
+const { execMaxima, buildMaximaCommand } = require("./maxima.util");
 const getMaximaRules = require("./maxima-rules.util");
 
 /**
@@ -550,11 +550,5 @@ function parseMaximaPair(pairStr) {
   ];
 }
 
-/**
- * Helper function to build Maxima commands
- */
-function buildMaximaCommand(maximaExpression) {
-  return `echo "${maximaExpression}" | maxima --very-quiet -`;
-}
 
 module.exports = calculatePiecewiseSeries;

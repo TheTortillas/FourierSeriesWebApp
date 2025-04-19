@@ -1,12 +1,5 @@
-const execMaxima = require("./maxima.util");
+const { execMaxima, buildMaximaCommand } = require("./maxima.util");
 const getMaximaRules = require("./maxima-rules.util");
-
-/**
- * Helper function to build Maxima commands
- */
-function buildMaximaCommand(maximaExpression) {
-  return `echo "${maximaExpression}" | maxima --very-quiet -`;
-}
 
 /**
  * Validates if an integral can be computed and if the result contains special functions

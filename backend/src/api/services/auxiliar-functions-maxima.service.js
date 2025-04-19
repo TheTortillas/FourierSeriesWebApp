@@ -1,9 +1,4 @@
-const execMaxima = require("../utils/maxima.util");
-
-// Helper function to build Maxima commands
-function buildMaximaCommand(maximaExpression) {
-  return `echo "${maximaExpression}" | maxima --very-quiet -`;
-}
+const { execMaxima, buildMaximaCommand } = require("../utils/maxima.util");
 
 exports.checkIntegrability = async (funcion, intVar, start, end) => {
   try {

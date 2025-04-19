@@ -1,12 +1,5 @@
-const execMaxima = require("./maxima.util");
+const { execMaxima, buildMaximaCommand } = require("./maxima.util");
 const getMaximaRules = require("./maxima-rules.util");
-
-/**
- * Helper function to build Maxima commands
- */
-function buildMaximaCommand(maximaExpression) {
-  return `echo "${maximaExpression}" | maxima --very-quiet -`;
-}
 
 /**
  * Checks if a coefficient is zero according to Maxima
@@ -192,7 +185,6 @@ async function expandSeries({
                 },
               }
             : null,
-
         };
       }
 
@@ -226,8 +218,7 @@ async function expandSeries({
         /* Generate list of positive and negative terms using safe substitution */
         lista_positivos: makelist(safe_subst(cn, i) * exp(%i * i * w0 * ${intVar}), i, n1, n2)$
         lista_negativos: makelist(safe_subst(cn, -i) * exp(%i * (-i) * w0 * ${intVar}), i, n1, n2)$
-        lista_negativos: reverse(lista_negativos)$
-        
+       
         c0_term: c0$
         cn_pos_terms: lista_positivos$
         cn_neg_terms: lista_negativos$

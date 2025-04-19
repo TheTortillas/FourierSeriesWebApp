@@ -1,4 +1,4 @@
-const execMaxima = require("../utils/maxima.util");
+const { execMaxima, buildMaximaCommand } = require("../utils/maxima.util");
 const getMaximaRules = require("../utils/maxima-rules.util");
 const calculatePiecewiseSeries = require("../utils/piecewise-series.util");
 const {
@@ -6,10 +6,6 @@ const {
   validatePiecewiseFourierSeries,
 } = require("../utils/fourier-validation.util");
 
-// Helper function to build Maxima commands
-function buildMaximaCommand(maximaExpression) {
-  return `echo "${maximaExpression}" | maxima --very-quiet -`;
-}
 
 exports.computeTrigonometricSeries = async (funcion, periodo, intVar) => {
   try {
