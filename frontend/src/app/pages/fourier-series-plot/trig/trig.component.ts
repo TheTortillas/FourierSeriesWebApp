@@ -28,11 +28,9 @@ import { Subscription } from 'rxjs';
     ThemeToggleComponent,
   ],
   templateUrl: './trig.component.html',
-  styleUrl: './trig.component.scss'
+  styleUrl: './trig.component.scss',
 })
-export class TrigComponent
-  implements OnInit, AfterViewInit, OnDestroy
-{
+export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('cartesianCanvas') cartesianCanvas!: CartesianCanvasComponent;
 
   public sidenavOpen = true;
@@ -141,7 +139,7 @@ export class TrigComponent
     this.precalculateCoefficients();
     this.precalculateOriginalFunctions();
     this.fetchIndividualTerms();
-
+    this.printAllCoefficients();
     // Subscribe to theme changes
     this.themeSubscription = this.themeService.darkMode$.subscribe((isDark) => {
       this.isDarkMode = isDark;
@@ -162,6 +160,62 @@ export class TrigComponent
 
     // Initialize colors based on current theme
     this.updateThemeColors();
+  }
+  private printAllCoefficients(): void {
+    // Esperar un momento para asegurar que los coeficientes estén calculados
+    setTimeout(() => {
+      console.group('Coeficientes Serie de Fourier - Valores numéricos');
+      console.log('a0:', this.cachedA0);
+      console.log('w0:', this.cachedW0);
+
+      // Crear un objeto para mostrar todos los coeficientes de manera estructurada
+      const allCoefficients = {
+        a0: this.cachedA0,
+        w0: this.cachedW0,
+        an: this.cachedACoefs.map((value, index) => ({ n: index + 1, value })),
+        bn: this.cachedBCoefs.map((value, index) => ({ n: index + 1, value })),
+      };
+
+      console.table(allCoefficients.an); // Mostrar an como tabla
+      console.table(allCoefficients.bn); // Mostrar bn como tabla
+
+      // También puedes crear un arreglo con todos los valores para exportación
+      const exportData = {
+        a0: this.cachedA0,
+        w0: this.cachedW0,
+        an: this.cachedACoefs,
+        bn: this.cachedBCoefs,
+      };
+
+       // Almacenar en una propiedad para posible uso posterior (descarga, etc.)
+    this.coefficientsData = exportData;
+
+      console.log('Datos completos para exportación:', exportData);
+      console.groupEnd();
+    }, 500);
+  }
+
+  // Añadir esta propiedad para almacenar los coeficientes
+  public coefficientsData: any = null;
+
+  // Para hacer los datos accesibles desde la UI, podemos añadir un método para descargarlos
+  public downloadCoefficients(): void {
+    if (!this.coefficientsData) {
+      console.warn('No hay coeficientes disponibles para descargar');
+      return;
+    }
+
+    const dataStr = JSON.stringify(this.coefficientsData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fourier_coefficients.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   ngAfterViewInit(): void {
