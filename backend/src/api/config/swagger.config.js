@@ -10,7 +10,7 @@ const swaggerOptions = {
       contact: {
         name: "Sebastián Morales Palacios",
         email: "sebasthefallen@gmail.com",
-        url: "https://github.com/TheTortillas",
+        url: "https://github.com/TheTortillas/FourierSeriesWebApp/",
       },
     },
     // servers: [
