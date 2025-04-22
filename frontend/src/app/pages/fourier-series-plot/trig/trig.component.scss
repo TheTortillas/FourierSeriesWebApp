@@ -178,7 +178,7 @@
 .coefficient-point {
   filter: blur(1px);
   transition: filter 0.2s ease, transform 0.2s ease;
-  
+
   &:hover {
     filter: blur(0);
     transform: scale(1.1);
@@ -198,13 +198,16 @@
   transform: translate(-50%, -100%);
   margin-top: -8px;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  
+  min-width: 80px;
+  text-align: center;
+
   &.visible {
     opacity: 1;
+    transform: translate(-50%, -110%);
   }
-  
+
   &::after {
     content: "";
     position: absolute;
@@ -215,13 +218,56 @@
     border-style: solid;
     border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
   }
+
+  // Add value emphasis
+  .coefficient-value {
+    font-size: 13px;
+    display: block;
+    margin-top: 2px;
+  }
 }
 
-// Estilos específicos para los tooltips de an y bn
+// Enhanced styles for the specific tooltips
 .an-tooltip {
-  border-left: 3px solid #B794F4;
+  border-left: 3px solid #b794f4;
+  background: linear-gradient(
+    to right,
+    rgba(45, 30, 80, 0.95),
+    rgba(0, 0, 0, 0.85)
+  );
+
+  &::after {
+    border-color: rgba(45, 30, 80, 0.95) transparent transparent transparent;
+  }
 }
 
 .bn-tooltip {
-  border-left: 3px solid #F6AD55;
+  border-left: 3px solid #f6ad55;
+  background: linear-gradient(
+    to right,
+    rgba(80, 40, 10, 0.95),
+    rgba(0, 0, 0, 0.85)
+  );
+
+  &::after {
+    border-color: rgba(80, 40, 10, 0.95) transparent transparent transparent;
+  }
+}
+
+// Add highlighted stem effect
+.highlighted-stem {
+  animation: pulse 1.5s infinite;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
 }

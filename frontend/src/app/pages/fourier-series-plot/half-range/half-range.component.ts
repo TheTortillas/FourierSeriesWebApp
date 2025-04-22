@@ -31,6 +31,7 @@ import { Subscription } from 'rxjs';
 })
 export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('cartesianCanvas') cartesianCanvas!: CartesianCanvasComponent;
+  @ViewChild('coeffCanvas') coeffCanvas!: CartesianCanvasComponent; // New canvas for coefficients
 
   // Propiedades generales similares a TrigComponent
   public sidenavOpen = true;
@@ -114,6 +115,24 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     end: number;
   }> = [];
 
+  // Add properties for amplitude graph
+  public showCoefficientsGraph: boolean = false;
+  public coeffLineWidth: number = 2;
+  public coeffColor: string = '#B794F4'; // Default color (will be updated based on series type)
+  private resizeObserver: ResizeObserver | null = null;
+
+  public coeffBgColor: string = '#1A1A2E'; // Dark mode default
+  public coeffAxisColor: string = '#B794F4'; // Dark mode default
+  public coeffGridColor: string = '#553C9A'; // Dark mode default
+
+  private coeffPoints: Array<{
+    n: number;
+    x: number;
+    y: number;
+    value: number;
+  }> = [];
+  private coeffTooltip: HTMLElement | null = null;
+
   constructor(
     private router: Router,
     private mathquillService: MathquillService,
@@ -137,6 +156,9 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
       // Redirigir si no hay datos
       this.router.navigate(['/fourier-calculator']);
     }
+
+    // Set coeff color based on active series type
+    this.updateCoeffColor();
   }
 
   ngOnInit(): void {
@@ -159,6 +181,19 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cartesianCanvas.clearCanvas();
         this.redrawFunctions();
       }
+
+      // Update coefficient canvas colors
+      if (this.coeffCanvas) {
+        this.coeffCanvas.bgColor = this.coeffBgColor;
+        this.coeffCanvas.axisColor = this.coeffAxisColor;
+        this.coeffCanvas.gridColor = this.coeffGridColor;
+        this.coeffCanvas.fontColor = this.fontColor;
+
+        if (this.showCoefficientsGraph) {
+          this.coeffCanvas.clearCanvas();
+          this.drawCoefficientsGraph();
+        }
+      }
     });
 
     this.updateThemeColors();
@@ -168,13 +203,37 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.mathquillService.renderMathJax();
       this.initializeCanvas();
+
+      // Initialize coefficient graph if visible
+      if (this.showCoefficientsGraph) {
+        this.drawCoefficientsGraph();
+      }
     }, 100);
+
+    // Setup resize observer for the coefficient canvas
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => {
+        if (this.showCoefficientsGraph) {
+          setTimeout(() => this.drawCoefficientsGraph(), 100);
+        }
+      });
+
+      // Observe container for coefficient canvas
+      const coeffCanvasElement = document.getElementById('coeffCanvas');
+      if (coeffCanvasElement) this.resizeObserver.observe(coeffCanvasElement);
+    }
   }
 
   ngOnDestroy(): void {
     if (this.themeSubscription) {
       this.themeSubscription.unsubscribe();
       this.themeSubscription = null;
+    }
+
+    // Clean up resize observer
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
     }
   }
 
@@ -190,19 +249,72 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
   // Método para cambiar entre serie coseno y serie seno
   toggleSeriesType(type: 'cosine' | 'sine'): void {
     this.activeSeriesType = type;
-    
+
+    // Update coefficient color based on series type
+    this.updateCoeffColor();
+
     // Redibujar el canvas con la nueva serie activa
     this.redrawCanvas();
-    
+
+    // Redraw the coefficients graph if visible
+    if (this.showCoefficientsGraph) {
+      setTimeout(() => this.drawCoefficientsGraph(), 100);
+    }
+
     // Actualizar visualización de términos si están mostrados
     if (this.showIndividualTerms) {
       this.displaySeriesTerms();
     }
-    
+
     // Re-renderizar las fórmulas LaTeX para asegurar que se muestren correctamente
     setTimeout(() => {
       this.mathquillService.renderMathJax();
     }, 100);
+  }
+
+  // Update coefficient color based on active series type
+  private updateCoeffColor(): void {
+    if (this.activeSeriesType === 'cosine') {
+      this.coeffColor = '#B794F4'; // Purple for an coefficients
+      this.coeffAxisColor = '#B794F4';
+      this.coeffGridColor = '#553C9A';
+      this.coeffBgColor = '#1A1A2E';
+    } else {
+      this.coeffColor = '#F6AD55'; // Orange for bn coefficients
+      this.coeffAxisColor = '#F6AD55';
+      this.coeffGridColor = '#9C4221';
+      this.coeffBgColor = '#2A1E17';
+    }
+
+    // Update canvas colors if already initialized
+    if (this.coeffCanvas) {
+      this.coeffCanvas.bgColor = this.coeffBgColor;
+      this.coeffCanvas.axisColor = this.coeffAxisColor;
+      this.coeffCanvas.gridColor = this.coeffGridColor;
+    }
+  }
+
+  // Toggle coefficient graph visibility
+  toggleCoefficientsGraph(show: boolean): void {
+    this.showCoefficientsGraph = show;
+
+    if (show) {
+      // Ensure the canvas colors are updated
+      if (this.coeffCanvas) {
+        this.coeffCanvas.bgColor = this.coeffBgColor;
+        this.coeffCanvas.axisColor = this.coeffAxisColor;
+        this.coeffCanvas.gridColor = this.coeffGridColor;
+        this.coeffCanvas.fontColor = this.fontColor;
+      }
+
+      setTimeout(() => {
+        this.drawCoefficientsGraph();
+        // Setup events after drawing
+        this.setupCoeffCanvasEvents();
+        // Setup zoom events
+        this.setupCoeffCanvasZoomEvents();
+      }, 100);
+    }
   }
 
   // Métodos para dibujo
@@ -235,6 +347,283 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   redrawCanvas(): void {
     this.redrawFunctions();
+
+    // Redraw coefficient graph if visible
+    if (this.showCoefficientsGraph && this.coeffCanvas) {
+      this.drawCoefficientsGraph();
+    }
+  }
+
+  // Draw coefficients graph
+  drawCoefficientsGraph(): void {
+    if (!this.showCoefficientsGraph || !this.coeffCanvas) return;
+
+    // Clear previous points
+    this.coeffPoints = [];
+
+    // Initialize tooltip reference if it doesn't exist
+    if (!this.coeffTooltip) {
+      this.coeffTooltip = document.getElementById('coeffTooltip');
+    }
+
+    this.coeffCanvas.clearCanvas();
+
+    // Get the appropriate coefficients based on active series type
+    const coefficients =
+      this.activeSeriesType === 'cosine'
+        ? this.cachedACoefs
+        : this.cachedBCoefs;
+
+    // Find the maximum absolute value for proper scaling
+    const maxAbsValue = Math.max(
+      ...coefficients
+        .slice(0, Math.min(50, coefficients.length))
+        .map((val) => Math.abs(val))
+    );
+
+    // Draw coefficient bars with blur effect
+    for (let i = 0; i < Math.min(50, coefficients.length); i++) {
+      const n = i + 1; // n starts at 1
+      const height = coefficients[i];
+
+      // Draw bar with blur effect
+      this.drawDiscreteLineWithBlur(
+        this.coeffCanvas,
+        n,
+        0,
+        height,
+        this.coeffColor,
+        this.coeffLineWidth,
+        true
+      );
+
+      // Save position and value for tooltip
+      const pixelPos = this.canvasCoordToPixel(this.coeffCanvas, n, height);
+      if (pixelPos) {
+        this.coeffPoints.push({
+          n,
+          x: pixelPos.x,
+          y: pixelPos.y,
+          value: height,
+        });
+      }
+    }
+  }
+
+  // Method to draw discrete line with blur effect
+  private drawDiscreteLineWithBlur(
+    canvas: CartesianCanvasComponent,
+    startX: number,
+    startY: number,
+    height: number,
+    color: string,
+    lineWidth: number = 2.5,
+    applyBlur: boolean = false,
+    isHighlighted: boolean = false
+  ): void {
+    if (!canvas || !canvas.ctx) return;
+
+    const ctx = canvas.ctx;
+    const origin = canvas.origin;
+    const unit = canvas.unit;
+    const offsetX = canvas.offsetX;
+    const offsetY = canvas.offsetY;
+
+    // Calculate pixel coordinates
+    const xPx = origin.x - offsetX + unit * startX;
+    const y0Px = origin.y - offsetY - unit * startY;
+    const yEndPx = origin.y - offsetY - unit * (startY + height);
+
+    // Save current context state
+    ctx.save();
+
+    // Apply blur if enabled
+    if (applyBlur) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 1.5;
+      ctx.globalAlpha = 0.9;
+    }
+
+    // If highlighted, apply more pronounced effect
+    if (isHighlighted) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 4;
+      ctx.globalAlpha = 1;
+      lineWidth += 0.5; // Make it slightly thicker
+    }
+
+    // Draw vertical line
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(xPx, y0Px);
+    ctx.lineTo(xPx, yEndPx);
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+
+    // Draw point at the end with glow effect
+    ctx.beginPath();
+    ctx.arc(xPx, yEndPx, isHighlighted ? 6 : 5, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Add a small fill for the point
+    ctx.fillStyle = color;
+    ctx.globalAlpha = isHighlighted ? 0.5 : 0.3;
+    ctx.fill();
+
+    // Restore original context state
+    ctx.restore();
+  }
+
+  // Method to convert mathematical coordinates to pixel coordinates
+  private canvasCoordToPixel(
+    canvas: CartesianCanvasComponent,
+    x: number,
+    y: number
+  ): { x: number; y: number } | null {
+    if (!canvas || !canvas.ctx) return null;
+
+    const origin = canvas.origin;
+    const unit = canvas.unit;
+    const offsetX = canvas.offsetX;
+    const offsetY = canvas.offsetY;
+
+    // Convert from mathematical units to pixels
+    const pixelX = origin.x - offsetX + unit * x;
+    const pixelY = origin.y - offsetY - unit * y;
+
+    return { x: pixelX, y: pixelY };
+  }
+
+  // Configure mouse events for tooltips
+  private setupCoeffCanvasEvents(): void {
+    if (!this.coeffCanvas) return;
+
+    const coeffCanvasElement = document.getElementById('coeffCanvas');
+
+    if (!coeffCanvasElement) return;
+
+    // Helper function to check if mouse is near a stem
+    const isNearStem = (
+      mouseX: number,
+      mouseY: number,
+      stemX: number,
+      stemY0: number,
+      stemY1: number,
+      threshold: number
+    ): boolean => {
+      // If mouse is outside the vertical range of the stem, it's not near
+      if (
+        mouseY < Math.min(stemY0, stemY1) - threshold ||
+        mouseY > Math.max(stemY0, stemY1) + threshold
+      ) {
+        return false;
+      }
+
+      // Calculate horizontal distance to the stem
+      const distance = Math.abs(mouseX - stemX);
+      return distance < threshold;
+    };
+
+    // Events for coeffCanvas
+    coeffCanvasElement.onmousemove = (event: MouseEvent) => {
+      const rect = coeffCanvasElement.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      // Check proximity to any stem or point
+      const threshold = 12; // Wider threshold to detect the entire stem
+      let closestPoint = null;
+      let minDistance = Infinity;
+      let isCloseToStem = false;
+
+      for (const point of this.coeffPoints) {
+        // Convert point coordinates to pixels
+        const stemX = point.x;
+        const stemEndY = point.y;
+
+        // Calculate Y0 (stem origin, usually Y=0)
+        const origin = this.coeffCanvas.origin;
+        const offsetY = this.coeffCanvas.offsetY;
+        const unit = this.coeffCanvas.unit;
+        const stemStartY = origin.y - offsetY - unit * 0; // 0 is the initial Y value
+
+        // Check if mouse is near the stem
+        if (
+          isNearStem(mouseX, mouseY, stemX, stemStartY, stemEndY, threshold)
+        ) {
+          isCloseToStem = true;
+
+          // Also determine the closest point to show tooltip
+          const dx = mouseX - stemX;
+          const dy = mouseY - stemEndY; // Distance to end point (where the value is)
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+          }
+        }
+      }
+
+      // If close to any stem
+      if (isCloseToStem && closestPoint && this.coeffTooltip) {
+        // Show tooltip with the coefficient name based on series type
+        const coeffName = this.activeSeriesType === 'cosine' ? 'a' : 'b';
+        this.coeffTooltip.innerHTML = `${coeffName}<sub>${
+          closestPoint.n
+        }</sub>: ${closestPoint.value.toFixed(6)}`;
+        this.coeffTooltip.style.left = `${closestPoint.x}px`;
+        this.coeffTooltip.style.top = `${closestPoint.y}px`;
+        this.coeffTooltip.classList.add('visible');
+
+        // First redraw all points with normal blur
+        this.drawCoefficientsGraph();
+
+        // Then highlight only the selected stem
+        this.drawDiscreteLineWithBlur(
+          this.coeffCanvas,
+          closestPoint.n,
+          0,
+          closestPoint.value,
+          this.coeffColor,
+          this.coeffLineWidth + 0.5,
+          false,
+          true // Indicator that it's highlighted
+        );
+      } else if (this.coeffTooltip) {
+        // Hide tooltip if no stem is nearby
+        this.coeffTooltip.classList.remove('visible');
+
+        // Redraw all points with normal blur
+        this.drawCoefficientsGraph();
+      }
+    };
+
+    // Event handlers for leaving the canvas
+    coeffCanvasElement.onmouseleave = () => {
+      if (this.coeffTooltip) {
+        this.coeffTooltip.classList.remove('visible');
+        // Redraw without highlighting
+        this.drawCoefficientsGraph();
+      }
+    };
+  }
+
+  // Setup zoom events for coefficient canvas
+  private setupCoeffCanvasZoomEvents(): void {
+    if (this.coeffCanvas && this.coeffCanvas.canvasElement?.nativeElement) {
+      const coeffCanvas = this.coeffCanvas.canvasElement.nativeElement;
+
+      // Create a new wheel handler that first executes the original and then redraws
+      const originalWheel = coeffCanvas.onwheel;
+      coeffCanvas.onwheel = (event: WheelEvent) => {
+        // Call the original handler
+        if (originalWheel) originalWheel.call(coeffCanvas, event);
+
+        // Redraw after a brief delay to allow the canvas to update
+        setTimeout(() => this.drawCoefficientsGraph(), 0);
+      };
+    }
   }
 
   // Método para dibujar la función original
@@ -622,13 +1011,14 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
       console.warn('No hay respuesta o datos simplificados');
       return;
     }
-  
+
     // Mostrar loading
     const termsContainer = document.getElementById('series-terms-container');
     if (termsContainer) {
-      termsContainer.innerHTML = '<div class="text-center p-4"><p>Calculando términos...</p></div>';
+      termsContainer.innerHTML =
+        '<div class="text-center p-4"><p>Calculando términos...</p></div>';
     }
-  
+
     // Intentar usar los términos directamente desde la respuesta
     // No necesitamos llamar al API nuevamente si ya tenemos los datos
     try {
@@ -637,26 +1027,27 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         string: {
           a0: this.response.simplified.a0,
           an: this.response.simplified.an,
-          bn: this.response.simplified.bn
+          bn: this.response.simplified.bn,
         },
         latex: {
           a0: this.response.latex?.a0,
-          an: [],  // Se llenará en displaySeriesTerms según necesidades
-          bn: []   // Se llenará en displaySeriesTerms según necesidades
-        }
+          an: [], // Se llenará en displaySeriesTerms según necesidades
+          bn: [], // Se llenará en displaySeriesTerms según necesidades
+        },
       });
-  
+
       // Mostrar términos si el toggle está activado
       if (this.showIndividualTerms) {
         this.displaySeriesTerms();
       }
-      
+
       // Redibujar el canvas
       this.redrawCanvas();
     } catch (error) {
       console.error('Error preparando términos individuales:', error);
       if (termsContainer) {
-        termsContainer.innerHTML = '<div class="text-center text-red-500 p-4"><p>Error calculando términos</p></div>';
+        termsContainer.innerHTML =
+          '<div class="text-center text-red-500 p-4"><p>Error calculando términos</p></div>';
       }
     }
   }
@@ -944,17 +1335,39 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
   // Método para actualizar colores de tema
   private updateThemeColors(): void {
     if (this.isDarkMode) {
-      // Dark theme colors
+      // Dark theme colors - Main canvas
       this.bgColor = '#222';
       this.axisColor = '#90DCB5';
       this.gridColor = '#6BBCAC';
       this.fontColor = '#EBEBEB';
+
+      // Dark theme colors - coefficient canvas (depends on series type)
+      if (this.activeSeriesType === 'cosine') {
+        this.coeffBgColor = '#1A1A2E';
+        this.coeffAxisColor = '#B794F4';
+        this.coeffGridColor = '#553C9A';
+      } else {
+        this.coeffBgColor = '#2A1E17';
+        this.coeffAxisColor = '#F6AD55';
+        this.coeffGridColor = '#9C4221';
+      }
     } else {
-      // Light theme colors
+      // Light theme colors - Main canvas
       this.bgColor = '#f8fafc';
       this.axisColor = '#3b82f6';
       this.gridColor = '#93c5fd';
       this.fontColor = '#334155';
+
+      // Light theme colors - coefficient canvas (depends on series type)
+      if (this.activeSeriesType === 'cosine') {
+        this.coeffBgColor = '#F5F7FF';
+        this.coeffAxisColor = '#805AD5';
+        this.coeffGridColor = '#D6BCFA';
+      } else {
+        this.coeffBgColor = '#FFFAF0';
+        this.coeffAxisColor = '#ED8936';
+        this.coeffGridColor = '#FEEBC8';
+      }
     }
   }
 }

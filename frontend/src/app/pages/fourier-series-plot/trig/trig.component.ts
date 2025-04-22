@@ -1405,30 +1405,30 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   ): void {
     // Esta función es un wrapper para drawDiscreteLine
     // que agrega efectos visuales adicionales
-  
+
     if (!canvas || !canvas.ctx) return;
-  
+
     const ctx = canvas.ctx;
     const origin = canvas.origin;
     const unit = canvas.unit;
     const offsetX = canvas.offsetX;
     const offsetY = canvas.offsetY;
-  
+
     // Calcular coordenadas en píxeles
     const xPx = origin.x - offsetX + unit * startX;
     const y0Px = origin.y - offsetY - unit * startY;
     const yEndPx = origin.y - offsetY - unit * (startY + height);
-  
+
     // Guardar estado actual del contexto
     ctx.save();
-  
+
     // Aplicar blur si está activado
     if (applyBlur) {
       ctx.shadowColor = color;
       ctx.shadowBlur = 1.5;
       ctx.globalAlpha = 0.9;
     }
-  
+
     // Si está destacado, aplicar un efecto más pronunciado
     if (isHighlighted) {
       ctx.shadowColor = color;
@@ -1436,7 +1436,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       ctx.globalAlpha = 1;
       lineWidth += 0.5; // Hacerlo ligeramente más grueso
     }
-  
+
     // Dibujar línea vertical
     ctx.strokeStyle = color;
     ctx.beginPath();
@@ -1444,17 +1444,17 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     ctx.lineTo(xPx, yEndPx);
     ctx.lineWidth = lineWidth;
     ctx.stroke();
-  
+
     // Dibujar punto en el extremo con efecto brillante
     ctx.beginPath();
     ctx.arc(xPx, yEndPx, isHighlighted ? 6 : 5, 0, 2 * Math.PI);
     ctx.stroke();
-  
+
     // Añadir un pequeño relleno para el punto
     ctx.fillStyle = color;
     ctx.globalAlpha = isHighlighted ? 0.5 : 0.3;
     ctx.fill();
-  
+
     // Restaurar estado original del contexto
     ctx.restore();
   }
@@ -1482,71 +1482,76 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   // Configurar eventos de mouse para los tooltips
   private setupAmplitudeCanvasEvents(): void {
     if (!this.anCanvas || !this.bnCanvas) return;
-  
+
     // Obtener elementos DOM
     const anCanvasElement = document.getElementById('anCanvas');
     const bnCanvasElement = document.getElementById('bnCanvas');
-  
+
     if (!anCanvasElement || !bnCanvasElement) return;
-  
+
     // Función auxiliar para comprobar si el mouse está cerca de un tallo
     const isNearStem = (
-      mouseX: number, 
-      mouseY: number, 
-      stemX: number, 
-      stemY0: number, 
-      stemY1: number, 
+      mouseX: number,
+      mouseY: number,
+      stemX: number,
+      stemY0: number,
+      stemY1: number,
       threshold: number
     ): boolean => {
       // Si el mouse está fuera del rango vertical del tallo, no está cerca
-      if (mouseY < Math.min(stemY0, stemY1) - threshold || mouseY > Math.max(stemY0, stemY1) + threshold) {
+      if (
+        mouseY < Math.min(stemY0, stemY1) - threshold ||
+        mouseY > Math.max(stemY0, stemY1) + threshold
+      ) {
         return false;
       }
-      
+
       // Calcular la distancia horizontal al tallo
       const distance = Math.abs(mouseX - stemX);
       return distance < threshold;
     };
-  
+
     // Eventos para anCanvas
     anCanvasElement.onmousemove = (event: MouseEvent) => {
       const rect = anCanvasElement.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
-  
+
       // Comprobar cercanía a algún tallo o punto
       const threshold = 12; // Umbral más amplio para detectar todo el tallo
       let closestPoint = null;
       let minDistance = Infinity;
       let isCloseToStem = false;
-  
+
       for (const point of this.anPoints) {
         // Convertir coordenadas del punto a píxeles
         const stemX = point.x;
         const stemEndY = point.y;
-        
+
         // Calcular Y0 (origen del tallo, generalmente Y=0)
         const origin = this.anCanvas.origin;
         const offsetY = this.anCanvas.offsetY;
         const unit = this.anCanvas.unit;
         const stemStartY = origin.y - offsetY - unit * 0; // 0 es el valor Y inicial
-        
+
         // Comprobar si el mouse está cerca del tallo
-        if (isNearStem(mouseX, mouseY, stemX, stemStartY, stemEndY, threshold)) {
+        if (
+          isNearStem(mouseX, mouseY, stemX, stemStartY, stemEndY, threshold)
+        ) {
           isCloseToStem = true;
-          
+
           // También determinamos el punto más cercano para mostrar el tooltip
           const dx = mouseX - stemX;
           const dy = mouseY - stemEndY; // Distancia al punto final (donde está el valor)
-          const distance = Math.sqrt(dx*dx + dy*dy);
-          
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
           if (distance < minDistance) {
             minDistance = distance;
             closestPoint = point;
           }
         }
       }
-  
+
       // Si está cerca de algún tallo
       if (isCloseToStem && closestPoint && this.anTooltip) {
         // Mostrar tooltip
@@ -1556,10 +1561,10 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         this.anTooltip.style.left = `${closestPoint.x}px`;
         this.anTooltip.style.top = `${closestPoint.y}px`;
         this.anTooltip.classList.add('visible');
-  
+
         // Primero redibujar todos los puntos con blur normal
         this.drawAmplitudeGraphs();
-        
+
         // Luego resaltar solo el tallo seleccionado
         this.drawDiscreteLineWithBlur(
           this.anCanvas,
@@ -1574,51 +1579,53 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       } else if (this.anTooltip) {
         // Ocultar tooltip si no hay tallo cercano
         this.anTooltip.classList.remove('visible');
-        
+
         // Redibujar todos los puntos con blur normal
         this.drawAmplitudeGraphs();
       }
     };
-  
+
     // Código similar para bnCanvas
     bnCanvasElement.onmousemove = (event: MouseEvent) => {
       const rect = bnCanvasElement.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
-  
+
       // Comprobar cercanía a algún tallo o punto
       const threshold = 12; // Umbral más amplio para detectar todo el tallo
       let closestPoint = null;
       let minDistance = Infinity;
       let isCloseToStem = false;
-  
+
       for (const point of this.bnPoints) {
         // Convertir coordenadas del punto a píxeles
         const stemX = point.x;
         const stemEndY = point.y;
-        
+
         // Calcular Y0 (origen del tallo, generalmente Y=0)
         const origin = this.bnCanvas.origin;
         const offsetY = this.bnCanvas.offsetY;
         const unit = this.bnCanvas.unit;
         const stemStartY = origin.y - offsetY - unit * 0; // 0 es el valor Y inicial
-        
+
         // Comprobar si el mouse está cerca del tallo
-        if (isNearStem(mouseX, mouseY, stemX, stemStartY, stemEndY, threshold)) {
+        if (
+          isNearStem(mouseX, mouseY, stemX, stemStartY, stemEndY, threshold)
+        ) {
           isCloseToStem = true;
-          
+
           // También determinamos el punto más cercano para mostrar el tooltip
           const dx = mouseX - stemX;
           const dy = mouseY - stemEndY; // Distancia al punto final (donde está el valor)
-          const distance = Math.sqrt(dx*dx + dy*dy);
-          
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
           if (distance < minDistance) {
             minDistance = distance;
             closestPoint = point;
           }
         }
       }
-  
+
       // Si está cerca de algún tallo
       if (isCloseToStem && closestPoint && this.bnTooltip) {
         // Mostrar tooltip
@@ -1628,10 +1635,10 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         this.bnTooltip.style.left = `${closestPoint.x}px`;
         this.bnTooltip.style.top = `${closestPoint.y}px`;
         this.bnTooltip.classList.add('visible');
-  
+
         // Primero redibujar todos los puntos con blur normal
         this.drawAmplitudeGraphs();
-        
+
         // Luego resaltar solo el tallo seleccionado
         this.drawDiscreteLineWithBlur(
           this.bnCanvas,
@@ -1646,12 +1653,12 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       } else if (this.bnTooltip) {
         // Ocultar tooltip si no hay tallo cercano
         this.bnTooltip.classList.remove('visible');
-        
+
         // Redibujar todos los puntos con blur normal
         this.drawAmplitudeGraphs();
       }
     };
-  
+
     // Gestores de eventos para salir del canvas
     anCanvasElement.onmouseleave = () => {
       if (this.anTooltip) {
@@ -1660,7 +1667,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         this.drawAmplitudeGraphs();
       }
     };
-  
+
     bnCanvasElement.onmouseleave = () => {
       if (this.bnTooltip) {
         this.bnTooltip.classList.remove('visible');
@@ -1706,31 +1713,31 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   //     label.textContent = text;
   //   }
   // }
-    // Añadir este método a TrigComponent
+  // Añadir este método a TrigComponent
   private setupAmplitudeCanvasZoomEvents(): void {
     if (this.anCanvas && this.anCanvas.canvasElement?.nativeElement) {
       const anCanvas = this.anCanvas.canvasElement.nativeElement;
-      
+
       // Crear un nuevo manejador de wheel que primero ejecute el original y luego redibuje
       const originalWheel = anCanvas.onwheel;
       anCanvas.onwheel = (event: WheelEvent) => {
         // Llamar al manejador original
         if (originalWheel) originalWheel.call(anCanvas, event);
-        
+
         // Redibujar después de un breve retraso para permitir que se actualice el canvas
         setTimeout(() => this.drawAmplitudeGraphs(), 0);
       };
     }
-    
+
     if (this.bnCanvas && this.bnCanvas.canvasElement?.nativeElement) {
       const bnCanvas = this.bnCanvas.canvasElement.nativeElement;
-      
+
       // Crear un nuevo manejador de wheel que primero ejecute el original y luego redibuje
       const originalWheel = bnCanvas.onwheel;
       bnCanvas.onwheel = (event: WheelEvent) => {
         // Llamar al manejador original
         if (originalWheel) originalWheel.call(bnCanvas, event);
-        
+
         // Redibujar después de un breve retraso para permitir que se actualice el canvas
         setTimeout(() => this.drawAmplitudeGraphs(), 0);
       };

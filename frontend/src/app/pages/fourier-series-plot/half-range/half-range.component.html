@@ -7,7 +7,7 @@
 >
   <!-- Contenedor principal con gradiente y efecto de vidrio -->
   <div
-    class="h-full shadow-2xl border-r overflow-auto"
+    class="h-full shadow-2xl border-r"
     [ngClass]="
       isDarkMode
         ? 'bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 text-gray-100 border-teal-500/20'
@@ -101,26 +101,30 @@
         <div class="flex rounded-md overflow-hidden">
           <button
             class="flex-1 py-3 px-4 transition-all duration-300 font-medium"
-            [ngClass]="activeSeriesType === 'cosine' 
-              ? (isDarkMode 
-                ? 'bg-teal-600 text-white' 
-                : 'bg-blue-500 text-white')
-              : (isDarkMode 
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300')"
+            [ngClass]="
+              activeSeriesType === 'cosine'
+                ? isDarkMode
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-blue-500 text-white'
+                : isDarkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            "
             (click)="toggleSeriesType('cosine')"
           >
             Serie Coseno
           </button>
           <button
             class="flex-1 py-3 px-4 transition-all duration-300 font-medium"
-            [ngClass]="activeSeriesType === 'sine' 
-              ? (isDarkMode 
-                ? 'bg-teal-600 text-white' 
-                : 'bg-blue-500 text-white')
-              : (isDarkMode 
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300')"
+            [ngClass]="
+              activeSeriesType === 'sine'
+                ? isDarkMode
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-blue-500 text-white'
+                : isDarkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            "
             (click)="toggleSeriesType('sine')"
           >
             Serie Seno
@@ -128,7 +132,7 @@
         </div>
 
         <!-- Mostrar fórmula de la serie activa -->
-        <div 
+        <div
           class="mt-4 p-4 rounded-lg border transition-all duration-300"
           [ngClass]="
             isDarkMode
@@ -137,14 +141,14 @@
           "
         >
           <div class="latex-container">
-            <div 
+            <div
               *ngIf="activeSeriesType === 'cosine'"
-              [innerHTML]="cosineLatexFormula" 
+              [innerHTML]="cosineLatexFormula"
               class="math-formula"
             ></div>
-            <div 
+            <div
               *ngIf="activeSeriesType === 'sine'"
-              [innerHTML]="sineLatexFormula" 
+              [innerHTML]="sineLatexFormula"
               class="math-formula"
             ></div>
           </div>
@@ -310,7 +314,7 @@
               >Términos individuales</span
             >
           </h3>
-        
+
           <div class="flex items-center justify-between mb-3">
             <label
               class="text-sm font-medium"
@@ -328,7 +332,7 @@
               <label for="toggleIndividualTerms" class="toggle-label"></label>
             </div>
           </div>
-        
+
           <!-- Controles de color para términos -->
           <div class="space-y-3 mt-3" *ngIf="showIndividualTerms">
             <!-- Color inicial -->
@@ -336,7 +340,8 @@
               <label
                 class="text-sm font-medium"
                 [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
-              >Color inicial términos:</label>
+                >Color inicial términos:</label
+              >
               <div class="flex items-center">
                 <input
                   type="color"
@@ -347,16 +352,18 @@
                 <span
                   class="ml-2 text-xs font-mono"
                   [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
-                >{{ termsStartColor }}</span>
+                  >{{ termsStartColor }}</span
+                >
               </div>
             </div>
-            
+
             <!-- Color final -->
             <div class="flex items-center justify-between">
               <label
                 class="text-sm font-medium"
                 [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
-              >Color final términos:</label>
+                >Color final términos:</label
+              >
               <div class="flex items-center">
                 <input
                   type="color"
@@ -367,16 +374,148 @@
                 <span
                   class="ml-2 text-xs font-mono"
                   [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
-                >{{ termsEndColor }}</span>
+                  >{{ termsEndColor }}</span
+                >
               </div>
             </div>
           </div>
-        
+
           <!-- Contenedor para mostrar los términos individuales -->
           <!-- <div id="series-terms-container" class="mt-4">
             Los términos se cargarán dinámicamente aquí -->
           <!-- </div> -->
         </div>
+
+        <!-- NEW: Coefficient Graph Section -->
+        <div
+          class="mt-5 p-4 rounded-lg border transition-all"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30'
+              : 'bg-white border-gray-200 hover:border-blue-300'
+          "
+        >
+          <h3 class="text-base mb-3 font-medium flex items-center">
+            <span
+              class="w-1 h-1 rounded-full mr-2"
+              [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+            ></span>
+            <span [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+              >Gráfico de Coeficientes</span
+            >
+          </h3>
+
+          <div class="flex items-center justify-between mb-3">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Mostrar gráfico de
+              {{ activeSeriesType === "cosine" ? "an" : "bn" }}:</label
+            >
+            <div class="relative inline-block w-12 align-middle select-none">
+              <input
+                type="checkbox"
+                [(ngModel)]="showCoefficientsGraph"
+                (change)="toggleCoefficientsGraph(showCoefficientsGraph)"
+                id="toggleCoeffGraph"
+                class="toggle-checkbox"
+              />
+              <label for="toggleCoeffGraph" class="toggle-label"></label>
+            </div>
+          </div>
+
+          <!-- Coefficient graph container (shown only when enabled) -->
+          <div *ngIf="showCoefficientsGraph" class="mt-4">
+            <div
+              class="text-sm mb-2"
+              [ngClass]="isDarkMode ? 'text-gray-300' : 'text-gray-600'"
+            >
+              Coeficientes
+              {{ activeSeriesType === "cosine" ? "an" : "bn" }} para n=1 hasta
+              n=50
+            </div>
+
+            <!-- Container for coefficient graph with relative position for tooltips -->
+            <div
+              class="relative h-48 rounded-md overflow-hidden border"
+              [ngClass]="isDarkMode ? 'border-gray-700' : 'border-gray-300'"
+            >
+              <app-cartesian-canvas
+                #coeffCanvas
+                id="coeffCanvas"
+                [bgColor]="coeffBgColor"
+                [axisColor]="coeffAxisColor"
+                [gridColor]="coeffGridColor"
+                [fontColor]="fontColor"
+                [initialZoom]="50"
+              >
+              </app-cartesian-canvas>
+
+              <!-- Tooltip for coefficients -->
+              <div
+                id="coeffTooltip"
+                class="coefficient-tooltip"
+                [ngClass]="activeSeriesType === 'cosine' ? 'cosine' : 'sine'"
+              >
+                <!-- Content will be filled dynamically -->
+              </div>
+            </div>
+
+            <!-- Controls for the coefficient graph -->
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Line width control -->
+              <div class="flex items-center justify-between">
+                <label
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                  >Grosor de línea:</label
+                >
+                <div
+                  class="relative inline-block w-24 align-middle select-none"
+                >
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="0.5"
+                    [(ngModel)]="coeffLineWidth"
+                    (input)="drawCoefficientsGraph()"
+                    class="w-full accent-teal-500"
+                  />
+                  <div
+                    class="text-xs text-center font-medium mt-1"
+                    [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+                  >
+                    {{ coeffLineWidth }}px
+                  </div>
+                </div>
+              </div>
+
+              <!-- Color control -->
+              <div class="flex items-center justify-between">
+                <label
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                  >Color:</label
+                >
+                <div class="flex items-center">
+                  <input
+                    type="color"
+                    [(ngModel)]="coeffColor"
+                    (change)="drawCoefficientsGraph()"
+                    class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+                  />
+                  <span
+                    class="ml-2 text-xs font-mono"
+                    [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                    >{{ coeffColor }}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- END: Coefficient Graph Section -->
 
         <!-- Sección de personalización visual -->
         <div
@@ -420,7 +559,10 @@
           </div>
 
           <!-- Selector de color para la serie activa -->
-          <div class="flex items-center justify-between" *ngIf="activeSeriesType === 'cosine'">
+          <div
+            class="flex items-center justify-between"
+            *ngIf="activeSeriesType === 'cosine'"
+          >
             <label
               class="text-sm font-medium"
               [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
@@ -441,7 +583,10 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-between" *ngIf="activeSeriesType === 'sine'">
+          <div
+            class="flex items-center justify-between"
+            *ngIf="activeSeriesType === 'sine'"
+          >
             <label
               class="text-sm font-medium"
               [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"

@@ -220,6 +220,7 @@
           </div>
         </div>
 
+        <!-- NUEVO: Amplitud de Coeficientes en el Sidenav -->
         <div
           class="mt-5 p-4 rounded-lg border transition-all"
           [ngClass]="
@@ -255,7 +256,149 @@
               <label for="toggleAmplitudeGraphs" class="toggle-label"></label>
             </div>
           </div>
+
+          <!-- Amplitude graph containers (shown only when enabled) -->
+          <div *ngIf="showAmplitudeGraphs" class="mt-4 space-y-6">
+            <!-- an coefficients -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-purple-300' : 'text-purple-600'"
+                >
+                  Coeficientes a<sub>n</sub> (n=1 hasta n=50)
+                </div>
+                <div class="flex items-center space-x-1">
+                  <input
+                    type="color"
+                    [(ngModel)]="anColor"
+                    (change)="drawAmplitudeGraphs()"
+                    class="w-6 h-6 rounded overflow-hidden"
+                  />
+                </div>
+              </div>
+
+              <!-- Container for an graph with relative position for tooltips -->
+              <div
+                class="relative h-60 rounded-md overflow-hidden border"
+                [ngClass]="isDarkMode ? 'border-gray-700' : 'border-gray-300'"
+              >
+                <app-cartesian-canvas
+                  #anCanvas
+                  id="anCanvas"
+                  [bgColor]="anBgColor"
+                  [axisColor]="anAxisColor"
+                  [gridColor]="anGridColor"
+                  [fontColor]="fontColor"
+                  [initialZoom]="75"
+                >
+                </app-cartesian-canvas>
+
+                <!-- Tooltip for an -->
+                <div id="anTooltip" class="coefficient-tooltip an-tooltip">
+                  <!-- Content will be filled dynamically -->
+                </div>
+              </div>
+
+              <!-- Line width control for an -->
+              <div class="flex items-center justify-between mt-2">
+                <label
+                  class="text-xs font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-300' : 'text-gray-600'"
+                  >Grosor de línea:</label
+                >
+                <div
+                  class="relative inline-block w-20 align-middle select-none"
+                >
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="0.5"
+                    [(ngModel)]="anLineWidth"
+                    (input)="drawAmplitudeGraphs()"
+                    class="w-full accent-purple-500"
+                  />
+                  <div
+                    class="text-xs text-center font-medium mt-1 text-purple-400"
+                  >
+                    {{ anLineWidth }}px
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- bn coefficients -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-orange-300' : 'text-orange-600'"
+                >
+                  Coeficientes b<sub>n</sub> (n=1 hasta n=50)
+                </div>
+                <div class="flex items-center space-x-1">
+                  <input
+                    type="color"
+                    [(ngModel)]="bnColor"
+                    (change)="drawAmplitudeGraphs()"
+                    class="w-6 h-6 rounded overflow-hidden"
+                  />
+                </div>
+              </div>
+
+              <!-- Container for bn graph with relative position for tooltips -->
+              <div
+                class="relative h-60 rounded-md overflow-hidden border"
+                [ngClass]="isDarkMode ? 'border-gray-700' : 'border-gray-300'"
+              >
+                <app-cartesian-canvas
+                  #bnCanvas
+                  id="bnCanvas"
+                  [bgColor]="bnBgColor"
+                  [axisColor]="bnAxisColor"
+                  [gridColor]="bnGridColor"
+                  [fontColor]="fontColor"
+                  [initialZoom]="75"
+                >
+                </app-cartesian-canvas>
+
+                <!-- Tooltip for bn -->
+                <div id="bnTooltip" class="coefficient-tooltip bn-tooltip">
+                  <!-- Content will be filled dynamically -->
+                </div>
+              </div>
+
+              <!-- Line width control for bn -->
+              <div class="flex items-center justify-between mt-2">
+                <label
+                  class="text-xs font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-300' : 'text-gray-600'"
+                  >Grosor de línea:</label
+                >
+                <div
+                  class="relative inline-block w-20 align-middle select-none"
+                >
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="0.5"
+                    [(ngModel)]="bnLineWidth"
+                    (input)="drawAmplitudeGraphs()"
+                    class="w-full accent-orange-500"
+                  />
+                  <div
+                    class="text-xs text-center font-medium mt-1 text-orange-400"
+                  >
+                    {{ bnLineWidth }}px
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+        <!-- FIN: Amplitud de Coeficientes en el Sidenav -->
 
         <!-- Términos individuales -->
         <div
@@ -686,56 +829,6 @@
     (onZoom)="redrawFunctions()"
   >
   </app-cartesian-canvas>
-
- <div 
-  *ngIf="showAmplitudeGraphs" 
-  class="fixed bottom-0 left-0 right-0 flex flex-col md:flex-row h-1/3 z-10"
-  [ngClass]="sidenavOpen ? 'md:left-96 lg:left-1/3' : 'left-0'"
->
-  <!-- an coefficients canvas -->
-  <div 
-  *ngIf="showAmplitudeGraphs" 
-  class="fixed bottom-0 left-0 right-0 flex flex-col md:flex-row h-1/3 z-10"
-  [ngClass]="sidenavOpen ? 'md:left-96 lg:left-1/3' : 'left-0'"
->
-  <!-- an coefficients canvas -->
-  <div class="w-full md:w-1/2 h-1/2 md:h-full relative">
-    <div class="absolute top-0 left-0 p-2 text-xs font-medium bg-gray-900/70 text-purple-300 rounded-br-md">
-      Coeficientes a<sub>n</sub>
-    </div>
-    <app-cartesian-canvas
-      #anCanvas
-      canvasId="anCanvas"
-      [bgColor]="anBgColor"
-      [axisColor]="anAxisColor"
-      [gridColor]="anGridColor"
-      [fontColor]="fontColor"
-      [initialZoom]="75"
-    >
-    </app-cartesian-canvas>
-    <!-- Tooltip para an -->
-    <div id="anTooltip" class="coefficient-tooltip an-tooltip">a<sub>n</sub>: 0</div>
-  </div>
-  
-  <!-- bn coefficients canvas -->
-  <div class="w-full md:w-1/2 h-1/2 md:h-full relative">
-    <div class="absolute top-0 left-0 p-2 text-xs font-medium bg-gray-900/70 text-orange-300 rounded-br-md">
-      Coeficientes b<sub>n</sub>
-    </div>
-    <app-cartesian-canvas
-      #bnCanvas
-      canvasId="bnCanvas"
-      [bgColor]="bnBgColor"
-      [axisColor]="bnAxisColor"
-      [gridColor]="bnGridColor"
-      [fontColor]="fontColor"
-      [initialZoom]="75"
-    >
-    </app-cartesian-canvas>
-    <!-- Tooltip para bn -->
-    <div id="bnTooltip" class="coefficient-tooltip bn-tooltip">b<sub>n</sub>: 0</div>
-  </div>
-</div>
 </div>
 
 <!-- Add Theme Toggle button -->
