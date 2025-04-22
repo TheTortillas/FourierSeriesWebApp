@@ -32,6 +32,8 @@ import { Subscription } from 'rxjs';
 })
 export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('cartesianCanvas') cartesianCanvas!: CartesianCanvasComponent;
+  @ViewChild('anCanvas') anCanvas!: CartesianCanvasComponent;
+  @ViewChild('bnCanvas') bnCanvas!: CartesianCanvasComponent;
 
   public sidenavOpen = true;
   public isDarkMode = true;
@@ -92,6 +94,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     an: [],
     bn: [],
   };
+
   public showIndividualTerms: boolean = false;
   private individualTermFunctions: Array<{
     fn: (x: number) => number;
@@ -100,6 +103,29 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public termsLatex: string[] = [];
   public termsLineWidth: number = 2;
+
+  // Add these properties to control the visibility of amplitude graphs
+  public showAmplitudeGraphs: boolean = false;
+  public anLineWidth: number = 2;
+  public bnLineWidth: number = 2;
+  public anColor: string = '#B794F4'; // Purple for an coefficients
+  public bnColor: string = '#F6AD55'; // Orange for bn coefficients
+  private resizeObserver: ResizeObserver | null = null;
+
+  public anBgColor: string = '#1A1A2E'; // Dark mode default
+  public anAxisColor: string = '#B794F4'; // Dark mode default
+  public anGridColor: string = '#553C9A'; // Dark mode default
+
+  public bnBgColor: string = '#2A1E17'; // Dark mode default
+  public bnAxisColor: string = '#F6AD55'; // Dark mode default
+  public bnGridColor: string = '#9C4221'; // Dark mode default
+
+  private anPoints: Array<{ n: number; x: number; y: number; value: number }> =
+    [];
+  private bnPoints: Array<{ n: number; x: number; y: number; value: number }> =
+    [];
+  private anTooltip: HTMLElement | null = null;
+  private bnTooltip: HTMLElement | null = null;
 
   // Funciones cacheadas para piezas originales
   private cachedOriginalFunctions: Array<{
@@ -158,9 +184,55 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
+    this.themeSubscription = this.themeService.darkMode$.subscribe((isDark) => {
+      this.isDarkMode = isDark;
+      this.updateThemeColors();
+
+      // Actualizar el canvas principal
+      if (this.cartesianCanvas) {
+        this.cartesianCanvas.bgColor = this.bgColor;
+        this.cartesianCanvas.axisColor = this.axisColor;
+        this.cartesianCanvas.gridColor = this.gridColor;
+        this.cartesianCanvas.fontColor = this.fontColor;
+
+        // Redraw para aplicar los nuevos colores
+        this.cartesianCanvas.clearCanvas();
+        this.redrawFunctions();
+      }
+
+      // Actualizar los canvas de amplitud
+      if (this.anCanvas) {
+        this.anCanvas.bgColor = this.anBgColor;
+        this.anCanvas.axisColor = this.anAxisColor;
+        this.anCanvas.gridColor = this.anGridColor;
+        this.anCanvas.fontColor = this.fontColor;
+
+        if (this.showAmplitudeGraphs) {
+          this.anCanvas.clearCanvas();
+        }
+      }
+
+      if (this.bnCanvas) {
+        this.bnCanvas.bgColor = this.bnBgColor;
+        this.bnCanvas.axisColor = this.bnAxisColor;
+        this.bnCanvas.gridColor = this.bnGridColor;
+        this.bnCanvas.fontColor = this.fontColor;
+
+        if (this.showAmplitudeGraphs) {
+          this.bnCanvas.clearCanvas();
+        }
+      }
+
+      // Redibujar los gráficos de amplitud si están visibles
+      if (this.showAmplitudeGraphs) {
+        setTimeout(() => this.drawAmplitudeGraphs(), 100);
+      }
+    });
+
     // Initialize colors based on current theme
     this.updateThemeColors();
   }
+
   private printAllCoefficients(): void {
     // Esperar un momento para asegurar que los coeficientes estén calculados
     setTimeout(() => {
@@ -187,8 +259,8 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         bn: this.cachedBCoefs,
       };
 
-       // Almacenar en una propiedad para posible uso posterior (descarga, etc.)
-    this.coefficientsData = exportData;
+      // Almacenar en una propiedad para posible uso posterior (descarga, etc.)
+      this.coefficientsData = exportData;
 
       console.log('Datos completos para exportación:', exportData);
       console.groupEnd();
@@ -219,18 +291,46 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Renderizar MathJax
+    // Existing code
     setTimeout(() => {
       this.mathquillService.renderMathJax();
       this.initializeCanvas();
+
+      // Initialize amplitude graphs if visible
+      if (this.showAmplitudeGraphs) {
+        this.drawAmplitudeGraphs();
+      }
     }, 100);
+
+    // Setup resize observer for the amplitude canvases
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => {
+        if (this.showAmplitudeGraphs) {
+          setTimeout(() => this.drawAmplitudeGraphs(), 100);
+        }
+      });
+
+      // Observe containers for both canvases
+      const anCanvasElement = document.getElementById('anCanvas');
+      const bnCanvasElement = document.getElementById('bnCanvas');
+
+      if (anCanvasElement) this.resizeObserver.observe(anCanvasElement);
+      if (bnCanvasElement) this.resizeObserver.observe(bnCanvasElement);
+    }
   }
 
+  // Cleanup in ngOnDestroy
   ngOnDestroy(): void {
-    // Clean up the theme subscription
+    // Existing theme subscription cleanup
     if (this.themeSubscription) {
       this.themeSubscription.unsubscribe();
       this.themeSubscription = null;
+    }
+
+    // Clean up resize observer
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
     }
   }
 
@@ -238,6 +338,35 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleSidenav(): void {
     // Método para alternar el sidenav
     this.sidenavOpen = !this.sidenavOpen;
+  }
+
+  toggleAmplitudeGraphs(show: boolean): void {
+    this.showAmplitudeGraphs = show;
+
+    if (show) {
+      // Asegurar que los colores de los canvas estén actualizados
+      if (this.anCanvas) {
+        this.anCanvas.bgColor = this.anBgColor;
+        this.anCanvas.axisColor = this.anAxisColor;
+        this.anCanvas.gridColor = this.anGridColor;
+        this.anCanvas.fontColor = this.fontColor;
+      }
+
+      if (this.bnCanvas) {
+        this.bnCanvas.bgColor = this.bnBgColor;
+        this.bnCanvas.axisColor = this.bnAxisColor;
+        this.bnCanvas.gridColor = this.bnGridColor;
+        this.bnCanvas.fontColor = this.fontColor;
+      }
+
+      setTimeout(() => {
+        this.drawAmplitudeGraphs();
+        // Una vez dibujados, configurar los eventos
+        this.setupAmplitudeCanvasEvents();
+        // Configurar eventos de zoom
+        this.setupAmplitudeCanvasZoomEvents();
+      }, 1000);
+    }
   }
 
   goBack(): void {
@@ -286,8 +415,13 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   redrawCanvas(): void {
-    // Método para implementar el redibujado sin resetear la vista
+    // Existing code
     this.redrawFunctions();
+
+    // Draw amplitude graphs if enabled
+    if (this.showAmplitudeGraphs) {
+      this.drawAmplitudeGraphs();
+    }
   }
 
   drawOriginalFunction(): void {
@@ -1118,17 +1252,488 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   // Update colors based on current theme
   private updateThemeColors(): void {
     if (this.isDarkMode) {
-      // Dark theme colors
+      // Dark theme colors - Main canvas
       this.bgColor = '#222';
       this.axisColor = '#90DCB5';
       this.gridColor = '#6BBCAC';
       this.fontColor = '#EBEBEB';
+
+      // Dark theme colors - an canvas
+      this.anBgColor = '#1A1A2E';
+      this.anAxisColor = '#B794F4';
+      this.anGridColor = '#553C9A';
+
+      // Dark theme colors - bn canvas
+      this.bnBgColor = '#2A1E17';
+      this.bnAxisColor = '#F6AD55';
+      this.bnGridColor = '#9C4221';
     } else {
-      // Light theme colors
+      // Light theme colors - Main canvas
       this.bgColor = '#f8fafc';
       this.axisColor = '#3b82f6';
       this.gridColor = '#93c5fd';
       this.fontColor = '#334155';
+
+      // Light theme colors - an canvas
+      this.anBgColor = '#F5F7FF';
+      this.anAxisColor = '#805AD5';
+      this.anGridColor = '#D6BCFA';
+
+      // Light theme colors - bn canvas
+      this.bnBgColor = '#FFFAF0';
+      this.bnAxisColor = '#ED8936';
+      this.bnGridColor = '#FEEBC8';
+    }
+  }
+
+  // Add this method to draw amplitude graphs
+  drawAmplitudeGraphs(): void {
+    if (!this.showAmplitudeGraphs || !this.cachedACoefs || !this.cachedBCoefs)
+      return;
+
+    // Limpiar puntos anteriores
+    this.anPoints = [];
+    this.bnPoints = [];
+
+    // Inicializar referencias a los tooltips si no existen
+    if (!this.anTooltip) {
+      this.anTooltip = document.getElementById('anTooltip');
+    }
+    if (!this.bnTooltip) {
+      this.bnTooltip = document.getElementById('bnTooltip');
+    }
+
+    // Dibujar gráfico de an
+    if (this.anCanvas) {
+      this.anCanvas.clearCanvas();
+
+      // Encontrar el valor máximo absoluto para escalar adecuadamente
+      const maxAbsValue = Math.max(
+        ...this.cachedACoefs
+          .slice(0, Math.min(100, this.cachedACoefs.length))
+          .map((val) => Math.abs(val))
+      );
+
+      // Mostrar los valores de an como barras discretas con efecto de blur
+      for (let i = 0; i < Math.min(100, this.cachedACoefs.length); i++) {
+        const n = i + 1; // n comienza en 1
+        const height = this.cachedACoefs[i];
+
+        // Usar un método personalizado para dibujar con blur
+        this.drawDiscreteLineWithBlur(
+          this.anCanvas,
+          n,
+          0,
+          height,
+          this.anColor,
+          this.anLineWidth,
+          true
+        );
+
+        // Guardar la posición y valor del punto para tooltip
+        const pixelPos = this.canvasCoordToPixel(this.anCanvas, n, height);
+        if (pixelPos) {
+          this.anPoints.push({
+            n,
+            x: pixelPos.x,
+            y: pixelPos.y,
+            value: height,
+          });
+        }
+      }
+
+      // Añadir etiqueta para el valor máximo
+      // if (maxAbsValue > 0) {
+      //   this.addOverlayLabel('anCanvas', `Max: ${maxAbsValue.toFixed(4)}`);
+      // }
+    }
+
+    // Configuración similar para bn
+    if (this.bnCanvas) {
+      this.bnCanvas.clearCanvas();
+
+      const maxAbsValue = Math.max(
+        ...this.cachedBCoefs
+          .slice(0, Math.min(100, this.cachedBCoefs.length))
+          .map((val) => Math.abs(val))
+      );
+
+      for (let i = 0; i < Math.min(100, this.cachedBCoefs.length); i++) {
+        const n = i + 1;
+        const height = this.cachedBCoefs[i];
+
+        this.drawDiscreteLineWithBlur(
+          this.bnCanvas,
+          n,
+          0,
+          height,
+          this.bnColor,
+          this.bnLineWidth,
+          true
+        );
+
+        const pixelPos = this.canvasCoordToPixel(this.bnCanvas, n, height);
+        if (pixelPos) {
+          this.bnPoints.push({
+            n,
+            x: pixelPos.x,
+            y: pixelPos.y,
+            value: height,
+          });
+        }
+      }
+
+      // if (maxAbsValue > 0) {
+      //   this.addOverlayLabel('bnCanvas', `Max: ${maxAbsValue.toFixed(4)}`);
+      // }
+    }
+
+    // Configurar los eventos de mouse para los tooltips
+    this.setupAmplitudeCanvasEvents();
+  }
+
+  // Método auxiliar para dibujar líneas discretas con efecto de blur
+  private drawDiscreteLineWithBlur(
+    canvas: CartesianCanvasComponent,
+    startX: number,
+    startY: number,
+    height: number,
+    color: string,
+    lineWidth: number = 2.5,
+    applyBlur: boolean = false,
+    isHighlighted: boolean = false
+  ): void {
+    // Esta función es un wrapper para drawDiscreteLine
+    // que agrega efectos visuales adicionales
+  
+    if (!canvas || !canvas.ctx) return;
+  
+    const ctx = canvas.ctx;
+    const origin = canvas.origin;
+    const unit = canvas.unit;
+    const offsetX = canvas.offsetX;
+    const offsetY = canvas.offsetY;
+  
+    // Calcular coordenadas en píxeles
+    const xPx = origin.x - offsetX + unit * startX;
+    const y0Px = origin.y - offsetY - unit * startY;
+    const yEndPx = origin.y - offsetY - unit * (startY + height);
+  
+    // Guardar estado actual del contexto
+    ctx.save();
+  
+    // Aplicar blur si está activado
+    if (applyBlur) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 1.5;
+      ctx.globalAlpha = 0.9;
+    }
+  
+    // Si está destacado, aplicar un efecto más pronunciado
+    if (isHighlighted) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 4;
+      ctx.globalAlpha = 1;
+      lineWidth += 0.5; // Hacerlo ligeramente más grueso
+    }
+  
+    // Dibujar línea vertical
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(xPx, y0Px);
+    ctx.lineTo(xPx, yEndPx);
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  
+    // Dibujar punto en el extremo con efecto brillante
+    ctx.beginPath();
+    ctx.arc(xPx, yEndPx, isHighlighted ? 6 : 5, 0, 2 * Math.PI);
+    ctx.stroke();
+  
+    // Añadir un pequeño relleno para el punto
+    ctx.fillStyle = color;
+    ctx.globalAlpha = isHighlighted ? 0.5 : 0.3;
+    ctx.fill();
+  
+    // Restaurar estado original del contexto
+    ctx.restore();
+  }
+
+  // Método para convertir coordenadas matemáticas a coordenadas de píxeles
+  private canvasCoordToPixel(
+    canvas: CartesianCanvasComponent,
+    x: number,
+    y: number
+  ): { x: number; y: number } | null {
+    if (!canvas || !canvas.ctx) return null;
+
+    const origin = canvas.origin;
+    const unit = canvas.unit;
+    const offsetX = canvas.offsetX;
+    const offsetY = canvas.offsetY;
+
+    // Convertir de unidades matemáticas a píxeles
+    const pixelX = origin.x - offsetX + unit * x;
+    const pixelY = origin.y - offsetY - unit * y;
+
+    return { x: pixelX, y: pixelY };
+  }
+
+  // Configurar eventos de mouse para los tooltips
+  private setupAmplitudeCanvasEvents(): void {
+    if (!this.anCanvas || !this.bnCanvas) return;
+  
+    // Obtener elementos DOM
+    const anCanvasElement = document.getElementById('anCanvas');
+    const bnCanvasElement = document.getElementById('bnCanvas');
+  
+    if (!anCanvasElement || !bnCanvasElement) return;
+  
+    // Función auxiliar para comprobar si el mouse está cerca de un tallo
+    const isNearStem = (
+      mouseX: number, 
+      mouseY: number, 
+      stemX: number, 
+      stemY0: number, 
+      stemY1: number, 
+      threshold: number
+    ): boolean => {
+      // Si el mouse está fuera del rango vertical del tallo, no está cerca
+      if (mouseY < Math.min(stemY0, stemY1) - threshold || mouseY > Math.max(stemY0, stemY1) + threshold) {
+        return false;
+      }
+      
+      // Calcular la distancia horizontal al tallo
+      const distance = Math.abs(mouseX - stemX);
+      return distance < threshold;
+    };
+  
+    // Eventos para anCanvas
+    anCanvasElement.onmousemove = (event: MouseEvent) => {
+      const rect = anCanvasElement.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+  
+      // Comprobar cercanía a algún tallo o punto
+      const threshold = 12; // Umbral más amplio para detectar todo el tallo
+      let closestPoint = null;
+      let minDistance = Infinity;
+      let isCloseToStem = false;
+  
+      for (const point of this.anPoints) {
+        // Convertir coordenadas del punto a píxeles
+        const stemX = point.x;
+        const stemEndY = point.y;
+        
+        // Calcular Y0 (origen del tallo, generalmente Y=0)
+        const origin = this.anCanvas.origin;
+        const offsetY = this.anCanvas.offsetY;
+        const unit = this.anCanvas.unit;
+        const stemStartY = origin.y - offsetY - unit * 0; // 0 es el valor Y inicial
+        
+        // Comprobar si el mouse está cerca del tallo
+        if (isNearStem(mouseX, mouseY, stemX, stemStartY, stemEndY, threshold)) {
+          isCloseToStem = true;
+          
+          // También determinamos el punto más cercano para mostrar el tooltip
+          const dx = mouseX - stemX;
+          const dy = mouseY - stemEndY; // Distancia al punto final (donde está el valor)
+          const distance = Math.sqrt(dx*dx + dy*dy);
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+          }
+        }
+      }
+  
+      // Si está cerca de algún tallo
+      if (isCloseToStem && closestPoint && this.anTooltip) {
+        // Mostrar tooltip
+        this.anTooltip.innerHTML = `a<sub>${
+          closestPoint.n
+        }</sub>: ${closestPoint.value.toFixed(6)}`;
+        this.anTooltip.style.left = `${closestPoint.x}px`;
+        this.anTooltip.style.top = `${closestPoint.y}px`;
+        this.anTooltip.classList.add('visible');
+  
+        // Primero redibujar todos los puntos con blur normal
+        this.drawAmplitudeGraphs();
+        
+        // Luego resaltar solo el tallo seleccionado
+        this.drawDiscreteLineWithBlur(
+          this.anCanvas,
+          closestPoint.n,
+          0,
+          closestPoint.value,
+          this.anColor,
+          this.anLineWidth + 0.5,
+          false,
+          true // Indicador de que está resaltado
+        );
+      } else if (this.anTooltip) {
+        // Ocultar tooltip si no hay tallo cercano
+        this.anTooltip.classList.remove('visible');
+        
+        // Redibujar todos los puntos con blur normal
+        this.drawAmplitudeGraphs();
+      }
+    };
+  
+    // Código similar para bnCanvas
+    bnCanvasElement.onmousemove = (event: MouseEvent) => {
+      const rect = bnCanvasElement.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+  
+      // Comprobar cercanía a algún tallo o punto
+      const threshold = 12; // Umbral más amplio para detectar todo el tallo
+      let closestPoint = null;
+      let minDistance = Infinity;
+      let isCloseToStem = false;
+  
+      for (const point of this.bnPoints) {
+        // Convertir coordenadas del punto a píxeles
+        const stemX = point.x;
+        const stemEndY = point.y;
+        
+        // Calcular Y0 (origen del tallo, generalmente Y=0)
+        const origin = this.bnCanvas.origin;
+        const offsetY = this.bnCanvas.offsetY;
+        const unit = this.bnCanvas.unit;
+        const stemStartY = origin.y - offsetY - unit * 0; // 0 es el valor Y inicial
+        
+        // Comprobar si el mouse está cerca del tallo
+        if (isNearStem(mouseX, mouseY, stemX, stemStartY, stemEndY, threshold)) {
+          isCloseToStem = true;
+          
+          // También determinamos el punto más cercano para mostrar el tooltip
+          const dx = mouseX - stemX;
+          const dy = mouseY - stemEndY; // Distancia al punto final (donde está el valor)
+          const distance = Math.sqrt(dx*dx + dy*dy);
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+          }
+        }
+      }
+  
+      // Si está cerca de algún tallo
+      if (isCloseToStem && closestPoint && this.bnTooltip) {
+        // Mostrar tooltip
+        this.bnTooltip.innerHTML = `b<sub>${
+          closestPoint.n
+        }</sub>: ${closestPoint.value.toFixed(6)}`;
+        this.bnTooltip.style.left = `${closestPoint.x}px`;
+        this.bnTooltip.style.top = `${closestPoint.y}px`;
+        this.bnTooltip.classList.add('visible');
+  
+        // Primero redibujar todos los puntos con blur normal
+        this.drawAmplitudeGraphs();
+        
+        // Luego resaltar solo el tallo seleccionado
+        this.drawDiscreteLineWithBlur(
+          this.bnCanvas,
+          closestPoint.n,
+          0,
+          closestPoint.value,
+          this.bnColor,
+          this.bnLineWidth + 0.5,
+          false,
+          true // Indicador de que está resaltado
+        );
+      } else if (this.bnTooltip) {
+        // Ocultar tooltip si no hay tallo cercano
+        this.bnTooltip.classList.remove('visible');
+        
+        // Redibujar todos los puntos con blur normal
+        this.drawAmplitudeGraphs();
+      }
+    };
+  
+    // Gestores de eventos para salir del canvas
+    anCanvasElement.onmouseleave = () => {
+      if (this.anTooltip) {
+        this.anTooltip.classList.remove('visible');
+        // Redibujar sin resaltado
+        this.drawAmplitudeGraphs();
+      }
+    };
+  
+    bnCanvasElement.onmouseleave = () => {
+      if (this.bnTooltip) {
+        this.bnTooltip.classList.remove('visible');
+        // Redibujar sin resaltado
+        this.drawAmplitudeGraphs();
+      }
+    };
+  }
+
+  // Helper method to add labels as overlays since drawText isn't available
+  // private addOverlayLabel(canvasId: string, text: string): void {
+  //   const canvasElement = document.getElementById(canvasId);
+  //   if (!canvasElement) return;
+
+  //   // Find existing label or create a new one
+  //   let label = document.getElementById(`${canvasId}-label`);
+  //   if (!label) {
+  //     label = document.createElement('div');
+  //     label.id = `${canvasId}-label`;
+  //     label.style.position = 'absolute';
+  //     label.style.top = '10px';
+  //     label.style.right = '15px';
+  //     label.style.padding = '4px 8px';
+  //     label.style.borderRadius = '4px';
+  //     label.style.fontSize = '12px';
+  //     label.style.fontWeight = 'bold';
+  //     label.style.background = 'rgba(0,0,0,0.7)';
+  //     label.style.zIndex = '10';
+
+  //     // Set color based on canvas
+  //     label.style.color = canvasId === 'anCanvas' ? this.anColor : this.bnColor;
+
+  //     // Add to the parent container of the canvas
+  //     const parent = canvasElement.parentElement;
+  //     if (parent) {
+  //       parent.style.position = 'relative';
+  //       parent.appendChild(label);
+  //     }
+  //   }
+
+  //   // Update text
+  //   if (label) {
+  //     label.textContent = text;
+  //   }
+  // }
+    // Añadir este método a TrigComponent
+  private setupAmplitudeCanvasZoomEvents(): void {
+    if (this.anCanvas && this.anCanvas.canvasElement?.nativeElement) {
+      const anCanvas = this.anCanvas.canvasElement.nativeElement;
+      
+      // Crear un nuevo manejador de wheel que primero ejecute el original y luego redibuje
+      const originalWheel = anCanvas.onwheel;
+      anCanvas.onwheel = (event: WheelEvent) => {
+        // Llamar al manejador original
+        if (originalWheel) originalWheel.call(anCanvas, event);
+        
+        // Redibujar después de un breve retraso para permitir que se actualice el canvas
+        setTimeout(() => this.drawAmplitudeGraphs(), 0);
+      };
+    }
+    
+    if (this.bnCanvas && this.bnCanvas.canvasElement?.nativeElement) {
+      const bnCanvas = this.bnCanvas.canvasElement.nativeElement;
+      
+      // Crear un nuevo manejador de wheel que primero ejecute el original y luego redibuje
+      const originalWheel = bnCanvas.onwheel;
+      bnCanvas.onwheel = (event: WheelEvent) => {
+        // Llamar al manejador original
+        if (originalWheel) originalWheel.call(bnCanvas, event);
+        
+        // Redibujar después de un breve retraso para permitir que se actualice el canvas
+        setTimeout(() => this.drawAmplitudeGraphs(), 0);
+      };
     }
   }
 }
