@@ -228,7 +228,7 @@ async function expandSeries({
       const strC0Term = await execMaxima(
         buildMaximaCommand(`
         ${seriesExpansionCode}
-        string(c0_term/2);
+        string(c0_term);
       `)
       );
 
@@ -254,7 +254,7 @@ async function expandSeries({
       const texC0Term = await execMaxima(
         buildMaximaCommand(`
         ${seriesExpansionCode}
-        tex(c0_term/2, false);
+        tex(c0_term, false);
       `)
       );
 

@@ -6,7 +6,6 @@ const {
   validatePiecewiseFourierSeries,
 } = require("../utils/fourier-validation.util");
 
-
 exports.computeTrigonometricSeries = async (funcion, periodo, intVar) => {
   try {
     // First, validate the integrability of the function
@@ -298,16 +297,107 @@ exports.computeComplexSeriesPiecewise = async (funcionMatrix, intVar) => {
       };
     }
 
+    // Calculate period T as the difference between last and first boundary
+    const pieces = funcionMatrix.length;
+    const firstLimit = funcionMatrix[0][1];
+    const lastLimit = funcionMatrix[pieces - 1][2];
+    const period = `(${lastLimit}) - (${firstLimit})`;
+
+    // Define common expressions including core functions with negative exponent
+    const commonExprPart = `
+      ${getMaximaRules({
+        integer: true,
+        trigRules: true,
+        assumptions: true,
+        expRules: true,
+      })}
+      T: ${period}$
+      w0: (2*(%pi))/(T)$     
+      series_exp_core_pos: exp((%i*n*w0*${intVar}))$
+      series_exp_core_neg: exp(-(%i*n*w0*${intVar}))$
+    `;
+
+    // Get w0 and exponents
+    const w0Expression = `
+      ${commonExprPart}
+      string(w0);
+    `;
+
+    const expCorePosExpression = `
+      ${commonExprPart}
+      string(series_exp_core_pos);
+    `;
+
+    const expCoreNegExpression = `
+      ${commonExprPart}
+      string(series_exp_core_neg);
+    `;
+
     // Continue with calculation if validation passed
     const result = await calculatePiecewiseSeries({
       funcionMatrix,
       intVar,
       seriesType: "complex",
+      period,
     });
 
+    // Get the fundamental frequency and exponential cores
+    const [w0, expCorePos, expCoreNeg] = await Promise.all([
+      execMaxima(buildMaximaCommand(w0Expression)),
+      execMaxima(buildMaximaCommand(expCorePosExpression)),
+      execMaxima(buildMaximaCommand(expCoreNegExpression)),
+    ]);
+
+    // Convert to LaTeX
+    const [w0Tex, expCorePosTex, expCoreNegTex] = await Promise.all([
+      execMaxima(
+        buildMaximaCommand(
+          `${getMaximaRules({ displayFlags: true })} tex(${w0}, false);`
+        )
+      ),
+      execMaxima(
+        buildMaximaCommand(
+          `${getMaximaRules({ displayFlags: true })} tex(${expCorePos}, false);`
+        )
+      ),
+      execMaxima(
+        buildMaximaCommand(
+          `${getMaximaRules({ displayFlags: true })} tex(${expCoreNeg}, false);`
+        )
+      ),
+    ]);
+
+    // Create a friendly structure for the series expansion information
+    const seriesExpansion = {
+      coefficientList: result.simplified.coefficientList,
+      amplitudePhaseList: result.simplified.amplitudePhaseList,
+      terms: result.simplified.seriesTerms,
+      demoivreTerms: result.simplified.demoivreTerms,
+    };
+
+    const seriesExpansionLatex = {
+      terms: result.latex.terms,
+      demoivreTerms: result.latex.demoivreTerms,
+    };
+
+    // Add the additional data to the result
     return {
       success: true,
       ...result,
+      simplified: {
+        ...result.simplified,
+        w0,
+        series_exp_core_pos: expCorePos,
+        series_exp_core_neg: expCoreNeg,
+      },
+      latex: {
+        ...result.latex,
+        w0: w0Tex,
+        series_exp_core_pos: expCorePosTex,
+        series_exp_core_neg: expCoreNegTex,
+      },
+      seriesExpansion,
+      seriesExpansionLatex,
     };
   } catch (error) {
     throw new Error(

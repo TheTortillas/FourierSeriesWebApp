@@ -37,6 +37,7 @@ function getMaximaRules(options = {}) {
 
   if (expRules) {
     rules.push(`
+      lognegint : true$
       tellsimpafter(exp(%i * %pi * n), (-1)^n)$
       tellsimpafter(exp(%i * 2 * %pi * n), 1)$
       tellsimpafter(exp((%i * %pi * n)/2), %i^n)$
