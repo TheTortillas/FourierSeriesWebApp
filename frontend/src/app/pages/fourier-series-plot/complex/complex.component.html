@@ -1,0 +1,937 @@
+<!-- Side Navigation -->
+<div
+  class="fixed top-0 h-screen z-50 sidenav"
+  [ngClass]="
+    sidenavOpen ? 'left-0 w-full md:w-96 lg:w-1/3' : '-left-[200%] w-0'
+  "
+>
+  <!-- Contenedor principal con gradiente y efecto de vidrio -->
+  <div
+    class="h-full shadow-2xl border-r"
+    [ngClass]="
+      isDarkMode
+        ? 'bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 text-gray-100 border-teal-500/20'
+        : 'bg-gradient-to-br from-white/95 via-white/90 to-white/95 text-gray-800 border-blue-200'
+    "
+  >
+    <!-- Encabezado -->
+    <div
+      class="flex justify-between items-center p-5 border-b"
+      [ngClass]="
+        isDarkMode
+          ? 'border-teal-500/30 bg-gray-800/60'
+          : 'border-blue-200 bg-blue-50'
+      "
+    >
+      <h2
+        class="text-xl font-bold text-transparent bg-clip-text"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gradient-to-r from-teal-400 to-green-300'
+            : 'bg-gradient-to-r from-blue-500 to-sky-400'
+        "
+      >
+        Resultados de la Serie Compleja de Fourier
+      </h2>
+      <button
+        class="rounded-full w-8 h-8 flex items-center justify-center transition-all duration-300 focus:outline-none"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-700/50 hover:bg-teal-600/70 text-white focus:ring-2 focus:ring-teal-400/50'
+            : 'bg-gray-200 hover:bg-blue-400/70 text-gray-700 hover:text-white focus:ring-2 focus:ring-blue-400/50'
+        "
+        (click)="toggleSidenav()"
+      >
+        <span class="text-xl">×</span>
+      </button>
+    </div>
+
+    <div class="p-6 overflow-y-auto max-h-[calc(100vh-64px)]">
+      <!-- Tipo de serie y función original -->
+      <div class="mb-8">
+        <h3 class="text-base mb-3 font-bold flex items-center">
+          <span
+            class="w-1.5 h-1.5 rounded-full mr-2"
+            [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+          ></span>
+          <span
+            class="text-transparent bg-clip-text"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gradient-to-r from-teal-400 to-green-300'
+                : 'bg-gradient-to-r from-blue-500 to-sky-400'
+            "
+            >Función Original</span
+          >
+        </h3>
+        <div
+          class="border p-4 rounded-lg shadow-inner transition-all duration-300"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/70 border-teal-500/20 text-white hover:shadow-teal-500/5'
+              : 'bg-white border-blue-200 text-gray-800 hover:shadow-blue-500/5'
+          "
+        >
+          <div
+            class="latex-container"
+            [innerHTML]="'$$f(' + intVar + ') = ' + originalFunction + '$$'"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Opciones de visualización -->
+      <div class="mb-8">
+        <h3 class="text-base mb-4 font-bold flex items-center">
+          <span
+            class="w-1.5 h-1.5 rounded-full mr-2"
+            [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+          ></span>
+          <span
+            class="text-transparent bg-clip-text"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gradient-to-r from-teal-400 to-green-300'
+                : 'bg-gradient-to-r from-blue-500 to-sky-400'
+            "
+            >Visualización</span
+          >
+        </h3>
+
+        <!-- Contenedor de tarjetas para los controles -->
+        <div class="space-y-4">
+          <!-- Selector de escala del eje X -->
+          <div
+            class="p-3 rounded-lg border transition-all"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30'
+                : 'bg-white border-gray-200 hover:border-blue-300'
+            "
+          >
+            <div class="flex items-center justify-between">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                >Escala del eje X:</label
+              >
+              <select
+                [(ngModel)]="xAxisScale"
+                (change)="updateAxisScale()"
+                class="text-sm border rounded-md px-3 py-1.5 focus:outline-none"
+                [ngClass]="
+                  isDarkMode
+                    ? 'bg-gray-700/70 border-gray-600 text-white focus:ring-1 focus:ring-teal-500'
+                    : 'bg-white border-gray-300 text-gray-800 focus:ring-1 focus:ring-blue-500'
+                "
+              >
+                <option value="integer">Unidades enteras</option>
+                <option value="pi">Múltiplos de π</option>
+                <option value="e">Múltiplos de e</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Controles con toggles -->
+          <div
+            class="p-3 rounded-lg border transition-all space-y-3"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30'
+                : 'bg-white border-gray-200 hover:border-blue-300'
+            "
+          >
+            <div class="flex items-center justify-between">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                >Mostrar función original:</label
+              >
+              <div class="relative inline-block w-12 align-middle select-none">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="showOriginalFunction"
+                  (change)="redrawCanvas()"
+                  id="toggleOriginal"
+                  class="toggle-checkbox"
+                />
+                <label for="toggleOriginal" class="toggle-label"></label>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                >Mostrar aproximación:</label
+              >
+              <div class="relative inline-block w-12 align-middle select-none">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="showSeriesApproximation"
+                  (change)="redrawCanvas()"
+                  id="toggleSeries"
+                  class="toggle-checkbox"
+                />
+                <label for="toggleSeries" class="toggle-label"></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Control deslizante del número de términos -->
+          <div
+            class="p-3 rounded-lg border transition-all"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30'
+                : 'bg-white border-gray-200 hover:border-blue-300'
+            "
+          >
+            <label
+              class="block text-sm font-medium mb-2"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Número de términos:</label
+            >
+            <div class="flex items-center">
+              <span
+                class="text-xs mr-2"
+                [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                >0</span
+              >
+              <input
+                type="range"
+                min="0"
+                max="100"
+                [(ngModel)]="termCount"
+                (input)="updateTermCount()"
+                class="w-full accent-teal-500"
+              />
+              <span
+                class="text-xs ml-2"
+                [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                >100</span
+              >
+            </div>
+            <div
+              class="text-center text-sm mt-1 font-semibold"
+              [ngClass]="isDarkMode ? 'text-teal-400' : 'text-blue-500'"
+            >
+              {{ termCount }}
+            </div>
+          </div>
+        </div>
+
+        <!-- NUEVO: Amplitud y Fase de Coeficientes en el Sidenav -->
+        <div
+          class="mt-5 p-4 rounded-lg border transition-all"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30'
+              : 'bg-white border-gray-200 hover:border-blue-300'
+          "
+        >
+          <h3 class="text-base mb-3 font-medium flex items-center">
+            <span
+              class="w-1 h-1 rounded-full mr-2"
+              [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+            ></span>
+            <span [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+              >Análisis de coeficientes</span
+            >
+          </h3>
+
+          <div class="flex items-center justify-between mb-3">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Mostrar gráficos de análisis:</label
+            >
+            <div class="relative inline-block w-12 align-middle select-none">
+              <input
+                type="checkbox"
+                [(ngModel)]="showAmplitudePhaseGraphs"
+                (change)="toggleAmplitudePhaseGraphs(showAmplitudePhaseGraphs)"
+                id="toggleAmplitudePhaseGraphs"
+                class="toggle-checkbox"
+              />
+              <label
+                for="toggleAmplitudePhaseGraphs"
+                class="toggle-label"
+              ></label>
+            </div>
+          </div>
+
+          <!-- Amplitude/Phase graph containers (shown only when enabled) -->
+          <div *ngIf="showAmplitudePhaseGraphs" class="mt-4 space-y-6">
+            <!-- cn coefficients -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-purple-300' : 'text-purple-600'"
+                >
+                  Coeficientes c<sub>n</sub> (n=-100 hasta n=100)
+                </div>
+                <div class="flex items-center space-x-1">
+                  <input
+                    type="color"
+                    [(ngModel)]="cnColor"
+                    (change)="drawAmplitudePhaseGraphs()"
+                    class="w-6 h-6 rounded overflow-hidden"
+                  />
+                </div>
+              </div>
+
+              <!-- Container for cn graph with relative position for tooltips -->
+              <div
+                class="relative h-60 rounded-md overflow-hidden border"
+                [ngClass]="isDarkMode ? 'border-gray-700' : 'border-gray-300'"
+              >
+                <app-cartesian-canvas
+                  #cnCanvas
+                  id="cnCanvas"
+                  [bgColor]="cnBgColor"
+                  [axisColor]="cnAxisColor"
+                  [gridColor]="cnGridColor"
+                  [fontColor]="fontColor"
+                  [initialZoom]="75"
+                >
+                </app-cartesian-canvas>
+
+                <!-- Tooltip for cn -->
+                <div id="cnTooltip" class="coefficient-tooltip cn-tooltip">
+                  <!-- Content will be filled dynamically -->
+                </div>
+              </div>
+
+              <!-- Line width control for cn -->
+              <div class="flex items-center justify-between mt-2">
+                <label
+                  class="text-xs font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-300' : 'text-gray-600'"
+                  >Grosor de línea:</label
+                >
+                <div
+                  class="relative inline-block w-20 align-middle select-none"
+                >
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="0.5"
+                    [(ngModel)]="cnLineWidth"
+                    (input)="drawAmplitudePhaseGraphs()"
+                    class="w-full accent-purple-500"
+                  />
+                  <div
+                    class="text-xs text-center font-medium mt-1 text-purple-400"
+                  >
+                    {{ cnLineWidth }}px
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- amplitude graph -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-orange-300' : 'text-orange-600'"
+                >
+                  Amplitud |c<sub>n</sub>| (n=0 hasta n=100)
+                </div>
+                <div class="flex items-center space-x-1">
+                  <input
+                    type="color"
+                    [(ngModel)]="amplitudeColor"
+                    (change)="drawAmplitudePhaseGraphs()"
+                    class="w-6 h-6 rounded overflow-hidden"
+                  />
+                </div>
+              </div>
+
+              <!-- Container for amplitude graph with relative position for tooltips -->
+              <div
+                class="relative h-60 rounded-md overflow-hidden border"
+                [ngClass]="isDarkMode ? 'border-gray-700' : 'border-gray-300'"
+              >
+                <app-cartesian-canvas
+                  #amplitudeCanvas
+                  id="amplitudeCanvas"
+                  [bgColor]="amplitudeBgColor"
+                  [axisColor]="amplitudeAxisColor"
+                  [gridColor]="amplitudeGridColor"
+                  [fontColor]="fontColor"
+                  [initialZoom]="75"
+                >
+                </app-cartesian-canvas>
+
+                <!-- Tooltip for amplitude -->
+                <div
+                  id="amplitudeTooltip"
+                  class="coefficient-tooltip amplitude-tooltip"
+                >
+                  <!-- Content will be filled dynamically -->
+                </div>
+              </div>
+
+              <!-- Line width control for amplitude -->
+              <div class="flex items-center justify-between mt-2">
+                <label
+                  class="text-xs font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-300' : 'text-gray-600'"
+                  >Grosor de línea:</label
+                >
+                <div
+                  class="relative inline-block w-20 align-middle select-none"
+                >
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="0.5"
+                    [(ngModel)]="amplitudeLineWidth"
+                    (input)="drawAmplitudePhaseGraphs()"
+                    class="w-full accent-orange-500"
+                  />
+                  <div
+                    class="text-xs text-center font-medium mt-1 text-orange-400"
+                  >
+                    {{ amplitudeLineWidth }}px
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- phase graph -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-teal-300' : 'text-teal-600'"
+                >
+                  Fase ∠c<sub>n</sub> (n=0 hasta n=100)
+                </div>
+                <div class="flex items-center space-x-1">
+                  <input
+                    type="color"
+                    [(ngModel)]="phaseColor"
+                    (change)="drawAmplitudePhaseGraphs()"
+                    class="w-6 h-6 rounded overflow-hidden"
+                  />
+                </div>
+              </div>
+
+              <!-- Container for phase graph with relative position for tooltips -->
+              <div
+                class="relative h-60 rounded-md overflow-hidden border"
+                [ngClass]="isDarkMode ? 'border-gray-700' : 'border-gray-300'"
+              >
+                <app-cartesian-canvas
+                  #phaseCanvas
+                  id="phaseCanvas"
+                  [bgColor]="phaseBgColor"
+                  [axisColor]="phaseAxisColor"
+                  [gridColor]="phaseGridColor"
+                  [fontColor]="fontColor"
+                  [initialZoom]="75"
+                >
+                </app-cartesian-canvas>
+
+                <!-- Tooltip for phase -->
+                <div
+                  id="phaseTooltip"
+                  class="coefficient-tooltip phase-tooltip"
+                >
+                  <!-- Content will be filled dynamically -->
+                </div>
+              </div>
+
+              <!-- Line width control for phase -->
+              <div class="flex items-center justify-between mt-2">
+                <label
+                  class="text-xs font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-300' : 'text-gray-600'"
+                  >Grosor de línea:</label
+                >
+                <div
+                  class="relative inline-block w-20 align-middle select-none"
+                >
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="0.5"
+                    [(ngModel)]="phaseLineWidth"
+                    (input)="drawAmplitudePhaseGraphs()"
+                    class="w-full accent-teal-500"
+                  />
+                  <div
+                    class="text-xs text-center font-medium mt-1 text-teal-400"
+                  >
+                    {{ phaseLineWidth }}px
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- FIN: Amplitud y Fase de Coeficientes en el Sidenav -->
+
+        <!-- Términos individuales -->
+        <div
+          class="mt-5 p-4 rounded-lg border transition-all"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30'
+              : 'bg-white border-gray-200 hover:border-blue-300'
+          "
+        >
+          <h3 class="text-base mb-3 font-medium flex items-center">
+            <span
+              class="w-1 h-1 rounded-full mr-2"
+              [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+            ></span>
+            <span [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+              >Términos individuales</span
+            >
+          </h3>
+
+          <div class="flex items-center justify-between mb-3">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Mostrar términos individuales:</label
+            >
+            <div class="relative inline-block w-12 align-middle select-none">
+              <input
+                type="checkbox"
+                [(ngModel)]="showIndividualTerms"
+                (change)="toggleIndividualTerms(showIndividualTerms)"
+                id="toggleIndividualTerms"
+                class="toggle-checkbox"
+              />
+              <label for="toggleIndividualTerms" class="toggle-label"></label>
+            </div>
+          </div>
+
+          <!-- Controles de colores para términos individuales -->
+          <div class="space-y-3 mt-3" *ngIf="showIndividualTerms">
+            <!-- Color inicial -->
+            <div class="flex items-center justify-between">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                >Color inicial términos:</label
+              >
+              <div class="flex items-center">
+                <input
+                  type="color"
+                  [(ngModel)]="termsStartColor"
+                  (change)="updateTermColors()"
+                  class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+                />
+                <span
+                  class="ml-2 text-xs font-mono"
+                  [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                  >{{ termsStartColor }}</span
+                >
+              </div>
+            </div>
+
+            <!-- Color final -->
+            <div class="flex items-center justify-between">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                >Color final términos:</label
+              >
+              <div class="flex items-center">
+                <input
+                  type="color"
+                  [(ngModel)]="termsEndColor"
+                  (change)="updateTermColors()"
+                  class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+                />
+                <span
+                  class="ml-2 text-xs font-mono"
+                  [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                  >{{ termsEndColor }}</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección de personalización visual -->
+        <div
+          class="mt-5 p-4 rounded-lg border transition-all space-y-3"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30'
+              : 'bg-white border-gray-200 hover:border-blue-300'
+          "
+        >
+          <h3 class="text-base mb-3 font-medium flex items-center">
+            <span
+              class="w-1 h-1 rounded-full mr-2"
+              [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+            ></span>
+            <span [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+              >Personalización</span
+            >
+          </h3>
+
+          <!-- Selector de color para función original -->
+          <div class="flex items-center justify-between">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Color función original:</label
+            >
+            <div class="flex items-center">
+              <input
+                type="color"
+                [(ngModel)]="functionColor"
+                (change)="redrawCanvas()"
+                class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+              />
+              <span
+                class="ml-2 text-xs font-mono"
+                [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                >{{ functionColor }}</span
+              >
+            </div>
+          </div>
+
+          <!-- Selector de color para la aproximación -->
+          <div class="flex items-center justify-between">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Color aproximación:</label
+            >
+            <div class="flex items-center">
+              <input
+                type="color"
+                [(ngModel)]="seriesColor"
+                (change)="redrawCanvas()"
+                class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+              />
+              <span
+                class="ml-2 text-xs font-mono"
+                [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                >{{ seriesColor }}</span
+              >
+            </div>
+          </div>
+
+          <!-- Grosor función original -->
+          <div class="flex items-center justify-between">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Grosor función original:</label
+            >
+            <div class="relative inline-block w-24 align-middle select-none">
+              <input
+                type="range"
+                min="1"
+                max="5"
+                [(ngModel)]="functionLineWidth"
+                (input)="redrawCanvas()"
+                class="w-full accent-teal-500"
+              />
+              <div
+                class="text-xs text-center font-medium mt-1"
+                [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+              >
+                {{ functionLineWidth }}px
+              </div>
+            </div>
+          </div>
+
+          <!-- Grosor aproximación -->
+          <div class="flex items-center justify-between">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Grosor aproximación:</label
+            >
+            <div class="relative inline-block w-24 align-middle select-none">
+              <input
+                type="range"
+                min="1"
+                max="5"
+                [(ngModel)]="seriesLineWidth"
+                (input)="redrawCanvas()"
+                class="w-full accent-teal-500"
+              />
+              <div
+                class="text-xs text-center font-medium mt-1"
+                [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+              >
+                {{ seriesLineWidth }}px
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados de coeficientes complejos -->
+      <div class="mb-8">
+        <h3 class="text-base mb-4 font-bold flex items-center">
+          <span
+            class="w-1.5 h-1.5 rounded-full mr-2"
+            [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+          ></span>
+          <span
+            class="text-transparent bg-clip-text"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gradient-to-r from-teal-400 to-green-300'
+                : 'bg-gradient-to-r from-blue-500 to-sky-400'
+            "
+            >Coeficientes de la Serie</span
+          >
+        </h3>
+
+        <div class="space-y-4">
+          <!-- Coeficiente c0 -->
+          <div class="group" *ngIf="latexRendered.c0">
+            <p
+              class="text-sm font-medium mb-1 transition-colors"
+              [ngClass]="
+                isDarkMode
+                  ? 'text-gray-300 group-hover:text-teal-300'
+                  : 'text-gray-700 group-hover:text-blue-500'
+              "
+            >
+              Coeficiente c<sub>0</sub>:
+            </p>
+            <div
+              class="border p-3 rounded-lg shadow-inner transition-all duration-300"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-800/70 border-gray-700/50 group-hover:border-teal-500/30 text-white'
+                  : 'bg-white border-gray-200 group-hover:border-blue-300 text-gray-800'
+              "
+            >
+              <div class="latex-container">
+                <div [innerHTML]="latexRendered.c0" class="math-formula"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coeficiente cn -->
+          <div class="group" *ngIf="latexRendered.cn">
+            <p
+              class="text-sm font-medium mb-1 transition-colors"
+              [ngClass]="
+                isDarkMode
+                  ? 'text-gray-300 group-hover:text-teal-300'
+                  : 'text-gray-700 group-hover:text-blue-500'
+              "
+            >
+              Coeficiente c<sub>n</sub>:
+            </p>
+            <div
+              class="border p-3 rounded-lg shadow-inner transition-all duration-300"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-800/70 border-gray-700/50 group-hover:border-teal-500/30 text-white'
+                  : 'bg-white border-gray-200 group-hover:border-blue-300 text-gray-800'
+              "
+            >
+              <div class="latex-container">
+                <div [innerHTML]="latexRendered.cn" class="math-formula"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Frecuencia angular w0 -->
+          <div class="group" *ngIf="latexRendered.w0">
+            <p
+              class="text-sm font-medium mb-1 transition-colors"
+              [ngClass]="
+                isDarkMode
+                  ? 'text-gray-300 group-hover:text-teal-300'
+                  : 'text-gray-700 group-hover:text-blue-500'
+              "
+            >
+              Frecuencia angular (ω<sub>0</sub>):
+            </p>
+            <div
+              class="border p-3 rounded-lg shadow-inner transition-all duration-300"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-800/70 border-gray-700/50 group-hover:border-teal-500/30 text-white'
+                  : 'bg-white border-gray-200 group-hover:border-blue-300 text-gray-800'
+              "
+            >
+              <div class="latex-container">
+                <div [innerHTML]="latexRendered.w0" class="math-formula"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Periodo T -->
+          <div class="group" *ngIf="latexRendered.T">
+            <p
+              class="text-sm font-medium mb-1 transition-colors"
+              [ngClass]="
+                isDarkMode
+                  ? 'text-gray-300 group-hover:text-teal-300'
+                  : 'text-gray-700 group-hover:text-blue-500'
+              "
+            >
+              Periodo (T):
+            </p>
+            <div
+              class="border p-3 rounded-lg shadow-inner transition-all duration-300"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-800/70 border-gray-700/50 group-hover:border-teal-500/30 text-white'
+                  : 'bg-white border-gray-200 group-hover:border-blue-300 text-gray-800'
+              "
+            >
+              <div class="latex-container">
+                <div [innerHTML]="latexRendered.T" class="math-formula"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expresión completa de la serie -->
+          <div class="group" *ngIf="fullLatexFormula">
+            <p
+              class="text-sm font-medium mb-1 transition-colors"
+              [ngClass]="
+                isDarkMode
+                  ? 'text-gray-300 group-hover:text-teal-300'
+                  : 'text-gray-700 group-hover:text-blue-500'
+              "
+            >
+              Serie completa:
+            </p>
+            <div
+              class="border p-3 rounded-lg shadow-inner transition-all duration-300"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-800/70 border-gray-700/50 group-hover:border-teal-500/30 text-white'
+                  : 'bg-white border-gray-200 group-hover:border-blue-300 text-gray-800'
+              "
+            >
+              <div class="latex-container">
+                <div [innerHTML]="fullLatexFormula" class="math-formula"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Términos de la serie -->
+      <!-- <div *ngIf="showIndividualTerms" class="mb-8">
+        <h3 class="text-base mb-4 font-bold flex items-center">
+          <span
+            class="w-1.5 h-1.5 rounded-full mr-2"
+            [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+          ></span>
+          <span
+            class="text-transparent bg-clip-text"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gradient-to-r from-teal-400 to-green-300'
+                : 'bg-gradient-to-r from-blue-500 to-sky-400'
+            "
+            >Términos de la serie</span
+          >
+        </h3>
+
+        <div id="series-terms-container" class="space-y-4">
+           Los términos se cargarán dinámicamente aquí 
+        </div>
+      </div> -->
+
+      <!-- Botón de acción -->
+      <div class="mb-6">
+        <button
+          (click)="goBack()"
+          class="w-full py-3 px-4 rounded-lg transition-all duration-300 shadow-lg font-medium flex items-center justify-center"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gradient-to-r from-teal-500 to-green-500 hover:from-teal-600 hover:to-green-600 text-white hover:shadow-teal-500/30'
+              : 'bg-gradient-to-r from-blue-500 to-sky-400 hover:from-blue-600 hover:to-sky-500 text-white hover:shadow-blue-500/30'
+          "
+        >
+          <span class="mr-2">←</span> Volver a calculadora
+        </button>
+      </div>
+
+      <!-- Botón para descargar coeficientes -->
+      <div class="mt-4">
+        <button
+          (click)="downloadCoefficients()"
+          class="w-full py-2 px-3 rounded-lg transition-all duration-300 shadow font-medium flex items-center justify-center"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/70 border border-teal-500/30 text-teal-400 hover:bg-teal-900/30 hover:border-teal-400/50'
+              : 'bg-blue-50 border border-blue-300 text-blue-500 hover:bg-blue-100 hover:border-blue-400'
+          "
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          Descargar coeficientes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Botón para abrir el sidenav -->
+<button
+  class="fixed top-5 left-5 w-12 h-12 rounded-full text-white border-none flex items-center justify-center cursor-pointer z-40 shadow-lg focus:outline-none menu-button"
+  [ngClass]="
+    isDarkMode
+      ? 'bg-gradient-to-r from-teal-500 to-green-500 hover:shadow-teal-500/50'
+      : 'bg-gradient-to-r from-blue-400 to-sky-500 hover:shadow-blue-500/50'
+  "
+  [class.open]="sidenavOpen"
+  (click)="toggleSidenav()"
+>
+  <span class="text-lg">☰</span>
+</button>
+
+<!-- Canvas with dynamic colors based on theme -->
+<div
+  class="fixed inset-0 w-screen h-screen z-0"
+  [ngClass]="isDarkMode ? 'bg-gray-900' : 'bg-blue-50'"
+>
+  <app-cartesian-canvas
+    #cartesianCanvas
+    [bgColor]="bgColor"
+    [axisColor]="axisColor"
+    [gridColor]="gridColor"
+    [fontColor]="fontColor"
+    [initialZoom]="75"
+    [xAxisScale]="xAxisScale"
+    [xAxisFactor]="xAxisFactor"
+    (onViewChanged)="redrawFunctions()"
+    (onZoom)="redrawFunctions()"
+  >
+  </app-cartesian-canvas>
+</div>
+
+<!-- Add Theme Toggle button -->
+<app-theme-toggle></app-theme-toggle>

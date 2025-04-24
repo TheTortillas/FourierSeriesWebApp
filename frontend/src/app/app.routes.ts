@@ -15,6 +15,7 @@ import { FourierCalculatorComponent } from './pages/fourier-calculator/fourier-c
 import { FourierSeriesPlotComponent } from './pages/fourier-series-plot/fourier-series-plot.component';
 import { TrigComponent } from './pages/fourier-series-plot/trig/trig.component';
 import { HalfRangeComponent } from './pages/fourier-series-plot/half-range/half-range.component';
+import { ComplexComponent } from './pages/fourier-series-plot/complex/complex.component';
 export const routes: Routes = [
   {
     path: 'fourier-calculator',
@@ -30,6 +31,10 @@ export const routes: Routes = [
       {
         path: 'half-range',
         component: HalfRangeComponent,
+      },
+      {
+        path: 'complex',
+        component: ComplexComponent,
       },
       {
         path: '',

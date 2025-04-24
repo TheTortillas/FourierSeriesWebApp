@@ -6,6 +6,12 @@ export interface ComplexResponse {
     T?: string;
     w0?: string;
     series_exp_core?: string;
+    series_exp_core_pos?: string;
+    series_exp_core_neg?: string;
+    coefficientList?: string;
+    amplitudePhaseList?: string;
+    seriesTerms?: string;
+    demoivreTerms?: string;
   };
   latex?: {
     c0?: string;
@@ -13,6 +19,10 @@ export interface ComplexResponse {
     T?: string;
     w0?: string;
     series_exp_core?: string;
+    series_exp_core_pos?: string;
+    series_exp_core_neg?: string;
+    terms?: { [key: string]: string };
+    demoivreTerms?: { [key: string]: string };
   };
   indeterminateValues?: {
     cn?: Array<{ n: number; limit: string; limitTex: string }>;
@@ -51,17 +61,14 @@ export interface ComplexResponse {
       result: string;
     };
   };
-  coefficients?: {
-    cnPositive?: Array<string>;
-    cnNegative?: Array<string>;
-    termsList?: Array<string>;
-    demoivreSeries?: Array<string>;
-    amplitudePhase?: Array<{ n: number; amplitude: string; phase: string }>;
+  seriesExpansion?: {
+    coefficientList?: string;
+    amplitudePhaseList?: string;
+    terms?: string;
+    demoivreTerms?: string;
   };
-  latexCoefficients?: {
-    cnPositive?: Array<string>;
-    cnNegative?: Array<string>;
-    termsList?: Array<string>;
-    demoivreSeries?: Array<string>;
+  seriesExpansionLatex?: {
+    terms?: { [key: string]: string };
+    demoivreTerms?: { [key: string]: string };
   };
 }

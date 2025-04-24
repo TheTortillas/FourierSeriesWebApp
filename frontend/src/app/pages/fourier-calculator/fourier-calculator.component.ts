@@ -391,11 +391,11 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
         break;
       case 'complex':
         apiCall = this.apiService.calculateComplexSeriesPiecewise(data);
-        targetRoute = '/fourier-series-plot/trig'; // Por ahora usamos el mismo componente
+        targetRoute = '/fourier-series-plot/complex'; 
         break;
       case 'halfrange':
         apiCall = this.apiService.calculateHalfRangeSeries(data);
-        targetRoute = '/fourier-series-plot/half-range'; // Navegar al componente de medio rango
+        targetRoute = '/fourier-series-plot/half-range'; 
         break;
       default:
         Swal.fire({

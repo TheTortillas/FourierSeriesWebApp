@@ -65,7 +65,7 @@ async function calculatePiecewiseSeries({
       expr_cn : ratsimp(c_n(n))$
 
       /* Calculate coefficient list for n = -N to N */
-      N : 10$
+      N : 100$
       lista_cn : makelist([k, ratsimp(c_n(k))], k, -N, N)$
       
       /* Calculate amplitude and phase for each coefficient */
@@ -80,7 +80,7 @@ async function calculatePiecewiseSeries({
       )$
       
       /* Generate list of terms up to harmonic N_terms */
-      N_terms : 10$
+      N_terms : 100$
       lista_terminos : makelist(term(k), k, 0, N_terms)$
       
       /* Apply demoivre to convert complex to trigonometric form */
