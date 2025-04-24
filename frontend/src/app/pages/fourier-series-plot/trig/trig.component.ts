@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CartesianCanvasComponent } from '../../../shared/components/cartesian-canvas/cartesian-canvas.component';
-import { FourierResponse } from '../../../interfaces/fourier-response.interface';
+import { TrigonometricResponse } from '../../../interfaces/trigonometric-response.interface';
 import { MathquillService } from '../../../core/services/mathquill/mathquill.service';
 import { MathUtilsService } from '../../../core/services/maximaToJS/math-utils.service';
 import { PlotConfig } from '../../../interfaces/plot-config.interface';
@@ -49,7 +49,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   public xAxisFactor: number = 1;
 
   // Datos de la serie
-  public response: FourierResponse | null = null;
+  public response: TrigonometricResponse | null = null;
   public seriesType: string = '';
   public intVar: string = 'x';
   public originalLatex: string[][] = [];

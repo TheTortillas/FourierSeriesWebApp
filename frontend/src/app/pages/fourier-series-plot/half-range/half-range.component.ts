@@ -14,7 +14,7 @@ import { MathquillService } from '../../../core/services/mathquill/mathquill.ser
 import { MathUtilsService } from '../../../core/services/maximaToJS/math-utils.service';
 import { ApiService } from '../../../core/services/api/api.service';
 import { ThemeService } from '../../../core/services/theming/theme.service';
-import { FourierResponse } from '../../../interfaces/fourier-response.interface';
+import { TrigonometricResponse } from '../../../interfaces/trigonometric-response.interface';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -49,7 +49,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
   public xAxisFactor: number = 1;
 
   // Datos de la serie
-  public response: FourierResponse | null = null;
+  public response: TrigonometricResponse | null = null;
   public seriesType: string = '';
   public intVar: string = 'x';
   public originalLatex: string[][] = [];

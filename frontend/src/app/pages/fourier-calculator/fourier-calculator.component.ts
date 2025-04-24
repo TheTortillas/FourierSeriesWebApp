@@ -17,7 +17,8 @@ import { MathKeyboardService } from '../../core/services/mathquill/math-keyboard
 import { Piece } from '../../interfaces/piece.interface';
 import { ApiService } from '../../core/services/api/api.service';
 import { FourierRequest } from '../../interfaces/fourier-request.interface';
-import { FourierResponse } from '../../interfaces/fourier-response.interface';
+import { TrigonometricResponse } from '../../interfaces/trigonometric-response.interface';
+import { ComplexResponse } from '../../interfaces/complex-response.interface';
 import { LatexToMaximaService } from '../../core/services/conversion/latex-to-maxima.service';
 import Swal from 'sweetalert2';
 import { debounceTime, Subject } from 'rxjs';
@@ -408,13 +409,11 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
 
     // Suscribirse a la respuesta de la API
     apiCall.subscribe({
-      next: (response: FourierResponse) => {
-        Swal.close(); // Cerrar el diálogo de carga
+      next: (response: TrigonometricResponse | ComplexResponse) => {
+        Swal.close();
         console.log('Respuesta de la API:', response);
-
-        // Navegar a la página de visualización con los datos solo si hay éxito
+  
         if (response.success) {
-          // Navegar directamente al componente hijo específico
           this.router.navigate([targetRoute], {
             state: {
               response,
@@ -426,14 +425,11 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
             },
           });
         } else {
-          // Mostrar error con los detalles de validación
           this.showValidationErrorMessage(response);
         }
       },
       error: (error) => {
-        // Manejar errores HTTP
         if (error.status === 422 && error.error?.validationDetails) {
-          // Es un error de validación con detalles
           Swal.close();
           this.showValidationErrorMessage(error.error);
         } else {
@@ -450,106 +446,105 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
     });
   }
 
-  /**
+   /**
    * Muestra un mensaje detallado de error de validación
    * @param response Respuesta con detalles de validación
    */
-  showValidationErrorMessage(response: FourierResponse): void {
+  showValidationErrorMessage(response: TrigonometricResponse | ComplexResponse): void {
     let errorHtml = '<div class="text-left">';
-
+  
     errorHtml +=
       '<p class="mb-3">La función no puede ser calculada debido a los siguientes problemas:</p>';
     errorHtml += '<ul class="list-disc pl-5">';
-
+  
     // Si hay detalles de validación para piezas específicas (función por trozos)
     if (response.validationDetails?.pieces) {
       response.validationDetails.pieces.forEach(
-        (
-          piece: {
-            index: number;
-            function: string;
-            start: string;
-            end: string;
-            validation: {
-              isValid: boolean;
-              a0?: {
-                isIntegrable: boolean;
-                hasSpecialFunctions: boolean;
-                result: string;
-              };
-              an?: {
-                isIntegrable: boolean;
-                hasSpecialFunctions: boolean;
-                result: string;
-              };
-              bn?: {
-                isIntegrable: boolean;
-                hasSpecialFunctions: boolean;
-                result: string;
-              };
-              c0?: {
-                isIntegrable: boolean;
-                hasSpecialFunctions: boolean;
-                result: string;
-              };
-              cn?: {
-                isIntegrable: boolean;
-                hasSpecialFunctions: boolean;
-                result: string;
-              };
-            };
-          },
-          index: number
-        ) => {
+        (piece, index: number) => {
           if (!piece.validation.isValid) {
             errorHtml += `<li class="mb-2"><strong>Problema en tramo ${
               index + 1
             }:</strong> `;
-
+  
             // Determinar qué coeficientes tienen problemas
             const problemCoeffs = [];
-
+  
             if (this.seriesType === 'complex') {
-              // Serie compleja
+              // Serie compleja - Cast response como ComplexResponse para TypeScript
+              const complexPiece = piece as unknown as {
+                validation: {
+                  c0?: {
+                    isIntegrable: boolean;
+                    hasSpecialFunctions: boolean;
+                    result: string;
+                  };
+                  cn?: {
+                    isIntegrable: boolean;
+                    hasSpecialFunctions: boolean;
+                    result: string;
+                  };
+                };
+              };
+              
               if (
-                piece.validation.c0 &&
-                (!piece.validation.c0.isIntegrable ||
-                  piece.validation.c0.hasSpecialFunctions)
+                complexPiece.validation.c0 &&
+                (!complexPiece.validation.c0.isIntegrable ||
+                  complexPiece.validation.c0.hasSpecialFunctions)
               ) {
                 problemCoeffs.push('c₀');
               }
               if (
-                piece.validation.cn &&
-                (!piece.validation.cn.isIntegrable ||
-                  piece.validation.cn.hasSpecialFunctions)
+                complexPiece.validation.cn &&
+                (!complexPiece.validation.cn.isIntegrable ||
+                  complexPiece.validation.cn.hasSpecialFunctions)
               ) {
                 problemCoeffs.push('cₙ');
               }
             } else {
-              // Series trigonométricas
+              // Series trigonométricas - Cast response como TrigonometricResponse para TypeScript
+              const trigPiece = piece as unknown as {
+                validation: {
+                  a0?: {
+                    isIntegrable: boolean;
+                    hasSpecialFunctions: boolean;
+                    result: string;
+                  };
+                  an?: {
+                    isIntegrable: boolean;
+                    hasSpecialFunctions: boolean;
+                    result: string;
+                  };
+                  bn?: {
+                    isIntegrable: boolean;
+                    hasSpecialFunctions: boolean;
+                    result: string;
+                  };
+                };
+              };
+              
               if (
-                piece.validation.a0 &&
-                (!piece.validation.a0.isIntegrable ||
-                  piece.validation.a0.hasSpecialFunctions)
+                trigPiece.validation.a0 &&
+                (!trigPiece.validation.a0.isIntegrable ||
+                  trigPiece.validation.a0.hasSpecialFunctions)
               ) {
                 problemCoeffs.push('a₀');
               }
               if (
-                piece.validation.an &&
-                (!piece.validation.an.isIntegrable ||
-                  piece.validation.an.hasSpecialFunctions)
+                trigPiece.validation.an &&
+                (!trigPiece.validation.an.isIntegrable ||
+                  trigPiece.validation.an.hasSpecialFunctions)
               ) {
                 problemCoeffs.push('aₙ');
               }
               if (
-                piece.validation.bn &&
-                (!piece.validation.bn.isIntegrable ||
-                  piece.validation.bn.hasSpecialFunctions)
+                trigPiece.validation.bn &&
+                (!trigPiece.validation.bn.isIntegrable ||
+                  trigPiece.validation.bn.hasSpecialFunctions)
               ) {
                 problemCoeffs.push('bₙ');
               }
             }
-
+  
             // Agregar detalles del problema
             errorHtml += `No se pueden calcular los coeficientes: ${problemCoeffs.join(
               ', '
@@ -560,55 +555,61 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
     } else {
       // Si son problemas generales de la función completa
       const problemCoeffs = [];
-
+  
       if (this.seriesType === 'complex') {
+        // Tratamos response como ComplexResponse
+        const complexResponse = response as ComplexResponse;
+        
         if (
-          response.validationDetails?.c0 &&
-          (!response.validationDetails.c0.isIntegrable ||
-            response.validationDetails.c0.hasSpecialFunctions)
+          complexResponse.validationDetails?.c0 &&
+          (!complexResponse.validationDetails.c0.isIntegrable ||
+            complexResponse.validationDetails.c0.hasSpecialFunctions)
         ) {
           problemCoeffs.push('c₀');
         }
         if (
-          response.validationDetails?.cn &&
-          (!response.validationDetails.cn.isIntegrable ||
-            response.validationDetails.cn.hasSpecialFunctions)
+          complexResponse.validationDetails?.cn &&
+          (!complexResponse.validationDetails.cn.isIntegrable ||
+            complexResponse.validationDetails.cn.hasSpecialFunctions)
         ) {
           problemCoeffs.push('cₙ');
         }
       } else {
+        // Tratamos response como TrigonometricResponse
+        const trigResponse = response as TrigonometricResponse;
+        
         if (
-          response.validationDetails?.a0 &&
-          (!response.validationDetails.a0.isIntegrable ||
-            response.validationDetails.a0.hasSpecialFunctions)
+          trigResponse.validationDetails?.a0 &&
+          (!trigResponse.validationDetails.a0.isIntegrable ||
+            trigResponse.validationDetails.a0.hasSpecialFunctions)
         ) {
           problemCoeffs.push('a₀');
         }
         if (
-          response.validationDetails?.an &&
-          (!response.validationDetails.an.isIntegrable ||
-            response.validationDetails.an.hasSpecialFunctions)
+          trigResponse.validationDetails?.an &&
+          (!trigResponse.validationDetails.an.isIntegrable ||
+            trigResponse.validationDetails.an.hasSpecialFunctions)
         ) {
           problemCoeffs.push('aₙ');
         }
         if (
-          response.validationDetails?.bn &&
-          (!response.validationDetails.bn.isIntegrable ||
-            response.validationDetails.bn.hasSpecialFunctions)
+          trigResponse.validationDetails?.bn &&
+          (!trigResponse.validationDetails.bn.isIntegrable ||
+            trigResponse.validationDetails.bn.hasSpecialFunctions)
         ) {
           problemCoeffs.push('bₙ');
         }
       }
-
+  
       if (problemCoeffs.length > 0) {
         errorHtml += `<li class="mb-2">No se pueden calcular los coeficientes: ${problemCoeffs.join(
           ', '
         )}</li>`;
       }
     }
-
+  
     errorHtml += '</ul>';
-
+  
     // Consejos para el usuario
     errorHtml += '<p class="mt-3">La función puede contener:</p>';
     errorHtml += '<ul class="list-disc pl-5">';
@@ -616,12 +617,12 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
     errorHtml += '<li>Funciones especiales (erf, gamma, Bessel, etc.)</li>';
     errorHtml += '<li>Expresiones demasiado complejas para resolver</li>';
     errorHtml += '</ul>';
-
+  
     // Sugerencias
     errorHtml +=
       '<p class="mt-3">Intenta simplificar la función o usar otra aproximación.</p>';
     errorHtml += '</div>';
-
+  
     Swal.fire({
       title: 'No se puede calcular la serie',
       html: errorHtml,

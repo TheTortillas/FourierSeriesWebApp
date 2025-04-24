@@ -17,7 +17,8 @@ import { MathKeyboardService } from '../../../core/services/mathquill/math-keybo
 import { Piece } from '../../../interfaces/piece.interface';
 import { ApiService } from '../../../core/services/api/api.service';
 import { FourierRequest } from '../../../interfaces/fourier-request.interface';
-import { FourierResponse } from '../../../interfaces/fourier-response.interface';
+import { TrigonometricResponse } from '../../../interfaces/trigonometric-response.interface';
+import { ComplexResponse } from '../../../interfaces/complex-response.interface';
 import { LatexToMaximaService } from '../../../core/services/conversion/latex-to-maxima.service';
 import Swal from 'sweetalert2';
 import { debounceTime, Subject } from 'rxjs';
@@ -405,7 +406,7 @@ export class MathquillComponent implements OnInit, AfterViewInit {
 
     // Suscribirse a la respuesta de la API
     apiCall.subscribe({
-      next: (response: FourierResponse) => {
+      next: (response: TrigonometricResponse | ComplexResponse) => {
         console.log(response);
         Swal.fire({
           title: 'Cálculo completado',
