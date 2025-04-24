@@ -17,6 +17,7 @@ import { ApiService } from '../../../core/services/api/api.service';
 import { ThemeService } from '../../../core/services/theming/theme.service';
 import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 import { Subscription } from 'rxjs';
+import { SurveyButtonComponent } from '../../../shared/components/survey-button/survey-button.component';
 
 @Component({
   selector: 'app-trig',
@@ -26,6 +27,7 @@ import { Subscription } from 'rxjs';
     FormsModule,
     CartesianCanvasComponent,
     ThemeToggleComponent,
+    SurveyButtonComponent
   ],
   templateUrl: './trig.component.html',
   styleUrl: './trig.component.scss',

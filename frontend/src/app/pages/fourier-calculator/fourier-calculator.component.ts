@@ -24,11 +24,12 @@ import Swal from 'sweetalert2';
 import { debounceTime, Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { SurveyButtonComponent } from '../../shared/components/survey-button/survey-button.component';
 
 @Component({
   selector: 'app-fourier-calculator',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent, SurveyButtonComponent],
   templateUrl: './fourier-calculator.component.html',
   styleUrl: './fourier-calculator.component.scss',
 })

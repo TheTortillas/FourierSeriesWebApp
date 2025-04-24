@@ -12,10 +12,11 @@ import { CartesianCanvasComponent } from '../../../shared/components/cartesian-c
 import { ComplexResponse } from '../../../interfaces/complex-response.interface';
 import { MathquillService } from '../../../core/services/mathquill/mathquill.service';
 import { MathUtilsService } from '../../../core/services/maximaToJS/math-utils.service';
-import { PlotConfig } from '../../../interfaces/plot-config.interface';
 import { ApiService } from '../../../core/services/api/api.service';
 import { ThemeService } from '../../../core/services/theming/theme.service';
 import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
+import { SurveyButtonComponent } from '../../../shared/components/survey-button/survey-button.component';
+
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -26,6 +27,7 @@ import { Subscription } from 'rxjs';
     FormsModule,
     CartesianCanvasComponent,
     ThemeToggleComponent,
+    SurveyButtonComponent
   ],
   templateUrl: './complex.component.html',
   styleUrl: './complex.component.scss',
@@ -390,24 +392,28 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-   drawSeriesApproximation(): void {
+  drawSeriesApproximation(): void {
     if (!this.cartesianCanvas) return;
-  
+
     try {
       const fourierSeries = (x: number): number => {
         let sum = 0;
-        
+
         // Usar las funciones precompiladas
-        for (let i = 0; i <= Math.min(this.termCount, this.compiledTermFunctions.length - 1); i++) {
+        for (
+          let i = 0;
+          i <= Math.min(this.termCount, this.compiledTermFunctions.length - 1);
+          i++
+        ) {
           const fn = this.compiledTermFunctions[i];
           if (fn) {
             sum += fn(x);
           }
         }
-  
+
         return sum;
       };
-  
+
       this.cartesianCanvas.drawFunction(
         fourierSeries,
         this.seriesColor,
@@ -647,29 +653,31 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
       w0Display = w0Str;
     }
 
-    // Determine how to display w0 in the formula
-    let angularFreq: string;
-    if (w0Display === '') {
-      // If w0 = 1, just show the variable
-      angularFreq = this.intVar;
-    } else {
-      // Otherwise show w0·var
-      angularFreq = `${w0Display} ${this.intVar}`;
-    }
-
     // Create the full formula with summation notation
-    this.fullLatexFormula = `$$f(${this.intVar}) =  \\sum_{n=-\\infty}^{\\infty}{}`;
+    this.fullLatexFormula = `$$f(${this.intVar}) = \\sum_{n=-\\infty}^{\\infty}{}`;
 
     // Replace 'n' in cn with actual variable
     // First, replace with temporary placeholder to avoid conflicts
     const cnWithVar = cn.replace(/n/g, '_VAR_');
 
+    // Get the exponential core from the response
+    let expCoreLatex = this.stripLatexDelimiters(
+      this.response?.latex?.series_exp_core_pos || ''
+    );
+
+    // If series_exp_core_pos is not available, use default format
+    if (!expCoreLatex) {
+      const angularFreq =
+        w0Display === '' ? this.intVar : `${w0Display} ${this.intVar}`;
+      expCoreLatex = `e^{i\\,n\\,${angularFreq}}`;
+    } else {
+      // Replace any variable placeholders in the exponential core
+      expCoreLatex = expCoreLatex.replace(/VAR/g, this.intVar);
+    }
+
     // Build the formula: c_n * e^{i n w0 x}
     let termFormula =
-      cnWithVar.replace(/_VAR_/g, 'n') +
-      ' \\cdot e^{i\\,n\\,' +
-      angularFreq +
-      '}';
+      cnWithVar.replace(/_VAR_/g, 'n') + ' \\cdot ' + expCoreLatex;
 
     // Add term to complete formula
     this.fullLatexFormula += termFormula + '$$';
@@ -1483,13 +1491,15 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private precompileTermFunctions(): void {
     this.compiledTermFunctions = [];
-    
+
     if (this.parsedDemoivreTerms && this.parsedDemoivreTerms.length > 0) {
       for (const term of this.parsedDemoivreTerms) {
         try {
           const jsExpr = this.mathUtilsService.maximaToJS(term);
-          const fn = new Function(this.intVar, `return ${jsExpr};`) as (x: number) => number;
-          
+          const fn = new Function(this.intVar, `return ${jsExpr};`) as (
+            x: number
+          ) => number;
+
           // Verificar que la función es válida
           try {
             const testValue = fn(0);

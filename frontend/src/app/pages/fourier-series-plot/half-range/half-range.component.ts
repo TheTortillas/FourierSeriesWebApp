@@ -16,6 +16,7 @@ import { ApiService } from '../../../core/services/api/api.service';
 import { ThemeService } from '../../../core/services/theming/theme.service';
 import { TrigonometricResponse } from '../../../interfaces/trigonometric-response.interface';
 import { Subscription } from 'rxjs';
+import { SurveyButtonComponent } from '../../../shared/components/survey-button/survey-button.component';
 
 @Component({
   selector: 'app-half-range',
@@ -25,6 +26,7 @@ import { Subscription } from 'rxjs';
     FormsModule,
     CartesianCanvasComponent,
     ThemeToggleComponent,
+    SurveyButtonComponent
   ],
   templateUrl: './half-range.component.html',
   styleUrls: ['./half-range.component.scss'],
