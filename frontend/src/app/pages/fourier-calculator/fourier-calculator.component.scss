@@ -15,7 +15,7 @@
 // Categorías del teclado matemático
 .keyboard-category {
   margin-bottom: 0.75rem;
-  
+
   .category-title {
     font-weight: 600;
     font-size: 0.9rem;
@@ -30,7 +30,7 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease-in-out;
-  
+
   &.visible {
     max-height: 800px; // Valor aumentado para asegurar que quepa todo el teclado
   }
@@ -39,7 +39,7 @@
 // Botón de teclado con animación solo para la flecha
 .keyboard-toggle-btn {
   position: relative;
-  
+
   // Quitar la rotación general del botón
   .keyboard-icon {
     // Mantenemos el icono del teclado estático
@@ -47,21 +47,21 @@
     align-items: center;
     justify-content: center;
   }
-  
+
   .arrow-icon {
     // Solo la flecha tiene animación
     svg {
       transition: transform 0.2s ease;
     }
   }
-  
+
   &.active .arrow-icon svg {
     transform: rotate(180deg);
   }
-  
+
   // Hacemos el botón un poco más grande
   @apply py-3 px-4;
-  
+
   .keyboard-icon svg {
     width: 24px;
     height: 24px;
@@ -71,29 +71,29 @@
 // Estilos para los botones del teclado que funcionen en ambos temas
 .math-keyboard-btn {
   @apply w-[90px] h-[60px] m-1 rounded-md flex items-center justify-center transition-all;
-  
+
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
-  
+
   &:active {
     transform: translateY(0);
   }
-  
+
   // Fuerza estilos específicos para cada tema
   .dark & {
-    
     @apply bg-gray-800/70 border-teal-500/30 text-gray-100;
-    
+
     &:hover {
       @apply bg-teal-500/20 border-teal-500/60;
     }
   }
-  
+
   .light & {
     @apply bg-gray-100 border-gray-300 text-gray-800;
-    
+
     &:hover {
       @apply bg-blue-100 border-blue-300;
     }
@@ -111,11 +111,11 @@
   border-color: #ef4444 !important;
   border-width: 2px !important;
   box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
-  
+
   &:focus-within {
     box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
   }
-  
+
   &:hover {
     border-color: #ef4444 !important;
   }
@@ -123,9 +123,15 @@
 
 // Animación de parpadeo para enfatizar el error
 @keyframes blink {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .border-red-500 {
@@ -147,3 +153,19 @@ body.light .math-field .mq-editable-field .mq-cursor.mq-blink {
   visibility: visible !important;
   opacity: 0.5;
 }
+
+// Estilos para los botones de cambio entre Series y DFT
+.bg-blue-500.dark\:bg-blue-600 {
+  @apply text-white;
+}
+
+// Asegurar que los campos numéricos tengan un estilo consistente
+input[type="number"] {
+  @apply dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700;
+}
+
+// Asegurar que los selects tengan un estilo consistente
+select {
+  @apply dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700;
+}
+

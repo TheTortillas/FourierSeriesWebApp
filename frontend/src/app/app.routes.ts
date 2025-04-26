@@ -16,6 +16,7 @@ import { FourierSeriesPlotComponent } from './pages/fourier-series-plot/fourier-
 import { TrigComponent } from './pages/fourier-series-plot/trig/trig.component';
 import { HalfRangeComponent } from './pages/fourier-series-plot/half-range/half-range.component';
 import { ComplexComponent } from './pages/fourier-series-plot/complex/complex.component';
+import { DFTPlotComponent } from './pages/dft-plot/dft-plot.component';
 export const routes: Routes = [
   {
     path: 'fourier-calculator',
@@ -42,6 +43,15 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
     ],
+  },
+  {
+    path: 'fourier-transform-plot',
+    children: [
+      {
+        path: 'dft',
+        component: DFTPlotComponent,
+      },
+    ]
   },
   {
     path: 'tests',

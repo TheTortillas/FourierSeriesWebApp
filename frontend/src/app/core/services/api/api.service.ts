@@ -129,6 +129,15 @@ export class ApiService {
     );
   }
 
+  calculateDFT(data: {
+    funcionMatrix: string[][];
+    intVar: string;
+    numSamples: number;
+    sampleRate: number;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/dft/calculate`, data);
+  }
+
   // Parse coefficient lists from complex series response
   parseCoefficients(coefficientList: string): { n: number; value: string }[] {
     try {

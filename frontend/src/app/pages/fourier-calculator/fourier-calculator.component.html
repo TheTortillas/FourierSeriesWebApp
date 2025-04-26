@@ -170,32 +170,121 @@
     <div class="mb-8 section-container p-4 rounded-lg border transition-all">
       <h3 class="text-base mb-3 font-medium flex items-center">
         <span class="w-1 h-1 dot-indicator rounded-full mr-2"></span>
-        <span class="section-header">Tipo de Serie</span>
+        <span class="section-header">Tipo de Cálculo</span>
       </h3>
 
-      <select
-        id="type"
-        name="type"
-        [(ngModel)]="seriesType"
-        class="w-full p-2.5 select text-sm border rounded-md focus:outline-none"
+      <!-- Stepper para elegir entre Serie o Transformada -->
+      <div class="mb-4">
+        <div
+          class="flex justify-between bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden"
+        >
+          <button
+            [ngClass]="{
+              'bg-primary text-blue-500 dark:text-green-500':
+                calculationType === 'series',
+              'bg-transparent text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600':
+                calculationType !== 'series'
+            }"
+            class="flex-1 py-2 transition-colors duration-200"
+            (click)="setCalculationType('series')"
+          >
+            Series de Fourier
+          </button>
+          <button
+            [ngClass]="{
+              'bg-primary text-blue-500 dark:text-green-500':
+                calculationType === 'dft',
+              'bg-transparent text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600':
+                calculationType !== 'dft'
+            }"
+            class="flex-1 py-2 transition-colors duration-200"
+            (click)="setCalculationType('dft')"
+          >
+            Transformada Discreta (DFT)
+          </button>
+        </div>
+      </div>
+
+      <!-- Opciones para Series de Fourier -->
+      <div
+        *ngIf="calculationType === 'series'"
+        class="transition-opacity duration-300"
       >
-        <option value="" disabled selected>
-          Selecciona el tipo de Serie de Fourier
-        </option>
-        <option value="trigonometric">Trigonométrica</option>
-        <option value="complex">Compleja</option>
-        <option value="halfrange">Medio Rango</option>
-      </select>
+        <label for="type" class="block mb-2 text-sm font-medium"
+          >Selecciona el tipo de Serie:</label
+        >
+        <select
+          id="type"
+          name="type"
+          [(ngModel)]="seriesType"
+          class="w-full p-2.5 select text-sm border rounded-md focus:outline-none"
+        >
+          <option value="" disabled selected>
+            Selecciona el tipo de Serie de Fourier
+          </option>
+          <option value="trigonometric">Trigonométrica</option>
+          <option value="complex">Compleja</option>
+          <option value="halfrange">Medio Rango</option>
+        </select>
+      </div>
+
+      <!-- Opciones para Transformada Discreta -->
+      <div
+        *ngIf="calculationType === 'dft'"
+        class="transition-opacity duration-300"
+      >
+        <p class="text-sm mb-3">
+          La Transformada Discreta de Fourier permite analizar funciones no
+          integrables analíticamente mediante muestreo numérico.
+        </p>
+
+        <!-- Parámetros específicos para DFT -->
+        <div class="grid grid-cols-2 gap-4 mb-2">
+          <div>
+            <label for="numSamples" class="block mb-1 text-sm font-medium"
+              >Número de muestras:</label
+            >
+            <select
+              id="numSamples"
+              [(ngModel)]="dftParams.numSamples"
+              class="w-full p-2 border rounded-md text-sm focus:outline-none"
+            >
+              <option *ngFor="let value of powersOfTwo" [value]="value">
+                {{ value }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label for="sampleRate" class="block mb-1 text-sm font-medium"
+              >Número de periodos:</label
+            >
+            <input
+              type="number"
+              id="sampleRate"
+              [(ngModel)]="dftParams.sampleRate"
+              min="0"
+              class="w-full p-2 border rounded-md text-sm focus:outline-none"
+              placeholder="1"
+            />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Submit Button -->
     <div class="text-center">
       <button
         id="submitButton"
-        (click)="submitData()"
+        (click)="
+          calculationType === 'series' ? submitData() : submitDftCalculation()
+        "
         class="px-6 py-3 btn-primary rounded-lg transition-all duration-300 font-medium"
       >
-        Calcular Serie de Fourier
+        {{
+          calculationType === "series"
+            ? "Calcular Serie de Fourier"
+            : "Calcular Transformada Discreta"
+        }}
       </button>
     </div>
   </div>
