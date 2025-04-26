@@ -57,7 +57,6 @@ function extractErrorMessage(output) {
   // Si no encuentra un patrón específico, devuelve un mensaje genérico
   return "Error matemático en la evaluación de la función";
 }
-
 exports.computeDFT = async (funcionMatrix, N = 32, M = 1, intVar = "x") => {
   try {
     // Convertimos la matriz de JavaScript a una representación válida en Maxima
@@ -107,11 +106,15 @@ exports.computeDFT = async (funcionMatrix, N = 32, M = 1, intVar = "x") => {
       
       /* Creamos el arreglo de muestras */
       muestras : []$
+      puntos_originales : []$
       for i:0 thru N-1 do (
         x_val : a + i*dx,
-        push(evaluar_funcion_por_tramos(func, x_val), muestras)
+        y_val : evaluar_funcion_por_tramos(func, x_val),
+        push(y_val, muestras),
+        push([x_val, y_val], puntos_originales)
       )$
       muestras : reverse(muestras)$
+      puntos_originales : reverse(puntos_originales)$
 
       /* 4. Cálculo de la DFT y señal reconstruida */
       load("fft")$
@@ -144,7 +147,8 @@ exports.computeDFT = async (funcionMatrix, N = 32, M = 1, intVar = "x") => {
       puntos : reverse(puntos)$
 
       /* 8. Resultado final */
-      string(puntos);
+      resultado : [string(puntos), string(puntos_originales)];
+      string(resultado);
     `;
 
     // Ejecutar el script en Maxima
@@ -159,19 +163,25 @@ exports.computeDFT = async (funcionMatrix, N = 32, M = 1, intVar = "x") => {
       return { success: false, message: errorMessage, details: cleanedResult };
     }
     
-    // Extraemos solo la parte de la lista si es necesario
-    const match = cleanedResult.match(/\[\[.*\]\]/);
+    // Extraemos los dos arrays de puntos
+    const match = cleanedResult.match(/\["(\[\[.*?\]\])",\s*"(\[\[.*?\]\])"\]/);
     
-    if (!match) {
+    if (!match || !match[1] || !match[2]) {
       return { 
         success: false, 
-        message: "No se pudo extraer la lista de puntos", 
+        message: "No se pudieron extraer los puntos", 
         details: cleanedResult 
       };
     }
     
-    const finalResult = match[0];
-    return { success: true, result: finalResult };
+    const dftPoints = match[1];
+    const originalPoints = match[2];
+    
+    return { 
+      success: true, 
+      result: dftPoints, 
+      originalPoints: originalPoints 
+    };
   } catch (error) {
     console.error("Error al calcular la DFT:", error);
     return { success: false, message: error.message };

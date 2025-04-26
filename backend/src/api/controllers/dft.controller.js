@@ -10,7 +10,11 @@ exports.calculateDFT = async (req, res) => {
       return res.status(500).json({ error: result.message });
     }
 
-    res.json({ success: true, data: result.result });
+    res.json({ 
+      success: true, 
+      data: result.result,
+      originalPoints: result.originalPoints
+    });
   } catch (error) {
     console.error("Error en el controlador DFT:", error);
     res.status(500).json({ error: "Error interno del servidor" });
