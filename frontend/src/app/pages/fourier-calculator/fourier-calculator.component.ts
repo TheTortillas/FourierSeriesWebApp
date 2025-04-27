@@ -51,8 +51,8 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
 
   calculationType: 'series' | 'dft' = 'series';
   dftParams = {
-    numSamples: 512,
-    sampleRate: 10,
+    numSamples: 128,
+    sampleRate: 3,
   };
 
   // Add this new property for numSamples options
@@ -773,9 +773,9 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
     // Crear objeto JSON para enviar
     const data = {
       funcionMatrix,
+      N: this.dftParams.numSamples,
+      M: this.dftParams.sampleRate,
       intVar: this.selectedVariable,
-      numSamples: this.dftParams.numSamples,
-      sampleRate: this.dftParams.sampleRate,
     };
 
     // Mostrar indicador de carga

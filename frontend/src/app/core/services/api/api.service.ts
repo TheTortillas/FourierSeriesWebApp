@@ -131,9 +131,9 @@ export class ApiService {
 
   calculateDFT(data: {
     funcionMatrix: string[][];
+    N: number;
+    M: number;
     intVar: string;
-    numSamples: number;
-    sampleRate: number;
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/dft/calculate`, data);
   }

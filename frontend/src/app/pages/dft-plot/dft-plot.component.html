@@ -131,36 +131,63 @@
             </div>
           </div>
 
-          <!-- Controles con toggles -->
-          <div
-            class="p-3 rounded-lg border transition-all space-y-3"
-            [ngClass]="
-              isDarkMode
-                ? 'bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30'
-                : 'bg-white border-gray-200 hover:border-blue-300'
-            "
-          >
-            <div class="flex items-center justify-between">
-              <label
-                class="text-sm font-medium"
-                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
-                >Mostrar función original:</label
-              >
-              <div class="relative inline-block w-12 align-middle select-none">
-                <input
-                  type="checkbox"
-                  [(ngModel)]="showOriginalFunction"
-                  (change)="redrawCanvas()"
-                  id="toggleOriginal"
-                  class="toggle-checkbox"
-                />
-                <label for="toggleOriginal" class="toggle-label"></label>
-              </div>
+          <div class="flex items-center justify-between">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Mostrar función original:</label
+            >
+            <div class="relative inline-block w-12 align-middle select-none">
+              <input
+                type="checkbox"
+                [checked]="showOriginalFunction"
+                (change)="toggleOriginalFunction($event)"
+                id="toggleOriginal"
+                class="toggle-checkbox"
+              />
+              <label for="toggleOriginal" class="toggle-label"></label>
+            </div>
+          </div>
+
+          <!-- Toggle para función reconstruida - CORREGIDO -->
+          <div class="flex items-center justify-between">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Mostrar función reconstruida:</label
+            >
+            <div class="relative inline-block w-12 align-middle select-none">
+              <input
+                type="checkbox"
+                [checked]="showReconstructedFunction"
+                (change)="toggleReconstructedFunction($event)"
+                id="toggleReconstructed"
+                class="toggle-checkbox"
+              />
+              <label for="toggleReconstructed" class="toggle-label"></label>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Mostrar puntos originales:</label
+            >
+            <div class="relative inline-block w-12 align-middle select-none">
+              <input
+                type="checkbox"
+                [checked]="showOriginalPoints"
+                (change)="toggleOriginalPoints($event)"
+                id="toggleOriginalPoints"
+                class="toggle-checkbox"
+              />
+              <label for="toggleOriginalPoints" class="toggle-label"></label>
             </div>
           </div>
         </div>
 
-        <!-- Sección de personalización visual -->
+        <!-- En la sección de personalización visual -->
         <div
           class="mt-5 p-4 rounded-lg border transition-all space-y-3"
           [ngClass]="
@@ -179,49 +206,358 @@
             >
           </h3>
 
-          <!-- Selector de color para función original -->
-          <div class="flex items-center justify-between">
-            <label
-              class="text-sm font-medium"
-              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
-              >Color función original:</label
+          <!-- NUEVO: Sección para la función original -->
+          <div
+            class="mb-4 pb-3 border-b"
+            [ngClass]="isDarkMode ? 'border-gray-700/50' : 'border-gray-200'"
+          >
+            <h4
+              class="text-sm font-semibold mb-2"
+              [ngClass]="isDarkMode ? 'text-teal-200' : 'text-blue-600'"
             >
-            <div class="flex items-center">
-              <input
-                type="color"
-                [(ngModel)]="functionColor"
-                (change)="redrawCanvas()"
-                class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
-              />
-              <span
-                class="ml-2 text-xs font-mono"
-                [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
-                >{{ functionColor }}</span
+              Función Original
+            </h4>
+
+            <!-- Color función original -->
+            <div class="flex items-center justify-between mb-2">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                >Color:</label
               >
+              <div class="flex items-center">
+                <input
+                  type="color"
+                  [(ngModel)]="functionColor"
+                  (change)="redrawCanvas()"
+                  class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+                />
+                <span
+                  class="ml-2 text-xs font-mono"
+                  [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                  >{{ functionColor }}</span
+                >
+              </div>
+            </div>
+
+            <!-- Grosor función original -->
+            <div class="flex items-center justify-between">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                >Grosor:</label
+              >
+              <div class="relative inline-block w-24 align-middle select-none">
+                <input
+                  type="range"
+                  min="1"
+                  max="5"
+                  [(ngModel)]="functionLineWidth"
+                  (input)="redrawCanvas()"
+                  class="w-full accent-teal-500"
+                />
+                <div
+                  class="text-xs text-center font-medium mt-1"
+                  [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+                >
+                  {{ functionLineWidth }}px
+                </div>
+              </div>
+            </div>
+            <!-- Después de la información de la función original, agregar sección para espectros -->
+            <div class="mb-8">
+              <h3 class="text-base mb-3 font-bold flex items-center">
+                <span
+                  class="w-1.5 h-1.5 rounded-full mr-2"
+                  [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+                ></span>
+                <span
+                  class="text-transparent bg-clip-text"
+                  [ngClass]="
+                    isDarkMode
+                      ? 'bg-gradient-to-r from-teal-400 to-green-300'
+                      : 'bg-gradient-to-r from-blue-500 to-sky-400'
+                  "
+                  >Análisis Espectral</span
+                >
+              </h3>
+
+              <!-- Espectro de Amplitud -->
+              <div class="mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <h4
+                    class="text-sm font-semibold"
+                    [ngClass]="isDarkMode ? 'text-teal-200' : 'text-blue-600'"
+                  >
+                    Espectro de Amplitud
+                  </h4>
+                  <div
+                    class="relative inline-block w-12 align-middle select-none"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="showAmplitudeSpectrum"
+                      (change)="toggleAmplitudeSpectrum($event)"
+                      id="toggleAmplitude"
+                      class="toggle-checkbox"
+                    />
+                    <label for="toggleAmplitude" class="toggle-label"></label>
+                  </div>
+                </div>
+
+                <!-- Canvas para el espectro de amplitud -->
+                <div
+                  class="border rounded-lg transition-all overflow-hidden"
+                  [ngClass]="
+                    isDarkMode ? 'border-teal-500/20' : 'border-blue-200'
+                  "
+                  [style.height.px]="amplitudeCanvasHeight"
+                  *ngIf="showAmplitudeSpectrum"
+                >
+                  <app-cartesian-canvas
+                    #amplitudeCanvas
+                    [bgColor]="bgColor"
+                    [axisColor]="axisColor"
+                    [gridColor]="gridColor"
+                    [fontColor]="fontColor"
+                    [initialZoom]="75"
+                    [xAxisScale]="'integer'"
+                    [xAxisFactor]="1"
+                    (onViewChanged)="drawAmplitudeSpectrum()"
+                    (onZoom)="drawAmplitudeSpectrum()"
+                    class="w-full h-full"
+                  >
+                  </app-cartesian-canvas>
+                </div>
+              </div>
+
+              <!-- Espectro de Fase -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <h4
+                    class="text-sm font-semibold"
+                    [ngClass]="isDarkMode ? 'text-teal-200' : 'text-blue-600'"
+                  >
+                    Espectro de Fase
+                  </h4>
+                  <div
+                    class="relative inline-block w-12 align-middle select-none"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="showPhaseSpectrum"
+                      (change)="togglePhaseSpectrum($event)"
+                      id="togglePhase"
+                      class="toggle-checkbox"
+                    />
+                    <label for="togglePhase" class="toggle-label"></label>
+                  </div>
+                </div>
+
+                <!-- Canvas para el espectro de fase -->
+                <div
+                  class="border rounded-lg transition-all overflow-hidden"
+                  [ngClass]="
+                    isDarkMode ? 'border-teal-500/20' : 'border-blue-200'
+                  "
+                  [style.height.px]="phaseCanvasHeight"
+                  *ngIf="showPhaseSpectrum"
+                >
+                  <app-cartesian-canvas
+                    #phaseCanvas
+                    [bgColor]="bgColor"
+                    [axisColor]="axisColor"
+                    [gridColor]="gridColor"
+                    [fontColor]="fontColor"
+                    [initialZoom]="75"
+                    [xAxisScale]="'integer'"
+                    [xAxisFactor]="1"
+                    (onViewChanged)="drawPhaseSpectrum()"
+                    (onZoom)="drawPhaseSpectrum()"
+                    class="w-full h-full"
+                  >
+                  </app-cartesian-canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Añadir controles para la personalización de los espectros en la sección de personalización -->
+            <!-- Después de la sección de función reconstruida -->
+            <!-- Sección para el espectro de amplitud -->
+            <div
+              class="mt-4 pb-3 border-t pt-3"
+              [ngClass]="isDarkMode ? 'border-gray-700/50' : 'border-gray-200'"
+            >
+              <h4
+                class="text-sm font-semibold mb-2"
+                [ngClass]="isDarkMode ? 'text-teal-200' : 'text-blue-600'"
+              >
+                Espectro de Amplitud
+              </h4>
+
+              <!-- Color espectro de amplitud -->
+              <div class="flex items-center justify-between mb-2">
+                <label
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                  >Color:</label
+                >
+                <div class="flex items-center">
+                  <input
+                    type="color"
+                    [(ngModel)]="amplitudeColor"
+                    (change)="drawAmplitudeSpectrum()"
+                    class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+                  />
+                  <span
+                    class="ml-2 text-xs font-mono"
+                    [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                    >{{ amplitudeColor }}</span
+                  >
+                </div>
+              </div>
+
+              <!-- Grosor espectro de amplitud -->
+              <div class="flex items-center justify-between">
+                <label
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                  >Grosor:</label
+                >
+                <div
+                  class="relative inline-block w-24 align-middle select-none"
+                >
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    [(ngModel)]="amplitudeLineWidth"
+                    (input)="drawAmplitudeSpectrum()"
+                    class="w-full accent-teal-500"
+                  />
+                  <div
+                    class="text-xs text-center font-medium mt-1"
+                    [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+                  >
+                    {{ amplitudeLineWidth }}px
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección para el espectro de fase -->
+            <div class="mt-4 pt-3">
+              <h4
+                class="text-sm font-semibold mb-2"
+                [ngClass]="isDarkMode ? 'text-teal-200' : 'text-blue-600'"
+              >
+                Espectro de Fase
+              </h4>
+
+              <!-- Color espectro de fase -->
+              <div class="flex items-center justify-between mb-2">
+                <label
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                  >Color:</label
+                >
+                <div class="flex items-center">
+                  <input
+                    type="color"
+                    [(ngModel)]="phaseColor"
+                    (change)="drawPhaseSpectrum()"
+                    class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+                  />
+                  <span
+                    class="ml-2 text-xs font-mono"
+                    [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                    >{{ phaseColor }}</span
+                  >
+                </div>
+              </div>
+
+              <!-- Grosor espectro de fase -->
+              <div class="flex items-center justify-between">
+                <label
+                  class="text-sm font-medium"
+                  [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                  >Grosor:</label
+                >
+                <div
+                  class="relative inline-block w-24 align-middle select-none"
+                >
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    [(ngModel)]="phaseLineWidth"
+                    (input)="drawPhaseSpectrum()"
+                    class="w-full accent-teal-500"
+                  />
+                  <div
+                    class="text-xs text-center font-medium mt-1"
+                    [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+                  >
+                    {{ phaseLineWidth }}px
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Grosor función original -->
-          <div class="flex items-center justify-between">
-            <label
-              class="text-sm font-medium"
-              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
-              >Grosor función original:</label
+          <!-- Sección para la función reconstruida -->
+          <div>
+            <h4
+              class="text-sm font-semibold mb-2"
+              [ngClass]="isDarkMode ? 'text-teal-200' : 'text-blue-600'"
             >
-            <div class="relative inline-block w-24 align-middle select-none">
-              <input
-                type="range"
-                min="1"
-                max="5"
-                [(ngModel)]="functionLineWidth"
-                (input)="redrawCanvas()"
-                class="w-full accent-teal-500"
-              />
-              <div
-                class="text-xs text-center font-medium mt-1"
-                [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+              Función Reconstruida
+            </h4>
+
+            <!-- Color función reconstruida -->
+            <div class="flex items-center justify-between mb-2">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                >Color:</label
               >
-                {{ functionLineWidth }}px
+              <div class="flex items-center">
+                <input
+                  type="color"
+                  [(ngModel)]="reconstructedColor"
+                  (change)="redrawCanvas()"
+                  class="w-8 h-8 bg-transparent border-none cursor-pointer rounded-full overflow-hidden"
+                />
+                <span
+                  class="ml-2 text-xs font-mono"
+                  [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-500'"
+                  >{{ reconstructedColor }}</span
+                >
+              </div>
+            </div>
+
+            <!-- Grosor función reconstruida -->
+            <div class="flex items-center justify-between">
+              <label
+                class="text-sm font-medium"
+                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+                >Grosor:</label
+              >
+              <div class="relative inline-block w-24 align-middle select-none">
+                <input
+                  type="range"
+                  min="1"
+                  max="5"
+                  [(ngModel)]="reconstructedLineWidth"
+                  (input)="redrawCanvas()"
+                  class="w-full accent-teal-500"
+                />
+                <div
+                  class="text-xs text-center font-medium mt-1"
+                  [ngClass]="isDarkMode ? 'text-teal-300' : 'text-blue-500'"
+                >
+                  {{ reconstructedLineWidth }}px
+                </div>
               </div>
             </div>
           </div>

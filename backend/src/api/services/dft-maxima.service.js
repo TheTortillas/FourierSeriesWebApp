@@ -151,7 +151,7 @@ exports.computeDFT = async (funcionMatrix, N = 32, M = 1, intVar = "x") => {
       puntos : reverse(puntos)$
 
       /* 8. Resultado final */
-      resultado : [string(puntos), string(puntos_originales), string(amplitud), string(fase)];
+      resultado : [string(float(puntos)), string(float(puntos_originales)), string(float(amplitud)), string(float(fase))];
       string(resultado);
     `;
 
