@@ -13,7 +13,9 @@ exports.calculateDFT = async (req, res) => {
     res.json({ 
       success: true, 
       data: result.result,
-      originalPoints: result.originalPoints
+      originalPoints: result.originalPoints,
+      amplitudeSpectrum: result.amplitudeSpectrum,
+      phaseSpectrum: result.phaseSpectrum
     });
   } catch (error) {
     console.error("Error en el controlador DFT:", error);

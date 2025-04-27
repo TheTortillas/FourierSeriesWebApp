@@ -7,10 +7,10 @@ const { execMaxima, buildMaximaCommand } = require("../utils/maxima.util");
  */
 function cleanMaximaOutput(output) {
   return output
-    .replace(/\\\n/g, '') // Elimina saltos de línea escapados
-    .replace(/\n/g, '')   // Elimina saltos de línea normales
-    .replace(/\s+/g, ' ') // Normaliza espacios
-    .trim();              // Elimina espacios al inicio y fin
+    .replace(/\\\n/g, "") // Elimina saltos de línea escapados
+    .replace(/\n/g, "") // Elimina saltos de línea normales
+    .replace(/\s+/g, " ") // Normaliza espacios
+    .trim(); // Elimina espacios al inicio y fin
 }
 
 /**
@@ -24,13 +24,13 @@ function containsError(output) {
     /log: encountered log\(0\)/i,
     /división por cero/i,
     /division by zero/i,
-    /no es de tipo/i, 
+    /no es de tipo/i,
     /is not of type/i,
     /argument cannot be/i,
-    /unexpected condition/i
+    /unexpected condition/i,
   ];
-  
-  return errorPatterns.some(pattern => pattern.test(output));
+
+  return errorPatterns.some((pattern) => pattern.test(output));
 }
 
 /**
@@ -46,14 +46,14 @@ function extractErrorMessage(output) {
     output.match(/(is not of type [^:]+)/),
     output.match(/(argument cannot be [^;]+)/),
   ];
-  
+
   // Usa el primer match que encuentre
   for (const match of errorMatches) {
     if (match && match[1]) {
       return `Error matemático: ${match[1]}`;
     }
   }
-  
+
   // Si no encuentra un patrón específico, devuelve un mensaje genérico
   return "Error matemático en la evaluación de la función";
 }
@@ -121,6 +121,10 @@ exports.computeDFT = async (funcionMatrix, N = 32, M = 1, intVar = "x") => {
       dft_result : fft(muestras)$
       reconstruida : inverse_fft(dft_result)$
 
+      /* 4B. Calcular espectros de amplitud y fase */
+      amplitud : makelist([k, float(cabs(dft_result[k+1]))], k, 0, N-1)$
+      fase : makelist([k, float((carg(dft_result[k+1])))], k, 0, N-1)$
+
       /* 5. Repetir la señal hacia ambos lados */
       señal_extendida : []$
       for rep:1 thru 2*M+1 do (
@@ -147,40 +151,46 @@ exports.computeDFT = async (funcionMatrix, N = 32, M = 1, intVar = "x") => {
       puntos : reverse(puntos)$
 
       /* 8. Resultado final */
-      resultado : [string(puntos), string(puntos_originales)];
+      resultado : [string(puntos), string(puntos_originales), string(amplitud), string(fase)];
       string(resultado);
     `;
 
     // Ejecutar el script en Maxima
     const rawResult = await execMaxima(buildMaximaCommand(maximaScript));
-    
+
     // Limpiamos la salida usando la función de limpieza
     const cleanedResult = cleanMaximaOutput(rawResult);
-    
+
     // Verificamos si hay errores en la salida
     if (containsError(cleanedResult)) {
       const errorMessage = extractErrorMessage(cleanedResult);
       return { success: false, message: errorMessage, details: cleanedResult };
     }
-    
-    // Extraemos los dos arrays de puntos
-    const match = cleanedResult.match(/\["(\[\[.*?\]\])",\s*"(\[\[.*?\]\])"\]/);
-    
-    if (!match || !match[1] || !match[2]) {
-      return { 
-        success: false, 
-        message: "No se pudieron extraer los puntos", 
-        details: cleanedResult 
+
+    // Extraemos los arrays de puntos (ahora incluye amplitud y fase)
+    const match = cleanedResult.match(
+      /\["(\[\[.*?\]\])",\s*"(\[\[.*?\]\])",\s*"(\[\[.*?\]\])",\s*"(\[\[.*?\]\])"\]/
+    );
+
+    if (!match || !match[1] || !match[2] || !match[3] || !match[4]) {
+      return {
+        success: false,
+        message: "No se pudieron extraer los puntos",
+        details: cleanedResult,
       };
     }
-    
+
     const dftPoints = match[1];
     const originalPoints = match[2];
-    
-    return { 
-      success: true, 
-      result: dftPoints, 
-      originalPoints: originalPoints 
+    const amplitudeSpectrum = match[3];
+    const phaseSpectrum = match[4];
+
+    return {
+      success: true,
+      result: dftPoints,
+      originalPoints: originalPoints,
+      amplitudeSpectrum: amplitudeSpectrum,
+      phaseSpectrum: phaseSpectrum,
     };
   } catch (error) {
     console.error("Error al calcular la DFT:", error);
