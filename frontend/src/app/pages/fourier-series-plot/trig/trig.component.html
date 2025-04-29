@@ -793,6 +793,40 @@
           Descargar coeficientes
         </button>
       </div>
+
+      <div class="mt-4">
+        <button
+          (click)="displayAllSeriesTermsInModal()"
+          class="w-full py-2 px-3 rounded-lg transition-all duration-300 shadow font-medium flex items-center justify-center"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/70 border border-teal-500/30 text-teal-400 hover:bg-teal-900/30 hover:border-teal-400/50'
+              : 'bg-blue-50 border border-blue-300 text-blue-500 hover:bg-blue-100 hover:border-blue-400'
+          "
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+            />
+          </svg>
+          Mostrar lista completa de términos
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -834,3 +868,89 @@
 <!-- Add Theme Toggle button -->
 <app-theme-toggle></app-theme-toggle>
 <app-survey-button></app-survey-button>
+
+<!-- Add the modal component at the end of the file, before closing body tag -->
+<!-- Modal para mostrar todos los términos de la serie -->
+<div
+  *ngIf="showSeriesTermsModal"
+  class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto"
+>
+  <!-- Overlay -->
+  <div
+    class="fixed inset-0 transition-opacity bg-black bg-opacity-50 backdrop-blur-sm"
+    (click)="closeSeriesTermsModal()"
+  ></div>
+
+  <!-- Modal Content -->
+  <div
+    class="relative z-50 bg-opacity-90 p-6 rounded-xl shadow-2xl max-h-[90vh] w-[90vw] max-w-5xl transform transition-all duration-300 overflow-hidden"
+    [ngClass]="
+      isDarkMode
+        ? 'bg-gray-900 border border-teal-500/20'
+        : 'bg-white border border-blue-200'
+    "
+  >
+    <!-- Header -->
+    <div
+      class="flex items-center justify-between mb-4 border-b pb-3"
+      [ngClass]="isDarkMode ? 'border-teal-500/30' : 'border-blue-200'"
+    >
+      <h3
+        class="text-xl font-bold"
+        [ngClass]="isDarkMode ? 'text-teal-400' : 'text-blue-600'"
+      >
+        Lista completa de términos de la serie
+      </h3>
+      <button
+        class="rounded-full p-1 transition-all"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-800 hover:bg-teal-900 text-teal-400'
+            : 'bg-gray-200 hover:bg-blue-100 text-blue-500'
+        "
+        (click)="closeSeriesTermsModal()"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div
+      class="overflow-y-auto max-h-[calc(90vh-120px)] pr-2 custom-scrollbar"
+      [ngClass]="isDarkMode ? 'text-white' : 'text-gray-800'"
+    >
+      <div [innerHTML]="allTermsHtml"></div>
+    </div>
+
+    <!-- Footer -->
+    <div
+      class="mt-5 flex justify-end border-t pt-3"
+      [ngClass]="isDarkMode ? 'border-teal-500/30' : 'border-blue-200'"
+    >
+      <button
+        class="px-4 py-2 rounded-lg transition-all shadow-sm"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-500 hover:to-green-500 text-white'
+            : 'bg-gradient-to-r from-blue-500 to-sky-400 hover:from-blue-400 hover:to-sky-300 text-white'
+        "
+        (click)="closeSeriesTermsModal()"
+      >
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

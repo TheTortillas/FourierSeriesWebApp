@@ -271,3 +271,60 @@
     opacity: 0.7;
   }
 }
+
+/* Custom scrollbar styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(144, 220, 181, 0.5) rgba(0, 0, 0, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(144, 220, 181, 0.5);
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+
+/* Dark mode specific scrollbar */
+:host-context(.dark-mode) .custom-scrollbar {
+  scrollbar-color: rgba(144, 220, 181, 0.6) rgba(30, 30, 30, 0.5);
+}
+
+:host-context(.dark-mode) .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(30, 30, 30, 0.5);
+}
+
+:host-context(.dark-mode) .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(144, 220, 181, 0.6);
+}
+
+/* Modal animation */
+.modal-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.modal-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.modal-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modal-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 300ms, transform 300ms;
+}

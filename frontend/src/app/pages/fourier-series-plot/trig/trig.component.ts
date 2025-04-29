@@ -27,7 +27,7 @@ import { SurveyButtonComponent } from '../../../shared/components/survey-button/
     FormsModule,
     CartesianCanvasComponent,
     ThemeToggleComponent,
-    SurveyButtonComponent
+    SurveyButtonComponent,
   ],
   templateUrl: './trig.component.html',
   styleUrl: './trig.component.scss',
@@ -105,6 +105,10 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public termsLatex: string[] = [];
   public termsLineWidth: number = 2;
+
+  // Add these properties to the TrigComponent class
+  public showSeriesTermsModal: boolean = false;
+  public allTermsHtml: string = '';
 
   // Add these properties to control the visibility of amplitude graphs
   public showAmplitudeGraphs: boolean = false;
@@ -1032,6 +1036,126 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.mathquillService.renderMathJax();
     }, 100);
+  }
+
+  // Add this method after displaySeriesTerms()
+  displayAllSeriesTermsInModal(): void {
+    // Show the modal dialog
+    this.showSeriesTermsModal = true;
+
+    // Generate HTML with all terms
+    if (!this.seriesTerms || !this.seriesTerms.latex) {
+      this.allTermsHtml =
+        '<div class="py-4 text-center"><p>No hay términos para mostrar</p></div>';
+      return;
+    }
+
+    // Define card style based on theme
+    const cardStyle = this.isDarkMode
+      ? 'bg-gray-800 border border-gray-700 text-white'
+      : 'bg-white border border-gray-200 text-gray-800';
+
+    // Define title style based on theme
+    const titleStyle = this.isDarkMode ? 'text-green-300' : 'text-green-600';
+
+    let html = `<div class="grid grid-cols-1 gap-4 max-w-full">`;
+
+    // Add a0/2 term first if present
+    if (
+      this.seriesTerms.latex.a0 &&
+      this.seriesTerms.latex.a0 !== '0' &&
+      this.seriesTerms.latex.a0 !== '$$0$$'
+    ) {
+      const a0LatexClean = this.stripLatexDelimiters(this.seriesTerms.latex.a0);
+      html += `
+        <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
+          <div class="term-title font-semibold mb-2 ${titleStyle}">$$\\text{Término constante } \\frac{a_0}{2}$$</div>
+          <div class="term-latex">$$\\frac{${a0LatexClean}}{2}$$</div>
+        </div>
+      `;
+    }
+
+    // Determine the maximum number of terms available
+    const maxTerms = Math.max(
+      this.seriesTerms.latex.an?.length || 0,
+      this.seriesTerms.latex.bn?.length || 0
+    );
+
+    // Show all available terms (an*cos + bn*sin) for each n
+    for (let n = 1; n <= maxTerms; n++) {
+      const index = n - 1;
+
+      // Check if we have an and/or bn for this n
+      const hasAn =
+        index < (this.seriesTerms.latex.an?.length || 0) &&
+        this.seriesTerms.latex.an[index] !== '$$0$$';
+      const hasBn =
+        index < (this.seriesTerms.latex.bn?.length || 0) &&
+        this.seriesTerms.latex.bn[index] !== '$$0$$';
+
+      // If no term for this n, continue to next
+      if (!hasAn && !hasBn) continue;
+
+      // Build LaTeX for combined term
+      let termLatex = '$$';
+
+      if (hasAn) {
+        const anLatexClean = this.stripLatexDelimiters(
+          this.seriesTerms.latex.an[index]
+        );
+        termLatex += anLatexClean;
+      }
+
+      if (hasAn && hasBn) {
+        termLatex += ' + ';
+      }
+
+      if (hasBn) {
+        const bnLatexClean = this.stripLatexDelimiters(
+          this.seriesTerms.latex.bn[index]
+        );
+        termLatex += bnLatexClean;
+      }
+
+      termLatex += '$$';
+
+      // Build term title in LaTeX format
+      let termTitle = `$$\\text{Término ${n}: }`;
+
+      if (hasAn) {
+        termTitle += `a_{${n}} \\cdot \\cos(${n}\\omega_0 ${this.intVar})`;
+      }
+
+      if (hasAn && hasBn) {
+        termTitle += ' + ';
+      }
+
+      if (hasBn) {
+        termTitle += `b_{${n}} \\cdot \\sin(${n}\\omega_0 ${this.intVar})`;
+      }
+
+      termTitle += '$$';
+
+      // Add term to display
+      html += `
+        <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
+          <div class="term-title font-semibold mb-2 ${titleStyle}">${termTitle}</div>
+          <div class="term-latex">${termLatex}</div>
+        </div>
+      `;
+    }
+
+    html += '</div>';
+    this.allTermsHtml = html;
+
+    // Render LaTeX after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      this.mathquillService.renderMathJax();
+    }, 200);
+  }
+
+  closeSeriesTermsModal(): void {
+    this.showSeriesTermsModal = false;
   }
 
   prepareIndividualTermFunctions(): void {
