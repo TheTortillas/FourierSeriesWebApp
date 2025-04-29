@@ -96,8 +96,25 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
   public phaseLineWidth: number = 2;
 
   // Añadir también estas propiedades para configuración de visualización
-  public amplitudeCanvasHeight: number = 200; // Altura en píxeles
-  public phaseCanvasHeight: number = 200; // Altura en píxeles
+  public amplitudeCanvasHeight: number = 300; // Altura en píxeles
+  public phaseCanvasHeight: number = 300; // Altura en píxeles
+
+  private amplitudePoints: Array<{
+    n: number;
+    x: number;
+    y: number;
+    value: number;
+  }> = [];
+
+  private phasePoints: Array<{
+    n: number;
+    x: number;
+    y: number;
+    value: number;
+  }> = [];
+
+  private amplitudeTooltip: HTMLElement | null = null;
+  private phaseTooltip: HTMLElement | null = null;
 
   /* Lifecycle Methods */
   constructor(
@@ -169,14 +186,20 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.mathquillService.renderMathJax();
-      
+
       // Inicializar canvas principal
       this.initializeCanvas();
-      
+
       // Inicializar canvas de espectros
       this.initializeSpectrumCanvas();
+
+      // Configurar eventos para los tooltips solo en el navegador
+      if (isPlatformBrowser(this.platformId)) {
+        this.setupSpectrumCanvasEvents();
+      }
     }, 100);
   }
+
   ngOnDestroy(): void {
     if (this.themeSubscription) {
       this.themeSubscription.unsubscribe();
@@ -327,6 +350,7 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /* Utility Methods */
+  // Método para actualizar los colores en todos los canvas
   private updateCanvasColors(): void {
     // Update main canvas colors
     if (this.cartesianCanvas) {
@@ -335,8 +359,30 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
       this.cartesianCanvas.gridColor = this.gridColor;
       this.cartesianCanvas.fontColor = this.fontColor;
 
-      // Redraw canvas with new colors
+      // Redraw main canvas with new colors
       this.redrawCanvas();
+    }
+
+    // Update amplitude canvas colors
+    if (this.amplitudeCanvas) {
+      this.amplitudeCanvas.bgColor = this.bgColor;
+      this.amplitudeCanvas.axisColor = this.axisColor;
+      this.amplitudeCanvas.gridColor = this.gridColor;
+      this.amplitudeCanvas.fontColor = this.fontColor;
+
+      // Redraw amplitude spectrum with new colors
+      this.drawAmplitudeSpectrum();
+    }
+
+    // Update phase canvas colors
+    if (this.phaseCanvas) {
+      this.phaseCanvas.bgColor = this.bgColor;
+      this.phaseCanvas.axisColor = this.axisColor;
+      this.phaseCanvas.gridColor = this.gridColor;
+      this.phaseCanvas.fontColor = this.fontColor;
+
+      // Redraw phase spectrum with new colors
+      this.drawPhaseSpectrum();
     }
   }
   // Update colors based on current theme
@@ -596,21 +642,38 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
 
     try {
       if (this.amplitudeSpectrum.length > 0) {
-        console.log('Dibujando espectro de amplitud');
-
-        // Limpiar canvas y configurarlo para dibujo de espectro (barras discretas)
+        // Limpiar canvas y resetear puntos
         this.amplitudeCanvas.clearCanvas();
+        this.amplitudePoints = [];
 
         // Dibujar barras discretas para el espectro de amplitud
         for (const point of this.amplitudeSpectrum) {
           // Dibujar una línea vertical (barra) para cada componente
-          this.amplitudeCanvas.drawDiscreteLine(
+          this.drawDiscreteLineWithBlur(
+            this.amplitudeCanvas,
             point.x,
             0,
             point.y,
             this.amplitudeColor,
-            this.amplitudeLineWidth
+            this.amplitudeLineWidth,
+            true
           );
+
+          // Almacenar punto para tooltips
+          const pixelPos = this.canvasCoordToPixel(
+            this.amplitudeCanvas,
+            point.x,
+            point.y
+          );
+
+          if (pixelPos) {
+            this.amplitudePoints.push({
+              n: point.x, // Usamos x como índice
+              x: pixelPos.x,
+              y: pixelPos.y,
+              value: point.y,
+            });
+          }
         }
       }
     } catch (error) {
@@ -623,21 +686,38 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
 
     try {
       if (this.phaseSpectrum.length > 0) {
-        console.log('Dibujando espectro de fase');
-
-        // Limpiar canvas y configurarlo para dibujo de espectro
+        // Limpiar canvas y resetear puntos
         this.phaseCanvas.clearCanvas();
+        this.phasePoints = [];
 
         // Dibujar barras discretas para el espectro de fase
         for (const point of this.phaseSpectrum) {
           // Dibujar una línea vertical (barra) para cada componente
-          this.phaseCanvas.drawDiscreteLine(
+          this.drawDiscreteLineWithBlur(
+            this.phaseCanvas,
             point.x,
             0,
             point.y,
             this.phaseColor,
-            this.phaseLineWidth
+            this.phaseLineWidth,
+            true
           );
+
+          // Almacenar punto para tooltips
+          const pixelPos = this.canvasCoordToPixel(
+            this.phaseCanvas,
+            point.x,
+            point.y
+          );
+
+          if (pixelPos) {
+            this.phasePoints.push({
+              n: point.x, // Usamos x como índice
+              x: pixelPos.x,
+              y: pixelPos.y,
+              value: point.y,
+            });
+          }
         }
       }
     } catch (error) {
@@ -646,30 +726,347 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // Método para inicializar los canvas de espectros
-initializeSpectrumCanvas(): void {
-  // Inicializar canvas de amplitud
-  if (this.amplitudeCanvas) {
-    this.amplitudeCanvas.clearCanvas();
-    this.amplitudeCanvas.resetView();
+  initializeSpectrumCanvas(): void {
+    // Inicializar canvas de amplitud
+    if (this.amplitudeCanvas) {
+      this.amplitudeCanvas.clearCanvas();
+      this.amplitudeCanvas.resetView();
+      this.drawAmplitudeSpectrum();
+    }
+
+    // Inicializar canvas de fase
+    if (this.phaseCanvas) {
+      this.phaseCanvas.clearCanvas();
+      this.phaseCanvas.resetView();
+      this.drawPhaseSpectrum();
+    }
+
+    // Configurar eventos de zoom
+    this.setupSpectrumCanvasZoomEvents();
+  }
+
+  // Toggle methods para los espectros
+  toggleAmplitudeSpectrum(event: any): void {
+    this.showAmplitudeSpectrum = event.target.checked;
     this.drawAmplitudeSpectrum();
   }
-  
-  // Inicializar canvas de fase
-  if (this.phaseCanvas) {
-    this.phaseCanvas.clearCanvas();
-    this.phaseCanvas.resetView();
+
+  togglePhaseSpectrum(event: any): void {
+    this.showPhaseSpectrum = event.target.checked;
     this.drawPhaseSpectrum();
   }
-}
 
-// Toggle methods para los espectros
-toggleAmplitudeSpectrum(event: any): void {
-  this.showAmplitudeSpectrum = event.target.checked;
-  this.drawAmplitudeSpectrum();
-}
+  // Método para dibujar líneas con efecto blur
+  private drawDiscreteLineWithBlur(
+    canvas: CartesianCanvasComponent,
+    startX: number,
+    startY: number,
+    height: number,
+    color: string,
+    lineWidth: number = 2.5,
+    applyBlur: boolean = false,
+    isHighlighted: boolean = false
+  ): void {
+    if (!canvas || !canvas.ctx) return;
 
-togglePhaseSpectrum(event: any): void {
-  this.showPhaseSpectrum = event.target.checked;
-  this.drawPhaseSpectrum();
-}
+    const ctx = canvas.ctx;
+    const origin = canvas.origin;
+    const unit = canvas.unit;
+    const offsetX = canvas.offsetX;
+    const offsetY = canvas.offsetY;
+
+    // Calculate pixel coordinates
+    const xPx = origin.x - offsetX + unit * startX;
+    const y0Px = origin.y - offsetY - unit * startY;
+    const yEndPx = origin.y - offsetY - unit * (startY + height);
+
+    // Save current context state
+    ctx.save();
+
+    // Apply blur effect if needed
+    if (applyBlur) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 1.5;
+      ctx.globalAlpha = 0.9;
+    }
+
+    // Add highlight effect if needed
+    if (isHighlighted) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 4;
+      ctx.globalAlpha = 1;
+      lineWidth += 0.5; // Make it slightly thicker
+    }
+
+    // Draw vertical line
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(xPx, y0Px);
+    ctx.lineTo(xPx, yEndPx);
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+
+    // Draw point at the end with glow effect
+    ctx.beginPath();
+    ctx.arc(xPx, yEndPx, isHighlighted ? 6 : 5, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Add a small fill for the point
+    ctx.fillStyle = color;
+    ctx.globalAlpha = isHighlighted ? 0.5 : 0.3;
+    ctx.fill();
+
+    // Restore original context state
+    ctx.restore();
+  }
+
+  // Método para convertir coordenadas matemáticas a píxeles
+  private canvasCoordToPixel(
+    canvas: CartesianCanvasComponent,
+    x: number,
+    y: number
+  ): { x: number; y: number } | null {
+    if (!canvas || !canvas.ctx) return null;
+
+    const origin = canvas.origin;
+    const unit = canvas.unit;
+    const offsetX = canvas.offsetX;
+    const offsetY = canvas.offsetY;
+
+    // Convert from math units to pixels
+    const pixelX = origin.x - offsetX + unit * x;
+    const pixelY = origin.y - offsetY - unit * y;
+
+    return { x: pixelX, y: pixelY };
+  }
+
+  private setupSpectrumCanvasEvents(): void {
+    // Inicializar tooltips
+
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('No configurando eventos de tooltips en SSR');
+      return;
+    }
+
+    this.amplitudeTooltip = document.getElementById('amplitudeTooltip');
+    this.phaseTooltip = document.getElementById('phaseTooltip');
+
+    // Obtener elementos del DOM
+    const canvasElements = {
+      amplitude: document.getElementById('amplitudeCanvas'),
+      phase: document.getElementById('phaseCanvas'),
+    };
+
+    // Función auxiliar para verificar si el ratón está cerca de un tallo
+    const isNearStem = (
+      mouseX: number,
+      mouseY: number,
+      stemX: number,
+      stemY0: number,
+      stemY1: number,
+      threshold: number
+    ): boolean => {
+      // Si el ratón está fuera del rango vertical del tallo, no está cerca
+      if (
+        mouseY < Math.min(stemY0, stemY1) - threshold ||
+        mouseY > Math.max(stemY0, stemY1) + threshold
+      ) {
+        return false;
+      }
+
+      // Calcular la distancia horizontal al tallo
+      const distance = Math.abs(mouseX - stemX);
+      return distance < threshold;
+    };
+
+    // Eventos para el canvas de amplitud
+    if (canvasElements.amplitude && this.amplitudeTooltip) {
+      canvasElements.amplitude.onmousemove = (event: MouseEvent) => {
+        const rect = canvasElements.amplitude!.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        const threshold = 12;
+        let closestPoint = null;
+        let minDistance = Infinity;
+        let isCloseToStem = false;
+
+        for (const point of this.amplitudePoints) {
+          const stemX = point.x;
+          const stemEndY = point.y;
+
+          // Calcular Y0 (origen del tallo, normalmente Y=0)
+          const origin = this.amplitudeCanvas.origin;
+          const offsetY = this.amplitudeCanvas.offsetY;
+          const unit = this.amplitudeCanvas.unit;
+          const stemStartY = origin.y - offsetY - unit * 0;
+
+          if (
+            isNearStem(mouseX, mouseY, stemX, stemStartY, stemEndY, threshold)
+          ) {
+            isCloseToStem = true;
+
+            const dx = mouseX - stemX;
+            const dy = mouseY - stemEndY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestPoint = point;
+            }
+          }
+        }
+
+        if (isCloseToStem && closestPoint) {
+          this.amplitudeTooltip!.innerHTML = `A<sub>${Math.round(
+            closestPoint.n
+          )}</sub> = ${closestPoint.value.toFixed(6)}`;
+          this.amplitudeTooltip!.style.left = `${closestPoint.x}px`;
+          this.amplitudeTooltip!.style.top = `${closestPoint.y}px`;
+          this.amplitudeTooltip!.classList.add('visible');
+
+          // Redibujar con resaltado
+          this.drawAmplitudeSpectrum();
+          const point = this.amplitudeSpectrum.find(
+            (p) => p.x === closestPoint!.n
+          );
+          if (point) {
+            this.drawDiscreteLineWithBlur(
+              this.amplitudeCanvas,
+              point.x,
+              0,
+              point.y,
+              this.amplitudeColor,
+              this.amplitudeLineWidth + 0.5,
+              false,
+              true
+            );
+          }
+        } else if (this.amplitudeTooltip) {
+          this.amplitudeTooltip.classList.remove('visible');
+          this.drawAmplitudeSpectrum();
+        }
+      };
+
+      canvasElements.amplitude.onmouseleave = () => {
+        if (this.amplitudeTooltip) {
+          this.amplitudeTooltip.classList.remove('visible');
+          this.drawAmplitudeSpectrum();
+        }
+      };
+    }
+
+    // Eventos para el canvas de fase
+    if (canvasElements.phase && this.phaseTooltip) {
+      canvasElements.phase.onmousemove = (event: MouseEvent) => {
+        const rect = canvasElements.phase!.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        const threshold = 12;
+        let closestPoint = null;
+        let minDistance = Infinity;
+        let isCloseToStem = false;
+
+        for (const point of this.phasePoints) {
+          const stemX = point.x;
+          const stemEndY = point.y;
+
+          const origin = this.phaseCanvas.origin;
+          const offsetY = this.phaseCanvas.offsetY;
+          const unit = this.phaseCanvas.unit;
+          const stemStartY = origin.y - offsetY - unit * 0;
+
+          if (
+            isNearStem(mouseX, mouseY, stemX, stemStartY, stemEndY, threshold)
+          ) {
+            isCloseToStem = true;
+
+            const dx = mouseX - stemX;
+            const dy = mouseY - stemEndY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestPoint = point;
+            }
+          }
+        }
+
+        if (isCloseToStem && closestPoint) {
+          // Convertir fase a grados para mostrar
+          const phaseDegrees = ((closestPoint.value * 180) / Math.PI).toFixed(
+            2
+          );
+
+          this.phaseTooltip!.innerHTML = `φ<sub>${Math.round(
+            closestPoint.n
+          )}</sub> = ${phaseDegrees}°`;
+          this.phaseTooltip!.style.left = `${closestPoint.x}px`;
+          this.phaseTooltip!.style.top = `${closestPoint.y}px`;
+          this.phaseTooltip!.classList.add('visible');
+
+          // Redibujar con resaltado
+          this.drawPhaseSpectrum();
+          const point = this.phaseSpectrum.find((p) => p.x === closestPoint!.n);
+          if (point) {
+            this.drawDiscreteLineWithBlur(
+              this.phaseCanvas,
+              point.x,
+              0,
+              point.y,
+              this.phaseColor,
+              this.phaseLineWidth + 0.5,
+              false,
+              true
+            );
+          }
+        } else if (this.phaseTooltip) {
+          this.phaseTooltip.classList.remove('visible');
+          this.drawPhaseSpectrum();
+        }
+      };
+
+      canvasElements.phase.onmouseleave = () => {
+        if (this.phaseTooltip) {
+          this.phaseTooltip.classList.remove('visible');
+          this.drawPhaseSpectrum();
+        }
+      };
+    }
+  }
+
+  private setupSpectrumCanvasZoomEvents(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('No configurando eventos de zoom en SSR');
+      return;
+    }
+
+    const canvasElements = [
+      { canvas: this.amplitudeCanvas, elementId: 'amplitudeCanvas' },
+      { canvas: this.phaseCanvas, elementId: 'phaseCanvas' },
+    ];
+
+    for (const { canvas, elementId } of canvasElements) {
+      if (canvas && canvas.canvasElement?.nativeElement) {
+        const canvasEl = canvas.canvasElement.nativeElement;
+
+        // Crear un manejador de rueda que llame al manejador original y luego redibuje
+        const originalWheel = canvasEl.onwheel;
+        canvasEl.onwheel = (event: WheelEvent) => {
+          // Llamar al manejador original
+          if (originalWheel) originalWheel.call(canvasEl, event);
+
+          // Redibujar después de un pequeño retraso para permitir la actualización del canvas
+          setTimeout(() => {
+            if (elementId === 'amplitudeCanvas') {
+              this.drawAmplitudeSpectrum();
+            } else if (elementId === 'phaseCanvas') {
+              this.drawPhaseSpectrum();
+            }
+          }, 0);
+        };
+      }
+    }
+  }
 }

@@ -149,6 +149,24 @@
             </div>
           </div>
 
+          <div class="flex items-center justify-between">
+            <label
+              class="text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+              >Mostrar función muestreada</label
+            >
+            <div class="relative inline-block w-12 align-middle select-none">
+              <input
+                type="checkbox"
+                [checked]="showOriginalPoints"
+                (change)="toggleOriginalPoints($event)"
+                id="toggleOriginalPoints"
+                class="toggle-checkbox"
+              />
+              <label for="toggleOriginalPoints" class="toggle-label"></label>
+            </div>
+          </div>
+
           <!-- Toggle para función reconstruida - CORREGIDO -->
           <div class="flex items-center justify-between">
             <label
@@ -165,24 +183,6 @@
                 class="toggle-checkbox"
               />
               <label for="toggleReconstructed" class="toggle-label"></label>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between">
-            <label
-              class="text-sm font-medium"
-              [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
-              >Mostrar puntos originales:</label
-            >
-            <div class="relative inline-block w-12 align-middle select-none">
-              <input
-                type="checkbox"
-                [checked]="showOriginalPoints"
-                (change)="toggleOriginalPoints($event)"
-                id="toggleOriginalPoints"
-                class="toggle-checkbox"
-              />
-              <label for="toggleOriginalPoints" class="toggle-label"></label>
             </div>
           </div>
         </div>
@@ -307,7 +307,7 @@
 
                 <!-- Canvas para el espectro de amplitud -->
                 <div
-                  class="border rounded-lg transition-all overflow-hidden"
+                  class="border rounded-lg transition-all overflow-hidden relative"
                   [ngClass]="
                     isDarkMode ? 'border-teal-500/20' : 'border-blue-200'
                   "
@@ -316,6 +316,7 @@
                 >
                   <app-cartesian-canvas
                     #amplitudeCanvas
+                    id="amplitudeCanvas"
                     [bgColor]="bgColor"
                     [axisColor]="axisColor"
                     [gridColor]="gridColor"
@@ -328,6 +329,14 @@
                     class="w-full h-full"
                   >
                   </app-cartesian-canvas>
+
+                  <!-- Tooltip para el espectro de amplitud -->
+                  <div
+                    id="amplitudeTooltip"
+                    class="coefficient-tooltip amplitude-tooltip"
+                  >
+                    <!-- El contenido se llenará dinámicamente -->
+                  </div>
                 </div>
               </div>
 
@@ -356,7 +365,7 @@
 
                 <!-- Canvas para el espectro de fase -->
                 <div
-                  class="border rounded-lg transition-all overflow-hidden"
+                  class="border rounded-lg transition-all overflow-hidden relative"
                   [ngClass]="
                     isDarkMode ? 'border-teal-500/20' : 'border-blue-200'
                   "
@@ -365,6 +374,7 @@
                 >
                   <app-cartesian-canvas
                     #phaseCanvas
+                    id="phaseCanvas"
                     [bgColor]="bgColor"
                     [axisColor]="axisColor"
                     [gridColor]="gridColor"
@@ -377,6 +387,14 @@
                     class="w-full h-full"
                   >
                   </app-cartesian-canvas>
+
+                  <!-- Tooltip para el espectro de fase -->
+                  <div
+                    id="phaseTooltip"
+                    class="coefficient-tooltip phase-tooltip"
+                  >
+                    <!-- El contenido se llenará dinámicamente -->
+                  </div>
                 </div>
               </div>
             </div>
