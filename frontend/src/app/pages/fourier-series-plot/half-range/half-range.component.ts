@@ -26,7 +26,7 @@ import { SurveyButtonComponent } from '../../../shared/components/survey-button/
     FormsModule,
     CartesianCanvasComponent,
     ThemeToggleComponent,
-    SurveyButtonComponent
+    SurveyButtonComponent,
   ],
   templateUrl: './half-range.component.html',
   styleUrls: ['./half-range.component.scss'],
@@ -134,6 +134,10 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     value: number;
   }> = [];
   private coeffTooltip: HTMLElement | null = null;
+
+  // Add modal control properties
+  public showSeriesTermsModal: boolean = false;
+  public allTermsHtml: string = '';
 
   constructor(
     private router: Router,
@@ -1227,25 +1231,22 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         `;
       }
 
-      // Mostrar términos an*cos
+      // Mostrar términos an*cos según el valor de termCount
       if (this.termCount > 0) {
-        const maxTermsToShow = Math.min(
-          this.termCount,
-          this.termsLatex.cosine.length - 1
-        );
-
-        for (let n = 1; n <= maxTermsToShow; n++) {
-          // Índice en termsLatex.cosine (el primero es a0)
-          const index = n;
-
+        // Solo dibujamos hasta el número de términos seleccionado o disponible
+        for (
+          let i = 1;
+          i <= Math.min(this.termCount, this.termsLatex.cosine.length - 1);
+          i++
+        ) {
           if (
-            index < this.termsLatex.cosine.length &&
-            this.termsLatex.cosine[index] !== '$$0$$'
+            i < this.termsLatex.cosine.length &&
+            this.termsLatex.cosine[i] !== '$$0$$'
           ) {
             const anLatexClean = this.stripLatexDelimiters(
-              this.termsLatex.cosine[index]
+              this.termsLatex.cosine[i]
             );
-            const termTitle = `Término ${n}: a${n}·cos(${n}ω₀${this.intVar})`;
+            const termTitle = `Término ${i}: a${i}·cos(${i}ω₀${this.intVar})`;
 
             html += `
               <div class="term-card bg-gray-800 border border-gray-700 p-4 rounded-lg shadow">
@@ -1257,15 +1258,15 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     } else {
-      // Mostrar términos bn*sin
+      // Mostrar términos bn*sin según el valor de termCount
       if (this.termCount > 0) {
-        const maxTermsToShow = Math.min(
-          this.termCount,
-          this.termsLatex.sine.length
-        );
-
-        for (let n = 1; n <= maxTermsToShow; n++) {
-          const index = n - 1;
+        // Solo dibujamos hasta el número de términos seleccionado o disponible
+        for (
+          let i = 1;
+          i <= Math.min(this.termCount, this.termsLatex.sine.length);
+          i++
+        ) {
+          const index = i - 1;
 
           if (
             index < this.termsLatex.sine.length &&
@@ -1274,7 +1275,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
             const bnLatexClean = this.stripLatexDelimiters(
               this.termsLatex.sine[index]
             );
-            const termTitle = `Término ${n}: b${n}·sin(${n}ω₀${this.intVar})`;
+            const termTitle = `Término ${i}: b${i}·sin(${i}ω₀${this.intVar})`;
 
             html += `
               <div class="term-card bg-gray-800 border border-gray-700 p-4 rounded-lg shadow">
@@ -1294,6 +1295,133 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.mathquillService.renderMathJax();
     }, 100);
+  }
+
+  // Show all series terms in a modal dialog
+  displayAllSeriesTermsInModal(): void {
+    // Show the modal dialog
+    this.showSeriesTermsModal = true;
+
+    // Prepare LaTeX expressions for the current active series type
+    const data = {
+      coefficients: {
+        a0: this.response?.simplified?.a0 || '0',
+        an: this.response?.simplified?.an || '0',
+        bn: this.response?.simplified?.bn || '0',
+      },
+      w0: this.response?.simplified?.w0 || '%pi',
+      intVar: this.intVar,
+      terms: 100, // Request a larger number to ensure we have enough terms
+    };
+
+    // Call the API to get the LaTeX expressions for the terms
+    this.apiService.expandTrigonometricSeries(data).subscribe({
+      next: (response) => {
+        // Define card style based on theme
+        const cardStyle = this.isDarkMode
+          ? 'bg-gray-800 border border-gray-700 text-white'
+          : 'bg-white border border-gray-200 text-gray-800';
+
+        // Define title style based on theme and series type
+        const titleStyle = this.isDarkMode
+          ? this.activeSeriesType === 'cosine'
+            ? 'text-green-300'
+            : 'text-blue-300'
+          : this.activeSeriesType === 'cosine'
+          ? 'text-green-600'
+          : 'text-blue-600';
+
+        let html = `<div class="grid grid-cols-1 gap-4 max-w-full">`;
+
+        if (this.activeSeriesType === 'cosine') {
+          // For cosine series, add a0/2 term first if present
+          if (
+            response.latex.a0 &&
+            response.latex.a0 !== '0' &&
+            response.latex.a0 !== '$$0$$'
+          ) {
+            const a0LatexClean = this.stripLatexDelimiters(response.latex.a0);
+            html += `
+              <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
+                <div class="term-title font-semibold mb-2 ${titleStyle}">$$\\text{Término constante } \\frac{a_0}{2}$$</div>
+                <div class="term-latex">$$\\frac{${a0LatexClean}}{2}$$</div>
+              </div>
+            `;
+          }
+
+          // Add an terms
+          if (response.latex.an && response.latex.an.length > 0) {
+            for (let n = 1; n <= Math.min(50, response.latex.an.length); n++) {
+              const index = n - 1;
+
+              if (
+                index < response.latex.an.length &&
+                response.latex.an[index] !== '$$0$$'
+              ) {
+                const anLatexClean = this.stripLatexDelimiters(
+                  response.latex.an[index]
+                );
+
+                html += `
+                  <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
+                    <div class="term-title font-semibold mb-2 ${titleStyle}">$$\\text{Término ${n}: } a_{${n}} \\cdot \\cos(${n}\\omega_0 ${this.intVar})$$</div>
+                    <div class="term-latex">$$${anLatexClean}$$</div>
+                  </div>
+                `;
+              }
+            }
+          }
+        } else {
+          // For sine series, just add bn terms
+          if (response.latex.bn && response.latex.bn.length > 0) {
+            for (let n = 1; n <= Math.min(50, response.latex.bn.length); n++) {
+              const index = n - 1;
+
+              if (
+                index < response.latex.bn.length &&
+                response.latex.bn[index] !== '$$0$$'
+              ) {
+                const bnLatexClean = this.stripLatexDelimiters(
+                  response.latex.bn[index]
+                );
+
+                html += `
+                  <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
+                    <div class="term-title font-semibold mb-2 ${titleStyle}">$$\\text{Término ${n}: } b_{${n}} \\cdot \\sin(${n}\\omega_0 ${this.intVar})$$</div>
+                    <div class="term-latex">$$${bnLatexClean}$$</div>
+                  </div>
+                `;
+              }
+            }
+          }
+        }
+
+        html += '</div>';
+        this.allTermsHtml = html;
+
+        // Render LaTeX after a short delay to ensure DOM is ready
+        setTimeout(() => {
+          this.mathquillService.renderMathJax();
+        }, 200);
+      },
+      error: (error) => {
+        console.error('Error fetching series terms for modal:', error);
+
+        // Show error message if API call fails
+        const errorHtml = `
+          <div class="text-center py-6">
+            <p class="${this.isDarkMode ? 'text-red-400' : 'text-red-600'}">
+              Error al cargar los términos. Por favor, intente nuevamente.
+            </p>
+          </div>
+        `;
+        this.allTermsHtml = errorHtml;
+      },
+    });
+  }
+
+  closeSeriesTermsModal(): void {
+    this.showSeriesTermsModal = false;
   }
 
   // Método para actualizar colores de términos
