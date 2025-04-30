@@ -35,6 +35,7 @@ async function calculatePiecewiseSeries({
        trigRules: !isComplex,
        assumptions: true,
        expRules: isComplex,
+       displayFlags: true,
      })}
    
      pieces: length(func)$
@@ -72,175 +73,145 @@ async function calculatePiecewiseSeries({
 
   // Add series core definitions based on type
   if (isComplex) {
-    // Using the approach from your Maxima example
-    maximaBaseCode += `
-      /* Define complex series cores with both positive and negative exponents */
-      series_exp_core_pos: exp((%i*n*w0*${intVar}))$
-      series_exp_core_neg: exp(-(%i*n*w0*${intVar}))$
-      
-      /* Define coefficient calculation function that iterates through pieces */
+    const N = 100; // coeficientes de −N … N
+    const N_terms = 100; // términos que expandiremos en la serie
+
+    const maximaScript = `
+      ${maximaBaseCode}
+  
+      /* Núcleos exponenciales */
+      series_exp_core_pos : exp(%i*n*w0*${intVar})$
+      series_exp_core_neg : exp(-%i*n*w0*${intVar})$
+  
+      /* Coeficiente general cₙ (función) */
       c_n(n) := block([c:0],
         for tr in tramos do
-            c : c + (1/T) * integrate(tr[1] * exp(-%i*n*w0*${intVar}), ${intVar}, tr[2], tr[3]),
+          c : c + (1/T)*integrate(tr[1]*exp(-%i*n*w0*${intVar}), ${intVar}, tr[2], tr[3]),
         return(ratsimp(c)))$
-
-      c0 : c_n(0)$  
+  
+      c0      : c_n(0)$
       expr_cn : ratsimp(c_n(n))$
-
-      /* Calculate coefficient list for n = -N to N */
-      N : 10$
-      lista_cn : makelist([k, ratsimp(c_n(k))], k, -N, N)$
-      
-      /* Calculate amplitude and phase for each coefficient */
-      lista_amp_fase : makelist([k, cabs(c_n(k)), carg(c_n(k))], k, -N, N)$
-      
-      /* Function to construct individual terms of the series */
+  
+      /* Listas de coeficientes, amplitud y fase */
+      N : ${N}$
+      lista_cn        : makelist([k, ratsimp(c_n(k))          ], k, -N, N)$
+      lista_amp_fase  : makelist([k, cabs(c_n(k)), carg(c_n(k))], k, -N, N)$
+  
+      /* Construcción de términos Σ */
       term(n) := block(
-          if n = 0 then
-              c_n(0)
-          else
-              c_n(n) * exp(%i*n*w0*${intVar}) + c_n(-n) * exp(-%i*n*w0*${intVar})
+        if n = 0 then c_n(0)
+        else c_n(n)*exp(%i*n*w0*${intVar}) + c_n(-n)*exp(-%i*n*w0*${intVar})
       )$
-      
-      /* Generate list of terms up to harmonic N_terms */
-      N_terms : 10$
+  
+      N_terms        : ${N_terms}$
       lista_terminos : makelist(term(k), k, 0, N_terms)$
-      
-      /* Apply demoivre to convert complex to trigonometric form */
       serie_demoivre : ratsimp(demoivre(lista_terminos))$
+  
+      /* Devolver listas de TeX como listas normales */
+      tex_lista_terminos      : map(lambda([z], tex(z,false)), lista_terminos)$
+      tex_demoivre_terminos   : map(lambda([z], tex(z,false)), serie_demoivre)$
+
+      resultados : [
+        string(c0), string(expr_cn), string(T), string(w0),
+        string(series_exp_core_pos), string(series_exp_core_neg),
+        string(lista_cn), string(lista_amp_fase),
+        string(lista_terminos), string(serie_demoivre),
+        tex_lista_terminos, tex_demoivre_terminos,
+        tex(c0,false), tex(expr_cn,false), tex(T,false), tex(w0,false),
+        tex(series_exp_core_pos,false), tex(series_exp_core_neg,false)
+      ]$
+      string(resultados);
     `;
 
-    // Execute Maxima commands for complex series
+    /* ─── 1 · Ejecutar Maxima una sola vez ─── */
+    const raw = await execMaxima(buildMaximaCommand(maximaScript));
+    const cleaned = raw
+      .replace(/\\\n/g, "")
+      .replace(/\n/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (/error/i.test(cleaned)) {
+      return {
+        success: false,
+        message: "Maxima devolvió un error",
+        details: cleaned,
+      };
+    }
+
+    /* ─── 2 · Parsear salida JSON-like ─── */
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      return {
+        success: false,
+        message: "No se pudo parsear la salida",
+        details: cleaned,
+      };
+    }
+
+    if (!Array.isArray(parsed) || parsed.length !== 18) {
+      return {
+        success: false,
+        message: "Formato inesperado",
+        details: cleaned,
+      };
+    }
+
+    /* ─── 3 · Desestructurar ─── */
     const [
-      c0Val,
-      cnVal,
-      TVal,
-      w0Val,
-      seriesExpCorePosVal,
-      seriesExpCoreNegVal,
-      coefficientListVal,
-      amplitudePhaseListVal,
-      seriesTermsVal,
-      demoivreTermsVal,
-    ] = await Promise.all([
-      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(c0);`)),
-      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(expr_cn);`)),
-      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(T);`)),
-      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(w0);`)),
-      execMaxima(
-        buildMaximaCommand(`${maximaBaseCode} string(series_exp_core_pos);`)
-      ),
-      execMaxima(
-        buildMaximaCommand(`${maximaBaseCode} string(series_exp_core_neg);`)
-      ),
-      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(lista_cn);`)),
-      execMaxima(
-        buildMaximaCommand(`${maximaBaseCode} string(lista_amp_fase);`)
-      ),
-      execMaxima(
-        buildMaximaCommand(`${maximaBaseCode} string(lista_terminos);`)
-      ),
-      execMaxima(
-        buildMaximaCommand(`${maximaBaseCode} string(serie_demoivre);`)
-      ),
-    ]);
+      c0,
+      expr_cn,
+      T,
+      w0,
+      series_exp_core_pos,
+      series_exp_core_neg,
+      coefficientList,
+      amplitudePhaseList,
+      seriesTerms,
+      demoivreTerms,
+      seriesTermsTeX,
+      demoivreTermsTeX,
+      c0TeX,
+      cnTeX,
+      TTeX,
+      w0TeX,
+      posTeX,
+      negTeX,
+    ] = parsed;
 
-    // Generate LaTeX output (computed once)
-    const [c0TexVal, cnTexVal, w0TexVal, TTexVal, posTeXVal, negTeXVal] =
-      await Promise.all([
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({ displayFlags: true })} tex(${c0Val}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({ displayFlags: true })} tex(${cnVal}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({ displayFlags: true })} tex(${w0Val}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({ displayFlags: true })} tex(${TVal}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({
-              displayFlags: true,
-            })} tex(${seriesExpCorePosVal}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({
-              displayFlags: true,
-            })} tex(${seriesExpCoreNegVal}, false);`
-          )
-        ),
-      ]);
-
-    // 1) Parse each term in the array
-    const parsedSeriesTerms = await parseListItems(seriesTermsVal);
-    const parsedDemoivreTerms = await parseListItems(demoivreTermsVal);
-
-    // 2) Generate individual TeX expansions
-    const seriesTermsTexArr = await Promise.all(
-      parsedSeriesTerms.map((_, i) =>
-        execMaxima(
-          buildMaximaCommand(
-            `${maximaBaseCode} tex(lista_terminos[${i + 1}], false);`
-          )
-        )
-      )
-    );
-
-    const demoivreTermsTexArr = await Promise.all(
-      parsedDemoivreTerms.map((_, i) =>
-        execMaxima(
-          buildMaximaCommand(
-            `${maximaBaseCode} tex(serie_demoivre[${i + 1}], false);`
-          )
-        )
-      )
-    );
-
-    // 3) Return final object with separate TeX items
+    /* ─── 4 · Responder ─── */
     return {
       success: true,
       simplified: {
-        c0: c0Val,
-        cn: cnVal,
-        w0: w0Val,
-        T: TVal,
-        series_exp_core_pos: seriesExpCorePosVal,
-        series_exp_core_neg: seriesExpCoreNegVal,
-        coefficientList: coefficientListVal,
-        amplitudePhaseList: amplitudePhaseListVal,
-        seriesTerms: seriesTermsVal,
-        demoivreTerms: demoivreTermsVal,
+        c0,
+        cn: expr_cn,
+        T,
+        w0,
+        series_exp_core_pos,
+        series_exp_core_neg,
+        coefficientList,
+        amplitudePhaseList,
+        seriesTerms,
+        demoivreTerms,
       },
       latex: {
-        c0: c0TexVal,
-        cn: cnTexVal,
-        w0: w0TexVal,
-        T: TTexVal,
-        series_exp_core_pos: posTeXVal,
-        series_exp_core_neg: negTeXVal,
-        // Each term in separate array entries:
-        terms: seriesTermsTexArr,
-        demoivreTerms: demoivreTermsTexArr,
+        c0: c0TeX,
+        cn: cnTeX,
+        T: TTeX,
+        w0: w0TeX,
+        series_exp_core_pos: posTeX,
+        series_exp_core_neg: negTeX,
+        terms: seriesTermsTeX,
+        demoivreTerms: demoivreTermsTeX,
       },
     };
   } else {
     // ───── Series trigonométricas (regular y half-range) ─────
     const integralCoefficient = isHalfRange ? "(1 / (T/2))" : "(2/T)";
     const simplificationMethod = isHalfRange ? "ratsimp" : "fullratsimp";
-  
+
     const maximaScript = `
       ${maximaBaseCode}
   
@@ -278,7 +249,7 @@ async function calculatePiecewiseSeries({
       ]$
       string(resultados);
     `;
-  
+
     /* Ejecución única */
     const raw = await execMaxima(buildMaximaCommand(maximaScript));
     const cleaned = raw
@@ -286,7 +257,7 @@ async function calculatePiecewiseSeries({
       .replace(/\n/g, "")
       .replace(/\s+/g, " ")
       .trim();
-  
+
     /* Manejo de errores */
     if (/error/i.test(cleaned)) {
       return {
@@ -295,7 +266,7 @@ async function calculatePiecewiseSeries({
         details: cleaned,
       };
     }
-  
+
     /* Parseo */
     let parsed;
     try {
@@ -307,7 +278,7 @@ async function calculatePiecewiseSeries({
         details: cleaned,
       };
     }
-  
+
     if (!Array.isArray(parsed) || parsed.length !== 14) {
       return {
         success: false,
@@ -315,7 +286,7 @@ async function calculatePiecewiseSeries({
         details: cleaned,
       };
     }
-  
+
     const [
       a0,
       an,
@@ -332,7 +303,7 @@ async function calculatePiecewiseSeries({
       cosineCoreTex,
       sineCoreTex,
     ] = parsed;
-  
+
     /* Indeterminaciones (usa tus utilidades existentes) */
     const anIndeterminateValues = await findIndeterminateValues(
       an,
@@ -348,7 +319,7 @@ async function calculatePiecewiseSeries({
       funcionMatrix,
       intVar
     );
-  
+
     /* Respuesta final */
     return {
       success: true,
@@ -617,6 +588,5 @@ function parseMaximaList(listStr) {
 
   return items;
 }
-
 
 module.exports = calculatePiecewiseSeries;
