@@ -237,63 +237,103 @@ async function calculatePiecewiseSeries({
       },
     };
   } else {
-    // Trigonometric series (both regular and half-range)
+    // ───── Series trigonométricas (regular y half-range) ─────
     const integralCoefficient = isHalfRange ? "(1 / (T/2))" : "(2/T)";
     const simplificationMethod = isHalfRange ? "ratsimp" : "fullratsimp";
-
-    maximaBaseCode += `
-       cos_core: cos(n * w0 * ${intVar})$
-       sin_core: sin(n * w0 * ${intVar})$
-       
-       a0_acum: 0$
-       an_acum: 0$
-       bn_acum: 0$
-       
-       for i:1 thru pieces do (
-           trozo: func[i],
-           f_i: trozo[1],
-           a: trozo[2],
-           b: trozo[3],
-           
-           a0: ${integralCoefficient} * integrate((f_i), ${intVar}, a, b),
-           an: ${integralCoefficient} * integrate((f_i)* cos_core, ${intVar}, a, b),
-           bn: ${integralCoefficient} * integrate((f_i) * sin_core, ${intVar}, a, b),
-           
-           a0_acum: a0_acum + a0,
-           an_acum: an_acum + an,
-           bn_acum: bn_acum + bn
-       )$
-       
-       Coeff_A0: factor(${simplificationMethod}(factor(a0_acum)))$
-       Coeff_An: factor(${simplificationMethod}(factor(an_acum)))$
-       Coeff_Bn: factor(${simplificationMethod}(factor(bn_acum)))$
-     `;
-
-    // Execute Maxima commands for trigonometric series
-    const a0 = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(Coeff_A0);`)
-    );
-    const an = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(Coeff_An);`)
-    );
-    const bn = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(Coeff_Bn);`)
-    );
-    const T = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(T);`)
-    );
-    const w0 = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(w0);`)
-    );
-    const series_cosine_core = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(cos_core);`)
-    );
-    const series_sine_core = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(sin_core);`)
-    );
-
-    // Find indeterminate values for coefficients
-    // En la parte donde calculamos indeterminaciones para series trigonométricas
+  
+    const maximaScript = `
+      ${maximaBaseCode}
+  
+      /* Núcleos seno/coseno */
+      cos_core : cos(n * w0 * ${intVar})$
+      sin_core : sin(n * w0 * ${intVar})$
+  
+      /* Acumuladores */
+      a0_acum : 0$
+      an_acum : 0$
+      bn_acum : 0$
+  
+      for i : 1 thru pieces do (
+        trozo : func[i],
+        f_i   : trozo[1],
+        a     : trozo[2],
+        b     : trozo[3],
+  
+        a0_acum : a0_acum + ${integralCoefficient} * integrate(      f_i , ${intVar}, a, b),
+        an_acum : an_acum + ${integralCoefficient} * integrate(f_i * cos_core, ${intVar}, a, b),
+        bn_acum : bn_acum + ${integralCoefficient} * integrate(f_i * sin_core, ${intVar}, a, b)
+      )$
+  
+      /* Coeficientes simplificados */
+      Coeff_A0 : factor(${simplificationMethod}(factor(a0_acum)))$
+      Coeff_An : factor(${simplificationMethod}(factor(an_acum)))$
+      Coeff_Bn : factor(${simplificationMethod}(factor(bn_acum)))$
+  
+      /* ---------- Salida única: 7 simplificados + 7 TeX ---------- */
+      resultados : [
+        string(Coeff_A0), string(Coeff_An), string(Coeff_Bn),
+        string(T), string(w0), string(cos_core), string(sin_core),
+        tex(Coeff_A0,false), tex(Coeff_An,false), tex(Coeff_Bn,false),
+        tex(T,false), tex(w0,false), tex(cos_core,false), tex(sin_core,false)
+      ]$
+      string(resultados);
+    `;
+  
+    /* Ejecución única */
+    const raw = await execMaxima(buildMaximaCommand(maximaScript));
+    const cleaned = raw
+      .replace(/\\\n/g, "")
+      .replace(/\n/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  
+    /* Manejo de errores */
+    if (/error/i.test(cleaned)) {
+      return {
+        success: false,
+        message: "Maxima devolvió un error",
+        details: cleaned,
+      };
+    }
+  
+    /* Parseo */
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned); // ← convierto la lista Maxima a JSON
+    } catch {
+      return {
+        success: false,
+        message: "No se pudo parsear la salida de Maxima",
+        details: cleaned,
+      };
+    }
+  
+    if (!Array.isArray(parsed) || parsed.length !== 14) {
+      return {
+        success: false,
+        message: "La salida de Maxima no tiene el formato esperado",
+        details: cleaned,
+      };
+    }
+  
+    const [
+      a0,
+      an,
+      bn,
+      T,
+      w0,
+      series_cosine_core,
+      series_sine_core,
+      a0Tex,
+      anTex,
+      bnTex,
+      TTex,
+      w0Tex,
+      cosineCoreTex,
+      sineCoreTex,
+    ] = parsed;
+  
+    /* Indeterminaciones (usa tus utilidades existentes) */
     const anIndeterminateValues = await findIndeterminateValues(
       an,
       "an",
@@ -308,42 +348,19 @@ async function calculatePiecewiseSeries({
       funcionMatrix,
       intVar
     );
-
-    // Generate LaTeX output
-    const a0Tex = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({ displayFlags: true })} tex(${a0}, false);`
-      )
-    );
-    const anTex = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({ displayFlags: true })} tex(${an}, false);`
-      )
-    );
-    const bnTex = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({ displayFlags: true })} tex(${bn}, false);`
-      )
-    );
-    const TTex = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({ displayFlags: true })} tex(${T}, false);`
-      )
-    );
-    const w0Tex = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({ displayFlags: true })} tex(${w0}, false);`
-      )
-    );
-    const cosineCoreTex = await execMaxima(
-      buildMaximaCommand(`tex(${series_cosine_core}, false);`)
-    );
-    const sineCoreTex = await execMaxima(
-      buildMaximaCommand(`tex(${series_sine_core}, false);`)
-    );
-
+  
+    /* Respuesta final */
     return {
-      simplified: { a0, an, bn, T, w0, series_cosine_core, series_sine_core },
+      success: true,
+      simplified: {
+        a0,
+        an,
+        bn,
+        T,
+        w0,
+        series_cosine_core,
+        series_sine_core,
+      },
       latex: {
         a0: a0Tex,
         an: anTex,
@@ -509,7 +526,7 @@ async function findIndeterminateValues(
 
     // Parse singularities
     const singularitiesList = parseMaximaList(
-      singularitiesResult.replace(/n\\s*=\\s*/g, "")
+      singularitiesResult.replace(/n\s*=\s*/g, "") // Ajuste en la expresión regular
     );
     const singularities = singularitiesList.map((s) => parseInt(s.trim(), 10));
 
