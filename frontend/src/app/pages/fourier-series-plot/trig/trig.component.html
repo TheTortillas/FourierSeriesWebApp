@@ -765,34 +765,6 @@
           <span class="mr-2">←</span> Volver a calculadora
         </button>
       </div>
-      <!-- Botón para descargar coeficientes -->
-      <div class="mt-4">
-        <button
-          (click)="downloadCoefficients()"
-          class="w-full py-2 px-3 rounded-lg transition-all duration-300 shadow font-medium flex items-center justify-center"
-          [ngClass]="
-            isDarkMode
-              ? 'bg-gray-800/70 border border-teal-500/30 text-teal-400 hover:bg-teal-900/30 hover:border-teal-400/50'
-              : 'bg-blue-50 border border-blue-300 text-blue-500 hover:bg-blue-100 hover:border-blue-400'
-          "
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-            />
-          </svg>
-          Descargar coeficientes
-        </button>
-      </div>
 
       <div class="mt-4">
         <button

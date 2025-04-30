@@ -1470,25 +1470,6 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public coefficientsData: any = null;
 
-  public downloadCoefficients(): void {
-    if (!this.coefficientsData) {
-      console.warn('No hay coeficientes disponibles para descargar');
-      return;
-    }
-
-    const dataStr = JSON.stringify(this.coefficientsData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'complex_fourier_coefficients.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
   private precompileTermFunctions(): void {
     this.compiledTermFunctions = [];
 

@@ -276,26 +276,6 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   // Añadir esta propiedad para almacenar los coeficientes
   public coefficientsData: any = null;
 
-  // Para hacer los datos accesibles desde la UI, podemos añadir un método para descargarlos
-  public downloadCoefficients(): void {
-    if (!this.coefficientsData) {
-      console.warn('No hay coeficientes disponibles para descargar');
-      return;
-    }
-
-    const dataStr = JSON.stringify(this.coefficientsData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fourier_coefficients.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
   ngAfterViewInit(): void {
     // Existing code
     setTimeout(() => {
