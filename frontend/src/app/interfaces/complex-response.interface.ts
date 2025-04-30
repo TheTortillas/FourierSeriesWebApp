@@ -21,8 +21,8 @@ export interface ComplexResponse {
     series_exp_core?: string;
     series_exp_core_pos?: string;
     series_exp_core_neg?: string;
-    terms?: { [key: string]: string };
-    demoivreTerms?: { [key: string]: string };
+    terms?: string | string[]; // Updated to handle both formats
+    demoivreTerms?: string | string[]; // Updated to handle both formats
   };
   indeterminateValues?: {
     cn?: Array<{ n: number; limit: string; limitTex: string }>;
@@ -60,12 +60,6 @@ export interface ComplexResponse {
       hasSpecialFunctions: boolean;
       result: string;
     };
-  };
-  seriesExpansion?: {
-    coefficientList?: string;
-    amplitudePhaseList?: string;
-    terms?: string;
-    demoivreTerms?: string;
   };
   seriesExpansionLatex?: {
     terms?: { [key: string]: string };

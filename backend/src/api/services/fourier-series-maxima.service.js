@@ -367,19 +367,6 @@ exports.computeComplexSeriesPiecewise = async (funcionMatrix, intVar) => {
       ),
     ]);
 
-    // Create a friendly structure for the series expansion information
-    const seriesExpansion = {
-      coefficientList: result.simplified.coefficientList,
-      amplitudePhaseList: result.simplified.amplitudePhaseList,
-      terms: result.simplified.seriesTerms,
-      demoivreTerms: result.simplified.demoivreTerms,
-    };
-
-    const seriesExpansionLatex = {
-      terms: result.latex.terms,
-      demoivreTerms: result.latex.demoivreTerms,
-    };
-
     // Add the additional data to the result
     return {
       success: true,
@@ -396,8 +383,6 @@ exports.computeComplexSeriesPiecewise = async (funcionMatrix, intVar) => {
         series_exp_core_pos: expCorePosTex,
         series_exp_core_neg: expCoreNegTex,
       },
-      seriesExpansion,
-      seriesExpansionLatex,
     };
   } catch (error) {
     throw new Error(

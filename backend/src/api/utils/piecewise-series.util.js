@@ -47,6 +47,29 @@ async function calculatePiecewiseSeries({
      tramos: makelist([func[i][1], func[i][2], func[i][3]], i, 1, pieces)$
    `;
 
+  async function parseListItems(listStr) {
+    if (!listStr || !listStr.startsWith("[") || !listStr.endsWith("]"))
+      return [];
+    const content = listStr.slice(1, -1).trim();
+    if (!content) return [];
+    const result = [];
+    let current = "";
+    let depth = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content[i];
+      if (char === "[" || char === "(") depth++;
+      if (char === "]" || char === ")") depth--;
+      if (char === "," && depth === 0) {
+        result.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    if (current) result.push(current.trim());
+    return result;
+  }
+
   // Add series core definitions based on type
   if (isComplex) {
     // Using the approach from your Maxima example
@@ -65,7 +88,7 @@ async function calculatePiecewiseSeries({
       expr_cn : ratsimp(c_n(n))$
 
       /* Calculate coefficient list for n = -N to N */
-      N : 100$
+      N : 10$
       lista_cn : makelist([k, ratsimp(c_n(k))], k, -N, N)$
       
       /* Calculate amplitude and phase for each coefficient */
@@ -80,7 +103,7 @@ async function calculatePiecewiseSeries({
       )$
       
       /* Generate list of terms up to harmonic N_terms */
-      N_terms : 100$
+      N_terms : 10$
       lista_terminos : makelist(term(k), k, 0, N_terms)$
       
       /* Apply demoivre to convert complex to trigonometric form */
@@ -88,132 +111,129 @@ async function calculatePiecewiseSeries({
     `;
 
     // Execute Maxima commands for complex series
-    const c0 = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(c0);`)
-    );
-    const cn = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(expr_cn);`)
-    );
-    const T = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(T);`)
-    );
-    const w0 = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(w0);`)
-    );
-    const series_exp_core_pos = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(series_exp_core_pos);`)
-    );
-    const series_exp_core_neg = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(series_exp_core_neg);`)
-    );
+    const [
+      c0Val,
+      cnVal,
+      TVal,
+      w0Val,
+      seriesExpCorePosVal,
+      seriesExpCoreNegVal,
+      coefficientListVal,
+      amplitudePhaseListVal,
+      seriesTermsVal,
+      demoivreTermsVal,
+    ] = await Promise.all([
+      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(c0);`)),
+      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(expr_cn);`)),
+      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(T);`)),
+      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(w0);`)),
+      execMaxima(
+        buildMaximaCommand(`${maximaBaseCode} string(series_exp_core_pos);`)
+      ),
+      execMaxima(
+        buildMaximaCommand(`${maximaBaseCode} string(series_exp_core_neg);`)
+      ),
+      execMaxima(buildMaximaCommand(`${maximaBaseCode} string(lista_cn);`)),
+      execMaxima(
+        buildMaximaCommand(`${maximaBaseCode} string(lista_amp_fase);`)
+      ),
+      execMaxima(
+        buildMaximaCommand(`${maximaBaseCode} string(lista_terminos);`)
+      ),
+      execMaxima(
+        buildMaximaCommand(`${maximaBaseCode} string(serie_demoivre);`)
+      ),
+    ]);
 
-    // Get coefficient lists
-    const coefficientList = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(lista_cn);`)
-    );
+    // Generate LaTeX output (computed once)
+    const [c0TexVal, cnTexVal, w0TexVal, TTexVal, posTeXVal, negTeXVal] =
+      await Promise.all([
+        execMaxima(
+          buildMaximaCommand(
+            `${getMaximaRules({ displayFlags: true })} tex(${c0Val}, false);`
+          )
+        ),
+        execMaxima(
+          buildMaximaCommand(
+            `${getMaximaRules({ displayFlags: true })} tex(${cnVal}, false);`
+          )
+        ),
+        execMaxima(
+          buildMaximaCommand(
+            `${getMaximaRules({ displayFlags: true })} tex(${w0Val}, false);`
+          )
+        ),
+        execMaxima(
+          buildMaximaCommand(
+            `${getMaximaRules({ displayFlags: true })} tex(${TVal}, false);`
+          )
+        ),
+        execMaxima(
+          buildMaximaCommand(
+            `${getMaximaRules({
+              displayFlags: true,
+            })} tex(${seriesExpCorePosVal}, false);`
+          )
+        ),
+        execMaxima(
+          buildMaximaCommand(
+            `${getMaximaRules({
+              displayFlags: true,
+            })} tex(${seriesExpCoreNegVal}, false);`
+          )
+        ),
+      ]);
 
-    const amplitudePhaseList = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(lista_amp_fase);`)
-    );
+    // 1) Parse each term in the array
+    const parsedSeriesTerms = await parseListItems(seriesTermsVal);
+    const parsedDemoivreTerms = await parseListItems(demoivreTermsVal);
 
-    // Get series terms
-    const seriesTerms = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(lista_terminos);`)
-    );
-
-    const demoivreTerms = await execMaxima(
-      buildMaximaCommand(`${maximaBaseCode} string(serie_demoivre);`)
-    );
-
-    // Generate LaTeX output
-    const c0Tex = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({ displayFlags: true })} tex(${c0}, false);`
+    // 2) Generate individual TeX expansions
+    const seriesTermsTexArr = await Promise.all(
+      parsedSeriesTerms.map((_, i) =>
+        execMaxima(
+          buildMaximaCommand(
+            `${maximaBaseCode} tex(lista_terminos[${i + 1}], false);`
+          )
+        )
       )
     );
-    const cnTex = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({ displayFlags: true })} tex(${cn}, false);`
-      )
-    );
-    const w0Tex = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({ displayFlags: true })} tex(${w0}, false);`
-      )
-    );
-    const TTex = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({ displayFlags: true })} tex(${T}, false);`
-      )
-    );
-    const expCorePosTeX = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({
-          displayFlags: true,
-        })} tex(${series_exp_core_pos}, false);`
-      )
-    );
-    const expCoreNegTeX = await execMaxima(
-      buildMaximaCommand(
-        `${getMaximaRules({
-          displayFlags: true,
-        })} tex(${series_exp_core_neg}, false);`
+
+    const demoivreTermsTexArr = await Promise.all(
+      parsedDemoivreTerms.map((_, i) =>
+        execMaxima(
+          buildMaximaCommand(
+            `${maximaBaseCode} tex(serie_demoivre[${i + 1}], false);`
+          )
+        )
       )
     );
 
-    // Generate TeX for terms
-    const termsTexCommand = `
-      ${maximaBaseCode}
-      for k:0 thru N_terms do print("TERM_" + string(k) + "_TEX: " + string(tex(term(k), false)))$
-    `;
-
-    const termsTexOutput = await execMaxima(
-      buildMaximaCommand(termsTexCommand)
-    );
-    const termsTexMap = {};
-    const termTexRegex = /TERM_(\\d+)_TEX: (.+)/g;
-    let match;
-    while ((match = termTexRegex.exec(termsTexOutput)) !== null) {
-      termsTexMap[match[1]] = match[2];
-    }
-
-    // Generate TeX for demoivre terms
-    const demoivreTexCommand = `
-      ${maximaBaseCode}
-      for k:1 thru length(serie_demoivre) do print("DEMOIVRE_" + string(k-1) + "_TEX: " + string(tex(serie_demoivre[k], false)))$
-    `;
-
-    const demoivreTexOutput = await execMaxima(
-      buildMaximaCommand(demoivreTexCommand)
-    );
-    const demoivreTexMap = {};
-    const demoivreTexRegex = /DEMOIVRE_(\\d+)_TEX: (.+)/g;
-    while ((match = demoivreTexRegex.exec(demoivreTexOutput)) !== null) {
-      demoivreTexMap[match[1]] = match[2];
-    }
-
+    // 3) Return final object with separate TeX items
     return {
+      success: true,
       simplified: {
-        c0,
-        cn,
-        w0,
-        T,
-        series_exp_core_pos,
-        series_exp_core_neg,
-        coefficientList,
-        amplitudePhaseList,
-        seriesTerms,
-        demoivreTerms,
+        c0: c0Val,
+        cn: cnVal,
+        w0: w0Val,
+        T: TVal,
+        series_exp_core_pos: seriesExpCorePosVal,
+        series_exp_core_neg: seriesExpCoreNegVal,
+        coefficientList: coefficientListVal,
+        amplitudePhaseList: amplitudePhaseListVal,
+        seriesTerms: seriesTermsVal,
+        demoivreTerms: demoivreTermsVal,
       },
       latex: {
-        c0: c0Tex,
-        cn: cnTex,
-        w0: w0Tex,
-        T: TTex,
-        series_exp_core_pos: expCorePosTeX,
-        series_exp_core_neg: expCoreNegTeX,
-        terms: termsTexMap,
-        demoivreTerms: demoivreTexMap,
+        c0: c0TexVal,
+        cn: cnTexVal,
+        w0: w0TexVal,
+        T: TTexVal,
+        series_exp_core_pos: posTeXVal,
+        series_exp_core_neg: negTeXVal,
+        // Each term in separate array entries:
+        terms: seriesTermsTexArr,
+        demoivreTerms: demoivreTermsTexArr,
       },
     };
   } else {

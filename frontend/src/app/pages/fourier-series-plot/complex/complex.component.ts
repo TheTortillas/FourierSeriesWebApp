@@ -27,7 +27,7 @@ import { Subscription } from 'rxjs';
     FormsModule,
     CartesianCanvasComponent,
     ThemeToggleComponent,
-    SurveyButtonComponent
+    SurveyButtonComponent,
   ],
   templateUrl: './complex.component.html',
   styleUrl: './complex.component.scss',
@@ -269,33 +269,33 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /* Process Complex Series Data */
   private processComplexSeriesData(): void {
-    if (!this.response || !this.response.seriesExpansion) return;
+    if (!this.response || !this.response.simplified) return;
 
     // Parse coefficient list
-    if (this.response.seriesExpansion.coefficientList) {
+    if (this.response.simplified.coefficientList) {
       this.coefficientList = this.apiService.parseCoefficients(
-        this.response.seriesExpansion.coefficientList
+        this.response.simplified.coefficientList
       );
     }
 
     // Parse amplitude/phase list
-    if (this.response.seriesExpansion.amplitudePhaseList) {
+    if (this.response.simplified.amplitudePhaseList) {
       this.amplitudePhaseList = this.apiService.parseAmplitudePhase(
-        this.response.seriesExpansion.amplitudePhaseList
+        this.response.simplified.amplitudePhaseList
       );
     }
 
     // Parse terms
-    if (this.response.seriesExpansion.terms) {
+    if (this.response.simplified.seriesTerms) {
       this.parsedTerms = this.apiService.parseSeriesTerms(
-        this.response.seriesExpansion.terms
+        this.response.simplified.seriesTerms
       );
     }
 
     // Parse demoivre terms
-    if (this.response.seriesExpansion.demoivreTerms) {
+    if (this.response.simplified.demoivreTerms) {
       this.parsedDemoivreTerms = this.apiService.parseSeriesTerms(
-        this.response.seriesExpansion.demoivreTerms
+        this.response.simplified.demoivreTerms
       );
     }
   }
@@ -692,7 +692,7 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /* Series Terms Management Methods */
   fetchIndividualTerms(): void {
-    // In complex series, we already have the terms from response.seriesExpansion.demoivreTerms
+    // In complex series, we already have the terms from response.smplified.demoivreTerms
     // We just need to prepare the JavaScript functions for each term
     this.precompileTermFunctions();
     this.prepareIndividualTermFunctions();
@@ -1518,5 +1518,122 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     }
+  }
+
+  // Add these properties to control the modal
+  public showSeriesTermsModal: boolean = false;
+  public allTermsHtml: string = '';
+
+  // Add the displayAllSeriesTermsInModal method
+  displayAllSeriesTermsInModal(): void {
+    // Show the modal dialog
+    this.showSeriesTermsModal = true;
+
+    // Check if we have term data available
+    if (!this.response || !this.response.latex) {
+      this.allTermsHtml =
+        '<div class="py-4 text-center"><p>No hay términos para mostrar</p></div>';
+      return;
+    }
+
+    // Define styles based on theme
+    const cardStyle = this.isDarkMode
+      ? 'bg-gray-800 border border-gray-700 text-white'
+      : 'bg-white border border-gray-200 text-gray-800';
+
+    const titleStyle = this.isDarkMode ? 'text-purple-300' : 'text-purple-600';
+    const secondaryTitleStyle = this.isDarkMode
+      ? 'text-teal-300'
+      : 'text-teal-600';
+
+    // Extract complex terms and demoivre terms from the response
+    const termsLatex = this.parseTermsArray(this.response.latex.terms);
+    const demoivreLatex = this.parseTermsArray(
+      this.response.latex.demoivreTerms
+    );
+
+    // Generate HTML with both forms of terms
+    let html = `<div class="grid grid-cols-1 gap-4 max-w-full">`;
+
+    // Loop through terms and display both forms
+    const maxTerms = Math.min(termsLatex.length, demoivreLatex.length);
+
+    for (let i = 0; i < maxTerms; i++) {
+      const complexTerm = this.stripLatexDelimiters(termsLatex[i]);
+      const simplifiedTerm = this.stripLatexDelimiters(demoivreLatex[i]);
+
+      html += `
+        <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
+          <div class="term-title font-semibold mb-2 ${titleStyle}">$$\\text{Término ${i}}$$</div>
+          
+          <div class="mb-3">
+            <div class="text-sm font-medium mb-1 ${secondaryTitleStyle}">Forma compleja:</div>
+            <div class="term-latex pl-3 border-l-2 border-purple-500">$$${complexTerm}$$</div>
+          </div>
+          
+          <div>
+            <div class="text-sm font-medium mb-1 ${secondaryTitleStyle}">Forma simplificada (DeMoivre):</div>
+            <div class="term-latex pl-3 border-l-2 border-teal-500">$$${simplifiedTerm}$$</div>
+          </div>
+        </div>
+      `;
+    }
+
+    html += '</div>';
+    this.allTermsHtml = html;
+
+    // Render LaTeX after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      this.mathquillService.renderMathJax();
+    }, 200);
+  }
+
+  // Helper method to close the modal
+  closeSeriesTermsModal(): void {
+    this.showSeriesTermsModal = false;
+  }
+
+  // Updated helper method to handle both string and array
+  private parseTermsArray(latexData: string | string[] | undefined): string[] {
+    if (!latexData) return [];
+
+    // If it's already an array, return it directly
+    if (Array.isArray(latexData)) {
+      return latexData;
+    }
+
+    // If it's a string, parse it as before
+    const cleanedLatex = latexData
+      .replace(/^\$\$/, '')
+      .replace(/\$\$$/, '')
+      .replace(/\\left\[/, '')
+      .replace(/\\right\]/, '')
+      .trim();
+
+    // Split by commas, but handle nested expressions properly
+    const terms: string[] = [];
+    let currentTerm = '';
+    let nestedLevel = 0;
+
+    for (let i = 0; i < cleanedLatex.length; i++) {
+      const char = cleanedLatex[i];
+
+      if (char === '{') nestedLevel++;
+      else if (char === '}') nestedLevel--;
+
+      if (char === ',' && nestedLevel === 0) {
+        terms.push(currentTerm.trim());
+        currentTerm = '';
+      } else {
+        currentTerm += char;
+      }
+    }
+
+    // Add the last term
+    if (currentTerm.trim()) {
+      terms.push(currentTerm.trim());
+    }
+
+    return terms;
   }
 }
