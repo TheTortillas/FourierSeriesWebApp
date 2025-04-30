@@ -6,9 +6,48 @@ const {
   validatePiecewiseFourierSeries,
 } = require("../utils/fourier-validation.util");
 
-exports.computeTrigonometricSeries = async (funcion, periodo, intVar) => {
+/* ----------------------------- helpers ----------------------------- */
+
+/** Normaliza la salida de Maxima (sin líneas nuevas, espacios duplicados, …) */
+function cleanMaximaOutput(output = "") {
+  return output
+    .replace(/\\\n/g, "")
+    .replace(/\n/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Devuelve true si la salida contiene texto típico de error */
+function containsError(out = "") {
+  const patterns = [
+    /error/i,
+    /division by zero/i,
+    /división por cero/i,
+    /log: encountered/i,
+    /is not of type/i,
+    /argument cannot be/i,
+    /unexpected condition/i,
+  ];
+  return patterns.some((re) => re.test(out));
+}
+
+/** Intenta sacar un mensaje de error “humano” de la salida cruda */
+function extractErrorMessage(out = "") {
+  const first =
+    out.match(/log: encountered ([^.]+)/) ||
+    out.match(/([^:]+: [^.]+\.)/) ||
+    out.match(/(is not of type [^:]+)/) ||
+    out.match(/(argument cannot be [^;]+)/);
+  return first && first[1]
+    ? `Error matemático: ${first[1]}`
+    : "Error matemático en la evaluación de la función";
+}
+
+/* ------------------ servicio optimizado: 1 sola llamada ------------------ */
+
+exports.computeTrigonometricSeries = async (funcion, periodo, intVar = "x") => {
   try {
-    // First, validate the integrability of the function
+    /* 1 . Validación previa — igual que antes -------------------------- */
     const validation = await validateFourierSeries({
       func: funcion,
       intVar,
@@ -27,108 +66,99 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar) => {
       };
     }
 
-    // Continue with the calculation if validation passed
-    // Define common expressions including core functions
-    const commonExprPart = `
+    /* 2 . Script único de Maxima --------------------------------------- */
+    const maximaScript = `
+      /* Reglas y flags */
       ${getMaximaRules({
         integer: true,
         trigRules: true,
         assumptions: true,
+        displayFlags: true /* para que tex() salga en una sola línea */,
       })}
-      w0: (2*(%pi))/(${periodo})$          
-      series_cosine_core: cos(n*w0*${intVar})$
-      series_sine_core: sin(n*w0*${intVar})$
+
+      /* Parámetros */
+      P   : (${periodo})$
+      w0  : (2*%pi)/P$
+      f   : (${funcion})$
+
+      /* Coeficientes */
+      a0  : fullratsimp(factor((2/P)*integrate((f),${intVar}, -P/2, P/2)))$
+      an  : fullratsimp(factor((2/P)*integrate((f)*cos(n*w0*${intVar}), ${intVar}, -P/2, P/2)))$
+      bn  : fullratsimp(factor((2/P)*integrate((f)*sin(n*w0*${intVar}), ${intVar}, -P/2, P/2)))$
+
+      /* Núcleos */
+      core_cos : cos(n*w0*${intVar})$
+      core_sin : sin(n*w0*${intVar})$
+
+      /* Salida: 6 simplificados + 6 en TeX */
+      resultados : [
+        string(a0),   string(an),   string(bn),
+        string(w0),   string(core_cos), string(core_sin),
+        tex(a0,false),tex(an,false),tex(bn,false),
+        tex(w0,false),tex(core_cos,false),tex(core_sin,false)
+      ]$
+      string(resultados);
     `;
 
-    // Primero obtenemos w0
-    const w0Expression = `
-      ${commonExprPart}
-      string(w0);
-    `;
+    /* 3 . Ejecución única ---------------------------------------------- */
+    const raw = await execMaxima(buildMaximaCommand(maximaScript));
+    const cleaned = cleanMaximaOutput(raw);
 
-    const cosineCoreExpression = `
-      ${commonExprPart}
-      string(series_cosine_core);
-    `;
+    if (containsError(cleaned)) {
+      return {
+        success: false,
+        message: extractErrorMessage(cleaned),
+        details: cleaned,
+      };
+    }
 
-    const sineCoreExpression = `
-      ${commonExprPart}
-      string(series_sine_core);
-    `;
+    /* 4 . Parseo genérico ---------------------------------------------- */
+    // cleaned será algo tipo ["a0str","anstr",...,"tex(core_sin)"]
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (err) {
+      return {
+        success: false,
+        message: "No se pudo parsear la salida de Maxima",
+        details: cleaned,
+      };
+    }
 
-    // Define expressions for a0, an, and bn
-    const a0Expression = `
-      ${commonExprPart}
-      string(factor(fullratsimp(factor(
-        (2/((${periodo}))) * integrate(${funcion}, ${intVar}, -((${periodo})/2), (${periodo})/2)
-    ))));
-    `;
-    const anExpression = `
-      ${commonExprPart}
-      string(factor(fullratsimp(factor(
-        (2/((${periodo}))) * integrate(((${funcion}) * series_cosine_core), ${intVar}, -((${periodo})/2), (${periodo})/2)
-    ))));
-    `;
-    const bnExpression = `
-      ${commonExprPart}
-      string(factor(fullratsimp(factor(
-        (2/((${periodo}))) * integrate(((${funcion}) * series_sine_core), ${intVar}, -((${periodo})/2), (${periodo})/2)
-      ))));
-    `;
+    if (!Array.isArray(parsed) || parsed.length !== 12) {
+      return {
+        success: false,
+        message: "La salida de Maxima no tiene el formato esperado",
+        details: cleaned,
+      };
+    }
 
-    // First, calculate the coefficients
-    const [a0, an, bn, w0, series_cosine_core, series_sine_core] =
-      await Promise.all([
-        execMaxima(buildMaximaCommand(a0Expression)),
-        execMaxima(buildMaximaCommand(anExpression)),
-        execMaxima(buildMaximaCommand(bnExpression)),
-        execMaxima(buildMaximaCommand(w0Expression)),
-        execMaxima(buildMaximaCommand(cosineCoreExpression)),
-        execMaxima(buildMaximaCommand(sineCoreExpression)),
-      ]);
+    const [
+      a0,
+      an,
+      bn,
+      w0,
+      series_cosine_core,
+      series_sine_core,
+      a0Tex,
+      anTex,
+      bnTex,
+      w0Tex,
+      cosineCoreTex,
+      sineCoreTex,
+    ] = parsed;
 
-    // Then convert them to LaTeX
-    const [a0Tex, anTex, bnTex, w0Tex, cosineCoreTex, sineCoreTex] =
-      await Promise.all([
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({ displayFlags: true })} tex(${a0}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({ displayFlags: true })} tex(${an}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({ displayFlags: true })} tex(${bn}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({ displayFlags: true })} tex(${w0}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({
-              displayFlags: true,
-            })} tex(${series_cosine_core}, false);`
-          )
-        ),
-        execMaxima(
-          buildMaximaCommand(
-            `${getMaximaRules({
-              displayFlags: true,
-            })} tex(${series_sine_core}, false);`
-          )
-        ),
-      ]);
-
+    /* 5 . Respuesta ----------------------------------------------------- */
     return {
       success: true,
-      simplified: { a0, an, bn, w0, series_cosine_core, series_sine_core },
+      simplified: {
+        a0,
+        an,
+        bn,
+        w0,
+        series_cosine_core,
+        series_sine_core,
+      },
       latex: {
         a0: a0Tex,
         an: anTex,
@@ -138,14 +168,17 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar) => {
         series_sine_core: sineCoreTex,
       },
     };
-  } catch (error) {
-    throw new Error(`Error computing trigonometric series: ${error.message}`);
+  } catch (err) {
+    /* Cualquier fallo Node/exec general */
+    return {
+      success: false,
+      message: `Error computing trigonometric series: ${err.message}`,
+    };
   }
 };
 
-exports.computeComplexSeries = async (funcion, periodo, intVar) => {
+exports.computeComplexSeries = async (funcion, periodo, intVar = "x") => {
   try {
-    // First, validate the integrability of the function
     const validation = await validateFourierSeries({
       func: funcion,
       intVar,
@@ -164,74 +197,63 @@ exports.computeComplexSeries = async (funcion, periodo, intVar) => {
       };
     }
 
-    // Define common expressions including core functions
-    const commonExprPart = `
+    const maximaScript = `
       ${getMaximaRules({
         integer: true,
         trigRules: true,
-        assumptions: true,
         expRules: true,
+        assumptions: true,
+        displayFlags: true,
       })}
-      w0: (2*(%pi))/(${periodo})$     
-      series_exp_core: exp(-(%i*n*w0*${intVar}))$
+
+      P  : (${periodo})$
+      w0 : (2*%pi)/P$
+      f  : (${funcion})$
+
+      /* Coeficientes complejos */
+      c0 : (fullratsimp(factor((1/P)*integrate(f, ${intVar}, -P/2, P/2))))$
+      cn : (fullratsimp(factor((1/P)*integrate(f*exp(-%i*n*w0*${intVar}), ${intVar}, -P/2, P/2))))$
+
+      core_exp : exp(%i*n*w0*${intVar})$
+
+      resultados : [
+        string(c0), string(cn), string(w0), string(core_exp),
+        tex(c0,false), tex(cn,false), tex(w0,false), tex(core_exp,false)
+      ]$
+      string(resultados);
     `;
 
-    // Obtener w0
-    const w0Expression = `
-     ${commonExprPart}
-     string(w0);
-   `;
+    const raw = await execMaxima(buildMaximaCommand(maximaScript));
+    const cleaned = cleanMaximaOutput(raw);
 
-    const seriesExpCoreExpression = `
-      ${commonExprPart}
-      string(exp((%i * n * w0 * ${intVar})));
-    `;
+    if (containsError(cleaned)) {
+      return {
+        success: false,
+        message: extractErrorMessage(cleaned),
+        details: cleaned,
+      };
+    }
 
-    // Define expressions for c0 and cn
-    const c0Expression = `
-      ${commonExprPart}
-      string(factor(fullratsimp(factor(
-        (1/(${periodo})) * integrate((${funcion}), ${intVar}, -((${periodo})/2), (${periodo})/2)
-      ))));
-    `;
-    const cnExpression = `
-      ${commonExprPart}
-      string(factor(fullratsimp(factor(
-        (1/(${periodo})) * integrate(((${funcion}) * series_exp_core), ${intVar}, -((${periodo})/2), (${periodo})/2)
-      ))));
-    `;
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (err) {
+      return {
+        success: false,
+        message: "No se pudo parsear la salida de Maxima",
+        details: cleaned,
+      };
+    }
 
-    const [c0, cn, w0, series_exp_core] = await Promise.all([
-      execMaxima(buildMaximaCommand(c0Expression)),
-      execMaxima(buildMaximaCommand(cnExpression)),
-      execMaxima(buildMaximaCommand(w0Expression)),
-      execMaxima(buildMaximaCommand(seriesExpCoreExpression)),
-    ]);
+    if (!Array.isArray(parsed) || parsed.length !== 8) {
+      return {
+        success: false,
+        message: "La salida de Maxima no tiene el formato esperado",
+        details: cleaned,
+      };
+    }
 
-    const [c0Tex, cnTex, w0Tex, expCoreTex] = await Promise.all([
-      execMaxima(
-        buildMaximaCommand(
-          `${getMaximaRules({ displayFlags: true })} tex(${c0}, false);`
-        )
-      ),
-      execMaxima(
-        buildMaximaCommand(
-          `${getMaximaRules({ displayFlags: true })} tex(${cn}, false);`
-        )
-      ),
-      execMaxima(
-        buildMaximaCommand(
-          `${getMaximaRules({ displayFlags: true })} tex(${w0}, false);`
-        )
-      ),
-      execMaxima(
-        buildMaximaCommand(
-          `${getMaximaRules({
-            displayFlags: true,
-          })} tex(${series_exp_core}, false);`
-        )
-      ),
-    ]);
+    const [c0, cn, w0, series_exp_core, c0Tex, cnTex, w0Tex, expCoreTex] = parsed;
 
     return {
       success: true,
@@ -239,7 +261,10 @@ exports.computeComplexSeries = async (funcion, periodo, intVar) => {
       latex: { c0: c0Tex, cn: cnTex, w0: w0Tex, series_exp_core: expCoreTex },
     };
   } catch (error) {
-    throw new Error(`Error computing complex series: ${error.message}`);
+    return {
+      success: false,
+      message: `Error computing complex series: ${error.message}`,
+    };
   }
 };
 

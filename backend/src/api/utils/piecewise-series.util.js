@@ -601,49 +601,5 @@ function parseMaximaList(listStr) {
   return items;
 }
 
-/**
- * Parse a Maxima pair [a, b] into separate components
- * @param {string} pairStr String representation of a Maxima pair
- * @returns {Array} Array containing the two parts of the pair
- */
-function parseMaximaPair(pairStr) {
-  if (!pairStr.startsWith("[") || !pairStr.endsWith("]")) {
-    return ["0", "0"];
-  }
-
-  const content = pairStr.substring(1, pairStr.length - 1).trim();
-
-  // Find the middle comma that separates the values
-  let commaPos = -1;
-  let nestedLevel = 0;
-
-  for (let i = 0; i < content.length; i++) {
-    const char = content[i];
-
-    if (
-      (char === "[" || char === "(") &&
-      (i === 0 || content[i - 1] !== "\\")
-    ) {
-      nestedLevel++;
-    } else if (
-      (char === "]" || char === ")") &&
-      (i === 0 || content[i - 1] !== "\\")
-    ) {
-      nestedLevel--;
-    } else if (char === "," && nestedLevel === 0) {
-      commaPos = i;
-      break;
-    }
-  }
-
-  if (commaPos === -1) {
-    return ["0", "0"];
-  }
-
-  return [
-    content.substring(0, commaPos).trim(),
-    content.substring(commaPos + 1).trim(),
-  ];
-}
 
 module.exports = calculatePiecewiseSeries;
