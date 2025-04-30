@@ -211,20 +211,18 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
     this.precalculateOriginalFunctions();
     this.fetchIndividualTerms();
     this.printAllCoefficients();
-
+  
     // Subscribe to theme changes
     this.themeSubscription = this.themeService.darkMode$.subscribe((isDark) => {
       this.isDarkMode = isDark;
-      this.updateThemeColors();
-
-      // Update all canvases with new colors
-      this.updateCanvasColors();
+      this.updateThemeColors(); // Actualiza los colores del tema
+      this.updateCanvasColors(); // Actualiza los colores de los canvas
+      this.redrawCanvas(); // Redibuja los canvas para reflejar los cambios
     });
-
+  
     // Initialize colors based on current theme
     this.updateThemeColors();
   }
-
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.mathquillService.renderMathJax();
