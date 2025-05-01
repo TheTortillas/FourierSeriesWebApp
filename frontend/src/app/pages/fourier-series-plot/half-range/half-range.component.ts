@@ -1301,7 +1301,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
   displayAllSeriesTermsInModal(): void {
     // Show the modal dialog
     this.showSeriesTermsModal = true;
-
+  
     // Prepare LaTeX expressions for the current active series type
     const data = {
       coefficients: {
@@ -1313,7 +1313,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
       intVar: this.intVar,
       terms: 100, // Request a larger number to ensure we have enough terms
     };
-
+  
     // Call the API to get the LaTeX expressions for the terms
     this.apiService.expandTrigonometricSeries(data).subscribe({
       next: (response) => {
@@ -1321,7 +1321,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         const cardStyle = this.isDarkMode
           ? 'bg-gray-800 border border-gray-700 text-white'
           : 'bg-white border border-gray-200 text-gray-800';
-
+  
         // Define title style based on theme and series type
         const titleStyle = this.isDarkMode
           ? this.activeSeriesType === 'cosine'
@@ -1330,9 +1330,16 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
           : this.activeSeriesType === 'cosine'
           ? 'text-green-600'
           : 'text-blue-600';
-
+  
         let html = `<div class="grid grid-cols-1 gap-4 max-w-full">`;
-
+  
+        let localW0 = this.stripLatexDelimiters(this.latexRendered.w0 || '');
+        if (localW0 === '1') {
+          localW0 = '';
+        } else if (localW0) {
+          localW0 += ' ';
+        }
+  
         if (this.activeSeriesType === 'cosine') {
           // For cosine series, add a0/2 term first if present
           if (
@@ -1348,20 +1355,35 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
               </div>
             `;
           }
-
+  
           // Add an terms
           if (response.latex.an && response.latex.an.length > 0) {
             for (let n = 1; n <= Math.min(50, response.latex.an.length); n++) {
               const index = n - 1;
-
-              if (
-                index < response.latex.an.length &&
-                response.latex.an[index] !== '$$0$$'
-              ) {
-                const anLatexClean = this.stripLatexDelimiters(
-                  response.latex.an[index]
+              
+              let anLatexClean = '';
+              
+              // Check if the array has aₙ
+              if (index < (response.latex.an?.length || 0)) {
+                anLatexClean = this.stripLatexDelimiters(response.latex.an[index]);
+                const indetAn = this.response?.indeterminateValues?.an?.find(
+                  (i) => i.n === n
                 );
-
+                if (indetAn) {
+                  if (this.stripLatexDelimiters(indetAn.limitTex) === '0') {
+                    anLatexClean = '';
+                  } else {
+                    const argument = [n === 1 ? '' : String(n), localW0, this.intVar]
+                      .filter(Boolean)
+                      .join('');
+                    anLatexClean = `\\left (${this.stripLatexDelimiters(
+                      indetAn.limitTex
+                    )} \\right ) \\cos \\left (${argument} \\right )`;
+                  }
+                }
+              }
+  
+              if (anLatexClean && anLatexClean !== '0') {
                 html += `
                   <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
                     <div class="term-title font-semibold mb-2 ${titleStyle}">$$\\text{Término ${n}: } a_{${n}} \\cdot \\cos(${n}\\omega_0 ${this.intVar})$$</div>
@@ -1376,15 +1398,30 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
           if (response.latex.bn && response.latex.bn.length > 0) {
             for (let n = 1; n <= Math.min(50, response.latex.bn.length); n++) {
               const index = n - 1;
-
-              if (
-                index < response.latex.bn.length &&
-                response.latex.bn[index] !== '$$0$$'
-              ) {
-                const bnLatexClean = this.stripLatexDelimiters(
-                  response.latex.bn[index]
+              
+              let bnLatexClean = '';
+              
+              // Check if the array has bₙ
+              if (index < (response.latex.bn?.length || 0)) {
+                bnLatexClean = this.stripLatexDelimiters(response.latex.bn[index]);
+                const indetBn = this.response?.indeterminateValues?.bn?.find(
+                  (i) => i.n === n
                 );
-
+                if (indetBn) {
+                  if (this.stripLatexDelimiters(indetBn.limitTex) === '0') {
+                    bnLatexClean = '';
+                  } else {
+                    const argument = [n === 1 ? '' : String(n), localW0, this.intVar]
+                      .filter(Boolean)
+                      .join('');
+                    bnLatexClean = `\\left (${this.stripLatexDelimiters(
+                      indetBn.limitTex
+                    )} \\right ) \\sin \\left (${argument} \\right )`;
+                  }
+                }
+              }
+  
+              if (bnLatexClean && bnLatexClean !== '0') {
                 html += `
                   <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
                     <div class="term-title font-semibold mb-2 ${titleStyle}">$$\\text{Término ${n}: } b_{${n}} \\cdot \\sin(${n}\\omega_0 ${this.intVar})$$</div>
@@ -1395,10 +1432,10 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
             }
           }
         }
-
+  
         html += '</div>';
         this.allTermsHtml = html;
-
+  
         // Render LaTeX after a short delay to ensure DOM is ready
         setTimeout(() => {
           this.mathquillService.renderMathJax();
@@ -1406,7 +1443,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error fetching series terms for modal:', error);
-
+  
         // Show error message if API call fails
         const errorHtml = `
           <div class="text-center py-6">

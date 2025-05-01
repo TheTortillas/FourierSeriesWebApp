@@ -1061,59 +1061,80 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       this.seriesTerms.latex.bn?.length || 0
     );
 
+    let localW0 = this.stripLatexDelimiters(this.latexRendered.w0 || '');
+    if (localW0 === '1') {
+      localW0 = '';
+    } else if (localW0) {
+      localW0 += ' ';
+    }
+
     // Show all available terms (an*cos + bn*sin) for each n
     for (let n = 1; n <= maxTerms; n++) {
       const index = n - 1;
 
       // Check if we have an and/or bn for this n
-      const hasAn =
-        index < (this.seriesTerms.latex.an?.length || 0) &&
-        this.seriesTerms.latex.an[index] !== '$$0$$';
-      const hasBn =
-        index < (this.seriesTerms.latex.bn?.length || 0) &&
-        this.seriesTerms.latex.bn[index] !== '$$0$$';
+      let anLatexClean = '';
+      let bnLatexClean = '';
 
-      // If no term for this n, continue to next
-      if (!hasAn && !hasBn) continue;
-
-      // Build LaTeX for combined term
-      let termLatex = '$$';
-
-      if (hasAn) {
-        const anLatexClean = this.stripLatexDelimiters(
+      // Check if the array has aₙ
+      if (index < (this.seriesTerms.latex.an?.length || 0)) {
+        anLatexClean = this.stripLatexDelimiters(
           this.seriesTerms.latex.an[index]
         );
-        termLatex += anLatexClean;
+        const indetAn = this.response?.indeterminateValues?.an?.find(
+          (i) => i.n === n
+        );
+        if (indetAn) {
+          if (this.stripLatexDelimiters(indetAn.limitTex) === '0') {
+            anLatexClean = '';
+          } else {
+            const argument = [n === 1 ? '' : String(n), localW0, this.intVar]
+              .filter(Boolean)
+              .join('');
+            anLatexClean = `\\left (${this.stripLatexDelimiters(
+              indetAn.limitTex
+            )} \\right ) \\cos \\left (${argument} \\right )`;
+          }
+        }
       }
 
-      if (hasAn && hasBn) {
-        termLatex += ' + ';
-      }
-
-      if (hasBn) {
-        const bnLatexClean = this.stripLatexDelimiters(
+      // Check if the array has bₙ
+      if (index < (this.seriesTerms.latex.bn?.length || 0)) {
+        bnLatexClean = this.stripLatexDelimiters(
           this.seriesTerms.latex.bn[index]
         );
-        termLatex += bnLatexClean;
+        const indetBn = this.response?.indeterminateValues?.bn?.find(
+          (i) => i.n === n
+        );
+        if (indetBn) {
+          if (this.stripLatexDelimiters(indetBn.limitTex) === '0') {
+            bnLatexClean = '';
+          } else {
+            const argument = [n === 1 ? '' : String(n), localW0, this.intVar]
+              .filter(Boolean)
+              .join('');
+            bnLatexClean = `\\left (${this.stripLatexDelimiters(
+              indetBn.limitTex
+            )} \\right ) \\sin \\left (${argument} \\right )`;
+          }
+        }
       }
 
-      termLatex += '$$';
+      const hasAn =
+        anLatexClean && anLatexClean !== '$$0$$' && anLatexClean !== '0';
+      const hasBn =
+        bnLatexClean && bnLatexClean !== '$$0$$' && bnLatexClean !== '0';
+      if (!hasAn && !hasBn) continue;
 
-      // Build term title in LaTeX format
+      const termLatex = `$$${hasAn ? anLatexClean : ''}${
+        hasAn && hasBn ? ' + ' : ''
+      }${hasBn ? bnLatexClean : ''}$$`;
       let termTitle = `$$\\text{Término ${n}: }`;
-
-      if (hasAn) {
+      if (hasAn)
         termTitle += `a_{${n}} \\cdot \\cos(${n}\\omega_0 ${this.intVar})`;
-      }
-
-      if (hasAn && hasBn) {
-        termTitle += ' + ';
-      }
-
-      if (hasBn) {
+      if (hasAn && hasBn) termTitle += ' + ';
+      if (hasBn)
         termTitle += `b_{${n}} \\cdot \\sin(${n}\\omega_0 ${this.intVar})`;
-      }
-
       termTitle += '$$';
 
       // Add term to display
@@ -1293,7 +1314,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
           });
         }
       } catch (error) {
-        console.error(`Error creating combined term for n=${n}:`, error);
+        console.error(`Error creating combined term for n=${n}: error`);
       }
     }
   }

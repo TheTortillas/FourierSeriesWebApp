@@ -296,6 +296,41 @@
           </div>
         </div>
 
+         <!-- Botón para mostrar términos de la serie -->
+      <div class="mt-4 mb-6">
+        <button
+          (click)="displayAllSeriesTermsInModal()"
+          class="w-full py-2 px-3 rounded-lg transition-all duration-300 shadow font-medium flex items-center justify-center"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/70 border border-teal-500/30 text-teal-400 hover:bg-teal-900/30 hover:border-teal-400/50'
+              : 'bg-blue-50 border border-blue-300 text-blue-500 hover:bg-blue-100 hover:border-blue-400'
+          "
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+            />
+          </svg>
+          Mostrar lista completa de términos
+        </button>
+      </div>
+
         <!-- Términos individuales -->
         <div
           class="mt-5 p-4 rounded-lg border transition-all"
@@ -782,41 +817,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Botón para mostrar términos de la serie -->
-      <div class="mt-4 mb-6">
-        <button
-          (click)="displayAllSeriesTermsInModal()"
-          class="w-full py-2 px-3 rounded-lg transition-all duration-300 shadow font-medium flex items-center justify-center"
-          [ngClass]="
-            isDarkMode
-              ? 'bg-gray-800/70 border border-teal-500/30 text-teal-400 hover:bg-teal-900/30 hover:border-teal-400/50'
-              : 'bg-blue-50 border border-blue-300 text-blue-500 hover:bg-blue-100 hover:border-blue-400'
-          "
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-            />
-          </svg>
-          Mostrar lista completa de términos
-        </button>
       </div>
 
       <!-- Botón de acción -->
