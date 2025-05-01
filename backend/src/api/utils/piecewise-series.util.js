@@ -35,7 +35,7 @@ async function calculatePiecewiseSeries({
        trigRules: !isComplex,
        assumptions: true,
        expRules: isComplex,
-       displayFlags: true,
+       displayFlags: false,
      })}
    
      pieces: length(func)$

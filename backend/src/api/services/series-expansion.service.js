@@ -1,9 +1,4 @@
-const execMaxima = require("../utils/maxima.util");
-const getMaximaRules = require("../utils/maxima-rules.util");
-const calculatePiecewiseSeries = require("../utils/piecewise-series.util");
 const expandSeries = require("../utils/series-expansion.util");
-
-// Add these new exports at the end of the file
 
 exports.expandTrigonometricSeries = async (
   coefficients,

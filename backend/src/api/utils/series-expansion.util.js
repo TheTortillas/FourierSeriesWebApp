@@ -342,132 +342,109 @@ async function expandSeries({
         },
       };
     } else {
-      // For trigonometric series (normal or half-range)
       const { a0, an, bn } = coefficients;
 
-      // Check which coefficients are zero
-      const isA0Zero = await isZeroCoefficient(a0);
-      const isAnZero = await isZeroCoefficient(an);
-      const isBnZero = await isZeroCoefficient(bn);
-
-      // Find indeterminate values for an and bn coefficients
-      const anIndeterminateValues = !isAnZero
-        ? await findIndeterminateValues(an)
-        : [];
-      const bnIndeterminateValues = !isBnZero
-        ? await findIndeterminateValues(bn)
-        : [];
-
-      // Enhanced safe-substitution function for Maxima
-      const safeSubstCode = `
-        /* Safe substitution function that handles indeterminate points */
+      const seriesExpansionCode = `
+        ${getMaximaRules({
+          integer: true,
+          trigRules: true,
+          assumptions: true,
+          displayFlags: true,
+        })}
+    
+        /* Parámetros generales */
+        w0: ${w0}$
+        n1: 1$
+        n2: ${terms}$
+        x: ${intVar}$
+        a0 : ${a0}$
+        an : ${an}$
+        bn : ${bn}$
+    
+        /* Sustitución segura */
         safe_subst(expr, n_val) := block(
-          [result, indet_points, i, limit_val],
-          
-          /* Get denominator and check if n_val makes it zero */
+          [result, d],
           d: denom(expr),
-          if is(subst(n=n_val, d) = 0) then (
-            /* Calculate limit at this point */
-            result: limit(expr, n, n_val)
-          ) else (
-            /* Normal substitution */
-            result: subst(n=n_val, expr)
-          ),
-          
+          if is(subst(n=n_val, d) = 0)
+            then result : limit(expr, n, n_val)
+            else result : subst(n=n_val, expr),
           return(result)
         )$
+    
+        /* Generar términos individuales */
+        an_terms_str : makelist(string(safe_subst(an, i) * cos(i * w0 * x)), i, n1, n2)$
+        bn_terms_str : makelist(string(safe_subst(bn, i) * sin(i * w0 * x)), i, n1, n2)$
+        an_terms_tex : makelist(tex(safe_subst(an, i) * cos(i * w0 * x), false), i, n1, n2)$
+        bn_terms_tex : makelist(tex(safe_subst(bn, i) * sin(i * w0 * x), false), i, n1, n2)$
+    
+        a0_str  : string(a0)$
+        a0_tex  : tex(a0, false)$
+    
+        /* Resultado completo */
+        resultados : [
+          a0_str,           /* 1 */
+          a0_tex,           /* 2 */
+          an_terms_str,     /* 3 */
+          an_terms_tex,     /* 4 */
+          bn_terms_str,     /* 5 */
+          bn_terms_tex      /* 6 */
+        ]$
+        string(resultados);
       `;
 
-      // Prepare empty results structures
-      const result = {
+      const raw = await execMaxima(buildMaximaCommand(seriesExpansionCode));
+      const cleaned = raw
+        .replace(/\\\n/g, "")
+        .replace(/\n/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (/error/i.test(cleaned)) {
+        return {
+          success: false,
+          message: "Maxima devolvió un error",
+          details: cleaned,
+        };
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch {
+        return {
+          success: false,
+          message: "No se pudo parsear la salida de Maxima",
+          details: cleaned,
+        };
+      }
+
+      if (!Array.isArray(parsed) || parsed.length !== 6) {
+        return {
+          success: false,
+          message: "La salida de Maxima no tiene el formato esperado",
+          details: cleaned,
+        };
+      }
+
+      const [a0Str, a0Tex, anStrList, anTexList, bnStrList, bnTexList] = parsed;
+
+      return {
         string: {
-          a0: isA0Zero ? "0" : null,
-          an: isAnZero ? [] : null,
-          bn: isBnZero ? [] : null,
+          a0: a0Str,
+          an: anStrList,
+          bn: bnStrList,
         },
         latex: {
-          a0: isA0Zero ? "0" : null,
-          an: isAnZero ? [] : null,
-          bn: isBnZero ? [] : null,
+          a0: a0Tex,
+          an: anTexList,
+          bn: bnTexList,
         },
+        // Solo si tienes implementado findIndeterminateValues para trig:
         indeterminateValues: {
-          an: anIndeterminateValues,
-          bn: bnIndeterminateValues,
+          an: await findIndeterminateValues(an),
+          bn: await findIndeterminateValues(bn),
         },
       };
-
-      // Base code for the series expansion
-      const seriesExpansionCode = `
-        ${baseCode}
-        ${safeSubstCode}
-        a0: ${a0}$
-        an: ${an}$
-        bn: ${bn}$
-      `;
-
-      // Calculate a0 term if not zero
-      if (!isA0Zero) {
-        const a0Code = `
-          ${seriesExpansionCode}
-          a0_term: a0$
-        `;
-
-        result.string.a0 = await execMaxima(
-          buildMaximaCommand(`${a0Code} string(a0_term);`)
-        );
-
-        result.latex.a0 = await execMaxima(
-          buildMaximaCommand(`${a0Code} tex(a0_term, false);`)
-        );
-      }
-
-      // Calculate an terms if not zero
-      if (!isAnZero) {
-        const anCode = `
-          ${seriesExpansionCode}
-          an_terms: makelist(safe_subst(an, i) * cos(i * w0 * ${intVar}), i, n1, n2)$
-        `;
-
-        const strAnTerms = await execMaxima(
-          buildMaximaCommand(`${anCode} string(an_terms);`)
-        );
-
-        const anTermsArray = await extractListItems(strAnTerms);
-        result.string.an = anTermsArray;
-
-        result.latex.an = await Promise.all(
-          anTermsArray.map((_, i) =>
-            execMaxima(
-              buildMaximaCommand(`${anCode} tex(an_terms[${i + 1}], false);`)
-            )
-          )
-        );
-      }
-
-      // Calculate bn terms if not zero
-      if (!isBnZero) {
-        const bnCode = `
-          ${seriesExpansionCode}
-          bn_terms: makelist(safe_subst(bn, i) * sin(i * w0 * ${intVar}), i, n1, n2)$
-        `;
-
-        const strBnTerms = await execMaxima(
-          buildMaximaCommand(`${bnCode} string(bn_terms);`)
-        );
-
-        const bnTermsArray = await extractListItems(strBnTerms);
-        result.string.bn = bnTermsArray;
-
-        result.latex.bn = await Promise.all(
-          bnTermsArray.map((_, i) =>
-            execMaxima(
-              buildMaximaCommand(`${bnCode} tex(bn_terms[${i + 1}], false);`)
-            )
-          )
-        );
-      }
-
-      return result;
     }
   } catch (error) {
     throw new Error(`Error expanding series: ${error.message}`);
