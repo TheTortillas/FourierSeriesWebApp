@@ -82,6 +82,7 @@ export class CartesianCanvasComponent implements AfterViewInit {
   mouseX = 0;
   mouseY = 0;
   origin: { x: number; y: number } = { x: 0, y: 0 };
+  lastPinchDistance: number | null = null; // Para manejar pinch-zoom
 
   // Verificar si estamos en el navegador
   private isBrowser: boolean;
@@ -447,6 +448,76 @@ export class CartesianCanvasComponent implements AfterViewInit {
     canvas.addEventListener('mouseleave', () => {
       this.drag = false;
     });
+
+    // Eventos táctiles para dispositivos móviles
+    canvas.addEventListener('touchstart', (event) => {
+      event.preventDefault(); // Prevenir el comportamiento predeterminado
+      if (event.touches.length === 1) {
+        // Un solo dedo para arrastrar
+        this.drag = true;
+        this.mouseX = event.touches[0].clientX + this.offsetX;
+        this.mouseY = event.touches[0].clientY + this.offsetY;
+      } else if (event.touches.length === 2) {
+        // Dos dedos para zoom (implementación de pinch-zoom)
+        this.drag = false;
+      }
+    });
+
+    canvas.addEventListener('touchmove', (event) => {
+      event.preventDefault(); // Prevenir el comportamiento predeterminado
+      if (event.touches.length === 1 && this.drag) {
+        // Un solo dedo para arrastrar
+        this.offsetX = this.mouseX - event.touches[0].clientX;
+        this.offsetY = this.mouseY - event.touches[0].clientY;
+        this.drawScreen();
+      } else if (event.touches.length === 2) {
+        // Gestión del zoom con dos dedos (pinch gesture)
+        // Implementación de pinch-zoom
+        const touch1 = event.touches[0];
+        const touch2 = event.touches[1];
+
+        // Calcular la distancia entre los dos dedos
+        const currentDistance = Math.hypot(
+          touch1.clientX - touch2.clientX,
+          touch1.clientY - touch2.clientY
+        );
+
+        if (this.lastPinchDistance) {
+          // Cambiar el zoom basado en el cambio de distancia
+          const pinchRatio = currentDistance / this.lastPinchDistance;
+          const zoomFactor = pinchRatio;
+
+          // Obtener el punto medio entre los dos dedos
+          const midX = (touch1.clientX + touch2.clientX) / 2;
+          const midY = (touch1.clientY + touch2.clientY) / 2;
+
+          // Lo mismo que hacemos con el zoom de rueda
+          const rect = canvas.getBoundingClientRect();
+          const canvasX = midX - rect.left;
+          const canvasY = midY - rect.top;
+
+          const oldUnit = this.unit;
+          const x0 = (canvasX - this.origin.x + this.offsetX) / oldUnit;
+          const y0 = (canvasY - this.origin.y + this.offsetY) / oldUnit;
+
+          this.unit *= zoomFactor;
+          this.unit = Math.max(this.minZoom, Math.min(this.unit, this.maxZoom));
+
+          this.offsetX += x0 * (this.unit - oldUnit);
+          this.offsetY += y0 * (this.unit - oldUnit);
+
+          this.drawScreen();
+        }
+
+        this.lastPinchDistance = currentDistance;
+      }
+    });
+
+    canvas.addEventListener('touchend', (event) => {
+      event.preventDefault();
+      this.drag = false;
+      this.lastPinchDistance = null;
+    });
   }
 
   /**
@@ -455,9 +526,9 @@ export class CartesianCanvasComponent implements AfterViewInit {
    */
   public setXAxisScale(scale: 'integer' | 'pi' | 'e'): void {
     if (!this.isBrowser) return;
-    
+
     this.xAxisScale = scale;
-    
+
     // Actualizar el factor según la escala seleccionada
     if (scale === 'pi') {
       this.xAxisFactor = Math.PI;
@@ -466,7 +537,7 @@ export class CartesianCanvasComponent implements AfterViewInit {
     } else {
       this.xAxisFactor = 1;
     }
-    
+
     this.drawScreen();
   }
 }
