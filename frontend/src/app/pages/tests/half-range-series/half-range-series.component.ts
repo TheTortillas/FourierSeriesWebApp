@@ -92,12 +92,7 @@ export class HalfRangeSeriesComponent implements OnInit, AfterViewChecked {
 
       .subscribe({
         next: (data) => {
-          console.log('API Request:', {
-            funcionMatrix,
-            intVar: this.variable,
-          });
           this.result = data;
-          console.log('API Response:', data);
           this.loading = false;
           this.processLatexResults(data.latex);
           this.formulasNeedRendering = true;

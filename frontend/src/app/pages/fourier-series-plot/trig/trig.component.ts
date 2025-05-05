@@ -243,9 +243,6 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     // Esperar un momento para asegurar que los coeficientes estén calculados
     setTimeout(() => {
       console.group('Coeficientes Serie de Fourier - Valores numéricos');
-      console.log('a0:', this.cachedA0);
-      console.log('w0:', this.cachedW0);
-
       // Crear un objeto para mostrar todos los coeficientes de manera estructurada
       const allCoefficients = {
         a0: this.cachedA0,
@@ -254,8 +251,8 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         bn: this.cachedBCoefs.map((value, index) => ({ n: index + 1, value })),
       };
 
-      console.table(allCoefficients.an); // Mostrar an como tabla
-      console.table(allCoefficients.bn); // Mostrar bn como tabla
+      // console.table(allCoefficients.an); // Mostrar an como tabla
+      // console.table(allCoefficients.bn); // Mostrar bn como tabla
 
       // También puedes crear un arreglo con todos los valores para exportación
       const exportData = {
@@ -575,7 +572,6 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       // Evaluar a0 - sólo una vez
       try {
         this.cachedA0 = this.mathUtilsService.evaluateMaximaExpr(a0Expr, {});
-        console.log('a0 evaluado:', this.cachedA0);
       } catch (error) {
         console.error('Error evaluando a0:', error);
         this.cachedA0 = 0;
@@ -584,7 +580,6 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       // Evaluar w0 - sólo una vez
       try {
         this.cachedW0 = this.mathUtilsService.evaluateMaximaExpr(w0Expr, {});
-        console.log('w0 evaluado:', this.cachedW0);
       } catch (error) {
         console.error('Error evaluando w0:', error);
         this.cachedW0 = Math.PI;
@@ -659,12 +654,12 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cachedBCoefs = Array(maxTerms).fill(0);
       }
 
-      console.log('Coeficientes precalculados:', {
-        a0: this.cachedA0,
-        w0: this.cachedW0,
-        an: this.cachedACoefs.slice(0, 5), // Solo mostrar los primeros 5 para debug
-        bn: this.cachedBCoefs.slice(0, 5),
-      });
+      // console.log('Coeficientes precalculados:', {
+      //   a0: this.cachedA0,
+      //   w0: this.cachedW0,
+      //   an: this.cachedACoefs.slice(0, 5), // Solo mostrar los primeros 5 para debug
+      //   bn: this.cachedBCoefs.slice(0, 5),
+      // });
     } catch (error) {
       console.error('Error en precalculateCoefficients:', error);
     }
@@ -692,14 +687,12 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
           const startX = piece[1]; // Límite inferior en Maxima
           const endX = piece[2]; // Límite superior en Maxima
 
-          console.log(
-            `Procesando función: ${functionExpr} en [${startX}, ${endX}]`
-          );
+          // console.log(
+          //   `Procesando función: ${functionExpr} en [${startX}, ${endX}]`
+          // );
 
           // Convertir la expresión de Maxima a JavaScript
           const jsExpr = this.mathUtilsService.maximaToJS(functionExpr);
-          console.log(`Convertida a JS: ${jsExpr}`);
-
           // Crear una función JavaScript cerrada que no dependa de mathUtilsService
           try {
             // eslint-disable-next-line no-new-func
@@ -711,15 +704,10 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
             const start = this.mathUtilsService.evaluateMaximaExpr(startX, {});
             const end = this.mathUtilsService.evaluateMaximaExpr(endX, {});
 
-            console.log(`Límites evaluados: [${start}, ${end}]`);
-
             // Verificar que la función es válida evaluándola en un punto de prueba
             try {
               const testPoint = (start + end) / 2;
               const testValue = fn(testPoint);
-              console.log(
-                `Prueba de función en x=${testPoint}: f(x)=${testValue}`
-              );
 
               if (isFinite(testValue) && !isNaN(testValue)) {
                 // Almacenar la función y sus límites en caché
@@ -728,7 +716,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
                   start,
                   end,
                 });
-                console.log('Función añadida a caché con éxito');
+                // console.log('Función añadida a caché con éxito');
               } else {
                 console.error(
                   'La función devuelve un valor no numérico en prueba:',
@@ -752,11 +740,6 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
           console.error('Error al precalcular función original:', error);
         }
       });
-
-      console.log(
-        'Funciones originales precalculadas:',
-        this.cachedOriginalFunctions.length
-      );
     } catch (error) {
       console.error('Error en precalculateOriginalFunctions:', error);
     }

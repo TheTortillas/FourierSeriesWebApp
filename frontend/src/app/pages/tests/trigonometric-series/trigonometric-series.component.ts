@@ -67,7 +67,6 @@ export class TrigonometricSeriesComponent implements OnInit, AfterViewChecked {
       .subscribe({
         next: (data) => {
           this.result = data;
-          console.log('API Response:', data);
           this.loading = false;
           this.processLatexResults(data.latex);
           this.formulasNeedRendering = true;

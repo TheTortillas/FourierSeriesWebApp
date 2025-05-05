@@ -1152,7 +1152,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     } else {
-      console.log('No hay términos an (coeficientes = 0 o indefinidos)');
+      // console.log('No hay términos an (coeficientes = 0 o indefinidos)');
     }
 
     // --- Serie Seno: Términos bn*sin(n*w0*x) ---
@@ -1197,7 +1197,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     } else {
-      console.log('No hay términos bn (coeficientes = 0 o indefinidos)');
+      // console.log('No hay términos bn (coeficientes = 0 o indefinidos)');
     }
 
     // console.log(

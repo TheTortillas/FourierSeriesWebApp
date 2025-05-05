@@ -40,19 +40,19 @@ export class LatexToMaximaService {
       // Procesamiento previo para casos especiales
       let preprocessedLatex = this.preProcessLatexExpression(latexExpression);
 
-      console.log('LaTeX pre-procesado:', preprocessedLatex);
+      // console.log('LaTeX pre-procesado:', preprocessedLatex);
       const maximaExpression = this.converter.toMaxima(preprocessedLatex);
-      console.log('Maxima inicial:', maximaExpression);
+      // console.log('Maxima inicial:', maximaExpression);
 
       // Algunos post-procesamiento que pueda ser necesario para compatibilidad con Maxima
       const finalExpression =
         this.postProcessMaximaExpression(maximaExpression);
-      console.log('Maxima final:', finalExpression);
+      // console.log('Maxima final:', finalExpression);
 
       return finalExpression;
     } catch (error) {
-      console.error('Error al convertir LaTeX a Maxima:', error);
-      console.error('Expresión LaTeX problemática:', latexExpression);
+      // console.error('Error al convertir LaTeX a Maxima:', error);
+      // console.error('Expresión LaTeX problemática:', latexExpression);
 
       // Intento de recuperación para expresiones exponenciales
       if (latexExpression.includes('\\exp')) {

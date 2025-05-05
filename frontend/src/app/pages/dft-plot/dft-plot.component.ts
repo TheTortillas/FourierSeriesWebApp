@@ -141,7 +141,7 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
     // Load data from router state
     if (isBrowser) {
       const state = history.state;
-      console.log('Estado recibido en DFTPlotComponent:', state);
+      // console.log('Estado recibido en DFTPlotComponent:', state);
 
       if (state && state.response) {
         this.intVar = state.intVar || 'x';
@@ -175,9 +175,7 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
         this.router.navigate(['/fourier-calculator']);
       }
     } else {
-      console.log(
-        'Running in SSR environment, skipping history-dependent code'
-      );
+      // console.log('Running in SSR environment, skipping history-dependent code');
     }
 
     this.updateThemeColors();
@@ -225,17 +223,14 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Dibujamos cada elemento solo si su bandera correspondiente está activada
     if (this.showOriginalFunction) {
-      console.log('Dibujando función original');
       this.drawOriginalFunction();
     }
 
     if (this.showOriginalPoints) {
-      console.log('Dibujando puntos originales muestreados');
       this.drawOriginalPoints();
     }
 
     if (this.showReconstructedFunction) {
-      console.log('Dibujando puntos reconstruidos');
       this.drawReconstructedPoints();
     }
   }
@@ -340,10 +335,7 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       });
 
-      console.log(
-        'Funciones originales precalculadas:',
-        this.cachedOriginalFunctions.length
-      );
+      // console.log('Funciones originales precalculadas:',this.cachedOriginalFunctions.length);
     } catch (error) {
       console.error('Error en precalculateOriginalFunctions:', error);
     }
@@ -435,9 +427,7 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
           y: point[1],
         }));
 
-        console.log(
-          `Se han procesado ${this.reconstructedPoints.length} puntos reconstructivos`
-        );
+        // console.log(`Se han procesado ${this.reconstructedPoints.length} puntos reconstructivos`);
       }
     } catch (error) {
       console.error('Error al procesar puntos de la DFT:', error);
@@ -451,8 +441,6 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       // Si tenemos puntos para graficar
       if (this.reconstructedPoints.length > 0) {
-        console.log('Dibujando solo puntos discretos reconstruidos');
-
         // Eliminar el código que dibuja las líneas entre puntos
         // Solo mantener el código que dibuja puntos discretos
         for (const point of this.reconstructedPoints) {
@@ -488,9 +476,7 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
           y: point[1],
         }));
 
-        console.log(
-          `Se han procesado ${this.originalPoints.length} puntos originales muestreados`
-        );
+        // console.log(`Se han procesado ${this.originalPoints.length} puntos originales muestreados`);
       }
     } catch (error) {
       console.error('Error al procesar puntos originales:', error);
@@ -503,8 +489,6 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       // Si tenemos puntos para graficar
       if (this.originalPoints.length > 0) {
-        console.log('Dibujando puntos originales muestreados');
-
         for (const point of this.originalPoints) {
           // Dibujar un punto en cada posición de muestra
           this.cartesianCanvas.drawDiscreteLine(
@@ -522,20 +506,17 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   toggleOriginalFunction(event: any): void {
-    console.log('Toggle función original:', event.target.checked);
     this.showOriginalFunction = event.target.checked;
     this.redrawCanvas();
   }
 
   toggleReconstructedFunction(event: any): void {
-    console.log('Toggle función reconstruida:', event.target.checked);
     this.showReconstructedFunction = event.target.checked;
     this.redrawCanvas();
   }
 
   // Método de toggle para los puntos originales
   toggleOriginalPoints(event: any): void {
-    console.log('Toggle puntos originales:', event.target.checked);
     this.showOriginalPoints = event.target.checked;
     this.redrawCanvas();
   }
@@ -549,9 +530,7 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Usar un parser seguro en lugar de eval
       this.amplitudeSpectrum = this.parseMaximaPointArray(cleanedData);
-      console.log(
-        `Se han procesado ${this.amplitudeSpectrum.length} puntos del espectro de amplitud`
-      );
+      // console.log( `Se han procesado ${this.amplitudeSpectrum.length} puntos del espectro de amplitud` );
     } catch (error) {
       console.error('Error al procesar espectro de amplitud:', error);
     }
@@ -565,9 +544,7 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Usar un parser seguro en lugar de eval
       this.phaseSpectrum = this.parseMaximaPointArray(cleanedData);
-      console.log(
-        `Se han procesado ${this.phaseSpectrum.length} puntos del espectro de fase`
-      );
+      // console.log( `Se han procesado ${this.phaseSpectrum.length} puntos del espectro de fase` );
     } catch (error) {
       console.error('Error al procesar espectro de fase:', error);
     }
@@ -882,7 +859,6 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
     // Inicializar tooltips
 
     if (!isPlatformBrowser(this.platformId)) {
-      console.log('No configurando eventos de tooltips en SSR');
       return;
     }
 
@@ -1076,7 +1052,6 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private setupSpectrumCanvasZoomEvents(): void {
     if (!isPlatformBrowser(this.platformId)) {
-      console.log('No configurando eventos de zoom en SSR');
       return;
     }
 

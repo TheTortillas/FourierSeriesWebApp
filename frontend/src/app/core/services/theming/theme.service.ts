@@ -43,7 +43,7 @@ export class ThemeService {
     // Verificar si hay una preferencia guardada
     const savedPreference = this.getLocalStorageItem(this.darkModeKey);
     if (savedPreference !== null) {
-      console.log('Preferencia guardada:', savedPreference);
+      // console.log('Preferencia guardada:', savedPreference);
       return savedPreference === 'true';
     }
 

@@ -1449,7 +1449,7 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
       };
 
       // Show cn coefficients
-      console.table(this.cachedCnCoefs);
+      // console.table(this.cachedCnCoefs);
 
       // También puedes crear un arreglo con todos los valores para exportación
       const exportData = {

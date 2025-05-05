@@ -353,24 +353,24 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     };
 
     // Imprimir datos convertidos para depuración
-    console.log(
-      '%c Datos enviados (convertidos a Maxima):',
-      'background: #002b36; color: #2aa198; font-size: 12px; padding: 4px 8px; border-radius: 4px;'
-    );
-    console.log(data);
+    // console.log(
+    //   '%c Datos enviados (convertidos a Maxima):',
+    //   'background: #002b36; color: #2aa198; font-size: 12px; padding: 4px 8px; border-radius: 4px;'
+    // );
+    // console.log(data);
 
     // Mostrar también las expresiones originales LaTeX para comparación
-    console.log(
-      '%c Expresiones LaTeX originales:',
-      'background: #073642; color: #cb4b16; font-size: 12px; padding: 4px 8px; border-radius: 4px;'
-    );
-    console.log(
-      this.pieces.map((piece) => [
-        piece.funcField.latex(),
-        piece.startField.latex(),
-        piece.endField.latex(),
-      ])
-    );
+    // console.log(
+    //   '%c Expresiones LaTeX originales:',
+    //   'background: #073642; color: #cb4b16; font-size: 12px; padding: 4px 8px; border-radius: 4px;'
+    // );
+    // console.log(
+    //   this.pieces.map((piece) => [
+    //     piece.funcField.latex(),
+    //     piece.startField.latex(),
+    //     piece.endField.latex(),
+    //   ])
+    // );
 
     // Mostrar indicador de carga
     Swal.fire({
@@ -407,7 +407,6 @@ export class MathquillComponent implements OnInit, AfterViewInit {
     // Suscribirse a la respuesta de la API
     apiCall.subscribe({
       next: (response: TrigonometricResponse | ComplexResponse) => {
-        console.log(response);
         Swal.fire({
           title: 'Cálculo completado',
           text: 'La serie ha sido calculada exitosamente. Consulta la consola para ver los resultados.',

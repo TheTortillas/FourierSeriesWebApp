@@ -384,6 +384,14 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
       intVar: this.selectedVariable,
     };
 
+    // Mostrar log de lo que se está enviando al backend
+    // console.log('🚀 Enviando al backend (Series de Fourier):', {
+    //   tipo: this.seriesType,
+    //   datos: data,
+    //   latex: latexMatrix,
+    //   maxima: maximaMatrix,
+    // });
+
     // Mostrar indicador de carga
     Swal.fire({
       title: 'Calculando...',
@@ -426,8 +434,6 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
     apiCall.subscribe({
       next: (response: TrigonometricResponse | ComplexResponse) => {
         Swal.close();
-        console.log('Respuesta de la API:', response);
-
         if (response.success) {
           this.router.navigate([targetRoute], {
             state: {
@@ -778,6 +784,13 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
       intVar: this.selectedVariable,
     };
 
+    // Mostrar log de lo que se está enviando al backend
+    // console.log('🚀 Enviando al backend (DFT):', {
+    //   datos: data,
+    //   latex: latexMatrix,
+    //   parametros: this.dftParams,
+    // });
+
     // Mostrar indicador de carga
     Swal.fire({
       title: 'Calculando...',
@@ -792,8 +805,6 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
     this.apiService.calculateDFT(data).subscribe({
       next: (response) => {
         Swal.close();
-        console.log('Respuesta de la API (DFT):', response);
-
         if (response.success) {
           this.router.navigate(['/fourier-transform-plot/dft'], {
             state: {
