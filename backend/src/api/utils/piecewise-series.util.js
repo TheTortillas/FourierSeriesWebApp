@@ -29,14 +29,6 @@ async function calculatePiecewiseSeries({
   // Base code common to all types
   let maximaBaseCode = `
      func : ${maximaMatrix}$
-     
-     ${getMaximaRules({
-       integer: true,
-       trigRules: !isComplex,
-       assumptions: true,
-       expRules: isComplex,
-       displayFlags: false,
-     })}
    
      pieces: length(func)$
      inicio: func[1][2]$
@@ -78,6 +70,14 @@ async function calculatePiecewiseSeries({
 
     const maximaScript = `
       ${maximaBaseCode}
+
+      ${getMaximaRules({
+       integer: true,
+       trigRules: !isComplex,
+       assumptions: true,
+       expRules: isComplex,
+       displayFlags: false,
+     })}
   
       /* Núcleos exponenciales */
       series_exp_core_pos : exp(%i*n*w0*${intVar})$
@@ -87,10 +87,10 @@ async function calculatePiecewiseSeries({
       c_n(n) := block([c:0],
         for tr in tramos do
           c : c + (1/T)*integrate(tr[1]*exp(-%i*n*w0*${intVar}), ${intVar}, tr[2], tr[3]),
-        return(ratsimp(c)))$
+        return(((c))))$
   
       c0      : c_n(0)$
-      expr_cn : ratsimp(c_n(n))$
+      expr_cn : factor(fullratsimp(c_n(n)))$
   
       /* Listas de coeficientes, amplitud y fase */
       N : ${N}$
@@ -100,7 +100,7 @@ async function calculatePiecewiseSeries({
       /* Construcción de términos Σ */
       term(n) := block(
         if n = 0 then c_n(0)
-        else c_n(n)*exp(%i*n*w0*${intVar}) + c_n(-n)*exp(-%i*n*w0*${intVar})
+        else ratsimp(c_n(n))*exp(%i*n*w0*${intVar}) + ratsimp(c_n(-n))*exp(-%i*n*w0*${intVar})
       )$
   
       N_terms        : ${N_terms}$
@@ -214,6 +214,14 @@ async function calculatePiecewiseSeries({
 
     const maximaScript = `
       ${maximaBaseCode}
+
+      ${getMaximaRules({
+       integer: true,
+       trigRules: !isComplex,
+       assumptions: true,
+       expRules: isComplex,
+       displayFlags: true,
+     })}
   
       /* Núcleos seno/coseno */
       cos_core : cos(n * w0 * ${intVar})$
@@ -236,9 +244,9 @@ async function calculatePiecewiseSeries({
       )$
   
       /* Coeficientes simplificados */
-      Coeff_A0 : factor(${simplificationMethod}(factor(a0_acum)))$
-      Coeff_An : factor(${simplificationMethod}(factor(an_acum)))$
-      Coeff_Bn : factor(${simplificationMethod}(factor(bn_acum)))$
+      Coeff_A0 : (${simplificationMethod}(factor(a0_acum)))$
+      Coeff_An : (${simplificationMethod}(factor(an_acum)))$
+      Coeff_Bn : (${simplificationMethod}(factor(bn_acum)))$
   
       /* ---------- Salida única: 7 simplificados + 7 TeX ---------- */
       resultados : [
