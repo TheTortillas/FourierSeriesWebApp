@@ -646,7 +646,11 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
         this.amplitudeCanvas.clearCanvas();
         this.amplitudePoints = [];
 
-        // Dibujar barras discretas para el espectro de amplitud
+        // Encontrar la mitad de la longitud del espectro para reflejar correctamente
+        const n = this.amplitudeSpectrum.length;
+        const halfN = Math.floor(n / 2);
+
+        // Dibujar barras discretas para el espectro de amplitud (parte positiva)
         for (const point of this.amplitudeSpectrum) {
           // Dibujar una línea vertical (barra) para cada componente
           this.drawDiscreteLineWithBlur(
@@ -673,6 +677,40 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
               y: pixelPos.y,
               value: point.y,
             });
+          }
+
+          // Reflejar el punto en la parte negativa del espectro
+          // (Evitamos reflejar el punto en frecuencia cero)
+          if (point.x > 0) {
+            // La frecuencia negativa correspondiente
+            const negativeX = -point.x;
+
+            // Dibujar el punto reflejado
+            this.drawDiscreteLineWithBlur(
+              this.amplitudeCanvas,
+              negativeX,
+              0,
+              point.y, // La amplitud es la misma para la frecuencia reflejada
+              this.amplitudeColor,
+              this.amplitudeLineWidth,
+              true
+            );
+
+            // Almacenar el punto reflejado para tooltip
+            const negPixelPos = this.canvasCoordToPixel(
+              this.amplitudeCanvas,
+              negativeX,
+              point.y
+            );
+
+            if (negPixelPos) {
+              this.amplitudePoints.push({
+                n: negativeX,
+                x: negPixelPos.x,
+                y: negPixelPos.y,
+                value: point.y,
+              });
+            }
           }
         }
       }
