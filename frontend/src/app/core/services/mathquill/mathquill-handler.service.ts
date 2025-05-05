@@ -41,7 +41,7 @@ export class MathquillHandlerService {
     this.ngZone.runOutsideAngular(() => {
       this.activeMathField.focus();
 
-      // Lista de todas las funciones trigonométricas
+      // Lista completa de todas las funciones trigonométricas
       const trigFunctions = [
         '\\sin',
         '\\cos',
@@ -76,7 +76,9 @@ export class MathquillHandlerService {
         // Extraer el nombre de la función
         const funcName = latex.match(/\\[a-z]+/)?.[0];
         if (funcName) {
+          // Insertar la función como operador para que se formatee correctamente
           this.activeMathField.cmd(funcName);
+          // Agregar paréntesis directamente después de la función
           this.activeMathField.write('\\left( \\right)');
           this.activeMathField.keystroke('Left');
         }
@@ -90,15 +92,16 @@ export class MathquillHandlerService {
       } else if (latex === '\\sqrt{ }') {
         // Raíz cuadrada
         this.activeMathField.cmd('\\sqrt');
-      } else if (latex === '\\ln{ }') {
-        // Logaritmo natural
-        this.activeMathField.cmd('\\ln');
+      } else if (latex === '\\log{ }') {
+        // Logaritmo
+        this.activeMathField.cmd('\\log');
         this.activeMathField.write('\\left( \\right)');
         this.activeMathField.keystroke('Left');
-      } else if (latex === '\\log_{ }{ }') {
-        // Logaritmo en base
-        this.activeMathField.write('\\log_{}{}');
-        this.activeMathField.keystroke('Left Left Left');
+      } else if (latex === '\\exp{ }') {
+        // Función exponencial
+        this.activeMathField.cmd('\\exp');
+        this.activeMathField.write('\\left( \\right)');
+        this.activeMathField.keystroke('Left');
       } else if (latex === '{}^2') {
         // Cuadrado
         this.activeMathField.write('{}^2');

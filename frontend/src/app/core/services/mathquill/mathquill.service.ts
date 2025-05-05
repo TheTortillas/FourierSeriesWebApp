@@ -40,9 +40,12 @@ export class MathquillService {
       return this.MQ.MathField(element, {
         spaceBehavesLikeTab: true,
         autoCommands: 'pi theta sqrt sum',
-        // Ampliar la lista de operadores para incluir los hiperbólicos
+        // Lista completa de operadores trigonométricos y otros
         autoOperatorNames:
-          'sin cos tan sinh cosh tanh arcsin arccos arctan arcsinh arccosh arctanh exp ln log',
+          'sin cos tan cot sec csc sinh cosh tanh coth sech csch ' +
+          'arcsin arccos arctan arccot arcsec arccsc ' +
+          'arcsinh arccosh arctanh arccoth arcsech arccsch ' +
+          'exp log',
         handlers: {
           edit: () => {},
           ...config,

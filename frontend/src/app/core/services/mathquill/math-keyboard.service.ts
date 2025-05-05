@@ -29,14 +29,14 @@ export class MathKeyboardService {
       tooltip: 'Raíz Cuadrada',
     },
     {
-      latex: '\\ln{ }',
-      display: '\\ln{\\square}',
-      tooltip: 'Logaritmo Natural',
+      latex: '\\log{ }',
+      display: '\\log{\\square}',
+      tooltip: 'Logaritmo natural',
     },
     {
-      latex: '\\log_{ }{ }',
-      display: '\\log_{\\square}{\\square}',
-      tooltip: 'Logaritmo en Base',
+      latex: '\\exp{ }',
+      display: '\\exp{\\left(\\square\\right)}',
+      tooltip: 'Función Exponencial',
     },
   ];
 

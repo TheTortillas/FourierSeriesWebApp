@@ -37,16 +37,71 @@ export class LatexToMaximaService {
         return '';
       }
 
-      const maximaExpression = this.converter.toMaxima(latexExpression);
+      // Procesamiento previo para casos especiales
+      let preprocessedLatex = this.preProcessLatexExpression(latexExpression);
+
+      console.log('LaTeX pre-procesado:', preprocessedLatex);
+      const maximaExpression = this.converter.toMaxima(preprocessedLatex);
+      console.log('Maxima inicial:', maximaExpression);
 
       // Algunos post-procesamiento que pueda ser necesario para compatibilidad con Maxima
-      return this.postProcessMaximaExpression(maximaExpression);
+      const finalExpression =
+        this.postProcessMaximaExpression(maximaExpression);
+      console.log('Maxima final:', finalExpression);
+
+      return finalExpression;
     } catch (error) {
       console.error('Error al convertir LaTeX a Maxima:', error);
       console.error('Expresión LaTeX problemática:', latexExpression);
+
+      // Intento de recuperación para expresiones exponenciales
+      if (latexExpression.includes('\\exp')) {
+        return this.handleExponentialFallback(latexExpression);
+      }
+
       // En caso de error, devolver la expresión original para no bloquear toda la operación
       return latexExpression;
     }
+  }
+
+  /**
+   * Pre-procesa la expresión LaTeX para casos especiales antes de la conversión
+   */
+  private preProcessLatexExpression(expression: string): string {
+    // Normalizar la función exponencial
+    let result = expression;
+
+    // Convertir \exp{...} y \exp \left( ... \right) a formatos que tex2max pueda manejar mejor
+    result = result.replace(/\\exp\s*\{([^}]*)\}/g, '\\exp\\left($1\\right)');
+    result = result.replace(/\\exp\s*(?!\\left)/g, '\\exp\\left(');
+
+    // Asegurar que los espacios en blanco no afecten el parsing
+    result = result.replace(/\\\s+/g, '\\');
+
+    return result;
+  }
+
+  /**
+   * Maneja la función exponencial cuando falla la conversión normal
+   */
+  private handleExponentialFallback(expression: string): string {
+    // Extraer el contenido dentro de los paréntesis o llaves después de \exp
+    const expMatch = expression.match(
+      /\\exp(?:\\left)?\(\s*(.*?)\s*(?:\\right)?\)/
+    );
+    const expContent = expMatch ? expMatch[1] : '';
+
+    if (expContent) {
+      // Convertir manualmente el contenido si es posible
+      const content = this.convertToMaxima(expContent);
+      return `exp(${content})`;
+    }
+
+    // Si todo falla, transformar \exp directamente a exp()
+    return expression.replace(
+      /\\exp(?:\\left)?\(\s*(.*?)\s*(?:\\right)?\)/g,
+      'exp($1)'
+    );
   }
 
   /**
@@ -74,8 +129,9 @@ export class LatexToMaximaService {
       sinh: 'sinh',
       cosh: 'cosh',
       tanh: 'tanh',
-      ln: 'log', // En Maxima, log es el logaritmo natural
-      log: 'log10', // En Maxima, log10 es el logaritmo base 10
+      ln: 'log',
+      log: 'log',
+      exp: 'exp',
     };
 
     // Aplicar todas las conversiones de funciones
@@ -87,6 +143,15 @@ export class LatexToMaximaService {
       result = result.replace(pattern1, `${maximaFunc}(`);
       result = result.replace(pattern2, `${maximaFunc}(`);
     }
+
+    // Manejo especial para la función exponencial
+    result = result.replace(/\\exp\{([^}]*)\}/g, 'exp($1)');
+    result = result.replace(/\\exp\s*\\left\(\s*(.*?)\s*\\right\)/g, 'exp($1)');
+    result = result.replace(/\\exp\s*\(\s*(.*?)\s*\)/g, 'exp($1)');
+
+    // Manejo de notación exponencial
+    result = result.replace(/\\text\{exp\}\s*\(\s*(.*?)\s*\)/g, 'exp($1)');
+    result = result.replace(/\\mathrm\{exp\}\s*\(\s*(.*?)\s*\)/g, 'exp($1)');
 
     // Asegurar que las multiplicaciones implícitas tengan el operador *
     // Por ejemplo: 2x -> 2*x
