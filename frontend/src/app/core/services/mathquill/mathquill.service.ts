@@ -29,6 +29,10 @@ export class MathquillService {
     }
   }
 
+  private isMobileDevice(): boolean {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  }
+
   createMathField(element: HTMLElement, config = {}) {
     if (!this.isBrowser) return null;
 
@@ -37,21 +41,33 @@ export class MathquillService {
     }
 
     if (this.MQ) {
-      return this.MQ.MathField(element, {
+      const isMobile = this.isMobileDevice();
+
+      const finalConfig = {
         spaceBehavesLikeTab: true,
         autoCommands: 'pi theta sqrt sum',
-        // Lista completa de operadores trigonométricos y otros
         autoOperatorNames:
           'sin cos tan cot sec csc sinh cosh tanh coth sech csch ' +
           'arcsin arccos arctan arccot arcsec arccsc ' +
           'arcsinh arccosh arctanh arccoth arcsech arccsch ' +
           'exp log',
+        // Solo usar substituteTextarea en móviles
+        ...(isMobile && {
+          substituteTextarea: () => {
+            const span = document.createElement('span');
+            span.setAttribute('tabindex', '0');
+            return span;
+          },
+        }),
         handlers: {
           edit: () => {},
           ...config,
         },
-      });
+      };
+
+      return this.MQ.MathField(element, finalConfig);
     }
+
     return null;
   }
 
