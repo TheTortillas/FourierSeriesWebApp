@@ -5,11 +5,11 @@
     class="w-full max-w-5xl card rounded-xl shadow-2xl p-8 border text-inherit"
   >
     <h1 class="text-2xl font-bold text-center mb-6 main-title">
-      Calculadora de Series de Fourier
+      Introduce tus parametros
     </h1>
 
-    <!-- Math Keyboard Toggle Button -->
-    <div class="flex justify-center mb-4">
+    <!-- Math Keyboard Toggle Button - Mostrar solo en escritorio -->
+    <div class="flex justify-center mb-4" *ngIf="!isMobile">
       <button
         (click)="toggleKeyboard()"
         class="keyboard-toggle-btn flex items-center justify-center gap-2 px-5 py-2.5 btn-primary rounded-lg transition-all duration-300"
@@ -46,10 +46,11 @@
       </button>
     </div>
 
-    <!-- Math Keyboard Container with Animation -->
+    <!-- Math Keyboard Container with Animation - Mostrar solo en escritorio -->
     <div
       class="keyboard-container mb-6 px-2 py-3 section-container rounded-lg border transition-all"
       [ngClass]="{ visible: keyboardVisible }"
+      *ngIf="!isMobile"
     >
       <!-- Título del teclado -->
       <h3 class="text-base mb-3 font-medium flex items-center px-2">
@@ -117,29 +118,40 @@
         class="border piece-container rounded-md p-3"
       >
         <div
-          class="flex items-center mb-3"
+          class="piece-wrapper flex items-center mb-3"
           *ngFor="let piece of pieces; let i = index"
         >
-          <div class="flex-1 flex items-center" style="width: 85%">
-            <div
-              class="math-field pieceFunc rounded-md min-h-[50px] min-w-[50px] flex items-center justify-center cursor-text transition-colors"
-              style="width: 55%"
-            ></div>
-            <span class="mx-2 text-lg math-operator" tabindex="-1">$$,$$</span>
-            <div
-              class="math-field pieceStart rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text transition-colors"
-              style="width: 15%"
-            ></div>
-            <span class="mx-1 text-lg variable-span" tabindex="-1"
-              >$$< {{ selectedVariable }} <$$</span
+          <!-- Primera columna: Función e intervalos -->
+          <div class="piece-inputs flex-1" style="width: 85%">
+            <!-- Input de la función -->
+            <div class="piece-func-container">
+              <div
+                class="math-field pieceFunc rounded-md min-h-[50px] min-w-[50px] flex items-center justify-center cursor-text transition-colors"
+              ></div>
+            </div>
+            <!-- Separador que solo se muestra en escritorio -->
+            <span
+              class="desktop-separator mx-2 text-lg math-operator"
+              tabindex="-1"
+              >$$,$$</span
             >
-            <div
-              class="math-field pieceEnd rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text transition-colors"
-              style="width: 15%"
-            ></div>
+            <!-- Inputs para los intervalos -->
+            <div class="piece-interval-container">
+              <div
+                class="math-field pieceStart rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text transition-colors"
+              ></div>
+              <span class="mx-1 text-lg variable-span" tabindex="-1"
+                >$$< {{ selectedVariable }} <$$</span
+              >
+              <div
+                class="math-field pieceEnd rounded-md min-h-[50px] min-w-[25px] flex items-center justify-center cursor-text transition-colors"
+              ></div>
+            </div>
           </div>
+
+          <!-- Segunda columna: Botones de agregar/quitar -->
           <div
-            class="flex-none flex flex-col items-center justify-center"
+            class="piece-action flex-none flex flex-col items-center justify-center"
             style="width: 15%"
           >
             <button
@@ -285,6 +297,239 @@
             ? "Calcular Serie de Fourier"
             : "Calcular Transformada Discreta"
         }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Math Keyboard -->
+<div
+  class="mobile-math-keyboard"
+  [ngClass]="{ visible: isMobile && mobileKeyboardVisible }"
+  *ngIf="isMobile"
+>
+  <!-- Keyboard Header with Tab Navigation -->
+  <div class="keyboard-header">
+    <button
+      *ngFor="let tab of keyboardTabs"
+      [ngClass]="{ active: activeTab === tab.id }"
+      (click)="setActiveTab(tab.id)"
+      class="tab-button"
+    >
+      {{ tab.name }}
+    </button>
+    <button class="keyboard-close-btn" (click)="hideMobileKeyboard()">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        fill="currentColor"
+        viewBox="0 0 16 16"
+      >
+        <path
+          d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Numbers Tab -->
+  <div class="keyboard-content" *ngIf="activeTab === 'numbers'">
+    <div class="key-row">
+      <button class="number-key" (click)="insertMath('7')">7</button>
+      <button class="number-key" (click)="insertMath('8')">8</button>
+      <button class="number-key" (click)="insertMath('9')">9</button>
+      <button
+        class="operation-key delete-key"
+        (click)="deleteMath()"
+        title="Borrar"
+      >
+        ⌫
+      </button>
+    </div>
+    <div class="key-row">
+      <button class="number-key" (click)="insertMath('4')">4</button>
+      <button class="number-key" (click)="insertMath('5')">5</button>
+      <button class="number-key" (click)="insertMath('6')">6</button>
+      <button class="operation-key" (click)="insertMath('-')" title="Resta">
+        −
+      </button>
+    </div>
+    <div class="key-row">
+      <button class="number-key" (click)="insertMath('1')">1</button>
+      <button class="number-key" (click)="insertMath('2')">2</button>
+      <button class="number-key" (click)="insertMath('3')">3</button>
+      <button
+        class="operation-key"
+        (click)="insertMath('\\cdot')"
+        title="Multiplicación"
+      >
+        ×
+      </button>
+    </div>
+    <div class="key-row">
+      <button class="number-key" (click)="insertMath('0')">0</button>
+      <button
+        class="number-key"
+        (click)="insertMath('.')"
+        title="Punto decimal"
+      >
+        .
+      </button>
+      <button class="operation-key" (click)="insertMath('+')" title="Suma">
+        +
+      </button>
+      <button
+        class="operation-key"
+        (click)="insertMath('\\frac{}{}')"
+        title="División"
+      >
+        ÷
+      </button>
+    </div>
+  </div>
+
+  <!-- Basics Tab (Variables y paréntesis) -->
+  <div class="keyboard-content" *ngIf="activeTab === 'basics'">
+    <div class="keyboard-section-header">
+      <h5 class="keyboard-section-title">Variables</h5>
+      <button class="section-delete-key" (click)="deleteMath()" title="Borrar">
+        ⌫
+      </button>
+    </div>
+    <div class="key-row">
+      <button
+        class="operation-key variable-key"
+        (click)="insertMath('x')"
+        title="Variable x"
+      >
+        x
+      </button>
+      <button
+        class="operation-key variable-key"
+        (click)="insertMath('t')"
+        title="Variable t"
+      >
+        t
+      </button>
+      <button class="operation-key" (click)="insertMath('\\pi')" title="Pi">
+        π
+      </button>
+      <button class="operation-key" (click)="insertMath('e')" title="Número e">
+        e
+      </button>
+    </div>
+
+    <div class="key-section">
+      <h5 class="keyboard-section-title">Paréntesis</h5>
+      <div class="key-row">
+        <button
+          class="function-key"
+          (click)="insertMath('\\left(\\right)')"
+          title="Paréntesis"
+        >
+          <span [innerHTML]="'$$(\\square)$$'"></span>
+        </button>
+        <button
+          class="function-key"
+          (click)="insertMath('\\left[\\right]')"
+          title="Corchetes"
+        >
+          <span [innerHTML]="'$$[\\square]$$'"></span>
+        </button>
+        <button
+          class="function-key"
+          (click)="insertMath('\\left\\{\\right\\}')"
+          title="Llaves"
+        >
+          <span [innerHTML]="'$$\\{\\square\\}$$'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Tab (Potencias, raíces, fracciones) -->
+  <div class="keyboard-content" *ngIf="activeTab === 'advanced'">
+    <div class="keyboard-section-header">
+      <h5 class="keyboard-section-title">Potencias y Raíces</h5>
+      <button class="section-delete-key" (click)="deleteMath()" title="Borrar">
+        ⌫
+      </button>
+    </div>
+    <div class="key-row">
+      <button
+        class="function-key"
+        (click)="insertMath('\\square^{}')"
+        title="Potencia"
+      >
+        <span [innerHTML]="'$$\\square^{n}$$'"></span>
+      </button>
+      <button
+        class="function-key"
+        (click)="insertMath('\\sqrt{}')"
+        title="Raíz cuadrada"
+      >
+        <span [innerHTML]="'$$\\sqrt{\\square}$$'"></span>
+      </button>
+      <button
+        class="function-key"
+        (click)="insertMath('\\sqrt[n]{}')"
+        title="Raíz n-ésima"
+      >
+        <span [innerHTML]="'$$\\sqrt[n]{\\square}$$'"></span>
+      </button>
+    </div>
+
+    <div class="key-section">
+      <h5 class="keyboard-section-title">Fracciones</h5>
+      <div class="key-row">
+        <button
+          class="function-key"
+          (click)="insertMath('\\frac{}{}')"
+          title="Fracción"
+        >
+          <span [innerHTML]="'$$\\frac{\\square}{\\square}$$'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trigonometric Tab -->
+  <div class="keyboard-content" *ngIf="activeTab === 'trigonometric'">
+    <div class="keyboard-section-header">
+      <h5 class="keyboard-section-title">Funciones Trigonométricas</h5>
+      <button class="section-delete-key" (click)="deleteMath()" title="Borrar">
+        ⌫
+      </button>
+    </div>
+    <div class="key-grid">
+      <button
+        class="function-key"
+        *ngFor="let button of mathButtonsTrig"
+        (click)="insertMath(button.latex)"
+        [title]="button.tooltip"
+      >
+        <span [innerHTML]="'$$' + button.display + '$$'"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Functions Tab -->
+  <div class="keyboard-content" *ngIf="activeTab === 'functions'">
+    <div class="keyboard-section-header">
+      <h5 class="keyboard-section-title">Funciones Matemáticas</h5>
+      <button class="section-delete-key" (click)="deleteMath()" title="Borrar">
+        ⌫
+      </button>
+    </div>
+    <div class="key-grid">
+      <button
+        class="function-key"
+        *ngFor="let button of mathButtonsBasic"
+        (click)="insertMath(button.latex)"
+        [title]="button.tooltip"
+      >
+        <span [innerHTML]="'$$' + button.display + '$$'"></span>
       </button>
     </div>
   </div>

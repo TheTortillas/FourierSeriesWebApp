@@ -7,6 +7,7 @@ import {
   PLATFORM_ID,
   Inject,
   NgZone,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -38,7 +39,9 @@ import { SurveyButtonComponent } from '../../shared/components/survey-button/sur
   templateUrl: './fourier-calculator.component.html',
   styleUrl: './fourier-calculator.component.scss',
 })
-export class FourierCalculatorComponent implements OnInit, AfterViewInit {
+export class FourierCalculatorComponent
+  implements OnInit, AfterViewInit, OnDestroy
+{
   @ViewChild('pieceContainer') pieceContainer: ElementRef | undefined;
 
   pieces: Piece[] = [];
@@ -58,6 +61,9 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
   // Add this new property for numSamples options
   powersOfTwo = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024];
 
+  // Add a property to track global click listener
+  private documentClickListener: any;
+
   // Obtener botones del teclado del servicio
   get mathButtonsBasic() {
     return this.mathKeyboardService.mathButtonsBasic;
@@ -68,6 +74,18 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
   get mathButtons() {
     return this.mathKeyboardService.mathButtons;
   }
+
+  // Mobile keyboard properties
+  isMobile: boolean = false;
+  mobileKeyboardVisible: boolean = false;
+  activeTab: string = 'numbers';
+  keyboardTabs = [
+    { id: 'numbers', name: 'Números' },
+    { id: 'basics', name: 'Variables' },
+    { id: 'advanced', name: 'Avanzados' },
+    { id: 'trigonometric', name: 'Trigonometría' },
+    { id: 'functions', name: 'Funciones' },
+  ];
 
   constructor(
     private apiService: ApiService,
@@ -91,15 +109,135 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     if (this.isBrowser) {
       this.addPiece();
+      // Check if device is mobile
+      this.isMobile = this.mathquillService.isMobileDevice();
+
+      // Add event listener for clicks outside MathQuill fields
+      if (this.isMobile) {
+        this.setupDocumentClickListener();
+      }
     }
+  }
+
+  // Add OnDestroy implementation to clean up the event listener
+  ngOnDestroy(): void {
+    if (this.isBrowser && this.documentClickListener) {
+      document.removeEventListener('click', this.documentClickListener);
+    }
+  }
+
+  // Create a method to handle the document click listener
+  private setupDocumentClickListener(): void {
+    this.documentClickListener = (event: MouseEvent) => {
+      // Don't hide keyboard if clicking on the keyboard itself
+      if (this.isClickInsideKeyboard(event)) {
+        return;
+      }
+
+      // Don't hide keyboard if clicking on a MathQuill field
+      if (this.isClickOnMathField(event)) {
+        // Show keyboard if clicking on math field
+        this.showMobileKeyboard();
+        return;
+      }
+
+      // Hide keyboard if clicking elsewhere
+      this.hideMobileKeyboard();
+    };
+
+    document.addEventListener('click', this.documentClickListener);
+  }
+
+  // Helper method to check if click is inside the keyboard
+  private isClickInsideKeyboard(event: MouseEvent): boolean {
+    const keyboardElement = document.querySelector('.mobile-math-keyboard');
+    const toggleButton = document.querySelector('.mobile-keyboard-toggle');
+
+    return !!(
+      (keyboardElement && keyboardElement.contains(event.target as Node)) ||
+      (toggleButton && toggleButton.contains(event.target as Node))
+    );
+  }
+
+  // Helper method to check if click is on a math field
+  private isClickOnMathField(event: MouseEvent): boolean {
+    const mathFields = document.querySelectorAll('.math-field');
+
+    for (let i = 0; i < mathFields.length; i++) {
+      if (mathFields[i].contains(event.target as Node)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   ngAfterViewInit(): void {
     if (this.isBrowser) {
       setTimeout(() => {
         this.mathquillService.renderMathJax();
+
+        // Add touch events for the drag handle
+        if (this.isMobile) {
+          this.setupDragToHide();
+        }
       }, 100);
     }
+  }
+
+  // Setup drag to hide functionality
+  private setupDragToHide(): void {
+    const dragHandle = document.querySelector('.keyboard-drag-handle');
+    const keyboard = document.querySelector('.mobile-math-keyboard');
+
+    if (!dragHandle || !keyboard) return;
+
+    let startY = 0;
+    let currentY = 0;
+
+    const touchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      currentY = startY;
+
+      document.addEventListener('touchmove', touchMove, { passive: false });
+      document.addEventListener('touchend', touchEnd);
+    };
+
+    const touchMove = (e: TouchEvent) => {
+      // Prevent scrolling while dragging
+      e.preventDefault();
+
+      currentY = e.touches[0].clientY;
+
+      // Calculate the drag distance
+      const deltaY = currentY - startY;
+
+      // Only allow dragging down (positive deltaY)
+      if (deltaY > 0) {
+        // Apply transform to keyboard directly for smooth animation
+        (keyboard as HTMLElement).style.transform = `translateY(${deltaY}px)`;
+      }
+    };
+
+    const touchEnd = () => {
+      // Remove event listeners
+      document.removeEventListener('touchmove', touchMove);
+      document.removeEventListener('touchend', touchEnd);
+
+      // Calculate if we should hide the keyboard
+      const deltaY = currentY - startY;
+
+      // Reset the inline style
+      (keyboard as HTMLElement).style.transform = '';
+
+      // If dragged down more than 80px, hide the keyboard
+      if (deltaY > 80) {
+        this.hideMobileKeyboard();
+      }
+    };
+
+    // Add touch start event
+    //dragHandle.addEventListener('touchstart', touchStart);
   }
 
   toggleKeyboard(): void {
@@ -229,7 +367,7 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
   createMathField(element: HTMLElement): any {
     if (!this.isBrowser) return null;
 
-    return this.mathquillHandler.createMathField(element, {
+    const field = this.mathquillHandler.createMathField(element, {
       edit: () => {
         // Trigger debounced update
         this.updateSubject.next();
@@ -243,6 +381,15 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
         }
       },
     });
+
+    // Add click event to show keyboard on mobile
+    if (this.isMobile) {
+      element.addEventListener('click', () => {
+        this.showMobileKeyboard();
+      });
+    }
+
+    return field;
   }
 
   private updateDisplayDebounced(): void {
@@ -835,5 +982,51 @@ export class FourierCalculatorComponent implements OnInit, AfterViewInit {
         });
       },
     });
+  }
+
+  // Mobile keyboard methods
+  showMobileKeyboard(): void {
+    this.mobileKeyboardVisible = true;
+    // Render MathJax for the keyboard buttons after the keyboard becomes visible
+    setTimeout(() => {
+      this.mathquillService.renderMathJax();
+    }, 100);
+  }
+
+  hideMobileKeyboard(): void {
+    this.mobileKeyboardVisible = false;
+  }
+
+  setActiveTab(tabId: string): void {
+    this.activeTab = tabId;
+    // Render MathJax for the newly visible tab
+    setTimeout(() => {
+      this.mathquillService.renderMathJax();
+    }, 10);
+  }
+
+  // Method to delete the last character or selection in the active math field
+  deleteMath(): void {
+    if (!this.isBrowser) return;
+
+    const activeField = this.mathquillHandler.getActiveMathField();
+    if (activeField) {
+      // Check if there's a selection first
+      const hasSelection =
+        activeField.selection !== undefined &&
+        activeField.selection() !== undefined &&
+        activeField.selection() !== '';
+
+      if (hasSelection) {
+        // If there's a selection, replace it with empty string
+        activeField.write('');
+      } else {
+        // Otherwise, delete the character to the left of the cursor
+        activeField.keystroke('Backspace');
+      }
+
+      // Update function display after deletion
+      this.updateSubject.next();
+    }
   }
 }

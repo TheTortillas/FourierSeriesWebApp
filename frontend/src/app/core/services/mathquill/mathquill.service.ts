@@ -29,7 +29,8 @@ export class MathquillService {
     }
   }
 
-  private isMobileDevice(): boolean {
+  // Cambiamos a público para poder usarlo desde otros componentes
+  isMobileDevice(): boolean {
     return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   }
 
