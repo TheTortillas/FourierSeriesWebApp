@@ -1,0 +1,453 @@
+<div
+  class="min-h-screen pt-12 pb-24 px-4 relative overflow-hidden"
+  [ngClass]="
+    isDarkMode
+      ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100'
+      : 'bg-gradient-to-br from-blue-50 via-white to-blue-50 text-gray-800'
+  "
+>
+  <!-- Decorative background elements -->
+  <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+    <div
+      class="sine-wave sine-wave-1"
+      [ngClass]="isDarkMode ? 'opacity-5' : 'opacity-10'"
+    ></div>
+    <div
+      class="sine-wave sine-wave-2"
+      [ngClass]="isDarkMode ? 'opacity-5' : 'opacity-10'"
+    ></div>
+    <div
+      class="sine-wave sine-wave-3"
+      [ngClass]="isDarkMode ? 'opacity-5' : 'opacity-10'"
+    ></div>
+  </div>
+
+  <!-- Main content container -->
+  <div class="container mx-auto max-w-6xl relative z-10">
+    <!-- Hero section -->
+    <div
+      class="flex flex-col lg:flex-row items-center justify-between mb-16 gap-8"
+    >
+      <!-- Left text content -->
+      <div class="lg:w-1/2" >
+        <h1
+          class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
+          [ngClass]="isDarkMode ? 'text-gradient-dark' : 'text-gradient-light'"
+        >
+          Calculadora de Series de Fourier y DFT
+        </h1>
+        <p class="text-xl md:text-2xl mb-8 font-light leading-relaxed">
+          Herramienta interactiva para el cálculo, análisis y visualización de Series de
+          Fourier y Transformada Discreta
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button
+            (click)="navigateToCalculator()"
+            class="py-3 px-6 rounded-lg text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gradient-to-r from-teal-500 to-green-500 hover:from-teal-600 hover:to-green-600 text-white'
+                : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white'
+            "
+          >
+            Series de Fourier
+          </button>
+          <button
+            (click)="navigateToDFT()"
+            class="py-3 px-6 rounded-lg text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white'
+                : 'bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white'
+            "
+          >
+            Transformada Discreta
+          </button>
+        </div>
+      </div>
+
+      <!-- Right illustration -->
+      <div class="lg:w-1/2 flex justify-center">
+        <div class="relative w-full max-w-md">
+          <!-- SVG illustration of Fourier plots with animated paths -->
+          <div
+            class="fourier-illustration"
+            [ngClass]="isDarkMode ? 'fourier-dark' : 'fourier-light'"
+          >
+            <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+              <!-- Grid lines -->
+              <g
+                class="grid-lines"
+                [ngClass]="isDarkMode ? 'stroke-gray-700' : 'stroke-gray-200'"
+              >
+                <line x1="0" y1="150" x2="400" y2="150" stroke-width="2" />
+                <line x1="200" y1="0" x2="200" y2="300" stroke-width="2" />
+                <line
+                  x1="0"
+                  y1="75"
+                  x2="400"
+                  y2="75"
+                  stroke-width="1"
+                  stroke-dasharray="4"
+                />
+                <line
+                  x1="0"
+                  y1="225"
+                  x2="400"
+                  y2="225"
+                  stroke-width="1"
+                  stroke-dasharray="4"
+                />
+                <line
+                  x1="100"
+                  y1="0"
+                  x2="100"
+                  y2="300"
+                  stroke-width="1"
+                  stroke-dasharray="4"
+                />
+                <line
+                  x1="300"
+                  y1="0"
+                  x2="300"
+                  y2="300"
+                  stroke-width="1"
+                  stroke-dasharray="4"
+                />
+              </g>
+
+              <!-- Original function -->
+              <path
+                class="original-function"
+                [ngClass]="isDarkMode ? 'stroke-teal-400' : 'stroke-blue-600'"
+                d="M0,150 C50,75 100,225 150,150 S250,75 300,150 S400,225 400,150"
+                fill="none"
+                stroke-width="3"
+              />
+
+              <!-- Approximation -->
+              <path
+                class="approximation"
+                [ngClass]="
+                  isDarkMode ? 'stroke-purple-400' : 'stroke-purple-600'
+                "
+                d="M0,150 C25,125 50,175 75,150 S125,125 150,150 S175,175 200,150 S225,125 250,150 S275,175 300,150 S350,125 400,150"
+                fill="none"
+                stroke-width="2"
+              />
+
+              <!-- Frequency components - discrete stems for DFT -->
+              <g
+                class="frequency-components"
+                [ngClass]="isDarkMode ? 'stroke-pink-500' : 'stroke-pink-600'"
+              >
+                <line x1="50" y1="150" x2="50" y2="100" stroke-width="2" />
+                <line x1="100" y1="150" x2="100" y2="75" stroke-width="2" />
+                <line x1="150" y1="150" x2="150" y2="125" stroke-width="2" />
+                <line x1="200" y1="150" x2="200" y2="175" stroke-width="2" />
+                <line x1="250" y1="150" x2="250" y2="125" stroke-width="2" />
+                <line x1="300" y1="150" x2="300" y2="75" stroke-width="2" />
+                <line x1="350" y1="150" x2="350" y2="100" stroke-width="2" />
+
+                <circle
+                  cx="50"
+                  cy="100"
+                  r="4"
+                  [ngClass]="isDarkMode ? 'fill-pink-500' : 'fill-pink-600'"
+                />
+                <circle
+                  cx="100"
+                  cy="75"
+                  r="4"
+                  [ngClass]="isDarkMode ? 'fill-pink-500' : 'fill-pink-600'"
+                />
+                <circle
+                  cx="150"
+                  cy="125"
+                  r="4"
+                  [ngClass]="isDarkMode ? 'fill-pink-500' : 'fill-pink-600'"
+                />
+                <circle
+                  cx="200"
+                  cy="175"
+                  r="4"
+                  [ngClass]="isDarkMode ? 'fill-pink-500' : 'fill-pink-600'"
+                />
+                <circle
+                  cx="250"
+                  cy="125"
+                  r="4"
+                  [ngClass]="isDarkMode ? 'fill-pink-500' : 'fill-pink-600'"
+                />
+                <circle
+                  cx="300"
+                  cy="75"
+                  r="4"
+                  [ngClass]="isDarkMode ? 'fill-pink-500' : 'fill-pink-600'"
+                />
+                <circle
+                  cx="350"
+                  cy="100"
+                  r="4"
+                  [ngClass]="isDarkMode ? 'fill-pink-500' : 'fill-pink-600'"
+                />
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features section -->
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"
+    >
+      <div
+        class="feature-card rounded-xl p-8 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-800/50 border border-gray-700'
+            : 'bg-white/80 shadow-md border border-gray-100'
+        "
+      >
+        <div
+          class="feature-icon mb-4 p-3 rounded-full w-16 h-16 flex items-center justify-center"
+          [ngClass]="isDarkMode ? 'bg-teal-900/30' : 'bg-blue-100'"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8"
+            [ngClass]="isDarkMode ? 'text-teal-400' : 'text-blue-600'"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            />
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold mb-3">Series Trigonométricas</h3>
+        <p class="mb-4">
+          Expande tu función en términos de senos y cosenos utilizando
+          coeficientes de Fourier con visualización interactiva.
+        </p>
+        <button
+          (click)="navigateToCalculator()"
+          class="text-sm font-medium hover:underline"
+          [ngClass]="isDarkMode ? 'text-teal-400' : 'text-blue-600'"
+        >
+          Calcular serie trigonométrica →
+        </button>
+      </div>
+
+      <div
+        class="feature-card rounded-xl p-8 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-800/50 border border-gray-700'
+            : 'bg-white/80 shadow-md border border-gray-100'
+        "
+      >
+        <div
+          class="feature-icon mb-4 p-3 rounded-full w-16 h-16 flex items-center justify-center"
+          [ngClass]="isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100'"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8"
+            [ngClass]="isDarkMode ? 'text-purple-400' : 'text-purple-600'"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold mb-3">Series Complejas</h3>
+        <p class="mb-4">
+          Representa funciones periódicas en términos de exponenciales complejas
+          con visualización de amplitud y fase.
+        </p>
+        <button
+          (click)="navigateToCalculator()"
+          class="text-sm font-medium hover:underline"
+          [ngClass]="isDarkMode ? 'text-purple-400' : 'text-purple-600'"
+        >
+          Calcular serie compleja →
+        </button>
+      </div>
+
+      <div
+        class="feature-card rounded-xl p-8 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-800/50 border border-gray-700'
+            : 'bg-white/80 shadow-md border border-gray-100'
+        "
+      >
+        <div
+          class="feature-icon mb-4 p-3 rounded-full w-16 h-16 flex items-center justify-center"
+          [ngClass]="isDarkMode ? 'bg-pink-900/30' : 'bg-pink-100'"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8"
+            [ngClass]="isDarkMode ? 'text-pink-400' : 'text-pink-600'"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold mb-3">Transformada Discreta</h3>
+        <p class="mb-4">
+          Analiza señales mediante el algoritmo DFT para obtener componentes
+          frecuenciales con visualización espectral.
+        </p>
+        <button
+          (click)="navigateToDFT()"
+          class="text-sm font-medium hover:underline"
+          [ngClass]="isDarkMode ? 'text-pink-400' : 'text-pink-600'"
+        >
+          Calcular transformada →
+        </button>
+      </div>
+    </div>
+
+    <!-- About section -->
+    <div
+      class="rounded-xl p-8 mb-16"
+
+      [ngClass]="
+        isDarkMode
+          ? 'bg-gray-800/50 border border-gray-700'
+          : 'bg-white/80 shadow-md border border-gray-100'
+      "
+    >
+      <div class="flex flex-col md:flex-row gap-8 items-center">
+        <div class="md:w-2/3">
+          <h2
+            class="text-3xl font-bold mb-6"
+            [ngClass]="
+              isDarkMode ? 'text-gradient-dark' : 'text-gradient-light'
+            "
+          >
+            Analiza y visualiza transformaciones de Fourier
+          </h2>
+          <p class="mb-4 leading-relaxed">
+            Fourier Web Calculator es más que una calculadora de series. Es una
+            plataforma interactiva para conectar conceptos matemáticos
+            abstractos con representaciones visuales tangibles, mostrando la
+            potencia y belleza de las transformadas de Fourier.
+          </p>
+          <p class="mb-6 leading-relaxed">
+            Explora la descomposición espectral de funciones periódicas,
+            visualiza las componentes armónicas y comprende la dualidad entre
+            los dominios del tiempo y la frecuencia.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <span
+              class="px-3 py-1 rounded-full text-sm font-medium"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-300'
+                  : 'bg-gray-100 text-gray-600'
+              "
+            >
+              Series de Fourier
+            </span>
+            <span
+              class="px-3 py-1 rounded-full text-sm font-medium"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-300'
+                  : 'bg-gray-100 text-gray-600'
+              "
+            >
+              Análisis Armónico
+            </span>
+            <span
+              class="px-3 py-1 rounded-full text-sm font-medium"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-300'
+                  : 'bg-gray-100 text-gray-600'
+              "
+            >
+              Espectro de Frecuencias
+            </span>
+            <span
+              class="px-3 py-1 rounded-full text-sm font-medium"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-300'
+                  : 'bg-gray-100 text-gray-600'
+              "
+            >
+              Visualización Matemática
+            </span>
+            <span
+              class="px-3 py-1 rounded-full text-sm font-medium"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-300'
+                  : 'bg-gray-100 text-gray-600'
+              "
+            >
+              Transformada Discreta
+            </span>
+          </div>
+        </div>
+        <div class="md:w-1/3 flex justify-center">
+          <div class="pulse-circle">
+            <div
+              class="circle-container"
+              [ngClass]="
+                isDarkMode ? 'circle-container-dark' : 'circle-container-light'
+              "
+            >
+              <div class="circle circle1"></div>
+              <div class="circle circle2"></div>
+              <div class="circle circle3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Footer -->
+    <footer class="footer-section py-10 border-t">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+              <p class="opacity-70">© 2025 Calculadora de Series de Fourier y DFT</p>
+            </div>
+            <div class="flex space-x-6">
+              <a href="#" class="footer-link">Acerca de</a>
+              <a href="#" class="footer-link">Documentación</a>
+              <a href="#" class="footer-link">Contacto</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+  <!-- Buttons -->
+  <app-theme-toggle></app-theme-toggle>
+  <app-survey-button></app-survey-button>
+</div>
