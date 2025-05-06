@@ -67,7 +67,7 @@ import { ThemeService } from '../../../core/services/theming/theme.service';
 export class SurveyButtonComponent implements OnInit {
   surveyCompleted = false;
   isDarkMode = false;
-  private surveyUrl = 'https://tu-url-de-encuesta.com'; // Reemplaza con tu URL real
+  private surveyUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSd4f1PFz7KpLaxqcLoAyL8zKR_KyCpXQKzbEWPlUxvjlJmGjQ/viewform?usp=header'; 
 
   constructor(
     private surveyService: SurveyService,
