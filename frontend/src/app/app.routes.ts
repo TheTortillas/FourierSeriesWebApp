@@ -18,6 +18,7 @@ import { HalfRangeComponent } from './pages/fourier-series-plot/half-range/half-
 import { ComplexComponent } from './pages/fourier-series-plot/complex/complex.component';
 import { DFTPlotComponent } from './pages/dft-plot/dft-plot.component';
 import { HomeComponent } from './pages/home/home.component';
+import { AboutUsComponent } from './pages/about-us/about-us.component';
 export const routes: Routes = [
   {
     path: 'fourier-calculator',
@@ -107,6 +108,10 @@ export const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent
+  },
+  {
+    path: 'about-us',
+    component: AboutUsComponent
   },
   {
     path: '',

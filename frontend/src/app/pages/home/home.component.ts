@@ -1,15 +1,16 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { SurveyButtonComponent } from '../../shared/components/survey-button/survey-button.component';
 import { ThemeService } from '../../core/services/theming/theme.service';
 import { MathquillService } from '../../core/services/mathquill/mathquill.service';
+import { FooterComponent } from "../../shared/components/footer/footer.component";
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ThemeToggleComponent, SurveyButtonComponent, RouterLink],
+  imports: [CommonModule, ThemeToggleComponent, SurveyButtonComponent, FooterComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
@@ -30,16 +31,20 @@ export class HomeComponent implements OnInit, AfterViewInit {
     // Get initial theme state synchronously if possible
     this.isDarkMode = this.themeService.isDarkMode;
   }
-
+  
   ngOnInit(): void {
-    // Use setTimeout to ensure this runs after Angular's change detection
+    // Mover scroll a la parte superior
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
+  
     setTimeout(() => {
       this.themeService.darkMode$.subscribe((isDark) => {
         this.isDarkMode = isDark;
       });
     }, 0);
   }
-
+  
   ngAfterViewInit(): void {
     // Render MathJax formulas after view is initialized
     setTimeout(() => {

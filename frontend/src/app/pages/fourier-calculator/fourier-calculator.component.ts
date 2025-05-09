@@ -108,6 +108,8 @@ export class FourierCalculatorComponent
 
   ngOnInit(): void {
     if (this.isBrowser) {
+      window.scrollTo(0, 0);
+
       this.addPiece();
       // Check if device is mobile
       this.isMobile = this.mathquillService.isMobileDevice();
@@ -116,6 +118,19 @@ export class FourierCalculatorComponent
       if (this.isMobile) {
         this.setupDocumentClickListener();
       }
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if (this.isBrowser) {
+      setTimeout(() => {
+        this.mathquillService.renderMathJax();
+
+        // Add touch events for the drag handle
+        if (this.isMobile) {
+          this.setupDragToHide();
+        }
+      }, 100);
     }
   }
 
@@ -170,19 +185,6 @@ export class FourierCalculatorComponent
     }
 
     return false;
-  }
-
-  ngAfterViewInit(): void {
-    if (this.isBrowser) {
-      setTimeout(() => {
-        this.mathquillService.renderMathJax();
-
-        // Add touch events for the drag handle
-        if (this.isMobile) {
-          this.setupDragToHide();
-        }
-      }, 100);
-    }
   }
 
   // Setup drag to hide functionality

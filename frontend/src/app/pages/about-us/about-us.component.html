@@ -1,0 +1,299 @@
+<div
+  class="min-h-screen pt-10 sm:pt-12 pb-16 sm:pb-24 px-5 sm:px-6 relative overflow-hidden"
+  [ngClass]="
+    isDarkMode
+      ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100'
+      : 'bg-gradient-to-br from-blue-50 via-white to-blue-50 text-gray-800'
+  "
+>
+  <!-- Decorative background elements similar to home page -->
+  <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+    <div
+      class="sine-wave sine-wave-1"
+      [ngClass]="isDarkMode ? 'opacity-5' : 'opacity-10'"
+    ></div>
+    <div
+      class="sine-wave sine-wave-2"
+      [ngClass]="isDarkMode ? 'opacity-5' : 'opacity-10'"
+    ></div>
+    <div
+      class="sine-wave sine-wave-3"
+      [ngClass]="isDarkMode ? 'opacity-5' : 'opacity-10'"
+    ></div>
+  </div>
+
+  <!-- Main content container -->
+  <div class="container mx-auto max-w-4xl relative z-10">
+    <!-- Header -->
+    <header class="mb-12 text-center">
+      <h1
+        class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+        [ngClass]="isDarkMode ? 'text-gradient-dark' : 'text-gradient-light'"
+      >
+        Acerca de este Proyecto
+      </h1>
+      <p class="text-lg sm:text-xl font-light max-w-2xl mx-auto">
+        Una herramienta educativa para visualizar y comprender las Series de
+        Fourier y la Transformada Discreta de Fourier
+      </p>
+    </header>
+
+    <!-- Project section -->
+    <section
+      class="mb-12 rounded-xl p-6 sm:p-8"
+      [ngClass]="
+        isDarkMode
+          ? 'bg-gray-800/50 border border-gray-700'
+          : 'bg-white/80 shadow-md border border-gray-100'
+      "
+    >
+      <h2 class="text-2xl font-bold mb-4">El Proyecto</h2>
+
+      <div class="space-y-4">
+        <p>
+          <strong>Calculadora de series de Fourier y DFT</strong> es una
+          aplicación web educativa diseñada para ayudar a estudiantes y
+          profesionales a enseñar y comprender las series de Fourier y la
+          transformada discreta de Fourier (DFT) a través de visualizaciones
+          interactivas.
+        </p>
+
+        <p>
+          Este proyecto nació de la necesidad de crear herramientas visuales
+          para conceptos matemáticos complejos que suelen ser difíciles de
+          entender sin una representación gráfica adecuada.
+        </p>
+
+        <h3 class="text-xl font-semibold mt-6 mb-2">
+          Características Principales
+        </h3>
+        <ul class="list-disc pl-5 space-y-2">
+          <li>Cálculo y visualización de series de Fourier trigonométricas</li>
+          <li>Representación de series de Fourier complejas</li>
+          <li>
+            Implementación interactiva de la Transformada Discreta de Fourier
+          </li>
+          <li>
+            Interfaz intuitiva y adaptable para dispositivos móviles y de
+            escritorio
+          </li>
+          <li>Soporte para modo claro y oscuro</li>
+        </ul>
+
+        <h3 class="text-xl font-semibold mt-6 mb-2">Tecnologías Utilizadas</h3>
+        <div class="flex flex-wrap gap-2">
+          <span
+            class="px-3 py-1 rounded-full text-sm font-medium"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-gray-100 text-gray-600'
+            "
+          >
+            Angular
+          </span>
+          <span
+            class="px-3 py-1 rounded-full text-sm font-medium"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-gray-100 text-gray-600'
+            "
+          >
+            TypeScript
+          </span>
+          <span
+            class="px-3 py-1 rounded-full text-sm font-medium"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-gray-100 text-gray-600'
+            "
+          >
+            TailwindCSS
+          </span>
+          <span
+            class="px-3 py-1 rounded-full text-sm font-medium"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-gray-100 text-gray-600'
+            "
+          >
+            MathJax
+          </span>
+          <span
+            class="px-3 py-1 rounded-full text-sm font-medium"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-gray-100 text-gray-600'
+            "
+          >
+            MathQuill
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Developer section -->
+    <section
+      class="mb-12 rounded-xl p-6 sm:p-8"
+      [ngClass]="
+        isDarkMode
+          ? 'bg-gray-800/50 border border-gray-700'
+          : 'bg-white/80 shadow-md border border-gray-100'
+      "
+    >
+      <h2 class="text-2xl font-bold mb-4">Sobre Mí</h2>
+
+      <div class="flex flex-col md:flex-row gap-6">
+        <div class="md:w-1/3 flex justify-center">
+          <div
+            class="w-48 h-48 rounded-full overflow-hidden border-4"
+            [ngClass]="isDarkMode ? 'border-teal-500/30' : 'border-blue-500/30'"
+          >
+            <!-- Replace with your photo -->
+            <img
+              src="assets/images/profile.jpg"
+              alt="Desarrollador"
+              class="w-full h-full object-cover"
+              onerror="this.src='https://via.placeholder.com/200x200?text=Foto';this.onerror='';"
+            />
+          </div>
+        </div>
+        <div class="md:w-2/3">
+          <h3 class="text-xl font-semibold mb-2">Sebastián</h3>
+          <p class="mb-4">
+            Soy un desarrollador apasionado por las matemáticas y la
+            programación. Este proyecto nació de mi interés por crear
+            herramientas educativas que faciliten el aprendizaje de conceptos
+            complejos a través de visualizaciones interactivas.
+          </p>
+          <p class="mb-4">
+            Mi formación en ingeniería informática y mi experiencia en
+            desarrollo web me permitieron crear esta aplicación que busca tender
+            un puente entre la teoría matemática y su aplicación práctica en el
+            procesamiento de señales.
+          </p>
+
+          <div class="mt-4 flex flex-wrap gap-3">
+            <a
+              href="https://github.com/TheTortillas/FourierSeriesWebApp"
+              target="_blank"
+              class="flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+              "
+            >
+              <svg
+                class="w-5 h-5 mr-2"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              GitHub
+            </a>
+            <a
+              href="mailto:sebasthefallen@gmail.com"
+              class="flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+              "
+            >
+              <svg
+                class="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                ></path>
+              </svg>
+              Contacto
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Project goals -->
+    <section
+      class="rounded-xl p-6 sm:p-8"
+      [ngClass]="
+        isDarkMode
+          ? 'bg-gray-800/50 border border-gray-700'
+          : 'bg-white/80 shadow-md border border-gray-100'
+      "
+    >
+      <h2 class="text-2xl font-bold mb-4">Visión y Objetivos</h2>
+
+      <div class="space-y-4">
+        <p>
+          El objetivo principal de este proyecto es hacer que los conceptos de
+          análisis de Fourier sean más accesibles y comprensibles para
+          estudiantes y profesionales a través de herramientas interactivas y
+          visuales.
+        </p>
+
+        <p>A futuro, planeo expandir la aplicación con:</p>
+
+        <ul class="list-disc pl-5 space-y-2">
+          <li>Más ejemplos predefinidos para casos de uso específicos</li>
+          <li>Tutoriales interactivos paso a paso</li>
+          <li>Implementación de la Transformada Rápida de Fourier (FFT)</li>
+          <li>Aplicaciones prácticas en procesamiento de señales e imágenes</li>
+          <li>Soporte para exportar resultados y visualizaciones</li>
+        </ul>
+
+        <div class="mt-8">
+          <a
+            routerLink="/"
+            class="inline-flex items-center px-5 py-2.5 rounded-lg text-base font-medium transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gradient-to-r from-teal-500 to-green-500 hover:from-teal-600 hover:to-green-600 text-white'
+                : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white'
+            "
+          >
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              ></path>
+            </svg>
+            Volver al Inicio
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <app-footer [isDarkMode]="isDarkMode"></app-footer>
+  </div>
+
+  <!-- Theme toggle button -->
+  <app-theme-toggle></app-theme-toggle>
+</div>
