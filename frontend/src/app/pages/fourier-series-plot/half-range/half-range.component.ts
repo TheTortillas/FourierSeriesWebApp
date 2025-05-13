@@ -81,6 +81,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     an: '',
     bn: '',
     w0: '',
+    T: '',
   };
 
   // Serie completa en formato LaTeX
@@ -126,6 +127,10 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
   public coeffBgColor: string = '#1A1A2E'; // Dark mode default
   public coeffAxisColor: string = '#B794F4'; // Dark mode default
   public coeffGridColor: string = '#553C9A'; // Dark mode default
+
+  public showNonIntegerCoeffs: boolean = false;
+  public nonIntegerCosineLatexFormula: string = '';
+  public nonIntegerSineLatexFormula: string = '';
 
   private coeffPoints: Array<{
     n: number;
@@ -807,13 +812,27 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Método para precalcular coeficientes (similar a TrigComponent pero adaptado)
   private precalculateCoefficients(): void {
-    if (!this.response || !this.response.simplified) return;
+    if (
+      !this.response ||
+      (!this.response.simplified && !this.response.nonIntegerCoeffs)
+    )
+      return;
 
     try {
-      const a0Expr = this.response.simplified.a0 || '0';
-      const anExpr = this.response.simplified.an || '0';
-      const bnExpr = this.response.simplified.bn || '0';
-      const w0Expr = this.response.simplified.w0 || '%pi';
+      // Usar preferentemente los coeficientes no enteros para evitar singularidades
+      const a0Expr =
+        this.response.nonIntegerCoeffs?.a0 ||
+        this.response.simplified?.a0 ||
+        '0';
+      const anExpr =
+        this.response.nonIntegerCoeffs?.an ||
+        this.response.simplified?.an ||
+        '0';
+      const bnExpr =
+        this.response.nonIntegerCoeffs?.bn ||
+        this.response.simplified?.bn ||
+        '0';
+      const w0Expr = this.response.simplified?.w0 || '%pi';
 
       // Evaluar a0
       try {
@@ -963,7 +982,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
   private prepareLatexFormulas(): void {
     if (!this.response || !this.response.latex) return;
 
-    // Limpiamos los delimitadores LaTeX
+    // Limpiamos los delimitadores LaTeX - coeficientes con n entero
     const a0 = this.stripLatexDelimiters(this.response.latex.a0 || '');
     const an = this.stripLatexDelimiters(this.response.latex.an || '');
     const bn = this.stripLatexDelimiters(this.response.latex.bn || '');
@@ -972,18 +991,35 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     );
     const sine = this.stripLatexDelimiters(this.response.latex.sineCore || '');
 
+    // Para los coeficientes sin restricción de n entero
+    const nonIntA0 = this.response.latex.nonInteger?.a0
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.a0)
+      : a0;
+    const nonIntAn = this.response.latex.nonInteger?.an
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.an)
+      : an;
+    const nonIntBn = this.response.latex.nonInteger?.bn
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.bn)
+      : bn;
+
     // Asignar valores LaTeX para los coeficientes
-    this.latexRendered.a0 = `$$${a0}$$`;
-    this.latexRendered.an = `$$${an}$$`;
-    this.latexRendered.bn = `$$${bn}$$`;
+    this.latexRendered = {
+      a0: `$$${a0}$$`,
+      an: `$$${an}$$`,
+      bn: `$$${bn}$$`,
+      w0: this.response.latex.w0
+        ? `$$${this.stripLatexDelimiters(this.response.latex.w0)}$$`
+        : '',
+      T: this.response.latex.T,
+      // Añadir los coeficientes sin restricción
+      nonInteger: {
+        a0: `$$${nonIntA0}$$`,
+        an: `$$${nonIntAn}$$`,
+        bn: `$$${nonIntBn}$$`,
+      },
+    };
 
-    if (this.response.latex.w0) {
-      this.latexRendered.w0 = `$$${this.stripLatexDelimiters(
-        this.response.latex.w0
-      )}$$`;
-    }
-
-    // Formular serie coseno
+    // Formular serie coseno con n entero
     if (a0 !== '0') {
       if (an !== '0') {
         this.cosineLatexFormula = `$$f_c(${this.intVar}) = \\frac{${a0}}{2} + \\sum_{n=1}^{\\infty} ${an} \\cdot ${cosine}$$`;
@@ -996,11 +1032,31 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
       this.cosineLatexFormula = `$$f_c(${this.intVar}) = 0$$`;
     }
 
-    // Formular serie seno
+    // Formular serie seno con n entero
     if (bn !== '0') {
       this.sineLatexFormula = `$$f_s(${this.intVar}) = \\sum_{n=1}^{\\infty} ${bn} \\cdot ${sine}$$`;
     } else {
       this.sineLatexFormula = `$$f_s(${this.intVar}) = 0$$`;
+    }
+
+    // Formular serie coseno sin restricción n entero
+    if (nonIntA0 !== '0') {
+      if (nonIntAn !== '0') {
+        this.nonIntegerCosineLatexFormula = `$$f_c(${this.intVar}) = \\frac{${nonIntA0}}{2} + \\sum_{n=1}^{\\infty} ${nonIntAn} \\cdot ${cosine}$$`;
+      } else {
+        this.nonIntegerCosineLatexFormula = `$$f_c(${this.intVar}) = \\frac{${nonIntA0}}{2}$$`;
+      }
+    } else if (nonIntAn !== '0') {
+      this.nonIntegerCosineLatexFormula = `$$f_c(${this.intVar}) = \\sum_{n=1}^{\\infty} ${nonIntAn} \\cdot ${cosine}$$`;
+    } else {
+      this.nonIntegerCosineLatexFormula = `$$f_c(${this.intVar}) = 0$$`;
+    }
+
+    // Formular serie seno sin restricción n entero
+    if (nonIntBn !== '0') {
+      this.nonIntegerSineLatexFormula = `$$f_s(${this.intVar}) = \\sum_{n=1}^{\\infty} ${nonIntBn} \\cdot ${sine}$$`;
+    } else {
+      this.nonIntegerSineLatexFormula = `$$f_s(${this.intVar}) = 0$$`;
     }
   }
 
@@ -1013,8 +1069,11 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   fetchIndividualTerms(): void {
-    if (!this.response || !this.response.simplified) {
-      console.warn('No hay respuesta o datos simplificados');
+    if (
+      !this.response ||
+      (!this.response.simplified && !this.response.nonIntegerCoeffs)
+    ) {
+      console.warn('No hay respuesta o datos de coeficientes');
       return;
     }
 
@@ -1026,17 +1085,29 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Intentar usar los términos directamente desde la respuesta
-    // No necesitamos llamar al API nuevamente si ya tenemos los datos
     try {
+      // Usar preferentemente los coeficientes no enteros para evitar singularidades
       // Procesar y mostrar términos en LaTeX
       this.prepareIndividualTermFunctions({
         string: {
-          a0: this.response.simplified.a0,
-          an: this.response.simplified.an,
-          bn: this.response.simplified.bn,
+          a0:
+            this.response.nonIntegerCoeffs?.a0 ||
+            this.response.simplified?.a0 ||
+            '0',
+          an:
+            this.response.nonIntegerCoeffs?.an ||
+            this.response.simplified?.an ||
+            '0',
+          bn:
+            this.response.nonIntegerCoeffs?.bn ||
+            this.response.simplified?.bn ||
+            '0',
         },
         latex: {
-          a0: this.response.latex?.a0,
+          a0:
+            this.response.latex?.nonInteger?.a0 ||
+            this.response.latex?.a0 ||
+            '',
           an: [], // Se llenará en displaySeriesTerms según necesidades
           bn: [], // Se llenará en displaySeriesTerms según necesidades
         },
@@ -1301,7 +1372,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
   displayAllSeriesTermsInModal(): void {
     // Show the modal dialog
     this.showSeriesTermsModal = true;
-  
+
     // Prepare LaTeX expressions for the current active series type
     const data = {
       coefficients: {
@@ -1313,7 +1384,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
       intVar: this.intVar,
       terms: 100, // Request a larger number to ensure we have enough terms
     };
-  
+
     // Call the API to get the LaTeX expressions for the terms
     this.apiService.expandTrigonometricSeries(data).subscribe({
       next: (response) => {
@@ -1321,7 +1392,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         const cardStyle = this.isDarkMode
           ? 'bg-gray-800 border border-gray-700 text-white'
           : 'bg-white border border-gray-200 text-gray-800';
-  
+
         // Define title style based on theme and series type
         const titleStyle = this.isDarkMode
           ? this.activeSeriesType === 'cosine'
@@ -1330,16 +1401,16 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
           : this.activeSeriesType === 'cosine'
           ? 'text-green-600'
           : 'text-blue-600';
-  
+
         let html = `<div class="grid grid-cols-1 gap-4 max-w-full">`;
-  
+
         let localW0 = this.stripLatexDelimiters(this.latexRendered.w0 || '');
         if (localW0 === '1') {
           localW0 = '';
         } else if (localW0) {
           localW0 += ' ';
         }
-  
+
         if (this.activeSeriesType === 'cosine') {
           // For cosine series, add a0/2 term first if present
           if (
@@ -1355,17 +1426,19 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
               </div>
             `;
           }
-  
+
           // Add an terms
           if (response.latex.an && response.latex.an.length > 0) {
             for (let n = 1; n <= Math.min(50, response.latex.an.length); n++) {
               const index = n - 1;
-              
+
               let anLatexClean = '';
-              
+
               // Check if the array has aₙ
               if (index < (response.latex.an?.length || 0)) {
-                anLatexClean = this.stripLatexDelimiters(response.latex.an[index]);
+                anLatexClean = this.stripLatexDelimiters(
+                  response.latex.an[index]
+                );
                 const indetAn = this.response?.indeterminateValues?.an?.find(
                   (i) => i.n === n
                 );
@@ -1373,7 +1446,11 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
                   if (this.stripLatexDelimiters(indetAn.limitTex) === '0') {
                     anLatexClean = '';
                   } else {
-                    const argument = [n === 1 ? '' : String(n), localW0, this.intVar]
+                    const argument = [
+                      n === 1 ? '' : String(n),
+                      localW0,
+                      this.intVar,
+                    ]
                       .filter(Boolean)
                       .join('');
                     anLatexClean = `\\left (${this.stripLatexDelimiters(
@@ -1382,7 +1459,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
                   }
                 }
               }
-  
+
               if (anLatexClean && anLatexClean !== '0') {
                 html += `
                   <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
@@ -1398,12 +1475,14 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
           if (response.latex.bn && response.latex.bn.length > 0) {
             for (let n = 1; n <= Math.min(50, response.latex.bn.length); n++) {
               const index = n - 1;
-              
+
               let bnLatexClean = '';
-              
+
               // Check if the array has bₙ
               if (index < (response.latex.bn?.length || 0)) {
-                bnLatexClean = this.stripLatexDelimiters(response.latex.bn[index]);
+                bnLatexClean = this.stripLatexDelimiters(
+                  response.latex.bn[index]
+                );
                 const indetBn = this.response?.indeterminateValues?.bn?.find(
                   (i) => i.n === n
                 );
@@ -1411,7 +1490,11 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
                   if (this.stripLatexDelimiters(indetBn.limitTex) === '0') {
                     bnLatexClean = '';
                   } else {
-                    const argument = [n === 1 ? '' : String(n), localW0, this.intVar]
+                    const argument = [
+                      n === 1 ? '' : String(n),
+                      localW0,
+                      this.intVar,
+                    ]
                       .filter(Boolean)
                       .join('');
                     bnLatexClean = `\\left (${this.stripLatexDelimiters(
@@ -1420,7 +1503,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
                   }
                 }
               }
-  
+
               if (bnLatexClean && bnLatexClean !== '0') {
                 html += `
                   <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
@@ -1432,10 +1515,10 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
             }
           }
         }
-  
+
         html += '</div>';
         this.allTermsHtml = html;
-  
+
         // Render LaTeX after a short delay to ensure DOM is ready
         setTimeout(() => {
           this.mathquillService.renderMathJax();
@@ -1443,7 +1526,7 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error fetching series terms for modal:', error);
-  
+
         // Show error message if API call fails
         const errorHtml = `
           <div class="text-center py-6">
@@ -1536,5 +1619,12 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         this.coeffGridColor = '#FEEBC8';
       }
     }
+  }
+
+  toggleCoefficientsView(): void {
+    // Re-renderizar fórmulas LaTeX cuando cambia el toggle
+    setTimeout(() => {
+      this.mathquillService.renderMathJax();
+    }, 100);
   }
 }

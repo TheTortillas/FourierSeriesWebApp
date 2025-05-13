@@ -9,6 +9,11 @@ export interface TrigonometricResponse {
     series_cosine_core?: string;
     series_sine_core?: string;
   };
+  nonIntegerCoeffs?: {
+    a0?: string;
+    an?: string;
+    bn?: string;
+  };
   latex?: {
     a0?: string;
     an?: string;
@@ -17,6 +22,11 @@ export interface TrigonometricResponse {
     w0?: string;
     cosineCore?: string;
     sineCore?: string;
+    nonInteger?: {
+      a0?: string;
+      an?: string;
+      bn?: string;
+    }
   };
   indeterminateValues?: {
     an?: Array<{ n: number; limit: string; limitTex: string }>;

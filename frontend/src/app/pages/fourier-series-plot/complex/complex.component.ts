@@ -85,6 +85,8 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Serie completa en formato LaTeX
   public fullLatexFormula: string = '';
+  public nonIntegerFullLatexFormula: string = '';
+  public showNonIntegerCoeffs: boolean = false;
 
   // Cache de coeficientes precalculados para mejorar rendimiento
   private cachedC0: number = 0;
@@ -211,7 +213,7 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
     this.precalculateOriginalFunctions();
     this.fetchIndividualTerms();
     this.printAllCoefficients();
-  
+
     // Subscribe to theme changes
     this.themeSubscription = this.themeService.darkMode$.subscribe((isDark) => {
       this.isDarkMode = isDark;
@@ -219,7 +221,7 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
       this.updateCanvasColors(); // Actualiza los colores de los canvas
       this.redrawCanvas(); // Redibuja los canvas para reflejar los cambios
     });
-  
+
     // Initialize colors based on current theme
     this.updateThemeColors();
   }
@@ -605,14 +607,88 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
       this.response.latex.series_exp_core_neg || ''
     );
 
-    // Asignar valores LaTeX para los coeficientes
-    this.latexRendered.c0 = `$$${c0}$$`;
-    this.latexRendered.cn = `$$${cn}$$`;
-    this.latexRendered.w0 = `$$${w0}$$`;
-    this.latexRendered.T = `$$${T}$$`;
+    // Para los coeficientes sin restricción de n entero
+    const nonIntC0 = this.response.latex.nonInteger?.c0
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.c0)
+      : c0;
+    const nonIntCn = this.response.latex.nonInteger?.cn
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.cn)
+      : cn;
 
-    // Build the full complex series formula
+    // Asignar valores LaTeX para los coeficientes
+    this.latexRendered = {
+      c0: `$$${c0}$$`,
+      cn: `$$${cn}$$`,
+      w0: `$$${w0}$$`,
+      T: `$$${T}$$`,
+      // Añadir los coeficientes sin restricción
+      nonInteger: {
+        c0: `$$${nonIntC0}$$`,
+        cn: `$$${nonIntCn}$$`,
+      },
+    };
+
+    // Build the full complex series formula (versión con n entero)
     this.buildCompleteSeriesFormula(c0, cn, expPos);
+
+    // Build the full complex series formula (versión sin restricción de n entero)
+    this.buildNonIntegerSeriesFormula(nonIntC0, nonIntCn, expPos);
+  }
+
+  /**
+   * Builds the series formula without n integer restriction
+   */
+  private buildNonIntegerSeriesFormula(
+    c0: string,
+    cn: string,
+    expCore: string
+  ): void {
+    // Check if coefficients are available
+    if (!c0 || !cn) {
+      this.nonIntegerFullLatexFormula = '';
+      return;
+    }
+
+    // Parse w0 for display in formula
+    const w0Str = this.stripLatexDelimiters(this.response?.latex?.w0 || '1');
+    let w0Display: string;
+
+    // Format w0 based on its value (similar to the other method)
+    if (w0Str === '1') {
+      w0Display = '';
+    } else if (w0Str.includes('\\frac')) {
+      w0Display = w0Str;
+    } else if (w0Str === '\\pi') {
+      w0Display = '\\pi';
+    } else {
+      w0Display = w0Str;
+    }
+
+    // Create the full formula with summation notation
+    this.nonIntegerFullLatexFormula = `$$f(${this.intVar}) = \\sum_{n=-\\infty}^{\\infty}{}`;
+
+    // Replace 'n' in cn with actual variable
+    const cnWithVar = cn.replace(/n/g, '_VAR_');
+
+    // Get the exponential core
+    let expCoreLatex = this.stripLatexDelimiters(
+      this.response?.latex?.series_exp_core_pos || ''
+    );
+
+    if (!expCoreLatex) {
+      const angularFreq =
+        w0Display === '' ? this.intVar : `${w0Display} ${this.intVar}`;
+      expCoreLatex = `e^{i\\,n\\,${angularFreq}}`;
+    } else {
+      expCoreLatex = expCoreLatex.replace(/VAR/g, this.intVar);
+    }
+
+    // Build the formula: c_n * e^{i n w0 x}
+    let termFormula =
+      cnWithVar.replace(/_VAR_/g, 'n') + ' \\cdot ' + expCoreLatex;
+
+    // Add term to complete formula
+    this.nonIntegerFullLatexFormula += termFormula + '$$';
   }
 
   /**
@@ -1614,5 +1690,12 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     return terms;
+  }
+
+  toggleCoefficientsView(): void {
+    // Re-render LaTeX formulas when the toggle changes
+    setTimeout(() => {
+      this.mathquillService.renderMathJax();
+    }, 100);
   }
 }

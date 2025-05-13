@@ -13,6 +13,10 @@ export interface ComplexResponse {
     seriesTerms?: string;
     demoivreTerms?: string;
   };
+  nonIntegerCoeffs?: {
+    c0?: string;
+    cn?: string;
+  };
   latex?: {
     c0?: string;
     cn?: string;
@@ -21,8 +25,12 @@ export interface ComplexResponse {
     series_exp_core?: string;
     series_exp_core_pos?: string;
     series_exp_core_neg?: string;
-    terms?: string | string[]; // Updated to handle both formats
-    demoivreTerms?: string | string[]; // Updated to handle both formats
+    terms?: string | string[];
+    demoivreTerms?: string | string[];
+    nonInteger?: {
+      c0?: string;
+      cn?: string;
+    };
   };
   indeterminateValues?: {
     cn?: Array<{ n: number; limit: string; limitTex: string }>;

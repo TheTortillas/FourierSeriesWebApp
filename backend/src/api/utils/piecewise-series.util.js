@@ -68,16 +68,98 @@ async function calculatePiecewiseSeries({
     const N = 100; // coeficientes de −N … N
     const N_terms = 100; // términos que expandiremos en la serie
 
+    // PASO 1: Calcular coeficientes SIN declarar n entero
+    const nonIntegerScript = `
+      ${maximaBaseCode}
+  
+      ${getMaximaRules({
+        integer: false,
+        trigRules: false,
+        assumptions: true,
+        expRules: false,
+        displayFlags: false,
+      })}
+  
+      /* Núcleos exponenciales */
+      series_exp_core_pos : exp(%i*n*w0*${intVar})$
+      series_exp_core_neg : exp(-%i*n*w0*${intVar})$
+  
+      /* Coeficiente general cₙ (función) sin restricción de n entero */
+      c_n_nonint(n) := block([c:0],
+        for tr in tramos do
+          c : c + (1/T)*integrate(tr[1]*exp(-%i*n*w0*${intVar}), ${intVar}, tr[2], tr[3]),
+        return(((c))))$
+  
+      c0_nonint      : c_n_nonint(0)$
+      expr_cn_nonint : factor(fullratsimp(c_n_nonint(n)))$
+  
+      /* Resultados sin n entero (incluye LaTeX) */
+      resultados_nonint : [
+        string(c0_nonint), string(expr_cn_nonint),
+        tex(c0_nonint, false), tex(expr_cn_nonint, false)
+      ]$
+      string(resultados_nonint);
+    `;
+
+    // Ejecutar cálculo sin n entero
+    const rawNonInt = await execMaxima(buildMaximaCommand(nonIntegerScript));
+    const cleanedNonInt = rawNonInt
+      .replace(/\\\n/g, "")
+      .replace(/\n/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (/error/i.test(cleanedNonInt)) {
+      return {
+        success: false,
+        message: "Error al calcular coeficientes complejos sin n entero",
+        details: cleanedNonInt,
+      };
+    }
+
+    // Parsear resultados no enteros
+    let parsedNonInt;
+    try {
+      parsedNonInt = JSON.parse(cleanedNonInt);
+    } catch {
+      return {
+        success: false,
+        message:
+          "No se pudo parsear la salida para coeficientes complejos no enteros",
+        details: cleanedNonInt,
+      };
+    }
+
+    if (!Array.isArray(parsedNonInt) || parsedNonInt.length !== 4) {
+      return {
+        success: false,
+        message: "Formato inesperado para coeficientes complejos no enteros",
+        details: cleanedNonInt,
+      };
+    }
+
+    const [c0NonInt, cnNonInt, c0NonIntTex, cnNonIntTex] = parsedNonInt;
+
+    // PASO 2: Calcular indeterminaciones usando las expresiones sin n entero
+    const cnIndeterminateValues = await findIndeterminateValues(
+      cnNonInt,
+      "cn",
+      seriesType,
+      funcionMatrix,
+      intVar
+    );
+
+    // PASO 3: Calcular coeficientes con n entero para resultado final
     const maximaScript = `
       ${maximaBaseCode}
-
+  
       ${getMaximaRules({
-       integer: true,
-       trigRules: !isComplex,
-       assumptions: true,
-       expRules: isComplex,
-       displayFlags: false,
-     })}
+        integer: true,
+        trigRules: !isComplex,
+        assumptions: true,
+        expRules: isComplex,
+        displayFlags: false,
+      })}
   
       /* Núcleos exponenciales */
       series_exp_core_pos : exp(%i*n*w0*${intVar})$
@@ -110,7 +192,7 @@ async function calculatePiecewiseSeries({
       /* Devolver listas de TeX como listas normales */
       tex_lista_terminos      : map(lambda([z], tex(z,false)), lista_terminos)$
       tex_demoivre_terminos   : map(lambda([z], tex(z,false)), serie_demoivre)$
-
+  
       resultados : [
         string(c0), string(expr_cn), string(T), string(w0),
         string(series_exp_core_pos), string(series_exp_core_neg),
@@ -181,7 +263,7 @@ async function calculatePiecewiseSeries({
       negTeX,
     ] = parsed;
 
-    /* ─── 4 · Responder ─── */
+    /* ─── 4 · Responder con ambas versiones de coeficientes ─── */
     return {
       success: true,
       simplified: {
@@ -196,6 +278,10 @@ async function calculatePiecewiseSeries({
         seriesTerms,
         demoivreTerms,
       },
+      nonIntegerCoeffs: {
+        c0: c0NonInt,
+        cn: cnNonInt,
+      },
       latex: {
         c0: c0TeX,
         cn: cnTeX,
@@ -205,6 +291,13 @@ async function calculatePiecewiseSeries({
         series_exp_core_neg: negTeX,
         terms: seriesTermsTeX,
         demoivreTerms: demoivreTermsTeX,
+        nonInteger: {
+          c0: c0NonIntTex,
+          cn: cnNonIntTex,
+        },
+      },
+      indeterminateValues: {
+        cn: cnIndeterminateValues,
       },
     };
   } else {
@@ -212,16 +305,124 @@ async function calculatePiecewiseSeries({
     const integralCoefficient = isHalfRange ? "(1 / (T/2))" : "(2/T)";
     const simplificationMethod = isHalfRange ? "ratsimp" : "fullratsimp";
 
-    const maximaScript = `
+    // PASO 1: Calcular coeficientes SIN declarar n entero
+    const nonIntegerScript = `
+    ${maximaBaseCode}
+
+    ${getMaximaRules({
+      integer: false,
+      trigRules: false,
+      assumptions: true,
+      expRules: false,
+      displayFlags: false,
+    })}
+
+    /* Núcleos seno/coseno */
+    cos_core : cos(n * w0 * ${intVar})$
+    sin_core : sin(n * w0 * ${intVar})$
+
+    /* Acumuladores */
+    a0_acum_nonint : 0$
+    an_acum_nonint : 0$
+    bn_acum_nonint : 0$
+
+    for i : 1 thru pieces do (
+      trozo : func[i],
+      f_i   : trozo[1],
+      a     : trozo[2],
+      b     : trozo[3],
+
+      a0_acum_nonint : a0_acum_nonint + ${integralCoefficient} * integrate(      f_i , ${intVar}, a, b),
+      an_acum_nonint : an_acum_nonint + ${integralCoefficient} * integrate(f_i * cos_core, ${intVar}, a, b),
+      bn_acum_nonint : bn_acum_nonint + ${integralCoefficient} * integrate(f_i * sin_core, ${intVar}, a, b)
+    )$
+
+    /* Coeficientes simplificados (sin n entero) */
+    Coeff_A0_nonint : (${simplificationMethod}(factor(a0_acum_nonint)))$
+    Coeff_An_nonint : (${simplificationMethod}(factor(an_acum_nonint)))$
+    Coeff_Bn_nonint : (${simplificationMethod}(factor(bn_acum_nonint)))$
+    
+    /* Resultados sin n entero (incluye LaTeX) */
+    resultados_nonint : [
+      string(Coeff_A0_nonint), string(Coeff_An_nonint), string(Coeff_Bn_nonint),
+      tex(Coeff_A0_nonint, false), tex(Coeff_An_nonint, false), tex(Coeff_Bn_nonint, false)
+    ]$
+    string(resultados_nonint);
+  `;
+
+    // Ejecutar cálculo sin n entero
+    const rawNonInt = await execMaxima(buildMaximaCommand(nonIntegerScript));
+    const cleanedNonInt = rawNonInt
+      .replace(/\\\n/g, "")
+      .replace(/\n/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (/error/i.test(cleanedNonInt)) {
+      return {
+        success: false,
+        message: "Error al calcular coeficientes sin n entero",
+        details: cleanedNonInt,
+      };
+    }
+
+    // Parsear resultados no enteros
+    let parsedNonInt;
+    try {
+      parsedNonInt = JSON.parse(cleanedNonInt);
+    } catch {
+      return {
+        success: false,
+        message: "No se pudo parsear la salida para coeficientes no enteros",
+        details: cleanedNonInt,
+      };
+    }
+
+    if (!Array.isArray(parsedNonInt) || parsedNonInt.length !== 6) {
+      return {
+        success: false,
+        message: "Formato inesperado para coeficientes no enteros",
+        details: cleanedNonInt,
+      };
+    }
+
+    const [
+      a0NonInt,
+      anNonInt,
+      bnNonInt,
+      a0NonIntTex,
+      anNonIntTex,
+      bnNonIntTex,
+    ] = parsedNonInt;
+
+    // PASO 2: Calcular indeterminaciones usando las expresiones sin n entero
+    const anIndeterminateValues = await findIndeterminateValues(
+      anNonInt,
+      "an",
+      seriesType,
+      funcionMatrix,
+      intVar
+    );
+
+    const bnIndeterminateValues = await findIndeterminateValues(
+      bnNonInt,
+      "bn",
+      seriesType,
+      funcionMatrix,
+      intVar
+    );
+
+    // PASO 3: Recalcular coeficientes con n entero para resultado final
+    const integerScript = `
       ${maximaBaseCode}
 
       ${getMaximaRules({
-       integer: true,
-       trigRules: !isComplex,
-       assumptions: true,
-       expRules: isComplex,
-       displayFlags: true,
-     })}
+        integer: true,
+        trigRules: true,
+        assumptions: true,
+        expRules: false,
+        displayFlags: true,
+      })}
   
       /* Núcleos seno/coseno */
       cos_core : cos(n * w0 * ${intVar})$
@@ -243,12 +444,12 @@ async function calculatePiecewiseSeries({
         bn_acum : bn_acum + ${integralCoefficient} * integrate(f_i * sin_core, ${intVar}, a, b)
       )$
   
-      /* Coeficientes simplificados */
+      /* Coeficientes simplificados (con n entero) */
       Coeff_A0 : (${simplificationMethod}(factor(a0_acum)))$
       Coeff_An : (${simplificationMethod}(factor(an_acum)))$
       Coeff_Bn : (${simplificationMethod}(factor(bn_acum)))$
   
-      /* ---------- Salida única: 7 simplificados + 7 TeX ---------- */
+      /* Salida completa con resultados */
       resultados : [
         string(Coeff_A0), string(Coeff_An), string(Coeff_Bn),
         string(T), string(w0), string(cos_core), string(sin_core),
@@ -258,8 +459,8 @@ async function calculatePiecewiseSeries({
       string(resultados);
     `;
 
-    /* Ejecución única */
-    const raw = await execMaxima(buildMaximaCommand(maximaScript));
+    /* Ejecución con n entero */
+    const raw = await execMaxima(buildMaximaCommand(integerScript));
     const cleaned = raw
       .replace(/\\\n/g, "")
       .replace(/\n/g, "")
@@ -278,7 +479,7 @@ async function calculatePiecewiseSeries({
     /* Parseo */
     let parsed;
     try {
-      parsed = JSON.parse(cleaned); // ← convierto la lista Maxima a JSON
+      parsed = JSON.parse(cleaned);
     } catch {
       return {
         success: false,
@@ -312,23 +513,7 @@ async function calculatePiecewiseSeries({
       sineCoreTex,
     ] = parsed;
 
-    /* Indeterminaciones (usa tus utilidades existentes) */
-    const anIndeterminateValues = await findIndeterminateValues(
-      an,
-      "an",
-      seriesType,
-      funcionMatrix,
-      intVar
-    );
-    const bnIndeterminateValues = await findIndeterminateValues(
-      bn,
-      "bn",
-      seriesType,
-      funcionMatrix,
-      intVar
-    );
-
-    /* Respuesta final */
+    /* Respuesta final con indeterminaciones ya calculadas */
     return {
       success: true,
       simplified: {
@@ -340,6 +525,11 @@ async function calculatePiecewiseSeries({
         series_cosine_core,
         series_sine_core,
       },
+      nonIntegerCoeffs: {
+        a0: a0NonInt,
+        an: anNonInt,
+        bn: bnNonInt,
+      },
       latex: {
         a0: a0Tex,
         an: anTex,
@@ -348,6 +538,11 @@ async function calculatePiecewiseSeries({
         w0: w0Tex,
         cosineCore: cosineCoreTex,
         sineCore: sineCoreTex,
+        nonInteger: {
+          a0: a0NonIntTex,
+          an: anNonIntTex,
+          bn: bnNonIntTex,
+        },
       },
       indeterminateValues: {
         an: anIndeterminateValues,
@@ -482,7 +677,6 @@ async function findIndeterminateValues(
 
     // Step 3: Find integer values where the denominator becomes zero using the non-integer coefficient
     const findSingularitiesCommand = `
-       declare(n, integer)$
        buscar_singularidades(expr) := block(
          [d, soluciones, enteros],
          d: denom(expr),

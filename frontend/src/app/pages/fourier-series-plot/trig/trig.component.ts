@@ -78,6 +78,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     an: '',
     bn: '',
     w0: '',
+    T: '',
   };
 
   public maximaMatrix: string[][] = [];
@@ -132,6 +133,9 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     [];
   private anTooltip: HTMLElement | null = null;
   private bnTooltip: HTMLElement | null = null;
+
+  public showNonIntegerCoeffs: boolean = false; 
+  public nonIntegerFullLatexFormula: string = '';
 
   // Funciones cacheadas para piezas originales
   private cachedOriginalFunctions: Array<{
@@ -559,15 +563,30 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /* Calculation and Preprocessing Methods */
+  /* Calculation and Preprocessing Methods */
   private precalculateCoefficients(): void {
     // Precalcular todos los coeficientes de la serie
-    if (!this.response || !this.response.simplified) return;
+    if (
+      !this.response ||
+      (!this.response.simplified && !this.response.nonIntegerCoeffs)
+    )
+      return;
 
     try {
-      const a0Expr = this.response.simplified.a0 || '0';
-      const anExpr = this.response.simplified.an || '0';
-      const bnExpr = this.response.simplified.bn || '0';
-      const w0Expr = this.response.simplified.w0 || '%pi';
+      // Usar preferentemente los coeficientes no enteros para evitar singularidades
+      const a0Expr =
+        this.response.nonIntegerCoeffs?.a0 ||
+        this.response.simplified?.a0 ||
+        '0';
+      const anExpr =
+        this.response.nonIntegerCoeffs?.an ||
+        this.response.simplified?.an ||
+        '0';
+      const bnExpr =
+        this.response.nonIntegerCoeffs?.bn ||
+        this.response.simplified?.bn ||
+        '0';
+      const w0Expr = this.response.simplified?.w0 || '%pi';
 
       // Evaluar a0 - sólo una vez
       try {
@@ -608,7 +627,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
               );
               this.cachedACoefs.push(limitVal);
             } else {
-              // Evaluación normal
+              // Evaluación normal usando las expresiones no enteras
               const anVal = this.mathUtilsService.evaluateMaximaExpr(anExpr, {
                 n,
               });
@@ -638,7 +657,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
               );
               this.cachedBCoefs.push(limitVal);
             } else {
-              // Evaluación normal
+              // Evaluación normal usando las expresiones no enteras
               const bnVal = this.mathUtilsService.evaluateMaximaExpr(bnExpr, {
                 n,
               });
@@ -654,12 +673,11 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cachedBCoefs = Array(maxTerms).fill(0);
       }
 
-      // console.log('Coeficientes precalculados:', {
-      //   a0: this.cachedA0,
-      //   w0: this.cachedW0,
-      //   an: this.cachedACoefs.slice(0, 5), // Solo mostrar los primeros 5 para debug
-      //   bn: this.cachedBCoefs.slice(0, 5),
-      // });
+      console.log('Coeficientes no enteros usados para graficar:', {
+        a0: a0Expr,
+        an: anExpr,
+        bn: bnExpr,
+      });
     } catch (error) {
       console.error('Error en precalculateCoefficients:', error);
     }
@@ -758,10 +776,11 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /* LaTeX Processing Methods */
   private prepareLatexFormulas(): void {
-    // Preparar fórmulas LaTeX para visualización (adaptado de TrigonometricPiecewiseSeriesComponent)
+    // Preparar fórmulas LaTeX para visualización
     if (!this.response || !this.response.latex) return;
-
-    // Limpiamos los delimitadores LaTeX si existen
+  
+    // Procesamos tanto los coeficientes con n entero como sin restricción
+    // Para los coeficientes estándar (con n entero)
     const a0 = this.stripLatexDelimiters(this.response.latex.a0 || '');
     const an = this.stripLatexDelimiters(this.response.latex.an || '');
     const bn = this.stripLatexDelimiters(this.response.latex.bn || '');
@@ -769,33 +788,49 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       this.response.latex.cosineCore || ''
     );
     const sine = this.stripLatexDelimiters(this.response.latex.sineCore || '');
-
+  
+    // Para los coeficientes sin restricción de n entero
+    const nonIntA0 = this.response.latex.nonInteger?.a0
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.a0)
+      : a0;
+    const nonIntAn = this.response.latex.nonInteger?.an
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.an)
+      : an;
+    const nonIntBn = this.response.latex.nonInteger?.bn
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.bn)
+      : bn;
+  
     // Asignar valores LaTeX para los coeficientes
-    this.latexRendered.a0 = `$$${a0}$$`;
-    this.latexRendered.an = `$$${an}$$`;
-    this.latexRendered.bn = `$$${bn}$$`;
-    if (this.response.latex.w0) {
-      this.latexRendered.w0 = `$$${this.stripLatexDelimiters(
-        this.response.latex.w0
-      )}$$`;
-    }
-
-    // Construimos los términos de la suma si no son cero
+    this.latexRendered = {
+      a0: `$$${a0}$$`,
+      an: `$$${an}$$`,
+      bn: `$$${bn}$$`,
+      w0: this.response.latex.w0
+        ? `$$${this.stripLatexDelimiters(this.response.latex.w0)}$$`
+        : '',
+      T: this.response.latex.T,
+      // Añadir los coeficientes sin restricción
+      nonInteger: {
+        a0: `$$${nonIntA0}$$`,
+        an: `$$${nonIntAn}$$`,
+        bn: `$$${nonIntBn}$$`,
+      },
+    };
+  
+    // Construimos los términos de la suma (versión con n entero)
     const terms = [];
-
     if (an !== '0') {
       terms.push(`${an} \\cdot ${cosine}`);
     }
-
     if (bn !== '0') {
       terms.push(`${bn} \\cdot ${sine}`);
     }
-
-    // Formamos la fórmula completa según los coeficientes disponibles
+  
+    // Formamos la fórmula completa con n entero
     if (a0 !== '0') {
       this.fullLatexFormula = `$$f(${
         this.intVar
-      }) = ${a0} + \\sum_{n=1}^{\\infty} \\left( ${terms.join(
+      }) = \\frac{${a0}}{2} + \\sum_{n=1}^{\\infty} \\left( ${terms.join(
         ' + '
       )} \\right)$$`;
     } else if (terms.length > 0) {
@@ -804,6 +839,30 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       }) = \\sum_{n=1}^{\\infty} \\left( ${terms.join(' + ')} \\right)$$`;
     } else {
       this.fullLatexFormula = `$$f(${this.intVar}) = 0$$`;
+    }
+  
+    // Construimos los términos para la versión sin restricción de n entero
+    const nonIntTerms = [];
+    if (nonIntAn !== '0') {
+      nonIntTerms.push(`${nonIntAn} \\cdot ${cosine}`);
+    }
+    if (nonIntBn !== '0') {
+      nonIntTerms.push(`${nonIntBn} \\cdot ${sine}`);
+    }
+  
+    // Formamos la fórmula completa sin restricción de n entero
+    if (nonIntA0 !== '0') {
+      this.nonIntegerFullLatexFormula = `$$f(${
+        this.intVar
+      }) = \\frac{${nonIntA0}}{2} + \\sum_{n=1}^{\\infty} \\left( ${nonIntTerms.join(
+        ' + '
+      )} \\right)$$`;
+    } else if (nonIntTerms.length > 0) {
+      this.nonIntegerFullLatexFormula = `$$f(${
+        this.intVar
+      }) = \\sum_{n=1}^{\\infty} \\left( ${nonIntTerms.join(' + ')} \\right)$$`;
+    } else {
+      this.nonIntegerFullLatexFormula = `$$f(${this.intVar}) = 0$$`;
     }
   }
 
@@ -817,16 +876,25 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
 
   /* Series Terms Management Methods */
   fetchIndividualTerms(): void {
-    if (!this.response || !this.response.simplified) return;
+    if (!this.response) return;
 
-    // Prepare data for API call
+    // Prepare data for API call - Usar preferentemente los coeficientes no enteros
     const data = {
       coefficients: {
-        a0: this.response.simplified.a0 || '0',
-        an: this.response.simplified.an || '0',
-        bn: this.response.simplified.bn || '0',
+        a0:
+          this.response.nonIntegerCoeffs?.a0 ||
+          this.response.simplified?.a0 ||
+          '0',
+        an:
+          this.response.nonIntegerCoeffs?.an ||
+          this.response.simplified?.an ||
+          '0',
+        bn:
+          this.response.nonIntegerCoeffs?.bn ||
+          this.response.simplified?.bn ||
+          '0',
       },
-      w0: this.response.simplified.w0 || '%pi',
+      w0: this.response.simplified?.w0 || '%pi',
       intVar: this.intVar,
       terms: 100, // Always fetch 100 terms
     };
@@ -1852,5 +1920,12 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         setTimeout(() => this.drawAmplitudeGraphs(), 0);
       };
     }
+  }
+
+  toggleCoefficientsView(): void {
+    // Re-renderizar fórmulas LaTeX cuando cambia el toggle
+    setTimeout(() => {
+      this.mathquillService.renderMathJax();
+    }, 100);
   }
 }

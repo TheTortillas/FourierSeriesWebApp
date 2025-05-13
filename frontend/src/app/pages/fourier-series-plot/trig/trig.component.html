@@ -93,8 +93,19 @@
                 ? 'bg-gradient-to-r from-teal-400 to-green-300'
                 : 'bg-gradient-to-r from-blue-500 to-sky-400'
             "
-            >Serie de Fourier</span
-          >
+            >Serie de Fourier
+            <span
+              *ngIf="showNonIntegerCoeffs"
+              class="ml-2 text-xs px-2 py-0.5 rounded normal-case"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-purple-900/50 text-purple-200'
+                  : 'bg-purple-100 text-purple-700'
+              "
+            >
+              Sin restricción n entero
+            </span>
+          </span>
         </h3>
         <div
           class="border p-3 rounded-lg shadow-inner transition-all duration-300"
@@ -105,8 +116,46 @@
           "
         >
           <div class="latex-container">
-            <div [innerHTML]="fullLatexFormula" class="math-formula"></div>
+            <div
+              [innerHTML]="
+                showNonIntegerCoeffs && nonIntegerFullLatexFormula
+                  ? nonIntegerFullLatexFormula
+                  : fullLatexFormula
+              "
+              class="math-formula"
+            ></div>
           </div>
+        </div>
+      </div>
+
+      <!-- Toggle para cambiar entre coeficientes con n entero y sin restricción -->
+      <div
+        class="flex items-center justify-between mb-4 p-3 rounded-lg border transition-all"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-800/40 border-gray-700/50 hover:border-purple-500/30'
+            : 'bg-white border-gray-200 hover:border-purple-300'
+        "
+      >
+        <label
+          class="text-sm font-medium"
+          [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+        >
+          {{
+            showNonIntegerCoeffs
+              ? "Mostrar coeficientes sin restricción n entero:"
+              : "Mostrar coeficientes con n entero:"
+          }}
+        </label>
+        <div class="relative inline-block w-12 align-middle select-none">
+          <input
+            type="checkbox"
+            [(ngModel)]="showNonIntegerCoeffs"
+            (change)="toggleCoefficientsView()"
+            id="toggleCoeffType"
+            class="toggle-checkbox"
+          />
+          <label for="toggleCoeffType" class="toggle-label"></label>
         </div>
       </div>
 
@@ -683,11 +732,43 @@
           >
         </h3>
 
+        <!-- Toggle para cambiar entre coeficientes con n entero y sin restricción -->
+        <div
+          class="flex items-center justify-between mb-4 p-3 rounded-lg border transition-all"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/40 border-gray-700/50 hover:border-purple-500/30'
+              : 'bg-white border-gray-200 hover:border-purple-300'
+          "
+        >
+          <label
+            class="text-sm font-medium"
+            [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+          >
+            {{
+              showNonIntegerCoeffs
+                ? "Mostrar coeficientes sin restricción n entero:"
+                : "Mostrar coeficientes con n entero:"
+            }}
+          </label>
+          <div class="relative inline-block w-12 align-middle select-none">
+            <input
+              type="checkbox"
+              [(ngModel)]="showNonIntegerCoeffs"
+              (change)="toggleCoefficientsView()"
+              id="toggleCoeffType"
+              class="toggle-checkbox"
+            />
+            <label for="toggleCoeffType" class="toggle-label"></label>
+          </div>
+        </div>
+
+        <!-- Resto de la sección con modificaciones para mostrar fórmulas según el toggle -->
         <div class="space-y-4">
           <!-- Coeficiente a0 -->
           <div class="group" *ngIf="latexRendered.a0">
             <p
-              class="text-sm font-medium mb-1 transition-colors"
+              class="text-sm font-medium mb-1 transition-colors flex items-center"
               [ngClass]="
                 isDarkMode
                   ? 'text-gray-300 group-hover:text-teal-300'
@@ -695,6 +776,17 @@
               "
             >
               Coeficiente a<sub>0</sub>:
+              <span
+                *ngIf="showNonIntegerCoeffs"
+                class="ml-2 text-xs px-2 py-0.5 rounded"
+                [ngClass]="
+                  isDarkMode
+                    ? 'bg-purple-900/50 text-purple-200'
+                    : 'bg-purple-100 text-purple-700'
+                "
+              >
+                Sin restricción n entero
+              </span>
             </p>
             <div
               class="border p-3 rounded-lg shadow-inner transition-all duration-300"
@@ -705,7 +797,14 @@
               "
             >
               <div class="latex-container">
-                <div [innerHTML]="latexRendered.a0" class="math-formula"></div>
+                <div
+                  [innerHTML]="
+                    showNonIntegerCoeffs && latexRendered.nonInteger?.a0
+                      ? latexRendered.nonInteger.a0
+                      : latexRendered.a0
+                  "
+                  class="math-formula"
+                ></div>
               </div>
             </div>
           </div>
@@ -713,7 +812,7 @@
           <!-- Coeficiente an -->
           <div class="group" *ngIf="latexRendered.an">
             <p
-              class="text-sm font-medium mb-1 transition-colors"
+              class="text-sm font-medium mb-1 transition-colors flex items-center"
               [ngClass]="
                 isDarkMode
                   ? 'text-gray-300 group-hover:text-teal-300'
@@ -721,6 +820,17 @@
               "
             >
               Coeficiente a<sub>n</sub>:
+              <span
+                *ngIf="showNonIntegerCoeffs"
+                class="ml-2 text-xs px-2 py-0.5 rounded"
+                [ngClass]="
+                  isDarkMode
+                    ? 'bg-purple-900/50 text-purple-200'
+                    : 'bg-purple-100 text-purple-700'
+                "
+              >
+                Sin restricción n entero
+              </span>
             </p>
             <div
               class="border p-3 rounded-lg shadow-inner transition-all duration-300"
@@ -731,7 +841,14 @@
               "
             >
               <div class="latex-container">
-                <div [innerHTML]="latexRendered.an" class="math-formula"></div>
+                <div
+                  [innerHTML]="
+                    showNonIntegerCoeffs && latexRendered.nonInteger?.an
+                      ? latexRendered.nonInteger.an
+                      : latexRendered.an
+                  "
+                  class="math-formula"
+                ></div>
               </div>
             </div>
           </div>
@@ -739,7 +856,7 @@
           <!-- Coeficiente bn -->
           <div class="group" *ngIf="latexRendered.bn">
             <p
-              class="text-sm font-medium mb-1 transition-colors"
+              class="text-sm font-medium mb-1 transition-colors flex items-center"
               [ngClass]="
                 isDarkMode
                   ? 'text-gray-300 group-hover:text-teal-300'
@@ -747,6 +864,17 @@
               "
             >
               Coeficiente b<sub>n</sub>:
+              <span
+                *ngIf="showNonIntegerCoeffs"
+                class="ml-2 text-xs px-2 py-0.5 rounded"
+                [ngClass]="
+                  isDarkMode
+                    ? 'bg-purple-900/50 text-purple-200'
+                    : 'bg-purple-100 text-purple-700'
+                "
+              >
+                Sin restricción n entero
+              </span>
             </p>
             <div
               class="border p-3 rounded-lg shadow-inner transition-all duration-300"
@@ -757,22 +885,28 @@
               "
             >
               <div class="latex-container">
-                <div [innerHTML]="latexRendered.bn" class="math-formula"></div>
+                <div
+                  [innerHTML]="
+                    showNonIntegerCoeffs && latexRendered.nonInteger?.bn
+                      ? latexRendered.nonInteger.bn
+                      : latexRendered.bn
+                  "
+                  class="math-formula"
+                ></div>
               </div>
             </div>
           </div>
 
-          <!-- Frecuencia angular -->
           <div class="group" *ngIf="latexRendered.w0">
             <p
-              class="text-sm font-medium mb-1 transition-colors"
+              class="text-sm font-medium mb-1 transition-colors flex items-center"
               [ngClass]="
                 isDarkMode
                   ? 'text-gray-300 group-hover:text-teal-300'
                   : 'text-gray-700 group-hover:text-blue-500'
               "
             >
-              Frecuencia angular (ω<sub>0</sub>):
+              Frecuencia angular fundamental (ω₀):
             </p>
             <div
               class="border p-3 rounded-lg shadow-inner transition-all duration-300"
@@ -787,9 +921,34 @@
               </div>
             </div>
           </div>
+
+          <!-- Periodo T -->
+          <div class="group" *ngIf="latexRendered.T">
+            <p
+              class="text-sm font-medium mb-1 transition-colors flex items-center"
+              [ngClass]="
+                isDarkMode
+                  ? 'text-gray-300 group-hover:text-teal-300'
+                  : 'text-gray-700 group-hover:text-blue-500'
+              "
+            >
+              Periodo (T):
+            </p>
+            <div
+              class="border p-3 rounded-lg shadow-inner transition-all duration-300"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-800/70 border-gray-700/50 group-hover:border-teal-500/30 text-white'
+                  : 'bg-white border-gray-200 group-hover:border-blue-300 text-gray-800'
+              "
+            >
+              <div class="latex-container">
+                <div [innerHTML]="latexRendered.T" class="math-formula"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
       <!-- Botón de acción -->
       <div class="mb-6">
         <button

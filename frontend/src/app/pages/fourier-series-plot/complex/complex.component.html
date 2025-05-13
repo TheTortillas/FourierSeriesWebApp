@@ -79,8 +79,8 @@
         </div>
       </div>
 
-       <!-- Expresión completa de la serie -->
-       <div class="group mb-8" *ngIf="fullLatexFormula">
+      <!-- Expresión completa de la serie -->
+      <div class="group mb-8" *ngIf="fullLatexFormula">
         <h3 class="text-base mb-3 font-bold flex items-center">
           <span
             class="w-1.5 h-1.5 rounded-full mr-2"
@@ -93,8 +93,19 @@
                 ? 'bg-gradient-to-r from-teal-400 to-green-300'
                 : 'bg-gradient-to-r from-blue-500 to-sky-400'
             "
-            >Serie de Fourier</span
-          >
+            >Serie de Fourier
+            <span
+              *ngIf="showNonIntegerCoeffs"
+              class="ml-2 text-xs px-2 py-0.5 rounded normal-case"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-purple-900/50 text-purple-200'
+                  : 'bg-purple-100 text-purple-700'
+              "
+            >
+              Sin restricción n entero
+            </span>
+          </span>
         </h3>
         <div
           class="border p-3 rounded-lg shadow-inner transition-all duration-300"
@@ -105,8 +116,45 @@
           "
         >
           <div class="latex-container">
-            <div [innerHTML]="fullLatexFormula" class="math-formula"></div>
+            <div
+              [innerHTML]="
+                showNonIntegerCoeffs && nonIntegerFullLatexFormula
+                  ? nonIntegerFullLatexFormula
+                  : fullLatexFormula
+              "
+              class="math-formula"
+            ></div>
           </div>
+        </div>
+      </div>
+
+      <div
+        class="flex items-center justify-between mb-4 p-3 rounded-lg border transition-all"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-800/40 border-gray-700/50 hover:border-purple-500/30'
+            : 'bg-white border-gray-200 hover:border-purple-300'
+        "
+      >
+        <label
+          class="text-sm font-medium"
+          [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
+        >
+          {{
+            showNonIntegerCoeffs
+              ? "Mostrar coeficientes sin restricción n entero:"
+              : "Mostrar coeficientes con n entero:"
+          }}
+        </label>
+        <div class="relative inline-block w-12 align-middle select-none">
+          <input
+            type="checkbox"
+            [(ngModel)]="showNonIntegerCoeffs"
+            (change)="toggleCoefficientsView()"
+            id="toggleCoeffType"
+            class="toggle-checkbox"
+          />
+          <label for="toggleCoeffType" class="toggle-label"></label>
         </div>
       </div>
 
@@ -251,40 +299,40 @@
           </div>
         </div>
 
-         <!-- Add button to show all terms modal -->
-      <div class="mt-4">
-        <button
-          (click)="displayAllSeriesTermsInModal()"
-          class="w-full py-2 px-3 rounded-lg transition-all duration-300 shadow font-medium flex items-center justify-center"
-          [ngClass]="
-            isDarkMode
-              ? 'bg-gray-800/70 border border-teal-500/30 text-teal-400 hover:bg-teal-900/30 hover:border-teal-400/50'
-              : 'bg-blue-50 border border-blue-300 text-blue-500 hover:bg-blue-100 hover:border-blue-400'
-          "
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        <!-- Add button to show all terms modal -->
+        <div class="mt-4">
+          <button
+            (click)="displayAllSeriesTermsInModal()"
+            class="w-full py-2 px-3 rounded-lg transition-all duration-300 shadow font-medium flex items-center justify-center"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-800/70 border border-teal-500/30 text-teal-400 hover:bg-teal-900/30 hover:border-teal-400/50'
+                : 'bg-blue-50 border border-blue-300 text-blue-500 hover:bg-blue-100 hover:border-blue-400'
+            "
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-            />
-          </svg>
-          Mostrar todos los términos
-        </button>
-      </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+            </svg>
+            Mostrar todos los términos
+          </button>
+        </div>
 
         <!-- NUEVO: Amplitud y Fase de Coeficientes en el Sidenav -->
         <div
@@ -766,7 +814,7 @@
           <!-- Coeficiente c0 -->
           <div class="group" *ngIf="latexRendered.c0">
             <p
-              class="text-sm font-medium mb-1 transition-colors"
+              class="text-sm font-medium mb-1 transition-colors flex items-center"
               [ngClass]="
                 isDarkMode
                   ? 'text-gray-300 group-hover:text-teal-300'
@@ -774,6 +822,17 @@
               "
             >
               Coeficiente c<sub>0</sub>:
+              <span
+                *ngIf="showNonIntegerCoeffs"
+                class="ml-2 text-xs px-2 py-0.5 rounded"
+                [ngClass]="
+                  isDarkMode
+                    ? 'bg-purple-900/50 text-purple-200'
+                    : 'bg-purple-100 text-purple-700'
+                "
+              >
+                Sin restricción n entero
+              </span>
             </p>
             <div
               class="border p-3 rounded-lg shadow-inner transition-all duration-300"
@@ -784,7 +843,14 @@
               "
             >
               <div class="latex-container">
-                <div [innerHTML]="latexRendered.c0" class="math-formula"></div>
+                <div
+                  [innerHTML]="
+                    showNonIntegerCoeffs && latexRendered.nonInteger?.c0
+                      ? latexRendered.nonInteger.c0
+                      : latexRendered.c0
+                  "
+                  class="math-formula"
+                ></div>
               </div>
             </div>
           </div>
@@ -792,7 +858,7 @@
           <!-- Coeficiente cn -->
           <div class="group" *ngIf="latexRendered.cn">
             <p
-              class="text-sm font-medium mb-1 transition-colors"
+              class="text-sm font-medium mb-1 transition-colors flex items-center"
               [ngClass]="
                 isDarkMode
                   ? 'text-gray-300 group-hover:text-teal-300'
@@ -800,6 +866,17 @@
               "
             >
               Coeficiente c<sub>n</sub>:
+              <span
+                *ngIf="showNonIntegerCoeffs"
+                class="ml-2 text-xs px-2 py-0.5 rounded"
+                [ngClass]="
+                  isDarkMode
+                    ? 'bg-purple-900/50 text-purple-200'
+                    : 'bg-purple-100 text-purple-700'
+                "
+              >
+                Sin restricción n entero
+              </span>
             </p>
             <div
               class="border p-3 rounded-lg shadow-inner transition-all duration-300"
@@ -810,7 +887,14 @@
               "
             >
               <div class="latex-container">
-                <div [innerHTML]="latexRendered.cn" class="math-formula"></div>
+                <div
+                  [innerHTML]="
+                    showNonIntegerCoeffs && latexRendered.nonInteger?.cn
+                      ? latexRendered.nonInteger.cn
+                      : latexRendered.cn
+                  "
+                  class="math-formula"
+                ></div>
               </div>
             </div>
           </div>
@@ -906,8 +990,6 @@
           <span class="mr-2">←</span> Volver a calculadora
         </button>
       </div>
-
-     
     </div>
   </div>
 </div>
