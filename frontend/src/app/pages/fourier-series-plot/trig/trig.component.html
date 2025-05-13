@@ -79,6 +79,37 @@
         </div>
       </div>
 
+      <!-- Expresión completa de la serie -->
+      <div class="group mb-8" *ngIf="fullLatexFormula">
+        <h3 class="text-base mb-3 font-bold flex items-center">
+          <span
+            class="w-1.5 h-1.5 rounded-full mr-2"
+            [ngClass]="isDarkMode ? 'bg-teal-400' : 'bg-blue-500'"
+          ></span>
+          <span
+            class="text-transparent bg-clip-text"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gradient-to-r from-teal-400 to-green-300'
+                : 'bg-gradient-to-r from-blue-500 to-sky-400'
+            "
+            >Serie de Fourier</span
+          >
+        </h3>
+        <div
+          class="border p-3 rounded-lg shadow-inner transition-all duration-300"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-800/70 border-gray-700/50 group-hover:border-teal-500/30 text-white'
+              : 'bg-white border-gray-200 group-hover:border-blue-300 text-gray-800'
+          "
+        >
+          <div class="latex-container">
+            <div [innerHTML]="fullLatexFormula" class="math-formula"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Opciones de visualización -->
       <div class="mb-8">
         <h3 class="text-base mb-4 font-bold flex items-center">
@@ -756,32 +787,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Expresión completa de la serie -->
-          <div class="group" *ngIf="fullLatexFormula">
-            <p
-              class="text-sm font-medium mb-1 transition-colors"
-              [ngClass]="
-                isDarkMode
-                  ? 'text-gray-300 group-hover:text-teal-300'
-                  : 'text-gray-700 group-hover:text-blue-500'
-              "
-            >
-              Serie completa:
-            </p>
-            <div
-              class="border p-3 rounded-lg shadow-inner transition-all duration-300"
-              [ngClass]="
-                isDarkMode
-                  ? 'bg-gray-800/70 border-gray-700/50 group-hover:border-teal-500/30 text-white'
-                  : 'bg-white border-gray-200 group-hover:border-blue-300 text-gray-800'
-              "
-            >
-              <div class="latex-container">
-                <div [innerHTML]="fullLatexFormula" class="math-formula"></div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -799,8 +804,6 @@
           <span class="mr-2">←</span> Volver a calculadora
         </button>
       </div>
-
-     
     </div>
   </div>
 </div>
