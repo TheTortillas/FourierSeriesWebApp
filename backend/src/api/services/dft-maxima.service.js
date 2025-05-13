@@ -123,7 +123,11 @@ exports.computeDFT = async (funcionMatrix, N = 32, M = 1, intVar = "x") => {
 
       /* 4B. Calcular espectros de amplitud y fase */
       amplitud : makelist([k, float(cabs(dft_result[k+1]))], k, 0, N-1)$
-      fase : makelist([k, float((carg(dft_result[k+1])))], k, 0, N-1)$
+      umbral : 1e-6$
+      fase : makelist(
+        [k, if cabs(dft_result[k+1]) < umbral then 0 else float(-carg(dft_result[k+1]))],
+        k, 0, N-1
+      )$
 
       /* 5. Repetir la señal hacia ambos lados */
       señal_extendida : []$
