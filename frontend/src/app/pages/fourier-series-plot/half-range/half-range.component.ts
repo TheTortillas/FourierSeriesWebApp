@@ -812,27 +812,45 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Método para precalcular coeficientes (similar a TrigComponent pero adaptado)
   private precalculateCoefficients(): void {
-    if (
-      !this.response ||
-      (!this.response.simplified && !this.response.nonIntegerCoeffs)
-    )
-      return;
+    if (!this.response || !this.response.simplified) return;
 
     try {
-      // Usar preferentemente los coeficientes no enteros para evitar singularidades
-      const a0Expr =
-        this.response.nonIntegerCoeffs?.a0 ||
-        this.response.simplified?.a0 ||
-        '0';
-      const anExpr =
-        this.response.nonIntegerCoeffs?.an ||
-        this.response.simplified?.an ||
-        '0';
-      const bnExpr =
-        this.response.nonIntegerCoeffs?.bn ||
-        this.response.simplified?.bn ||
-        '0';
-      const w0Expr = this.response.simplified?.w0 || '%pi';
+      // 1. Verificar si existen singularidades para valores n distintos de cero
+      const hasAnSingularities =
+        this.response.indeterminateValues?.an?.some(
+          (item) => item.n !== 0 // Consideramos singularidad si n NO es cero
+        ) || false;
+
+      const hasBnSingularities =
+        this.response.indeterminateValues?.bn?.some(
+          (item) => item.n !== 0 // Consideramos singularidad si n NO es cero
+        ) || false;
+
+      // 2. Decidir qué set de coeficientes usar basado en la presencia de singularidades
+      const hasSingularities = hasAnSingularities || hasBnSingularities;
+
+      // 3. Seleccionar expresiones de coeficientes apropiadas
+      let a0Expr, anExpr, bnExpr;
+
+      if (hasSingularities && this.response.nonIntegerCoeffs) {
+        // Si hay singularidades en n ≠ 0, usar coeficientes sin restricción de n entero
+        a0Expr = this.response.nonIntegerCoeffs.a0 || '0';
+        anExpr = this.response.nonIntegerCoeffs.an || '0';
+        bnExpr = this.response.nonIntegerCoeffs.bn || '0';
+
+        console.log(
+          'Usando coeficientes sin restricción de n entero debido a singularidades para n ≠ 0'
+        );
+      } else {
+        // Si no hay singularidades n ≠ 0, usar coeficientes simplificados
+        a0Expr = this.response.simplified.a0 || '0';
+        anExpr = this.response.simplified.an || '0';
+        bnExpr = this.response.simplified.bn || '0';
+
+        console.log('Usando coeficientes simplificados (con n entero)');
+      }
+
+      const w0Expr = this.response.simplified.w0 || '%pi';
 
       // Evaluar a0
       try {
@@ -910,6 +928,13 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
       } else {
         this.cachedBCoefs = Array(maxTerms).fill(0);
       }
+
+      console.log('Coeficientes seleccionados para graficar:', {
+        a0: a0Expr,
+        an: anExpr,
+        bn: bnExpr,
+        tieneIndeterminaciones: hasSingularities,
+      });
     } catch (error) {
       console.error('Error en precalculateCoefficients:', error);
     }

@@ -134,7 +134,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   private anTooltip: HTMLElement | null = null;
   private bnTooltip: HTMLElement | null = null;
 
-  public showNonIntegerCoeffs: boolean = false; 
+  public showNonIntegerCoeffs: boolean = false;
   public nonIntegerFullLatexFormula: string = '';
 
   // Funciones cacheadas para piezas originales
@@ -563,30 +563,46 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /* Calculation and Preprocessing Methods */
-  /* Calculation and Preprocessing Methods */
   private precalculateCoefficients(): void {
-    // Precalcular todos los coeficientes de la serie
-    if (
-      !this.response ||
-      (!this.response.simplified && !this.response.nonIntegerCoeffs)
-    )
-      return;
+    if (!this.response || !this.response.simplified) return;
 
     try {
-      // Usar preferentemente los coeficientes no enteros para evitar singularidades
-      const a0Expr =
-        this.response.nonIntegerCoeffs?.a0 ||
-        this.response.simplified?.a0 ||
-        '0';
-      const anExpr =
-        this.response.nonIntegerCoeffs?.an ||
-        this.response.simplified?.an ||
-        '0';
-      const bnExpr =
-        this.response.nonIntegerCoeffs?.bn ||
-        this.response.simplified?.bn ||
-        '0';
-      const w0Expr = this.response.simplified?.w0 || '%pi';
+      // 1. Verificar si existen singularidades no triviales (diferentes de cero)
+      const hasAnSingularities =
+        this.response.indeterminateValues?.an?.some(
+          (item) => item.n !== 0 // Consideramos singularidad si n NO es cero
+        ) || false;
+
+      const hasBnSingularities =
+        this.response.indeterminateValues?.bn?.some(
+          (item) => item.n !== 0 // Consideramos singularidad si n NO es cero
+        ) || false;
+
+      // 2. Decidir qué set de coeficientes usar basado en la presencia de singularidades
+      const hasSingularities = hasAnSingularities || hasBnSingularities;
+
+      // 3. Seleccionar expresiones de coeficientes apropiadas
+      let a0Expr, anExpr, bnExpr;
+
+      if (hasSingularities && this.response.nonIntegerCoeffs) {
+        // Si hay singularidades, usar coeficientes sin restricción de n entero
+        a0Expr = this.response.nonIntegerCoeffs.a0 || '0';
+        anExpr = this.response.nonIntegerCoeffs.an || '0';
+        bnExpr = this.response.nonIntegerCoeffs.bn || '0';
+
+        console.log(
+          'Usando coeficientes sin restricción de n entero debido a que hay singularidades'
+        );
+      } else {
+        // Si no hay singularidades, usar coeficientes simplificados
+        a0Expr = this.response.simplified.a0 || '0';
+        anExpr = this.response.simplified.an || '0';
+        bnExpr = this.response.simplified.bn || '0';
+
+        console.log('Usando coeficientes simplificados (con n entero)');
+      }
+
+      const w0Expr = this.response.simplified.w0 || '%pi';
 
       // Evaluar a0 - sólo una vez
       try {
@@ -627,7 +643,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
               );
               this.cachedACoefs.push(limitVal);
             } else {
-              // Evaluación normal usando las expresiones no enteras
+              // Evaluación normal
               const anVal = this.mathUtilsService.evaluateMaximaExpr(anExpr, {
                 n,
               });
@@ -657,7 +673,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
               );
               this.cachedBCoefs.push(limitVal);
             } else {
-              // Evaluación normal usando las expresiones no enteras
+              // Evaluación normal
               const bnVal = this.mathUtilsService.evaluateMaximaExpr(bnExpr, {
                 n,
               });
@@ -673,10 +689,11 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cachedBCoefs = Array(maxTerms).fill(0);
       }
 
-      console.log('Coeficientes no enteros usados para graficar:', {
+      console.log('Coeficientes seleccionados para graficar:', {
         a0: a0Expr,
         an: anExpr,
         bn: bnExpr,
+        tieneIndeterminaciones: hasSingularities,
       });
     } catch (error) {
       console.error('Error en precalculateCoefficients:', error);
@@ -778,7 +795,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
   private prepareLatexFormulas(): void {
     // Preparar fórmulas LaTeX para visualización
     if (!this.response || !this.response.latex) return;
-  
+
     // Procesamos tanto los coeficientes con n entero como sin restricción
     // Para los coeficientes estándar (con n entero)
     const a0 = this.stripLatexDelimiters(this.response.latex.a0 || '');
@@ -788,7 +805,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       this.response.latex.cosineCore || ''
     );
     const sine = this.stripLatexDelimiters(this.response.latex.sineCore || '');
-  
+
     // Para los coeficientes sin restricción de n entero
     const nonIntA0 = this.response.latex.nonInteger?.a0
       ? this.stripLatexDelimiters(this.response.latex.nonInteger.a0)
@@ -799,7 +816,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     const nonIntBn = this.response.latex.nonInteger?.bn
       ? this.stripLatexDelimiters(this.response.latex.nonInteger.bn)
       : bn;
-  
+
     // Asignar valores LaTeX para los coeficientes
     this.latexRendered = {
       a0: `$$${a0}$$`,
@@ -816,7 +833,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         bn: `$$${nonIntBn}$$`,
       },
     };
-  
+
     // Construimos los términos de la suma (versión con n entero)
     const terms = [];
     if (an !== '0') {
@@ -825,7 +842,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     if (bn !== '0') {
       terms.push(`${bn} \\cdot ${sine}`);
     }
-  
+
     // Formamos la fórmula completa con n entero
     if (a0 !== '0') {
       this.fullLatexFormula = `$$f(${
@@ -840,7 +857,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.fullLatexFormula = `$$f(${this.intVar}) = 0$$`;
     }
-  
+
     // Construimos los términos para la versión sin restricción de n entero
     const nonIntTerms = [];
     if (nonIntAn !== '0') {
@@ -849,7 +866,7 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     if (nonIntBn !== '0') {
       nonIntTerms.push(`${nonIntBn} \\cdot ${sine}`);
     }
-  
+
     // Formamos la fórmula completa sin restricción de n entero
     if (nonIntA0 !== '0') {
       this.nonIntegerFullLatexFormula = `$$f(${
