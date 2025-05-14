@@ -55,10 +55,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   // Ejemplos predefinidos para DFT
   dftExamples: Example[] = [
     { id: 'sine_mix', name: 'Mezcla de Senoides' },
-    { id: 'square_dft', name: 'Onda Cuadrada (DFT)' },
-    { id: 'sawtooth_dft', name: 'Diente de Sierra (DFT)' },
-    { id: 'impulse', name: 'Señal de Impulsos' },
-    { id: 'noise', name: 'Señal con Ruido' },
+    { id: 'square_wave', name: 'Onda Cuadrada (DFT)' },
   ];
 
   // Ejemplos predefinidos para series de medio rango
@@ -140,11 +137,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
       if (exampleData) {
         this.router.navigate(['/fourier-series-plot/complex'], {
           state: {
-            response: exampleData,           // ✓ Corrected
-            seriesType: 'complex',           // ✓ Added missing
-            intVar: exampleData.intVar || 'x', // ✓ Corrected
+            response: exampleData,          
+            seriesType: 'complex',          
+            intVar: exampleData.intVar || 'x', 
             originalLatex: exampleData.originalLatex || [],
-            maximaMatrix: exampleData.maximaMatrix || [], // ✓ Added missing
+            maximaMatrix: exampleData.maximaMatrix || [], 
             originalFunction: exampleData.originalFunction || '',
           },
         });
