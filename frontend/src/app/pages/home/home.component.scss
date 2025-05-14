@@ -1,13 +1,24 @@
+// Background container for sine waves
+.absolute.top-0.left-0.w-full.h-full {
+  z-index: -1 !important; // Force to back
+  pointer-events: none; // Prevents mouse interactions with the background
+  overflow: hidden !important; // Force hidden overflow
+  box-sizing: border-box;
+}
+
 // Animated sine waves in the background
 .sine-wave {
   position: absolute;
   width: 100%;
   height: 100%;
+  max-width: 100vw; // Prevent overflow beyond viewport width
   background-repeat: repeat-x;
   animation-timing-function: cubic-bezier(0.445, 0.05, 0.55, 0.95);
   animation-iteration-count: infinite;
   animation-duration: 20s;
-  
+  z-index: -1; // Keep wave behind content
+  pointer-events: none; // Prevents mouse interactions with the waves
+  box-sizing: border-box; // Include padding in width calculation
 
   &.sine-wave-1 {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="none" stroke="rgb(107, 114, 128)" stroke-width="2" d="M0,160 C320,300,320,20,640,160 C960,300,960,20,1280,160 C1600,300,1600,20,1920,160"></path></svg>');
@@ -227,8 +238,17 @@
 
 // Feature card hover effects
 .feature-card {
+  transition: transform 0.3s ease;
+  position: relative; // Establish new stacking context
+  z-index: 0;
+
+  &:hover {
+    transform: scale(1.02);
+    z-index: 1; // Dropdown (z-50) stays above this
+  }
+
   &:hover .feature-icon {
-    transform: scale(1.05) rotate(2deg);
+    transform: scale(1.05);
     transition: transform 0.3s ease;
   }
 
@@ -257,6 +277,8 @@
   :host ::ng-deep .MathJax {
     display: inline-block !important;
     margin: 0 auto !important;
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   // Scale MathJax formulas for better fit
@@ -346,4 +368,54 @@
 .footer-section {
   position: relative;
   z-index: 10;
+}
+
+// Estilos para los dropdowns
+.relative {
+  position: relative;
+  z-index: 10; // Ensure the container has a z-index context
+}
+
+.light-dropdown,
+.dark-dropdown {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  position: absolute; // Ensure absolute positioning
+  z-index: 50; // Match the z-index used in the HTML
+}
+
+.absolute {
+  max-height: 240px;
+  overflow-y: auto;
+
+  // Ensure this is in front of other elements
+  position: absolute;
+  z-index: 50;
+
+  // Mejorar desplazamiento en móviles
+  @media (max-width: 640px) {
+    max-height: 200px;
+  }
+
+  // Estilizar scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 20px;
+  }
+}
+
+// Add to end of file
+:host ::ng-deep {
+  html,
+  body {
+    overflow-x: hidden;
+  }
 }

@@ -1,5 +1,6 @@
 <div
   class="min-h-screen pt-10 sm:pt-12 pb-16 sm:pb-24 px-5 sm:px-6 relative overflow-hidden"
+  style="overflow-x: hidden; box-sizing: border-box"
   [ngClass]="
     isDarkMode
       ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100'
@@ -7,7 +8,10 @@
   "
 >
   <!-- Decorative background elements -->
-  <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+  <div
+    class="absolute top-0 left-0 w-full h-full overflow-hidden"
+    style="z-index: -1; overflow-x: hidden; overflow-y: hidden"
+  >
     <div
       class="sine-wave sine-wave-1"
       [ngClass]="isDarkMode ? 'opacity-5' : 'opacity-10'"
@@ -42,28 +46,36 @@
           Herramienta interactiva para el cálculo, análisis y visualización de
           Series de Fourier y Transformada Discreta
         </p>
-        <div class="flex flex-wrap sm:flex-row gap-3 sm:gap-4">
+
+        <!-- Single large button replacing the two buttons -->
+        <div class="flex justify-center">
           <button
             (click)="navigateToCalculator()"
-            class="py-2 sm:py-3 px-4 sm:px-6 rounded-lg text-base sm:text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full sm:w-auto mb-2 sm:mb-0"
+            class="py-3 sm:py-4 px-8 sm:px-10 rounded-lg text-lg sm:text-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 w-full max-w-sm mx-auto"
             [ngClass]="
               isDarkMode
-                ? 'bg-gradient-to-r from-teal-500 to-green-500 hover:from-teal-600 hover:to-green-600 text-white'
-                : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white'
+                ? 'bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 hover:from-teal-600 hover:via-cyan-600 hover:to-blue-600 text-white'
+                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 text-white'
             "
+            style="width: 100%; max-width: none"
           >
-            Series de Fourier
-          </button>
-          <button
-            (click)="navigateToDFT()"
-            class="py-2 sm:py-3 px-4 sm:px-6 rounded-lg text-base sm:text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full sm:w-auto"
-            [ngClass]="
-              isDarkMode
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white'
-                : 'bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white'
-            "
-          >
-            Transformada Discreta
+            <span class="flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              Iniciar Calculadora
+            </span>
           </button>
         </div>
       </div>
@@ -204,10 +216,11 @@
 
     <!-- Features section -->
     <div
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8 mb-10 sm:mb-16"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5 sm:gap-8 mb-10 sm:mb-16"
     >
       <div
-        class="feature-card rounded-xl p-5 sm:p-8 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+        class="feature-card rounded-xl p-5 sm:p-8 transition-all duration-300 hover:shadow-lg"
+        (mouseenter)="closeDropdownIfNot('trig')"
         [ngClass]="
           isDarkMode
             ? 'bg-gray-800/50 border border-gray-700'
@@ -217,6 +230,7 @@
         <div
           class="feature-icon mb-3 sm:mb-4 p-2 sm:p-3 rounded-full w-full max-w-xs h-20 sm:h-24 flex items-center justify-center mx-auto trigonometric-container"
           [ngClass]="isDarkMode ? 'bg-teal-900/30' : 'bg-blue-100'"
+          style="width: 100%; max-width: none"
         >
           <div
             class="formula-container"
@@ -229,17 +243,135 @@
           Expande tu función en términos de senos y cosenos utilizando
           coeficientes de Fourier con visualización interactiva.
         </p>
-        <button
-          (click)="navigateToCalculator()"
-          class="text-sm font-medium hover:underline"
-          [ngClass]="isDarkMode ? 'text-teal-400' : 'text-blue-600'"
+        <div class="relative">
+          <button
+            (click)="toggleDropdown('trig')"
+            class="w-full text-sm font-medium flex justify-between items-center hover:bg-opacity-90 px-3 py-2 rounded transition-all duration-200"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-teal-900/20 text-teal-400'
+                : 'bg-blue-50 text-blue-600'
+            "
+          >
+            <span>Explorar ejemplos</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 ml-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <div
+            *ngIf="activeDropdown === 'trig'"
+            class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md py-1 border border-gray-200 dark:border-gray-700"
+            [ngClass]="isDarkMode ? 'dark-dropdown' : 'light-dropdown'"
+          >
+            <button
+              *ngFor="let example of trigExamples"
+              (click)="navigateToCalculatorWithExample('trig', example.id)"
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 text-sm"
+            >
+              {{ example.name }}
+            </button>
+            <div
+              class="border-t border-gray-200 dark:border-gray-700 my-1"
+            ></div>
+            <button
+              (click)="navigateToCalculator()"
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-teal-400' : 'text-blue-600'"
+            >
+              Calculadora personalizada →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- New container for Half-Range Series -->
+      <div
+        class="feature-card rounded-xl p-8 transition-all duration-300 hover:shadow-lg"
+        (mouseenter)="closeDropdownIfNot('halfRange')"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-800/50 border border-gray-700'
+            : 'bg-white/80 shadow-md border border-gray-100'
+        "
+      >
+        <div
+          class="feature-icon mb-4 p-3 rounded-full w-full max-w-xs h-20 flex items-center justify-center mx-auto"
+          [ngClass]="isDarkMode ? 'bg-amber-900/30' : 'bg-amber-100'"
+          style="width: 100%; max-width: none"
         >
-          Calcular serie trigonométrica →
-        </button>
+          <div
+            class="formula-container"
+            [ngClass]="isDarkMode ? 'text-amber-400' : 'text-amber-600'"
+            [innerHTML]="halfRangeTeX"
+          ></div>
+        </div>
+        <h3 class="text-xl font-semibold mb-3">Series de Medio Rango</h3>
+        <p class="mb-4">
+          Expande funciones en series de senos o cosenos puros, ideal para
+          problemas con condiciones de contorno específicas.
+        </p>
+        <div class="relative">
+          <button
+            (click)="toggleDropdown('halfRange')"
+            class="w-full text-sm font-medium flex justify-between items-center hover:bg-opacity-90 px-3 py-2 rounded transition-all duration-200"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-amber-900/20 text-amber-400'
+                : 'bg-amber-50 text-amber-600'
+            "
+          >
+            <span>Explorar ejemplos</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 ml-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <div
+            *ngIf="activeDropdown === 'halfRange'"
+            class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md py-1 border border-gray-200 dark:border-gray-700"
+            [ngClass]="isDarkMode ? 'dark-dropdown' : 'light-dropdown'"
+          >
+            <button
+              *ngFor="let example of halfRangeExamples"
+              (click)="navigateToCalculatorWithExample('halfRange', example.id)"
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 text-sm"
+            >
+              {{ example.name }}
+            </button>
+            <div
+              class="border-t border-gray-200 dark:border-gray-700 my-1"
+            ></div>
+            <button
+              (click)="navigateToCalculator()"
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-amber-400' : 'text-amber-600'"
+            >
+              Calculadora personalizada →
+            </button>
+          </div>
+        </div>
       </div>
 
       <div
-        class="feature-card rounded-xl p-8 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+        class="feature-card rounded-xl p-8 transition-all duration-300 hover:shadow-lg"
+        (mouseenter)="closeDropdownIfNot('complex')"
         [ngClass]="
           isDarkMode
             ? 'bg-gray-800/50 border border-gray-700'
@@ -249,6 +381,7 @@
         <div
           class="feature-icon mb-4 p-3 rounded-full w-full max-w-xs h-20 flex items-center justify-center mx-auto"
           [ngClass]="isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100'"
+          style="width: 100%; max-width: none"
         >
           <div
             class="formula-container"
@@ -261,17 +394,59 @@
           Representa funciones periódicas en términos de exponenciales complejas
           con visualización de amplitud y fase.
         </p>
-        <button
-          (click)="navigateToCalculator()"
-          class="text-sm font-medium hover:underline"
-          [ngClass]="isDarkMode ? 'text-purple-400' : 'text-purple-600'"
-        >
-          Calcular serie compleja →
-        </button>
+        <div class="relative">
+          <button
+            (click)="toggleDropdown('complex')"
+            class="w-full text-sm font-medium flex justify-between items-center hover:bg-opacity-90 px-3 py-2 rounded transition-all duration-200"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-purple-900/20 text-purple-400'
+                : 'bg-purple-50 text-purple-600'
+            "
+          >
+            <span>Explorar ejemplos</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 ml-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <div
+            *ngIf="activeDropdown === 'complex'"
+            class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md py-1 border border-gray-200 dark:border-gray-700"
+            [ngClass]="isDarkMode ? 'dark-dropdown' : 'light-dropdown'"
+          >
+            <button
+              *ngFor="let example of complexExamples"
+              (click)="navigateToCalculatorWithExample('complex', example.id)"
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 text-sm"
+            >
+              {{ example.name }}
+            </button>
+            <div
+              class="border-t border-gray-200 dark:border-gray-700 my-1"
+            ></div>
+            <button
+              (click)="navigateToCalculator()"
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-purple-400' : 'text-purple-600'"
+            >
+              Calculadora personalizada →
+            </button>
+          </div>
+        </div>
       </div>
 
       <div
-        class="feature-card rounded-xl p-8 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+        class="feature-card rounded-xl p-8 transition-all duration-300 hover:shadow-lg"
+        (mouseenter)="closeDropdownIfNot('dft')"
         [ngClass]="
           isDarkMode
             ? 'bg-gray-800/50 border border-gray-700'
@@ -281,6 +456,7 @@
         <div
           class="feature-icon mb-4 p-3 rounded-full w-full max-w-xs h-20 flex items-center justify-center mx-auto"
           [ngClass]="isDarkMode ? 'bg-pink-900/30' : 'bg-pink-100'"
+          style="width: 100%; max-width: none"
         >
           <div
             class="formula-container"
@@ -293,13 +469,54 @@
           Analiza señales mediante el algoritmo DFT para obtener componentes
           frecuenciales con visualización espectral.
         </p>
-        <button
-          (click)="navigateToDFT()"
-          class="text-sm font-medium hover:underline"
-          [ngClass]="isDarkMode ? 'text-pink-400' : 'text-pink-600'"
-        >
-          Calcular transformada →
-        </button>
+        <div class="relative">
+          <button
+            (click)="toggleDropdown('dft')"
+            class="w-full text-sm font-medium flex justify-between items-center hover:bg-opacity-90 px-3 py-2 rounded transition-all duration-200"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-pink-900/20 text-pink-400'
+                : 'bg-pink-50 text-pink-600'
+            "
+          >
+            <span>Explorar ejemplos</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 ml-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a 1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <div
+            *ngIf="activeDropdown === 'dft'"
+            class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md py-1 border border-gray-200 dark:border-gray-700"
+            [ngClass]="isDarkMode ? 'dark-dropdown' : 'light-dropdown'"
+          >
+            <button
+              *ngFor="let example of dftExamples"
+              (click)="navigateToCalculatorWithExample('dft', example.id)"
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 text-sm"
+            >
+              {{ example.name }}
+            </button>
+            <div
+              class="border-t border-gray-200 dark:border-gray-700 my-1"
+            ></div>
+            <button
+              (click)="navigateToDFT()"
+              class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 text-sm font-medium"
+              [ngClass]="isDarkMode ? 'text-pink-400' : 'text-pink-600'"
+            >
+              Calculadora personalizada →
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
