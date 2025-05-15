@@ -733,6 +733,43 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
               value: point.y,
             });
           }
+
+          // Reflejar el punto en la parte negativa del espectro
+          // (Evitamos reflejar el punto en frecuencia cero)
+          if (point.x > 0) {
+            // La frecuencia negativa correspondiente
+            const negativeX = -point.x;
+
+            // Para la fase, invertimos el signo del valor (simetría impar)
+            const negativeY = -point.y;
+
+            // Dibujar el punto reflejado con fase invertida
+            this.drawDiscreteLineWithBlur(
+              this.phaseCanvas,
+              negativeX,
+              0,
+              negativeY,
+              this.phaseColor,
+              this.phaseLineWidth,
+              true
+            );
+
+            // Almacenar el punto reflejado para tooltip
+            const negPixelPos = this.canvasCoordToPixel(
+              this.phaseCanvas,
+              negativeX,
+              negativeY
+            );
+
+            if (negPixelPos) {
+              this.phasePoints.push({
+                n: negativeX,
+                x: negPixelPos.x,
+                y: negPixelPos.y,
+                value: negativeY,
+              });
+            }
+          }
         }
       }
     } catch (error) {
