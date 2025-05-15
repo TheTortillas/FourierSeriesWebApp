@@ -192,6 +192,8 @@ Los componentes de visualización permiten personalizar diversos aspectos:
 
 ## Licencia
 
-Este proyecto está licenciado bajo ISC License.
+Este proyecto se distribuye bajo una licencia personalizada de uso no comercial.  
+Puedes consultar los términos completos en el archivo [`LICENSE`](../LICENSE).  
+Para uso comercial, contacta al autor.
 
 ---
