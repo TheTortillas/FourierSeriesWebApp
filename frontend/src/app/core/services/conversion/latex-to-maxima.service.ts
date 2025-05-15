@@ -71,6 +71,13 @@ export class LatexToMaximaService {
     // Normalizar la función exponencial
     let result = expression;
 
+    // Agregar esta línea para manejar \operatorname{sen}
+    result = result.replace(/\\operatorname\{sen\}/g, '\\sin');
+
+    // Mantener las reglas existentes
+    result = result.replace(/\\sen/g, '\\sin');
+    result = result.replace(/\bsen\s*\(/g, 'sin(');
+
     // Convertir \exp{...} y \exp \left( ... \right) a formatos que tex2max pueda manejar mejor
     result = result.replace(/\\exp\s*\{([^}]*)\}/g, '\\exp\\left($1\\right)');
     result = result.replace(/\\exp\s*(?!\\left)/g, '\\exp\\left(');
@@ -118,6 +125,7 @@ export class LatexToMaximaService {
     // Reemplazar funciones trigonométricas y logarítmicas
     const funcMap: Record<string, string> = {
       sin: 'sin',
+      sen: 'sin',
       cos: 'cos',
       tan: 'tan',
       cot: 'cot',

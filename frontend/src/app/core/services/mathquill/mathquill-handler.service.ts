@@ -44,6 +44,7 @@ export class MathquillHandlerService {
       // Lista completa de todas las funciones trigonométricas
       const trigFunctions = [
         '\\sin',
+        '\\sen',
         '\\cos',
         '\\tan',
         '\\cot',
