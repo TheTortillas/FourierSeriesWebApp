@@ -45,7 +45,7 @@ export class FourierCalculatorComponent
   @ViewChild('pieceContainer') pieceContainer: ElementRef | undefined;
 
   pieces: Piece[] = [];
-  seriesType: string = '';
+  seriesType: string = 'trigonometric';
   selectedVariable: string = 'x';
   keyboardVisible: boolean = true;
 

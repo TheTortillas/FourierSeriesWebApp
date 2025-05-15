@@ -1,19 +1,27 @@
-
 <div
   class="min-h-screen app-container font-sans p-4 flex items-center justify-center"
 >
-<div class="fixed top-4 left-4 z-10">
-  <button
-    (click)="navigateToMenu()"
-    class="back-to-menu flex items-center gap-2 px-4 py-2 rounded-lg btn-secondary shadow-md hover:shadow-lg transition-all duration-200"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-      <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-    </svg>
-    <span class="hidden sm:inline">Regresar al Menú</span>
-    <span class="sm:hidden">Menú</span>
-  </button>
-</div>
+  <div class="fixed top-4 left-4 z-10">
+    <button
+      (click)="navigateToMenu()"
+      class="back-to-menu flex items-center gap-2 px-4 py-2 rounded-lg btn-secondary shadow-md hover:shadow-lg transition-all duration-200"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        fill="currentColor"
+        viewBox="0 0 16 16"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
+        />
+      </svg>
+      <span class="hidden sm:inline">Regresar al Menú</span>
+      <span class="sm:hidden">Menú</span>
+    </button>
+  </div>
   <div
     class="w-full max-w-5xl card rounded-xl shadow-2xl p-8 border text-inherit"
   >
@@ -117,7 +125,9 @@
     <div class="mb-6 section-container p-4 rounded-lg border transition-all">
       <h3 class="text-base mb-3 font-medium flex items-center">
         <span class="w-1 h-1 dot-indicator rounded-full mr-2"></span>
-        <span class="section-header">Función f({{ selectedVariable }})</span>
+        <span class="section-header"
+          >Función f({{ selectedVariable }}) en el periodo a expandir</span
+        >
       </h3>
 
       <div
@@ -242,9 +252,9 @@
           id="type"
           name="type"
           [(ngModel)]="seriesType"
-          class="w-full p-2.5 select text-sm border rounded-md focus:outline-none"
+          class="w-full p-2.5 select text-base border rounded-md focus:outline-none"
         >
-          <option value="" disabled selected>
+          <option value="" disabled>
             Selecciona el tipo de Serie de Fourier
           </option>
           <option value="trigonometric">Trigonométrica</option>
@@ -272,7 +282,7 @@
             <select
               id="numSamples"
               [(ngModel)]="dftParams.numSamples"
-              class="w-full p-2 border rounded-md text-sm focus:outline-none"
+              class="w-full p-2 border rounded-md text-base focus:outline-none"
             >
               <option *ngFor="let value of powersOfTwo" [value]="value">
                 {{ value }}
@@ -288,7 +298,7 @@
               id="sampleRate"
               [(ngModel)]="dftParams.sampleRate"
               min="0"
-              class="w-full p-2 border rounded-md text-sm focus:outline-none"
+              class="w-full p-2 border rounded-md text-base focus:outline-none"
               placeholder="1"
             />
           </div>
