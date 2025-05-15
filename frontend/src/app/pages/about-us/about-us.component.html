@@ -132,12 +132,50 @@
           >
             MathQuill
           </span>
+          <span
+          class="px-3 py-1 rounded-full text-sm font-medium"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gray-700 text-gray-300'
+              : 'bg-gray-100 text-gray-600'
+          "
+        >
+          CAS Maxima
+        </span>
         </div>
+      </div>
+
+      <div class="mt-8">
+        <a
+          routerLink="/"
+          class="inline-flex items-center px-5 py-2.5 rounded-lg text-base font-medium transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1"
+          [ngClass]="
+            isDarkMode
+              ? 'bg-gradient-to-r from-teal-500 to-green-500 hover:from-teal-600 hover:to-green-600 text-white'
+              : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white'
+          "
+        >
+          <svg
+            class="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            ></path>
+          </svg>
+          Volver al Inicio
+        </a>
       </div>
     </section>
 
     <!-- Developer section -->
-    <section
+    <!-- <section
       class="mb-12 rounded-xl p-6 sm:p-8"
       [ngClass]="
         isDarkMode
@@ -152,8 +190,7 @@
           <div
             class="w-48 h-48 rounded-full overflow-hidden border-4"
             [ngClass]="isDarkMode ? 'border-teal-500/30' : 'border-blue-500/30'"
-          >
-            <!-- Replace with your photo -->
+          >       
             <img
               src="assets/images/profile.jpg"
               alt="Desarrollador"
@@ -230,10 +267,10 @@
           </div>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <!-- Project goals -->
-    <section
+    <!-- <section
       class="rounded-xl p-6 sm:p-8"
       [ngClass]="
         isDarkMode
@@ -289,7 +326,7 @@
           </a>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <app-footer [isDarkMode]="isDarkMode"></app-footer>
   </div>

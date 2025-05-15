@@ -1059,4 +1059,9 @@ export class FourierCalculatorComponent
       this.updateSubject.next();
     }
   }
+
+  navigateToMenu(): void {
+    this.router.navigate(['/']);
+  }
+
 }
