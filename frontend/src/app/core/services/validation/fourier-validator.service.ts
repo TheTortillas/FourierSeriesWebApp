@@ -287,4 +287,183 @@ export class FourierValidatorService {
 
     return hasError;
   }
+
+  /**
+   * Valida si hay texto en cursiva (funciones no reconocidas) en los campos
+   * @param pieces Las piezas de la función a validar
+   * @param intVar La variable de integración seleccionada
+   * @returns Un objeto con el resultado de la validación y los detalles
+   */
+  validateItalicText(
+    pieces: Piece[],
+    intVar: string
+  ): {
+    isValid: boolean;
+    error?: any;
+  } {
+    if (pieces.length <= 0) return { isValid: true };
+
+    const invalidFields: {
+      index: number;
+      fieldType: string;
+      content: string;
+    }[] = [];
+
+    // Permitir la variable de integración y las variables especiales L y T
+    const allowedVars = [intVar, 'L', 'T'];
+
+    // Lista de palabras clave a ignorar (constantes, etc.)
+    const ignoreKeywords = ['pi', 'e'];
+
+    // Variable para rastrear si se encontraron L o T
+    let usesArbitraryVars = false;
+
+    for (let i = 0; i < pieces.length; i++) {
+      const piece = pieces[i];
+
+      // Validar campo de función
+      if (piece.funcField) {
+        const funcLatex = piece.funcField.latex();
+        const italicMatches = this.findItalicText(
+          funcLatex,
+          allowedVars,
+          ignoreKeywords
+        );
+
+        if (italicMatches.length > 0) {
+          invalidFields.push({
+            index: i,
+            fieldType: 'función',
+            content: italicMatches.join(', '),
+          });
+        }
+
+        // Verificar si se usan variables arbitrarias
+        if (funcLatex.includes('L') || funcLatex.includes('T')) {
+          usesArbitraryVars = true;
+        }
+      }
+
+      // Validar límite inferior
+      if (piece.startField) {
+        const startLatex = piece.startField.latex();
+        const italicMatches = this.findItalicText(
+          startLatex,
+          allowedVars,
+          ignoreKeywords
+        );
+
+        if (italicMatches.length > 0) {
+          invalidFields.push({
+            index: i,
+            fieldType: 'límite inferior',
+            content: italicMatches.join(', '),
+          });
+        }
+
+        // Verificar si se usan variables arbitrarias
+        if (startLatex.includes('L') || startLatex.includes('T')) {
+          usesArbitraryVars = true;
+        }
+      }
+
+      // Validar límite superior
+      if (piece.endField) {
+        const endLatex = piece.endField.latex();
+        const italicMatches = this.findItalicText(
+          endLatex,
+          allowedVars,
+          ignoreKeywords
+        );
+
+        if (italicMatches.length > 0) {
+          invalidFields.push({
+            index: i,
+            fieldType: 'límite superior',
+            content: italicMatches.join(', '),
+          });
+        }
+
+        // Verificar si se usan variables arbitrarias
+        if (endLatex.includes('L') || endLatex.includes('T')) {
+          usesArbitraryVars = true;
+        }
+      }
+    }
+
+    // Registrar en consola si se están usando variables arbitrarias
+    if (usesArbitraryVars) {
+      console.log(
+        '⚠️ Se están usando variables arbitrarias (L, T) en la expresión.'
+      );
+    }
+
+    if (invalidFields.length > 0) {
+      let errorMessage = '';
+      invalidFields.forEach((field) => {
+        errorMessage += `\n• Pieza ${field.index + 1}, ${field.fieldType}: "${
+          field.content
+        }"`;
+      });
+
+      return {
+        isValid: false,
+        error: {
+          title: 'Expresiones no reconocidas',
+          html: `<div>
+            <p>Se encontraron funciones o variables no reconocidas:</p>
+            <pre style="text-align: left; margin-top: 10px; padding: 8px; background: #f4f4f4; border-radius: 4px; max-height: 150px; overflow-y: auto;">${errorMessage}</pre>
+          </div>`,
+          icon: 'warning',
+        },
+      };
+    }
+
+    return { isValid: true };
+  }
+
+  /**
+   * Encuentra texto en cursiva (no reconocido) en una expresión LaTeX
+   */
+  private findItalicText(
+    latex: string,
+    allowedVars: string[],
+    ignoreKeywords: string[]
+  ): string[] {
+    if (!latex || latex === '\\square') return [];
+
+    const matches: string[] = [];
+    const italicTextRegex = /(?<![\\a-zA-Z])([a-zA-Z]+)(?![a-zA-Z])/g;
+    let match;
+
+    // Buscar todas las coincidencias
+    while ((match = italicTextRegex.exec(latex)) !== null) {
+      const word = match[1];
+      // Si no es una variable permitida ni una palabra clave ignorada
+      if (!allowedVars.includes(word) && !ignoreKeywords.includes(word)) {
+        // Ignorar funciones conocidas que no necesitan validación
+        if (
+          ![
+            'sin',
+            'cos',
+            'tan',
+            'sec',
+            'csc',
+            'cot',
+            'sen',
+            'exp',
+            'log',
+            'ln',
+            'sinh',
+            'cosh',
+            'tanh',
+          ].includes(word)
+        ) {
+          matches.push(word);
+        }
+      }
+    }
+
+    return matches;
+  }
 }

@@ -506,6 +506,20 @@ export class FourierCalculatorComponent
       return;
     }
 
+    const italicValidation = this.validator.validateItalicText(
+      this.pieces,
+      this.selectedVariable
+    );
+    if (!italicValidation.isValid) {
+      Swal.fire({
+        title: italicValidation.error.title,
+        html: italicValidation.error.html,
+        icon: italicValidation.error.icon,
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
     // Crear la matriz de función en el formato requerido y convertir a Maxima
     const funcionMatrix = this.pieces.map((piece) => [
       this.latexToMaximaService.convertToMaxima(piece.funcField.latex()),
@@ -891,6 +905,20 @@ export class FourierCalculatorComponent
         title: 'Datos incompletos',
         text: 'Por favor define la función completamente',
         icon: 'warning',
+        confirmButtonText: 'Entendido',
+      });
+      return;
+    }
+
+    const italicValidation = this.validator.validateItalicText(
+      this.pieces,
+      this.selectedVariable
+    );
+    if (!italicValidation.isValid) {
+      Swal.fire({
+        title: italicValidation.error.title,
+        html: italicValidation.error.html,
+        icon: italicValidation.error.icon,
         confirmButtonText: 'Entendido',
       });
       return;
