@@ -35,14 +35,6 @@
   - Soporte para funciones definidas por tramos
   - Validación matemática instantánea
 
-## 📸 Demostración
-
-<img src="https://placehold.co/600x400?text=Fourier+Web+Calculator+Screenshot" alt="Screenshot de la aplicación" width="600"/>
-
-_Nota: Sustituye esta imagen con una captura real de tu aplicación._
-
-## 🏗️ Estructura del Proyecto
-
 El proyecto está dividido en dos componentes principales:
 
 ```
