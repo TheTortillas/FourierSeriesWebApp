@@ -731,38 +731,7 @@
             >Coeficientes de la Serie</span
           >
         </h3>
-
-        <!-- Toggle para cambiar entre coeficientes con n entero y sin restricción -->
-        <div
-          class="flex items-center justify-between mb-4 p-3 rounded-lg border transition-all"
-          [ngClass]="
-            isDarkMode
-              ? 'bg-gray-800/40 border-gray-700/50 hover:border-purple-500/30'
-              : 'bg-white border-gray-200 hover:border-purple-300'
-          "
-        >
-          <label
-            class="text-sm font-medium"
-            [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
-          >
-            {{
-              showNonIntegerCoeffs
-                ? "Mostrar coeficientes sin restricción n entero:"
-                : "Mostrar coeficientes con n entero:"
-            }}
-          </label>
-          <div class="relative inline-block w-12 align-middle select-none">
-            <input
-              type="checkbox"
-              [(ngModel)]="showNonIntegerCoeffs"
-              (change)="toggleCoefficientsView()"
-              id="toggleCoeffType"
-              class="toggle-checkbox"
-            />
-            <label for="toggleCoeffType" class="toggle-label"></label>
-          </div>
-        </div>
-
+             
         <!-- Resto de la sección con modificaciones para mostrar fórmulas según el toggle -->
         <div class="space-y-4">
           <!-- Coeficiente a0 -->
