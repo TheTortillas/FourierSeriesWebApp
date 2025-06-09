@@ -26,6 +26,8 @@ import { debounceTime, Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { SurveyButtonComponent } from '../../shared/components/survey-button/survey-button.component';
+import { driver } from 'driver.js';
+import 'driver.js/dist/driver.css';
 
 @Component({
   selector: 'app-fourier-calculator',
@@ -63,6 +65,12 @@ export class FourierCalculatorComponent
 
   // Add a property to track global click listener
   private documentClickListener: any;
+
+  // Propiedad para el tour
+  private tourDriver: any;
+
+  // Propiedad para controlar si se ha completado el tour
+  tourCompleted: boolean = false;
 
   // Obtener botones del teclado del servicio
   get mathButtonsBasic() {
@@ -118,6 +126,10 @@ export class FourierCalculatorComponent
       if (this.isMobile) {
         this.setupDocumentClickListener();
       }
+
+      // Verificar si el tour ya se completó
+      this.tourCompleted =
+        localStorage.getItem('fourierTourCompleted') === 'true';
     }
   }
 
@@ -130,7 +142,11 @@ export class FourierCalculatorComponent
         if (this.isMobile) {
           this.setupDragToHide();
         }
-      }, 100);
+
+        // Inicializar y mostrar el tour después de renderizar la interfaz
+        this.initTour();
+        this.checkAndStartTour();
+      }, 300); // Incrementé el tiempo para asegurar que todos los elementos estén renderizados
     }
   }
 
@@ -1064,4 +1080,142 @@ export class FourierCalculatorComponent
     this.router.navigate(['/']);
   }
 
+  // Método para inicializar el tour
+  private initTour(): void {
+    if (!this.isBrowser) return;
+
+    this.tourDriver = driver({
+      showProgress: true,
+      animate: true,
+      showButtons: ['next', 'previous', 'close'],
+      steps: this.getTourSteps(),
+      nextBtnText: 'Siguiente',
+      prevBtnText: 'Anterior',
+      doneBtnText: 'Finalizar',
+      // Remove the invalid property 'overlayClickNext'
+      onDestroyed: () => {
+        // Guardar en localStorage que el usuario ha visto el tour
+        localStorage.setItem('fourierTourCompleted', 'true');
+      },
+    });
+  }
+
+  // Método para verificar si debe mostrarse el tour y ejecutarlo
+  private checkAndStartTour(): void {
+    if (!this.isBrowser) return;
+
+    // Verificar si el usuario ya ha visto el tour
+    this.tourCompleted =
+      localStorage.getItem('fourierTourCompleted') === 'true';
+
+    if (!this.tourCompleted && this.tourDriver) {
+      setTimeout(() => {
+        this.startTour();
+      }, 500); // Dar tiempo adicional para asegurar que todo esté listo
+    }
+  }
+
+  // Método para iniciar el tour manualmente
+  startTour(): void {
+    if (this.isBrowser && this.tourDriver) {
+      this.tourDriver.drive();
+    }
+  }
+
+  // Método para reiniciar el tour (puede ser llamado desde un botón en la interfaz)
+  restartTour(): void {
+    if (this.isBrowser) {
+      // Reiniciar la configuración del tour y comenzar de nuevo
+      this.initTour();
+      this.startTour();
+    }
+  }
+
+  // Configuración de los pasos del tour
+  private getTourSteps(): any[] {
+    // Adaptar los pasos según sea móvil o desktop
+    const isMobile = this.mathquillService.isMobileDevice();
+
+    const steps = [
+      {
+        element: '.card',
+        popover: {
+          title: 'Bienvenido a la Calculadora Fourier',
+          description:
+            'Esta herramienta te permite calcular Series de Fourier y Transformadas Discretas de funciones matemáticas.',
+          side: 'bottom',
+          align: 'center',
+        },
+      },
+      {
+        element: '#variable',
+        popover: {
+          title: 'Variable de integración',
+          description:
+            'Selecciona la variable con la que trabajarás, ya sea espacial (x) o temporal (t).',
+          side: 'bottom',
+        },
+      },
+      {
+        element: '#functionDisplay',
+        popover: {
+          title: 'Visualización de la función',
+          description:
+            'Aquí podrás ver cómo se representa matemáticamente la función que estás definiendo.',
+          side: 'top',
+        },
+      },
+      {
+        element: '#pieceContainer',
+        popover: {
+          title: 'Definición de función',
+          description:
+            'Define tu función matemática y los intervalos donde se aplica. Puedes añadir múltiples tramos para funciones por partes.',
+          side: 'top',
+        },
+      },
+    ];
+
+    // Añadir paso específico para teclado matemático en escritorio
+    if (!isMobile) {
+      steps.push({
+        element: '.keyboard-toggle-btn',
+        popover: {
+          title: 'Teclado matemático',
+          description:
+            'Haz clic aquí para mostrar u ocultar el teclado matemático, que te ayudará a introducir símbolos y funciones.',
+          side: 'bottom',
+        },
+      });
+    }
+
+    // Continuar con pasos comunes
+    steps.push(
+      {
+        element: '.mb-8.section-container',
+        popover: {
+          title: 'Tipo de cálculo',
+          description:
+            'Selecciona entre Series de Fourier (para funciones analíticamente integrables) o Transformada Discreta (para aproximaciones numéricas).',
+          side: 'top',
+        },
+      },
+      {
+        element: '#submitButton',
+        popover: {
+          title: 'Calcular',
+          description:
+            'Una vez que hayas configurado tu función, haz clic aquí para calcular la serie o transformada.',
+          side: 'top',
+        },
+      }
+    );
+
+    return steps;
+  }
+
+  // Puedes añadir un método público para ser llamado desde el HTML
+  showHelp(): void {
+    this.restartTour();
+  }
 }
