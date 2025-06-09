@@ -152,8 +152,22 @@ export class FourierCalculatorComponent
 
   // Add OnDestroy implementation to clean up the event listener
   ngOnDestroy(): void {
-    if (this.isBrowser && this.documentClickListener) {
-      document.removeEventListener('click', this.documentClickListener);
+    if (this.isBrowser) {
+      // Remove document click listener
+      if (this.documentClickListener) {
+        document.removeEventListener('click', this.documentClickListener);
+      }
+
+      // Detener el tour si está activo
+      if (this.tourDriver) {
+        try {
+          // Destruir la instancia del tour para evitar que permanezca en otras páginas
+          this.tourDriver.destroy();
+          this.tourDriver = null;
+        } catch (error) {
+          console.error('Error al destruir el tour:', error);
+        }
+      }
     }
   }
 
