@@ -506,62 +506,6 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private drawFourierSeries(
-    a0: number,
-    aCoefs: number[],
-    bCoefs: number[],
-    w0: number,
-    terms: number,
-    color: string,
-    lineWidth: number = 2 // Añadir parámetro de grosor
-  ): void {
-    // Método para dibujar la serie de Fourier
-    const config = this.getPlotConfig();
-    if (!config.ctx) return;
-
-    const { ctx, width, unit, offsetX, offsetY, origin } = config;
-
-    let previousX: number | undefined = undefined;
-    let previousY: number | undefined = undefined;
-
-    // Para cada pixel en el ancho del canvas
-    for (let px = 0; px < width; px++) {
-      // Convertir de pixel a coordenada matemática
-      const x = (px + offsetX - origin.x) / unit;
-
-      // Inicializar la suma con el término constante a0
-      let sum = a0;
-
-      // Sumar términos de la serie para cada n
-      for (let n = 1; n <= Math.min(terms, aCoefs.length); n++) {
-        if (n - 1 < aCoefs.length && aCoefs[n - 1] !== 0) {
-          sum += aCoefs[n - 1] * Math.cos(n * w0 * x);
-        }
-
-        if (n - 1 < bCoefs.length && bCoefs[n - 1] !== 0) {
-          sum += bCoefs[n - 1] * Math.sin(n * w0 * x);
-        }
-      }
-
-      // Convertir de coordenada matemática a pixel
-      const canvasX = px;
-      const canvasY = origin.y - offsetY - unit * sum;
-
-      // Dibujar línea desde el punto anterior
-      if (previousX !== undefined && previousY !== undefined) {
-        ctx.strokeStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(previousX, previousY);
-        ctx.lineTo(canvasX, canvasY);
-        ctx.lineWidth = lineWidth; // Usar el parámetro lineWidth
-        ctx.stroke();
-      }
-
-      previousX = canvasX;
-      previousY = canvasY;
-    }
-  }
-
   /* Calculation and Preprocessing Methods */
   private precalculateCoefficients(): void {
     if (!this.response || !this.response.simplified) return;
