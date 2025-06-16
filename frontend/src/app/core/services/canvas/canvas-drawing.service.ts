@@ -8,6 +8,8 @@ import { DrawScreenConfig } from '../../../interfaces/draw-screen-config.interfa
 export class CanvasDrawingService {
   /**
    * Dibuja el plano cartesiano completo (fondo, ejes, cuadrícula)
+   * @param config Configuración del dibujo que incluye: contexto, dimensiones,
+   *               desplazamientos, origen, colores, unidad y escala del eje X
    */
   drawScreen(config: DrawScreenConfig): void {
     const {
@@ -68,6 +70,12 @@ export class CanvasDrawingService {
 
   /**
    * Dibuja los ejes X y Y
+   * @param ctx Contexto del canvas
+   * @param XAxis Objeto con coordenadas de inicio y fin del eje X
+   * @param YAxis Objeto con coordenadas de inicio y fin del eje Y
+   * @param axisColor Color de los ejes
+   * @param offsetX Desplazamiento horizontal
+   * @param offsetY Desplazamiento vertical
    */
   drawAxes(
     ctx: CanvasRenderingContext2D,
@@ -96,6 +104,17 @@ export class CanvasDrawingService {
 
   /**
    * Dibuja la cuadrícula en el plano cartesiano
+   * @param ctx Contexto del canvas
+   * @param origin Coordenadas del origen
+   * @param XAxis Objeto con coordenadas de inicio y fin del eje X
+   * @param YAxis Objeto con coordenadas de inicio y fin del eje Y
+   * @param unit Tamaño de cada unidad en píxeles
+   * @param gridColor Color de la cuadrícula
+   * @param fontColor Color del texto
+   * @param offsetX Desplazamiento horizontal
+   * @param offsetY Desplazamiento vertical
+   * @param xAxisScale Escala del eje X ('integer', 'pi' o 'e')
+   * @param xAxisFactor Factor de escala aplicado al eje X
    */
   drawGrid(
     ctx: CanvasRenderingContext2D,
@@ -107,8 +126,8 @@ export class CanvasDrawingService {
     fontColor: string,
     offsetX: number,
     offsetY: number,
-    xAxisScale: 'integer' | 'pi' | 'e' = 'integer', // Default to integer
-    xAxisFactor: number = 1 // Default factor is 1
+    xAxisScale: 'integer' | 'pi' | 'e' = 'integer',
+    xAxisFactor: number = 1
   ): void {
     ctx.strokeStyle = gridColor;
     ctx.fillStyle = fontColor;
