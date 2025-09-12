@@ -145,13 +145,51 @@ make install
 
 > **💡 Ventaja**: Con `make install` evitas tener que entrar manualmente a cada directorio y ejecutar `npm install` por separado. Ideal para clonar el repositorio y ponerlo en funcionamiento rápidamente.
 
+### 🚀 Ejecutar los Servicios
+
+Una vez instaladas las dependencias, puedes ejecutar los servicios de desarrollo con el Makefile:
+
+#### Comandos de ejecución disponibles:
+
+| Comando             | Descripción                                              |
+| ------------------- | -------------------------------------------------------- |
+| `make dev`          | Ejecuta backend y frontend simultáneamente en background |
+| `make run-backend`  | Ejecuta solo el backend con `node --watch` (puerto 3000) |
+| `make run-frontend` | Ejecuta solo el frontend con `ng serve` (puerto 4200)    |
+| `make stop`         | Detiene todos los procesos en background                 |
+
+#### Ejemplos de uso:
+
+```bash
+# Opción 1: Ejecutar ambos servicios simultáneamente
+make dev
+
+# Opción 2: Ejecutar cada servicio por separado (recomendado para desarrollo)
+# Terminal 1:
+make run-backend
+
+# Terminal 2:
+make run-frontend
+
+# Para detener servicios en background:
+make stop
+```
+
+> **🔧 Detalles técnicos**:
+>
+> - El backend se ejecuta con `node --watch server.js` para reinicio automático
+> - El frontend se ejecuta con `ng serve` en modo desarrollo
+> - Los servicios corren en puertos 3000 (backend) y 4200 (frontend) respectivamente
+
 ### 4. Acceder a la Aplicación
 
-Abre tu navegador y visita:
+Una vez que ambos servicios estén ejecutándose (ya sea con `make dev` o ejecutándolos por separado), abre tu navegador y visita:
 
 ```
 http://localhost:4200
 ```
+
+> **📌 Nota**: Asegúrate de que tanto el backend (puerto 3000) como el frontend (puerto 4200) estén ejecutándose antes de acceder a la aplicación.
 
 ## 💡 Uso
 
