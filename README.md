@@ -68,6 +68,7 @@ Para ejecutar el proyecto completo necesitas:
 - **Angular CLI** (v18 o superior)
 - **Maxima CAS** (Sistema de Álgebra Computacional)
 - **Sistema operativo Linux** (Ubuntu, Debian, etc.) para el backend
+- **Make** (opcional, para usar la instalación automatizada)
 
 > ⚠️ **IMPORTANTE**: El backend DEBE ejecutarse en un sistema operativo Linux. Esto se debe a diferencias fundamentales en cómo Node.js ejecuta los comandos de Maxima en distintos sistemas operativos. No es posible ejecutar el backend en Windows.
 
@@ -121,6 +122,29 @@ npm install
 ng serve
 ```
 
+### 🔥 Instalación Rápida con Makefile
+
+Para simplificar el proceso de instalación, el proyecto incluye un **Makefile** que automatiza la instalación de dependencias en ambos proyectos con un solo comando:
+
+```bash
+# Instalar dependencias de backend y frontend automáticamente
+make install
+```
+
+#### Comandos disponibles del Makefile:
+
+| Comando                 | Descripción                                |
+| ----------------------- | ------------------------------------------ |
+| `make install`          | Instala dependencias de backend y frontend |
+| `make install-backend`  | Instala solo dependencias del backend      |
+| `make install-frontend` | Instala solo dependencias del frontend     |
+| `make clean`            | Limpia todos los node_modules              |
+| `make clean-backend`    | Limpia node_modules del backend            |
+| `make clean-frontend`   | Limpia node_modules del frontend           |
+| `make help`             | Muestra todos los comandos disponibles     |
+
+> **💡 Ventaja**: Con `make install` evitas tener que entrar manualmente a cada directorio y ejecutar `npm install` por separado. Ideal para clonar el repositorio y ponerlo en funcionamiento rápidamente.
+
 ### 4. Acceder a la Aplicación
 
 Abre tu navegador y visita:
@@ -163,7 +187,6 @@ http://localhost:4200
 
 - **Node.js** con **Express**
 - **Maxima CAS** para cálculos simbólicos
-
 
 ## 📜 Licencia
 
