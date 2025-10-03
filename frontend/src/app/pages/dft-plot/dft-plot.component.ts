@@ -15,8 +15,6 @@ import { MathquillService } from '../../core/services/mathquill/mathquill.servic
 import { MathUtilsService } from '../../core/services/maximaToJS/math-utils.service';
 import { ApiService } from '../../core/services/api/api.service';
 import { ThemeService } from '../../core/services/theming/theme.service';
-import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
-import { SurveyButtonComponent } from '../../shared/components/survey-button/survey-button.component';
 import { LatexToMaximaService } from '../../core/services/conversion/latex-to-maxima.service';
 
 import { Subscription } from 'rxjs';
@@ -28,8 +26,6 @@ import { Subscription } from 'rxjs';
     CommonModule,
     FormsModule,
     CartesianCanvasComponent,
-    ThemeToggleComponent,
-    SurveyButtonComponent,
   ],
   templateUrl: './dft-plot.component.html',
   styleUrl: './dft-plot.component.scss',

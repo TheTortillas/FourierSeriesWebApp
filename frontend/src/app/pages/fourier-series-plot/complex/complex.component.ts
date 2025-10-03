@@ -14,8 +14,6 @@ import { MathquillService } from '../../../core/services/mathquill/mathquill.ser
 import { MathUtilsService } from '../../../core/services/maximaToJS/math-utils.service';
 import { ApiService } from '../../../core/services/api/api.service';
 import { ThemeService } from '../../../core/services/theming/theme.service';
-import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
-import { SurveyButtonComponent } from '../../../shared/components/survey-button/survey-button.component';
 
 import { Subscription } from 'rxjs';
 
@@ -26,8 +24,6 @@ import { Subscription } from 'rxjs';
     CommonModule,
     FormsModule,
     CartesianCanvasComponent,
-    ThemeToggleComponent,
-    SurveyButtonComponent,
   ],
   templateUrl: './complex.component.html',
   styleUrl: './complex.component.scss',

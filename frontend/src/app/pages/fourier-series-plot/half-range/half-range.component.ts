@@ -9,14 +9,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CartesianCanvasComponent } from '../../../shared/components/cartesian-canvas/cartesian-canvas.component';
-import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 import { MathquillService } from '../../../core/services/mathquill/mathquill.service';
 import { MathUtilsService } from '../../../core/services/maximaToJS/math-utils.service';
 import { ApiService } from '../../../core/services/api/api.service';
 import { ThemeService } from '../../../core/services/theming/theme.service';
 import { TrigonometricResponse } from '../../../interfaces/trigonometric-response.interface';
 import { Subscription } from 'rxjs';
-import { SurveyButtonComponent } from '../../../shared/components/survey-button/survey-button.component';
 
 @Component({
   selector: 'app-half-range',
@@ -25,8 +23,6 @@ import { SurveyButtonComponent } from '../../../shared/components/survey-button/
     CommonModule,
     FormsModule,
     CartesianCanvasComponent,
-    ThemeToggleComponent,
-    SurveyButtonComponent,
   ],
   templateUrl: './half-range.component.html',
   styleUrls: ['./half-range.component.scss'],

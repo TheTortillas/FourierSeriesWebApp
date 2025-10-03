@@ -1,5 +1,5 @@
 <div
-  class="min-h-screen pt-10 sm:pt-12 pb-16 sm:pb-24 px-5 sm:px-6 relative overflow-hidden"
+  class="min-h-screen pb-16 sm:pb-24 px-5 sm:px-6 relative overflow-hidden"
   [ngClass]="
     isDarkMode
       ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100'
@@ -133,15 +133,15 @@
             MathQuill
           </span>
           <span
-          class="px-3 py-1 rounded-full text-sm font-medium"
-          [ngClass]="
-            isDarkMode
-              ? 'bg-gray-700 text-gray-300'
-              : 'bg-gray-100 text-gray-600'
-          "
-        >
-          CAS Maxima
-        </span>
+            class="px-3 py-1 rounded-full text-sm font-medium"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-gray-100 text-gray-600'
+            "
+          >
+            CAS Maxima
+          </span>
         </div>
       </div>
 
@@ -332,5 +332,5 @@
   </div>
 
   <!-- Theme toggle button -->
-  <app-theme-toggle></app-theme-toggle>
+  <!-- <app-theme-toggle></app-theme-toggle> -->
 </div>
