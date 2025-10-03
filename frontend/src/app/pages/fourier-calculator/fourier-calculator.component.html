@@ -25,9 +25,76 @@
   <div
     class="w-full max-w-5xl card rounded-xl shadow-2xl p-8 border text-inherit"
   >
-    <h1 class="text-2xl font-bold text-center mb-6 main-title">
-      Introduce tus parametros
-    </h1>
+    <!-- Header con título y menú de opciones -->
+    <div class="flex justify-between items-center mb-6">
+      <div class="flex-1"></div>
+      <h1 class="text-2xl font-bold text-center main-title flex-1">
+        Introduce tus parametros
+      </h1>
+      <div class="flex-1 flex justify-end">
+        <!-- Menú desplegable -->
+        <div class="relative" #menuDropdown>
+          <button
+            (click)="toggleMenu()"
+            class="menu-button p-2 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            [ngClass]="{
+              'bg-gray-100 dark:bg-gray-700': menuOpen,
+              'has-tutorial': !tourCompleted
+            }"
+            title="Opciones"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"
+              />
+            </svg>
+          </button>
+
+          <!-- Dropdown menu -->
+          <div
+            class="dropdown-menu absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 z-50 transition-all duration-200"
+            [ngClass]="{
+              'opacity-100 visible': menuOpen,
+              'opacity-0 invisible': !menuOpen
+            }"
+          >
+            <button
+              (click)="showHelp(); toggleMenu()"
+              class="dropdown-item w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors rounded-t-lg"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+                class="text-blue-500"
+              >
+                <path
+                  d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
+                />
+                <path
+                  d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"
+                />
+              </svg>
+              <span>Ver Tutorial</span>
+              <span
+                class="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded ml-auto"
+                *ngIf="!tourCompleted"
+                >Nuevo</span
+              >
+            </button>
+            <!-- Puedes agregar más opciones del menú aquí -->
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Math Keyboard Toggle Button - Mostrar solo en escritorio -->
     <div class="flex justify-center mb-4" *ngIf="!isMobile">
@@ -553,30 +620,6 @@
     </div>
   </div>
 </div>
-
-<!-- Botón de ayuda para mostrar el tour -->
-<button
-  class="help-button"
-  [class.pulse]="!tourCompleted"
-  (click)="showHelp()"
-  title="Ver tutorial"
-  aria-label="Ver tutorial"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
-    fill="currentColor"
-    viewBox="0 0 16 16"
-  >
-    <path
-      d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
-    />
-    <path
-      d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"
-    />
-  </svg>
-</button>
 
 <!-- Botón de cambio de tema -->
 <!-- <app-theme-toggle></app-theme-toggle>

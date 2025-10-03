@@ -30,10 +30,7 @@ import 'driver.js/dist/driver.css';
 @Component({
   selector: 'app-fourier-calculator',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './fourier-calculator.component.html',
   styleUrl: './fourier-calculator.component.scss',
 })
@@ -41,6 +38,7 @@ export class FourierCalculatorComponent
   implements OnInit, AfterViewInit, OnDestroy
 {
   @ViewChild('pieceContainer') pieceContainer: ElementRef | undefined;
+  @ViewChild('menuDropdown') menuDropdown: ElementRef | undefined;
 
   pieces: Piece[] = [];
   seriesType: string = 'trigonometric';
@@ -91,6 +89,9 @@ export class FourierCalculatorComponent
     { id: 'functions', name: 'Funciones' },
   ];
 
+  // Menu dropdown state
+  menuOpen: boolean = false;
+
   constructor(
     private apiService: ApiService,
     private mathquillService: MathquillService,
@@ -132,12 +133,13 @@ export class FourierCalculatorComponent
   ngAfterViewInit(): void {
     if (this.isBrowser) {
       setTimeout(() => {
-        this.mathquillService.renderMathJax();
-
-        // Add touch events for the drag handle
+        this.mathquillService.renderMathJax(); // Add touch events for the drag handle
         if (this.isMobile) {
           this.setupDragToHide();
         }
+
+        // Setup menu click listener to close dropdown when clicking outside
+        this.setupMenuClickListener();
 
         // Inicializar y mostrar el tour después de renderizar la interfaz
         this.initTour();
@@ -1227,5 +1229,24 @@ export class FourierCalculatorComponent
   // Puedes añadir un método público para ser llamado desde el HTML
   showHelp(): void {
     this.restartTour();
+  }
+
+  // Toggle menu dropdown
+  toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  // Setup document click listener to close menu when clicking outside
+  private setupMenuClickListener(): void {
+    if (!this.isBrowser) return;
+
+    document.addEventListener('click', (event: MouseEvent) => {
+      if (
+        this.menuDropdown &&
+        !this.menuDropdown.nativeElement.contains(event.target as Node)
+      ) {
+        this.menuOpen = false;
+      }
+    });
   }
 }

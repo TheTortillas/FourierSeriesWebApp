@@ -522,88 +522,75 @@ select {
   }
 }
 
-// Estilos para el botón de ayuda/tour
-.help-button {
-  position: fixed;
-  bottom: 5rem;
-  right: 1rem;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+// Estilos para el menú desplegable
+.menu-button {
   border: none;
-  cursor: pointer;
-  z-index: 9999;
-  transition: all 0.3s ease;
+  background: transparent;
+  color: inherit;
+  position: relative;
 
-  // Asegurar que el SVG está centrado
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
   svg {
-    width: 24px;
-    height: 24px;
+    transition: transform 0.2s ease;
+  }
+
+  // Indicador de tutorial disponible (punto rojo pequeño)
+  &.has-tutorial::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    border: 2px solid white;
+    z-index: 1;
   }
 }
 
-// Tooltip personalizado para el botón de ayuda
-.help-button::after {
-  content: "Tutorial";
-  position: absolute;
-  right: 100%;
-  margin-right: 10px;
-  padding: 5px 10px;
-  background-color: #2d3748;
-  color: white;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
+.dropdown-menu {
+  transform-origin: top right;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 
-.help-button:hover::after {
-  opacity: 1;
-  visibility: visible;
-}
-
-// Responsive: ajustar posición en dispositivos móviles
-@media (max-width: 768px) {
-  .help-button {
-    bottom: 5.5rem;
-    right: 0.75rem;
-    width: 2.75rem;
-    height: 2.75rem;
-
-    svg {
-      width: 20px;
-      height: 20px;
-    }
+  &.opacity-0 {
+    transform: scale(0.95);
+    opacity: 0;
+    visibility: hidden;
   }
 
-  // Ocultar tooltip en móviles
-  .help-button::after {
-    display: none;
+  &.opacity-100 {
+    transform: scale(1);
+    opacity: 1;
+    visibility: visible;
   }
 }
 
-// Animación sutil para llamar la atención
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+.dropdown-item {
+  border: none;
+  background: none;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
   }
-  70% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+
+  &:last-child {
+    border-radius: 0 0 0.5rem 0.5rem;
   }
 }
 
-// Aplicar la animación solo cuando el usuario no ha visto el tour
-.help-button.pulse {
-  animation: pulse 2s infinite;
+// Dark mode adjustments for dropdown
+.dark {
+  .menu-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 }
