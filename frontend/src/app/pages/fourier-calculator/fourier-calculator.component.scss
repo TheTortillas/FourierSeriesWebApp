@@ -29,10 +29,17 @@
 .keyboard-container {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease-in-out;
+  opacity: 0;
+  transition: all 0.15s ease-in-out;
+  padding: 0 !important;
+  border-color: transparent !important;
+  margin-bottom: 0 !important;
 
   &.visible {
-    max-height: 800px; // Valor aumentado para asegurar que quepa todo el teclado
+    max-height: 300px;
+    opacity: 1;
+    border-color: inherit !important;
+    margin-bottom: 1.5rem !important; /* Restaurar el margin-bottom cuando esté visible */
   }
 }
 

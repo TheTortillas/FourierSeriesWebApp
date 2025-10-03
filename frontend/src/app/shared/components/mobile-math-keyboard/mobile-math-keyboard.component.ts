@@ -8,18 +8,18 @@ import { MathquillService } from '../../../core/services/mathquill/mathquill.ser
   standalone: true,
   imports: [CommonModule],
   templateUrl: './mobile-math-keyboard.component.html',
-  styleUrl: './mobile-math-keyboard.component.scss'
+  styleUrl: './mobile-math-keyboard.component.scss',
 })
 export class MobileMathKeyboardComponent implements OnInit {
   @Input() isVisible: boolean = false;
   @Input() isMobile: boolean = false;
-  
+
   @Output() onInsertMath = new EventEmitter<string>();
   @Output() onDeleteMath = new EventEmitter<void>();
   @Output() onClose = new EventEmitter<void>();
 
   activeTab: string = 'numbers';
-  
+
   keyboardTabs = [
     { id: 'numbers', name: 'Números' },
     { id: 'basics', name: 'Variables' },
@@ -39,7 +39,7 @@ export class MobileMathKeyboardComponent implements OnInit {
   get mathButtonsBasic() {
     return this.mathKeyboardService.mathButtonsBasic;
   }
-  
+
   get mathButtonsTrig() {
     return this.mathKeyboardService.mathButtonsTrig;
   }
