@@ -1,0 +1,44 @@
+.main-content {
+  padding-top: 70px; // Altura del navbar para evitar que se superponga al contenido
+  min-height: 100vh;
+    position: relative;
+  z-index: 1;
+}
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+app-navbar {
+  position: relative;
+  z-index: 1000;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: 70px; // Mantener el mismo padding en móviles
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-safe-button {
+  top: 84px !important; // 70px del navbar + 14px de margen
+}
+
+.navbar-offset {
+  padding-top: 84px; // 70px del navbar + 14px de margen adicional
+}
+
+.below-navbar {
+  margin-top: 84px;
+}

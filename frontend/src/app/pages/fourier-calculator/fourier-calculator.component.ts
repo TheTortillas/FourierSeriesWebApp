@@ -24,8 +24,6 @@ import { LatexToMaximaService } from '../../core/services/conversion/latex-to-ma
 import Swal from 'sweetalert2';
 import { debounceTime, Subject } from 'rxjs';
 import { Router } from '@angular/router';
-import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
-import { SurveyButtonComponent } from '../../shared/components/survey-button/survey-button.component';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 
@@ -35,8 +33,6 @@ import 'driver.js/dist/driver.css';
   imports: [
     CommonModule,
     FormsModule,
-    ThemeToggleComponent,
-    SurveyButtonComponent,
   ],
   templateUrl: './fourier-calculator.component.html',
   styleUrl: './fourier-calculator.component.scss',

@@ -1,0 +1,162 @@
+// Base Navbar Styles
+.navbar {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+
+  // Light Theme
+  &.light-theme {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    .brand-link {
+      color: white;
+    }
+
+    .brand-text {
+      background: linear-gradient(45deg, #ffffff, #f0f8ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-action-btn {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  // Dark Theme
+  &.dark-theme {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+    .brand-link {
+      color: #e2e8f0;
+    }
+
+    .brand-text {
+      background: linear-gradient(45deg, #e2e8f0, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-action-btn {
+      color: #e2e8f0;
+      background: rgba(255, 255, 255, 0.05);
+
+      &:hover {
+        background: rgba(99, 102, 241, 0.3);
+        color: white;
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+}
+
+// Brand/Logo
+.nav-brand {
+  .brand-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 0.75rem;
+    filter: brightness(0) invert(1);
+
+    @media (max-width: 768px) {
+      margin-right: 0;
+    }
+  }
+
+  .brand-text {
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+}
+
+// Action Buttons Container
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+// Action Buttons
+.nav-action-btn {
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  .action-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  &.theme-btn {
+    &:hover {
+      transform: rotate(180deg) translateY(-2px);
+    }
+  }
+
+  &.survey-btn {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+
+    &:hover {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+  }
+}
+
+// Global host styles
+:host {
+  display: block;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+// Smooth scrolling
+* {
+  scroll-behavior: smooth;
+}
