@@ -207,6 +207,7 @@ select {
   top: 0;
   background-color: inherit;
   z-index: 1;
+  padding: 4px;
 
   &::-webkit-scrollbar {
     display: none;
@@ -258,15 +259,39 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
   cursor: pointer;
-  color: inherit;
-  padding: 12px;
+  color: #ef4444;
+  padding: 8px;
+  margin: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 
   svg {
     width: 20px;
     height: 20px;
+  }
+
+  .dark & {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.6);
+    }
   }
 }
 
@@ -592,5 +617,51 @@ select {
 
   .dropdown-item:hover {
     background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+// Botón de cerrar teclado en el contenido
+.close-keyboard-key {
+  width: 100%;
+  height: 54px;
+  margin: 8px 4px 4px 4px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  background-color: #ef4444;
+  border: 1px solid #dc2626;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s ease;
+  gap: 8px;
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow: none;
+  }
+
+  &:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .dark & {
+    background-color: #dc2626;
+    border: 1px solid #b91c1c;
+
+    &:hover {
+      background-color: #b91c1c;
+    }
   }
 }
