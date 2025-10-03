@@ -26,11 +26,12 @@ import { debounceTime, Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
+import { MobileMathKeyboardComponent } from '../../shared/components/mobile-math-keyboard/mobile-math-keyboard.component';
 
 @Component({
   selector: 'app-fourier-calculator',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MobileMathKeyboardComponent],
   templateUrl: './fourier-calculator.component.html',
   styleUrl: './fourier-calculator.component.scss',
 })
@@ -80,14 +81,6 @@ export class FourierCalculatorComponent
   // Mobile keyboard properties
   isMobile: boolean = false;
   mobileKeyboardVisible: boolean = false;
-  activeTab: string = 'numbers';
-  keyboardTabs = [
-    { id: 'numbers', name: 'Números' },
-    { id: 'basics', name: 'Variables' },
-    { id: 'advanced', name: 'Avanzados' },
-    { id: 'trigonometric', name: 'Trigonometría' },
-    { id: 'functions', name: 'Funciones' },
-  ];
 
   // Menu dropdown state
   menuOpen: boolean = false;
@@ -440,6 +433,11 @@ export class FourierCalculatorComponent
         this.updateSubject.next();
       });
     }, 10);
+
+    // Renderizar MathJax para el teclado móvil si es necesario
+    setTimeout(() => {
+      this.mathquillService.renderMathJax();
+    }, 50);
   }
 
   updateFunctionDisplay(shouldRenderVariableSpans = true): void {
@@ -1053,14 +1051,6 @@ export class FourierCalculatorComponent
 
   hideMobileKeyboard(): void {
     this.mobileKeyboardVisible = false;
-  }
-
-  setActiveTab(tabId: string): void {
-    this.activeTab = tabId;
-    // Render MathJax for the newly visible tab
-    setTimeout(() => {
-      this.mathquillService.renderMathJax();
-    }, 10);
   }
 
   // Method to delete the last character or selection in the active math field
