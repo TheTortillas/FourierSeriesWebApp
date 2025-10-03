@@ -56,9 +56,9 @@
 
       <!-- Survey Button -->
       <button
-        *ngIf="!surveyCompleted"
         (click)="openSurvey()"
         class="nav-action-btn survey-btn"
+        [class.survey-completed]="surveyCompleted"
         title="Completar encuesta"
         aria-label="Completar encuesta"
       >
