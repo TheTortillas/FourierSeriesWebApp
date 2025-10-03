@@ -1,7 +1,7 @@
 <div class="relative w-screen h-screen overflow-hidden">
   <!-- Side Navigation -->
   <div
-    class="fixed top-0 h-screen bg-gray-900/95 text-gray-100 shadow-lg z-50 transition-all duration-300 overflow-y-auto backdrop-blur-sm w-full md:w-1/4"
+    class="fixed top-[70px] h-[calc(100vh-70px)] bg-gray-900/95 text-gray-100 shadow-lg z-50 transition-all duration-300 overflow-y-auto backdrop-blur-sm w-full md:w-1/4"
     [ngClass]="sidenavOpen ? 'left-0' : '-left-full md:-left-1/4'"
   >
     <div class="flex justify-between items-center p-4 border-b border-gray-700">
@@ -24,27 +24,39 @@
             <button
               (click)="layout = 'grid'"
               class="flex-1 py-2 px-4 rounded font-medium transition-colors"
-              [ngClass]="layout === 'grid' ? 'bg-teal-600 text-gray-900' : 'bg-gray-700 text-white'"
+              [ngClass]="
+                layout === 'grid'
+                  ? 'bg-teal-600 text-gray-900'
+                  : 'bg-gray-700 text-white'
+              "
             >
               Grid
             </button>
             <button
               (click)="layout = 'tabs'"
               class="flex-1 py-2 px-4 rounded font-medium transition-colors"
-              [ngClass]="layout === 'tabs' ? 'bg-teal-600 text-gray-900' : 'bg-gray-700 text-white'"
+              [ngClass]="
+                layout === 'tabs'
+                  ? 'bg-teal-600 text-gray-900'
+                  : 'bg-gray-700 text-white'
+              "
             >
               Tabs
             </button>
             <button
               (click)="layout = 'split'"
               class="flex-1 py-2 px-4 rounded font-medium transition-colors"
-              [ngClass]="layout === 'split' ? 'bg-teal-600 text-gray-900' : 'bg-gray-700 text-white'"
+              [ngClass]="
+                layout === 'split'
+                  ? 'bg-teal-600 text-gray-900'
+                  : 'bg-gray-700 text-white'
+              "
             >
               Split
             </button>
           </div>
         </div>
-        
+
         <div *ngIf="layout === 'grid'" class="mb-3">
           <label class="block mb-2">Columnas:</label>
           <input
@@ -60,35 +72,61 @@
       </div>
 
       <!-- Panel para cada canvas con su funcionalidad específica -->
-      <div *ngFor="let config of canvasConfigs; let i = index" class="mb-6 p-3 rounded-md bg-gray-800/50">
+      <div
+        *ngFor="let config of canvasConfigs; let i = index"
+        class="mb-6 p-3 rounded-md bg-gray-800/50"
+      >
         <div class="flex justify-between items-center mb-3">
-          <h3 class="text-base text-white font-medium" [style.color]="config.axisColor">
+          <h3
+            class="text-base text-white font-medium"
+            [style.color]="config.axisColor"
+          >
             {{ config.title }}
           </h3>
           <div class="flex items-center">
             <button
               class="ml-2 p-1 rounded-md hover:bg-gray-700"
-              [ngClass]="{'bg-gray-700': config.id === activeCanvas}"
+              [ngClass]="{ 'bg-gray-700': config.id === activeCanvas }"
               (click)="setActiveCanvas(config.id)"
               title="Seleccionar canvas"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
               </svg>
             </button>
-            <div class="ml-2 relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
-              <input 
-                type="checkbox" 
-                [id]="'toggle-' + config.id" 
+            <div
+              class="ml-2 relative inline-block w-10 align-middle select-none transition duration-200 ease-in"
+            >
+              <input
+                type="checkbox"
+                [id]="'toggle-' + config.id"
                 [checked]="!isCanvasHidden(config.id)"
                 (change)="toggleCanvas(config.id)"
-                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" 
+                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
               />
-              <label 
-                [for]="'toggle-' + config.id" 
+              <label
+                [for]="'toggle-' + config.id"
                 class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-700 cursor-pointer"
-                [style.background-color]="!isCanvasHidden(config.id) ? config.axisColor + '80' : ''"
+                [style.background-color]="
+                  !isCanvasHidden(config.id) ? config.axisColor + '80' : ''
+                "
               ></label>
             </div>
           </div>
@@ -187,7 +225,7 @@
               />
             </div>
           </div>
-          
+
           <div class="mb-3">
             <label class="block mb-1 text-sm">Altura:</label>
             <input
@@ -288,7 +326,7 @@
             Resetear Todos
           </button>
         </div>
-        
+
         <button
           (click)="showAllCanvas()"
           class="w-full bg-green-600 text-white border-none py-2 px-4 rounded font-medium hover:bg-green-700 transition-colors mb-3"
@@ -301,7 +339,7 @@
 
   <!-- Botón para abrir el sidenav -->
   <button
-    class="fixed top-5 left-5 w-10 h-10 rounded-full bg-teal-600/80 text-gray-900 border-none flex items-center justify-center cursor-pointer z-40 shadow-md hover:bg-teal-500 focus:outline-none"
+    class="fixed top-[84px] left-5 w-10 h-10 rounded-full bg-teal-600/80 text-gray-900 border-none flex items-center justify-center cursor-pointer z-40 shadow-md hover:bg-teal-500 focus:outline-none"
     (click)="toggleSidenav()"
   >
     <span class="text-lg">☰</span>
@@ -331,11 +369,20 @@
           class="canvas-wrapper"
           [class.active-canvas]="config.id === activeCanvas"
           [class.hidden-canvas]="isCanvasHidden(config.id)"
-          [ngStyle]="{'--axis-color': config.axisColor || '#90DCB5'}"
+          [ngStyle]="{ '--axis-color': config.axisColor || '#90DCB5' }"
         >
-          <div class="canvas-header" [ngStyle]="{'border-bottom-color': config.axisColor + '33' || 'rgba(255, 255, 255, 0.1)'}">
+          <div
+            class="canvas-header"
+            [ngStyle]="{
+              'border-bottom-color':
+                config.axisColor + '33' || 'rgba(255, 255, 255, 0.1)'
+            }"
+          >
             <h3>{{ config.title }}</h3>
-            <span class="inline-block w-2 h-2 rounded-full ml-2" [style.background-color]="config.axisColor || '#90DCB5'"></span>
+            <span
+              class="inline-block w-2 h-2 rounded-full ml-2"
+              [style.background-color]="config.axisColor || '#90DCB5'"
+            ></span>
           </div>
           <div class="canvas-container">
             <app-cartesian-canvas
@@ -359,10 +406,14 @@
             [class.hidden-tab]="isCanvasHidden(config.id)"
             (click)="setActiveTab(i)"
             class="tab-button"
-            [ngStyle]="{'--axis-color': config.axisColor || '#90DCB5'}"
+            [ngStyle]="{ '--axis-color': config.axisColor || '#90DCB5' }"
           >
             {{ config.title }}
-            <span *ngIf="activeTabIndex === i" class="inline-block w-2 h-2 rounded-full ml-2" [style.background-color]="config.axisColor || '#90DCB5'"></span>
+            <span
+              *ngIf="activeTabIndex === i"
+              class="inline-block w-2 h-2 rounded-full ml-2"
+              [style.background-color]="config.axisColor || '#90DCB5'"
+            ></span>
           </button>
         </div>
         <div class="tab-content">
@@ -407,11 +458,20 @@
               'main-panel': i === 0 && getVisibleCanvasCount() === 3,
               'active-canvas': config.id === activeCanvas
             }"
-            [ngStyle]="{'--axis-color': config.axisColor || '#90DCB5'}"
+            [ngStyle]="{ '--axis-color': config.axisColor || '#90DCB5' }"
           >
-            <div class="canvas-header" [ngStyle]="{'border-bottom-color': config.axisColor + '33' || 'rgba(255, 255, 255, 0.1)'}">
+            <div
+              class="canvas-header"
+              [ngStyle]="{
+                'border-bottom-color':
+                  config.axisColor + '33' || 'rgba(255, 255, 255, 0.1)'
+              }"
+            >
               <h3>{{ config.title }}</h3>
-              <span class="inline-block w-2 h-2 rounded-full ml-2" [style.background-color]="config.axisColor || '#90DCB5'"></span>
+              <span
+                class="inline-block w-2 h-2 rounded-full ml-2"
+                [style.background-color]="config.axisColor || '#90DCB5'"
+              ></span>
             </div>
             <div class="canvas-container">
               <app-cartesian-canvas
