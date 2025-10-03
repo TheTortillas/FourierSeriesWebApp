@@ -142,10 +142,41 @@
   &.survey-btn {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     color: white;
+    position: relative;
 
     &:hover {
       background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
       box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    // Por defecto no hay animación (cuando está completada)
+    &.survey-completed {
+      &::after {
+        display: none;
+      }
+    }
+
+    // Solo animar cuando NO esté completada (no tiene la clase survey-completed)
+    &:not(.survey-completed) {
+      animation: pulse-survey 2s infinite;
+
+      &:hover {
+        animation: none; // Detener animación en hover
+      }
+
+      &::after {
+        content: "";
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        opacity: 0.4;
+        z-index: -1;
+        animation: pulse-ring 2s infinite;
+      }
     }
   }
 }
@@ -159,4 +190,28 @@
 // Smooth scrolling
 * {
   scroll-behavior: smooth;
+}
+
+// Animaciones para el botón de encuesta
+@keyframes pulse-survey {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
 }
