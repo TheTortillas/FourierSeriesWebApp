@@ -1,7 +1,7 @@
 <div class="relative w-screen h-screen overflow-hidden">
   <!-- Side Navigation -->
   <div
-    class="fixed top-0 h-screen bg-gray-900/95 text-gray-100 shadow-lg z-50 transition-all duration-300 overflow-y-auto backdrop-blur-sm w-full md:w-1/4"
+    class="fixed top-[70px] h-[calc(100vh-70px)] bg-gray-900/95 text-gray-100 shadow-lg z-50 transition-all duration-300 overflow-y-auto backdrop-blur-sm w-full md:w-1/4"
     [ngClass]="sidenavOpen ? 'left-0' : '-left-full md:-left-1/4'"
   >
     <div class="flex justify-between items-center p-4 border-b border-gray-700">
@@ -97,7 +97,7 @@
 
   <!-- Botón para abrir el sidenav -->
   <button
-    class="fixed top-5 left-5 w-10 h-10 rounded-full bg-teal-600/80 text-gray-900 border-none flex items-center justify-center cursor-pointer z-40 shadow-md hover:bg-teal-500 focus:outline-none"
+    class="fixed top-[84px] left-5 w-10 h-10 rounded-full bg-teal-600/80 text-gray-900 border-none flex items-center justify-center cursor-pointer z-40 shadow-md hover:bg-teal-500 focus:outline-none"
     (click)="toggleSidenav()"
   >
     <span class="text-lg">☰</span>
