@@ -68,10 +68,10 @@ export class SurveyService {
         console.warn('Error accessing localStorage:', error);
       }
     }
-    console.log(
-      'Fallback to BehaviorSubject value:',
-      this.surveyCompletedSubject.value
-    );
+    // console.log(
+    //   'Fallback to BehaviorSubject value:',
+    //   this.surveyCompletedSubject.value
+    // );
     return this.surveyCompletedSubject.value;
   }
 
