@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
-import { Title } from '@angular/platform-browser';
+import { SEOService } from './core/services/seo/seo.service';
 
 @Component({
   selector: 'app-root',
@@ -11,11 +11,9 @@ import { Title } from '@angular/platform-browser';
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
-  title = $localize`:@@pageTitle:Calculadora de Series de Fourier y DFT | Herramienta de Análisis Matemático Online`;
-
-  constructor(private titleService: Title) {}
+  constructor(private seoService: SEOService) {}
 
   ngOnInit() {
-    this.titleService.setTitle(this.title);
+    this.seoService.updateSEOTags();
   }
 }

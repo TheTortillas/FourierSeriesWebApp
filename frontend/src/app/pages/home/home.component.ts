@@ -5,6 +5,7 @@ import { ThemeService } from '../../core/services/theming/theme.service';
 import { MathquillService } from '../../core/services/mathquill/mathquill.service';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { FourierExamplesService } from '../../core/services/examples/fourier-examples.service';
+import { SEOService } from '../../core/services/seo/seo.service';
 
 interface Example {
   id: string;
@@ -15,10 +16,7 @@ interface Example {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [
-    CommonModule,
-    FooterComponent,
-  ],
+  imports: [CommonModule, FooterComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
@@ -65,13 +63,17 @@ export class HomeComponent implements OnInit, AfterViewInit {
     private router: Router,
     private themeService: ThemeService,
     private mathquillService: MathquillService,
-    private fourierExamplesService: FourierExamplesService
+    private fourierExamplesService: FourierExamplesService,
+    private seoService: SEOService
   ) {
     // Get initial theme state synchronously if possible
     this.isDarkMode = this.themeService.isDarkMode;
   }
 
   ngOnInit(): void {
+    // Update SEO for home page
+    this.seoService.updateSEOTags();
+
     // Mover scroll a la parte superior
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
@@ -129,15 +131,16 @@ export class HomeComponent implements OnInit, AfterViewInit {
         this.navigateToCalculator();
       }
     } else if (type === 'complex') {
-      const exampleData = this.fourierExamplesService.getComplexExample(exampleId);
+      const exampleData =
+        this.fourierExamplesService.getComplexExample(exampleId);
       if (exampleData) {
         this.router.navigate(['/fourier-series-plot/complex'], {
           state: {
-            response: exampleData,          
-            seriesType: 'complex',          
-            intVar: exampleData.intVar || 'x', 
+            response: exampleData,
+            seriesType: 'complex',
+            intVar: exampleData.intVar || 'x',
             originalLatex: exampleData.originalLatex || [],
-            maximaMatrix: exampleData.maximaMatrix || [], 
+            maximaMatrix: exampleData.maximaMatrix || [],
             originalFunction: exampleData.originalFunction || '',
           },
         });
@@ -149,10 +152,13 @@ export class HomeComponent implements OnInit, AfterViewInit {
       if (exampleData) {
         this.router.navigate(['/fourier-transform-plot/dft'], {
           state: {
-            response: exampleData,                      
+            response: exampleData,
             intVar: exampleData.intVar || 'x',
-            originalLatex: exampleData.originalLatex || [], 
-            dftParams: exampleData.dftParams || { numSamples: 512, sampleRate: 10 }, 
+            originalLatex: exampleData.originalLatex || [],
+            dftParams: exampleData.dftParams || {
+              numSamples: 512,
+              sampleRate: 10,
+            },
             originalFunction: exampleData.originalFunction || '',
           },
         });
