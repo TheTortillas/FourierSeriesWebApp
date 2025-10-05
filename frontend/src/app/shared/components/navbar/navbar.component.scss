@@ -63,6 +63,38 @@
         transform: translateY(-2px);
       }
     }
+
+    // Language Selector Dark Theme
+    app-language-selector {
+      ::ng-deep .language-button {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #e2e8f0;
+
+        &:hover {
+          background: rgba(99, 102, 241, 0.3);
+          border-color: rgba(99, 102, 241, 0.5);
+        }
+      }
+
+      ::ng-deep .dropdown-menu {
+        background: rgba(31, 41, 55, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+        .dropdown-item {
+          color: #e2e8f0;
+
+          &:hover {
+            background: rgba(99, 102, 241, 0.2);
+          }
+
+          &.active {
+            background: rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -176,6 +208,46 @@
         opacity: 0.4;
         z-index: -1;
         animation: pulse-ring 2s infinite;
+      }
+    }
+  }
+}
+
+// Language Selector Integration
+app-language-selector {
+  // Override language selector styles to match navbar theme
+  ::ng-deep .language-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    &:focus {
+      --focus-ring: rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  ::ng-deep .dropdown-menu {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    .dropdown-item {
+      color: #374151;
+
+      &:hover {
+        background: rgba(102, 126, 234, 0.1);
+      }
+
+      &.active {
+        background: rgba(102, 126, 234, 0.2);
+        color: #667eea;
       }
     }
   }

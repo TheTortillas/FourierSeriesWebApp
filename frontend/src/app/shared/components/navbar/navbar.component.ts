@@ -3,12 +3,13 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../../core/services/theming/theme.service';
 import { SurveyService } from '../../../core/services/survey/survey.service';
+import { LanguageSelectorComponent } from '../language-selector/language-selector.component';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, LanguageSelectorComponent],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
 })
