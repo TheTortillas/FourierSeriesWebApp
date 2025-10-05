@@ -17,7 +17,7 @@ export function app(): express.Express {
   const langPath = `/${lang}/`;
 
   /* Note that the 'browser' folder is located two directories above 'server/{lang}' */
-  const browserDistFolder = resolve(serverDistFolder, '../../browser/${lang}');
+  const browserDistFolder = resolve(serverDistFolder, `../../browser/${lang}`);
   const indexHtml = join(serverDistFolder, 'index.server.html');
 
   const commonEngine = new CommonEngine();
@@ -27,6 +27,9 @@ export function app(): express.Express {
 
   // Example Express Rest API endpoints
   // server.get('/api/**', (req, res) => { });
+
+  // Serve static files from /browser with language prefix
+  server.use(langPath, express.static(browserDistFolder, { maxAge: '1y' }));
 
   // Serve static files from /browser
   // Complete the route for static content by concatenating the language.
@@ -42,7 +45,7 @@ export function app(): express.Express {
         bootstrap,
         documentFilePath: indexHtml,
         url: `${protocol}://${headers.host}${originalUrl}`,
-        publicPath: resolve(serverDistFolder, '../../browser/'),
+        publicPath: resolve(serverDistFolder, `../../browser/${lang}/`),
         providers: [
           { provide: APP_BASE_HREF, useValue: langPath },
           { provide: LOCALE_ID, useValue: lang },
