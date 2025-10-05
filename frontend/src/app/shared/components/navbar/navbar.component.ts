@@ -25,7 +25,7 @@ export class NavbarComponent implements OnInit {
     this.isDarkMode = this.themeService.isDarkMode;
     // Get initial survey completion state synchronously
     this.surveyCompleted = this.surveyService.getCurrentSurveyStatus();
-    console.log('Constructor - Survey completed:', this.surveyCompleted);
+    // console.log('Constructor - Survey completed:', this.surveyCompleted);
   }
 
   ngOnInit(): void {
