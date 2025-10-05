@@ -11,6 +11,11 @@
         </context-group>
         <note priority="1" from="description">homeTitle</note>
       </trans-unit>
+      <trans-unit id="pageTitle" datatype="html">
+        <source>Calculadora de Series de Fourier y DFT | Herramienta de Análisis Matemático Online</source>
+        <target>Calculadora de Séries de Fourier e DFT | Ferramenta de Análise Matemática Online</target>
+        <note priority="1" from="description">pageTitle</note>
+      </trans-unit>
       <trans-unit id="2856673614368227136" datatype="html">
         <source> Herramienta interactiva para el cálculo, análisis y visualización de Series de
           Fourier y Transformada Discreta </source>
