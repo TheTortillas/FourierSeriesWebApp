@@ -1,8 +1,6 @@
 import { Component, OnInit, AfterViewInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
-import { SurveyButtonComponent } from '../../shared/components/survey-button/survey-button.component';
 import { ThemeService } from '../../core/services/theming/theme.service';
 import { MathquillService } from '../../core/services/mathquill/mathquill.service';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
@@ -19,8 +17,6 @@ interface Example {
   standalone: true,
   imports: [
     CommonModule,
-    ThemeToggleComponent,
-    SurveyButtonComponent,
     FooterComponent,
   ],
   templateUrl: './home.component.html',

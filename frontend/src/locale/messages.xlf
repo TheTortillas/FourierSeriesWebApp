@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="es" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="6238048408203318097" datatype="html">
+        <source> Calculadora de Series de Fourier y DFT </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">42,43</context>
+        </context-group>
+        <note priority="1" from="description">homeTitle</note>
+      </trans-unit>
+      <trans-unit id="2856673614368227136" datatype="html">
+        <source> Herramienta interactiva para el cálculo, análisis y visualización de Series de Fourier y Transformada Discreta </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">48,50</context>
+        </context-group>
+        <note priority="1" from="description">homeDescription</note>
+      </trans-unit>
+      <trans-unit id="6841999555069371237" datatype="html">
+        <source><x id="START_TAG__SVG_SVG" ctype="x-_svg_svg" equiv-text="&lt;svg
+                xmlns=&quot;http://www.w3.org/2000/svg&quot;
+                class=&quot;h-5 w-5 mr-2&quot;
+                fill=&quot;none&quot;
+                viewBox=&quot;0 0 24 24&quot;
+                stroke=&quot;currentColor&quot;
+              &gt;"/><x id="START_TAG__SVG_PATH" ctype="x-_svg_path" equiv-text="&lt;path
+                  stroke-linecap=&quot;round&quot;
+                  stroke-linejoin=&quot;round&quot;
+                  stroke-width=&quot;2&quot;
+                  d=&quot;M13 10V3L4 14h7v7l9-11h-7z&quot;
+                /&gt;"/><x id="CLOSE_TAG__SVG_PATH" ctype="x-_svg_path" equiv-text="&lt;path
+                  stroke-linecap=&quot;round&quot;
+                  stroke-linejoin=&quot;round&quot;
+                  stroke-width=&quot;2&quot;
+                  d=&quot;M13 10V3L4 14h7v7l9-11h-7z&quot;
+                /&gt;"/><x id="CLOSE_TAG__SVG_SVG" ctype="x-_svg_svg" equiv-text="&lt;/svg&gt;"/> Iniciar Calculadora </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">66,80</context>
+        </context-group>
+        <note priority="1" from="description">homeButton</note>
+      </trans-unit>
+      <trans-unit id="2026721917480101314" datatype="html">
+        <source> Explora Nuestras Herramientas </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">226,228</context>
+        </context-group>
+        <note priority="1" from="description">featuresTitle</note>
+      </trans-unit>
+      <trans-unit id="772680465460889622" datatype="html">
+        <source> Descubre las diferentes series y transformadas que puedes calcular y visualizar. Cada tipo ofrece ejemplos predefinidos para ayudarte a entender sus características y aplicaciones. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">233,236</context>
+        </context-group>
+        <note priority="1" from="description">featuresDescription</note>
+      </trans-unit>
+      <trans-unit id="443248152787958778" datatype="html">
+        <source>Series Trigonométricas</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">262,263</context>
+        </context-group>
+        <note priority="1" from="description">trigSeriesTitle</note>
+      </trans-unit>
+      <trans-unit id="3298748331198882547" datatype="html">
+        <source> Expande tu función en términos de senos y cosenos utilizando coeficientes de Fourier con visualización interactiva. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">264,267</context>
+        </context-group>
+        <note priority="1" from="description">trigSeriesDescription</note>
+      </trans-unit>
+      <trans-unit id="8110355695831991437" datatype="html">
+        <source>Explorar ejemplos</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">277,279</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">354,356</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">430,432</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">506,508</context>
+        </context-group>
+        <note priority="1" from="description">ExploreButton</note>
+      </trans-unit>
+      <trans-unit id="4442083444066846745" datatype="html">
+        <source> Calculadora personalizada → </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">312,313</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">389,390</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">465,466</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">541,542</context>
+        </context-group>
+        <note priority="1" from="description">CustomCalculatorButton</note>
+      </trans-unit>
+      <trans-unit id="1739807785308718561" datatype="html">
+        <source>Series de Medio Rango</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">339,340</context>
+        </context-group>
+        <note priority="1" from="description">halfRangeSeriesTitle</note>
+      </trans-unit>
+      <trans-unit id="1636977729406380540" datatype="html">
+        <source> Expande funciones en series de senos o cosenos puros, ideal para problemas con condiciones de contorno específicas. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">341,344</context>
+        </context-group>
+        <note priority="1" from="description">halfRangeSeriesDescription</note>
+      </trans-unit>
+      <trans-unit id="8175119924074209099" datatype="html">
+        <source>Series Complejas</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">415,416</context>
+        </context-group>
+        <note priority="1" from="description">complexSeriesTitle</note>
+      </trans-unit>
+      <trans-unit id="913153599206374917" datatype="html">
+        <source> Representa funciones periódicas en términos de exponenciales complejas con visualización de amplitud y fase. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">417,420</context>
+        </context-group>
+        <note priority="1" from="description">complexSeriesDescription</note>
+      </trans-unit>
+      <trans-unit id="4753487167196981577" datatype="html">
+        <source>Transformada Discreta</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">491,492</context>
+        </context-group>
+        <note priority="1" from="description">dftTitle</note>
+      </trans-unit>
+      <trans-unit id="8202990417133075339" datatype="html">
+        <source> Analiza señales mediante el algoritmo DFT para obtener componentes frecuenciales con visualización espectral. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">493,495</context>
+        </context-group>
+        <note priority="1" from="description">dftDescription</note>
+      </trans-unit>
+      <trans-unit id="2587630202870385270" datatype="html">
+        <source> Analiza y visualiza transformaciones de Fourier </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">566,567</context>
+        </context-group>
+        <note priority="1" from="description">aboutTitle</note>
+      </trans-unit>
+      <trans-unit id="1604940071671642145" datatype="html">
+        <source> Esta herramienta es es una plataforma interactiva para conectar conceptos matemáticos abstractos con representaciones visuales tangibles, mostrando la potencia y belleza de las series y transformadas de Fourier. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">569,572</context>
+        </context-group>
+        <note priority="1" from="description">aboutDescription1</note>
+      </trans-unit>
+      <trans-unit id="740656033604847575" datatype="html">
+        <source> Explora la descomposición espectral de funciones periódicas, visualiza las componentes armónicas y comprende la dualidad entre los dominios del tiempo y la frecuencia. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">575,577</context>
+        </context-group>
+        <note priority="1" from="description">aboutDescription2</note>
+      </trans-unit>
+      <trans-unit id="8525288371329076661" datatype="html">
+        <source> Series de Fourier </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">589,590</context>
+        </context-group>
+        <note priority="1" from="description">fourierSeriesTag</note>
+      </trans-unit>
+      <trans-unit id="5398405394487986825" datatype="html">
+        <source> Análisis Armónico </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">600,601</context>
+        </context-group>
+        <note priority="1" from="description">harmonicAnalysisTag</note>
+      </trans-unit>
+      <trans-unit id="8460525184363397288" datatype="html">
+        <source> Espectro de Frecuencias </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">611,612</context>
+        </context-group>
+        <note priority="1" from="description">frequencySpectrumTag</note>
+      </trans-unit>
+      <trans-unit id="7083034757328337415" datatype="html">
+        <source> Visualización Matemática </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">622,623</context>
+        </context-group>
+        <note priority="1" from="description">mathVisualizationTag</note>
+      </trans-unit>
+      <trans-unit id="110607578275545130" datatype="html">
+        <source> Transformada Discreta </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
+          <context context-type="linenumber">633,634</context>
+        </context-group>
+        <note priority="1" from="description">dftTag</note>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
