@@ -27,57 +27,12 @@
         </context-group>
         <note priority="1" from="description">homeDescription</note>
       </trans-unit>
-      <trans-unit id="6841999555069371237" datatype="html">
-        <source><x id="START_TAG__SVG_SVG" ctype="x-_svg_svg"
-            equiv-text="&lt;svg
-                xmlns=&quot;http://www.w3.org/2000/svg&quot;
-                class=&quot;h-5 w-5 mr-2&quot;
-                fill=&quot;none&quot;
-                viewBox=&quot;0 0 24 24&quot;
-                stroke=&quot;currentColor&quot;
-              &gt;" /><x
-            id="START_TAG__SVG_PATH" ctype="x-_svg_path"
-            equiv-text="&lt;path
-                  stroke-linecap=&quot;round&quot;
-                  stroke-linejoin=&quot;round&quot;
-                  stroke-width=&quot;2&quot;
-                  d=&quot;M13 10V3L4 14h7v7l9-11h-7z&quot;
-                /&gt;" /><x
-            id="CLOSE_TAG__SVG_PATH" ctype="x-_svg_path"
-            equiv-text="&lt;path
-                  stroke-linecap=&quot;round&quot;
-                  stroke-linejoin=&quot;round&quot;
-                  stroke-width=&quot;2&quot;
-                  d=&quot;M13 10V3L4 14h7v7l9-11h-7z&quot;
-                /&gt;" /><x
-            id="CLOSE_TAG__SVG_SVG" ctype="x-_svg_svg" equiv-text="&lt;/svg&gt;" /> Iniciar
-          Calculadora </source>
-        <target><x id="START_TAG__SVG_SVG" ctype="x-_svg_svg"
-            equiv-text="&lt;svg
-                xmlns=&quot;http://www.w3.org/2000/svg&quot;
-                class=&quot;h-5 w-5 mr-2&quot;
-                fill=&quot;none&quot;
-                viewBox=&quot;0 0 24 24&quot;
-                stroke=&quot;currentColor&quot;
-              &gt;" /><x
-            id="START_TAG__SVG_PATH" ctype="x-_svg_path"
-            equiv-text="&lt;path
-                  stroke-linecap=&quot;round&quot;
-                  stroke-linejoin=&quot;round&quot;
-                  stroke-width=&quot;2&quot;
-                  d=&quot;M13 10V3L4 14h7v7l9-11h-7z&quot;
-                /&gt;" /><x
-            id="CLOSE_TAG__SVG_PATH" ctype="x-_svg_path"
-            equiv-text="&lt;path
-                  stroke-linecap=&quot;round&quot;
-                  stroke-linejoin=&quot;round&quot;
-                  stroke-width=&quot;2&quot;
-                  d=&quot;M13 10V3L4 14h7v7l9-11h-7z&quot;
-                /&gt;" /><x
-            id="CLOSE_TAG__SVG_SVG" ctype="x-_svg_svg" equiv-text="&lt;/svg&gt;" /> Start Calculator </target>
+      <trans-unit id="432388814467327144" datatype="html">
+        <source>Iniciar Calculadora</source>
+        <target>Start Calculator</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
-          <context context-type="linenumber">66,80</context>
+          <context context-type="linenumber">79,80</context>
         </context-group>
         <note priority="1" from="description">homeButton</note>
       </trans-unit>
@@ -303,6 +258,42 @@
           <context context-type="linenumber">633,634</context>
         </context-group>
         <note priority="1" from="description">dftTag</note>
+      </trans-unit>
+     <trans-unit id="5686520102504261410" datatype="html">
+        <source> © 2025 Calculadora de Series de Fourier y DFT </source>
+        <target> © 2025 Fourier Series &amp; DFT Calculator </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/footer/footer.component.html</context>
+          <context context-type="linenumber">6,8</context>
+        </context-group>
+        <note priority="1" from="description">footerCopyright</note>
+      </trans-unit>
+      <trans-unit id="1376141893306524657" datatype="html">
+        <source>Documentación</source>
+        <target>Documentation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/footer/footer.component.html</context>
+          <context context-type="linenumber">40,42</context>
+        </context-group>
+        <note priority="1" from="description">footerDocumentation</note>
+      </trans-unit>
+      <trans-unit id="2379082776169073909" datatype="html">
+        <source>Acerca de</source>
+        <target>About us</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/footer/footer.component.html</context>
+          <context context-type="linenumber">58,60</context>
+        </context-group>
+        <note priority="1" from="description">footerAboutUs</note>
+      </trans-unit>
+      <trans-unit id="8433768950518578342" datatype="html">
+        <source>Contacto</source>
+        <target>Contact</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/footer/footer.component.html</context>
+          <context context-type="linenumber">79,81</context>
+        </context-group>
+        <note priority="1" from="description">footerContact</note>
       </trans-unit>
     </body>
   </file>

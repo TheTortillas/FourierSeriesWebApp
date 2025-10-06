@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
   <file source-language="es" datatype="plaintext" original="ng2.template">
     <body>
@@ -10,47 +10,19 @@
         </context-group>
         <note priority="1" from="description">homeTitle</note>
       </trans-unit>
-      <trans-unit id="pageTitle" datatype="html">
-        <source>Calculadora de Series de Fourier y DFT | Herramienta de Análisis Matemático Online</source>
-        <note priority="1" from="description">pageTitle</note>
-      </trans-unit>
       <trans-unit id="2856673614368227136" datatype="html">
-        <source> Herramienta interactiva para el cálculo, análisis y visualización de Series de
-          Fourier y Transformada Discreta </source>
+        <source> Herramienta interactiva para el cálculo, análisis y visualización de Series de Fourier y Transformada Discreta </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
           <context context-type="linenumber">48,50</context>
         </context-group>
         <note priority="1" from="description">homeDescription</note>
       </trans-unit>
-      <trans-unit id="6841999555069371237" datatype="html">
-        <source><x id="START_TAG__SVG_SVG" ctype="x-_svg_svg"
-            equiv-text="&lt;svg
-                xmlns=&quot;http://www.w3.org/2000/svg&quot;
-                class=&quot;h-5 w-5 mr-2&quot;
-                fill=&quot;none&quot;
-                viewBox=&quot;0 0 24 24&quot;
-                stroke=&quot;currentColor&quot;
-              &gt;" /><x
-            id="START_TAG__SVG_PATH" ctype="x-_svg_path"
-            equiv-text="&lt;path
-                  stroke-linecap=&quot;round&quot;
-                  stroke-linejoin=&quot;round&quot;
-                  stroke-width=&quot;2&quot;
-                  d=&quot;M13 10V3L4 14h7v7l9-11h-7z&quot;
-                /&gt;" /><x
-            id="CLOSE_TAG__SVG_PATH" ctype="x-_svg_path"
-            equiv-text="&lt;path
-                  stroke-linecap=&quot;round&quot;
-                  stroke-linejoin=&quot;round&quot;
-                  stroke-width=&quot;2&quot;
-                  d=&quot;M13 10V3L4 14h7v7l9-11h-7z&quot;
-                /&gt;" /><x
-            id="CLOSE_TAG__SVG_SVG" ctype="x-_svg_svg" equiv-text="&lt;/svg&gt;" /> Iniciar
-          Calculadora </source>
+      <trans-unit id="432388814467327144" datatype="html">
+        <source>Iniciar Calculadora</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
-          <context context-type="linenumber">66,80</context>
+          <context context-type="linenumber">79,80</context>
         </context-group>
         <note priority="1" from="description">homeButton</note>
       </trans-unit>
@@ -63,9 +35,7 @@
         <note priority="1" from="description">featuresTitle</note>
       </trans-unit>
       <trans-unit id="772680465460889622" datatype="html">
-        <source> Descubre las diferentes series y transformadas que puedes calcular y visualizar.
-          Cada tipo ofrece ejemplos predefinidos para ayudarte a entender sus características y
-          aplicaciones. </source>
+        <source> Descubre las diferentes series y transformadas que puedes calcular y visualizar. Cada tipo ofrece ejemplos predefinidos para ayudarte a entender sus características y aplicaciones. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
           <context context-type="linenumber">233,236</context>
@@ -81,8 +51,7 @@
         <note priority="1" from="description">trigSeriesTitle</note>
       </trans-unit>
       <trans-unit id="3298748331198882547" datatype="html">
-        <source> Expande tu función en términos de senos y cosenos utilizando coeficientes de
-          Fourier con visualización interactiva. </source>
+        <source> Expande tu función en términos de senos y cosenos utilizando coeficientes de Fourier con visualización interactiva. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
           <context context-type="linenumber">264,267</context>
@@ -138,8 +107,7 @@
         <note priority="1" from="description">halfRangeSeriesTitle</note>
       </trans-unit>
       <trans-unit id="1636977729406380540" datatype="html">
-        <source> Expande funciones en series de senos o cosenos puros, ideal para problemas con
-          condiciones de contorno específicas. </source>
+        <source> Expande funciones en series de senos o cosenos puros, ideal para problemas con condiciones de contorno específicas. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
           <context context-type="linenumber">341,344</context>
@@ -155,8 +123,7 @@
         <note priority="1" from="description">complexSeriesTitle</note>
       </trans-unit>
       <trans-unit id="913153599206374917" datatype="html">
-        <source> Representa funciones periódicas en términos de exponenciales complejas con
-          visualización de amplitud y fase. </source>
+        <source> Representa funciones periódicas en términos de exponenciales complejas con visualización de amplitud y fase. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
           <context context-type="linenumber">417,420</context>
@@ -172,8 +139,7 @@
         <note priority="1" from="description">dftTitle</note>
       </trans-unit>
       <trans-unit id="8202990417133075339" datatype="html">
-        <source> Analiza señales mediante el algoritmo DFT para obtener componentes frecuenciales
-          con visualización espectral. </source>
+        <source> Analiza señales mediante el algoritmo DFT para obtener componentes frecuenciales con visualización espectral. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
           <context context-type="linenumber">493,495</context>
@@ -189,9 +155,7 @@
         <note priority="1" from="description">aboutTitle</note>
       </trans-unit>
       <trans-unit id="1604940071671642145" datatype="html">
-        <source> Esta herramienta es es una plataforma interactiva para conectar conceptos
-          matemáticos abstractos con representaciones visuales tangibles, mostrando la potencia y
-          belleza de las series y transformadas de Fourier. </source>
+        <source> Esta herramienta es es una plataforma interactiva para conectar conceptos matemáticos abstractos con representaciones visuales tangibles, mostrando la potencia y belleza de las series y transformadas de Fourier. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
           <context context-type="linenumber">569,572</context>
@@ -199,9 +163,7 @@
         <note priority="1" from="description">aboutDescription1</note>
       </trans-unit>
       <trans-unit id="740656033604847575" datatype="html">
-        <source> Explora la descomposición espectral de funciones periódicas, visualiza las
-          componentes armónicas y comprende la dualidad entre los dominios del tiempo y la
-          frecuencia. </source>
+        <source> Explora la descomposición espectral de funciones periódicas, visualiza las componentes armónicas y comprende la dualidad entre los dominios del tiempo y la frecuencia. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/home/home.component.html</context>
           <context context-type="linenumber">575,577</context>
@@ -248,13 +210,37 @@
         </context-group>
         <note priority="1" from="description">dftTag</note>
       </trans-unit>
-      <trans-unit id="6798776572560503946" datatype="html">
-        <source>Calculadora de Series de Fourier y DFT | Herramienta de Análisis Matemático Online</source>
+      <trans-unit id="5686520102504261410" datatype="html">
+        <source> © 2025 Calculadora de Series de Fourier y DFT </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/app.component.ts</context>
-          <context context-type="linenumber">12</context>
+          <context context-type="sourcefile">src/app/shared/components/footer/footer.component.html</context>
+          <context context-type="linenumber">6,8</context>
         </context-group>
-        <note priority="1" from="description">pageTitle</note>
+        <note priority="1" from="description">footerCopyright</note>
+      </trans-unit>
+      <trans-unit id="1376141893306524657" datatype="html">
+        <source>Documentación</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/footer/footer.component.html</context>
+          <context context-type="linenumber">40,42</context>
+        </context-group>
+        <note priority="1" from="description">footerDocumentation</note>
+      </trans-unit>
+      <trans-unit id="2379082776169073909" datatype="html">
+        <source>Acerca de</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/footer/footer.component.html</context>
+          <context context-type="linenumber">58,60</context>
+        </context-group>
+        <note priority="1" from="description">footerAboutUs</note>
+      </trans-unit>
+      <trans-unit id="8433768950518578342" datatype="html">
+        <source>Contacto</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/components/footer/footer.component.html</context>
+          <context context-type="linenumber">79,81</context>
+        </context-group>
+        <note priority="1" from="description">footerContact</note>
       </trans-unit>
     </body>
   </file>
