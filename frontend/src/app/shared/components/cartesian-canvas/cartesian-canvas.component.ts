@@ -93,6 +93,10 @@ export class CartesianCanvasComponent implements AfterViewInit {
   private discretePlots: DiscretePlot[] = [];
   private seriesPlots: SeriesPlot[] = [];
 
+  // Optimización de redibujado
+  private redrawPending = false;
+  private redrawAnimationFrame: number | null = null;
+
   constructor(
     private canvasDrawingService: CanvasDrawingService,
     private plottingService: PlottingService,
@@ -228,6 +232,39 @@ export class CartesianCanvasComponent implements AfterViewInit {
   }
 
   /**
+   * Dibuja múltiples funciones de manera optimizada (usado para términos individuales)
+   * OPTIMIZACIÓN: Agrupa las operaciones de dibujo para mejor rendimiento
+   */
+  public drawMultipleFunctions(
+    functions: Array<{ fn: (x: number) => number; color: string; lineWidth?: number }>
+  ): void {
+    if (!this.isBrowser || !this.ctx) return;
+
+    const config: PlotConfig = this.getPlotConfig();
+    
+    // Agrupar funciones por color y lineWidth para reducir cambios de estado
+    const grouped = new Map<string, Array<(x: number) => number>>();
+    
+    functions.forEach(({ fn, color, lineWidth = 2 }) => {
+      const key = `${color}-${lineWidth}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(fn);
+    });
+
+    // Dibujar cada grupo
+    grouped.forEach((fns, key) => {
+      const [color, lineWidthStr] = key.split('-');
+      const lineWidth = parseFloat(lineWidthStr);
+      
+      fns.forEach(fn => {
+        this.plottingService.drawFunction(config, fn, color, lineWidth);
+      });
+    });
+  }
+
+  /**
    * Limpia el canvas y redibuja solo el plano cartesiano
    */
   public clearCanvas(): void {
@@ -286,69 +323,81 @@ export class CartesianCanvasComponent implements AfterViewInit {
   private drawScreen(): void {
     if (!this.ctx || !this.isBrowser) return;
 
-    // 1. Dibujar el plano cartesiano
-    this.canvasDrawingService.drawScreen({
-      ctx: this.ctx,
-      width: this.width,
-      height: this.height,
-      offsetX: this.offsetX,
-      offsetY: this.offsetY,
-      origin: this.origin,
-      bgColor: this.bgColor,
-      axisColor: this.axisColor,
-      gridColor: this.gridColor,
-      fontColor: this.fontColor,
-      unit: this.unit,
-      xAxisScale: this.xAxisScale,
-      xAxisFactor: this.xAxisFactor,
-    });
+    // Cancelar cualquier redibujado pendiente
+    if (this.redrawAnimationFrame !== null) {
+      cancelAnimationFrame(this.redrawAnimationFrame);
+    }
 
-    // 2. Configuración para dibujar gráficas
-    const config: PlotConfig = this.getPlotConfig();
+    // Usar requestAnimationFrame para redibujado suave
+    this.redrawAnimationFrame = requestAnimationFrame(() => {
+      if (!this.ctx) return;
 
-    // 3. Redibujar todas las funciones guardadas
-    this.functionPlots.forEach((plot) => {
-      this.plottingService.drawFunction(
-        config,
-        plot.fn,
-        plot.color,
-        plot.lineWidth || 2 // Usar el grosor guardado o 2 como valor predeterminado
-      );
-    });
+      // 1. Dibujar el plano cartesiano
+      this.canvasDrawingService.drawScreen({
+        ctx: this.ctx,
+        width: this.width,
+        height: this.height,
+        offsetX: this.offsetX,
+        offsetY: this.offsetY,
+        origin: this.origin,
+        bgColor: this.bgColor,
+        axisColor: this.axisColor,
+        gridColor: this.gridColor,
+        fontColor: this.fontColor,
+        unit: this.unit,
+        xAxisScale: this.xAxisScale,
+        xAxisFactor: this.xAxisFactor,
+      });
 
-    // 4. Redibujar todas las funciones en intervalo
-    this.intervalPlots.forEach((plot) => {
-      this.plottingService.drawFunctionFromAToB(
-        config,
-        plot.fn,
-        plot.color,
-        plot.a,
-        plot.b,
-        plot.lineWidth || 2 // Usar el grosor guardado o 2 como valor predeterminado
-      );
-    });
+      // 2. Configuración para dibujar gráficas
+      const config: PlotConfig = this.getPlotConfig();
 
-    // 5. Redibujar todos los puntos discretos
-    this.discretePlots.forEach((plot) => {
-      this.plottingService.drawDiscreteLine(
-        config,
-        plot.startX,
-        plot.startY,
-        plot.n,
-        plot.color,
-        plot.lineWidth || 2.5 // Usar el grosor guardado o 2.5 como valor predeterminado
-      );
-    });
+      // 3. Redibujar todas las funciones guardadas
+      this.functionPlots.forEach((plot) => {
+        this.plottingService.drawFunction(
+          config,
+          plot.fn,
+          plot.color,
+          plot.lineWidth || 2
+        );
+      });
 
-    // 6. Redibujar todas las series
-    this.seriesPlots.forEach((plot) => {
-      this.plottingService.drawSeries(
-        config,
-        plot.seriesTerm,
-        plot.terms,
-        plot.color,
-        plot.lineWidth || 2 // Usar el grosor guardado o 2 como valor predeterminado
-      );
+      // 4. Redibujar todas las funciones en intervalo
+      this.intervalPlots.forEach((plot) => {
+        this.plottingService.drawFunctionFromAToB(
+          config,
+          plot.fn,
+          plot.color,
+          plot.a,
+          plot.b,
+          plot.lineWidth || 2
+        );
+      });
+
+      // 5. Redibujar todos los puntos discretos
+      this.discretePlots.forEach((plot) => {
+        this.plottingService.drawDiscreteLine(
+          config,
+          plot.startX,
+          plot.startY,
+          plot.n,
+          plot.color,
+          plot.lineWidth || 2.5
+        );
+      });
+
+      // 6. Redibujar todas las series
+      this.seriesPlots.forEach((plot) => {
+        this.plottingService.drawSeries(
+          config,
+          plot.seriesTerm,
+          plot.terms,
+          plot.color,
+          plot.lineWidth || 2
+        );
+      });
+
+      this.redrawAnimationFrame = null;
     });
   }
 
@@ -381,46 +430,78 @@ export class CartesianCanvasComponent implements AfterViewInit {
   private initCanvasEvents(canvas: HTMLCanvasElement): void {
     if (!this.isBrowser) return;
 
-    // Redibujar al cambiar tamaño
+    // Redibujar al cambiar tamaño (con debounce)
+    let resizeTimeout: number | null = null;
     window.addEventListener('resize', () => {
-      this.resizeCanvas(canvas);
-      this.width = canvas.width;
-      this.height = canvas.height;
-      this.origin = { x: this.width / 2, y: this.height / 2 };
-      this.drawScreen();
+      if (resizeTimeout !== null) {
+        clearTimeout(resizeTimeout);
+      }
+      resizeTimeout = window.setTimeout(() => {
+        this.resizeCanvas(canvas);
+        this.width = canvas.width;
+        this.height = canvas.height;
+        this.origin = { x: this.width / 2, y: this.height / 2 };
+        this.drawScreen();
+      }, 100);
     });
 
     // Implementar zoom dinámico respecto a la posición del cursor
+    // Con throttling para mejor rendimiento
+    let wheelTimeout: number | null = null;
+    let pendingZoomData: {
+      deltaY: number;
+      mouseX: number;
+      mouseY: number;
+    } | null = null;
+
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
 
-      // Almacena el valor antiguo de 'unit'
-      const oldUnit = this.unit;
-
-      // Obtiene la posición del ratón relativa al canvas
+      // Acumular datos del evento
       const rect = canvas.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
+      pendingZoomData = {
+        deltaY: event.deltaY,
+        mouseX: event.clientX - rect.left,
+        mouseY: event.clientY - rect.top,
+      };
 
-      // Calcula las coordenadas matemáticas bajo el cursor antes del zoom
-      const x0 = (mouseX - this.origin.x + this.offsetX) / oldUnit;
-      const y0 = (mouseY - this.origin.y + this.offsetY) / oldUnit;
+      // Si ya hay un timeout pendiente, no hacer nada más
+      if (wheelTimeout !== null) {
+        return;
+      }
 
-      // Calcula el factor de zoom
-      const zoomSpeed = 0.001;
-      const zoomFactor = Math.exp(-event.deltaY * zoomSpeed);
+      // Procesar el zoom después de un pequeño delay
+      wheelTimeout = window.setTimeout(() => {
+        if (pendingZoomData) {
+          // Almacena el valor antiguo de 'unit'
+          const oldUnit = this.unit;
 
-      // Ajusta 'unit' de forma multiplicativa
-      this.unit *= zoomFactor;
+          const { mouseX, mouseY, deltaY } = pendingZoomData;
 
-      // Limita el nivel de zoom
-      this.unit = Math.max(this.minZoom, Math.min(this.unit, this.maxZoom));
+          // Calcula las coordenadas matemáticas bajo el cursor antes del zoom
+          const x0 = (mouseX - this.origin.x + this.offsetX) / oldUnit;
+          const y0 = (mouseY - this.origin.y + this.offsetY) / oldUnit;
 
-      // Ajusta offsets para mantener el punto bajo el cursor estacionario
-      this.offsetX += x0 * (this.unit - oldUnit);
-      this.offsetY += y0 * (this.unit - oldUnit);
+          // Calcula el factor de zoom
+          const zoomSpeed = 0.001;
+          const zoomFactor = Math.exp(-deltaY * zoomSpeed);
 
-      this.drawScreen();
+          // Ajusta 'unit' de forma multiplicativa
+          this.unit *= zoomFactor;
+
+          // Limita el nivel de zoom
+          this.unit = Math.max(this.minZoom, Math.min(this.unit, this.maxZoom));
+
+          // Ajusta offsets para mantener el punto bajo el cursor estacionario
+          this.offsetX += x0 * (this.unit - oldUnit);
+          this.offsetY += y0 * (this.unit - oldUnit);
+
+          this.drawScreen();
+        }
+
+        wheelTimeout = null;
+        pendingZoomData = null;
+      }, 16); // ~60fps
     });
 
     // Drag start
@@ -430,12 +511,20 @@ export class CartesianCanvasComponent implements AfterViewInit {
       this.mouseY = event.clientY + this.offsetY;
     });
 
-    // Drag move
+    // Drag move con throttling
+    let dragAnimationFrame: number | null = null;
     canvas.addEventListener('mousemove', (event) => {
       if (this.drag) {
-        this.offsetX = this.mouseX - event.clientX;
-        this.offsetY = this.mouseY - event.clientY;
-        this.drawScreen();
+        if (dragAnimationFrame !== null) {
+          return; // Ya hay un frame pendiente
+        }
+        
+        dragAnimationFrame = requestAnimationFrame(() => {
+          this.offsetX = this.mouseX - event.clientX;
+          this.offsetY = this.mouseY - event.clientY;
+          this.drawScreen();
+          dragAnimationFrame = null;
+        });
       }
     });
 

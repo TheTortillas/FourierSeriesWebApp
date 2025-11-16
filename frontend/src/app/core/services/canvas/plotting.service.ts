@@ -58,6 +58,7 @@ export class PlottingService {
 
   /**
    * Dibuja una función matemática en todo el rango de pixeles del canvas.
+   * OPTIMIZADO: Usa un solo path para toda la función en lugar de uno por píxel
    * @param mathFunction Función de x -> y
    * @param color Color de la curva
    * @param lineWidth Grosor de la línea
@@ -80,8 +81,13 @@ export class PlottingService {
     } = config;
     if (!ctx) return;
 
-    let previousX: number | undefined = undefined;
-    let previousY: number | undefined = undefined;
+    // Configurar el estilo una sola vez antes de comenzar
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+
+    let firstPoint = true;
+    const maxDiscontinuityGap = 100; // Umbral para detectar discontinuidades
 
     for (let px = 0; px < width; px++) {
       // Convertir pixel (px) a coordenada matemática, ajustando por factor de escala
@@ -94,18 +100,40 @@ export class PlottingService {
       const pixelX = origin.x - offsetX + unit * xRaw;
       const pixelY = origin.y - offsetY - unit * y;
 
-      // Dibuja línea desde el punto anterior al actual
-      if (previousX !== undefined && previousY !== undefined) {
-        ctx.strokeStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(previousX, previousY);
-        ctx.lineTo(pixelX, pixelY);
-        ctx.lineWidth = lineWidth;
-        ctx.stroke();
+      // Saltar valores inválidos (NaN, Infinity)
+      if (!isFinite(y)) {
+        // Si encontramos un valor inválido, dibujar lo que tenemos hasta ahora
+        if (!firstPoint) {
+          ctx.stroke();
+          ctx.beginPath();
+          firstPoint = true;
+        }
+        continue;
       }
 
-      previousX = pixelX;
-      previousY = pixelY;
+      // Detectar discontinuidades grandes
+      if (!firstPoint) {
+        const lastPixelY = origin.y - offsetY - unit * mathFunction(((px - 1) + offsetX) / unit - width / unit / 2);
+        if (Math.abs(pixelY - lastPixelY) > maxDiscontinuityGap) {
+          // Hay una discontinuidad, dibujar el path actual y comenzar uno nuevo
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(pixelX, pixelY);
+          continue;
+        }
+      }
+
+      if (firstPoint) {
+        ctx.moveTo(pixelX, pixelY);
+        firstPoint = false;
+      } else {
+        ctx.lineTo(pixelX, pixelY);
+      }
+    }
+
+    // Dibujar el path completo de una sola vez
+    if (!firstPoint) {
+      ctx.stroke();
     }
   }
 
