@@ -19,11 +19,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-half-range',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    CartesianCanvasComponent,
-  ],
+  imports: [CommonModule, FormsModule, CartesianCanvasComponent],
   templateUrl: './half-range.component.html',
   styleUrls: ['./half-range.component.scss'],
 })
@@ -388,20 +384,18 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         .map((val) => Math.abs(val))
     );
 
-    // Draw coefficient bars with blur effect
+    // Draw coefficient bars
     for (let i = 0; i < Math.min(50, coefficients.length); i++) {
       const n = i + 1; // n starts at 1
       const height = coefficients[i];
 
-      // Draw bar with blur effect
-      this.drawDiscreteLineWithBlur(
-        this.coeffCanvas,
+      // Usar el método del canvas para agregar al historial
+      this.coeffCanvas.drawDiscreteLine(
         n,
         0,
         height,
         this.coeffColor,
-        this.coeffLineWidth,
-        true
+        this.coeffLineWidth
       );
 
       // Save position and value for tooltip
@@ -583,26 +577,10 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
         this.coeffTooltip.style.top = `${closestPoint.y}px`;
         this.coeffTooltip.classList.add('visible');
 
-        // First redraw all points with normal blur
-        this.drawCoefficientsGraph();
-
-        // Then highlight only the selected stem
-        this.drawDiscreteLineWithBlur(
-          this.coeffCanvas,
-          closestPoint.n,
-          0,
-          closestPoint.value,
-          this.coeffColor,
-          this.coeffLineWidth + 0.5,
-          false,
-          true // Indicator that it's highlighted
-        );
+        // Los stems ya están en el historial y se redibujan automáticamente
       } else if (this.coeffTooltip) {
         // Hide tooltip if no stem is nearby
         this.coeffTooltip.classList.remove('visible');
-
-        // Redraw all points with normal blur
-        this.drawCoefficientsGraph();
       }
     };
 
@@ -610,8 +588,6 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     coeffCanvasElement.onmouseleave = () => {
       if (this.coeffTooltip) {
         this.coeffTooltip.classList.remove('visible');
-        // Redraw without highlighting
-        this.drawCoefficientsGraph();
       }
     };
   }
@@ -621,15 +597,39 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.coeffCanvas && this.coeffCanvas.canvasElement?.nativeElement) {
       const coeffCanvas = this.coeffCanvas.canvasElement.nativeElement;
 
-      // Create a new wheel handler that first executes the original and then redraws
+      // Create a new wheel handler that only updates tooltip positions
       const originalWheel = coeffCanvas.onwheel;
       coeffCanvas.onwheel = (event: WheelEvent) => {
-        // Call the original handler
+        // Call the original handler (canvas redraws automatically from history)
         if (originalWheel) originalWheel.call(coeffCanvas, event);
 
-        // Redraw after a brief delay to allow the canvas to update
-        setTimeout(() => this.drawCoefficientsGraph(), 0);
+        // Only update tooltip positions
+        setTimeout(() => this.updateCoeffTooltipPositions(), 0);
       };
+    }
+  }
+
+  // Update only tooltip positions without redrawing
+  private updateCoeffTooltipPositions(): void {
+    this.coeffPoints = [];
+    // Get the appropriate coefficients based on active series type
+    const coefficients =
+      this.activeSeriesType === 'cosine'
+        ? this.cachedACoefs
+        : this.cachedBCoefs;
+
+    for (let i = 0; i < Math.min(50, coefficients.length); i++) {
+      const n = i + 1;
+      const height = coefficients[i];
+      const pixelPos = this.canvasCoordToPixel(this.coeffCanvas, n, height);
+      if (pixelPos) {
+        this.coeffPoints.push({
+          n,
+          x: pixelPos.x,
+          y: pixelPos.y,
+          value: height,
+        });
+      }
     }
   }
 

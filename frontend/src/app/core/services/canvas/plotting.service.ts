@@ -88,6 +88,7 @@ export class PlottingService {
 
     let firstPoint = true;
     const maxDiscontinuityGap = 100; // Umbral para detectar discontinuidades
+    let lastY: number | undefined = undefined;
 
     for (let px = 0; px < width; px++) {
       // Convertir pixel (px) a coordenada matemática, ajustando por factor de escala
@@ -108,17 +109,21 @@ export class PlottingService {
           ctx.beginPath();
           firstPoint = true;
         }
+        lastY = undefined;
         continue;
       }
 
       // Detectar discontinuidades grandes
-      if (!firstPoint) {
-        const lastPixelY = origin.y - offsetY - unit * mathFunction(((px - 1) + offsetX) / unit - width / unit / 2);
-        if (Math.abs(pixelY - lastPixelY) > maxDiscontinuityGap) {
+      if (!firstPoint && lastY !== undefined) {
+        if (
+          Math.abs(pixelY - (origin.y - offsetY - unit * lastY)) >
+          maxDiscontinuityGap
+        ) {
           // Hay una discontinuidad, dibujar el path actual y comenzar uno nuevo
           ctx.stroke();
           ctx.beginPath();
           ctx.moveTo(pixelX, pixelY);
+          lastY = y;
           continue;
         }
       }
@@ -129,6 +134,8 @@ export class PlottingService {
       } else {
         ctx.lineTo(pixelX, pixelY);
       }
+
+      lastY = y;
     }
 
     // Dibujar el path completo de una sola vez
