@@ -17,10 +17,17 @@ import { ThemeService } from '../../../core/services/theming/theme.service';
 
 import { Subscription } from 'rxjs';
 
+import { CanvasControlsComponent } from '../../../shared/components/canvas-controls/canvas-controls.component';
+
 @Component({
   selector: 'app-complex',
   standalone: true,
-  imports: [CommonModule, FormsModule, CartesianCanvasComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CartesianCanvasComponent,
+    CanvasControlsComponent,
+  ],
   templateUrl: './complex.component.html',
   styleUrl: './complex.component.scss',
 })
