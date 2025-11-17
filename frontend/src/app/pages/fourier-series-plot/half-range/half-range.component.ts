@@ -16,10 +16,17 @@ import { ThemeService } from '../../../core/services/theming/theme.service';
 import { TrigonometricResponse } from '../../../interfaces/trigonometric-response.interface';
 import { Subscription } from 'rxjs';
 
+import { CanvasControlsComponent } from '../../../shared/components/canvas-controls/canvas-controls.component';
+
 @Component({
   selector: 'app-half-range',
   standalone: true,
-  imports: [CommonModule, FormsModule, CartesianCanvasComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CartesianCanvasComponent,
+    CanvasControlsComponent,
+  ],
   templateUrl: './half-range.component.html',
   styleUrls: ['./half-range.component.scss'],
 })

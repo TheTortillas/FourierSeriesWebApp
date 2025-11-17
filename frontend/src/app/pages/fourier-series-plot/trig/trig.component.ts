@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CartesianCanvasComponent } from '../../../shared/components/cartesian-canvas/cartesian-canvas.component';
+import { CanvasControlsComponent } from '../../../shared/components/canvas-controls/canvas-controls.component';
 import { TrigonometricResponse } from '../../../interfaces/trigonometric-response.interface';
 import { MathquillService } from '../../../core/services/mathquill/mathquill.service';
 import { MathUtilsService } from '../../../core/services/maximaToJS/math-utils.service';
@@ -20,7 +21,12 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-trig',
   standalone: true,
-  imports: [CommonModule, FormsModule, CartesianCanvasComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CartesianCanvasComponent,
+    CanvasControlsComponent,
+  ],
   templateUrl: './trig.component.html',
   styleUrl: './trig.component.scss',
 })

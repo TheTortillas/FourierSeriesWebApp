@@ -29,6 +29,8 @@ export class PlottingService {
       unit,
       xAxisScale = 'integer',
       xAxisFactor = 1,
+      scaleX = 1,
+      scaleY = 1,
     } = config;
     if (!ctx) return;
 
@@ -37,9 +39,9 @@ export class PlottingService {
 
     // Convertir de unidades matemáticas a píxeles, ajustando por factor de escala
     const xRaw = startX / xAxisFactor; // Convertimos a escala visual
-    const startXPixel = origin.x - offsetX + unit * xRaw;
-    const startYPixel = origin.y - offsetY - unit * startY;
-    const endYPixel = origin.y - offsetY - unit * endY;
+    const startXPixel = origin.x - offsetX + unit * scaleX * xRaw;
+    const startYPixel = origin.y - offsetY - unit * scaleY * startY;
+    const endYPixel = origin.y - offsetY - unit * scaleY * endY;
 
     // Dibujar la línea
     ctx.strokeStyle = color;
@@ -78,6 +80,8 @@ export class PlottingService {
       origin,
       xAxisScale = 'integer',
       xAxisFactor = 1,
+      scaleX = 1,
+      scaleY = 1,
     } = config;
     if (!ctx) return;
 
@@ -92,14 +96,15 @@ export class PlottingService {
 
     for (let px = 0; px < width; px++) {
       // Convertir pixel (px) a coordenada matemática, ajustando por factor de escala
-      const xRaw = (px + offsetX) / unit - width / unit / 2;
+      const xRaw =
+        (px + offsetX) / (unit * scaleX) - width / (unit * scaleX) / 2;
       // Aplicar factor de escala según el tipo seleccionado
       const x = xRaw * xAxisFactor;
       const y = mathFunction(x);
 
       // Calcular la posición en píxeles, teniendo en cuenta el factor de escala
-      const pixelX = origin.x - offsetX + unit * xRaw;
-      const pixelY = origin.y - offsetY - unit * y;
+      const pixelX = origin.x - offsetX + unit * scaleX * xRaw;
+      const pixelY = origin.y - offsetY - unit * scaleY * y;
 
       // Saltar valores inválidos (NaN, Infinity)
       if (!isFinite(y)) {
@@ -116,7 +121,7 @@ export class PlottingService {
       // Detectar discontinuidades grandes
       if (!firstPoint && lastY !== undefined) {
         if (
-          Math.abs(pixelY - (origin.y - offsetY - unit * lastY)) >
+          Math.abs(pixelY - (origin.y - offsetY - unit * scaleY * lastY)) >
           maxDiscontinuityGap
         ) {
           // Hay una discontinuidad, dibujar el path actual y comenzar uno nuevo
@@ -168,6 +173,8 @@ export class PlottingService {
       unit,
       xAxisScale = 'integer',
       xAxisFactor = 1,
+      scaleX = 1,
+      scaleY = 1,
     } = config;
     if (!ctx) return;
 
@@ -184,8 +191,8 @@ export class PlottingService {
       // Convertir de unidades matemáticas a píxeles
       // Convertir el valor de x de nuevo a la escala visual
       const xRaw = x / xAxisFactor;
-      const canvasX = origin.x - offsetX + unit * xRaw;
-      const canvasY = origin.y - offsetY - unit * y;
+      const canvasX = origin.x - offsetX + unit * scaleX * xRaw;
+      const canvasY = origin.y - offsetY - unit * scaleY * y;
 
       if (previousX !== undefined && previousY !== undefined) {
         ctx.strokeStyle = color;
@@ -224,6 +231,8 @@ export class PlottingService {
       origin,
       xAxisScale = 'integer',
       xAxisFactor = 1,
+      scaleX = 1,
+      scaleY = 1,
     } = config;
     if (!ctx) return;
 
@@ -232,7 +241,8 @@ export class PlottingService {
 
     for (let px = 0; px < width; px++) {
       // Convertir pixel a coordenada matemática
-      const xRaw = (px + offsetX) / unit - width / unit / 2;
+      const xRaw =
+        (px + offsetX) / (unit * scaleX) - width / (unit * scaleX) / 2;
       // Aplicar factor de escala según el tipo seleccionado
       const x = xRaw * xAxisFactor;
 
@@ -247,14 +257,14 @@ export class PlottingService {
         ctx.beginPath();
         ctx.moveTo(previousX, previousY);
         ctx.lineTo(
-          origin.x - offsetX + unit * xRaw,
-          origin.y - offsetY - unit * sum
+          origin.x - offsetX + unit * scaleX * xRaw,
+          origin.y - offsetY - unit * scaleY * sum
         );
         ctx.lineWidth = lineWidth;
         ctx.stroke();
       }
-      previousX = origin.x - offsetX + unit * xRaw;
-      previousY = origin.y - offsetY - unit * sum;
+      previousX = origin.x - offsetX + unit * scaleX * xRaw;
+      previousY = origin.y - offsetY - unit * scaleY * sum;
     }
   }
 }

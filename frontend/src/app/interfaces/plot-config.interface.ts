@@ -6,6 +6,8 @@ export interface PlotConfig {
   offsetY: number;
   unit: number;
   origin: { x: number; y: number };
-  xAxisScale?: 'integer' | 'pi' | 'e';  
-  xAxisFactor?: number;                 
+  xAxisScale?: 'integer' | 'pi' | 'e';
+  xAxisFactor?: number;
+  scaleX?: number; // Escala independiente para eje X
+  scaleY?: number; // Escala independiente para eje Y
 }

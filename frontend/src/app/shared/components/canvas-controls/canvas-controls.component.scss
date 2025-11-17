@@ -1,0 +1,212 @@
+.canvas-controls-overlay {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+  pointer-events: none; // El overlay no intercepta eventos
+
+  &.top-3 {
+    top: 84px; // Altura del navbar (70px) + margen (14px)
+  }
+
+  &.bottom-3 {
+    bottom: 0.75rem;
+  }
+
+  &.left-3 {
+    left: 0.75rem;
+  }
+
+  &.right-3 {
+    right: 0.75rem;
+  }
+}
+
+.controls-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  pointer-events: all; // Solo el grupo de controles intercepta eventos
+}
+
+.separator {
+  width: 1px;
+  height: 24px;
+  margin: 0 4px;
+  opacity: 0.3;
+}
+
+.dark .separator {
+  background: #90dcb5;
+}
+
+.light .separator {
+  background: #3b82f6;
+}
+
+.dark .controls-group {
+  background: rgba(30, 30, 30, 0.85);
+  border: 1px solid rgba(144, 220, 181, 0.2);
+}
+
+.dark .controls-group:hover {
+  background: rgba(30, 30, 30, 0.95);
+  border-color: rgba(144, 220, 181, 0.3);
+}
+
+.light .controls-group {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.light .controls-group:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.control-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    pointer-events: none;
+  }
+}
+
+.dark .control-btn {
+  background: rgba(107, 188, 172, 0.1);
+  color: #90dcb5;
+}
+
+.dark .control-btn:hover {
+  background: rgba(107, 188, 172, 0.2);
+  transform: scale(1.05);
+}
+
+.dark .control-btn:active {
+  transform: scale(0.95);
+}
+
+.light .control-btn {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.light .control-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  transform: scale(1.05);
+}
+
+.light .control-btn:active {
+  transform: scale(0.95);
+}
+
+.tooltip {
+  position: absolute;
+  right: calc(100% + 8px);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.dark .tooltip {
+  background: rgba(30, 30, 30, 0.95);
+  color: #ebebeb;
+}
+
+.light .tooltip {
+  background: rgba(50, 50, 50, 0.95);
+  color: white;
+}
+
+.control-btn:hover .tooltip {
+  opacity: 1;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.dark .toggle-label {
+  color: #ebebeb;
+}
+
+.dark .toggle-label:hover {
+  background: rgba(144, 220, 181, 0.1);
+}
+
+.light .toggle-label {
+  color: #334155;
+}
+
+.light .toggle-label:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.toggle-checkbox-small {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #6bbcac;
+}
+
+.dark .toggle-checkbox-small {
+  accent-color: #90dcb5;
+}
+
+.light .toggle-checkbox-small {
+  accent-color: #3b82f6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .controls-group {
+    padding: 6px;
+    gap: 4px;
+  }
+
+  .control-btn {
+    width: 32px;
+    height: 32px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .toggle-label {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+
+  .tooltip {
+    display: none; // Ocultar tooltips en móvil
+  }
+}

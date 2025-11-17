@@ -19,10 +19,17 @@ import { LatexToMaximaService } from '../../core/services/conversion/latex-to-ma
 
 import { Subscription } from 'rxjs';
 
+import { CanvasControlsComponent } from '../../shared/components/canvas-controls/canvas-controls.component';
+
 @Component({
   selector: 'app-dft-plot',
   standalone: true,
-  imports: [CommonModule, FormsModule, CartesianCanvasComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CartesianCanvasComponent,
+    CanvasControlsComponent,
+  ],
   templateUrl: './dft-plot.component.html',
   styleUrl: './dft-plot.component.scss',
 })

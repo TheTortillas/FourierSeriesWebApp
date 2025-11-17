@@ -17,4 +17,6 @@ export interface DrawScreenConfig {
   unit: number;
   xAxisScale?: 'integer' | 'pi' | 'e';
   xAxisFactor?: number;
+  scaleX?: number; // Escala independiente para eje X
+  scaleY?: number; // Escala independiente para eje Y
 }

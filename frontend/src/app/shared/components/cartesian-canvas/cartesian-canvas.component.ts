@@ -66,6 +66,12 @@ export class CartesianCanvasComponent implements AfterViewInit {
   @Input() xAxisScale: 'integer' | 'pi' | 'e' = 'integer';
   @Input() xAxisFactor = 1;
 
+  // Nuevas propiedades para zoom independiente
+  @Input() enableIndependentZoom = false;
+  @Input() unlimitedZoom = false;
+  @Input() scaleXEnabled = true;
+  @Input() scaleYEnabled = true;
+
   // Eventos
   @Output() canvasReady = new EventEmitter<CanvasRenderingContext2D>();
 
@@ -83,6 +89,10 @@ export class CartesianCanvasComponent implements AfterViewInit {
   mouseY = 0;
   origin: { x: number; y: number } = { x: 0, y: 0 };
   lastPinchDistance: number | null = null; // Para manejar pinch-zoom
+
+  // Variables para zoom independiente
+  private scaleX = 1;
+  private scaleY = 1;
 
   // Verificar si estamos en el navegador
   private isBrowser: boolean;
@@ -236,15 +246,19 @@ export class CartesianCanvasComponent implements AfterViewInit {
    * OPTIMIZACIÓN: Agrupa las operaciones de dibujo para mejor rendimiento
    */
   public drawMultipleFunctions(
-    functions: Array<{ fn: (x: number) => number; color: string; lineWidth?: number }>
+    functions: Array<{
+      fn: (x: number) => number;
+      color: string;
+      lineWidth?: number;
+    }>
   ): void {
     if (!this.isBrowser || !this.ctx) return;
 
     const config: PlotConfig = this.getPlotConfig();
-    
+
     // Agrupar funciones por color y lineWidth para reducir cambios de estado
     const grouped = new Map<string, Array<(x: number) => number>>();
-    
+
     functions.forEach(({ fn, color, lineWidth = 2 }) => {
       const key = `${color}-${lineWidth}`;
       if (!grouped.has(key)) {
@@ -257,8 +271,8 @@ export class CartesianCanvasComponent implements AfterViewInit {
     grouped.forEach((fns, key) => {
       const [color, lineWidthStr] = key.split('-');
       const lineWidth = parseFloat(lineWidthStr);
-      
-      fns.forEach(fn => {
+
+      fns.forEach((fn) => {
         this.plottingService.drawFunction(config, fn, color, lineWidth);
       });
     });
@@ -293,6 +307,42 @@ export class CartesianCanvasComponent implements AfterViewInit {
   }
 
   /**
+   * Restablece las escalas de zoom independiente a 1
+   */
+  public resetScales(): void {
+    if (!this.isBrowser) return;
+
+    this.scaleX = 1;
+    this.scaleY = 1;
+    this.unit = this.initialZoom;
+    this.drawScreen();
+  }
+
+  /**
+   * Centra el plano cartesiano (offset a 0)
+   */
+  public centerPlane(): void {
+    if (!this.isBrowser) return;
+
+    this.offsetX = 0;
+    this.offsetY = 0;
+    this.drawScreen();
+  }
+
+  /**
+   * Habilita o deshabilita el zoom para un eje específico
+   */
+  public toggleScaleAxis(axis: 'x' | 'y', enabled: boolean): void {
+    if (!this.isBrowser) return;
+
+    if (axis === 'x') {
+      this.scaleXEnabled = enabled;
+    } else {
+      this.scaleYEnabled = enabled;
+    }
+  }
+
+  /**
    * Establece el nivel de zoom
    */
   public setZoom(zoom: number): void {
@@ -317,6 +367,8 @@ export class CartesianCanvasComponent implements AfterViewInit {
       origin: this.origin,
       xAxisScale: this.xAxisScale,
       xAxisFactor: this.xAxisFactor,
+      scaleX: this.scaleX,
+      scaleY: this.scaleY,
     };
   }
 
@@ -347,6 +399,8 @@ export class CartesianCanvasComponent implements AfterViewInit {
         unit: this.unit,
         xAxisScale: this.xAxisScale,
         xAxisFactor: this.xAxisFactor,
+        scaleX: this.scaleX,
+        scaleY: this.scaleY,
       });
 
       // 2. Configuración para dibujar gráficas
@@ -473,28 +527,80 @@ export class CartesianCanvasComponent implements AfterViewInit {
       // Procesar el zoom después de un pequeño delay
       wheelTimeout = window.setTimeout(() => {
         if (pendingZoomData) {
-          // Almacena el valor antiguo de 'unit'
-          const oldUnit = this.unit;
-
           const { mouseX, mouseY, deltaY } = pendingZoomData;
-
-          // Calcula las coordenadas matemáticas bajo el cursor antes del zoom
-          const x0 = (mouseX - this.origin.x + this.offsetX) / oldUnit;
-          const y0 = (mouseY - this.origin.y + this.offsetY) / oldUnit;
 
           // Calcula el factor de zoom
           const zoomSpeed = 0.001;
           const zoomFactor = Math.exp(-deltaY * zoomSpeed);
 
-          // Ajusta 'unit' de forma multiplicativa
-          this.unit *= zoomFactor;
+          if (this.enableIndependentZoom) {
+            // ===== ZOOM INDEPENDIENTE POR EJE =====
 
-          // Limita el nivel de zoom
-          this.unit = Math.max(this.minZoom, Math.min(this.unit, this.maxZoom));
+            // Almacena los valores antiguos
+            const oldScaleX = this.scaleX;
+            const oldScaleY = this.scaleY;
+            const oldUnit = this.unit;
 
-          // Ajusta offsets para mantener el punto bajo el cursor estacionario
-          this.offsetX += x0 * (this.unit - oldUnit);
-          this.offsetY += y0 * (this.unit - oldUnit);
+            // Calcula las coordenadas matemáticas bajo el cursor antes del zoom
+            const x0 =
+              (mouseX - this.origin.x + this.offsetX) / (oldUnit * oldScaleX);
+            const y0 =
+              (mouseY - this.origin.y + this.offsetY) / (oldUnit * oldScaleY);
+
+            // Aplica el zoom a las escalas habilitadas
+            if (this.scaleXEnabled) this.scaleX *= zoomFactor;
+            if (this.scaleYEnabled) this.scaleY *= zoomFactor;
+
+            // Si no es zoom ilimitado, verificar límites
+            if (!this.unlimitedZoom) {
+              const effectiveUnitX = oldUnit * this.scaleX;
+              const effectiveUnitY = oldUnit * this.scaleY;
+
+              // Revertir si se exceden los límites
+              if (
+                effectiveUnitX < this.minZoom ||
+                effectiveUnitX > this.maxZoom
+              ) {
+                this.scaleX = oldScaleX;
+              }
+              if (
+                effectiveUnitY < this.minZoom ||
+                effectiveUnitY > this.maxZoom
+              ) {
+                this.scaleY = oldScaleY;
+              }
+            }
+
+            // Ajusta offsets para mantener el punto bajo el cursor estacionario
+            this.offsetX +=
+              x0 * (this.unit * this.scaleX - oldUnit * oldScaleX);
+            this.offsetY +=
+              y0 * (this.unit * this.scaleY - oldUnit * oldScaleY);
+          } else {
+            // ===== ZOOM UNIFORME (comportamiento original) =====
+
+            // Almacena el valor antiguo de 'unit'
+            const oldUnit = this.unit;
+
+            // Calcula las coordenadas matemáticas bajo el cursor antes del zoom
+            const x0 = (mouseX - this.origin.x + this.offsetX) / oldUnit;
+            const y0 = (mouseY - this.origin.y + this.offsetY) / oldUnit;
+
+            // Ajusta 'unit' de forma multiplicativa
+            this.unit *= zoomFactor;
+
+            // Limita el nivel de zoom si no es ilimitado
+            if (!this.unlimitedZoom) {
+              this.unit = Math.max(
+                this.minZoom,
+                Math.min(this.unit, this.maxZoom)
+              );
+            }
+
+            // Ajusta offsets para mantener el punto bajo el cursor estacionario
+            this.offsetX += x0 * (this.unit - oldUnit);
+            this.offsetY += y0 * (this.unit - oldUnit);
+          }
 
           this.drawScreen();
         }
@@ -518,7 +624,7 @@ export class CartesianCanvasComponent implements AfterViewInit {
         if (dragAnimationFrame !== null) {
           return; // Ya hay un frame pendiente
         }
-        
+
         dragAnimationFrame = requestAnimationFrame(() => {
           this.offsetX = this.mouseX - event.clientX;
           this.offsetY = this.mouseY - event.clientY;
@@ -585,15 +691,60 @@ export class CartesianCanvasComponent implements AfterViewInit {
           const canvasX = midX - rect.left;
           const canvasY = midY - rect.top;
 
-          const oldUnit = this.unit;
-          const x0 = (canvasX - this.origin.x + this.offsetX) / oldUnit;
-          const y0 = (canvasY - this.origin.y + this.offsetY) / oldUnit;
+          if (this.enableIndependentZoom) {
+            // ===== ZOOM INDEPENDIENTE POR EJE =====
+            const oldScaleX = this.scaleX;
+            const oldScaleY = this.scaleY;
+            const oldUnit = this.unit;
 
-          this.unit *= zoomFactor;
-          this.unit = Math.max(this.minZoom, Math.min(this.unit, this.maxZoom));
+            const x0 =
+              (canvasX - this.origin.x + this.offsetX) / (oldUnit * oldScaleX);
+            const y0 =
+              (canvasY - this.origin.y + this.offsetY) / (oldUnit * oldScaleY);
 
-          this.offsetX += x0 * (this.unit - oldUnit);
-          this.offsetY += y0 * (this.unit - oldUnit);
+            if (this.scaleXEnabled) this.scaleX *= zoomFactor;
+            if (this.scaleYEnabled) this.scaleY *= zoomFactor;
+
+            if (!this.unlimitedZoom) {
+              const effectiveUnitX = oldUnit * this.scaleX;
+              const effectiveUnitY = oldUnit * this.scaleY;
+
+              if (
+                effectiveUnitX < this.minZoom ||
+                effectiveUnitX > this.maxZoom
+              ) {
+                this.scaleX = oldScaleX;
+              }
+              if (
+                effectiveUnitY < this.minZoom ||
+                effectiveUnitY > this.maxZoom
+              ) {
+                this.scaleY = oldScaleY;
+              }
+            }
+
+            this.offsetX +=
+              x0 * (this.unit * this.scaleX - oldUnit * oldScaleX);
+            this.offsetY +=
+              y0 * (this.unit * this.scaleY - oldUnit * oldScaleY);
+          } else {
+            // ===== ZOOM UNIFORME =====
+            const oldUnit = this.unit;
+            const x0 = (canvasX - this.origin.x + this.offsetX) / oldUnit;
+            const y0 = (canvasY - this.origin.y + this.offsetY) / oldUnit;
+
+            this.unit *= zoomFactor;
+
+            if (!this.unlimitedZoom) {
+              this.unit = Math.max(
+                this.minZoom,
+                Math.min(this.unit, this.maxZoom)
+              );
+            }
+
+            this.offsetX += x0 * (this.unit - oldUnit);
+            this.offsetY += y0 * (this.unit - oldUnit);
+          }
 
           this.drawScreen();
         }

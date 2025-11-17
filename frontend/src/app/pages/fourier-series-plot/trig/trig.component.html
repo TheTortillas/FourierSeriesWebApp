@@ -955,19 +955,37 @@
   class="fixed inset-0 w-screen h-screen z-0"
   [ngClass]="isDarkMode ? 'bg-gray-900' : 'bg-blue-50'"
 >
-  <app-cartesian-canvas
-    #cartesianCanvas
-    [bgColor]="bgColor"
-    [axisColor]="axisColor"
-    [gridColor]="gridColor"
-    [fontColor]="fontColor"
-    [initialZoom]="75"
-    [xAxisScale]="xAxisScale"
-    [xAxisFactor]="xAxisFactor"
-    (onViewChanged)="redrawFunctions()"
-    (onZoom)="redrawFunctions()"
-  >
-  </app-cartesian-canvas>
+  <div class="relative w-full h-full">
+    <app-cartesian-canvas
+      #cartesianCanvas
+      [bgColor]="bgColor"
+      [axisColor]="axisColor"
+      [gridColor]="gridColor"
+      [fontColor]="fontColor"
+      [initialZoom]="75"
+      [xAxisScale]="xAxisScale"
+      [xAxisFactor]="xAxisFactor"
+      [enableIndependentZoom]="true"
+      [unlimitedZoom]="true"
+      (onViewChanged)="redrawFunctions()"
+      (onZoom)="redrawFunctions()"
+    >
+    </app-cartesian-canvas>
+
+    <!-- Controles flotantes del canvas -->
+    <app-canvas-controls
+      [isDarkMode]="isDarkMode"
+      [showAxisToggles]="true"
+      [scaleXEnabled]="true"
+      [scaleYEnabled]="true"
+      [position]="'top-right'"
+      (resetScales)="cartesianCanvas.resetScales()"
+      (centerPlane)="cartesianCanvas.centerPlane()"
+      (toggleScaleX)="cartesianCanvas.toggleScaleAxis('x', $event)"
+      (toggleScaleY)="cartesianCanvas.toggleScaleAxis('y', $event)"
+    >
+    </app-canvas-controls>
+  </div>
 </div>
 
 <!-- Add Theme Toggle button -->
