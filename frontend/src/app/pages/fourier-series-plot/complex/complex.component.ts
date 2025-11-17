@@ -20,11 +20,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-complex',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    CartesianCanvasComponent,
-  ],
+  imports: [CommonModule, FormsModule, CartesianCanvasComponent],
   templateUrl: './complex.component.html',
   styleUrl: './complex.component.scss',
 })
@@ -932,15 +928,13 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
           coef.real * coef.real + coef.imag * coef.imag
         );
 
-        // Draw stem for the coefficient
-        this.drawDiscreteLineWithBlur(
-          this.cnCanvas,
+        // Draw stem for the coefficient usando el historial del canvas
+        this.cnCanvas.drawDiscreteLine(
           coef.n, // n can be positive or negative
           0,
           magnitude,
           this.cnColor,
-          this.cnLineWidth,
-          true
+          this.cnLineWidth
         );
 
         // Store point data for tooltip
@@ -968,14 +962,13 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
       const positiveCoefs = this.cachedCnCoefs.filter((coef) => coef.n >= 0);
 
       for (const coef of positiveCoefs) {
-        this.drawDiscreteLineWithBlur(
-          this.amplitudeCanvas,
+        // Usar el método del canvas para agregar al historial
+        this.amplitudeCanvas.drawDiscreteLine(
           coef.n,
           0,
           coef.amplitude,
           this.amplitudeColor,
-          this.amplitudeLineWidth,
-          true
+          this.amplitudeLineWidth
         );
 
         const pixelPos = this.canvasCoordToPixel(
@@ -1002,14 +995,13 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
       const positiveCoefs = this.cachedCnCoefs.filter((coef) => coef.n >= 0);
 
       for (const coef of positiveCoefs) {
-        this.drawDiscreteLineWithBlur(
-          this.phaseCanvas,
+        // Usar el método del canvas para agregar al historial
+        this.phaseCanvas.drawDiscreteLine(
           coef.n,
           0,
           coef.phase,
           this.phaseColor,
-          this.phaseLineWidth,
-          true
+          this.phaseLineWidth
         );
 
         const pixelPos = this.canvasCoordToPixel(
@@ -1193,29 +1185,10 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
           this.cnTooltip!.style.top = `${closestPoint.y}px`;
           this.cnTooltip!.classList.add('visible');
 
-          // Redraw with highlight
-          this.drawAmplitudePhaseGraphs();
-
-          const coef = this.cachedCnCoefs.find((c) => c.n === closestPoint!.n);
-          if (coef) {
-            const magnitude = Math.sqrt(
-              coef.real * coef.real + coef.imag * coef.imag
-            );
-            this.drawDiscreteLineWithBlur(
-              this.cnCanvas,
-              coef.n,
-              0,
-              magnitude,
-              this.cnColor,
-              this.cnLineWidth + 0.5,
-              false,
-              true
-            );
-          }
+          // Los stems ya están en el historial del canvas y se redibujan automáticamente
         } else if (this.cnTooltip) {
           // Hide tooltip if no stem is nearby
           this.cnTooltip.classList.remove('visible');
-          this.drawAmplitudePhaseGraphs();
         }
       };
 
@@ -1223,7 +1196,6 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
       canvasElements.cn.onmouseleave = () => {
         if (this.cnTooltip) {
           this.cnTooltip.classList.remove('visible');
-          this.drawAmplitudePhaseGraphs();
         }
       };
     }
@@ -1274,31 +1246,15 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
           this.amplitudeTooltip!.style.top = `${closestPoint.y}px`;
           this.amplitudeTooltip!.classList.add('visible');
 
-          this.drawAmplitudePhaseGraphs();
-
-          const coef = this.cachedCnCoefs.find((c) => c.n === closestPoint!.n);
-          if (coef) {
-            this.drawDiscreteLineWithBlur(
-              this.amplitudeCanvas,
-              coef.n,
-              0,
-              coef.amplitude,
-              this.amplitudeColor,
-              this.amplitudeLineWidth + 0.5,
-              false,
-              true
-            );
-          }
+          // Los stems ya están en el historial y se redibujan automáticamente
         } else if (this.amplitudeTooltip) {
           this.amplitudeTooltip.classList.remove('visible');
-          this.drawAmplitudePhaseGraphs();
         }
       };
 
       canvasElements.amplitude.onmouseleave = () => {
         if (this.amplitudeTooltip) {
           this.amplitudeTooltip.classList.remove('visible');
-          this.drawAmplitudePhaseGraphs();
         }
       };
     }
@@ -1352,31 +1308,15 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
           this.phaseTooltip!.style.top = `${closestPoint.y}px`;
           this.phaseTooltip!.classList.add('visible');
 
-          this.drawAmplitudePhaseGraphs();
-
-          const coef = this.cachedCnCoefs.find((c) => c.n === closestPoint!.n);
-          if (coef) {
-            this.drawDiscreteLineWithBlur(
-              this.phaseCanvas,
-              coef.n,
-              0,
-              coef.phase,
-              this.phaseColor,
-              this.phaseLineWidth + 0.5,
-              false,
-              true
-            );
-          }
+          // Los stems ya están en el historial y se redibujan automáticamente
         } else if (this.phaseTooltip) {
           this.phaseTooltip.classList.remove('visible');
-          this.drawAmplitudePhaseGraphs();
         }
       };
 
       canvasElements.phase.onmouseleave = () => {
         if (this.phaseTooltip) {
           this.phaseTooltip.classList.remove('visible');
-          this.drawAmplitudePhaseGraphs();
         }
       };
     }
@@ -1393,15 +1333,76 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
       if (canvas && canvas.canvasElement?.nativeElement) {
         const canvasEl = canvas.canvasElement.nativeElement;
 
-        // Create wheel handler that calls original handler then redraws
+        // Create wheel handler that calls original handler then updates tooltip positions
         const originalWheel = canvasEl.onwheel;
         canvasEl.onwheel = (event: WheelEvent) => {
-          // Call original handler
+          // Call original handler (canvas redraws automatically from history)
           if (originalWheel) originalWheel.call(canvasEl, event);
 
-          // Redraw after a small delay to allow canvas update
-          setTimeout(() => this.drawAmplitudePhaseGraphs(), 0);
+          // Solo actualizar posiciones de tooltips, no redibujar stems
+          setTimeout(() => this.updateTooltipPositions(), 0);
         };
+      }
+    }
+  }
+
+  // Actualizar solo las posiciones de tooltips sin redibujar stems
+  private updateTooltipPositions(): void {
+    // Actualizar cnPoints
+    this.cnPoints = [];
+    for (const coef of this.cachedCnCoefs) {
+      const magnitude = Math.sqrt(
+        coef.real * coef.real + coef.imag * coef.imag
+      );
+      const pixelPos = this.canvasCoordToPixel(
+        this.cnCanvas,
+        coef.n,
+        magnitude
+      );
+      if (pixelPos) {
+        this.cnPoints.push({
+          n: coef.n,
+          x: pixelPos.x,
+          y: pixelPos.y,
+          value: { real: coef.real, imag: coef.imag },
+        });
+      }
+    }
+
+    // Actualizar amplitudePoints
+    this.amplitudePoints = [];
+    const positiveCoefs = this.cachedCnCoefs.filter((coef) => coef.n >= 0);
+    for (const coef of positiveCoefs) {
+      const pixelPos = this.canvasCoordToPixel(
+        this.amplitudeCanvas,
+        coef.n,
+        coef.amplitude
+      );
+      if (pixelPos) {
+        this.amplitudePoints.push({
+          n: coef.n,
+          x: pixelPos.x,
+          y: pixelPos.y,
+          value: coef.amplitude,
+        });
+      }
+    }
+
+    // Actualizar phasePoints
+    this.phasePoints = [];
+    for (const coef of positiveCoefs) {
+      const pixelPos = this.canvasCoordToPixel(
+        this.phaseCanvas,
+        coef.n,
+        coef.phase
+      );
+      if (pixelPos) {
+        this.phasePoints.push({
+          n: coef.n,
+          x: pixelPos.x,
+          y: pixelPos.y,
+          value: coef.phase,
+        });
       }
     }
   }

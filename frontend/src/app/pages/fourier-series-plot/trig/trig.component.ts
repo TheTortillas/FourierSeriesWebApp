@@ -20,11 +20,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-trig',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    CartesianCanvasComponent
-  ],
+  imports: [CommonModule, FormsModule, CartesianCanvasComponent],
   templateUrl: './trig.component.html',
   styleUrl: './trig.component.scss',
 })
@@ -1449,20 +1445,18 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
           .map((val) => Math.abs(val))
       );
 
-      // Mostrar los valores de an como barras discretas con efecto de blur
+      // Mostrar los valores de an como barras discretas
       for (let i = 0; i < Math.min(100, this.cachedACoefs.length); i++) {
         const n = i + 1; // n comienza en 1
         const height = this.cachedACoefs[i];
 
-        // Usar un método personalizado para dibujar con blur
-        this.drawDiscreteLineWithBlur(
-          this.anCanvas,
+        // Usar el método del canvas para agregar al historial
+        this.anCanvas.drawDiscreteLine(
           n,
           0,
           height,
           this.anColor,
-          this.anLineWidth,
-          true
+          this.anLineWidth
         );
 
         // Guardar la posición y valor del punto para tooltip
@@ -1497,14 +1491,13 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         const n = i + 1;
         const height = this.cachedBCoefs[i];
 
-        this.drawDiscreteLineWithBlur(
-          this.bnCanvas,
+        // Usar el método del canvas para agregar al historial
+        this.bnCanvas.drawDiscreteLine(
           n,
           0,
           height,
           this.bnColor,
-          this.bnLineWidth,
-          true
+          this.bnLineWidth
         );
 
         const pixelPos = this.canvasCoordToPixel(this.bnCanvas, n, height);
@@ -1697,26 +1690,10 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         this.anTooltip.style.top = `${closestPoint.y}px`;
         this.anTooltip.classList.add('visible');
 
-        // Primero redibujar todos los puntos con blur normal
-        this.drawAmplitudeGraphs();
-
-        // Luego resaltar solo el tallo seleccionado
-        this.drawDiscreteLineWithBlur(
-          this.anCanvas,
-          closestPoint.n,
-          0,
-          closestPoint.value,
-          this.anColor,
-          this.anLineWidth + 0.5,
-          false,
-          true // Indicador de que está resaltado
-        );
+        // Los stems ya están en el historial y se redibujan automáticamente
       } else if (this.anTooltip) {
         // Ocultar tooltip si no hay tallo cercano
         this.anTooltip.classList.remove('visible');
-
-        // Redibujar todos los puntos con blur normal
-        this.drawAmplitudeGraphs();
       }
     };
 
@@ -1771,26 +1748,10 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         this.bnTooltip.style.top = `${closestPoint.y}px`;
         this.bnTooltip.classList.add('visible');
 
-        // Primero redibujar todos los puntos con blur normal
-        this.drawAmplitudeGraphs();
-
-        // Luego resaltar solo el tallo seleccionado
-        this.drawDiscreteLineWithBlur(
-          this.bnCanvas,
-          closestPoint.n,
-          0,
-          closestPoint.value,
-          this.bnColor,
-          this.bnLineWidth + 0.5,
-          false,
-          true // Indicador de que está resaltado
-        );
+        // Los stems ya están en el historial y se redibujan automáticamente
       } else if (this.bnTooltip) {
         // Ocultar tooltip si no hay tallo cercano
         this.bnTooltip.classList.remove('visible');
-
-        // Redibujar todos los puntos con blur normal
-        this.drawAmplitudeGraphs();
       }
     };
 
@@ -1853,29 +1814,64 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.anCanvas && this.anCanvas.canvasElement?.nativeElement) {
       const anCanvas = this.anCanvas.canvasElement.nativeElement;
 
-      // Crear un nuevo manejador de wheel que primero ejecute el original y luego redibuje
+      // Crear un nuevo manejador de wheel que actualice solo tooltips
       const originalWheel = anCanvas.onwheel;
       anCanvas.onwheel = (event: WheelEvent) => {
-        // Llamar al manejador original
+        // Llamar al manejador original (canvas redibuja automáticamente desde historial)
         if (originalWheel) originalWheel.call(anCanvas, event);
 
-        // Redibujar después de un breve retraso para permitir que se actualice el canvas
-        setTimeout(() => this.drawAmplitudeGraphs(), 0);
+        // Solo actualizar posiciones de tooltips
+        setTimeout(() => this.updateAnTooltipPositions(), 0);
       };
     }
 
     if (this.bnCanvas && this.bnCanvas.canvasElement?.nativeElement) {
       const bnCanvas = this.bnCanvas.canvasElement.nativeElement;
 
-      // Crear un nuevo manejador de wheel que primero ejecute el original y luego redibuje
+      // Crear un nuevo manejador de wheel que actualice solo tooltips
       const originalWheel = bnCanvas.onwheel;
       bnCanvas.onwheel = (event: WheelEvent) => {
-        // Llamar al manejador original
+        // Llamar al manejador original (canvas redibuja automáticamente desde historial)
         if (originalWheel) originalWheel.call(bnCanvas, event);
 
-        // Redibujar después de un breve retraso para permitir que se actualice el canvas
-        setTimeout(() => this.drawAmplitudeGraphs(), 0);
+        // Solo actualizar posiciones de tooltips
+        setTimeout(() => this.updateBnTooltipPositions(), 0);
       };
+    }
+  }
+
+  // Actualizar solo posiciones de tooltips sin redibujar
+  private updateAnTooltipPositions(): void {
+    this.anPoints = [];
+    for (let i = 0; i < Math.min(100, this.cachedACoefs.length); i++) {
+      const n = i + 1;
+      const height = this.cachedACoefs[i];
+      const pixelPos = this.canvasCoordToPixel(this.anCanvas, n, height);
+      if (pixelPos) {
+        this.anPoints.push({
+          n,
+          x: pixelPos.x,
+          y: pixelPos.y,
+          value: height,
+        });
+      }
+    }
+  }
+
+  private updateBnTooltipPositions(): void {
+    this.bnPoints = [];
+    for (let i = 0; i < Math.min(100, this.cachedBCoefs.length); i++) {
+      const n = i + 1;
+      const height = this.cachedBCoefs[i];
+      const pixelPos = this.canvasCoordToPixel(this.bnCanvas, n, height);
+      if (pixelPos) {
+        this.bnPoints.push({
+          n,
+          x: pixelPos.x,
+          y: pixelPos.y,
+          value: height,
+        });
+      }
     }
   }
 

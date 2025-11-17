@@ -22,11 +22,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-dft-plot',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    CartesianCanvasComponent,
-  ],
+  imports: [CommonModule, FormsModule, CartesianCanvasComponent],
   templateUrl: './dft-plot.component.html',
   styleUrl: './dft-plot.component.scss',
 })
@@ -435,7 +431,9 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.cartesianCanvas || !this.showReconstructedFunction) return;
 
     try {
-      // Si tenemos puntos para graficar
+      // IMPORTANTE: Los puntos discretos ya están en el historial del canvas
+      // Solo necesitamos agregarlos cuando los datos cambian, no en cada redibujado
+      // El canvas se encarga de redibujarlos automáticamente
       if (this.reconstructedPoints.length > 0) {
         // Eliminar el código que dibuja las líneas entre puntos
         // Solo mantener el código que dibuja puntos discretos
@@ -483,7 +481,9 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.cartesianCanvas || !this.showOriginalPoints) return;
 
     try {
-      // Si tenemos puntos para graficar
+      // IMPORTANTE: Los puntos discretos ya están en el historial del canvas
+      // Solo necesitamos agregarlos cuando los datos cambian, no en cada redibujado
+      // El canvas se encarga de redibujarlos automáticamente
       if (this.originalPoints.length > 0) {
         for (const point of this.originalPoints) {
           // Dibujar un punto en cada posición de muestra
@@ -626,14 +626,13 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
         // Dibujar barras discretas para el espectro de amplitud (parte positiva)
         for (const point of this.amplitudeSpectrum) {
           // Dibujar una línea vertical (barra) para cada componente
-          this.drawDiscreteLineWithBlur(
-            this.amplitudeCanvas,
+          // Usar el m\u00e9todo del canvas que agrega al historial para que se redibuje correctamente
+          this.amplitudeCanvas.drawDiscreteLine(
             point.x,
             0,
             point.y,
             this.amplitudeColor,
-            this.amplitudeLineWidth,
-            true
+            this.amplitudeLineWidth
           );
 
           // Almacenar punto para tooltips
@@ -658,15 +657,13 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
             // La frecuencia negativa correspondiente
             const negativeX = -point.x;
 
-            // Dibujar el punto reflejado
-            this.drawDiscreteLineWithBlur(
-              this.amplitudeCanvas,
+            // Dibujar el punto reflejado usando el m\u00e9todo del canvas
+            this.amplitudeCanvas.drawDiscreteLine(
               negativeX,
               0,
               point.y, // La amplitud es la misma para la frecuencia reflejada
               this.amplitudeColor,
-              this.amplitudeLineWidth,
-              true
+              this.amplitudeLineWidth
             );
 
             // Almacenar el punto reflejado para tooltip
@@ -704,14 +701,13 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
         // Dibujar barras discretas para el espectro de fase
         for (const point of this.phaseSpectrum) {
           // Dibujar una línea vertical (barra) para cada componente
-          this.drawDiscreteLineWithBlur(
-            this.phaseCanvas,
+          // Usar el método del canvas que agrega al historial para que se redibuje correctamente
+          this.phaseCanvas.drawDiscreteLine(
             point.x,
             0,
             point.y,
             this.phaseColor,
-            this.phaseLineWidth,
-            true
+            this.phaseLineWidth
           );
 
           // Almacenar punto para tooltips
@@ -739,15 +735,13 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
             // Para la fase, invertimos el signo del valor (simetría impar)
             const negativeY = -point.y;
 
-            // Dibujar el punto reflejado con fase invertida
-            this.drawDiscreteLineWithBlur(
-              this.phaseCanvas,
+            // Dibujar el punto reflejado con fase invertida usando el método del canvas
+            this.phaseCanvas.drawDiscreteLine(
               negativeX,
               0,
               negativeY,
               this.phaseColor,
-              this.phaseLineWidth,
-              true
+              this.phaseLineWidth
             );
 
             // Almacenar el punto reflejado para tooltip
@@ -972,33 +966,15 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
           this.amplitudeTooltip!.style.top = `${closestPoint.y}px`;
           this.amplitudeTooltip!.classList.add('visible');
 
-          // Redibujar con resaltado
-          this.drawAmplitudeSpectrum();
-          const point = this.amplitudeSpectrum.find(
-            (p) => p.x === closestPoint!.n
-          );
-          if (point) {
-            this.drawDiscreteLineWithBlur(
-              this.amplitudeCanvas,
-              point.x,
-              0,
-              point.y,
-              this.amplitudeColor,
-              this.amplitudeLineWidth + 0.5,
-              false,
-              true
-            );
-          }
+          // Los stems ya están en el historial y se redibujan automáticamente
         } else if (this.amplitudeTooltip) {
           this.amplitudeTooltip.classList.remove('visible');
-          this.drawAmplitudeSpectrum();
         }
       };
 
       canvasElements.amplitude.onmouseleave = () => {
         if (this.amplitudeTooltip) {
           this.amplitudeTooltip.classList.remove('visible');
-          this.drawAmplitudeSpectrum();
         }
       };
     }
@@ -1053,31 +1029,15 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
           this.phaseTooltip!.style.top = `${closestPoint.y}px`;
           this.phaseTooltip!.classList.add('visible');
 
-          // Redibujar con resaltado
-          this.drawPhaseSpectrum();
-          const point = this.phaseSpectrum.find((p) => p.x === closestPoint!.n);
-          if (point) {
-            this.drawDiscreteLineWithBlur(
-              this.phaseCanvas,
-              point.x,
-              0,
-              point.y,
-              this.phaseColor,
-              this.phaseLineWidth + 0.5,
-              false,
-              true
-            );
-          }
+          // Los stems ya están en el historial y se redibujan automáticamente
         } else if (this.phaseTooltip) {
           this.phaseTooltip.classList.remove('visible');
-          this.drawPhaseSpectrum();
         }
       };
 
       canvasElements.phase.onmouseleave = () => {
         if (this.phaseTooltip) {
           this.phaseTooltip.classList.remove('visible');
-          this.drawPhaseSpectrum();
         }
       };
     }
@@ -1097,21 +1057,97 @@ export class DFTPlotComponent implements OnInit, AfterViewInit, OnDestroy {
       if (canvas && canvas.canvasElement?.nativeElement) {
         const canvasEl = canvas.canvasElement.nativeElement;
 
-        // Crear un manejador de rueda que llame al manejador original y luego redibuje
+        // Crear un manejador de rueda que llame al manejador original y luego actualice tooltips
         const originalWheel = canvasEl.onwheel;
         canvasEl.onwheel = (event: WheelEvent) => {
-          // Llamar al manejador original
+          // Llamar al manejador original (el canvas redibuja automáticamente desde el historial)
           if (originalWheel) originalWheel.call(canvasEl, event);
 
-          // Redibujar después de un pequeño retraso para permitir la actualización del canvas
+          // Actualizar posiciones de tooltips después del zoom
           setTimeout(() => {
             if (elementId === 'amplitudeCanvas') {
-              this.drawAmplitudeSpectrum();
+              this.updateAmplitudeTooltipPositions();
             } else if (elementId === 'phaseCanvas') {
-              this.drawPhaseSpectrum();
+              this.updatePhaseTooltipPositions();
             }
           }, 0);
         };
+      }
+    }
+  }
+
+  // Métodos para actualizar solo las posiciones de los tooltips sin redibujar
+  private updateAmplitudeTooltipPositions(): void {
+    this.amplitudePoints = [];
+    for (const point of this.amplitudeSpectrum) {
+      const pixelPos = this.canvasCoordToPixel(
+        this.amplitudeCanvas,
+        point.x,
+        point.y
+      );
+      if (pixelPos) {
+        this.amplitudePoints.push({
+          n: point.x,
+          x: pixelPos.x,
+          y: pixelPos.y,
+          value: point.y,
+        });
+      }
+
+      // También para puntos reflejados
+      if (point.x > 0) {
+        const negativeX = -point.x;
+        const negPixelPos = this.canvasCoordToPixel(
+          this.amplitudeCanvas,
+          negativeX,
+          point.y
+        );
+        if (negPixelPos) {
+          this.amplitudePoints.push({
+            n: negativeX,
+            x: negPixelPos.x,
+            y: negPixelPos.y,
+            value: point.y,
+          });
+        }
+      }
+    }
+  }
+
+  private updatePhaseTooltipPositions(): void {
+    this.phasePoints = [];
+    for (const point of this.phaseSpectrum) {
+      const pixelPos = this.canvasCoordToPixel(
+        this.phaseCanvas,
+        point.x,
+        point.y
+      );
+      if (pixelPos) {
+        this.phasePoints.push({
+          n: point.x,
+          x: pixelPos.x,
+          y: pixelPos.y,
+          value: point.y,
+        });
+      }
+
+      // También para puntos reflejados
+      if (point.x > 0) {
+        const negativeX = -point.x;
+        const negativeY = -point.y;
+        const negPixelPos = this.canvasCoordToPixel(
+          this.phaseCanvas,
+          negativeX,
+          negativeY
+        );
+        if (negPixelPos) {
+          this.phasePoints.push({
+            n: negativeX,
+            x: negPixelPos.x,
+            y: negPixelPos.y,
+            value: negativeY,
+          });
+        }
       }
     }
   }
