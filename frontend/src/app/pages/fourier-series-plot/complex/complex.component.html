@@ -1,13 +1,38 @@
-<!-- Side Navigation -->
+<!-- Side Navigation / Bottom Panel -->
 <div
-  class="fixed top-[70px] h-[calc(100vh-70px)] z-50 sidenav"
-  [ngClass]="
-    sidenavOpen ? 'left-0 w-full md:w-96 lg:w-1/3' : '-left-[200%] w-0'
-  "
+  class="fixed z-50 sidenav-panel"
+  [ngClass]="{
+    open: sidenavOpen,
+    closed: !sidenavOpen,
+    'mobile-bottom': true,
+    'desktop-side': true
+  }"
 >
+  <!-- Drag handle para móviles - interactivo -->
+  <div
+    id="dragHandle"
+    class="drag-handle md:hidden"
+    [ngClass]="isDarkMode ? 'bg-gray-800/90' : 'bg-gray-200/90'"
+    (touchstart)="onDragStart($event)"
+    (touchmove)="onDragMove($event)"
+    (touchend)="onDragEnd($event)"
+  >
+    <div class="drag-indicator"></div>
+    <div
+      class="drag-hint text-xs opacity-60 mt-1"
+      [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-600'"
+    >
+      {{
+        sidenavOpen
+          ? "Desliza hacia abajo para ocultar"
+          : "Desliza hacia arriba"
+      }}
+    </div>
+  </div>
+
   <!-- Contenedor principal con gradiente y efecto de vidrio -->
   <div
-    class="h-full shadow-2xl border-r"
+    class="h-full shadow-2xl md:border-r border-t md:border-t-0"
     [ngClass]="
       isDarkMode
         ? 'bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 text-gray-100 border-teal-500/20'
@@ -16,7 +41,7 @@
   >
     <!-- Encabezado -->
     <div
-      class="flex justify-between items-center p-5 border-b"
+      class="flex justify-between items-center p-3 md:p-5 border-b"
       [ngClass]="
         isDarkMode
           ? 'border-teal-500/30 bg-gray-800/60'
@@ -24,7 +49,7 @@
       "
     >
       <h2
-        class="text-xl font-bold text-transparent bg-clip-text"
+        class="text-base md:text-xl font-bold text-transparent bg-clip-text"
         [ngClass]="
           isDarkMode
             ? 'bg-gradient-to-r from-teal-400 to-green-300'
@@ -46,7 +71,7 @@
       </button>
     </div>
 
-    <div class="p-6 overflow-y-auto max-h-[calc(100vh-134px)]">
+    <div class="p-3 md:p-6 overflow-y-auto panel-content">
       <!-- Tipo de serie y función original -->
       <div class="mb-8">
         <h3 class="text-base mb-3 font-bold flex items-center">
@@ -178,38 +203,6 @@
 
         <!-- Contenedor de tarjetas para los controles -->
         <div class="space-y-4">
-          <!-- Selector de escala del eje X -->
-          <div
-            class="p-3 rounded-lg border transition-all"
-            [ngClass]="
-              isDarkMode
-                ? 'bg-gray-800/40 border-gray-700/50 hover:border-teal-500/30'
-                : 'bg-white border-gray-200 hover:border-blue-300'
-            "
-          >
-            <div class="flex items-center justify-between">
-              <label
-                class="text-sm font-medium"
-                [ngClass]="isDarkMode ? 'text-gray-200' : 'text-gray-700'"
-                >Escala del eje X:</label
-              >
-              <select
-                [(ngModel)]="xAxisScale"
-                (change)="updateAxisScale()"
-                class="text-sm border rounded-md px-3 py-1.5 focus:outline-none"
-                [ngClass]="
-                  isDarkMode
-                    ? 'bg-gray-700/70 border-gray-600 text-white focus:ring-1 focus:ring-teal-500'
-                    : 'bg-white border-gray-300 text-gray-800 focus:ring-1 focus:ring-blue-500'
-                "
-              >
-                <option value="integer">Unidades enteras</option>
-                <option value="pi">Múltiplos de π</option>
-                <option value="e">Múltiplos de e</option>
-              </select>
-            </div>
-          </div>
-
           <!-- Controles con toggles -->
           <div
             class="p-3 rounded-lg border transition-all space-y-3"
@@ -994,18 +987,20 @@
   </div>
 </div>
 
-<!-- Botón para abrir el sidenav -->
+<!-- Botón para abrir el sidenav - SOLO VISIBLE EN DESKTOP -->
 <button
-  class="fixed top-[84px] left-5 w-12 h-12 rounded-full text-white border-none flex items-center justify-center cursor-pointer z-40 shadow-lg focus:outline-none menu-button"
-  [ngClass]="
+  class="hidden md:flex fixed w-12 h-12 rounded-full text-white border-none items-center justify-center cursor-pointer z-40 shadow-lg focus:outline-none menu-button"
+  [ngClass]="[
     isDarkMode
       ? 'bg-gradient-to-r from-teal-500 to-green-500 hover:shadow-teal-500/50'
-      : 'bg-gradient-to-r from-blue-400 to-sky-500 hover:shadow-blue-500/50'
-  "
-  [class.open]="sidenavOpen"
+      : 'bg-gradient-to-r from-blue-400 to-sky-500 hover:shadow-blue-500/50',
+    sidenavOpen ? 'open' : ''
+  ]"
   (click)="toggleSidenav()"
 >
-  <span class="text-lg">☰</span>
+  <!-- Icono cambia según estado -->
+  <span class="text-lg" *ngIf="!sidenavOpen">☰</span>
+  <span class="text-lg" *ngIf="sidenavOpen">✕</span>
 </button>
 
 <!-- Canvas with dynamic colors based on theme -->
@@ -1034,6 +1029,8 @@
     <app-canvas-controls
       [isDarkMode]="isDarkMode"
       [showAxisToggles]="true"
+      [showAxisScale]="true"
+      [xAxisScale]="xAxisScale"
       [scaleXEnabled]="cartesianCanvas.scaleXEnabled"
       [scaleYEnabled]="cartesianCanvas.scaleYEnabled"
       [position]="'top-right'"
@@ -1041,6 +1038,7 @@
       (centerPlane)="cartesianCanvas.centerPlane()"
       (toggleScaleX)="cartesianCanvas.toggleScaleAxis('x', $event)"
       (toggleScaleY)="cartesianCanvas.toggleScaleAxis('y', $event)"
+      (axisScaleChange)="onAxisScaleChange($event)"
     >
     </app-canvas-controls>
   </div>
