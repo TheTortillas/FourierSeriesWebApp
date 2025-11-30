@@ -53,7 +53,158 @@
   }
 }
 
-// Estilos para animación del sidenav
+// Estilos para el panel lateral/inferior responsivo
+.sidenav-panel {
+  // Estilos base
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+
+  // Estilos para móviles (panel inferior)
+  @media (max-width: 767px) {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 50vh;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+
+    &.open {
+      transform: translateY(0);
+      opacity: 1;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    &.closed {
+      // Cuando está cerrado, solo mostrar el drag handle (40px)
+      transform: translateY(calc(100% - 40px));
+      opacity: 1;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  // Estilos para desktop (panel lateral)
+  @media (min-width: 768px) {
+    top: 70px;
+    left: 0;
+    height: calc(100vh - 70px);
+    width: 384px; // md:w-96
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+
+    &.open {
+      transform: translateX(0);
+      opacity: 1;
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    &.closed {
+      transform: translateX(-100%);
+      opacity: 0;
+      box-shadow: none;
+    }
+  }
+
+  // Estilos para pantallas grandes
+  @media (min-width: 1024px) {
+    width: 33.333333%; // lg:w-1/3
+  }
+}
+
+// Drag handle para móviles - mejorado
+.drag-handle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
+  cursor: grab;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  touch-action: none;
+  transition: background-color 0.2s ease;
+  padding: 8px 0;
+  position: relative;
+  z-index: 10;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  .drag-indicator {
+    width: 50px;
+    height: 5px;
+    border-radius: 3px;
+    background-color: currentColor;
+    opacity: 0.4;
+    transition: opacity 0.2s ease, width 0.2s ease;
+  }
+
+  .drag-hint {
+    font-size: 10px;
+    text-align: center;
+    user-select: none;
+    transition: opacity 0.2s ease;
+  }
+
+  // Feedback visual al interactuar
+  &:active {
+    .drag-indicator {
+      opacity: 0.7;
+      width: 60px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+// Ajuste del contenido scrolleable
+.panel-content {
+  @media (max-width: 767px) {
+    max-height: calc(
+      50vh - 110px
+    ); // Ajuste para drag handle (40px) y header (~70px)
+    font-size: 0.875rem; // Texto más pequeño en móviles
+
+    // Reducir espaciado en móviles
+    h3 {
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      font-size: 1rem;
+    }
+
+    .text-sm {
+      font-size: 0.75rem;
+    }
+
+    .text-base {
+      font-size: 0.875rem;
+    }
+
+    // Reducir márgenes entre secciones
+    .mb-8 {
+      margin-bottom: 1rem;
+    }
+
+    .mb-4 {
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    max-height: calc(100vh - 134px);
+  }
+}
+
+// Estilos para animación del sidenav (desktop legacy)
 .sidenav {
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
@@ -92,13 +243,19 @@
   }
 }
 
-// Efecto para el botón de apertura
+// Efecto para el botón de apertura - solo desktop
 .menu-button {
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
     box-shadow 0.3s ease;
 
+  // Posición en desktop (esquina superior izquierda)
+  @media (min-width: 768px) {
+    top: 84px;
+    left: 20px;
+  }
+
   &:hover {
-    transform: scale(1.1) rotate(90deg);
+    transform: scale(1.1);
   }
 
   &:active {
@@ -106,7 +263,9 @@
   }
 
   &.open {
-    transform: rotate(90deg);
+    @media (min-width: 768px) {
+      transform: rotate(90deg);
+    }
   }
 }
 
@@ -265,4 +424,79 @@
   100% {
     opacity: 0.7;
   }
+}
+
+// Optimizaciones adicionales para móviles
+@media (max-width: 767px) {
+  // Reducir padding de tarjetas
+  .sidenav-panel {
+    .border {
+      border-width: 1px;
+    }
+
+    .rounded-lg {
+      border-radius: 0.5rem;
+    }
+
+    // Reducir espacios entre controles
+    .space-y-4 > * + * {
+      margin-top: 0.75rem;
+    }
+
+    .space-y-3 > * + * {
+      margin-top: 0.5rem;
+    }
+
+    // Hacer botones más compactos
+    button {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    // Optimizar inputs de rango
+    input[type="range"] {
+      height: 1.5rem;
+    }
+
+    // Reducir tamaño de color pickers
+    input[type="color"] {
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+  }
+}
+
+/* Custom scrollbar styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(144, 220, 181, 0.5) rgba(0, 0, 0, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(144, 220, 181, 0.5);
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+
+/* Dark mode specific scrollbar */
+:host-context(.dark-mode) .custom-scrollbar {
+  scrollbar-color: rgba(144, 220, 181, 0.6) rgba(30, 30, 30, 0.5);
+}
+
+:host-context(.dark-mode) .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(30, 30, 30, 0.5);
+}
+
+:host-context(.dark-mode) .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(144, 220, 181, 0.6);
 }
