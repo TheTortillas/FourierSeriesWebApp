@@ -13,6 +13,8 @@ export class CanvasControlsComponent {
   @Input() showAxisToggles = true;
   @Input() scaleXEnabled = true;
   @Input() scaleYEnabled = true;
+  @Input() showAxisScale = true; // Mostrar selector de escala del eje
+  @Input() xAxisScale: 'integer' | 'pi' | 'e' = 'integer';
   @Input() position: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' =
     'top-right';
 
@@ -20,6 +22,7 @@ export class CanvasControlsComponent {
   @Output() centerPlane = new EventEmitter<void>();
   @Output() toggleScaleX = new EventEmitter<boolean>();
   @Output() toggleScaleY = new EventEmitter<boolean>();
+  @Output() axisScaleChange = new EventEmitter<'integer' | 'pi' | 'e'>();
 
   onResetScales(): void {
     this.resetScales.emit();
@@ -37,6 +40,15 @@ export class CanvasControlsComponent {
   onToggleScaleY(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     this.toggleScaleY.emit(checked);
+  }
+
+  onAxisScaleChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value as
+      | 'integer'
+      | 'pi'
+      | 'e';
+    this.xAxisScale = value;
+    this.axisScaleChange.emit(value);
   }
 
   getPositionClasses(): string {

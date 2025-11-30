@@ -30,6 +30,26 @@
       <div class="separator"></div>
     </ng-container>
 
+    <!-- Selector de escala del eje (si está habilitado) -->
+    <ng-container *ngIf="showAxisScale">
+      <div class="scale-selector-group">
+        <label class="scale-label-text"> Eje: </label>
+        <select
+          [value]="xAxisScale"
+          (change)="onAxisScaleChange($event)"
+          class="scale-select"
+          [attr.aria-label]="'Escala del eje X'"
+        >
+          <option value="integer">1</option>
+          <option value="pi">π</option>
+          <option value="e">e</option>
+        </select>
+      </div>
+
+      <!-- Separador visual -->
+      <div class="separator"></div>
+    </ng-container>
+
     <!-- Botones de acción -->
     <button
       (click)="onResetScales()"
