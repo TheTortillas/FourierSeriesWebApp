@@ -325,6 +325,109 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     this.sidenavOpen = !this.sidenavOpen;
   }
 
+  // Drag functionality for mobile panel
+  private dragStartY: number = 0;
+  private dragCurrentY: number = 0;
+  private isDragging: boolean = false;
+  private panelElement: HTMLElement | null = null;
+  private initialPanelHeight: number = 50; // 50vh default
+  private dragStartTime: number = 0; // Para detectar tap vs drag
+
+  onDragStart(event: TouchEvent): void {
+    this.isDragging = true;
+    this.dragStartY = event.touches[0].clientY;
+    this.dragCurrentY = this.dragStartY;
+    this.dragStartTime = Date.now(); // Registrar el tiempo de inicio
+
+    // Get panel element
+    this.panelElement = document.querySelector('.sidenav-panel') as HTMLElement;
+
+    // Get current height - si está cerrado, usamos 50vh como base
+    if (this.panelElement) {
+      const currentHeight = this.panelElement.style.maxHeight || '50vh';
+      this.initialPanelHeight = parseFloat(currentHeight);
+
+      // Si el panel está cerrado, necesitamos abrirlo temporalmente para poder arrastrarlo
+      if (!this.sidenavOpen) {
+        this.initialPanelHeight = 0; // Empezamos desde 0 cuando está cerrado
+      }
+    }
+  }
+
+  onDragMove(event: TouchEvent): void {
+    if (!this.isDragging || !this.panelElement) return;
+
+    event.preventDefault();
+    this.dragCurrentY = event.touches[0].clientY;
+
+    // Calculate delta
+    const deltaY = this.dragStartY - this.dragCurrentY;
+    const viewportHeight = window.innerHeight;
+
+    // Calculate new height as percentage of viewport
+    const deltaVh = (deltaY / viewportHeight) * 100;
+    let newHeight = this.initialPanelHeight + deltaVh;
+
+    // Si está cerrado y arrastrando hacia arriba, mostrar el panel
+    if (!this.sidenavOpen && deltaY > 0) {
+      this.sidenavOpen = true;
+      newHeight = Math.max(0, newHeight);
+    }
+
+    // Constrain between 10vh (mínimo para evitar que desaparezca) and 55vh (límite máximo al 55%)
+    newHeight = Math.max(10, Math.min(55, newHeight));
+
+    // Apply the height
+    this.panelElement.style.maxHeight = `${newHeight}vh`;
+  }
+
+  onDragEnd(event: TouchEvent): void {
+    if (!this.isDragging) return;
+
+    this.isDragging = false;
+
+    // Calculate final delta
+    const deltaY = this.dragStartY - this.dragCurrentY;
+    const dragDuration = Date.now() - this.dragStartTime;
+    const dragDistance = Math.abs(deltaY);
+
+    // Detectar si fue un tap/click (duración corta y movimiento mínimo)
+    if (dragDuration < 300 && dragDistance < 10) {
+      // Es un tap/click, alternar entre abierto (55vh) y cerrado
+      if (this.sidenavOpen) {
+        this.sidenavOpen = false;
+        if (this.panelElement) {
+          this.panelElement.style.maxHeight = '50vh';
+        }
+      } else {
+        this.sidenavOpen = true;
+        if (this.panelElement) {
+          this.panelElement.style.maxHeight = '55vh'; // Abrir al máximo
+        }
+      }
+    } else {
+      // Es un drag, aplicar la lógica normal
+      // Si el panel está cerrado y se arrastra hacia arriba, abrirlo
+      if (!this.sidenavOpen && deltaY > 50) {
+        this.sidenavOpen = true;
+        if (this.panelElement) {
+          this.panelElement.style.maxHeight = '50vh';
+        }
+      }
+      // Si se arrastra hacia abajo significativamente, cerrar
+      else if (this.sidenavOpen && deltaY < -100) {
+        this.sidenavOpen = false;
+        if (this.panelElement) {
+          this.panelElement.style.maxHeight = '50vh';
+        }
+      }
+    }
+
+    this.dragStartY = 0;
+    this.dragCurrentY = 0;
+    this.dragStartTime = 0;
+  }
+
   toggleAmplitudeGraphs(show: boolean): void {
     this.showAmplitudeGraphs = show;
 
@@ -1384,6 +1487,11 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       this.cartesianCanvas.setXAxisScale(this.xAxisScale);
       // No necesitas llamar a redrawFunctions porque setXAxisScale ya redibuja el canvas
     }
+  }
+
+  onAxisScaleChange(scale: 'integer' | 'pi' | 'e'): void {
+    this.xAxisScale = scale;
+    this.updateAxisScale();
   }
 
   // Update colors based on current theme

@@ -115,6 +115,76 @@
   transform: scale(0.95);
 }
 
+.scale-selector-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.dark .scale-selector-group {
+  background: rgba(144, 220, 181, 0.08);
+}
+
+.light .scale-selector-group {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.scale-label-text {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.dark .scale-label-text {
+  color: #90dcb5;
+}
+
+.light .scale-label-text {
+  color: #3b82f6;
+}
+
+.scale-select {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  min-width: 50px;
+}
+
+.dark .scale-select {
+  background: rgba(107, 188, 172, 0.15);
+  color: #90dcb5;
+}
+
+.dark .scale-select:hover {
+  background: rgba(107, 188, 172, 0.25);
+}
+
+.dark .scale-select:focus {
+  background: rgba(107, 188, 172, 0.3);
+}
+
+.light .scale-select {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.light .scale-select:hover {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.light .scale-select:focus {
+  background: rgba(59, 130, 246, 0.3);
+}
+
 .tooltip {
   position: absolute;
   right: calc(100% + 8px);
@@ -208,5 +278,20 @@
 
   .tooltip {
     display: none; // Ocultar tooltips en móvil
+  }
+
+  .scale-selector-group {
+    padding: 3px 6px;
+    gap: 4px;
+  }
+
+  .scale-label-text {
+    font-size: 11px;
+  }
+
+  .scale-select {
+    font-size: 12px;
+    padding: 3px 6px;
+    min-width: 45px;
   }
 }
