@@ -11,4 +11,5 @@ import { RouterLink } from '@angular/router';
 })
 export class FooterComponent {
   @Input() isDarkMode: boolean = false;
+  currentYear = new Date().getFullYear();
 }
