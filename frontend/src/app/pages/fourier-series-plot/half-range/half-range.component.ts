@@ -794,9 +794,14 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
             const idx = n - 1;
             if (
               idx < this.cachedACoefs.length &&
+              isFinite(this.cachedACoefs[idx]) &&
               this.cachedACoefs[idx] !== 0
             ) {
-              sum += this.cachedACoefs[idx] * Math.cos(n * this.cachedW0 * x);
+              const term =
+                this.cachedACoefs[idx] * Math.cos(n * this.cachedW0 * x);
+              if (isFinite(term)) {
+                sum += term;
+              }
             }
           }
 
@@ -825,9 +830,14 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
             const idx = n - 1;
             if (
               idx < this.cachedBCoefs.length &&
+              isFinite(this.cachedBCoefs[idx]) &&
               this.cachedBCoefs[idx] !== 0
             ) {
-              sum += this.cachedBCoefs[idx] * Math.sin(n * this.cachedW0 * x);
+              const term =
+                this.cachedBCoefs[idx] * Math.sin(n * this.cachedW0 * x);
+              if (isFinite(term)) {
+                sum += term;
+              }
             }
           }
 
@@ -1000,11 +1010,29 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
                 {}
               );
               this.cachedACoefs.push(limitVal);
+              if (!isFinite(limitVal)) {
+                console.warn(
+                  `Coeficiente a${n} (límite) no es finito:`,
+                  limitVal,
+                  'expr:',
+                  match.limit
+                );
+              }
             } else {
               const anVal = this.mathUtilsService.evaluateMaximaExpr(anExpr, {
                 n,
               });
               this.cachedACoefs.push(anVal);
+              if (!isFinite(anVal) && n <= 5) {
+                console.warn(
+                  `Coeficiente a${n} no es finito:`,
+                  anVal,
+                  'expr:',
+                  anExpr,
+                  'con n=',
+                  n
+                );
+              }
             }
           } catch (error) {
             console.error(`Error calculando a${n}:`, error);
@@ -1026,11 +1054,29 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
                 {}
               );
               this.cachedBCoefs.push(limitVal);
+              if (!isFinite(limitVal)) {
+                console.warn(
+                  `Coeficiente b${n} (límite) no es finito:`,
+                  limitVal,
+                  'expr:',
+                  match.limit
+                );
+              }
             } else {
               const bnVal = this.mathUtilsService.evaluateMaximaExpr(bnExpr, {
                 n,
               });
               this.cachedBCoefs.push(bnVal);
+              if (!isFinite(bnVal) && n <= 5) {
+                console.warn(
+                  `Coeficiente b${n} no es finito:`,
+                  bnVal,
+                  'expr:',
+                  bnExpr,
+                  'con n=',
+                  n
+                );
+              }
             }
           } catch (error) {
             console.error(`Error calculando b${n}:`, error);

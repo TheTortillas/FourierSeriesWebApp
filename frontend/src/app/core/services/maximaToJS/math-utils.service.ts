@@ -16,6 +16,16 @@ export class MathUtilsService {
     expr = expr.replace(/\\\n/g, '');
     expr = expr.replace(/\\\s*\n/g, '');
 
+    // IMPORTANTE: Manejar (-1)^n antes de otras transformaciones
+    // Esto evita NaN cuando JavaScript evalúa potencias de números negativos
+    // Reemplazar (-1)^n con una función que alterna entre 1 y -1
+    expr = expr.replace(/\(\-1\)\*\*n/g, '(n % 2 === 0 ? 1 : -1)');
+    expr = expr.replace(/\(\-1\)\^n/g, '(n % 2 === 0 ? 1 : -1)');
+
+    // También manejar casos donde la variable no es 'n'
+    expr = expr.replace(/\(\-1\)\*\*([a-zA-Z]+)/g, '($1 % 2 === 0 ? 1 : -1)');
+    expr = expr.replace(/\(\-1\)\^([a-zA-Z]+)/g, '($1 % 2 === 0 ? 1 : -1)');
+
     const replacements = [
       // Constants
       { pattern: /%pi/g, replacement: 'Math.PI' },
@@ -134,9 +144,25 @@ export class MathUtilsService {
     try {
       // eslint-disable-next-line no-new-func
       const evalFn = new Function(...varNames, `return ${jsExpr};`);
-      return evalFn(...varValues);
+      const result = evalFn(...varValues);
+
+      // Validar el resultado
+      if (!isFinite(result)) {
+        console.warn(`Expresión evaluó a ${result}:`, {
+          original: expr,
+          jsExpr: jsExpr,
+          variables: variables,
+        });
+      }
+
+      return result;
     } catch (error) {
-      console.error('Error evaluating expression:', error);
+      console.error('Error evaluating expression:', {
+        error: error,
+        original: expr,
+        jsExpr: jsExpr,
+        variables: variables,
+      });
       return NaN;
     }
   }

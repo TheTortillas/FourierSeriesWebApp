@@ -515,7 +515,10 @@ export class ComplexComponent implements OnInit, AfterViewInit, OnDestroy {
         ) {
           const fn = this.compiledTermFunctions[i];
           if (fn) {
-            sum += fn(x);
+            const term = fn(x);
+            if (isFinite(term)) {
+              sum += term;
+            }
           }
         }
 
