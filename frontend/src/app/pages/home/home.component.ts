@@ -19,8 +19,6 @@ interface Example {
   standalone: true,
   imports: [
     CommonModule,
-    ThemeToggleComponent,
-    SurveyButtonComponent,
     FooterComponent,
   ],
   templateUrl: './home.component.html',
