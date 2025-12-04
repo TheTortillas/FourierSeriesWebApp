@@ -541,6 +541,22 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.cartesianCanvas) return;
 
     try {
+      // Verificar que los coeficientes sean válidos antes de dibujar
+      const hasValidCoefs =
+        this.cachedACoefs.some((c) => isFinite(c) && c !== 0) ||
+        this.cachedBCoefs.some((c) => isFinite(c) && c !== 0) ||
+        (isFinite(this.cachedA0) && this.cachedA0 !== 0);
+
+      if (!hasValidCoefs && this.termCount > 0) {
+        console.error('No hay coeficientes válidos para dibujar la serie', {
+          a0: this.cachedA0,
+          an_sample: this.cachedACoefs.slice(0, 5),
+          bn_sample: this.cachedBCoefs.slice(0, 5),
+          termCount: this.termCount,
+        });
+        return;
+      }
+
       // Crear una función que sume todos los términos usando los coeficientes precalculados
       const fourierSeries = (x: number): number => {
         // Comenzar con el término constante a0/2 (dividido entre 2)
@@ -555,12 +571,40 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         for (let n = 1; n <= this.termCount; n++) {
           const idx = n - 1;
 
-          if (idx < this.cachedACoefs.length && this.cachedACoefs[idx] !== 0) {
-            sum += this.cachedACoefs[idx] * Math.cos(n * this.cachedW0 * x);
+          if (
+            idx < this.cachedACoefs.length &&
+            isFinite(this.cachedACoefs[idx]) &&
+            this.cachedACoefs[idx] !== 0
+          ) {
+            const term =
+              this.cachedACoefs[idx] * Math.cos(n * this.cachedW0 * x);
+            if (!isFinite(term)) {
+              console.warn(`Término an[${n}] no finito en x=${x}:`, {
+                coef: this.cachedACoefs[idx],
+                cos: Math.cos(n * this.cachedW0 * x),
+                term: term,
+              });
+            } else {
+              sum += term;
+            }
           }
 
-          if (idx < this.cachedBCoefs.length && this.cachedBCoefs[idx] !== 0) {
-            sum += this.cachedBCoefs[idx] * Math.sin(n * this.cachedW0 * x);
+          if (
+            idx < this.cachedBCoefs.length &&
+            isFinite(this.cachedBCoefs[idx]) &&
+            this.cachedBCoefs[idx] !== 0
+          ) {
+            const term =
+              this.cachedBCoefs[idx] * Math.sin(n * this.cachedW0 * x);
+            if (!isFinite(term)) {
+              console.warn(`Término bn[${n}] no finito en x=${x}:`, {
+                coef: this.cachedBCoefs[idx],
+                sin: Math.sin(n * this.cachedW0 * x),
+                term: term,
+              });
+            } else {
+              sum += term;
+            }
           }
         }
 
@@ -687,12 +731,30 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
                 {}
               );
               this.cachedACoefs.push(limitVal);
+              if (!isFinite(limitVal)) {
+                console.warn(
+                  `Coeficiente a${n} (límite) no es finito:`,
+                  limitVal,
+                  'expr:',
+                  match.limit
+                );
+              }
             } else {
               // Evaluación normal
               const anVal = this.mathUtilsService.evaluateMaximaExpr(anExpr, {
                 n,
               });
               this.cachedACoefs.push(anVal);
+              if (!isFinite(anVal) && n <= 5) {
+                console.warn(
+                  `Coeficiente a${n} no es finito:`,
+                  anVal,
+                  'expr:',
+                  anExpr,
+                  'con n=',
+                  n
+                );
+              }
             }
           } catch (error) {
             console.error(`Error calculando a${n}:`, error);
@@ -717,12 +779,30 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
                 {}
               );
               this.cachedBCoefs.push(limitVal);
+              if (!isFinite(limitVal)) {
+                console.warn(
+                  `Coeficiente b${n} (límite) no es finito:`,
+                  limitVal,
+                  'expr:',
+                  match.limit
+                );
+              }
             } else {
               // Evaluación normal
               const bnVal = this.mathUtilsService.evaluateMaximaExpr(bnExpr, {
                 n,
               });
               this.cachedBCoefs.push(bnVal);
+              if (!isFinite(bnVal) && n <= 5) {
+                console.warn(
+                  `Coeficiente b${n} no es finito:`,
+                  bnVal,
+                  'expr:',
+                  bnExpr,
+                  'con n=',
+                  n
+                );
+              }
             }
           } catch (error) {
             console.error(`Error calculando b${n}:`, error);
