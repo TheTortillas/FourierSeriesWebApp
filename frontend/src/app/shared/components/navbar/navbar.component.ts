@@ -16,6 +16,8 @@ export class NavbarComponent implements OnInit {
   isDarkMode = false;
   surveyCompleted = false;
   private surveyUrl = 'https://forms.gle/PYZ4p3PajnSNawFn7';
+  private donateUrl =
+    'https://www.paypal.com/donate/?hosted_button_id=J4JV68ZQBA6JU';
 
   constructor(
     private themeService: ThemeService,
@@ -87,5 +89,10 @@ export class NavbarComponent implements OnInit {
         }
       });
     }, 500);
+  }
+
+  openDonation(): void {
+    // Abre la URL de donación de PayPal en una nueva pestaña
+    window.open(this.donateUrl, '_blank');
   }
 }

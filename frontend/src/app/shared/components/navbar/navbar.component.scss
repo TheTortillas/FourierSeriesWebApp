@@ -179,6 +179,32 @@
       }
     }
   }
+
+  &.donate-btn {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border-radius: 20px;
+    width: auto;
+    padding: 0.5rem 1rem;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+
+    &:hover {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    }
+
+    .action-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .donate-text {
+      white-space: nowrap;
+    }
+  }
 }
 
 // Global host styles
