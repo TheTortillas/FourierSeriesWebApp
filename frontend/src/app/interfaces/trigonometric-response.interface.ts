@@ -2,6 +2,7 @@ export interface TrigonometricResponse {
   success?: boolean;
   simplified?: {
     a0?: string;
+    a0over2?: string;
     an?: string;
     bn?: string;
     T?: string;
@@ -11,11 +12,13 @@ export interface TrigonometricResponse {
   };
   nonIntegerCoeffs?: {
     a0?: string;
+    a0over2?: string;
     an?: string;
     bn?: string;
   };
   latex?: {
     a0?: string;
+    a0over2?: string;
     an?: string;
     bn?: string;
     T?: string;
@@ -24,9 +27,10 @@ export interface TrigonometricResponse {
     sineCore?: string;
     nonInteger?: {
       a0?: string;
+      a0over2?: string;
       an?: string;
       bn?: string;
-    }
+    };
   };
   indeterminateValues?: {
     an?: Array<{ n: number; limit: string; limitTex: string }>;

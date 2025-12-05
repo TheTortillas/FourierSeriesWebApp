@@ -339,13 +339,14 @@ async function calculatePiecewiseSeries({
 
     /* Coeficientes simplificados (sin n entero) */
     Coeff_A0_nonint : (${simplificationMethod}(factor(a0_acum_nonint)))$
+    Coeff_A0over2_nonint : ${simplificationMethod}(Coeff_A0_nonint/2)$
     Coeff_An_nonint : (${simplificationMethod}(factor(an_acum_nonint)))$
     Coeff_Bn_nonint : (${simplificationMethod}(factor(bn_acum_nonint)))$
     
     /* Resultados sin n entero (incluye LaTeX) */
     resultados_nonint : [
-      string(Coeff_A0_nonint), string(Coeff_An_nonint), string(Coeff_Bn_nonint),
-      tex(Coeff_A0_nonint, false), tex(Coeff_An_nonint, false), tex(Coeff_Bn_nonint, false)
+      string(Coeff_A0_nonint), string(Coeff_A0over2_nonint), string(Coeff_An_nonint), string(Coeff_Bn_nonint),
+      tex(Coeff_A0_nonint, false), tex(Coeff_A0over2_nonint, false), tex(Coeff_An_nonint, false), tex(Coeff_Bn_nonint, false)
     ]$
     string(resultados_nonint);
   `;
@@ -378,7 +379,7 @@ async function calculatePiecewiseSeries({
       };
     }
 
-    if (!Array.isArray(parsedNonInt) || parsedNonInt.length !== 6) {
+    if (!Array.isArray(parsedNonInt) || parsedNonInt.length !== 8) {
       return {
         success: false,
         message: "Formato inesperado para coeficientes no enteros",
@@ -388,9 +389,11 @@ async function calculatePiecewiseSeries({
 
     const [
       a0NonInt,
+      a0over2NonInt,
       anNonInt,
       bnNonInt,
       a0NonIntTex,
+      a0over2NonIntTex,
       anNonIntTex,
       bnNonIntTex,
     ] = parsedNonInt;
@@ -446,14 +449,15 @@ async function calculatePiecewiseSeries({
   
       /* Coeficientes simplificados (con n entero) */
       Coeff_A0 : (${simplificationMethod}(factor(a0_acum)))$
+      Coeff_A0over2 : ${simplificationMethod}(Coeff_A0/2)$
       Coeff_An : (${simplificationMethod}(factor(an_acum)))$
       Coeff_Bn : (${simplificationMethod}(factor(bn_acum)))$
   
       /* Salida completa con resultados */
       resultados : [
-        string(Coeff_A0), string(Coeff_An), string(Coeff_Bn),
+        string(Coeff_A0), string(Coeff_A0over2), string(Coeff_An), string(Coeff_Bn),
         string(T), string(w0), string(cos_core), string(sin_core),
-        tex(Coeff_A0,false), tex(Coeff_An,false), tex(Coeff_Bn,false),
+        tex(Coeff_A0,false), tex(Coeff_A0over2,false), tex(Coeff_An,false), tex(Coeff_Bn,false),
         tex(T,false), tex(w0,false), tex(cos_core,false), tex(sin_core,false)
       ]$
       string(resultados);
@@ -488,7 +492,7 @@ async function calculatePiecewiseSeries({
       };
     }
 
-    if (!Array.isArray(parsed) || parsed.length !== 14) {
+    if (!Array.isArray(parsed) || parsed.length !== 16) {
       return {
         success: false,
         message: "La salida de Maxima no tiene el formato esperado",
@@ -498,6 +502,7 @@ async function calculatePiecewiseSeries({
 
     const [
       a0,
+      a0over2,
       an,
       bn,
       T,
@@ -505,6 +510,7 @@ async function calculatePiecewiseSeries({
       series_cosine_core,
       series_sine_core,
       a0Tex,
+      a0over2Tex,
       anTex,
       bnTex,
       TTex,
@@ -518,6 +524,7 @@ async function calculatePiecewiseSeries({
       success: true,
       simplified: {
         a0,
+        a0over2,
         an,
         bn,
         T,
@@ -527,11 +534,13 @@ async function calculatePiecewiseSeries({
       },
       nonIntegerCoeffs: {
         a0: a0NonInt,
+        a0over2: a0over2NonInt,
         an: anNonInt,
         bn: bnNonInt,
       },
       latex: {
         a0: a0Tex,
+        a0over2: a0over2Tex,
         an: anTex,
         bn: bnTex,
         T: TTex,
@@ -540,6 +549,7 @@ async function calculatePiecewiseSeries({
         sineCore: sineCoreTex,
         nonInteger: {
           a0: a0NonIntTex,
+          a0over2: a0over2NonIntTex,
           an: anNonIntTex,
           bn: bnNonIntTex,
         },

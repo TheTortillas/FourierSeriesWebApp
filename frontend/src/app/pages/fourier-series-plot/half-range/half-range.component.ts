@@ -1167,6 +1167,9 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Limpiamos los delimitadores LaTeX - coeficientes con n entero
     const a0 = this.stripLatexDelimiters(this.response.latex.a0 || '');
+    const a0over2 = this.stripLatexDelimiters(
+      this.response.latex.a0over2 || ''
+    );
     const an = this.stripLatexDelimiters(this.response.latex.an || '');
     const bn = this.stripLatexDelimiters(this.response.latex.bn || '');
     const cosine = this.stripLatexDelimiters(
@@ -1178,6 +1181,9 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     const nonIntA0 = this.response.latex.nonInteger?.a0
       ? this.stripLatexDelimiters(this.response.latex.nonInteger.a0)
       : a0;
+    const nonIntA0over2 = this.response.latex.nonInteger?.a0over2
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.a0over2)
+      : a0over2;
     const nonIntAn = this.response.latex.nonInteger?.an
       ? this.stripLatexDelimiters(this.response.latex.nonInteger.an)
       : an;
@@ -1203,11 +1209,11 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     // Formular serie coseno con n entero
-    if (a0 !== '0') {
+    if (a0over2 !== '0') {
       if (an !== '0') {
-        this.cosineLatexFormula = `$$f_c(${this.intVar}) = \\frac{${a0}}{2} + \\sum_{n=1}^{\\infty} ${an} \\cdot ${cosine}$$`;
+        this.cosineLatexFormula = `$$f_c(${this.intVar}) = ${a0over2} + \\sum_{n=1}^{\\infty} ${an} \\cdot ${cosine}$$`;
       } else {
-        this.cosineLatexFormula = `$$f_c(${this.intVar}) = \\frac{${a0}}{2}$$`;
+        this.cosineLatexFormula = `$$f_c(${this.intVar}) = ${a0over2}$$`;
       }
     } else if (an !== '0') {
       this.cosineLatexFormula = `$$f_c(${this.intVar}) = \\sum_{n=1}^{\\infty} ${an} \\cdot ${cosine}$$`;
@@ -1223,11 +1229,11 @@ export class HalfRangeComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Formular serie coseno sin restricción n entero
-    if (nonIntA0 !== '0') {
+    if (nonIntA0over2 !== '0') {
       if (nonIntAn !== '0') {
-        this.nonIntegerCosineLatexFormula = `$$f_c(${this.intVar}) = \\frac{${nonIntA0}}{2} + \\sum_{n=1}^{\\infty} ${nonIntAn} \\cdot ${cosine}$$`;
+        this.nonIntegerCosineLatexFormula = `$$f_c(${this.intVar}) = ${nonIntA0over2} + \\sum_{n=1}^{\\infty} ${nonIntAn} \\cdot ${cosine}$$`;
       } else {
-        this.nonIntegerCosineLatexFormula = `$$f_c(${this.intVar}) = \\frac{${nonIntA0}}{2}$$`;
+        this.nonIntegerCosineLatexFormula = `$$f_c(${this.intVar}) = ${nonIntA0over2}$$`;
       }
     } else if (nonIntAn !== '0') {
       this.nonIntegerCosineLatexFormula = `$$f_c(${this.intVar}) = \\sum_{n=1}^{\\infty} ${nonIntAn} \\cdot ${cosine}$$`;

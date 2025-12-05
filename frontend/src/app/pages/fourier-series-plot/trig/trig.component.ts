@@ -924,6 +924,9 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     // Procesamos tanto los coeficientes con n entero como sin restricción
     // Para los coeficientes estándar (con n entero)
     const a0 = this.stripLatexDelimiters(this.response.latex.a0 || '');
+    const a0over2 = this.stripLatexDelimiters(
+      this.response.latex.a0over2 || ''
+    );
     const an = this.stripLatexDelimiters(this.response.latex.an || '');
     const bn = this.stripLatexDelimiters(this.response.latex.bn || '');
     const cosine = this.stripLatexDelimiters(
@@ -935,6 +938,9 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     const nonIntA0 = this.response.latex.nonInteger?.a0
       ? this.stripLatexDelimiters(this.response.latex.nonInteger.a0)
       : a0;
+    const nonIntA0over2 = this.response.latex.nonInteger?.a0over2
+      ? this.stripLatexDelimiters(this.response.latex.nonInteger.a0over2)
+      : a0over2;
     const nonIntAn = this.response.latex.nonInteger?.an
       ? this.stripLatexDelimiters(this.response.latex.nonInteger.an)
       : an;
@@ -969,10 +975,10 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Formamos la fórmula completa con n entero
-    if (a0 !== '0') {
+    if (a0over2 !== '0') {
       this.fullLatexFormula = `$$f(${
         this.intVar
-      }) = \\frac{${a0}}{2} + \\sum_{n=1}^{\\infty} \\left( ${terms.join(
+      }) = ${a0over2} + \\sum_{n=1}^{\\infty} \\left( ${terms.join(
         ' + '
       )} \\right)$$`;
     } else if (terms.length > 0) {
@@ -993,10 +999,10 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Formamos la fórmula completa sin restricción de n entero
-    if (nonIntA0 !== '0') {
+    if (nonIntA0over2 !== '0') {
       this.nonIntegerFullLatexFormula = `$$f(${
         this.intVar
-      }) = \\frac{${nonIntA0}}{2} + \\sum_{n=1}^{\\infty} \\left( ${nonIntTerms.join(
+      }) = ${nonIntA0over2} + \\sum_{n=1}^{\\infty} \\left( ${nonIntTerms.join(
         ' + '
       )} \\right)$$`;
     } else if (nonIntTerms.length > 0) {

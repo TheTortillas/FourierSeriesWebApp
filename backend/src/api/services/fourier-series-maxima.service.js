@@ -83,6 +83,7 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar = "x") => {
 
       /* Coeficientes */
       a0  : fullratsimp(factor((2/P)*integrate((f),${intVar}, -P/2, P/2)))$
+      a0over2 : fullratsimp(a0/2)$
       an  : fullratsimp(factor((2/P)*integrate((f)*cos(n*w0*${intVar}), ${intVar}, -P/2, P/2)))$
       bn  : fullratsimp(factor((2/P)*integrate((f)*sin(n*w0*${intVar}), ${intVar}, -P/2, P/2)))$
 
@@ -90,12 +91,12 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar = "x") => {
       core_cos : cos(n*w0*${intVar})$
       core_sin : sin(n*w0*${intVar})$
 
-      /* Salida: 6 simplificados + 6 en TeX */
+      /* Salida: 7 simplificados + 7 en TeX */
       resultados : [
-        string(a0),   string(an),   string(bn),
+        string(a0),   string(a0over2), string(an),   string(bn),
         string(w0),   string(core_cos), string(core_sin),
-        tex(a0,false),tex(an,false),tex(bn,false),
-        tex(w0,false),tex(core_cos,false),tex(core_sin,false)
+        tex(a0,false), tex(a0over2,false), tex(an,false), tex(bn,false),
+        tex(w0,false), tex(core_cos,false), tex(core_sin,false)
       ]$
       string(resultados);
     `;
@@ -125,7 +126,7 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar = "x") => {
       };
     }
 
-    if (!Array.isArray(parsed) || parsed.length !== 12) {
+    if (!Array.isArray(parsed) || parsed.length !== 14) {
       return {
         success: false,
         message: "La salida de Maxima no tiene el formato esperado",
@@ -135,12 +136,14 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar = "x") => {
 
     const [
       a0,
+      a0over2,
       an,
       bn,
       w0,
       series_cosine_core,
       series_sine_core,
       a0Tex,
+      a0over2Tex,
       anTex,
       bnTex,
       w0Tex,
@@ -148,11 +151,12 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar = "x") => {
       sineCoreTex,
     ] = parsed;
 
-    /* 5 . Respuesta ----------------------------------------------------- */
+    /* 5 . Respuesta ----------------------------------------------------- */
     return {
       success: true,
       simplified: {
         a0,
+        a0over2,
         an,
         bn,
         w0,
@@ -161,6 +165,7 @@ exports.computeTrigonometricSeries = async (funcion, periodo, intVar = "x") => {
       },
       latex: {
         a0: a0Tex,
+        a0over2: a0over2Tex,
         an: anTex,
         bn: bnTex,
         w0: w0Tex,
@@ -253,7 +258,8 @@ exports.computeComplexSeries = async (funcion, periodo, intVar = "x") => {
       };
     }
 
-    const [c0, cn, w0, series_exp_core, c0Tex, cnTex, w0Tex, expCoreTex] = parsed;
+    const [c0, cn, w0, series_exp_core, c0Tex, cnTex, w0Tex, expCoreTex] =
+      parsed;
 
     return {
       success: true,
@@ -345,7 +351,6 @@ exports.computeComplexSeriesPiecewise = async (funcionMatrix, intVar) => {
     );
   }
 };
-
 
 exports.computeHalfRangeSeries = async (funcionMatrix, intVar = "x") => {
   try {
