@@ -10,6 +10,7 @@ export class FourierExamplesService {
       success: true,
       simplified: {
         a0: '1',
+        a0over2: '1/2',
         an: '0',
         bn: '-((-1)^n-1)/(%pi*n)',
         T: '2*%pi',
@@ -19,11 +20,13 @@ export class FourierExamplesService {
       },
       nonIntegerCoeffs: {
         a0: '1',
+        a0over2: '1/2',
         an: 'sin(%pi*n)/(%pi*n)',
         bn: '-(cos(%pi*n)-1)/(%pi*n)',
       },
       latex: {
         a0: '$$1$$',
+        a0over2: '$${{1}\\over{2}}$$',
         an: '$$0$$',
         bn: '$$-{{\\left(-1\\right)^{n}-1}\\over{\\pi\\,n}}$$',
         T: '$$2\\,\\pi$$',
@@ -32,6 +35,7 @@ export class FourierExamplesService {
         sineCore: '$$\\sin \\left(n\\,x\\right)$$',
         nonInteger: {
           a0: '$$1$$',
+          a0over2: '$${{1}\\over{2}}$$',
           an: '$${{\\sin \\left(\\pi\\,n\\right)}\\over{\\pi\\,n}}$$',
           bn: '$$-{{\\cos \\left(\\pi\\,n\\right)-1}\\over{\\pi\\,n}}$$',
         },
@@ -62,6 +66,7 @@ export class FourierExamplesService {
       success: true,
       simplified: {
         a0: '2*%pi',
+        a0over2: '%pi',
         an: '0',
         bn: '-2/n',
         T: '2*%pi',
@@ -71,11 +76,13 @@ export class FourierExamplesService {
       },
       nonIntegerCoeffs: {
         a0: '2*%pi',
+        a0over2: '%pi',
         an: '(2*%pi*n*sin(2*%pi*n)+cos(2*%pi*n)-1)/(%pi*n^2)',
         bn: '(sin(2*%pi*n)-2*%pi*n*cos(2*%pi*n))/(%pi*n^2)',
       },
       latex: {
         a0: '$$2\\pi$$',
+        a0over2: '$$\\pi$$',
         an: '$$0$$',
         bn: '$$-{{2}\\over{n}}$$',
         T: '$$2\\,\\pi$$',
@@ -84,6 +91,7 @@ export class FourierExamplesService {
         sineCore: '$$\\sin \\left(n\\,x\\right)$$',
         nonInteger: {
           a0: '$$2\\,\\pi$$',
+          a0over2: '$$\\pi$$',
           an: '$${{2\\,\\pi\\,n\\,\\sin \\left(2\\,\\pi\\,n\\right)+\\cos \\left(2\\,\\pi\\,n \\right)-1}\\over{\\pi\\,n^2}}$$',
           bn: '$${{\\sin \\left(2\\,\\pi\\,n\\right)-2\\,\\pi\\,n\\,\\cos \\left(2\\,\\pi\\,n \\right)}\\over{\\pi\\,n^2}}$$',
         },
@@ -101,6 +109,7 @@ export class FourierExamplesService {
       success: true,
       simplified: {
         a0: '%pi',
+        a0over2: '%pi/2',
         an: '(2*(-1)^n-2)/(%pi*n^2)',
         bn: '0',
         T: '2*%pi',
@@ -110,11 +119,13 @@ export class FourierExamplesService {
       },
       nonIntegerCoeffs: {
         a0: '%pi',
+        a0over2: '%pi/2',
         an: '(2*%pi*n*sin(%pi*n)+2*cos(%pi*n)-2)/(%pi*n^2)',
         bn: '0',
       },
       latex: {
         a0: '$$\\pi$$',
+        a0over2: '$${{\\pi}\\over{2}}$$',
         an: '$${{2\\,\\left(-1\\right)^{n}-2}\\over{\\pi\\,n^2}}$$',
         bn: '$$0$$',
         T: '$$2\\,\\pi$$',
@@ -123,6 +134,7 @@ export class FourierExamplesService {
         sineCore: '$$\\sin \\left(n\\,x\\right)$$',
         nonInteger: {
           a0: '$$\\pi$$',
+          a0over2: '$${{\\pi}\\over{2}}$$',
           an: '$${{2\\,\\pi\\,n\\,\\sin \\left(\\pi\\,n\\right)+2\\,\\cos \\left(\\pi\\,n\\right)-2 }\\over{\\pi\\,n^2}}$$',
           bn: '$$0$$',
         },
@@ -931,6 +943,7 @@ export class FourierExamplesService {
       success: true,
       simplified: {
         a0: '%pi',
+        a0over2: '%pi/2',
         an: '(2*(-1)^n-2)/(%pi*n^2)',
         bn: '-(2*(-1)^n)/n',
         T: '%pi',
@@ -940,11 +953,13 @@ export class FourierExamplesService {
       },
       nonIntegerCoeffs: {
         a0: '%pi',
+        a0over2: '%pi/2',
         an: '(2*%pi*n*sin(%pi*n)+2*cos(%pi*n)-2)/(%pi*n^2)',
         bn: '(2*sin(%pi*n)-2*%pi*n*cos(%pi*n))/(%pi*n^2)',
       },
       latex: {
         a0: '$$\\pi$$',
+        a0over2: '$${{\\pi}\\over{2}}$$',
         an: '$${{2\\,\\left(-1\\right)^{n}-2}\\over{\\pi\\,n^2}}$$',
         bn: '$$-{{2\\,\\left(-1\\right)^{n}}\\over{n}}$$',
         T: '$$\\pi$$',
@@ -953,6 +968,7 @@ export class FourierExamplesService {
         sineCore: '$$\\sin \\left(n\\,x\\right)$$',
         nonInteger: {
           a0: '$$\\pi$$',
+          a0over2: '$${{\\pi}\\over{2}}$$',
           an: '$${{2\\,\\pi\\,n\\,\\sin \\left(\\pi\\,n\\right)+2\\,\\cos \\left(\\pi\\,n\\right)-2 }\\over{\\pi\\,n^2}}$$',
           bn: '$${{2\\,\\sin \\left(\\pi\\,n\\right)-2\\,\\pi\\,n\\,\\cos \\left(\\pi\\,n\\right) }\\over{\\pi\\,n^2}}$$',
         },
@@ -982,6 +998,7 @@ export class FourierExamplesService {
       success: true,
       simplified: {
         a0: '2',
+        a0over2: '1',
         an: '0',
         bn: '-(2*(-1)^n-2)/(%pi*n)',
         T: '%pi',
@@ -991,11 +1008,13 @@ export class FourierExamplesService {
       },
       nonIntegerCoeffs: {
         a0: '2',
+        a0over2: '1',
         an: '(2*sin(%pi*n))/(%pi*n)',
         bn: '-(2*cos(%pi*n)-2)/(%pi*n)',
       },
       latex: {
         a0: '$$2$$',
+        a0over2: '$$1$$',
         an: '$$0$$',
         bn: '$$-{{2\\,\\left(-1\\right)^{n}-2}\\over{\\pi\\,n}}$$',
         T: '$$\\pi$$',
@@ -1004,6 +1023,7 @@ export class FourierExamplesService {
         sineCore: '$$\\sin \\left(n\\,x\\right)$$',
         nonInteger: {
           a0: '$$2$$',
+          a0over2: '$$1$$',
           an: '$${{2\\,\\sin \\left(\\pi\\,n\\right)}\\over{\\pi\\,n}}$$',
           bn: '$$-{{2\\,\\cos \\left(\\pi\\,n\\right)-2}\\over{\\pi\\,n}}$$',
         },
@@ -1033,6 +1053,7 @@ export class FourierExamplesService {
       success: true,
       simplified: {
         a0: '-2/5',
+        a0over2: '-1/5',
         an: '(2*sin((3*%pi*n)/5)+2*sin((%pi*n)/5))/(%pi*n)',
         bn: '-(2*cos((3*%pi*n)/5)+2*cos((%pi*n)/5)-2*(-1)^n-2)/(%pi*n)',
         T: '5',
@@ -1042,11 +1063,13 @@ export class FourierExamplesService {
       },
       nonIntegerCoeffs: {
         a0: '-2/5',
+        a0over2: '-1/5',
         an: '-(2*sin(%pi*n)-2*sin((3*%pi*n)/5)-2*sin((%pi*n)/5))/(%pi*n)',
         bn: '(2*cos(%pi*n)-2*cos((3*%pi*n)/5)-2*cos((%pi*n)/5)+2)/(%pi*n)',
       },
       latex: {
         a0: '$$-{{2}\\over{5}}$$',
+        a0over2: '$$-{{1}\\over{5}}$$',
         an: '$${{2\\,\\sin \\left({{3\\,\\pi\\,n}\\over{5}}\\right)+2\\,\\sin \\left({{\\pi\\,n }\\over{5}}\\right)}\\over{\\pi\\,n}}$$',
         bn: '$$-{{2\\,\\cos \\left({{3\\,\\pi\\,n}\\over{5}}\\right)+2\\,\\cos \\left({{\\pi\\, n}\\over{5}}\\right)-2\\,\\left(-1\\right)^{n}-2}\\over{\\pi\\,n}}$$',
         T: '$$5$$',
@@ -1055,6 +1078,7 @@ export class FourierExamplesService {
         sineCore: '$$\\sin \\left({{\\pi\\,n\\,x}\\over{5}}\\right)$$',
         nonInteger: {
           a0: '$$-{{2}\\over{5}}$$',
+          a0over2: '$$-{{1}\\over{5}}$$',
           an: '$$-{{2\\,\\sin \\left(\\pi\\,n\\right)-2\\,\\sin \\left({{3\\,\\pi\\,n}\\over{5}} \\right)-2\\,\\sin \\left({{\\pi\\,n}\\over{5}}\\right)}\\over{\\pi\\,n}}$$',
           bn: '$${{2\\,\\cos \\left(\\pi\\,n\\right)-2\\,\\cos \\left({{3\\,\\pi\\,n}\\over{5}} \\right)-2\\,\\cos \\left({{\\pi\\,n}\\over{5}}\\right)+2}\\over{\\pi\\,n}}$$',
         },
@@ -1122,7 +1146,7 @@ export class FourierExamplesService {
       phaseSpectrum:
         '[[0.0,0.0],[1.0,-3.043417883165112],[2.0,0.0],[3.0,0.2945243112740433],[4.0,0.0],[5.0,-2.650718801466388],[6.0,0.0],[7.0,0.6872233929727672],[8.0,0.0],[9.0,-2.258019719767664],[10.0,0.0],[11.0,1.079922474671492],[12.0,0.0],[13.0,-1.86532063806894],[14.0,0.0],[15.0,1.472621556370216],[16.0,0.0],[17.0,-1.472621556370216],[18.0,0.0],[19.0,1.86532063806894],[20.0,0.0],[21.0,-1.079922474671491],[22.0,0.0],[23.0,2.258019719767664],[24.0,0.0],[25.0,-0.6872233929727675],[26.0,0.0],[27.0,2.650718801466388],[28.0,0.0],[29.0,-0.2945243112740431],[30.0,0.0],[31.0,3.043417883165113]]',
       originalFunction:
-      '\\begin{cases}0 & , \\quad -2\\pi < x < -\\pi \\\\ 1 & , \\quad -\\pi < x < \\pi\\ \\\\ 0 & , \\quad \\pi < x < 2\\pi \\end{cases}',
+        '\\begin{cases}0 & , \\quad -2\\pi < x < -\\pi \\\\ 1 & , \\quad -\\pi < x < \\pi\\ \\\\ 0 & , \\quad \\pi < x < 2\\pi \\end{cases}',
       dftParams: {
         numSamples: 32,
         sampleRate: 1,
