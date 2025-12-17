@@ -12,13 +12,13 @@
       <!-- Botones de control -->
       <div class="grid grid-cols-2 gap-2 mb-3">
         <button
-          id="toggle-animation"
+          (click)="toggleAnimation()"
           class="p-2 bg-purple-600 hover:bg-purple-700 rounded transition-colors"
         >
-          ⏯️ Play/Pause
+          ⏯️ {{isAnimating ? 'Pause' : 'Play'}}
         </button>
         <button
-          id="clear-trace"
+          (click)="clearTrace()"
           class="p-2 bg-orange-600 hover:bg-orange-700 rounded transition-colors"
         >
           🗑️ Limpiar
@@ -26,7 +26,7 @@
       </div>
       
       <button
-        id="reset-view"
+        (click)="resetView()"
         class="w-full p-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
       >
         🔄 Reset Vista
@@ -37,11 +37,11 @@
         <label class="block text-sm font-medium mb-2">⚡ Velocidad:</label>
         <input
           type="range"
-          id="speed-slider"
           min="0.001"
           max="0.1"
           step="0.001"
           value="0.02"
+          (input)="onSpeedChange($event)"
           class="w-full"
         />
         <div class="text-xs text-gray-400 text-center mt-1">Lento ← → Rápido</div>
@@ -52,33 +52,108 @@
     <div class="mb-6">
       <h3 class="text-lg font-medium mb-3 text-green-400">⚙️ Epiciclos</h3>
       
-      <div class="grid grid-cols-2 gap-2 mb-3">
+      <div class="grid grid-cols-2 gap-2 mb-3" *ngIf="!showDftVisualization">
         <button
-          id="add-epicycle"
+          (click)="addRandomEpicycle()"
           class="p-2 bg-green-600 hover:bg-green-700 rounded transition-colors text-sm"
         >
-          ➕ Agregar
+          ➕ Aleatorio
         </button>
         <button
-          id="remove-epicycle"
+          (click)="removeLastEpicycle()"
           class="p-2 bg-red-600 hover:bg-red-700 rounded transition-colors text-sm"
         >
-          ➖ Quitar
+          ➖ Último
         </button>
       </div>
 
+      <!-- Botón para agregar epiciclo personalizado -->
+      <button
+        *ngIf="!showDftVisualization"
+        (click)="showAddCustomEpicycle = !showAddCustomEpicycle"
+        class="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm mb-3"
+      >
+        🎯 {{showAddCustomEpicycle ? 'Ocultar' : 'Personalizado'}}
+      </button>
+
+      <!-- Panel para agregar epiciclo personalizado -->
+      <div *ngIf="!showDftVisualization && showAddCustomEpicycle" class="p-3 bg-gray-600 rounded mb-3 space-y-2">
+        <h4 class="text-sm font-medium text-blue-300 mb-2">➕ Nuevo Epiciclo:</h4>
+        
+        <div>
+          <label class="block text-xs text-gray-300">Amplitud: {{newEpicycleParams.amplitude.toFixed(2)}}</label>
+          <input
+            type="range"
+            min="0.1"
+            max="5"
+            step="0.1"
+            [(ngModel)]="newEpicycleParams.amplitude"
+            class="w-full text-xs"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-xs text-gray-300">Frecuencia: {{newEpicycleParams.frequency}}</label>
+          <input
+            type="range"
+            min="1"
+            max="20"
+            step="1"
+            [(ngModel)]="newEpicycleParams.frequency"
+            class="w-full text-xs"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-xs text-gray-300">Fase: {{(newEpicycleParams.phase / Math.PI).toFixed(2)}}π</label>
+          <input
+            type="range"
+            min="0"
+            max="6.28"
+            step="0.1"
+            [(ngModel)]="newEpicycleParams.phase"
+            class="w-full text-xs"
+          />
+        </div>
+        
+        <button
+          (click)="addCustomEpicycle()"
+          class="w-full p-2 bg-green-600 hover:bg-green-700 rounded transition-colors text-xs"
+        >
+          ✅ Agregar Epiciclo
+        </button>
+      </div>
+
+      <!-- Botón para resetear a defaults -->
+      <button
+        *ngIf="!showDftVisualization"
+        (click)="resetToDefaults()"
+        class="w-full p-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors text-sm mb-3"
+      >
+        🔄 Resetear a Defaults
+      </button>
+
       <!-- Lista de epiciclos actuales -->
-      <div class="space-y-2">
+      <div class="space-y-2" *ngIf="!showDftVisualization">
         <div 
           *ngFor="let epicycle of epicycles; let i = index"
           class="p-3 bg-gray-700 rounded border border-gray-600"
         >
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm font-medium">Epiciclo {{i + 1}}</span>
-            <div 
-              class="w-4 h-4 rounded-full border border-gray-400"
-              [style.background-color]="epicycle.color"
-            ></div>
+            <div class="flex items-center gap-2">
+              <div 
+                class="w-4 h-4 rounded-full border border-gray-400"
+                [style.background-color]="epicycle.color"
+              ></div>
+              <button
+                (click)="removeEpicycleAt(i)"
+                class="text-red-400 hover:text-red-300 text-xs p-1"
+                title="Eliminar este epiciclo"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           
           <div class="space-y-2 text-xs">
@@ -120,6 +195,16 @@
                 class="w-full text-xs"
               />
             </div>
+            
+            <div>
+              <label class="block text-gray-300 mb-1">Color:</label>
+              <input
+                type="color"
+                [value]="epicycle.color"
+                (input)="onSliderChange(i, 'color', $event)"
+                class="w-full h-6 rounded cursor-pointer"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -131,7 +216,7 @@
       
       <div class="grid grid-cols-2 gap-2 mb-3">
         <button
-          id="draw-btn"
+          (click)="openDrawingModal()"
           class="p-3 bg-cyan-600 hover:bg-cyan-700 rounded transition-colors text-sm"
         >
           ✏️ Dibujar
@@ -192,14 +277,14 @@
             <span class="text-sm">✨ Estela del epiciclo</span>
           </label>
         </div>
-        
-        <button
-          (click)="toggleDftMode()"
-          class="w-full p-2 bg-yellow-600 hover:bg-yellow-700 rounded transition-colors text-sm"
-        >
-          🔄 {{showDftVisualization ? 'Modo Normal' : 'Modo DFT'}}
-        </button>
       </div>
+      
+      <button
+        (click)="toggleDftMode()"
+        class="w-full p-2 bg-yellow-600 hover:bg-yellow-700 rounded transition-colors text-sm"
+      >
+        🔄 {{showDftVisualization ? 'Modo Normal' : 'Modo DFT'}}
+      </button>
     </div>
 
     <!-- Información -->
