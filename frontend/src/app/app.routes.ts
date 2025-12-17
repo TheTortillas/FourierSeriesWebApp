@@ -11,6 +11,7 @@ import { TrigonometricPiecewiseSeriesComponent } from './pages/tests/trigonometr
 import { ComplexPiecewiseSeriesComponent } from './pages/tests/complex-piecewise-series/complex-piecewise-series.component';
 import { HalfRangeSeriesComponent } from './pages/tests/half-range-series/half-range-series.component';
 import { MultiCanvasLayoutComponent } from './pages/tests/multi-canvas-layout/multi-canvas-layout.component';
+import { EpicyclesComponent } from './pages/tests/epicycles/epicycles.component';
 import { FourierCalculatorComponent } from './pages/fourier-calculator/fourier-calculator.component';
 import { FourierSeriesPlotComponent } from './pages/fourier-series-plot/fourier-series-plot.component';
 import { TrigComponent } from './pages/fourier-series-plot/trig/trig.component';
@@ -102,6 +103,10 @@ export const routes: Routes = [
       {
         path: 'multi-canvas-layout',
         component: MultiCanvasLayoutComponent,
+      },
+      {
+        path: 'epicycles',
+        component: EpicyclesComponent,
       },
     ],
   },

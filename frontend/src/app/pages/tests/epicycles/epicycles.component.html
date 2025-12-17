@@ -1,0 +1,412 @@
+<div class="flex flex-col md:flex-row h-screen bg-gray-900 text-white">
+  <!-- 📌 PANEL DE CONTROL (IZQUIERDA) -->
+  <div class="w-full md:w-1/3 lg:w-1/4 p-4 bg-gray-800 border-r border-gray-700">
+    <h2 class="text-xl font-semibold mb-4 text-center text-purple-400">
+      🌀 Epiciclos
+    </h2>
+
+    <!-- Controles de Animación -->
+    <div class="mb-6">
+      <h3 class="text-lg font-medium mb-3 text-blue-400">🎮 Animación</h3>
+      
+      <!-- Botones de control -->
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <button
+          id="toggle-animation"
+          class="p-2 bg-purple-600 hover:bg-purple-700 rounded transition-colors"
+        >
+          ⏯️ Play/Pause
+        </button>
+        <button
+          id="clear-trace"
+          class="p-2 bg-orange-600 hover:bg-orange-700 rounded transition-colors"
+        >
+          🗑️ Limpiar
+        </button>
+      </div>
+      
+      <button
+        id="reset-view"
+        class="w-full p-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
+      >
+        🔄 Reset Vista
+      </button>
+
+      <!-- Control de velocidad -->
+      <div class="mt-4">
+        <label class="block text-sm font-medium mb-2">⚡ Velocidad:</label>
+        <input
+          type="range"
+          id="speed-slider"
+          min="0.001"
+          max="0.1"
+          step="0.001"
+          value="0.02"
+          class="w-full"
+        />
+        <div class="text-xs text-gray-400 text-center mt-1">Lento ← → Rápido</div>
+      </div>
+    </div>
+
+    <!-- Controles de Epiciclos -->
+    <div class="mb-6">
+      <h3 class="text-lg font-medium mb-3 text-green-400">⚙️ Epiciclos</h3>
+      
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <button
+          id="add-epicycle"
+          class="p-2 bg-green-600 hover:bg-green-700 rounded transition-colors text-sm"
+        >
+          ➕ Agregar
+        </button>
+        <button
+          id="remove-epicycle"
+          class="p-2 bg-red-600 hover:bg-red-700 rounded transition-colors text-sm"
+        >
+          ➖ Quitar
+        </button>
+      </div>
+
+      <!-- Lista de epiciclos actuales -->
+      <div class="space-y-2">
+        <div 
+          *ngFor="let epicycle of epicycles; let i = index"
+          class="p-3 bg-gray-700 rounded border border-gray-600"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium">Epiciclo {{i + 1}}</span>
+            <div 
+              class="w-4 h-4 rounded-full border border-gray-400"
+              [style.background-color]="epicycle.color"
+            ></div>
+          </div>
+          
+          <div class="space-y-2 text-xs">
+            <div>
+              <label class="block text-gray-300">Amplitud: {{epicycle.amplitude.toFixed(2)}}</label>
+              <input
+                type="range"
+                min="0.1"
+                max="3"
+                step="0.1"
+                [value]="epicycle.amplitude"
+                (input)="onSliderChange(i, 'amplitude', $event)"
+                class="w-full text-xs"
+              />
+            </div>
+            
+            <div>
+              <label class="block text-gray-300">Frecuencia: {{epicycle.frequency}}</label>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                step="1"
+                [value]="epicycle.frequency"
+                (input)="onSliderChange(i, 'frequency', $event)"
+                class="w-full text-xs"
+              />
+            </div>
+            
+            <div>
+              <label class="block text-gray-300">Fase: {{(epicycle.phase / Math.PI).toFixed(2)}}π</label>
+              <input
+                type="range"
+                min="0"
+                max="6.28"
+                step="0.1"
+                [value]="epicycle.phase"
+                (input)="onSliderChange(i, 'phase', $event)"
+                class="w-full text-xs"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección DFT -->
+    <div class="mb-6 border-t border-gray-600 pt-4">
+      <h3 class="text-lg font-medium mb-3 text-cyan-400">🎨 Dibujo DFT</h3>
+      
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <button
+          id="draw-btn"
+          class="p-3 bg-cyan-600 hover:bg-cyan-700 rounded transition-colors text-sm"
+        >
+          ✏️ Dibujar
+        </button>
+        
+        <button
+          (click)="openDataModal()"
+          class="p-3 bg-purple-600 hover:bg-purple-700 rounded transition-colors text-sm"
+        >
+          📁 Cargar CSV
+        </button>
+      </div>
+
+      <div *ngIf="showDftVisualization" class="space-y-3">
+        <div class="p-3 bg-gray-700 rounded">
+          <label class="block text-sm font-medium mb-2">🔢 Epiciclos DFT: {{epicycleCount}}/{{maxEpicycleCount}}</label>
+          <input
+            type="range"
+            [min]="1"
+            [max]="maxEpicycleCount"
+            [value]="epicycleCount"
+            (input)="onEpicycleCountChange($event)"
+            class="w-full"
+          />
+        </div>
+
+        <!-- Toggles de visualización -->
+        <div class="p-3 bg-gray-700 rounded space-y-2">
+          <h4 class="text-sm font-medium text-cyan-300 mb-2">👁️ Mostrar:</h4>
+          
+          <label class="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              [(ngModel)]="showSampledPoints"
+              (change)="onToggleChange()"
+              class="mr-2"
+            />
+            <span class="text-sm">📍 Puntos muestreados</span>
+          </label>
+
+          <label class="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              [(ngModel)]="showApproximation"
+              (change)="onToggleChange()"
+              class="mr-2"
+            />
+            <span class="text-sm">🌀 Aproximación (trazado)</span>
+          </label>
+
+          <label class="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              [(ngModel)]="showTrace"
+              (change)="onToggleChange()"
+              class="mr-2"
+            />
+            <span class="text-sm">✨ Estela del epiciclo</span>
+          </label>
+        </div>
+        
+        <button
+          (click)="toggleDftMode()"
+          class="w-full p-2 bg-yellow-600 hover:bg-yellow-700 rounded transition-colors text-sm"
+        >
+          🔄 {{showDftVisualization ? 'Modo Normal' : 'Modo DFT'}}
+        </button>
+      </div>
+    </div>
+
+    <!-- Información -->
+    <div class="text-xs text-gray-400 space-y-1">
+      <div>💡 <strong>Tips:</strong></div>
+      <div>• Usa la rueda del mouse para zoom</div>
+      <div>• Arrastra para mover la vista</div>
+      <div>• Ajusta los epiciclos para crear patrones</div>
+      <div>• El trazado blanco muestra el camino</div>
+    </div>
+  </div>
+
+  <!-- 📊 ÁREA DEL CANVAS (DERECHA) -->
+  <div class="flex-1 relative">
+    <!-- Canvas Container -->
+    <div class="w-full h-full">
+      <app-cartesian-canvas
+        #cartesianCanvas
+        [bgColor]="bgColor"
+        [axisColor]="axisColor"
+        [gridColor]="gridColor"
+        [fontColor]="fontColor"
+        [initialZoom]="50"
+        [enableIndependentZoom]="true"
+        [unlimitedZoom]="true"
+        (canvasReady)="onCanvasReady($event)"
+      >
+      </app-cartesian-canvas>
+    </div>
+
+    <!-- Overlay con información -->
+    <div class="absolute top-4 left-4 bg-gray-900/80 text-white p-3 rounded-lg text-sm">
+      <div class="mb-1">🌀 <strong>Epiciclos Activos:</strong> {{epicycles.length}}</div>
+      <div class="mb-1">⏰ <strong>Tiempo:</strong> {{(time / (2 * Math.PI)).toFixed(2)}} ciclos</div>
+      <div class="mb-1">📈 <strong>Puntos de Trazado:</strong> {{tracePoints.length}}</div>
+      <div>🎯 <strong>Estado:</strong> {{isAnimating ? '🟢 Animando' : '🔴 Pausado'}}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Dibujar -->
+<div 
+  *ngIf="showDrawingModal"
+  class="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+  (click)="closeDrawingModal()"
+>
+  <div 
+    class="bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-semibold text-white">🎨 Dibujar para DFT</h3>
+      <button 
+        (click)="closeDrawingModal()"
+        class="text-gray-400 hover:text-white text-2xl"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- Canvas de dibujo -->
+    <div class="mb-4">
+      <canvas 
+        id="drawing-canvas"
+        class="border-2 border-gray-600 rounded cursor-crosshair"
+        width="400" 
+        height="400"
+      ></canvas>
+    </div>
+
+    <!-- Controles -->
+    <div class="space-y-4">
+      <!-- Control de puntos de muestra -->
+      <div>
+        <label class="block text-sm font-medium mb-2 text-white">
+          📊 Puntos de muestra: {{samplePoints}}
+        </label>
+        <input
+          type="range"
+          min="50"
+          max="500"
+          step="10"
+          [(ngModel)]="samplePoints"
+          class="w-full"
+        />
+        <div class="text-xs text-gray-400 text-center mt-1">
+          Menos puntos = más rápido | Más puntos = más detalle
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="grid grid-cols-2 gap-3">
+        <button
+          (click)="clearDrawing()"
+          class="p-2 bg-orange-600 hover:bg-orange-700 rounded transition-colors text-white"
+        >
+          🗑️ Limpiar
+        </button>
+        <button
+          (click)="processDrawing()"
+          class="p-2 bg-green-600 hover:bg-green-700 rounded transition-colors text-white"
+        >
+          ✨ Procesar
+        </button>
+      </div>
+    </div>
+
+    <!-- Instrucciones -->
+    <div class="mt-4 text-xs text-gray-400">
+      <div class="mb-2"><strong>📝 Instrucciones:</strong></div>
+      <div>• Dibuja con el mouse o dedo</div>
+      <div>• Haz formas cerradas para mejores resultados</div>
+      <div>• Ajusta los puntos de muestra según el detalle</div>
+      <div>• Presiona "Procesar" para generar epiciclos</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Cargar Datos CSV -->
+<div 
+  *ngIf="showDataModal" 
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+  (click)="closeDataModal()"
+>
+  <div 
+    class="bg-gray-800 p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-semibold text-white">📁 Cargar Datos CSV</h3>
+      <button 
+        (click)="closeDataModal()"
+        class="text-gray-400 hover:text-white text-2xl"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Ejemplos predefinidos -->
+    <div class="mb-4">
+      <h4 class="text-sm font-medium text-gray-300 mb-2">🎭 Ejemplos predefinidos:</h4>
+      <div class="grid grid-cols-3 gap-2">
+        <button
+          (click)="loadPredefinedShape('circle')"
+          class="p-2 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-colors"
+        >
+          ⭕ Círculo
+        </button>
+        <button
+          (click)="loadPredefinedShape('heart')"
+          class="p-2 bg-red-600 hover:bg-red-700 rounded text-xs transition-colors"
+        >
+          ❤️ Corazón
+        </button>
+        <button
+          (click)="loadPredefinedShape('trex')"
+          class="p-2 bg-green-600 hover:bg-green-700 rounded text-xs transition-colors"
+        >
+          🦕 T-Rex
+        </button>
+      </div>
+    </div>
+
+    <!-- Área de texto para CSV -->
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-300 mb-2">
+        📋 Datos CSV (formato: x,y por línea):
+      </label>
+      <textarea
+        [(ngModel)]="csvData"
+        class="w-full h-64 p-3 bg-gray-700 text-white rounded resize-none font-mono text-sm"
+        placeholder="Ejemplo:
+100,50
+120,80
+90,110
+...
+
+Formato: x,y (un punto por línea)
+Separador: coma (,)"
+      ></textarea>
+    </div>
+
+    <!-- Información de formato -->
+    <div class="mb-4 p-3 bg-gray-700 rounded text-xs text-gray-300">
+      <div class="mb-1"><strong>📝 Formato aceptado:</strong></div>
+      <div>• Una línea por punto con formato: x,y</div>
+      <div>• Los puntos se normalizarán automáticamente</div>
+      <div>• Se recomienda entre 50-500 puntos</div>
+      <div>• Las coordenadas pueden ser decimales</div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="grid grid-cols-2 gap-3">
+      <button
+        (click)="closeDataModal()"
+        class="p-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors text-white"
+      >
+        ❌ Cancelar
+      </button>
+      <button
+        (click)="processCsvData()"
+        class="p-2 bg-green-600 hover:bg-green-700 rounded transition-colors text-white"
+        [disabled]="!csvData.trim()"
+        [class.opacity-50]="!csvData.trim()"
+      >
+        ✨ Procesar CSV
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,171 @@
+/* Estilo para el componente de epiciclos */
+.epicycles-container {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Mejoras para los controles */
+.control-panel {
+  max-height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4a5568 #2d3748;
+}
+
+.control-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.control-panel::-webkit-scrollbar-track {
+  background: #2d3748;
+}
+
+.control-panel::-webkit-scrollbar-thumb {
+  background: #4a5568;
+  border-radius: 3px;
+}
+
+/* Estilo para los sliders */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: #4a5568;
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #68d391;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  border: 2px solid #2d3748;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #4a5568;
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  background: #68d391;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  border: 2px solid #2d3748;
+  cursor: pointer;
+}
+
+/* Animaciones suaves para botones */
+button {
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Estilo para las tarjetas de epiciclos */
+.epicycle-card {
+  transition: all 0.2s ease-in-out;
+  border-left: 3px solid transparent;
+}
+
+.epicycle-card:hover {
+  border-left-color: #68d391;
+  background: #4a5568;
+}
+
+/* Overlay información */
+.info-overlay {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Canvas container */
+.canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .control-panel {
+    max-height: 40vh;
+  }
+  
+  .canvas-container {
+    height: 60vh;
+  }
+  
+  .info-overlay {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+}
+
+/* Animaciones para elementos dinámicos */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.epicycle-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Estilo para indicadores de color */
+.color-indicator {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.color-indicator:hover {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+/* Mejoras de accesibilidad */
+button:focus,
+input:focus {
+  outline: 2px solid #68d391;
+  outline-offset: 2px;
+}
+
+/* Estilo para elementos de estado */
+.status-active {
+  color: #68d391;
+}
+
+.status-inactive {
+  color: #fc8181;
+}
+
+/* Gradientes para títulos */
+.gradient-title {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
