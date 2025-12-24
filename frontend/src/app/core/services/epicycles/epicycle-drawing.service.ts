@@ -37,14 +37,16 @@ export class EpicycleDrawingService {
       2
     );
 
-    // Dibujar punto en el borde del círculo
-    this.drawPoint(
+    // Dibujar flecha en el borde del círculo
+    this.drawArrow(
       ctx,
       config,
+      state.centerX,
+      state.centerY,
       state.currentX,
       state.currentY,
       state.epicycle.color,
-      4
+      8
     );
   }
 
@@ -140,6 +142,63 @@ export class EpicycleDrawingService {
     ctx.arc(xPixel, yPixel, radius, 0, 2 * Math.PI);
     ctx.fillStyle = color;
     ctx.fill();
+  }
+
+  /**
+   * Dibuja una pequeña flecha al final de una línea
+   * @param ctx Contexto del canvas
+   * @param config Configuración del plot
+   * @param fromX Coordenada X del inicio
+   * @param fromY Coordenada Y del inicio
+   * @param toX Coordenada X del final
+   * @param toY Coordenada Y del final
+   * @param color Color de la flecha
+   * @param size Tamaño de la flecha
+   */
+  drawArrow(
+    ctx: CanvasRenderingContext2D,
+    config: PlotConfig,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    color: string,
+    size: number = 8
+  ): void {
+    const { origin, offsetX, offsetY, unit, scaleX = 1, scaleY = 1 } = config;
+
+    // Convertir coordenadas a píxeles
+    const toXPixel = origin.x + toX * unit * scaleX - offsetX;
+    const toYPixel = origin.y - toY * unit * scaleY - offsetY;
+    const fromXPixel = origin.x + fromX * unit * scaleX - offsetX;
+    const fromYPixel = origin.y - fromY * unit * scaleY - offsetY;
+
+    // Calcular ángulo de la línea
+    const angle = Math.atan2(toYPixel - fromYPixel, toXPixel - fromXPixel);
+    
+    // Calcular puntos de la flecha
+    const arrowLength = size;
+    const arrowAngle = Math.PI / 6; // 30 grados
+    
+    const x1 = toXPixel - arrowLength * Math.cos(angle - arrowAngle);
+    const y1 = toYPixel - arrowLength * Math.sin(angle - arrowAngle);
+    
+    const x2 = toXPixel - arrowLength * Math.cos(angle + arrowAngle);
+    const y2 = toYPixel - arrowLength * Math.sin(angle + arrowAngle);
+    
+    // Dibujar la punta de flecha
+    ctx.beginPath();
+    ctx.moveTo(toXPixel, toYPixel);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    
+    // Opcional: agregar borde a la flecha
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }
 
   /**
