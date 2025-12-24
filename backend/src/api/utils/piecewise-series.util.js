@@ -40,29 +40,6 @@ async function calculatePiecewiseSeries({
      tramos: makelist([func[i][1], func[i][2], func[i][3]], i, 1, pieces)$
    `;
 
-  async function parseListItems(listStr) {
-    if (!listStr || !listStr.startsWith("[") || !listStr.endsWith("]"))
-      return [];
-    const content = listStr.slice(1, -1).trim();
-    if (!content) return [];
-    const result = [];
-    let current = "";
-    let depth = 0;
-    for (let i = 0; i < content.length; i++) {
-      const char = content[i];
-      if (char === "[" || char === "(") depth++;
-      if (char === "]" || char === ")") depth--;
-      if (char === "," && depth === 0) {
-        result.push(current.trim());
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-    if (current) result.push(current.trim());
-    return result;
-  }
-
   // Add series core definitions based on type
   if (isComplex) {
     const N = 100; // coeficientes de −N … N
@@ -321,6 +298,15 @@ async function calculatePiecewiseSeries({
     cos_core : cos(n * w0 * ${intVar})$
     sin_core : sin(n * w0 * ${intVar})$
 
+    /* Función auxiliar para aplicar el truco del espejo complejo */
+    mirror_hyperbolic_trick(expr_indefinida, var) := block([expr_intermedia, expr_final],
+      /* x -> x*i | demoivre | x -> x/i */
+      expr_intermedia : subst(var/%i, var, demoivre(subst(var*%i, var, expr_indefinida))),
+      /* Simplificamos con trigreduce para compactar */
+      expr_final : fullratsimp(trigreduce(expr_intermedia)),
+      return(expr_final)
+    )$
+
     /* Acumuladores */
     a0_acum_nonint : 0$
     an_acum_nonint : 0$
@@ -332,16 +318,28 @@ async function calculatePiecewiseSeries({
       a     : trozo[2],
       b     : trozo[3],
 
-      a0_acum_nonint : a0_acum_nonint + ${integralCoefficient} * integrate(      f_i , ${intVar}, a, b),
-      an_acum_nonint : an_acum_nonint + ${integralCoefficient} * integrate(f_i * cos_core, ${intVar}, a, b),
-      bn_acum_nonint : bn_acum_nonint + ${integralCoefficient} * integrate(f_i * sin_core, ${intVar}, a, b)
+      /* Para a0: integral directa (sin kernel trigonométrico) */
+      indefinida_a0 : integrate(f_i, ${intVar}),
+      F_a0 : mirror_hyperbolic_trick(indefinida_a0, ${intVar}),
+      a0_acum_nonint : a0_acum_nonint + ${integralCoefficient} * (ev(F_a0, ${intVar}=b) - ev(F_a0, ${intVar}=a)),
+
+      /* Para an: integral indefinida con coseno */
+      indefinida_an : integrate(f_i * cos_core, ${intVar}),
+      F_an : mirror_hyperbolic_trick(indefinida_an, ${intVar}),
+      an_acum_nonint : an_acum_nonint + ${integralCoefficient} * (ev(F_an, ${intVar}=b) - ev(F_an, ${intVar}=a)),
+
+      /* Para bn: integral indefinida con seno */
+      indefinida_bn : integrate(f_i * sin_core, ${intVar}),
+      F_bn : mirror_hyperbolic_trick(indefinida_bn, ${intVar}),
+      bn_acum_nonint : bn_acum_nonint + ${integralCoefficient} * (ev(F_bn, ${intVar}=b) - ev(F_bn, ${intVar}=a))
     )$
 
     /* Coeficientes simplificados (sin n entero) */
-    Coeff_A0_nonint : (${simplificationMethod}(factor(a0_acum_nonint)))$
-    Coeff_A0over2_nonint : ${simplificationMethod}(Coeff_A0_nonint/2)$
-    Coeff_An_nonint : (${simplificationMethod}(factor(an_acum_nonint)))$
-    Coeff_Bn_nonint : (${simplificationMethod}(factor(bn_acum_nonint)))$
+    /* Aplicamos trigsimp al final para mejores resultados visuales */
+    Coeff_A0_nonint : trigsimp(${simplificationMethod}(factor(a0_acum_nonint)))$
+    Coeff_A0over2_nonint : trigsimp(${simplificationMethod}(Coeff_A0_nonint/2))$
+    Coeff_An_nonint : trigsimp(${simplificationMethod}(factor(an_acum_nonint)))$
+    Coeff_Bn_nonint : trigsimp(${simplificationMethod}(factor(bn_acum_nonint)))$
     
     /* Resultados sin n entero (incluye LaTeX) */
     resultados_nonint : [
@@ -427,6 +425,15 @@ async function calculatePiecewiseSeries({
         displayFlags: true,
       })}
   
+      /* Función auxiliar para aplicar el truco del espejo complejo */
+      mirror_hyperbolic_trick(expr_indefinida, var) := block([expr_intermedia, expr_final],
+        /* x -> x*i | demoivre | x -> x/i */
+        expr_intermedia : subst(var/%i, var, demoivre(subst(var*%i, var, expr_indefinida))),
+        /* Simplificamos con trigreduce para compactar */
+        expr_final : fullratsimp(trigreduce(expr_intermedia)),
+        return(expr_final)
+      )$
+
       /* Núcleos seno/coseno */
       cos_core : cos(n * w0 * ${intVar})$
       sin_core : sin(n * w0 * ${intVar})$
@@ -441,17 +448,32 @@ async function calculatePiecewiseSeries({
         f_i   : trozo[1],
         a     : trozo[2],
         b     : trozo[3],
-  
-        a0_acum : a0_acum + ${integralCoefficient} * integrate(      f_i , ${intVar}, a, b),
-        an_acum : an_acum + ${integralCoefficient} * integrate(f_i * cos_core, ${intVar}, a, b),
-        bn_acum : bn_acum + ${integralCoefficient} * integrate(f_i * sin_core, ${intVar}, a, b)
+
+        /* Para a0: integral indefinida directa */
+        indefinida_a0 : integrate(f_i, ${intVar}),
+        F_a0 : mirror_hyperbolic_trick(indefinida_a0, ${intVar}),
+        a0_temp : ${integralCoefficient} * (ev(F_a0, ${intVar}=b) - ev(F_a0, ${intVar}=a)),
+        a0_acum : a0_acum + a0_temp,
+
+        /* Para an: integral indefinida con coseno */
+        indefinida_an : integrate(f_i * cos_core, ${intVar}),
+        F_an : mirror_hyperbolic_trick(indefinida_an, ${intVar}),
+        an_temp : ${integralCoefficient} * (ev(F_an, ${intVar}=b) - ev(F_an, ${intVar}=a)),
+        an_acum : an_acum + an_temp,
+
+        /* Para bn: integral indefinida con seno */
+        indefinida_bn : integrate(f_i * sin_core, ${intVar}),
+        F_bn : mirror_hyperbolic_trick(indefinida_bn, ${intVar}),
+        bn_temp : ${integralCoefficient} * (ev(F_bn, ${intVar}=b) - ev(F_bn, ${intVar}=a)),
+        bn_acum : bn_acum + bn_temp
       )$
   
       /* Coeficientes simplificados (con n entero) */
-      Coeff_A0 : (${simplificationMethod}(factor(a0_acum)))$
-      Coeff_A0over2 : ${simplificationMethod}(Coeff_A0/2)$
-      Coeff_An : (${simplificationMethod}(factor(an_acum)))$
-      Coeff_Bn : (${simplificationMethod}(factor(bn_acum)))$
+      /* Aplicamos trigsimp al final para mejores resultados visuales */
+      Coeff_A0 : trigsimp(${simplificationMethod}(factor(a0_acum)))$
+      Coeff_A0over2 : trigsimp(${simplificationMethod}(Coeff_A0/2))$
+      Coeff_An : trigsimp(${simplificationMethod}(factor(an_acum)))$
+      Coeff_Bn : trigsimp(${simplificationMethod}(factor(bn_acum)))$
   
       /* Salida completa con resultados */
       resultados : [
