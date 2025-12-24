@@ -978,13 +978,11 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     if (a0over2 !== '0') {
       this.fullLatexFormula = `$$f(${
         this.intVar
-      }) = ${a0over2} + \\sum_{n=1}^{\\infty} \\left( ${terms.join(
-        ' + '
-      )} \\right)$$`;
+      }) = ${a0over2} + \\sum_{n=1}^{\\infty} \\left( ${this.joinTermsWithProperSigns(terms)} \\right)$$`;
     } else if (terms.length > 0) {
       this.fullLatexFormula = `$$f(${
         this.intVar
-      }) = \\sum_{n=1}^{\\infty} \\left( ${terms.join(' + ')} \\right)$$`;
+      }) = \\sum_{n=1}^{\\infty} \\left( ${this.joinTermsWithProperSigns(terms)} \\right)$$`;
     } else {
       this.fullLatexFormula = `$$f(${this.intVar}) = 0$$`;
     }
@@ -1002,13 +1000,11 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
     if (nonIntA0over2 !== '0') {
       this.nonIntegerFullLatexFormula = `$$f(${
         this.intVar
-      }) = ${nonIntA0over2} + \\sum_{n=1}^{\\infty} \\left( ${nonIntTerms.join(
-        ' + '
-      )} \\right)$$`;
+      }) = ${nonIntA0over2} + \\sum_{n=1}^{\\infty} \\left( ${this.joinTermsWithProperSigns(nonIntTerms)} \\right)$$`;
     } else if (nonIntTerms.length > 0) {
       this.nonIntegerFullLatexFormula = `$$f(${
         this.intVar
-      }) = \\sum_{n=1}^{\\infty} \\left( ${nonIntTerms.join(' + ')} \\right)$$`;
+      }) = \\sum_{n=1}^{\\infty} \\left( ${this.joinTermsWithProperSigns(nonIntTerms)} \\right)$$`;
     } else {
       this.nonIntegerFullLatexFormula = `$$f(${this.intVar}) = 0$$`;
     }
@@ -1020,6 +1016,36 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       .replace(/^\$\$?/, '')
       .replace(/\$\$?$/, '')
       .trim();
+  }
+
+  private joinTermsWithProperSigns(terms: string[]): string {
+    if (terms.length === 0) return '';
+    if (terms.length === 1) return terms[0];
+
+    let result = terms[0];
+    
+    for (let i = 1; i < terms.length; i++) {
+      const term = terms[i];
+      
+      // Check if the term starts with a minus sign
+      // We need to handle various LaTeX patterns like:
+      // "-{expression}" 
+      // "-\\frac{...}{...}"
+      // "- {expression}"
+      // "-(expression)"
+      const trimmedTerm = term.trim();
+      const startsWithMinus = trimmedTerm.startsWith('-');
+      
+      if (startsWithMinus) {
+        // If term already starts with minus, just add a space before it
+        result += ` ${term}`;
+      } else {
+        // If term doesn't start with minus, add plus sign
+        result += ` + ${term}`;
+      }
+    }
+    
+    return result;
   }
 
   /* Series Terms Management Methods */
@@ -1125,11 +1151,15 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       this.seriesTerms.latex.a0 !== '0' &&
       this.seriesTerms.latex.a0 !== '$$0$$'
     ) {
-      const a0LatexClean = this.stripLatexDelimiters(this.seriesTerms.latex.a0);
+      // Use the pre-calculated a0over2 coefficient instead of manually dividing a0 by 2
+      const a0Over2Latex = this.response?.latex?.a0over2 
+        ? this.stripLatexDelimiters(this.response.latex.a0over2)
+        : this.stripLatexDelimiters(this.seriesTerms.latex.a0);
+      
       html += `
         <div class="term-card bg-gray-800 border border-gray-700 p-4 rounded-lg shadow">
           <div class="term-title font-semibold mb-2 text-green-300">Término constante (a₀/2)</div>
-          <div class="term-latex text-white">$$\\frac{${a0LatexClean}}{2}$$</div>
+          <div class="term-latex text-white">$$${a0Over2Latex}$$</div>
         </div>
       `;
     }
@@ -1161,27 +1191,23 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         if (!hasAn && !hasBn) continue;
 
         // Construir el LaTeX para el término combinado
-        let termLatex = '$$';
-
+        const termParts = [];
+        
         if (hasAn) {
           const anLatexClean = this.stripLatexDelimiters(
             this.seriesTerms.latex.an[index]
           );
-          termLatex += anLatexClean;
-        }
-
-        if (hasAn && hasBn) {
-          termLatex += ' + ';
+          termParts.push(anLatexClean);
         }
 
         if (hasBn) {
           const bnLatexClean = this.stripLatexDelimiters(
             this.seriesTerms.latex.bn[index]
           );
-          termLatex += bnLatexClean;
+          termParts.push(bnLatexClean);
         }
 
-        termLatex += '$$';
+        const termLatex = `$$${this.joinTermsWithProperSigns(termParts)}$$`;
 
         // Construir el título del término
         let termTitle = `Término ${n}: `;
@@ -1245,22 +1271,26 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
       this.seriesTerms.latex.a0 !== '0' &&
       this.seriesTerms.latex.a0 !== '$$0$$'
     ) {
-      const a0LatexClean = this.stripLatexDelimiters(this.seriesTerms.latex.a0);
+      // Use the pre-calculated a0over2 coefficient instead of manually dividing a0 by 2
+      const a0Over2Latex = this.response?.latex?.a0over2 
+        ? this.stripLatexDelimiters(this.response.latex.a0over2)
+        : this.stripLatexDelimiters(this.seriesTerms.latex.a0);
+      
       html += `
         <div class="term-card ${cardStyle} p-4 rounded-lg shadow">
           <div class="term-title font-semibold mb-2 ${titleStyle}">$$\\text{Término constante } \\frac{a_0}{2}$$</div>
-          <div class="term-latex">$$\\frac{${a0LatexClean}}{2}$$</div>
+          <div class="term-latex">$$${a0Over2Latex}$$</div>
         </div>
       `;
     }
 
     // Determine the maximum number of terms available
     const maxTerms = Math.max(
-      this.seriesTerms.latex.an?.length || 0,
-      this.seriesTerms.latex.bn?.length || 0
+      this.seriesTerms?.latex?.an?.length || 0,
+      this.seriesTerms?.latex?.bn?.length || 0
     );
 
-    let localW0 = this.stripLatexDelimiters(this.latexRendered.w0 || '');
+    let localW0 = this.stripLatexDelimiters(this.latexRendered?.w0 || '');
     if (localW0 === '1') {
       localW0 = '';
     } else if (localW0) {
@@ -1325,9 +1355,12 @@ export class TrigComponent implements OnInit, AfterViewInit, OnDestroy {
         bnLatexClean && bnLatexClean !== '$$0$$' && bnLatexClean !== '0';
       if (!hasAn && !hasBn) continue;
 
-      const termLatex = `$$${hasAn ? anLatexClean : ''}${
-        hasAn && hasBn ? ' + ' : ''
-      }${hasBn ? bnLatexClean : ''}$$`;
+      // Build term parts for proper sign handling
+      const termParts = [];
+      if (hasAn) termParts.push(anLatexClean);
+      if (hasBn) termParts.push(bnLatexClean);
+      
+      const termLatex = `$$${this.joinTermsWithProperSigns(termParts)}$$`;
       let termTitle = `$$\\text{Término ${n}: }`;
       if (hasAn)
         termTitle += `a_{${n}} \\cdot \\cos(${n}\\omega_0 ${this.intVar})`;
