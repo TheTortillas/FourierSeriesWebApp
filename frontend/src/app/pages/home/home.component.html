@@ -481,7 +481,8 @@
             [innerHTML]="dftTeX"
           ></div>
         </div>
-        <h3 class="text-xl font-semibold mb-3">Transformada Discreta</h3>
+        <h3 class="text-xl font-semibold mb-3">Transformada Discreta de Fourier
+</h3>
         <p class="mb-4">
           Analiza señales mediante el algoritmo DFT para obtener componentes
           frecuenciales con visualización espectral.
@@ -532,6 +533,130 @@
             >
               Calculadora personalizada →
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transformada de Fourier Card -->
+      <div
+        class="feature-card rounded-xl p-5 sm:p-8 transition-all duration-300 hover:shadow-lg"
+        (mouseenter)="closeDropdownIfNot('fourierTransform')"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-800/50 border border-gray-700'
+            : 'bg-white/80 shadow-md border border-gray-100'
+        "
+      >
+        <div
+          class="feature-icon mb-3 sm:mb-4 p-2 sm:p-3 rounded-full w-full max-w-xs h-20 sm:h-24 flex items-center justify-center mx-auto"
+          [ngClass]="isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100'"
+          style="width: 100%; max-width: none"
+        >
+          <div
+            class="formula-container"
+            [ngClass]="isDarkMode ? 'text-emerald-400' : 'text-emerald-600'"
+            [innerHTML]="fourierTransformTeX"
+          ></div>
+        </div>
+        <h3 class="text-xl font-semibold mb-3">Transformada de Fourier</h3>
+        <p class="mb-4">
+          Analiza funciones no periódicas mediante la transformada integral de Fourier 
+          para obtener su representación en el dominio de la frecuencia.
+        </p>
+        <div class="relative">
+          <button
+            (click)="toggleDropdown('fourierTransform')"
+            class="w-full text-sm font-medium flex justify-between items-center hover:bg-opacity-90 px-3 py-2 rounded transition-all duration-200"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-emerald-900/20 text-emerald-400'
+                : 'bg-emerald-50 text-emerald-600'
+            "
+          >
+            <span>Próximamente disponible</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 ml-1 opacity-50"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <div
+            *ngIf="activeDropdown === 'fourierTransform'"
+            class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md py-1 border border-gray-200 dark:border-gray-700"
+            [ngClass]="isDarkMode ? 'dark-dropdown' : 'light-dropdown'"
+          >
+            <div class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+              Esta funcionalidad estará disponible próximamente
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Epiciclos Card -->
+      <div
+        class="feature-card rounded-xl p-5 sm:p-8 transition-all duration-300 hover:shadow-lg"
+        (mouseenter)="closeDropdownIfNot('epicycles')"
+        [ngClass]="
+          isDarkMode
+            ? 'bg-gray-800/50 border border-gray-700'
+            : 'bg-white/80 shadow-md border border-gray-100'
+        "
+      >
+        <div
+          class="feature-icon mb-3 sm:mb-4 p-2 sm:p-3 rounded-full w-full max-w-xs h-20 sm:h-24 flex items-center justify-center mx-auto"
+          [ngClass]="isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100'"
+          style="width: 100%; max-width: none"
+        >
+          <div
+            class="formula-container"
+            [ngClass]="isDarkMode ? 'text-orange-400' : 'text-orange-600'"
+            [innerHTML]="epicyclesTeX"
+          ></div>
+        </div>
+        <h3 class="text-xl font-semibold mb-3">Epiciclos</h3>
+        <p class="mb-4">
+          Recrea siluetas y formas complejas utilizando DFT sobre números complejos 
+          con una visualización animada de círculos rotantes (epiciclos).
+        </p>
+        <div class="relative">
+          <button
+            (click)="toggleDropdown('epicycles')"
+            class="w-full text-sm font-medium flex justify-between items-center hover:bg-opacity-90 px-3 py-2 rounded transition-all duration-200"
+            [ngClass]="
+              isDarkMode
+                ? 'bg-orange-900/20 text-orange-400'
+                : 'bg-orange-50 text-orange-600'
+            "
+          >
+            <span>Próximamente disponible</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 ml-1 opacity-50"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <div
+            *ngIf="activeDropdown === 'epicycles'"
+            class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md py-1 border border-gray-200 dark:border-gray-700"
+            [ngClass]="isDarkMode ? 'dark-dropdown' : 'light-dropdown'"
+          >
+            <div class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+              Esta funcionalidad estará disponible próximamente
+            </div>
           </div>
         </div>
       </div>
@@ -616,7 +741,27 @@
                   : 'bg-gray-100 text-gray-600'
               "
             >
-              Transformada Discreta
+              Transformada Discreta de Fourier
+            </span>
+            <span
+              class="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium mb-1"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-300'
+                  : 'bg-gray-100 text-gray-600'
+              "
+            >
+              Transformada de Fourier
+            </span>
+            <span
+              class="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium mb-1"
+              [ngClass]="
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-300'
+                  : 'bg-gray-100 text-gray-600'
+              "
+            >
+              Epiciclos
             </span>
           </div>
         </div>

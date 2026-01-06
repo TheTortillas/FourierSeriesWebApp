@@ -35,6 +35,11 @@ export class HomeComponent implements OnInit, AfterViewInit {
   dftTeX: string = '$$X[k] = \\sum_{n=0}^{N-1} x_n e^{-i\\frac{2\\pi kn}{N}}$$';
   halfRangeTeX: string =
     '$$f(x) = \\frac{a_0}{2} + \\sum_{n=0}^{\\infty} a_n \\cos(n\\omega_{0}x) \\quad  f(x) = \\sum_{n=1}^{\\infty} b_n \\sin(n\\omega_{0}x)$$';
+  fourierTransformTeX: string =
+    '$$\\mathcal{F}[f(t)] = \\int_{-\\infty}^{\\infty} f(t) e^{-i\\omega t} dt$$';
+        // '$$\\mathcal{F}[f(t)] = \\hat{f}(\\omega) = \\int_{-\\infty}^{\\infty} f(t) e^{-i\\omega t} dt$$';
+  epicyclesTeX: string =
+    '$$z(t) = \\sum_{k=-N}^{N} C_k e^{i2\\pi kt}$$';
 
   // Ejemplos predefinidos para series trigonométricas
   trigExamples: Example[] = [
@@ -61,6 +66,20 @@ export class HomeComponent implements OnInit, AfterViewInit {
     { id: 'linear', name: 'Función lineal' },
     { id: 'constant', name: 'Función constante' },
     { id: 'pulse_train', name: 'Tren de pulsos' },
+  ];
+
+  // Ejemplos predefinidos para Transformada de Fourier
+  fourierTransformExamples: Example[] = [
+    { id: 'gaussian', name: 'Función Gaussiana' },
+    { id: 'rectangular', name: 'Pulso Rectangular' },
+    { id: 'exponential', name: 'Función Exponencial' },
+  ];
+
+  // Ejemplos predefinidos para Epiciclos
+  epicyclesExamples: Example[] = [
+    { id: 'heart', name: 'Corazón' },
+    { id: 'star', name: 'Estrella' },
+    { id: 'flower', name: 'Flor' },
   ];
 
   constructor(
@@ -178,6 +197,37 @@ export class HomeComponent implements OnInit, AfterViewInit {
       } else {
         this.navigateToCalculator();
       }
+    } else if (type === 'fourierTransform') {
+      // const exampleData =
+      //   this.fourierExamplesService.getFourierTransformExample(exampleId);
+      // if (exampleData) {
+      //   this.router.navigate(['/fourier-transform-plot/continuous'], {
+      //     state: {
+      //       response: exampleData,
+      //       transformType: 'continuous',
+      //       intVar: exampleData.intVar || 'x',
+      //       originalLatex: exampleData.originalLatex || [],
+      //       originalFunction: exampleData.originalFunction || '',
+      //     },
+      //   });
+      // } else {
+      //   this.navigateToCalculator();
+      // }
+    } else if (type === 'epicycles') {
+      // const exampleData = this.fourierExamplesService.getEpicyclesExample(exampleId);
+      // if (exampleData) {
+      //   this.router.navigate(['/epicycles-plot'], {
+      //     state: {
+      //       response: exampleData,
+      //       shapeData: exampleData.shapeData || [],
+      //       epicyclesParams: exampleData.epicyclesParams || { numEpicycles: 50 },
+      //       originalShape: exampleData.originalShape || '',
+      //     },
+      //   });
+      // } else {
+      //   // Navigate to a general epicycles page when implemented
+      //   this.router.navigate(['/epicycles']);
+      // }
     } else {
       this.navigateToCalculator();
     }
