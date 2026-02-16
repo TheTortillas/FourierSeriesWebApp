@@ -27,11 +27,17 @@ import { Router } from '@angular/router';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { MobileMathKeyboardComponent } from '../../shared/components/mobile-math-keyboard/mobile-math-keyboard.component';
+import { FooterComponent } from '../../shared/components/footer/footer.component';
 
 @Component({
   selector: 'app-fourier-calculator',
   standalone: true,
-  imports: [CommonModule, FormsModule, MobileMathKeyboardComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MobileMathKeyboardComponent,
+    FooterComponent,
+  ],
   templateUrl: './fourier-calculator.component.html',
   styleUrl: './fourier-calculator.component.scss',
 })

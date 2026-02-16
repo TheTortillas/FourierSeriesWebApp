@@ -1,3 +1,10 @@
+// Layout
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 // Animaciones y estilos para la página About Us
 .sine-wave {
   position: absolute;
