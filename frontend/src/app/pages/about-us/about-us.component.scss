@@ -1,0 +1,92 @@
+// Animaciones y estilos para la página About Us
+.sine-wave {
+  position: absolute;
+  width: 200%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0,0 Q300,60 600,60 T1200,0' stroke='%236366f1' fill='none' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  animation: wave-animation 20s linear infinite;
+}
+
+.sine-wave-1 {
+  animation-duration: 25s;
+  top: 10%;
+}
+
+.sine-wave-2 {
+  animation-duration: 30s;
+  top: 40%;
+  animation-delay: -5s;
+}
+
+.sine-wave-3 {
+  animation-duration: 35s;
+  top: 70%;
+  animation-delay: -10s;
+}
+
+@keyframes wave-animation {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.text-gradient-light {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-dark {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Transiciones suaves para modo oscuro
+section {
+  transition: all 0.3s ease;
+}
+
+// Hover effects para las cards de contacto
+a[target="_blank"],
+a[href^="mailto"] {
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Estilos para las secciones colapsables
+section {
+  h2 {
+    user-select: none;
+    
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}
+
+// Animación de rotación para el icono de chevron
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+// Mejora para las transiciones de altura
+.max-h-0 {
+  max-height: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.max-h-screen {
+  max-height: 200vh;
+}

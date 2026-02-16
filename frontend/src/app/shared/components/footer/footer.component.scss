@@ -1,4 +1,30 @@
 .footer-section {
-    position: relative;
-    z-index: 10;
+  position: relative;
+  z-index: 10;
+}
+
+// Decorative background patterns
+.footer-pattern-light {
+  background-image: 
+    linear-gradient(135deg, #3b82f6 10%, transparent 10%),
+    linear-gradient(225deg, #3b82f6 10%, transparent 10%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+.footer-pattern-dark {
+  background-image: 
+    linear-gradient(135deg, #06b6d4 10%, transparent 10%),
+    linear-gradient(225deg, #06b6d4 10%, transparent 10%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+// Smooth hover transitions
+.footer-link {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-2px);
   }
+}
