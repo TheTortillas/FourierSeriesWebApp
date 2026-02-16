@@ -1,11 +1,13 @@
-<footer 
-  class="footer-section py-8 sm:py-12 border-t mt-6 relative overflow-hidden"
-  [ngClass]="isDarkMode 
-    ? 'border-gray-700 bg-gradient-to-b from-gray-900/50 to-gray-900/30' 
-    : 'border-gray-200 bg-gradient-to-b from-gray-50 to-white'"
+<footer
+  class="footer-section py-12 sm:py-16 border-t relative overflow-hidden w-full"
+  [ngClass]="
+    isDarkMode
+      ? 'border-gray-700 bg-gradient-to-b from-gray-900/50 to-gray-900/30'
+      : 'border-gray-200 bg-gradient-to-b from-gray-50 to-white'
+  "
 >
   <!-- Decorative background pattern -->
-  <div 
+  <div
     class="absolute inset-0 opacity-5"
     [ngClass]="isDarkMode ? 'footer-pattern-dark' : 'footer-pattern-light'"
   ></div>
@@ -14,22 +16,21 @@
     <div class="flex flex-col md:flex-row justify-between items-center gap-6">
       <!-- Left section: Brand/Copyright -->
       <div class="text-center md:text-left">
-        <h3 
-          class="font-semibold mb-2 text-lg"
+        <h3
+          class="font-semibold mb-2 text-xl sm:text-2xl"
           [ngClass]="isDarkMode ? 'text-cyan-400' : 'text-blue-600'"
         >
           Fourier Web Calculator
         </h3>
-        <p 
-          class="text-sm"
+        <p
+          class="text-base sm:text-lg"
           [ngClass]="isDarkMode ? 'text-gray-400' : 'text-gray-600'"
         >
-          &copy; {{ currentYear }} Desarrollado  
-          
-          por <span class="font-medium">Sebastián</span>
+          &copy; {{ currentYear }} Desarrollado por
+          <span class="font-medium">Sebastián</span>
         </p>
-        <p 
-          class="text-xs mt-1"
+        <p
+          class="text-sm sm:text-base mt-1"
           [ngClass]="isDarkMode ? 'text-gray-500' : 'text-gray-500'"
         >
           Proyecto de Titulación ESCOM-IPN
@@ -43,12 +44,14 @@
           target="_blank"
           rel="noopener noreferrer"
           class="footer-link group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300"
-          [ngClass]="isDarkMode 
-            ? 'hover:bg-gray-800/50 text-gray-300 hover:text-cyan-400' 
-            : 'hover:bg-blue-50 text-gray-700 hover:text-blue-600'"
+          [ngClass]="
+            isDarkMode
+              ? 'hover:bg-gray-800/50 text-gray-300 hover:text-cyan-400'
+              : 'hover:bg-blue-50 text-gray-700 hover:text-blue-600'
+          "
         >
           <svg
-            class="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
+            class="w-6 h-6 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
             fill="currentColor"
             viewBox="0 0 24 24"
             aria-hidden="true"
@@ -71,18 +74,20 @@
                 24 5.67 18.627.297 12 .297z"
             ></path>
           </svg>
-          <span class="text-sm font-medium">Documentación</span>
+          <span class="text-base sm:text-lg font-medium">Documentación</span>
         </a>
 
         <a
           routerLink="../about-us"
           class="footer-link group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300"
-          [ngClass]="isDarkMode 
-            ? 'hover:bg-gray-800/50 text-gray-300 hover:text-cyan-400' 
-            : 'hover:bg-blue-50 text-gray-700 hover:text-blue-600'"
+          [ngClass]="
+            isDarkMode
+              ? 'hover:bg-gray-800/50 text-gray-300 hover:text-cyan-400'
+              : 'hover:bg-blue-50 text-gray-700 hover:text-blue-600'
+          "
         >
           <svg
-            class="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
+            class="w-6 h-6 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
             fill="currentColor"
             viewBox="0 0 24 24"
             aria-hidden="true"
@@ -95,7 +100,7 @@
             />
             <path d="M11 11h2v5h-2zm0-4h2v2h-2z" />
           </svg>
-          <span class="text-sm font-medium">Acerca de</span>
+          <span class="text-base sm:text-lg font-medium">Acerca de</span>
         </a>
 
         <a
@@ -103,12 +108,14 @@
           target="_blank"
           rel="noopener noreferrer"
           class="footer-link group flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300"
-          [ngClass]="isDarkMode 
-            ? 'hover:bg-gray-800/50 text-gray-300 hover:text-cyan-400' 
-            : 'hover:bg-blue-50 text-gray-700 hover:text-blue-600'"
+          [ngClass]="
+            isDarkMode
+              ? 'hover:bg-gray-800/50 text-gray-300 hover:text-cyan-400'
+              : 'hover:bg-blue-50 text-gray-700 hover:text-blue-600'
+          "
         >
           <svg
-            class="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-12"
+            class="w-6 h-6 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-12"
             fill="currentColor"
             viewBox="0 0 24 24"
             aria-hidden="true"
@@ -120,7 +127,7 @@
                 5L20 4v2z"
             />
           </svg>
-          <span class="text-sm font-medium">Contacto</span>
+          <span class="text-base sm:text-lg font-medium">Contacto</span>
         </a>
       </div>
     </div>

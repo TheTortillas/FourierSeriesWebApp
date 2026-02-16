@@ -1,3 +1,9 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 // Background container for sine waves
 .absolute.top-0.left-0.w-full.h-full {
   z-index: -1 !important; // Force to back
