@@ -44,3 +44,7 @@
 
 node_modules/
 /backend/package-lock.json
+
+.env
+.env.local
+*.log
