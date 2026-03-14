@@ -7,7 +7,7 @@
 /frontend/bazel-out
 
 # Node
-/frontend/node_modules
+/node_modules/
 /frontend/npm-debug.log
 /frontend/yarn-error.log
 
@@ -42,5 +42,5 @@
 /frontend/Thumbs.db
 /frontend/package-lock.json
 
-/backend/node_modules
+node_modules/
 /backend/package-lock.json
