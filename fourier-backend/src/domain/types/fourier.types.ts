@@ -32,3 +32,23 @@ export interface FourierResult {
   simplifications?: Record<string, string>;
   executionTimeMs: number;
 }
+
+export type SingularityType =
+  | "removible"
+  | "salto"
+  | "asintotica"
+  | "esencial"
+  | "fuera_de_dominio";
+
+export interface Singularity {
+  point: string;
+  type: SingularityType;
+}
+
+export type ValidationDecision = "proceed" | "warn" | "reject";
+
+export interface ValidationResult {
+  decision: ValidationDecision;
+  singularities: Singularity[];
+  message?: string;
+}
