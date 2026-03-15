@@ -1,0 +1,418 @@
+/* ═══════════════════════════════════════════════════════════════════
+   MÓDULO: clean_integral + simplify_expint
+   Convierte salidas de Maxima con gamma_incomplete a funciones
+   especiales: expintegral_si, expintegral_ci, expintegral_shi,
+   expintegral_chi
+   Y simplifica combinaciones Shi/Chi → Ei, li
+
+   Uso: clean_integral(expr, variable)
+        simplify_expint(expr)
+   ═══════════════════════════════════════════════════════════════════ */
+
+kill(t, x, n)$
+declare(n, integer)$
+kill(Si_expr, Ci_expr, Shi_expr, Chi_expr)$
+
+Si_expr(v)  := ''(-(%i*gamma_incomplete(0,%i*v) - %i*gamma_incomplete(0,-(%i*v)))/2)$
+Ci_expr(v)  := ''(-(gamma_incomplete(0,%i*v) + gamma_incomplete(0,-(%i*v)))/2)$
+Shi_expr(v) := ''((gamma_incomplete(0,v) - gamma_incomplete(0,-v))/2)$
+Chi_expr(v) := ''((-gamma_incomplete(0,v) - gamma_incomplete(0,-v))/2)$
+
+Si_coefs:  [-(%i/2),  %i/2,    0,       0    ]$
+Ci_coefs:  [-(1/2),  -(1/2),   0,       0    ]$
+Shi_coefs: [ 0,       0,       1/2,    -(1/2)]$
+Chi_coefs: [ 0,       0,      -(1/2),  -(1/2)]$
+
+/* ════════════════════════════════════════════
+   RECOGNIZE_LINEAR — Si, Ci, Shi, Chi con k*v
+   ════════════════════════════════════════════ */
+recognize_linear(expr, v) := block(
+    [e: expand(expr),
+     all_args: [], paired: [],
+     result: 0, found: false, rest: 0],
+
+    if atom(e) then return(false),
+    if freeof('gamma_incomplete, e) then return(false),
+
+    for term in (if op(e) = "+" then args(e) else [e]) do
+        if freeof('gamma_incomplete, term) then rest: rest + term,
+
+    for term in (if op(e) = "+" then args(e) else [e]) do block(
+        [t: term],
+        while not atom(t) and op(t) # 'gamma_incomplete do block(
+            [a: args(t)],
+            t: false,
+            for s in a do
+                if not atom(s) and (op(s) = 'gamma_incomplete
+                                    or not freeof('gamma_incomplete, s))
+                then t: s
+        ),
+        if not atom(t) and op(t) = 'gamma_incomplete
+           and part(t,1) = 0
+           and not freeof(v, part(t,2))
+        then all_args: cons(part(t,2), all_args)
+    ),
+    all_args: unique(all_args),
+    if all_args = [] then return(false),
+
+    for arg in all_args do block(
+        [neg_arg: ratsimp(-arg),
+         gp, gm, c_gp, c_gm, k_si, k_ci, k_shi, k_chi,
+         kv, is_trig, is_hyp],
+
+        if not member(arg, paired) and not member(neg_arg, paired) then block(
+            paired: cons(arg, cons(neg_arg, paired)),
+            gp: gamma_incomplete(0, arg),
+            gm: gamma_incomplete(0, neg_arg),
+            c_gp: coeff(e, gp),
+            c_gm: coeff(e, gm),
+            is_trig: not freeof(%i, arg),
+            is_hyp:  freeof(%i, arg) and not freeof(v, arg),
+
+            if is_trig and (c_gp # 0 or c_gm # 0) then block(
+                kv: ratsimp(arg / %i),
+                if float(subst(v=1, kv)) < 0 then block(
+                    kv: ratsimp(neg_arg / %i),
+                    [c_gp, c_gm]: [c_gm, c_gp]
+                ),
+                kv: factor(kv),
+                k_si: ratsimp((c_gm - c_gp) / %i),
+                k_ci: ratsimp(-(c_gp + c_gm)),
+                if k_si # 0 then result: result + k_si * expintegral_si(kv),
+                if k_ci # 0 then result: result + k_ci * expintegral_ci(kv),
+                found: true
+            ),
+
+            if is_hyp and (c_gp # 0 or c_gm # 0) then block(
+                kv: factor(arg),
+                if float(subst(v=1, kv)) < 0 then block(
+                    kv: factor(neg_arg),
+                    [c_gp, c_gm]: [c_gm, c_gp]
+                ),
+                k_shi: ratsimp(c_gp - c_gm),
+                k_chi: ratsimp(-(c_gp + c_gm)),
+                if k_shi # 0 then result: result + k_shi * expintegral_shi(kv),
+                if k_chi # 0 then result: result + k_chi * expintegral_chi(kv),
+                found: true
+            )
+        )
+    ),
+    if found then result + rest else false
+)$
+
+/* ════════════════════════════════════════════
+   SPLIT_GAMMA
+   ════════════════════════════════════════════ */
+split_gamma(expr, v) := block(
+    [terms, gamma_terms, rest_terms, gp, rp],
+    terms: if not atom(expr) and inpart(expr,0) = "+"
+               then args(expr) else [expr],
+    gamma_terms: sublist(terms, lambda([t], not freeof(gamma_incomplete, t))),
+    rest_terms:  sublist(terms, lambda([t], freeof(gamma_incomplete, t))),
+    gp: if gamma_terms = [] then 0 else apply("+", gamma_terms),
+    rp: if rest_terms  = [] then 0 else apply("+", rest_terms),
+    [gp, rp]
+)$
+
+/* ════════════════════════════════════════════
+   EXTRACT_GAMMA_ARGS — argumentos constantes
+   ════════════════════════════════════════════ */
+extract_gamma_args(expr, v) := block(
+    [e: expand(expr), all_gammas: [], t],
+    if atom(e) then return([]),
+    if freeof('gamma_incomplete, e) then return([]),
+    for term in (if op(e) = "+" then args(e) else [e]) do block(
+        [t: term],
+        while not atom(t) and op(t) # 'gamma_incomplete do block(
+            [a: args(t)],
+            t: false,
+            for s in a do
+                if not atom(s) and (op(s) = 'gamma_incomplete
+                                    or not freeof('gamma_incomplete, s))
+                then t: s
+        ),
+        if not atom(t) and op(t) = 'gamma_incomplete
+           and part(t,1) = 0
+           and freeof(v, part(t,2))
+        then all_gammas: cons(part(t,2), all_gammas)
+    ),
+    unique(all_gammas)
+)$
+
+/* ════════════════════════════════════════════
+   RECOGNIZE_CONST — Si(a), Ci(a) constantes
+   ════════════════════════════════════════════ */
+recognize_const(expr, v) := block(
+    [e: expand(expr), all_gammas, paired: [],
+     result: 0, found: false],
+
+    if atom(e) then return(false),
+    if freeof('gamma_incomplete, e) then return(false),
+    all_gammas: extract_gamma_args(expr, v),
+    if all_gammas = [] then return(false),
+
+    for arg in all_gammas do block(
+        [neg_arg: ratsimp(-arg),
+         gp: gamma_incomplete(0, arg),
+         gm: gamma_incomplete(0, ratsimp(-arg)),
+         c_gp, c_gm, k_si, k_ci, a],
+
+        if not member(arg, paired) and not member(neg_arg, paired) then block(
+            paired: cons(arg, cons(neg_arg, paired)),
+            c_gp: coeff(e, gp),
+            c_gm: coeff(e, gm),
+            if c_gp # 0 or c_gm # 0 then (
+                a: ratsimp(arg / %i),
+                k_si: ratsimp((c_gm - c_gp) / %i),
+                k_ci: ratsimp(-(c_gp + c_gm)),
+                if k_si # 0 then result: result + k_si * expintegral_si(factor(a)),
+                if k_ci # 0 then result: result + k_ci * expintegral_ci(factor(a)),
+                found: true
+            )
+        )
+    ),
+    if found then result else false
+)$
+
+/* ════════════════════════════════════════════
+   RECOGNIZE_NEG1 — gamma(-1,...) → Ci - sinc
+   ════════════════════════════════════════════ */
+recognize_neg1(expr, v) := block(
+    [e: expand(expr), all_gammas: [], paired: [],
+     result: 0, found: false],
+
+    if atom(e) then return(false),
+    if freeof('gamma_incomplete, e) then return(false),
+
+    for term in (if op(e) = "+" then args(e) else [e]) do block(
+        [t: term],
+        while not atom(t) and op(t) # 'gamma_incomplete do block(
+            [a: args(t)],
+            t: false,
+            for s in a do
+                if not atom(s) and (op(s) = 'gamma_incomplete
+                                    or not freeof('gamma_incomplete, s))
+                then t: s
+        ),
+        if not atom(t) and op(t) = 'gamma_incomplete
+           and part(t,1) = -1
+           and not freeof(v, part(t,2))
+        then all_gammas: cons(part(t,2), all_gammas)
+    ),
+    all_gammas: unique(all_gammas),
+    if all_gammas = [] then return(false),
+
+    for arg in all_gammas do block(
+        [neg_arg: ratsimp(-arg),
+         gp, gm, c_gp, c_gm, c_sum, kv, kv1, kv2],
+
+        if not member(arg, paired) and not member(neg_arg, paired) then block(
+            paired: cons(arg, cons(neg_arg, paired)),
+            gp: gamma_incomplete(-1, arg),
+            gm: gamma_incomplete(-1, neg_arg),
+            c_gp: coeff(e, gp),
+            c_gm: coeff(e, gm),
+            if c_gp # 0 or c_gm # 0 then block(
+                c_sum: ratsimp(c_gp + c_gm),
+                kv1: ratsimp(arg / %i),
+                kv2: ratsimp(neg_arg / %i),
+                kv: false,
+                if freeof(%i, kv1) and freeof(%i, kv2) then (
+                    if float(subst(v=1, kv1)) > 0
+                    then kv: factor(kv1) else kv: factor(kv2)
+                ) else if freeof(%i, kv1) then kv: factor(kv1)
+                  else if freeof(%i, kv2) then kv: factor(kv2),
+                if kv # false and c_sum # 0 then (
+                    result: result
+                           + c_sum * expintegral_ci(kv)
+                           + c_sum * (-sin(kv/2)*cos(kv/2)/(kv/2)),
+                    found: true
+                )
+            )
+        )
+    ),
+    if found then result else false
+)$
+
+/* ════════════════════════════════════════════
+   CLEAN_INTEGRAL — función principal
+   ════════════════════════════════════════════ */
+clean_integral(expr, v) := block(
+    [r, parts, gamma_part, rest_part, op],
+
+    r: recognize_linear(expr, v),
+    if r # false then return(r),
+
+    r: recognize_const(expr, v),
+    if r # false then return(r),
+
+    r: recognize_neg1(expr, v),
+    if r # false then return(r),
+
+    if not atom(expr) and inpart(expr, 0) = "+" then (
+        parts: split_gamma(expr, v),
+        gamma_part: parts[1],
+        rest_part:  parts[2],
+        if not freeof(gamma_incomplete, gamma_part) then (
+            r: recognize_linear(gamma_part, v),
+            if r # false then return(r + rest_part),
+            r: recognize_const(gamma_part, v),
+            if r # false then return(r + rest_part),
+            r: recognize_neg1(gamma_part, v),
+            if r # false then return(r + rest_part)
+        ),
+        return(apply("+", map(lambda([a], clean_integral(a, v)), args(expr))))
+    ),
+
+    if atom(expr) then return(expr),
+
+    if not freeof(gamma_incomplete, expr) then (
+        if hipow(expand(expr), gamma_incomplete(0,  %i*v))   > 1 then return(expr),
+        if hipow(expand(expr), gamma_incomplete(0, -(%i*v))) > 1 then return(expr),
+        if hipow(expand(expr), gamma_incomplete(0,  v))      > 1 then return(expr),
+        if hipow(expand(expr), gamma_incomplete(0, -v))      > 1 then return(expr)
+    ),
+
+    op: inpart(expr, 0),
+    apply(op, map(lambda([a], clean_integral(a, v)), args(expr)))
+)$
+
+/* ════════════════════════════════════════════
+   GET_FUNC_COEFF — auxiliar para simplify_expint
+   Extrae el coeficiente de fname(u) en expr
+   navegando el árbol (robusto con fracciones)
+   ════════════════════════════════════════════ */
+get_func_coeff(e, fname, u) := block(
+    [result: 0],
+    for term in (if not atom(e) and op(e) = "+" then args(e) else [e]) do block(
+        [t: term, sign: 1],
+
+        /* manejar negación */
+        if not atom(t) and op(t) = "-" then block(
+            t: part(t, 1),
+            sign: -1
+        ),
+
+        /* normalizar a/b → trabajar con numerador si denominador es libre */
+        if not atom(t) and op(t) = "/" then block(
+            [num: part(t,1), den: part(t,2)],
+            if freeof(fname, den) then block(
+                /* buscar fname(u) dentro del numerador */
+                if not atom(num) and op(num) = fname
+                   and ratsimp(part(num,1) - u) = 0
+                then result: result + sign * ratsimp(1/den)
+                else if not atom(num) and op(num) = "*" then block(
+                    [has_f: false],
+                    for s in args(num) do
+                        if not atom(s) and op(s) = fname
+                           and ratsimp(part(s,1) - u) = 0
+                        then has_f: true,
+                    if has_f then
+                        result: result + sign * ratsimp(num / (den * apply(fname, [u])))
+                )
+            )
+        )
+        /* caso sin división */
+        else if not atom(t) and op(t) = fname
+           and ratsimp(part(t,1) - u) = 0
+        then result: result + sign
+        else if not atom(t) and op(t) = "*" then block(
+            [has_f: false],
+            for s in args(t) do
+                if not atom(s) and op(s) = fname
+                   and ratsimp(part(s,1) - u) = 0
+                then has_f: true,
+            if has_f then
+                result: result + sign * ratsimp(t / apply(fname, [u]))
+        )
+    ),
+    result
+)$
+
+/* ════════════════════════════════════════════
+   SIMPLIFY_EXPINT — post-procesador opcional
+   Shi(u) + Chi(u) → Ei(u)
+   Chi(u) - Shi(u) → Ei(-u)
+   Ei(log(x))      → li(x)
+   Ei(-log(x))     → li(1/x)
+   ════════════════════════════════════════════ */
+simplify_expint(expr) := block(
+    [e: expand(expr),
+     all_args: [], processed: [],
+     result: 0, rest: 0],
+
+    if freeof('expintegral_shi, e) and freeof('expintegral_chi, e)
+    then return(e),
+
+    /* Recolectar argumentos de Shi y Chi */
+    for term in (if not atom(e) and op(e) = "+" then args(e) else [e]) do block(
+        [t: term],
+        /* bajar negación */
+        if not atom(t) and op(t) = "-" then t: part(t, 1),
+        /* bajar división si denominador es libre */
+        if not atom(t) and op(t) = "/" then block(
+            [num: part(t,1), den: part(t,2)],
+            if freeof('expintegral_shi, den) and freeof('expintegral_chi, den)
+            then t: num
+        ),
+        /* bajar multiplicación */
+        if not atom(t) and op(t) = "*" then
+            for s in args(t) do (
+                if not atom(s) and op(s) = 'expintegral_shi
+                then all_args: cons(part(s,1), all_args)
+                else if not atom(s) and op(s) = 'expintegral_chi
+                then all_args: cons(part(s,1), all_args)
+            )
+        else if not atom(t) and op(t) = 'expintegral_shi
+        then all_args: cons(part(t,1), all_args)
+        else if not atom(t) and op(t) = 'expintegral_chi
+        then all_args: cons(part(t,1), all_args)
+    ),
+    all_args: unique(all_args),
+
+    /* Términos sin Shi/Chi */
+    for term in (if not atom(e) and op(e) = "+" then args(e) else [e]) do
+        if freeof('expintegral_shi, term) and freeof('expintegral_chi, term)
+        then rest: rest + term,
+
+    /* Procesar cada argumento */
+    for u in all_args do block(
+        [neg_u: ratsimp(-u), k_shi, k_chi],
+
+        if not member(u, processed) and not member(neg_u, processed) then block(
+            processed: cons(u, cons(neg_u, processed)),
+
+            k_shi: get_func_coeff(e, 'expintegral_shi, u),
+            k_chi: get_func_coeff(e, 'expintegral_chi, u),
+
+            /* Shi(u) + Chi(u) → Ei(u) */
+            if ratsimp(k_shi - k_chi) = 0 and k_shi # 0 then
+                result: result + k_shi * expintegral_ei(u)
+
+            /* Chi(u) - Shi(u) → Ei(-u) */
+            else if ratsimp(k_shi + k_chi) = 0 and k_chi # 0 then
+                result: result + k_chi * expintegral_ei(-u)
+
+            /* mixto */
+            else (
+                if k_shi # 0 then result: result + k_shi * expintegral_shi(u),
+                if k_chi # 0 then result: result + k_chi * expintegral_chi(u)
+            )
+        )
+    ),
+
+    result: result + rest,
+
+    /* Ei(log(x)) → li(x),  Ei(-log(x)) → li(1/x) */
+    result: subst(
+        lambda([u],
+            if not atom(u) and op(u) = 'log
+            then li(part(u,1))
+            else if not atom(u) and op(u) = "-"
+                 and not atom(part(u,1)) and op(part(u,1)) = 'log
+            then li(1/part(part(u,1),1))
+            else expintegral_ei(u)),
+        expintegral_ei, result),
+
+    result
+)$
