@@ -1,1 +1,3 @@
-// placeholder for dft.routes
+import { Router } from "express";
+
+export const dftRouter = Router();

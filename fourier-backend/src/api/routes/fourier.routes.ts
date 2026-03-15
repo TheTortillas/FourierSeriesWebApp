@@ -1,1 +1,3 @@
-// placeholder for fourier.routes
+import { Router } from "express";
+
+export const fourierRouter = Router();
