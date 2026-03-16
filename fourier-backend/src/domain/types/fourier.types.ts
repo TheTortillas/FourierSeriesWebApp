@@ -19,20 +19,24 @@ export interface PiecewiseFourierInput {
 }
 
 export interface FourierCoefficients {
-  a0?: string;
-  an?: string;
-  bn?: string;
-  cn?: string;
+  a0?: SymbolicExpression;
+  an?: SymbolicExpression;
+  bn?: SymbolicExpression;
+  cn?: SymbolicExpression;
 }
-
 export interface FourierResult {
   input: FourierInput | PiecewiseFourierInput;
   coefficients: FourierCoefficients;
-  series: string;
-  simplifications?: Record<string, string>;
+  series: SymbolicExpression;
+  simplifications?: Record<string, SymbolicExpression>;
+  validation?: ValidationResult;
   executionTimeMs: number;
 }
 
+export interface SymbolicExpression {
+  tex: string;
+  maxima: string;
+}
 export type SingularityType =
   | "removible"
   | "salto"

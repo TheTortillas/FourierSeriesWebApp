@@ -1,6 +1,6 @@
-import type { FourierResult } from "../types/fourier.types";
+import type { FourierResult, SymbolicExpression } from "../types/fourier.types";
 
 export interface IPostProcessor {
-  canProcess(raw: string): boolean;
+  canProcess(expr: SymbolicExpression): boolean;
   process(result: FourierResult): Promise<FourierResult>;
 }
