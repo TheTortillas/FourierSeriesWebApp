@@ -1,5 +1,7 @@
 import express, { Application } from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./api/swagger";
 import { fourierRouter } from "./api/routes/fourier.routes";
 import { dftRouter } from "./api/routes/dft.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
@@ -10,6 +12,7 @@ export function createApp(): Application {
   app.use(cors());
   app.use(express.json());
 
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.use("/api/fourier", fourierRouter);
   app.use("/api/dft", dftRouter);
 

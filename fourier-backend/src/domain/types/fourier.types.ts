@@ -2,7 +2,6 @@ export type SeriesType = "trigonometric" | "halfRange" | "complex";
 
 export interface FourierInput {
   func: string;
-  period: number;
   seriesType: SeriesType;
 }
 
@@ -14,7 +13,6 @@ export interface PiecewiseSegment {
 
 export interface PiecewiseFourierInput {
   segments: PiecewiseSegment[];
-  period: number;
   seriesType: SeriesType;
 }
 
