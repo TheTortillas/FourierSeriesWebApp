@@ -1,0 +1,62 @@
+/* ═══════════════════════════════════════════════════════════════
+   Serie de Fourier de Medio Rango
+   Input:  FUNC_INPUT  → matrix con tramos [expr, a, b]
+           INTVAR      → variable de integración (default x)
+   Calcula: Serie Seno (extensión impar) y Serie Coseno (extensión par)
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+
+/* Número de tramos */
+pieces: length(FUNC_INPUT);
+
+/* Intervalo y periodo */
+inicio: FUNC_INPUT[1][2];
+fin: FUNC_INPUT[pieces][3];
+T: fin - inicio;
+w0: %pi / T;
+
+/* Núcleos */
+cos_core: cos(n * w0 * INTVAR);
+sin_core: sin(n * w0 * INTVAR);
+
+/* Acumuladores */
+an_acum: 0;
+bn_acum: 0;
+a0_acum: 0;
+
+/* Cálculo de coeficientes */
+for i:1 thru pieces do (
+    trozo: FUNC_INPUT[i],
+    f_i: trozo[1],
+    a: trozo[2],
+    b: trozo[3],
+    a0_acum: a0_acum + (2/T) * integrate(f_i, INTVAR, a, b),
+    an_acum: an_acum + (2/T) * integrate(f_i * cos_core, INTVAR, a, b),
+    bn_acum: bn_acum + (2/T) * integrate(f_i * sin_core, INTVAR, a, b)
+);
+
+/* Coeficientes crudos */
+Coeff_A0: a0_acum / 2;
+Coeff_An: an_acum;
+Coeff_Bn: bn_acum;
+
+/* Series generales formales */
+serie_coseno: Coeff_A0 + 'sum(Coeff_An * cos(n * w0 * INTVAR), n, 1, inf);
+serie_seno: 'sum(Coeff_Bn * sin(n * w0 * INTVAR), n, 1, inf);
+
+/* Output estructurado */
+print("__A0_MAXIMA__")$ print(string(Coeff_A0))$
+print("__A0_TEX__")$    tex(Coeff_A0)$
+print("__AN_MAXIMA__")$ print(string(Coeff_An))$
+print("__AN_TEX__")$    tex(Coeff_An)$
+print("__BN_MAXIMA__")$ print(string(Coeff_Bn))$
+print("__BN_TEX__")$    tex(Coeff_Bn)$
+print("__W0_MAXIMA__")$ print(string(w0))$
+print("__W0_TEX__")$    tex(w0)$
+print("__SERIES_COSENO_MAXIMA__")$ print(string(serie_coseno))$
+print("__SERIES_COSENO_TEX__")$    tex(serie_coseno)$
+print("__SERIES_SENO_MAXIMA__")$   print(string(serie_seno))$
+print("__SERIES_SENO_TEX__")$      tex(serie_seno)$
+
+kill(all)$

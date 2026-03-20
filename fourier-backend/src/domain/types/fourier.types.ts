@@ -32,6 +32,15 @@ export interface FourierResult {
   executionTimeMs: number;
 }
 
+export interface HalfRangeResult {
+  input: PiecewiseFourierInput;
+  coefficients: FourierCoefficients;
+  seriesCosine: SymbolicExpression;
+  seriesSine: SymbolicExpression;
+  validation?: ValidationResult;
+  executionTimeMs: number;
+}
+
 export interface SymbolicExpression {
   tex: string;
   maxima: string;

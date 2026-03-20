@@ -1,5 +1,8 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { trigonometricService } from "../../infrastructure/container";
+import {
+  halfRangeService,
+  trigonometricService,
+} from "../../infrastructure/container";
 import { validateFourierInput } from "../middlewares/validate";
 import type { PiecewiseFourierInput } from "../../domain/types/fourier.types";
 
@@ -84,6 +87,47 @@ fourierRouter.post(
         nTerms: number;
       };
       const result = await trigonometricService.calculateTerms(input, nTerms);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/fourier/half-range:
+ *   post:
+ *     summary: Calcula las series de Fourier de medio rango (seno y coseno)
+ *     tags: [Fourier]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/FourierInput'
+ *           example:
+ *             segments:
+ *               - expression: "x"
+ *                 from: "0"
+ *                 to: "%pi"
+ *             seriesType: "halfRange"
+ *             intVar: "x"
+ *     responses:
+ *       200:
+ *         description: Series calculadas exitosamente
+ *       400:
+ *         description: Input inválido
+ *       500:
+ *         description: Error de cálculo en Maxima
+ */
+fourierRouter.post(
+  "/half-range",
+  validateFourierInput,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = req.body as PiecewiseFourierInput;
+      const result = await halfRangeService.calculate(input);
       res.json(result);
     } catch (err) {
       next(err);

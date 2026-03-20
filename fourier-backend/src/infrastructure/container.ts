@@ -2,6 +2,7 @@ import { MaximaRunner } from "./maxima/maximaRunner";
 import { MaximaPostProcessor } from "./postprocessor/maximaPostProcessor";
 import { AuxiliaryService } from "../application/auxiliary/auxiliaryService";
 import { TrigonometricService } from "../application/fourier/trigonometric.service";
+import { HalfRangeService } from "../application/fourier/halfRange.service";
 
 const runner = new MaximaRunner();
 const postProcessor = new MaximaPostProcessor(runner);
@@ -11,5 +12,16 @@ const trigonometricService = new TrigonometricService(
   postProcessor,
   auxiliaryService,
 );
+const halfRangeService = new HalfRangeService(
+  runner,
+  postProcessor,
+  auxiliaryService,
+);
 
-export { runner, postProcessor, auxiliaryService, trigonometricService };
+export {
+  runner,
+  postProcessor,
+  auxiliaryService,
+  trigonometricService,
+  halfRangeService,
+};
