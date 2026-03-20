@@ -16,8 +16,8 @@ T: fin - inicio;
 w0: 2 * %pi / T;
     
 /* Núcleos */
-cos_core: cos(n * w0 * x);
-sin_core: sin(n * w0 * x);
+cos_core: cos(n * w0 * INTVAR);
+sin_core: sin(n * w0 * INTVAR);
 
 /* Acumuladores */
 a0_acum: 0;
@@ -30,9 +30,9 @@ for i:1 thru pieces do (
     f_i: trozo[1],
     a: trozo[2],
     b: trozo[3],
-    a0_acum: a0_acum + (2/T) * integrate(f_i, x, a, b),
-    an_acum: an_acum + (2/T) * integrate(f_i * cos_core, x, a, b),
-    bn_acum: bn_acum + (2/T) * integrate(f_i * sin_core, x, a, b)
+    a0_acum: a0_acum + (2/T) * integrate(f_i, INTVAR, a, b),
+    an_acum: an_acum + (2/T) * integrate(f_i * cos_core, INTVAR, a, b),
+    bn_acum: bn_acum + (2/T) * integrate(f_i * sin_core, INTVAR, a, b)
 );
 
 /* Coeficientes crudos */
@@ -41,7 +41,7 @@ Coeff_An: an_acum;
 Coeff_Bn: bn_acum;
 
 /* Serie general formal */
-serie_general: Coeff_A0 + 'sum(Coeff_An * cos(n * w0 * x) + Coeff_Bn * sin(n * w0 * x), n, 1, inf);
+serie_general: Coeff_A0 + 'sum(Coeff_An * cos(n * w0 * INTVAR) + Coeff_Bn * sin(n * w0 * INTVAR), n, 1, inf);
 
 /* Output estructurado */
 print("__A0_MAXIMA__")$ print(string(Coeff_A0))$

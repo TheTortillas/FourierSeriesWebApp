@@ -45,6 +45,11 @@ const options: Options = {
               type: "string",
               enum: ["trigonometric", "halfRange", "complex"],
             },
+            intVar: {
+              type: "string",
+              description: "Variable de integración (default: x)",
+              example: "x",
+            },
           },
         },
         SymbolicExpression: {

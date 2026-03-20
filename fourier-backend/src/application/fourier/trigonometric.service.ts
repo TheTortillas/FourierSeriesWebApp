@@ -31,6 +31,7 @@ export class TrigonometricService {
 
   async calculate(input: PiecewiseFourierInput): Promise<FourierResult> {
     const startTime = Date.now();
+    const intVar = input.intVar ?? "x";
 
     const validation = await this.auxiliaryService.validateFunction(
       input.segments,
@@ -51,11 +52,12 @@ export class TrigonometricService {
 
     const fullScript = `
 FUNC_INPUT: ${funcInput};
+INTVAR: ${intVar};
 ${script}
 `;
 
     const result = await this.runner.run({ script: fullScript });
-    console.log("RAW RUNNER OUTPUT:", JSON.stringify(result.raw));
+    //console.log("RAW RUNNER OUTPUT:", JSON.stringify(result.raw));
 
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);

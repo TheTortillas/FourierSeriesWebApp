@@ -33,5 +33,10 @@ export function validateFourierInput(
     return;
   }
 
+  if (body.intVar && !/^[a-zA-Z][a-zA-Z0-9]*$/.test(body.intVar)) {
+    res.status(400).json({ error: "intVar must be a valid variable name" });
+    return;
+  }
+
   next();
 }

@@ -23,6 +23,7 @@ export const fourierRouter = Router();
  *                 from: "-%pi"
  *                 to: "%pi"
  *             seriesType: "trigonometric"
+ *             intVar: "x"
  *     responses:
  *       200:
  *         description: Serie calculada exitosamente

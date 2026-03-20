@@ -14,6 +14,7 @@ export interface PiecewiseSegment {
 export interface PiecewiseFourierInput {
   segments: PiecewiseSegment[];
   seriesType: SeriesType;
+  intVar?: string;
 }
 
 export interface FourierCoefficients {
