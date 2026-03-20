@@ -58,5 +58,3 @@ print("__SERIES_COSENO_MAXIMA__")$ print(string(serie_coseno))$
 print("__SERIES_COSENO_TEX__")$    tex(serie_coseno)$
 print("__SERIES_SENO_MAXIMA__")$   print(string(serie_seno))$
 print("__SERIES_SENO_TEX__")$      tex(serie_seno)$
-
-kill(all)$

@@ -54,6 +54,7 @@ export class TrigonometricService {
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
+kill(all)$
 `;
 
     const result = await this.runner.run({ script: fullScript });

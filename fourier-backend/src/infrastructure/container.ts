@@ -3,6 +3,7 @@ import { MaximaPostProcessor } from "./postprocessor/maximaPostProcessor";
 import { AuxiliaryService } from "../application/auxiliary/auxiliaryService";
 import { TrigonometricService } from "../application/fourier/trigonometric.service";
 import { HalfRangeService } from "../application/fourier/halfRange.service";
+import { ComplexService } from "../application/fourier/complex.service";
 
 const runner = new MaximaRunner();
 const postProcessor = new MaximaPostProcessor(runner);
@@ -17,6 +18,11 @@ const halfRangeService = new HalfRangeService(
   postProcessor,
   auxiliaryService,
 );
+const complexService = new ComplexService(
+  runner,
+  postProcessor,
+  auxiliaryService,
+);
 
 export {
   runner,
@@ -24,4 +30,5 @@ export {
   auxiliaryService,
   trigonometricService,
   halfRangeService,
+  complexService,
 };

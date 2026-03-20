@@ -23,6 +23,7 @@ export interface FourierCoefficients {
   bn?: SymbolicExpression;
   cn?: SymbolicExpression;
 }
+
 export interface FourierResult {
   input: FourierInput | PiecewiseFourierInput;
   coefficients: FourierCoefficients;
@@ -39,6 +40,29 @@ export interface HalfRangeResult {
   seriesSine: SymbolicExpression;
   validation?: ValidationResult;
   executionTimeMs: number;
+}
+
+export interface ComplexFourierResult {
+  input: PiecewiseFourierInput;
+  coefficients: {
+    c0: SymbolicExpression;
+    cn: SymbolicExpression;
+  };
+  seriesComplex: SymbolicExpression;
+  validation?: ValidationResult;
+  executionTimeMs: number;
+}
+
+export interface ComplexTerm {
+  n: number;
+  complex: SymbolicExpression;
+  real: SymbolicExpression;
+  amplitude: number;
+  phase: number;
+}
+
+export interface ComplexTermsResult {
+  terms: ComplexTerm[];
 }
 
 export interface SymbolicExpression {

@@ -54,5 +54,3 @@ print("__W0_MAXIMA__")$ print(string(w0))$
 print("__W0_TEX__")$    tex(w0)$
 print("__SERIES_MAXIMA__")$ print(string(serie_general))$
 print("__SERIES_TEX__")$    tex(serie_general)$
-
-kill(all)$

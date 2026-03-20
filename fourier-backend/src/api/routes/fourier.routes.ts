@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import {
+  complexService,
   halfRangeService,
   trigonometricService,
 } from "../../infrastructure/container";
@@ -128,6 +129,88 @@ fourierRouter.post(
     try {
       const input = req.body as PiecewiseFourierInput;
       const result = await halfRangeService.calculate(input);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/fourier/complex:
+ *   post:
+ *     summary: Calcula la serie de Fourier compleja
+ *     tags: [Fourier]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/FourierInput'
+ *           example:
+ *             segments:
+ *               - expression: "exp(-x)"
+ *                 from: "-%pi"
+ *                 to: "%pi"
+ *             seriesType: "complex"
+ *             intVar: "x"
+ *     responses:
+ *       200:
+ *         description: Serie calculada exitosamente
+ *       400:
+ *         description: Input inválido
+ *       500:
+ *         description: Error de cálculo en Maxima
+ */
+fourierRouter.post(
+  "/complex",
+  validateFourierInput,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = req.body as PiecewiseFourierInput;
+      const result = await complexService.calculate(input);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/fourier/complex/terms:
+ *   post:
+ *     summary: Calcula los primeros N términos de la serie compleja
+ *     tags: [Fourier]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [input, nTerms]
+ *             properties:
+ *               input:
+ *                 $ref: '#/components/schemas/FourierInput'
+ *               nTerms:
+ *                 type: integer
+ *                 example: 5
+ *     responses:
+ *       200:
+ *         description: Términos calculados exitosamente
+ *       500:
+ *         description: Error de cálculo en Maxima
+ */
+fourierRouter.post(
+  "/complex/terms",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { input, nTerms } = req.body as {
+        input: PiecewiseFourierInput;
+        nTerms: number;
+      };
+      const result = await complexService.calculateTerms(input, nTerms);
       res.json(result);
     } catch (err) {
       next(err);
