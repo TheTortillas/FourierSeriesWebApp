@@ -8,6 +8,11 @@ import type {
   PiecewiseFourierInput,
   PiecewiseSegment,
 } from "../../domain/types/fourier.types";
+import {
+  buildCacheKey,
+  getFromCache,
+  setInCache,
+} from "../../infrastructure/cache/fourierCache";
 
 const HALF_RANGE_MARKERS = [
   "__A0_MAXIMA__",
@@ -32,6 +37,13 @@ export class HalfRangeService {
   ) {}
 
   async calculate(input: PiecewiseFourierInput): Promise<HalfRangeResult> {
+    const cacheKey = buildCacheKey(input);
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      //console.log(`Cache hit: ${cacheKey}`);
+      return cached as HalfRangeResult;
+    }
+
     const startTime = Date.now();
     const intVar = input.intVar ?? "x";
 
@@ -68,7 +80,7 @@ kill(all)$
 
     const parsed = parseMarkeredOutput(result.raw, HALF_RANGE_MARKERS);
 
-    return {
+    const halfRangeResult: HalfRangeResult = {
       input,
       coefficients: {
         a0: parsed["a0"],
@@ -80,6 +92,9 @@ kill(all)$
       validation,
       executionTimeMs: Date.now() - startTime,
     };
+
+    setInCache(cacheKey, halfRangeResult);
+    return halfRangeResult;
   }
 
   private buildFuncInput(segments: PiecewiseSegment[]): string {
