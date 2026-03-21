@@ -1,4 +1,5 @@
 export type SeriesType = "trigonometric" | "halfRange" | "complex";
+export type DFTMode = "signal" | "epicycles";
 
 export interface FourierInput {
   func: string;
@@ -200,5 +201,37 @@ export interface InverseFourierTransformResult {
   input: InverseFourierTransformInput;
   exists: boolean;
   results?: InverseFourierTransformRegionResult[];
+  executionTimeMs: number;
+}
+
+export interface DFTPoint {
+  x: number;
+  y: number;
+}
+
+export interface DFTCoefficient {
+  k: number;
+  re: number;
+  im: number;
+  amplitude: number;
+  amplitudePercent: number;
+  phase: number;
+  phaseInPi: string;
+  freq: number;
+}
+
+export interface DFTInput {
+  points: DFTPoint[];
+  mode: DFTMode;
+  N?: number;
+}
+
+export interface DFTResult {
+  mode: DFTMode;
+  N: number;
+  coefficients: DFTCoefficient[];
+  topCoefficients: DFTCoefficient[];
+  reconstructed: DFTPoint[];
+  rmsError: number;
   executionTimeMs: number;
 }
