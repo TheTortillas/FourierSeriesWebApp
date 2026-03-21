@@ -38,6 +38,8 @@ export class MaximaRunner implements IMaximaRunner {
       });
 
       process.on("close", (code) => {
+        // console.log("PROCESS CLOSE CODE:", code);
+        // console.log("STDERR:", stderr.slice(0, 500));
         clearTimeout(timeout);
         const raw = stdout.trim();
 
@@ -58,7 +60,7 @@ export class MaximaRunner implements IMaximaRunner {
         });
       });
 
-      process.stdin.write(input.script + "\n");
+      process.stdin.write(input.script + "\nquit()$\n");
       process.stdin.end();
     });
   }

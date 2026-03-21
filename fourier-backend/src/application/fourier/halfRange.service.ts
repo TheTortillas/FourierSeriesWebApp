@@ -17,6 +17,8 @@ import {
 } from "../../infrastructure/cache/fourierCache";
 
 const HALF_RANGE_MARKERS = [
+  "__A0RAW_MAXIMA__",
+  "__A0RAW_TEX__",
   "__A0_MAXIMA__",
   "__A0_TEX__",
   "__AN_MAXIMA__",
@@ -59,6 +61,8 @@ export class HalfRangeService {
         coefficients: {},
         seriesCosine: { tex: "", maxima: "" },
         seriesSine: { tex: "", maxima: "" },
+        w0: { tex: "", maxima: "" },
+        a0Raw: { tex: "", maxima: "" },
         validation,
         executionTimeMs: Date.now() - startTime,
       };
@@ -91,6 +95,8 @@ kill(all)$
       },
       seriesCosine: parsed["series_coseno"] ?? { tex: "", maxima: "" },
       seriesSine: parsed["series_seno"] ?? { tex: "", maxima: "" },
+      w0: parsed["w0"] ?? { tex: "", maxima: "" },
+      a0Raw: parsed["a0raw"],
       validation,
       executionTimeMs: Date.now() - startTime,
     };
@@ -103,19 +109,51 @@ kill(all)$
     input: PiecewiseFourierInput,
     nTerms: number,
   ): Promise<HalfRangeTermsResult> {
+    const startTime = Date.now();
     const intVar = input.intVar ?? "x";
-    const script = await loadScript("halfRange", "halfRange.mac");
+    const script = await loadScript("halfRange", "halfRange_coeffs.mac");
     const funcInput = this.buildFuncInput(input.segments);
+
+    const quadIntegralAn = input.segments
+      .map(
+        (s) =>
+          `first(quad_qags((2/T) * (${s.expression}) * cos(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
+      )
+      .join(" + ");
+
+    const quadIntegralBn = input.segments
+      .map(
+        (s) =>
+          `first(quad_qags((2/T) * (${s.expression}) * sin(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
+      )
+      .join(" + ");
 
     const termsScript = `
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+Coeff_An: if not freeof(gamma_incomplete, Coeff_An)
+  then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_An, ${intVar})))],
+    if cleaned = [] then Coeff_An else first(cleaned))
+  else Coeff_An$
+Coeff_Bn: if not freeof(gamma_incomplete, Coeff_Bn)
+  then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_Bn, ${intVar})))],
+    if cleaned = [] then Coeff_Bn else first(cleaned))
+  else Coeff_Bn$
 block(
   [],
   for i: 1 thru ${nTerms} do (
-    an_i: factor(ratsimp(subst(n=i, Coeff_An))),
-    bn_i: factor(ratsimp(subst(n=i, Coeff_Bn))),
+    an_i: ratsimp(factor(subst(n=i, Coeff_An))),
+    bn_i: ratsimp(factor(subst(n=i, Coeff_Bn))),
+    an_float: block([result: errcatch(float(an_i))],
+      if result = [] or not numberp(first(result))
+      then ${quadIntegralAn}
+      else first(result)),
+    bn_float: block([result: errcatch(float(bn_i))],
+      if result = [] or not numberp(first(result))
+      then ${quadIntegralBn}
+      else first(result)),
     print("__TERM_START__"),
     print(i),
     print("__AN_MAXIMA__"),
@@ -125,7 +163,11 @@ block(
     print("__BN_MAXIMA__"),
     print(string(bn_i)),
     print("__BN_TEX__"),
-    tex(bn_i)
+    tex(bn_i),
+    print("__AN_FLOAT__"),
+    print(string(an_float)),
+    print("__BN_FLOAT__"),
+    print(string(bn_float))
   )
 )$
 kill(all)$
@@ -137,7 +179,10 @@ kill(all)$
       throw new Error(`Maxima error: ${result.error}`);
     }
 
-    return { terms: this.parseTerms(result.raw) };
+    return {
+      terms: this.parseTerms(result.raw),
+      executionTimeMs: Date.now() - startTime,
+    };
   }
 
   private parseTerms(raw: string): HalfRangeTerm[] {
@@ -162,13 +207,24 @@ kill(all)$
         "__BN_TEX__",
       );
       const bnTex = this.extractTex(
-        this.extractBetween(block, "__BN_TEX__", null),
+        this.extractBetween(block, "__BN_TEX__", "__AN_FLOAT__"),
       );
+      const anFloatStr = this.extractBetween(
+        block,
+        "__AN_FLOAT__",
+        "__BN_FLOAT__",
+      );
+      const bnFloatStr = this.extractBetween(block, "__BN_FLOAT__", null);
 
       return {
         n,
         an: { maxima: anMaxima.replace(/false/g, "").trim(), tex: anTex },
         bn: { maxima: bnMaxima.replace(/false/g, "").trim(), tex: bnTex },
+        anFloat: parseFloat(anFloatStr.replace(/false/g, "").trim()) || 0,
+        bnFloat:
+          parseFloat(
+            bnFloatStr.replace(/false/g, "").trim().split("\n")[0] ?? "0",
+          ) || 0,
       };
     });
   }

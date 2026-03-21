@@ -4,10 +4,10 @@
            N_TERMS     → número de términos para la serie parcial
    ═══════════════════════════════════════════════════════════════ */
 
+display2d: false$
+
 /* Número de tramos */
 pieces: length(FUNC_INPUT);
-
-display2d: false$
 
 /* Intervalo y periodo */
 inicio: FUNC_INPUT[1][2];
@@ -36,6 +36,7 @@ for i:1 thru pieces do (
 );
 
 /* Coeficientes crudos */
+Coeff_A0_Raw: a0_acum;
 Coeff_A0: a0_acum / 2;
 Coeff_An: an_acum;
 Coeff_Bn: bn_acum;
@@ -44,6 +45,8 @@ Coeff_Bn: bn_acum;
 serie_general: Coeff_A0 + 'sum(Coeff_An * cos(n * w0 * INTVAR) + Coeff_Bn * sin(n * w0 * INTVAR), n, 1, inf);
 
 /* Output estructurado */
+print("__A0RAW_MAXIMA__")$ print(string(Coeff_A0_Raw))$
+print("__A0RAW_TEX__")$    tex(Coeff_A0_Raw)$
 print("__A0_MAXIMA__")$ print(string(Coeff_A0))$
 print("__A0_TEX__")$    tex(Coeff_A0)$
 print("__AN_MAXIMA__")$ print(string(Coeff_An))$

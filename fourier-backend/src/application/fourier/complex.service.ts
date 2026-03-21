@@ -57,6 +57,7 @@ export class ComplexService {
           cn: { tex: "", maxima: "" },
         },
         seriesComplex: { tex: "", maxima: "" },
+        w0: { tex: "", maxima: "" },
         validation,
         executionTimeMs: Date.now() - startTime,
       };
@@ -87,6 +88,7 @@ kill(all)$
         cn: parsed["cn"] ?? { tex: "", maxima: "" },
       },
       seriesComplex: parsed["series_complex"] ?? { tex: "", maxima: "" },
+      w0: parsed["w0"] ?? { tex: "", maxima: "" },
       validation,
       executionTimeMs: Date.now() - startTime,
     };
@@ -94,27 +96,50 @@ kill(all)$
     setInCache(cacheKey, complexResult);
     return complexResult;
   }
-
   async calculateTerms(
     input: PiecewiseFourierInput,
     nTerms: number,
   ): Promise<ComplexTermsResult> {
+    const startTime = Date.now();
     const intVar = input.intVar ?? "x";
-    const script = await loadScript("complex", "complex.mac");
+    const script = await loadScript("complex", "complex_coeffs.mac");
     const funcInput = this.buildFuncInput(input.segments);
+
+    const quadIntegralReal = input.segments
+      .map(
+        (s) =>
+          `float(realpart(rectform((1/T) * integrate((${s.expression}) * (exp(%i*i*w0*${intVar}) + exp(-%i*i*w0*${intVar})), ${intVar}, ${s.from}, ${s.to}))))`,
+      )
+      .join(" + ");
 
     const termsScript = `
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+Coeff_n: if not freeof(gamma_incomplete, Coeff_n)
+  then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_n, ${intVar})))],
+    if cleaned = [] then Coeff_n else first(cleaned))
+  else Coeff_n$
 block(
-  [cn_val, cn_neg_val, term_real, amp, ph],
+  [cn_val, cn_neg_val, term_real, amp, ph, real_float],
   for i: 1 thru ${nTerms} do (
-    cn_val: ratsimp(subst(n=i, Coeff_n)),
-    cn_neg_val: ratsimp(subst(n=-i, Coeff_n)),
+    cn_val: ratsimp(factor(subst(n=i, Coeff_n))),
+    cn_neg_val: ratsimp(factor(subst(n=-i, Coeff_n))),
     term_real: factor(ratsimp(realpart(rectform(
       cn_val * exp(%i * i * w0 * ${intVar}) + cn_neg_val * exp(-%i * i * w0 * ${intVar})
     )))),
+    term_real: block([cleaned: errcatch(simplify_expint(clean_integral(term_real, ${intVar})))],
+      if cleaned = [] then term_real else first(cleaned)),
+    real_float: block(
+      [cos_coeff: coeff(term_real, cos(i * w0 * ${intVar})),
+       sin_coeff: coeff(term_real, sin(i * w0 * ${intVar})),
+       result],
+      result: errcatch(float(cos_coeff + sin_coeff)),
+      if result = [] or not numberp(first(result))
+      then ${quadIntegralReal}
+      else first(result)
+    ),
     amp: float(abs(cn_val)),
     ph: float(carg(cn_val)),
     print("__TERM_START__"),
@@ -131,6 +156,8 @@ block(
     print(string(term_real)),
     print("__REAL_TEX__"),
     tex(term_real),
+    print("__REAL_FLOAT__"),
+    print(string(real_float)),
     print("__AMPLITUDE__"),
     print(string(amp)),
     print("__PHASE__"),
@@ -146,14 +173,10 @@ kill(all)$
       throw new Error(`Maxima error: ${result.error}`);
     }
 
-    return { terms: this.parseTerms(result.raw) };
-  }
-
-  private buildFuncInput(segments: PiecewiseSegment[]): string {
-    const rows = segments
-      .map((s) => `[${s.expression}, ${s.from}, ${s.to}]`)
-      .join(", ");
-    return `matrix(${rows})`;
+    return {
+      terms: this.parseTerms(result.raw),
+      executionTimeMs: Date.now() - startTime,
+    };
   }
 
   private parseTerms(raw: string): ComplexTerm[] {
@@ -186,7 +209,12 @@ kill(all)$
         "__REAL_TEX__",
       );
       const realTex = this.extractTex(
-        this.extractBetween(block, "__REAL_TEX__", "__AMPLITUDE__"),
+        this.extractBetween(block, "__REAL_TEX__", "__REAL_FLOAT__"),
+      );
+      const realFloatStr = this.extractBetween(
+        block,
+        "__REAL_FLOAT__",
+        "__AMPLITUDE__",
       );
       const amplitudeStr = this.extractBetween(
         block,
@@ -203,6 +231,7 @@ kill(all)$
           tex: cnNegTex,
         },
         real: { maxima: realMaxima.replace(/false/g, "").trim(), tex: realTex },
+        realFloat: parseFloat(realFloatStr.replace(/false/g, "").trim()) || 0,
         amplitude: parseFloat(amplitudeStr.replace(/false/g, "").trim()) || 0,
         phase:
           parseFloat(
@@ -210,6 +239,13 @@ kill(all)$
           ) || 0,
       };
     });
+  }
+
+  private buildFuncInput(segments: PiecewiseSegment[]): string {
+    const rows = segments
+      .map((s) => `[${s.expression}, ${s.from}, ${s.to}]`)
+      .join(", ");
+    return `matrix(${rows})`;
   }
 
   private extractBetween(
