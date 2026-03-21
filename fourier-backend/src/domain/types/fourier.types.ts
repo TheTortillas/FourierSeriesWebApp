@@ -163,3 +163,25 @@ export interface ComplexTermsResult {
   terms: ComplexTerm[];
   executionTimeMs: number;
 }
+
+export interface FourierTransformInput {
+  segments: PiecewiseSegment[];
+  intVar?: string;
+  transVar?: string;
+}
+
+export interface FourierTransformResult {
+  input: FourierTransformInput;
+  exists: boolean;
+  F?: SymbolicExpression;
+  realPart?: SymbolicExpression;
+  imagPart?: SymbolicExpression;
+  executionTimeMs: number;
+}
+
+export interface InverseFourierTransformResult {
+  input: FourierTransformInput;
+  exists: boolean;
+  f?: SymbolicExpression;
+  executionTimeMs: number;
+}

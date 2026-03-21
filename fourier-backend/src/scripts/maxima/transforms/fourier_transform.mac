@@ -1,0 +1,42 @@
+/* ═══════════════════════════════════════════════════════════════
+   Transformada Continua de Fourier
+   Input:  FUNC_INPUT  → matrix con tramos [expr, a, b]
+           INTVAR      → variable de integración (default t)
+           TRANSVAR    → variable de transformada (default w)
+   Convención de ingeniería: F(w) = integral f(t)*exp(-i*w*t)dt
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+%iargs: false$
+
+declare(TRANSVAR, real)$
+
+pieces: length(FUNC_INPUT);
+
+/* Calcular transformada sumando sobre todos los trozos */
+F_acum: 0$
+for i: 1 thru pieces do (
+    trozo: FUNC_INPUT[i],
+    f_i: trozo[1],
+    a: trozo[2],
+    b: trozo[3],
+    F_acum: F_acum + integrate(f_i * exp(-%i * TRANSVAR * INTVAR), INTVAR, a, b)
+)$
+
+F: F_acum$
+
+/* Verificar si la transformada existe */
+transform_exists: freeof('integrate, F) and freeof('limit, F)$
+
+/* Parte real e imaginaria */
+F_real: ratsimp(realpart(rectform(F)))$
+F_imag: ratsimp(imagpart(rectform(F)))$
+
+/* Output */
+print("__EXISTS__")$ print(string(transform_exists))$
+print("__F_MAXIMA__")$ print(string(F))$
+print("__F_TEX__")$ tex(F)$
+print("__REAL_MAXIMA__")$ print(string(F_real))$
+print("__REAL_TEX__")$ tex(F_real)$
+print("__IMAG_MAXIMA__")$ print(string(F_imag))$
+print("__IMAG_TEX__")$ tex(F_imag)$
