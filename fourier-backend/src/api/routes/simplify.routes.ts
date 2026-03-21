@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { simplifyService } from "../../infrastructure/container";
 import type { SimplifyInput } from "../../domain/types/fourier.types";
+import { sanitizeExpression } from "../middlewares/sanitize";
 
 export const simplifyRouter = Router();
 
@@ -52,6 +53,12 @@ simplifyRouter.post(
 
       if (!input.expression || !input.profile) {
         res.status(400).json({ error: "expression and profile are required" });
+        return;
+      }
+
+      const sanitizeCheck = sanitizeExpression(input.expression);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
         return;
       }
 

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import type { PiecewiseFourierInput } from "../../domain/types/fourier.types";
+import { sanitizeSegments } from "./sanitize";
 
 export function validateFourierInput(
   req: Request,
@@ -35,6 +36,12 @@ export function validateFourierInput(
 
   if (body.intVar && !/^[a-zA-Z][a-zA-Z0-9]*$/.test(body.intVar)) {
     res.status(400).json({ error: "intVar must be a valid variable name" });
+    return;
+  }
+
+  const sanitizeCheck = sanitizeSegments(body.segments);
+  if (!sanitizeCheck.valid) {
+    res.status(400).json({ error: sanitizeCheck.error });
     return;
   }
 
