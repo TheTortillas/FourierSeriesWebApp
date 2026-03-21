@@ -5,6 +5,8 @@ import { SimplifyService } from "../application/auxiliary/simplifyService";
 import { TrigonometricService } from "../application/fourier/trigonometric.service";
 import { HalfRangeService } from "../application/fourier/halfRange.service";
 import { ComplexService } from "../application/fourier/complex.service";
+import { FourierTransformService } from "../application/transforms/fourierTransform.service";
+import { DFTService } from "../application/transforms/dft.service";
 
 const runner = new MaximaRunner();
 const postProcessor = new MaximaPostProcessor(runner);
@@ -25,6 +27,8 @@ const complexService = new ComplexService(
   postProcessor,
   auxiliaryService,
 );
+const fourierTransformService = new FourierTransformService(runner);
+const dftService = new DFTService(runner);
 
 export {
   runner,
@@ -34,4 +38,6 @@ export {
   trigonometricService,
   halfRangeService,
   complexService,
+  fourierTransformService,
+  dftService,
 };

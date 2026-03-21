@@ -1,0 +1,60 @@
+/* ═══════════════════════════════════════════════════════════════
+   Transformada Discreta de Fourier (FFT)
+   Input:  POINTS_RE   → lista de partes reales
+           POINTS_IM   → lista de partes imaginarias (zeros para señal real)
+           MODE        → "signal" o "epicycles"
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+load("fft")$
+
+N: length(POINTS_RE)$
+
+/* Construir señal compleja forzando float */
+signal: makelist(
+  float(POINTS_RE[k]) + %i * float(POINTS_IM[k]),
+  k, 1, N
+)$
+
+/* Calcular FFT */
+dft_result: fft(signal)$
+
+/* Calcular coeficientes normalizados */
+coeffs: makelist(
+  block([c: dft_result[k], phase_val, phase_pi],
+    phase_val: float(carg(c)),
+    phase_pi: string(rationalize(phase_val / float(%pi))),
+    [k-1,
+     float(realpart(c)),
+     float(imagpart(c)),
+     float(cabs(c)),
+     phase_val,
+     phase_pi]
+  ),
+  k, 1, N
+)$
+
+/* Reconstruir señal */
+reconstructed: inverse_fft(dft_result)$
+
+/* Calcular RMS error */
+rms_error: float(sqrt(
+  sum((realpart(reconstructed[k]) - POINTS_RE[k])^2 +
+      (imagpart(reconstructed[k]) - POINTS_IM[k])^2, k, 1, N) / N
+))$
+
+/* Frecuencias dominantes */
+sorted_coeffs: sort(coeffs, lambda([a, b], a[4] > b[4]))$
+top_coeffs: makelist(sorted_coeffs[k], k, 1, min(10, N))$
+
+/* Output reconstruido */
+reconstructed_points: makelist(
+  [float(realpart(reconstructed[k])), float(imagpart(reconstructed[k]))],
+  k, 1, N
+)$
+
+print("__N__")$ print(string(N))$
+print("__COEFFS__")$ print(string(coeffs))$
+print("__RECONSTRUCTED__")$ print(string(reconstructed_points))$
+print("__TOP_COEFFS__")$ print(string(top_coeffs))$
+print("__RMS_ERROR__")$ print(string(rms_error))$
