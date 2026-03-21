@@ -8,6 +8,11 @@ import type {
   PiecewiseFourierInput,
   PiecewiseSegment,
 } from "../../domain/types/fourier.types";
+import {
+  buildCacheKey,
+  getFromCache,
+  setInCache,
+} from "../../infrastructure/cache/fourierCache";
 
 const TRIG_MARKERS = [
   "__A0_MAXIMA__",
@@ -30,6 +35,12 @@ export class TrigonometricService {
   ) {}
 
   async calculate(input: PiecewiseFourierInput): Promise<FourierResult> {
+    const cacheKey = buildCacheKey(input);
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      //console.log(`Cache hit: ${cacheKey} at ${Date.now()}`);
+      return cached as FourierResult;
+    }
     const startTime = Date.now();
     const intVar = input.intVar ?? "x";
 
@@ -82,9 +93,12 @@ kill(all)$
       (parsed["an"] && this.postProcessor.canProcess(parsed["an"])) ||
       (parsed["bn"] && this.postProcessor.canProcess(parsed["bn"]))
     ) {
-      return this.postProcessor.process(fourierResult);
+      const processed = await this.postProcessor.process(fourierResult);
+      setInCache(cacheKey, processed);
+      return processed;
     }
 
+    setInCache(cacheKey, fourierResult);
     return fourierResult;
   }
 

@@ -9,6 +9,11 @@ import type {
   PiecewiseFourierInput,
   PiecewiseSegment,
 } from "../../domain/types/fourier.types";
+import {
+  buildCacheKey,
+  getFromCache,
+  setInCache,
+} from "../../infrastructure/cache/fourierCache";
 
 const COMPLEX_MARKERS = [
   "__C0_MAXIMA__",
@@ -29,6 +34,13 @@ export class ComplexService {
   ) {}
 
   async calculate(input: PiecewiseFourierInput): Promise<ComplexFourierResult> {
+    const cacheKey = buildCacheKey(input);
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      //console.log(`Cache hit: ${cacheKey}`);
+      return cached as ComplexFourierResult;
+    }
+
     const startTime = Date.now();
     const intVar = input.intVar ?? "x";
 
@@ -67,7 +79,7 @@ kill(all)$
 
     const parsed = parseMarkeredOutput(result.raw, COMPLEX_MARKERS);
 
-    return {
+    const complexResult: ComplexFourierResult = {
       input,
       coefficients: {
         c0: parsed["c0"] ?? { tex: "", maxima: "" },
@@ -77,6 +89,9 @@ kill(all)$
       validation,
       executionTimeMs: Date.now() - startTime,
     };
+
+    setInCache(cacheKey, complexResult);
+    return complexResult;
   }
 
   async calculateTerms(

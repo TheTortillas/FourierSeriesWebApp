@@ -6,6 +6,7 @@ import { fourierRouter } from "./api/routes/fourier.routes";
 import { dftRouter } from "./api/routes/dft.routes";
 import { simplifyRouter } from "./api/routes/simplify.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
+import { cacheRouter } from "./api/routes/cache.routes";
 
 export function createApp(): Application {
   const app = express();
@@ -17,6 +18,7 @@ export function createApp(): Application {
   app.use("/api/fourier", fourierRouter);
   app.use("/api/dft", dftRouter);
   app.use("/api/simplify", simplifyRouter);
+  app.use("/api/cache", cacheRouter);
 
   app.use(errorHandler);
 
