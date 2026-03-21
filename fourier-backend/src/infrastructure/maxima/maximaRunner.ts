@@ -4,8 +4,9 @@ import type {
   MaximaInput,
   MaximaResult,
 } from "../../domain/types/maxima.types";
+import { config } from "../../config/env";
 
-const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_TIMEOUT_MS = config.maxima.timeoutMs;
 
 export class MaximaRunner implements IMaximaRunner {
   run(input: MaximaInput): Promise<MaximaResult> {
