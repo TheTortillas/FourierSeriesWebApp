@@ -88,3 +88,40 @@ export interface ValidationResult {
   singularities: Singularity[];
   message?: string;
 }
+
+export type SimplificationProfile =
+  | "raw"
+  | "integer"
+  | "trigonometric"
+  | "exponential"
+  | "complete";
+
+export type SimplificationFunction =
+  | "fullratsimp"
+  | "ratsimp"
+  | "trigsimp"
+  | "trigreduce"
+  | "trigexpand"
+  | "factor"
+  | "expand"
+  | "radcan"
+  | "rectform"
+  | "polarform";
+
+export interface SimplifyInput {
+  expression: string;
+  profile: SimplificationProfile;
+  functions?: SimplificationFunction[];
+  displayFlags?: {
+    edispflag?: boolean;
+    exponentialize?: boolean;
+    demoivre?: boolean;
+  };
+}
+
+export interface SimplifyResult {
+  original: SymbolicExpression;
+  simplified: SymbolicExpression;
+  profile: SimplificationProfile;
+  functionsApplied: SimplificationFunction[];
+}

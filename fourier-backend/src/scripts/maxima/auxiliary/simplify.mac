@@ -1,0 +1,58 @@
+/* ═══════════════════════════════════════════════════════════════
+   Módulo de simplificación bajo demanda
+   Input:  EXPR_INPUT     → expresión a simplificar como string
+           PROFILE        → perfil de simplificación
+           SIMP_FUNCTIONS → lista de funciones a aplicar
+           FLAG_EDISPFLAG → flag para notación de exponenciales
+           FLAG_EXPONENT  → flag para convertir trig a exp
+           FLAG_DEMOIVRE  → flag para convertir exp a trig
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+
+/* Aplicar flags de display */
+if FLAG_EDISPFLAG then %edispflag: true$
+if FLAG_EXPONENT  then exponentialize: true$
+if FLAG_DEMOIVRE  then demoivre: true$
+
+/* Aplicar perfil */
+if PROFILE = "integer" or PROFILE = "trigonometric" or
+   PROFILE = "exponential" or PROFILE = "complete" then
+    declare(n, integer)$
+
+if PROFILE = "trigonometric" or PROFILE = "complete" then (
+    matchdeclare(kk, lambda([kk], is(evenp(kk)))),
+    matchdeclare(jj, lambda([jj], is(evenp(jj) = false))),
+    tellsimpafter(sin(((2*n+kk)*%pi)/2), 0),
+    tellsimpafter(sin(((2*n+jj)*%pi)/2), if mod(jj,4)=1 then (-1)^n else -(-1)^n)
+)$
+
+if PROFILE = "exponential" or PROFILE = "complete" then (
+    lognegint: true,
+    tellsimpafter(exp(%i * %pi * n), (-1)^n),
+    tellsimpafter(exp(%i * 2 * %pi * n), 1),
+    tellsimpafter(exp((%i * %pi * n)/2), %i^n),
+    tellsimpafter(exp(-(%i * %pi * n)/2), %i^(-n))
+)$
+
+/* Parsear expresión */
+_input_expr: parse_string(EXPR_INPUT)$
+
+/* Aplicar funciones en orden */
+_result_expr: _input_expr$
+for fn in SIMP_FUNCTIONS do (
+    if fn = "fullratsimp" then _result_expr: fullratsimp(_result_expr)
+    else if fn = "ratsimp"    then _result_expr: ratsimp(_result_expr)
+    else if fn = "trigsimp"   then _result_expr: trigsimp(_result_expr)
+    else if fn = "trigreduce" then _result_expr: trigreduce(_result_expr)
+    else if fn = "trigexpand" then _result_expr: trigexpand(_result_expr)
+    else if fn = "factor"     then _result_expr: factor(_result_expr)
+    else if fn = "expand"     then _result_expr: expand(_result_expr)
+    else if fn = "radcan"     then _result_expr: radcan(_result_expr)
+    else if fn = "rectform"   then _result_expr: rectform(_result_expr)
+    else if fn = "polarform"  then _result_expr: polarform(_result_expr)
+)$
+
+/* Output */
+print("__SIMPLIFIED_MAXIMA__")$ print(string(_result_expr))$
+print("__SIMPLIFIED_TEX__")$    tex(_result_expr)$
