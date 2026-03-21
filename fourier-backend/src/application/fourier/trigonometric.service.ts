@@ -7,6 +7,8 @@ import type {
   FourierResult,
   PiecewiseFourierInput,
   PiecewiseSegment,
+  TrigonometricTermsResult,
+  TrigonometricTerm,
 } from "../../domain/types/fourier.types";
 import {
   buildCacheKey,
@@ -105,9 +107,7 @@ kill(all)$
   async calculateTerms(
     input: PiecewiseFourierInput,
     nTerms: number,
-  ): Promise<{
-    terms: Array<{ n: number; tex: string; maxima: string; float: number[] }>;
-  }> {
+  ): Promise<TrigonometricTermsResult> {
     const intVar = input.intVar ?? "x";
     const script = await loadScript("trigonometric", "trigonometric.mac");
     const funcInput = this.buildFuncInput(input.segments);
@@ -119,15 +119,18 @@ ${script}
 block(
   [],
   for i: 1 thru ${nTerms} do (
-    an_i: ratsimp(subst(n=i, Coeff_An)),
-    bn_i: ratsimp(subst(n=i, Coeff_Bn)),
-    term: factor(ratsimp(an_i * cos(i * w0 * ${intVar}) + bn_i * sin(i * w0 * ${intVar}))),
+    an_i: factor(ratsimp(subst(n=i, Coeff_An))),
+    bn_i: factor(ratsimp(subst(n=i, Coeff_Bn))),
     print("__TERM_START__"),
     print(i),
-    print("__TERM_MAXIMA__"),
-    print(string(term)),
-    print("__TERM_TEX__"),
-    tex(term)
+    print("__AN_MAXIMA__"),
+    print(string(an_i)),
+    print("__AN_TEX__"),
+    tex(an_i),
+    print("__BN_MAXIMA__"),
+    print(string(bn_i)),
+    print("__BN_TEX__"),
+    tex(bn_i)
   )
 )$
 kill(all)$
@@ -149,9 +152,7 @@ kill(all)$
     return `matrix(${rows})`;
   }
 
-  private parseTerms(
-    raw: string,
-  ): Array<{ n: number; tex: string; maxima: string; float: number[] }> {
+  private parseTerms(raw: string): TrigonometricTerm[] {
     const cleaned = raw.replace(/\\\n/g, "").replace(/\r/g, "");
     const blocks = cleaned.split("__TERM_START__").slice(1);
 
@@ -159,19 +160,27 @@ kill(all)$
       const nMatch = block.match(/^\s*(\d+)/);
       const n = parseInt(nMatch?.[1] ?? "0");
 
-      const maximaRaw = this.extractBetween(
+      const anMaxima = this.extractBetween(
         block,
-        "__TERM_MAXIMA__",
-        "__TERM_TEX__",
+        "__AN_MAXIMA__",
+        "__AN_TEX__",
       );
-      const texRaw = this.extractBetween(block, "__TERM_TEX__", null);
-      const texMatch = texRaw.match(/\$\$([\s\S]+?)\$\$/);
+      const anTex = this.extractTex(
+        this.extractBetween(block, "__AN_TEX__", "__BN_MAXIMA__"),
+      );
+      const bnMaxima = this.extractBetween(
+        block,
+        "__BN_MAXIMA__",
+        "__BN_TEX__",
+      );
+      const bnTex = this.extractTex(
+        this.extractBetween(block, "__BN_TEX__", null),
+      );
 
       return {
         n,
-        maxima: maximaRaw.replace(/false/g, "").trim(),
-        tex: texMatch ? texMatch[1].trim() : "",
-        float: [],
+        an: { maxima: anMaxima.replace(/false/g, "").trim(), tex: anTex },
+        bn: { maxima: bnMaxima.replace(/false/g, "").trim(), tex: bnTex },
       };
     });
   }
@@ -189,5 +198,10 @@ kill(all)$
     return endIdx === -1
       ? text.slice(afterStart)
       : text.slice(afterStart, endIdx);
+  }
+
+  private extractTex(raw: string): string {
+    const match = raw.match(/\$\$([\s\S]+?)\$\$/);
+    return match ? match[1].trim() : "";
   }
 }

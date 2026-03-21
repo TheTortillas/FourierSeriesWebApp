@@ -138,6 +138,47 @@ fourierRouter.post(
 
 /**
  * @openapi
+ * /api/fourier/half-range/terms:
+ *   post:
+ *     summary: Calcula los primeros N términos de la serie de medio rango
+ *     tags: [Fourier]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [input, nTerms]
+ *             properties:
+ *               input:
+ *                 $ref: '#/components/schemas/FourierInput'
+ *               nTerms:
+ *                 type: integer
+ *                 example: 10
+ *     responses:
+ *       200:
+ *         description: Términos calculados exitosamente
+ *       500:
+ *         description: Error de cálculo en Maxima
+ */
+fourierRouter.post(
+  "/half-range/terms",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { input, nTerms } = req.body as {
+        input: PiecewiseFourierInput;
+        nTerms: number;
+      };
+      const result = await halfRangeService.calculateTerms(input, nTerms);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
  * /api/fourier/complex:
  *   post:
  *     summary: Calcula la serie de Fourier compleja

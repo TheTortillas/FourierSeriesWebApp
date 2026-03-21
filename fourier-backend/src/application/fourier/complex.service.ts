@@ -5,6 +5,7 @@ import { loadScript } from "../../infrastructure/maxima/scriptLoader";
 import { parseMarkeredOutput } from "../../infrastructure/maxima/maximaOutputParser";
 import type {
   ComplexFourierResult,
+  ComplexTerm,
   ComplexTermsResult,
   PiecewiseFourierInput,
   PiecewiseSegment,
@@ -107,20 +108,25 @@ FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
 block(
-  [cn_val, cn_neg_val, term_complex, term_real, amp, ph],
+  [cn_val, cn_neg_val, term_real, amp, ph],
   for i: 1 thru ${nTerms} do (
     cn_val: ratsimp(subst(n=i, Coeff_n)),
     cn_neg_val: ratsimp(subst(n=-i, Coeff_n)),
-    term_complex: cn_val * exp(%i * i * w0 * ${intVar}) + cn_neg_val * exp(-%i * i * w0 * ${intVar}),
-    term_real: factor(ratsimp(realpart(rectform(term_complex)))),
+    term_real: factor(ratsimp(realpart(rectform(
+      cn_val * exp(%i * i * w0 * ${intVar}) + cn_neg_val * exp(-%i * i * w0 * ${intVar})
+    )))),
     amp: float(abs(cn_val)),
     ph: float(carg(cn_val)),
     print("__TERM_START__"),
     print(i),
-    print("__COMPLEX_MAXIMA__"),
-    print(string(term_complex)),
-    print("__COMPLEX_TEX__"),
-    tex(term_complex),
+    print("__CN_MAXIMA__"),
+    print(string(cn_val)),
+    print("__CN_TEX__"),
+    tex(cn_val),
+    print("__CN_NEG_MAXIMA__"),
+    print(string(cn_neg_val)),
+    print("__CN_NEG_TEX__"),
+    tex(cn_neg_val),
     print("__REAL_MAXIMA__"),
     print(string(term_real)),
     print("__REAL_TEX__"),
@@ -150,7 +156,7 @@ kill(all)$
     return `matrix(${rows})`;
   }
 
-  private parseTerms(raw: string): ComplexTermsResult["terms"] {
+  private parseTerms(raw: string): ComplexTerm[] {
     const cleaned = raw.replace(/\\\n/g, "").replace(/\r/g, "");
     const blocks = cleaned.split("__TERM_START__").slice(1);
 
@@ -158,13 +164,21 @@ kill(all)$
       const nMatch = block.match(/^\s*(\d+)/);
       const n = parseInt(nMatch?.[1] ?? "0");
 
-      const complexMaxima = this.extractBetween(
+      const cnMaxima = this.extractBetween(
         block,
-        "__COMPLEX_MAXIMA__",
-        "__COMPLEX_TEX__",
+        "__CN_MAXIMA__",
+        "__CN_TEX__",
       );
-      const complexTex = this.extractTex(
-        this.extractBetween(block, "__COMPLEX_TEX__", "__REAL_MAXIMA__"),
+      const cnTex = this.extractTex(
+        this.extractBetween(block, "__CN_TEX__", "__CN_NEG_MAXIMA__"),
+      );
+      const cnNegMaxima = this.extractBetween(
+        block,
+        "__CN_NEG_MAXIMA__",
+        "__CN_NEG_TEX__",
+      );
+      const cnNegTex = this.extractTex(
+        this.extractBetween(block, "__CN_NEG_TEX__", "__REAL_MAXIMA__"),
       );
       const realMaxima = this.extractBetween(
         block,
@@ -183,14 +197,12 @@ kill(all)$
 
       return {
         n,
-        complex: {
-          maxima: complexMaxima.replace(/false/g, "").trim(),
-          tex: complexTex,
+        cn: { maxima: cnMaxima.replace(/false/g, "").trim(), tex: cnTex },
+        cnNeg: {
+          maxima: cnNegMaxima.replace(/false/g, "").trim(),
+          tex: cnNegTex,
         },
-        real: {
-          maxima: realMaxima.replace(/false/g, "").trim(),
-          tex: realTex,
-        },
+        real: { maxima: realMaxima.replace(/false/g, "").trim(), tex: realTex },
         amplitude: parseFloat(amplitudeStr.replace(/false/g, "").trim()) || 0,
         phase:
           parseFloat(

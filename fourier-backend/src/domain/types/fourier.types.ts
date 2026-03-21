@@ -53,14 +53,6 @@ export interface ComplexFourierResult {
   executionTimeMs: number;
 }
 
-export interface ComplexTerm {
-  n: number;
-  complex: SymbolicExpression;
-  real: SymbolicExpression;
-  amplitude: number;
-  phase: number;
-}
-
 export interface ComplexTermsResult {
   terms: ComplexTerm[];
 }
@@ -124,4 +116,37 @@ export interface SimplifyResult {
   simplified: SymbolicExpression;
   profile: SimplificationProfile;
   functionsApplied: SimplificationFunction[];
+}
+
+export interface TrigonometricTerm {
+  n: number;
+  an: SymbolicExpression;
+  bn: SymbolicExpression;
+}
+
+export interface HalfRangeTerm {
+  n: number;
+  an: SymbolicExpression;
+  bn: SymbolicExpression;
+}
+
+export interface ComplexTerm {
+  n: number;
+  cn: SymbolicExpression;
+  cnNeg: SymbolicExpression;
+  real: SymbolicExpression;
+  amplitude: number;
+  phase: number;
+}
+
+export interface TrigonometricTermsResult {
+  terms: TrigonometricTerm[];
+}
+
+export interface HalfRangeTermsResult {
+  terms: HalfRangeTerm[];
+}
+
+export interface ComplexTermsResult {
+  terms: ComplexTerm[];
 }
