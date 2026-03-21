@@ -1,33 +1,31 @@
 /* ═══════════════════════════════════════════════════════════════
    Transformada Inversa de Fourier
-   Input:  FUNC_INPUT  → matrix con tramos [expr, a, b]
-           INTVAR      → variable de transformada (default w)
-           TRANSVAR    → variable resultante (default t)
-   Convención: f(t) = (1/2pi) * integral F(w)*exp(i*w*t)dw
+   Input:  FUNC_INPUT   → matrix con tramos [expr, a, b]
+           INTVAR       → variable de transformada (default w)
+           TRANSVAR     → variable resultante (default t)
+           REGIONS      → lista de condiciones ["t > 0", "t < 0"]
    ═══════════════════════════════════════════════════════════════ */
 
 display2d: false$
 %iargs: false$
 
 declare(TRANSVAR, real)$
-
 pieces: length(FUNC_INPUT);
 
-f_acum: 0$
-for i: 1 thru pieces do (
-    trozo: FUNC_INPUT[i],
-    F_i: trozo[1],
-    a: trozo[2],
-    b: trozo[3],
-    f_acum: f_acum + (1/(2*%pi)) * integrate(F_i * exp(%i * INTVAR * TRANSVAR), INTVAR, a, b)
+compute_inverse(assumptions) := block(
+    [f_acum: 0, result],
+    for a in assumptions do
+        assume(a),
+    for i: 1 thru pieces do (
+        trozo: FUNC_INPUT[i],
+        F_i: trozo[1],
+        a: trozo[2],
+        b: trozo[3],
+        f_acum: f_acum + (1/(2*%pi)) * integrate(
+            F_i * exp(%i * INTVAR * TRANSVAR), INTVAR, a, b)
+    ),
+    result: ratsimp(f_acum),
+    for a in assumptions do
+        forget(a),
+    result
 )$
-
-f: f_acum$
-
-transform_exists: freeof('integrate, f) and freeof('limit, f)$
-
-f_simplified: ratsimp(f)$
-
-print("__EXISTS__")$ print(string(transform_exists))$
-print("__F_MAXIMA__")$ print(string(f_simplified))$
-print("__F_TEX__")$ tex(f_simplified)$

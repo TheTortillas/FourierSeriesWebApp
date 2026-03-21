@@ -3,6 +3,8 @@ import { loadScript } from "../../infrastructure/maxima/scriptLoader";
 import type {
   FourierTransformInput,
   FourierTransformResult,
+  InverseFourierTransformInput,
+  InverseFourierTransformRegionResult,
   InverseFourierTransformResult,
   PiecewiseSegment,
 } from "../../domain/types/fourier.types";
@@ -89,11 +91,15 @@ kill(all)$
   }
 
   async inverseTransform(
-    input: FourierTransformInput,
+    input: InverseFourierTransformInput,
   ): Promise<InverseFourierTransformResult> {
     const startTime = Date.now();
     const intVar = input.intVar ?? "w";
     const transVar = input.transVar ?? "t";
+    const regions = input.regions ?? [
+      { condition: `${transVar} > 0` },
+      { condition: `${transVar} < 0` },
+    ];
 
     const script = await loadScript(
       "transforms",
@@ -101,35 +107,76 @@ kill(all)$
     );
     const funcInput = this.buildFuncInput(input.segments);
 
+    const regionsScript = regions
+      .map((region, idx) => {
+        const assumptions = region.condition
+          .split(",")
+          .map((c) => `parse_string("${c.trim()}")`)
+          .join(", ");
+        return `
+result_${idx}: errcatch(compute_inverse([${assumptions}]))$
+print("__REGION_${idx}__")$
+if result_${idx} = [] 
+  then print("__FAILED__")
+  else (
+    print(string(first(result_${idx}))),
+    print("__TEX_${idx}__"),
+    tex(first(result_${idx}))
+  )$`;
+      })
+      .join("\n");
+
     const fullScript = `
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 TRANSVAR: ${transVar};
 ${script}
+${regionsScript}
 kill(all)$
 `;
 
-    const result = await this.runner.run({ script: fullScript });
+    const result = await this.runner.run({
+      script: fullScript,
+      timeoutMs: 60000,
+    });
 
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
     }
 
     const raw = result.raw;
-    const exists =
-      this.extractBetween(raw, "__EXISTS__", "__F_MAXIMA__")
-        .replace(/false/g, "")
-        .trim() === "true";
+    const results: InverseFourierTransformRegionResult[] = [];
+    let exists = true;
 
-    const fMaxima = this.extractBetween(raw, "__F_MAXIMA__", "__F_TEX__")
-      .replace(/false/g, "")
-      .trim();
-    const fTex = this.extractTex(this.extractBetween(raw, "__F_TEX__", null));
+    for (let idx = 0; idx < regions.length; idx++) {
+      const regionRaw = this.extractBetween(
+        raw,
+        `__REGION_${idx}__`,
+        idx < regions.length - 1 ? `__REGION_${idx + 1}__` : null,
+      );
+
+      if (regionRaw.includes("__FAILED__")) {
+        exists = false;
+        continue;
+      }
+
+      const fMaxima = this.extractBetween(regionRaw, "", `__TEX_${idx}__`)
+        .replace(/false/g, "")
+        .trim();
+      const fTex = this.extractTex(
+        this.extractBetween(regionRaw, `__TEX_${idx}__`, null),
+      );
+
+      results.push({
+        condition: regions[idx]!.condition,
+        f: { maxima: fMaxima, tex: fTex },
+      });
+    }
 
     return {
       input,
       exists,
-      f: exists ? { maxima: fMaxima, tex: fTex } : undefined,
+      results: exists ? results : undefined,
       executionTimeMs: Date.now() - startTime,
     };
   }

@@ -179,9 +179,26 @@ export interface FourierTransformResult {
   executionTimeMs: number;
 }
 
+export interface TransformRegion {
+  condition: string;
+  description?: string;
+}
+
+export interface InverseFourierTransformInput {
+  segments: PiecewiseSegment[];
+  intVar?: string;
+  transVar?: string;
+  regions?: TransformRegion[];
+}
+
+export interface InverseFourierTransformRegionResult {
+  condition: string;
+  f: SymbolicExpression;
+}
+
 export interface InverseFourierTransformResult {
-  input: FourierTransformInput;
+  input: InverseFourierTransformInput;
   exists: boolean;
-  f?: SymbolicExpression;
+  results?: InverseFourierTransformRegionResult[];
   executionTimeMs: number;
 }

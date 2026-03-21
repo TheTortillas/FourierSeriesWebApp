@@ -1,6 +1,9 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { fourierTransformService } from "../../infrastructure/container";
-import type { FourierTransformInput } from "../../domain/types/fourier.types";
+import type {
+  FourierTransformInput,
+  InverseFourierTransformInput,
+} from "../../domain/types/fourier.types";
 
 export const transformsRouter = Router();
 
@@ -98,11 +101,12 @@ transformsRouter.post(
  *       500:
  *         description: Error de cálculo
  */
+
 transformsRouter.post(
   "/fourier/inverse",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const input = req.body as FourierTransformInput;
+      const input = req.body as InverseFourierTransformInput;
       if (!input.segments || input.segments.length === 0) {
         res.status(400).json({ error: "segments is required" });
         return;
