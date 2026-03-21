@@ -5,11 +5,12 @@ import type {
   ComplexFourierResult,
   PiecewiseFourierInput,
 } from "../../domain/types/fourier.types";
+import { config } from "../../config/env";
 
 type CacheValue = FourierResult | HalfRangeResult | ComplexFourierResult;
 
 const cache = new LRUCache<string, CacheValue>({
-  max: 500,
+  max: config.cache.maxSize,
 });
 
 export function buildCacheKey(input: PiecewiseFourierInput): string {
@@ -28,7 +29,7 @@ export function setInCache(key: string, value: CacheValue): void {
 }
 
 export function getCacheStats(): { size: number; max: number } {
-  return { size: cache.size, max: 500 };
+  return { size: cache.size, max: config.cache.maxSize };
 }
 
 export function clearCache(): void {
