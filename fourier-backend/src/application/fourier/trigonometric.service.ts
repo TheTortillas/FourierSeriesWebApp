@@ -94,24 +94,29 @@ kill(all)$
   ): Promise<{
     terms: Array<{ n: number; tex: string; maxima: string; float: number[] }>;
   }> {
+    const intVar = input.intVar ?? "x";
     const script = await loadScript("trigonometric", "trigonometric.mac");
     const funcInput = this.buildFuncInput(input.segments);
 
     const termsScript = `
 FUNC_INPUT: ${funcInput};
+INTVAR: ${intVar};
 ${script}
 block(
-  [terms: []],
+  [],
   for i: 1 thru ${nTerms} do (
-    an_i: subst(n=i, Coeff_An),
-    bn_i: subst(n=i, Coeff_Bn),
-    term: an_i * cos(i * w0 * x) + bn_i * sin(i * w0 * x),
+    an_i: ratsimp(subst(n=i, Coeff_An)),
+    bn_i: ratsimp(subst(n=i, Coeff_Bn)),
+    term: factor(ratsimp(an_i * cos(i * w0 * ${intVar}) + bn_i * sin(i * w0 * ${intVar}))),
     print("__TERM_START__"),
     print(i),
+    print("__TERM_MAXIMA__"),
     print(string(term)),
+    print("__TERM_TEX__"),
     tex(term)
   )
 )$
+kill(all)$
 `;
 
     const result = await this.runner.run({ script: termsScript });
@@ -133,20 +138,42 @@ block(
   private parseTerms(
     raw: string,
   ): Array<{ n: number; tex: string; maxima: string; float: number[] }> {
-    const cleaned = raw.replace(/\\\n/g, "").replace(/\n/g, " ");
+    const cleaned = raw.replace(/\\\n/g, "").replace(/\r/g, "");
     const blocks = cleaned.split("__TERM_START__").slice(1);
 
     return blocks.map((block) => {
-      const texMatch = block.match(/\$\$(.+?)\$\$/s);
-      const tex = texMatch ? texMatch[1].trim() : "";
-      const withoutTex = block
-        .replace(/\$\$.*?\$\$/s, "")
-        .replace(/false/g, "");
-      const parts = withoutTex.trim().split(/\s+/);
-      const n = parseInt(parts[0] ?? "0");
-      const maxima = parts.slice(1).join(" ").trim();
+      const nMatch = block.match(/^\s*(\d+)/);
+      const n = parseInt(nMatch?.[1] ?? "0");
 
-      return { n, tex, maxima, float: [] };
+      const maximaRaw = this.extractBetween(
+        block,
+        "__TERM_MAXIMA__",
+        "__TERM_TEX__",
+      );
+      const texRaw = this.extractBetween(block, "__TERM_TEX__", null);
+      const texMatch = texRaw.match(/\$\$([\s\S]+?)\$\$/);
+
+      return {
+        n,
+        maxima: maximaRaw.replace(/false/g, "").trim(),
+        tex: texMatch ? texMatch[1].trim() : "",
+        float: [],
+      };
     });
+  }
+
+  private extractBetween(
+    text: string,
+    start: string,
+    end: string | null,
+  ): string {
+    const startIdx = text.indexOf(start);
+    if (startIdx === -1) return "";
+    const afterStart = startIdx + start.length;
+    if (end === null) return text.slice(afterStart);
+    const endIdx = text.indexOf(end, afterStart);
+    return endIdx === -1
+      ? text.slice(afterStart)
+      : text.slice(afterStart, endIdx);
   }
 }
