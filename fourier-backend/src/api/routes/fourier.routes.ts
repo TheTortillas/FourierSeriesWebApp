@@ -6,6 +6,7 @@ import {
 } from "../../infrastructure/container";
 import { validateFourierInput } from "../middlewares/validate";
 import type { PiecewiseFourierInput } from "../../domain/types/fourier.types";
+import { sanitizeSegments, sanitizeExpression } from "../middlewares/sanitize";
 
 export const fourierRouter = Router();
 
@@ -46,6 +47,11 @@ fourierRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const input = req.body as PiecewiseFourierInput;
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
       const result = await trigonometricService.calculate(input);
       res.json(result);
     } catch (err) {
@@ -87,6 +93,11 @@ fourierRouter.post(
         input: PiecewiseFourierInput;
         nTerms: number;
       };
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
       const result = await trigonometricService.calculateTerms(input, nTerms);
       res.json(result);
     } catch (err) {
@@ -128,6 +139,11 @@ fourierRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const input = req.body as PiecewiseFourierInput;
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
       const result = await halfRangeService.calculate(input);
       res.json(result);
     } catch (err) {
@@ -169,6 +185,11 @@ fourierRouter.post(
         input: PiecewiseFourierInput;
         nTerms: number;
       };
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
       const result = await halfRangeService.calculateTerms(input, nTerms);
       res.json(result);
     } catch (err) {
@@ -210,6 +231,12 @@ fourierRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const input = req.body as PiecewiseFourierInput;
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
+
       const result = await complexService.calculate(input);
       res.json(result);
     } catch (err) {
@@ -251,6 +278,11 @@ fourierRouter.post(
         input: PiecewiseFourierInput;
         nTerms: number;
       };
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
       const result = await complexService.calculateTerms(input, nTerms);
       res.json(result);
     } catch (err) {

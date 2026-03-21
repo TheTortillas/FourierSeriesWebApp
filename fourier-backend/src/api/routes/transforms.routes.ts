@@ -8,6 +8,7 @@ import type {
   InverseFourierTransformInput,
   DFTInput,
 } from "../../domain/types/fourier.types";
+import { sanitizeSegments, sanitizeExpression } from "../middlewares/sanitize";
 
 export const transformsRouter = Router();
 
@@ -58,6 +59,11 @@ transformsRouter.post(
       const input = req.body as FourierTransformInput;
       if (!input.segments || input.segments.length === 0) {
         res.status(400).json({ error: "segments is required" });
+        return;
+      }
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
         return;
       }
       const result = await fourierTransformService.transform(input);
@@ -113,6 +119,11 @@ transformsRouter.post(
       const input = req.body as InverseFourierTransformInput;
       if (!input.segments || input.segments.length === 0) {
         res.status(400).json({ error: "segments is required" });
+        return;
+      }
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
         return;
       }
       const result = await fourierTransformService.inverseTransform(input);
@@ -201,6 +212,17 @@ transformsRouter.post(
 
       if (input.points.length > 1024) {
         res.status(400).json({ error: "Maximum 1024 points allowed" });
+        return;
+      }
+      const sanitizeCheck = sanitizeSegments(
+        input.points.map((p) => ({
+          expression: `${p.y}`,
+          from: "0",
+          to: "0",
+        })),
+      );
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
         return;
       }
 
