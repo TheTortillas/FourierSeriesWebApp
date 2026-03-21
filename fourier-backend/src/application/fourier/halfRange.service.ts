@@ -5,6 +5,8 @@ import { loadScript } from "../../infrastructure/maxima/scriptLoader";
 import { parseMarkeredOutput } from "../../infrastructure/maxima/maximaOutputParser";
 import type {
   HalfRangeResult,
+  HalfRangeTerm,
+  HalfRangeTermsResult,
   PiecewiseFourierInput,
   PiecewiseSegment,
 } from "../../domain/types/fourier.types";
@@ -15,6 +17,8 @@ import {
 } from "../../infrastructure/cache/fourierCache";
 
 const HALF_RANGE_MARKERS = [
+  "__A0RAW_MAXIMA__",
+  "__A0RAW_TEX__",
   "__A0_MAXIMA__",
   "__A0_TEX__",
   "__AN_MAXIMA__",
@@ -57,6 +61,8 @@ export class HalfRangeService {
         coefficients: {},
         seriesCosine: { tex: "", maxima: "" },
         seriesSine: { tex: "", maxima: "" },
+        w0: { tex: "", maxima: "" },
+        a0Raw: { tex: "", maxima: "" },
         validation,
         executionTimeMs: Date.now() - startTime,
       };
@@ -89,12 +95,158 @@ kill(all)$
       },
       seriesCosine: parsed["series_coseno"] ?? { tex: "", maxima: "" },
       seriesSine: parsed["series_seno"] ?? { tex: "", maxima: "" },
+      w0: parsed["w0"] ?? { tex: "", maxima: "" },
+      a0Raw: parsed["a0raw"],
       validation,
       executionTimeMs: Date.now() - startTime,
     };
 
     setInCache(cacheKey, halfRangeResult);
     return halfRangeResult;
+  }
+
+  async calculateTerms(
+    input: PiecewiseFourierInput,
+    nTerms: number,
+  ): Promise<HalfRangeTermsResult> {
+    const startTime = Date.now();
+    const intVar = input.intVar ?? "x";
+    const script = await loadScript("halfRange", "halfRange_coeffs.mac");
+    const funcInput = this.buildFuncInput(input.segments);
+
+    const quadIntegralAn = input.segments
+      .map(
+        (s) =>
+          `first(quad_qags((2/T) * (${s.expression}) * cos(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
+      )
+      .join(" + ");
+
+    const quadIntegralBn = input.segments
+      .map(
+        (s) =>
+          `first(quad_qags((2/T) * (${s.expression}) * sin(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
+      )
+      .join(" + ");
+
+    const termsScript = `
+FUNC_INPUT: ${funcInput};
+INTVAR: ${intVar};
+${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+Coeff_An: if not freeof(gamma_incomplete, Coeff_An)
+  then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_An, ${intVar})))],
+    if cleaned = [] then Coeff_An else first(cleaned))
+  else Coeff_An$
+Coeff_Bn: if not freeof(gamma_incomplete, Coeff_Bn)
+  then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_Bn, ${intVar})))],
+    if cleaned = [] then Coeff_Bn else first(cleaned))
+  else Coeff_Bn$
+block(
+  [],
+  for i: 1 thru ${nTerms} do (
+    an_i: ratsimp(factor(subst(n=i, Coeff_An))),
+    bn_i: ratsimp(factor(subst(n=i, Coeff_Bn))),
+    an_float: block([result: errcatch(float(an_i))],
+      if result = [] or not numberp(first(result))
+      then ${quadIntegralAn}
+      else first(result)),
+    bn_float: block([result: errcatch(float(bn_i))],
+      if result = [] or not numberp(first(result))
+      then ${quadIntegralBn}
+      else first(result)),
+    print("__TERM_START__"),
+    print(i),
+    print("__AN_MAXIMA__"),
+    print(string(an_i)),
+    print("__AN_TEX__"),
+    tex(an_i),
+    print("__BN_MAXIMA__"),
+    print(string(bn_i)),
+    print("__BN_TEX__"),
+    tex(bn_i),
+    print("__AN_FLOAT__"),
+    print(string(an_float)),
+    print("__BN_FLOAT__"),
+    print(string(bn_float))
+  )
+)$
+kill(all)$
+`;
+
+    const result = await this.runner.run({ script: termsScript });
+
+    if (!result.success) {
+      throw new Error(`Maxima error: ${result.error}`);
+    }
+
+    return {
+      terms: this.parseTerms(result.raw),
+      executionTimeMs: Date.now() - startTime,
+    };
+  }
+
+  private parseTerms(raw: string): HalfRangeTerm[] {
+    const cleaned = raw.replace(/\\\n/g, "").replace(/\r/g, "");
+    const blocks = cleaned.split("__TERM_START__").slice(1);
+
+    return blocks.map((block) => {
+      const nMatch = block.match(/^\s*(\d+)/);
+      const n = parseInt(nMatch?.[1] ?? "0");
+
+      const anMaxima = this.extractBetween(
+        block,
+        "__AN_MAXIMA__",
+        "__AN_TEX__",
+      );
+      const anTex = this.extractTex(
+        this.extractBetween(block, "__AN_TEX__", "__BN_MAXIMA__"),
+      );
+      const bnMaxima = this.extractBetween(
+        block,
+        "__BN_MAXIMA__",
+        "__BN_TEX__",
+      );
+      const bnTex = this.extractTex(
+        this.extractBetween(block, "__BN_TEX__", "__AN_FLOAT__"),
+      );
+      const anFloatStr = this.extractBetween(
+        block,
+        "__AN_FLOAT__",
+        "__BN_FLOAT__",
+      );
+      const bnFloatStr = this.extractBetween(block, "__BN_FLOAT__", null);
+
+      return {
+        n,
+        an: { maxima: anMaxima.replace(/false/g, "").trim(), tex: anTex },
+        bn: { maxima: bnMaxima.replace(/false/g, "").trim(), tex: bnTex },
+        anFloat: parseFloat(anFloatStr.replace(/false/g, "").trim()) || 0,
+        bnFloat:
+          parseFloat(
+            bnFloatStr.replace(/false/g, "").trim().split("\n")[0] ?? "0",
+          ) || 0,
+      };
+    });
+  }
+
+  private extractBetween(
+    text: string,
+    start: string,
+    end: string | null,
+  ): string {
+    const startIdx = text.indexOf(start);
+    if (startIdx === -1) return "";
+    const afterStart = startIdx + start.length;
+    if (end === null) return text.slice(afterStart);
+    const endIdx = text.indexOf(end, afterStart);
+    return endIdx === -1
+      ? text.slice(afterStart)
+      : text.slice(afterStart, endIdx);
+  }
+
+  private extractTex(raw: string): string {
+    const match = raw.match(/\$\$([\s\S]+?)\$\$/);
+    return match ? match[1].trim() : "";
   }
 
   private buildFuncInput(segments: PiecewiseSegment[]): string {

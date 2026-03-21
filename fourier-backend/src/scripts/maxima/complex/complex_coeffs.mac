@@ -1,0 +1,20 @@
+display2d: false$
+%iargs: false$
+
+pieces: length(FUNC_INPUT);
+inicio: FUNC_INPUT[1][2];
+fin: FUNC_INPUT[pieces][3];
+T: fin - inicio;
+w0: 2 * %pi / T;
+
+cn_acum: 0;
+
+for i:1 thru pieces do (
+    trozo: FUNC_INPUT[i],
+    f_i: trozo[1],
+    a: trozo[2],
+    b: trozo[3],
+    cn_acum: cn_acum + (1/T) * integrate(f_i * exp(-%i * n * w0 * INTVAR), INTVAR, a, b)
+)$
+
+Coeff_n: cn_acum$

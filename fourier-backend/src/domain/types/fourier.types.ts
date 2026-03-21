@@ -28,6 +28,8 @@ export interface FourierResult {
   input: FourierInput | PiecewiseFourierInput;
   coefficients: FourierCoefficients;
   series: SymbolicExpression;
+  w0: SymbolicExpression;
+  a0Raw?: SymbolicExpression;
   simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   executionTimeMs: number;
@@ -38,6 +40,8 @@ export interface HalfRangeResult {
   coefficients: FourierCoefficients;
   seriesCosine: SymbolicExpression;
   seriesSine: SymbolicExpression;
+  w0: SymbolicExpression;
+  a0Raw?: SymbolicExpression;
   validation?: ValidationResult;
   executionTimeMs: number;
 }
@@ -49,16 +53,9 @@ export interface ComplexFourierResult {
     cn: SymbolicExpression;
   };
   seriesComplex: SymbolicExpression;
+  w0: SymbolicExpression;
   validation?: ValidationResult;
   executionTimeMs: number;
-}
-
-export interface ComplexTerm {
-  n: number;
-  complex: SymbolicExpression;
-  real: SymbolicExpression;
-  amplitude: number;
-  phase: number;
 }
 
 export interface ComplexTermsResult {
@@ -124,4 +121,45 @@ export interface SimplifyResult {
   simplified: SymbolicExpression;
   profile: SimplificationProfile;
   functionsApplied: SimplificationFunction[];
+}
+
+export interface TrigonometricTerm {
+  n: number;
+  an: SymbolicExpression;
+  bn: SymbolicExpression;
+  anFloat: number;
+  bnFloat: number;
+}
+
+export interface HalfRangeTerm {
+  n: number;
+  an: SymbolicExpression;
+  bn: SymbolicExpression;
+  anFloat: number;
+  bnFloat: number;
+}
+
+export interface ComplexTerm {
+  n: number;
+  cn: SymbolicExpression;
+  cnNeg: SymbolicExpression;
+  real: SymbolicExpression;
+  realFloat: number;
+  amplitude: number;
+  phase: number;
+}
+
+export interface TrigonometricTermsResult {
+  terms: TrigonometricTerm[];
+  executionTimeMs: number;
+}
+
+export interface HalfRangeTermsResult {
+  terms: HalfRangeTerm[];
+  executionTimeMs: number;
+}
+
+export interface ComplexTermsResult {
+  terms: ComplexTerm[];
+  executionTimeMs: number;
 }
