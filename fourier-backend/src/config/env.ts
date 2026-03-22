@@ -34,4 +34,33 @@ export const config = {
     maxGeneral: parseInt(optionalEnv("RATE_LIMIT_MAX_GENERAL", "100")),
     maxCompute: parseInt(optionalEnv("RATE_LIMIT_MAX_COMPUTE", "20")),
   },
+  database: {
+    url: requireEnv("DATABASE_URL"),
+  },
+  jwt: {
+    accessSecret: requireEnv("JWT_ACCESS_SECRET"),
+    refreshSecret: requireEnv("JWT_REFRESH_SECRET"),
+    accessExpiresIn: optionalEnv("JWT_ACCESS_EXPIRES_IN", "15m"),
+    refreshExpiresIn: optionalEnv("JWT_REFRESH_EXPIRES_IN", "30d"),
+  },
+  google: {
+    clientId: requireEnv("GOOGLE_CLIENT_ID"),
+    clientSecret: requireEnv("GOOGLE_CLIENT_SECRET"),
+  },
+  calcLimits: {
+    anonymous: parseInt(optionalEnv("CALC_LIMIT_ANONYMOUS", "10")),
+    free: parseInt(optionalEnv("CALC_LIMIT_FREE", "50")),
+    premium: parseInt(optionalEnv("CALC_LIMIT_PREMIUM", "-1")),
+  },
+  email: {
+    host: optionalEnv("SMTP_HOST", "smtp.ionos.com"),
+    port: parseInt(optionalEnv("SMTP_PORT", "587")),
+    secure: optionalEnv("SMTP_SECURE", "false") === "true",
+    user: requireEnv("SMTP_USER"),
+    pass: requireEnv("SMTP_PASS"),
+    from: requireEnv("SMTP_FROM"),
+  },
+  app: {
+    url: optionalEnv("APP_URL", "http://localhost:3000"),
+  },
 } as const;

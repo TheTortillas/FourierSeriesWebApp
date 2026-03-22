@@ -1,11 +1,19 @@
 import { createApp } from "./app";
 import { config } from "./config/env";
+import { checkDbConnection } from "./infrastructure/database/db";
 
-const PORT = process.env.PORT ?? 3000;
-const app = createApp();
+async function main() {
+  await checkDbConnection();
 
-app.listen(config.server.port, () => {
-  console.log(
-    `Server running on port ${config.server.port} [${config.server.nodeEnv}]`,
-  );
+  const app = createApp();
+  app.listen(config.server.port, () => {
+    console.log(
+      `Server running on port ${config.server.port} [${config.server.nodeEnv}]`,
+    );
+  });
+}
+
+main().catch((err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
 });

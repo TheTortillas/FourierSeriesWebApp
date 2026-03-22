@@ -9,6 +9,14 @@ import { transformsRouter } from "./api/routes/transforms.routes";
 import { cacheRouter } from "./api/routes/cache.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
 import { generalLimiter, computeLimiter } from "./api/middlewares/rateLimiter";
+import { authRouter } from "./api/routes/auth.routes";
+import {
+  authenticate,
+  optionalAuth,
+  requireAdmin,
+} from "./api/middlewares/authenticate";
+import { requireVerified } from "./api/middlewares/requireVerified";
+import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 
 export function createApp(): Application {
   const app = express();
@@ -21,10 +29,41 @@ export function createApp(): Application {
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.use("/api/cache", cacheRouter);
 
-  app.use("/api/fourier", computeLimiter, fourierRouter);
-  app.use("/api/simplify", computeLimiter, simplifyRouter);
-  app.use("/api/transforms", computeLimiter, transformsRouter);
-  app.use("/api/dft", dftRouter);
+  // Endpoints de cálculo: requieren auth + email verificado + rate limit
+  app.use(
+    "/api/fourier",
+    optionalAuth,
+    requireVerified,
+    requireTierLimit,
+    computeLimiter,
+    fourierRouter,
+  );
+  app.use(
+    "/api/simplify",
+    optionalAuth,
+    requireVerified,
+    requireTierLimit,
+    computeLimiter,
+    simplifyRouter,
+  );
+  app.use(
+    "/api/transforms",
+    optionalAuth,
+    requireVerified,
+    requireTierLimit,
+    computeLimiter,
+    transformsRouter,
+  );
+  app.use(
+    "/api/dft",
+    dftRouter,
+    optionalAuth,
+    requireVerified,
+    requireTierLimit,
+    computeLimiter,
+  );
+
+  app.use("/api/auth", authRouter);
 
   app.use(errorHandler);
 

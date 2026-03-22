@@ -9,6 +9,8 @@ import type {
   DFTInput,
 } from "../../domain/types/fourier.types";
 import { sanitizeSegments, sanitizeExpression } from "../middlewares/sanitize";
+import { AuthenticatedRequest } from "../middlewares/authenticate";
+import { incrementCalculationCount } from "../middlewares/requireTierLimit";
 
 export const transformsRouter = Router();
 
@@ -54,7 +56,7 @@ export const transformsRouter = Router();
  */
 transformsRouter.post(
   "/fourier",
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const input = req.body as FourierTransformInput;
       if (!input.segments || input.segments.length === 0) {
@@ -67,6 +69,11 @@ transformsRouter.post(
         return;
       }
       const result = await fourierTransformService.transform(input);
+      if (req.user) {
+        await incrementCalculationCount(req.user.id);
+      } else {
+        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+      }
       res.json(result);
     } catch (err) {
       next(err);
@@ -114,7 +121,7 @@ transformsRouter.post(
 
 transformsRouter.post(
   "/fourier/inverse",
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const input = req.body as InverseFourierTransformInput;
       if (!input.segments || input.segments.length === 0) {
@@ -127,6 +134,11 @@ transformsRouter.post(
         return;
       }
       const result = await fourierTransformService.inverseTransform(input);
+      if (req.user) {
+        await incrementCalculationCount(req.user.id);
+      } else {
+        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+      }
       res.json(result);
     } catch (err) {
       next(err);
@@ -190,7 +202,7 @@ transformsRouter.post(
  */
 transformsRouter.post(
   "/dft",
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const input = req.body as DFTInput;
 
@@ -227,6 +239,11 @@ transformsRouter.post(
       }
 
       const result = await dftService.compute(input);
+      if (req.user) {
+        await incrementCalculationCount(req.user.id);
+      } else {
+        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+      }
       res.json(result);
     } catch (err) {
       next(err);
