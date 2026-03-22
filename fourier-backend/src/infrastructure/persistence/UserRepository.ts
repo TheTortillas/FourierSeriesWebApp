@@ -266,4 +266,84 @@ export class UserRepository implements IUserRepository {
       [ip, weekStart.toISOString().split("T")[0]],
     );
   }
+  async findAll(
+    limit: number,
+    offset: number,
+    filters?: { role?: string; tier?: string; isActive?: boolean },
+  ): Promise<UserRecord[]> {
+    const conditions: string[] = ["u.deleted_at IS NULL"];
+    const params: unknown[] = [];
+    let paramIdx = 1;
+
+    if (filters?.role) {
+      conditions.push(`u.role = $${paramIdx++}`);
+      params.push(filters.role);
+    }
+    if (filters?.tier) {
+      conditions.push(`u.tier = $${paramIdx++}`);
+      params.push(filters.tier);
+    }
+    if (filters?.isActive !== undefined) {
+      conditions.push(`u.is_active = $${paramIdx++}`);
+      params.push(filters.isActive);
+    }
+
+    params.push(limit, offset);
+
+    const result = await db.query(
+      `SELECT u.id, u.person_id as "personId", u.email,
+            u.email_verified as "emailVerified",
+            u.role, u.tier,
+            u.is_active as "isActive",
+            u.created_at as "createdAt",
+            u.updated_at as "updatedAt",
+            u.last_login_at as "lastLoginAt",
+            u.deleted_at as "deletedAt",
+            p.first_name as "firstName",
+            p.last_name as "lastName"
+     FROM users u
+     JOIN persons p ON p.id = u.person_id
+     WHERE ${conditions.join(" AND ")}
+     ORDER BY u.created_at DESC
+     LIMIT $${paramIdx++} OFFSET $${paramIdx}`,
+      params,
+    );
+    return result.rows;
+  }
+
+  async countAll(filters?: {
+    role?: string;
+    tier?: string;
+    isActive?: boolean;
+  }): Promise<number> {
+    const conditions: string[] = ["deleted_at IS NULL"];
+    const params: unknown[] = [];
+    let paramIdx = 1;
+
+    if (filters?.role) {
+      conditions.push(`role = $${paramIdx++}`);
+      params.push(filters.role);
+    }
+    if (filters?.tier) {
+      conditions.push(`tier = $${paramIdx++}`);
+      params.push(filters.tier);
+    }
+    if (filters?.isActive !== undefined) {
+      conditions.push(`is_active = $${paramIdx++}`);
+      params.push(filters.isActive);
+    }
+
+    const result = await db.query(
+      `SELECT COUNT(*) as count FROM users WHERE ${conditions.join(" AND ")}`,
+      params,
+    );
+    return parseInt(result.rows[0]?.count ?? "0");
+  }
+
+  async activate(id: string): Promise<void> {
+    await db.query(
+      `UPDATE users SET is_active = TRUE, deleted_at = NULL WHERE id = $1`,
+      [id],
+    );
+  }
 }

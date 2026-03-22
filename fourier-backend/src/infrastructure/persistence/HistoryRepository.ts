@@ -125,4 +125,72 @@ export class HistoryRepository implements IHistoryRepository {
     );
     return parseInt(result.rows[0]?.count ?? "0");
   }
+
+  async findAll(
+    limit: number,
+    offset: number,
+    filters?: { userId?: string; type?: string },
+  ): Promise<HistoryRecord[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let paramIdx = 1;
+
+    if (filters?.userId) {
+      conditions.push(`user_id = $${paramIdx++}`);
+      params.push(filters.userId);
+    }
+    if (filters?.type) {
+      conditions.push(`type = $${paramIdx++}`);
+      params.push(filters.type);
+    }
+
+    const where =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    params.push(limit, offset);
+
+    const result = await db.query(
+      `SELECT
+       id,
+       user_id as "userId",
+       type,
+       input,
+       is_favorite as "isFavorite",
+       favorite_name as "favoriteName",
+       execution_ms as "executionMs",
+       created_at as "createdAt"
+     FROM calculation_history
+     ${where}
+     ORDER BY created_at DESC
+     LIMIT $${paramIdx++} OFFSET $${paramIdx}`,
+      params,
+    );
+    return result.rows;
+  }
+
+  async countAll(filters?: {
+    userId?: string;
+    type?: string;
+  }): Promise<number> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let paramIdx = 1;
+
+    if (filters?.userId) {
+      conditions.push(`user_id = $${paramIdx++}`);
+      params.push(filters.userId);
+    }
+    if (filters?.type) {
+      conditions.push(`type = $${paramIdx++}`);
+      params.push(filters.type);
+    }
+
+    const where =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const result = await db.query(
+      `SELECT COUNT(*) as count FROM calculation_history ${where}`,
+      params,
+    );
+    return parseInt(result.rows[0]?.count ?? "0");
+  }
 }
