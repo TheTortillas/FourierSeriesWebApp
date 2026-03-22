@@ -28,6 +28,7 @@
   --color-dark-surface2: #332a1e;
   --color-dark-border:  #4a3d2e;
   --color-dark-text:    #f5f0e8;
+  --color-dark-ink:     #f5f0e8;   /* alias usado en templates */
   --color-dark-muted:   #a89880;
   --color-dark-accent:  #c0402a;
   --color-dark-accent2: #3a7ab0;

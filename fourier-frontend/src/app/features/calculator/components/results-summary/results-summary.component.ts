@@ -3,10 +3,11 @@ import { CalculatorStore } from '../../store/calculator.store';
 import { FunctionPlotComponent, PlotLayer } from '../../../../shared/components/function-plot/function-plot.component';
 import { FourierReconstructionService, TrigNumericTerm, ComplexNumericTerm } from '../../../../core/services/canvas/fourier-reconstruction.service';
 import { PlottingService } from '../../../../core/services/canvas/plotting.service';
+import { MathjaxDirective } from '../../../../shared/directives/mathjax.directive';
 
 @Component({
   selector: 'app-results-summary',
-  imports: [FunctionPlotComponent],
+  imports: [FunctionPlotComponent, MathjaxDirective],
   templateUrl: './results-summary.component.html',
 })
 export class ResultsSummaryComponent {

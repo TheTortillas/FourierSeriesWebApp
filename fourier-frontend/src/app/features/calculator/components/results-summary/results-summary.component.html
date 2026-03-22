@@ -12,12 +12,12 @@
 
   <!-- ── Legend ───────────────────────────────────────────────────────────── -->
   <div class="flex gap-4 text-xs flex-wrap">
-    <span class="flex items-center gap-1.5 text-muted">
+    <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
       <span class="inline-block w-4 h-0.5 bg-accent rounded"></span>
       Función original
     </span>
     @if (store.hasResult()) {
-      <span class="flex items-center gap-1.5 text-muted">
+      <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
         <span class="inline-block w-4 h-0.5 bg-accent2 rounded"></span>
         Aproximación (N={{ store.nTerms() }})
       </span>
@@ -26,7 +26,7 @@
 
   <!-- ── Result panel ───────────────────────────────────────────────────── -->
   @if (store.hasResult() && coeffTex()) {
-    <div class="border border-border dark:border-dark-border rounded divide-y divide-border dark:divide-dark-border">
+    <div class="border border-border dark:border-dark-border rounded divide-y divide-border dark:divide-dark-border bg-paper dark:bg-dark-surface">
 
       <!-- Header -->
       <div class="px-4 py-3 flex items-center justify-between">
@@ -34,48 +34,48 @@
           Coeficientes
         </h3>
         @if (execTime()) {
-          <span class="text-[10px] text-muted font-mono">
+          <span class="text-[10px] text-muted dark:text-dark-muted font-mono">
             {{ execTime() }} ms
           </span>
         }
       </div>
 
-      <!-- Coefficients -->
-      <div class="px-4 py-3 space-y-2 font-mono text-sm overflow-x-auto">
+      <!-- Coefficients rendered with MathJax -->
+      <div class="px-4 py-3 space-y-3 overflow-x-auto">
         @if (coeffTex()!.w0) {
-          <div class="flex gap-2 items-baseline">
-            <span class="text-muted text-xs w-8 shrink-0">ω₀ =</span>
-            <span class="text-ink dark:text-dark-ink">{{ coeffTex()!.w0 }}</span>
+          <div class="flex gap-3 items-center">
+            <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">ω₀ =</span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.w0"></span>
           </div>
         }
         @if (coeffTex()!.a0) {
-          <div class="flex gap-2 items-baseline">
-            <span class="text-muted text-xs w-8 shrink-0">a₀ =</span>
-            <span class="text-ink dark:text-dark-ink break-all">{{ coeffTex()!.a0 }}</span>
+          <div class="flex gap-3 items-center">
+            <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">a₀ =</span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.a0"></span>
           </div>
         }
         @if (coeffTex()!.an) {
-          <div class="flex gap-2 items-baseline">
-            <span class="text-muted text-xs w-8 shrink-0">aₙ =</span>
-            <span class="text-ink dark:text-dark-ink break-all">{{ coeffTex()!.an }}</span>
+          <div class="flex gap-3 items-center">
+            <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">aₙ =</span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.an"></span>
           </div>
         }
         @if (coeffTex()!.bn) {
-          <div class="flex gap-2 items-baseline">
-            <span class="text-muted text-xs w-8 shrink-0">bₙ =</span>
-            <span class="text-ink dark:text-dark-ink break-all">{{ coeffTex()!.bn }}</span>
+          <div class="flex gap-3 items-center">
+            <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">bₙ =</span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.bn"></span>
           </div>
         }
         @if (coeffTex()!.c0) {
-          <div class="flex gap-2 items-baseline">
-            <span class="text-muted text-xs w-8 shrink-0">c₀ =</span>
-            <span class="text-ink dark:text-dark-ink break-all">{{ coeffTex()!.c0 }}</span>
+          <div class="flex gap-3 items-center">
+            <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">c₀ =</span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.c0"></span>
           </div>
         }
         @if (coeffTex()!.cn) {
-          <div class="flex gap-2 items-baseline">
-            <span class="text-muted text-xs w-8 shrink-0">cₙ =</span>
-            <span class="text-ink dark:text-dark-ink break-all">{{ coeffTex()!.cn }}</span>
+          <div class="flex gap-3 items-center">
+            <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">cₙ =</span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.cn"></span>
           </div>
         }
       </div>
@@ -83,12 +83,12 @@
       <!-- Numeric terms table -->
       @if (termRows().length > 0) {
         <div class="px-4 py-3 overflow-x-auto">
-          <p class="text-[10px] text-muted font-mono mb-2">
+          <p class="text-[10px] text-muted dark:text-dark-muted font-mono mb-2">
             Primeros {{ termRows().length }} términos numéricos
           </p>
           <table class="w-full text-xs font-mono">
             <thead>
-              <tr class="text-muted text-left border-b border-border dark:border-dark-border">
+              <tr class="text-muted dark:text-dark-muted text-left border-b border-border dark:border-dark-border">
                 <th class="pb-1 pr-4 font-medium">n</th>
                 <th class="pb-1 pr-4 font-medium">{{ termTableHeader()[0] }}</th>
                 <th class="pb-1 font-medium">{{ termTableHeader()[1] }}</th>
@@ -112,7 +112,7 @@
 
   <!-- Empty state -->
   @if (!store.hasResult() && !store.loading()) {
-    <div class="text-center py-6 text-muted text-sm font-body">
+    <div class="text-center py-6 text-muted dark:text-dark-muted text-sm font-body">
       Configura la función y presiona <strong class="text-ink dark:text-dark-ink">Calcular serie</strong>.
     </div>
   }
