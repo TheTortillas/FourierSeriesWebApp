@@ -18,6 +18,7 @@ import {
 import { requireVerified } from "./api/middlewares/requireVerified";
 import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 import { historyRouter } from "./api/routes/history.routes";
+import { adminRouter } from "./api/routes/admin.routes";
 
 export function createApp(): Application {
   const app = express();
@@ -67,6 +68,8 @@ export function createApp(): Application {
   app.use("/api/auth", authRouter);
 
   app.use("/api/history", historyRouter);
+
+  app.use("/api/admin", adminRouter);
 
   app.use(errorHandler);
 

@@ -38,4 +38,16 @@ export interface IHistoryRepository {
   ): Promise<HistoryRecord>;
   delete(id: string, userId: string): Promise<void>;
   countByUser(userId: string): Promise<number>;
+  findAll(
+    limit: number,
+    offset: number,
+    filters?: {
+      userId?: string;
+      type?: CalculationType;
+    },
+  ): Promise<HistoryRecord[]>;
+  countAll(filters?: {
+    userId?: string;
+    type?: CalculationType;
+  }): Promise<number>;
 }

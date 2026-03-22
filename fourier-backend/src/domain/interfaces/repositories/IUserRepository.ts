@@ -37,4 +37,19 @@ export interface IUserRepository {
   hardDeleteUnverified(id: string): Promise<void>;
   getWeeklyCount(userId: string): Promise<number>;
   incrementWeeklyCount(userId: string): Promise<void>;
+  findAll(
+    limit: number,
+    offset: number,
+    filters?: {
+      role?: "user" | "admin";
+      tier?: "free" | "premium";
+      isActive?: boolean;
+    },
+  ): Promise<UserRecord[]>;
+  countAll(filters?: {
+    role?: "user" | "admin";
+    tier?: "free" | "premium";
+    isActive?: boolean;
+  }): Promise<number>;
+  activate(id: string): Promise<void>;
 }
