@@ -76,26 +76,32 @@
 }
 
 /* ─── MathQuill integration ─────────────────────────────────────────────────
-   Override MathQuill's default white background and black text so it
-   inherits our design system tokens in both light and dark themes.          */
-.mq-editable-field,
-.mq-math-mode {
+   Strip MathQuill's own border/background so our wrapper div controls those.
+   Text color inherits from the parent (our ink / dark-ink tokens).          */
+.mq-editable-field {
   background: transparent !important;
-  color: inherit !important;
+  color: var(--color-ink) !important;
   border: none !important;
   box-shadow: none !important;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  min-height: 1.5rem;
+  display: block;
+  width: 100%;
 }
 
 .mq-editable-field .mq-cursor {
-  border-color: var(--color-accent);
+  border-color: var(--color-accent) !important;
 }
 
-html.dark .mq-editable-field,
-html.dark .mq-math-mode {
-  color: var(--color-dark-text) !important;
+html.dark .mq-editable-field {
+  color: var(--color-dark-ink) !important;
 }
 
 html.dark .mq-editable-field .mq-cursor {
-  border-color: var(--color-dark-accent);
+  border-color: var(--color-dark-accent) !important;
+}
+
+/* MathJax SVG inherits color for dark mode */
+.dark mjx-container svg {
+  fill: currentColor;
 }

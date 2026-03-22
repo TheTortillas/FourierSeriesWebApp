@@ -9,8 +9,8 @@ import { LatexToMaximaService } from '../../../../core/services/math/latex-to-ma
 
 /**
  * One row of the piecewise function input.
- * - Expression: MathQuill field → LaTeX → tex2max → Maxima stored in the draft
- * - From / To:  plain text inputs in Maxima syntax (-%pi, %pi/2, 0, …)
+ * All three fields (expression, from, to) use MathQuill.
+ * LaTeX → tex2max → Maxima is stored in the draft.
  */
 @Component({
   selector: 'app-segment-input',
@@ -27,46 +27,25 @@ import { LatexToMaximaService } from '../../../../core/services/math/latex-to-ma
       <!-- Expression field (MathQuill) -->
       <div class="flex-1 min-w-0">
         <label class="block text-[10px] text-muted font-mono mb-0.5">f(x)</label>
-        <!-- Container that MathQuill mounts onto -->
-        <div
-          #mqContainer
-          [class]="mqClass(hasExpressionError())"
-          style="min-height:2rem; cursor:text;">
-        </div>
+        <div #mqExpr [class]="mqClass(hasExpressionError())"></div>
         @if (hasExpressionError()) {
           <p class="text-[10px] text-red-400 mt-0.5">{{ error() }}</p>
         }
-        @if (conversionError()) {
-          <p class="text-[10px] text-red-400 mt-0.5">{{ conversionError() }}</p>
+        @if (conversionErrors[0]) {
+          <p class="text-[10px] text-red-400 mt-0.5">{{ conversionErrors[0] }}</p>
         }
       </div>
 
-      <!-- From field -->
+      <!-- From field (MathQuill) -->
       <div class="w-24 shrink-0">
         <label class="block text-[10px] text-muted font-mono mb-0.5">desde</label>
-        <input
-          type="text"
-          [ngModel]="segment().from"
-          (ngModelChange)="store.updateSegment(segment().id, { from: $event })"
-          placeholder="-%pi"
-          [class]="inputClass(false)"
-          autocomplete="off"
-          spellcheck="false"
-        />
+        <div #mqFrom [class]="mqClass(false)"></div>
       </div>
 
-      <!-- To field -->
+      <!-- To field (MathQuill) -->
       <div class="w-24 shrink-0">
         <label class="block text-[10px] text-muted font-mono mb-0.5">hasta</label>
-        <input
-          type="text"
-          [ngModel]="segment().to"
-          (ngModelChange)="store.updateSegment(segment().id, { to: $event })"
-          placeholder="%pi"
-          [class]="inputClass(false)"
-          autocomplete="off"
-          spellcheck="false"
-        />
+        <div #mqTo [class]="mqClass(false)"></div>
       </div>
 
       <!-- Remove button -->
@@ -83,7 +62,9 @@ import { LatexToMaximaService } from '../../../../core/services/math/latex-to-ma
   `,
 })
 export class SegmentInputComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('mqContainer') mqContainer!: ElementRef<HTMLElement>;
+  @ViewChild('mqExpr') mqExprRef!: ElementRef<HTMLElement>;
+  @ViewChild('mqFrom') mqFromRef!: ElementRef<HTMLElement>;
+  @ViewChild('mqTo')   mqToRef!:   ElementRef<HTMLElement>;
 
   readonly store   = inject(CalculatorStore);
   readonly mqs     = inject(MathquillService);
@@ -94,58 +75,50 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   readonly isOnly  = input<boolean>(false);
   readonly error   = input<string | null>(null);
 
-  conversionError: () => string | null = () => null;
-  private _conversionError: string | null = null;
-  private field: MathField | null = null;
+  conversionErrors: [string | null, string | null, string | null] = [null, null, null];
+
+  private fields: [MathField | null, MathField | null, MathField | null] = [null, null, null];
 
   constructor() {
-    // Keep conversionError as a plain getter so template sees it
-    this.conversionError = () => this._conversionError;
-
-    // When segment expression changes externally (e.g. store reset),
-    // keep MathQuill in sync. Use effect to react to signal.
+    // Reset MathQuill fields when store resets (expression becomes '')
     effect(() => {
-      const expr = this.segment().expression;
-      if (this.field && !expr) {
-        this.field.latex('');
-      }
+      const seg = this.segment();
+      if (!seg.expression && this.fields[0]) this.fields[0].latex('');
+      if (!seg.from       && this.fields[1]) this.fields[1].latex('');
+      if (!seg.to         && this.fields[2]) this.fields[2].latex('');
     });
   }
 
   async ngAfterViewInit(): Promise<void> {
-    const el = this.mqContainer.nativeElement;
-    this.field = await this.mqs.createField(el, {
+    const makeConfig = (fieldIndex: 0 | 1 | 2, storeKey: keyof Omit<SegmentDraft, 'id'>) => ({
       ...this.mqs.defaultConfig(),
       handlers: {
-        edit: (mf) => this.onMathFieldEdit(mf),
+        edit: (mf: MathField) => {
+          const latex = mf.latex().trim();
+          if (!latex) {
+            this.conversionErrors[fieldIndex] = null;
+            this.store.updateSegment(this.segment().id, { [storeKey]: '' });
+            return;
+          }
+          const result = this.tex2max.convert(latex);
+          if (result.ok) {
+            this.conversionErrors[fieldIndex] = null;
+            this.store.updateSegment(this.segment().id, { [storeKey]: result.maxima });
+          } else {
+            this.conversionErrors[fieldIndex] = result.error ?? null;
+          }
+        },
       },
     });
-    // Set initial value from store if segment already has an expression
-    // (e.g. navigating back). The store holds Maxima — we can't restore
-    // LaTeX from Maxima, so we leave it blank if empty.
+
+    this.fields[0] = await this.mqs.createField(this.mqExprRef.nativeElement, makeConfig(0, 'expression'));
+    this.fields[1] = await this.mqs.createField(this.mqFromRef.nativeElement, makeConfig(1, 'from'));
+    this.fields[2] = await this.mqs.createField(this.mqToRef.nativeElement,   makeConfig(2, 'to'));
   }
 
   ngOnDestroy(): void {
-    // MathQuill doesn't have an official destroy API; just clear the container
-    if (this.mqContainer?.nativeElement) {
-      this.mqContainer.nativeElement.innerHTML = '';
-    }
-  }
-
-  private onMathFieldEdit(mf: MathField): void {
-    const latex = mf.latex().trim();
-    if (!latex) {
-      this._conversionError = null;
-      this.store.updateSegment(this.segment().id, { expression: '' });
-      return;
-    }
-    const result = this.tex2max.convert(latex);
-    if (result.ok) {
-      this._conversionError = null;
-      this.store.updateSegment(this.segment().id, { expression: result.maxima });
-    } else {
-      this._conversionError = `No se pudo convertir: ${result.error}`;
-      // Keep last good value in store — don't overwrite with empty
+    for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {
+      if (ref?.nativeElement) ref.nativeElement.innerHTML = '';
     }
   }
 
@@ -154,19 +127,11 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
 
   mqClass(hasError: boolean): string {
     const base =
-      'w-full px-2 py-1 text-sm rounded border bg-paper dark:bg-dark-surface ' +
-      'focus-within:outline-none focus-within:ring-1 transition-colors';
+      'w-full px-2 py-1 min-h-[2rem] text-sm rounded border ' +
+      'bg-paper2 dark:bg-dark-surface2 ' +
+      'focus-within:outline-none focus-within:ring-1 transition-colors cursor-text';
     return hasError
       ? `${base} border-red-400 focus-within:ring-red-400`
       : `${base} border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent`;
-  }
-
-  inputClass(hasError: boolean): string {
-    const base =
-      'w-full px-2 py-1.5 text-sm font-mono rounded border bg-paper dark:bg-dark-surface ' +
-      'text-ink dark:text-dark-ink focus:outline-none focus:ring-1 transition-colors';
-    return hasError
-      ? `${base} border-red-400 focus:ring-red-400`
-      : `${base} border-border dark:border-dark-border focus:border-accent focus:ring-accent`;
   }
 }
