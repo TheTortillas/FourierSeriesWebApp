@@ -11,6 +11,8 @@ import { DFTService } from "../application/transforms/dft.service";
 import { UserRepository } from "./persistence/UserRepository";
 import { TokenRepository } from "./persistence/TokenRepository";
 import { AuditRepository } from "./persistence/AuditRepository";
+import { TokenService } from "../application/auth/tokenService";
+import { AuthService } from "../application/auth/authService";
 
 const runner = new MaximaRunner();
 const postProcessor = new MaximaPostProcessor(runner);
@@ -37,6 +39,13 @@ const dftService = new DFTService(runner);
 const userRepository = new UserRepository();
 const tokenRepository = new TokenRepository();
 const auditRepository = new AuditRepository();
+const tokenService = new TokenService();
+const authService = new AuthService(
+  userRepository,
+  tokenRepository,
+  auditRepository,
+  tokenService,
+);
 
 export {
   runner,
@@ -51,4 +60,6 @@ export {
   userRepository,
   tokenRepository,
   auditRepository,
+  tokenService,
+  authService,
 };
