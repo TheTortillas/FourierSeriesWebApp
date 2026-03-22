@@ -11,6 +11,7 @@ import { DFTService } from "../application/transforms/dft.service";
 import { UserRepository } from "./persistence/UserRepository";
 import { TokenRepository } from "./persistence/TokenRepository";
 import { AuditRepository } from "./persistence/AuditRepository";
+import { HistoryRepository } from "./persistence/HistoryRepository";
 import { TokenService } from "../application/auth/tokenService";
 import { AuthService } from "../application/auth/authService";
 
@@ -39,6 +40,7 @@ const dftService = new DFTService(runner);
 const userRepository = new UserRepository();
 const tokenRepository = new TokenRepository();
 const auditRepository = new AuditRepository();
+const historyRepository = new HistoryRepository();
 const tokenService = new TokenService();
 const authService = new AuthService(
   userRepository,
@@ -60,6 +62,7 @@ export {
   userRepository,
   tokenRepository,
   auditRepository,
+  historyRepository,
   tokenService,
   authService,
 };
