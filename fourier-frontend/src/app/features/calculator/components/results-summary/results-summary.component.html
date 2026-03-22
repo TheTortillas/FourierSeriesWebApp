@@ -99,12 +99,30 @@
                 <tr class="border-b border-border/40 dark:border-dark-border/40
                            last:border-0 hover:bg-paper2 dark:hover:bg-dark-surface2">
                   <td class="py-0.5 pr-4">{{ row.n }}</td>
-                  <td class="py-0.5 pr-4">{{ row.col1 }}</td>
-                  <td class="py-0.5">{{ row.col2 }}</td>
+                  <td class="py-0.5 pr-4">
+                    {{ row.col1 }}
+                    @if (row.lim1) {
+                      <span class="text-gold dark:text-dark-gold ml-0.5"
+                            title="Coeficiente indeterminado (0/0); calculado por límite">*</span>
+                    }
+                  </td>
+                  <td class="py-0.5">
+                    {{ row.col2 }}
+                    @if (row.lim2) {
+                      <span class="text-gold dark:text-dark-gold ml-0.5"
+                            title="Coeficiente indeterminado (0/0); calculado por límite">*</span>
+                    }
+                  </td>
                 </tr>
               }
             </tbody>
           </table>
+          <!-- Legend shown only if any term used a limit -->
+          @if (termRows().some(r => r.lim1 || r.lim2)) {
+            <p class="text-[10px] text-gold dark:text-dark-gold font-mono mt-1.5">
+              * coeficiente indeterminado (0/0); evaluado por límite
+            </p>
+          }
         </div>
       }
     </div>

@@ -117,22 +117,32 @@ export class ResultsSummaryComponent {
   });
 
   /** First 5 numeric terms as unified rows for the table */
-  readonly termRows = computed<{ n: number; col1: string; col2: string }[]>(() => {
+  readonly termRows = computed<{ n: number; col1: string; col2: string; lim1: boolean; lim2: boolean }[]>(() => {
     const r = this.store.result();
     if (!r) return [];
     if (r.type === 'trigonometric' || r.type === 'halfRange') {
-      return r.terms.terms.slice(0, 5).map((t) => ({
-        n:    t.n,
-        col1: (t as TrigNumericTerm).anFloat.toFixed(6),
-        col2: (t as TrigNumericTerm).bnFloat.toFixed(6),
-      }));
+      return r.terms.terms.slice(0, 5).map((t) => {
+        const term = t as TrigNumericTerm;
+        return {
+          n:    term.n,
+          col1: term.anFloat.toFixed(6),
+          col2: term.bnFloat.toFixed(6),
+          lim1: !!term.anUsedLimit,
+          lim2: !!term.bnUsedLimit,
+        };
+      });
     }
     if (r.type === 'complex') {
-      return r.terms.terms.slice(0, 5).map((t) => ({
-        n:    t.n,
-        col1: (t as ComplexNumericTerm).amplitude.toFixed(6),
-        col2: (t as ComplexNumericTerm).phase.toFixed(6),
-      }));
+      return r.terms.terms.slice(0, 5).map((t) => {
+        const term = t as ComplexNumericTerm;
+        return {
+          n:    term.n,
+          col1: term.amplitude.toFixed(6),
+          col2: term.phase.toFixed(6),
+          lim1: !!term.cnUsedLimit,
+          lim2: !!term.cnNegUsedLimit,
+        };
+      });
     }
     return [];
   });

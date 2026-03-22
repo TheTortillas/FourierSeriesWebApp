@@ -59,6 +59,8 @@ export interface TrigonometricTerm {
   bn: SymbolicExpression;
   anFloat: number;
   bnFloat: number;
+  anUsedLimit?: boolean;
+  bnUsedLimit?: boolean;
 }
 
 export interface TrigonometricTermsResponse {
@@ -99,6 +101,8 @@ export interface ComplexTerm {
   realFloat: number;
   amplitude: number;
   phase: number;
+  cnUsedLimit?: boolean;
+  cnNegUsedLimit?: boolean;
 }
 
 export interface ComplexTermsResponse {

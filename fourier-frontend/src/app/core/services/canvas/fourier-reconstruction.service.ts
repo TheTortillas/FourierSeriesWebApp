@@ -5,6 +5,8 @@ export interface TrigNumericTerm {
   n: number;
   anFloat: number;
   bnFloat: number;
+  anUsedLimit?: boolean;
+  bnUsedLimit?: boolean;
 }
 
 /** Numeric-only subset of ComplexTerm needed for reconstruction */
@@ -12,6 +14,8 @@ export interface ComplexNumericTerm {
   n: number;
   amplitude: number;
   phase: number;
+  cnUsedLimit?: boolean;
+  cnNegUsedLimit?: boolean;
 }
 
 /**
