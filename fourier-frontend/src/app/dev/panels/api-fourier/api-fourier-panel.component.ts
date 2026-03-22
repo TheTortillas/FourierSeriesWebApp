@@ -11,10 +11,12 @@ import { Segment, FourierSeriesRequest } from '../../../domain';
 export class ApiFourierPanelComponent {
   private readonly api = inject(ApiService);
 
-  // Formulario
-  expr     = 'x';
-  from     = '-%pi';
-  to       = '%pi';
+  // Segmentos de la función a trozos (siempre al menos 1)
+  segments: Segment[] = [
+    { expression: 'x', from: '-%pi', to: '0' },
+    { expression: '1', from: '0',    to: '%pi' },
+  ];
+
   intVar   = 'x';
   seriesType: 'trigonometric' | 'complex' | 'halfRange' = 'trigonometric';
   nTerms   = 5;
@@ -23,13 +25,22 @@ export class ApiFourierPanelComponent {
   error     = signal<string | null>(null);
   loading   = signal(false);
 
+  addSegment(): void {
+    this.segments = [...this.segments, { expression: '', from: '', to: '' }];
+  }
+
+  removeSegment(index: number): void {
+    if (this.segments.length > 1) {
+      this.segments = this.segments.filter((_, i) => i !== index);
+    }
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
   private buildRequest(): FourierSeriesRequest {
-    const segment: Segment = {
-      expression: this.expr,
-      from: this.from,
-      to: this.to,
-    };
-    return { segments: [segment], seriesType: this.seriesType, intVar: this.intVar };
+    return { segments: this.segments, seriesType: this.seriesType, intVar: this.intVar };
   }
 
   private call<T>(obs: () => import('rxjs').Observable<T>): void {
@@ -37,7 +48,7 @@ export class ApiFourierPanelComponent {
     this.response.set(null);
     this.error.set(null);
     obs().subscribe({
-      next: (res) => { this.response.set(res); this.loading.set(false); },
+      next:  (res) => { this.response.set(res); this.loading.set(false); },
       error: (err) => { this.error.set(err?.error?.error ?? err.message); this.loading.set(false); },
     });
   }
@@ -54,8 +65,7 @@ export class ApiFourierPanelComponent {
   }
 
   calculateTerms(): void {
-    const req = this.buildRequest();
-    const body = { input: req, nTerms: this.nTerms };
+    const body = { input: this.buildRequest(), nTerms: this.nTerms };
     if (this.seriesType === 'trigonometric') {
       this.call(() => this.api.calculateTrigonometricTerms(body));
     } else if (this.seriesType === 'complex') {

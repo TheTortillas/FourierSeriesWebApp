@@ -13,10 +13,8 @@ export class ThemeService {
   private resolveInitialTheme(): Theme {
     const stored = this.platform.getLocalStorageItem(STORAGE_KEY);
     if (stored === 'dark' || stored === 'light') return stored;
-
-    // Respeta preferencia del sistema si no hay preferencia guardada
-    const prefersDark = this.platform.window?.matchMedia('(prefers-color-scheme: dark)').matches;
-    return prefersDark ? 'dark' : 'light';
+    // Predeterminado: light. El tema se cambia SOLO con el botón de la UI.
+    return 'light';
   }
 
   toggle(): void {
