@@ -10,7 +10,11 @@ import { cacheRouter } from "./api/routes/cache.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
 import { generalLimiter, computeLimiter } from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
-import { authenticate, optionalAuth } from "./api/middlewares/authenticate";
+import {
+  authenticate,
+  optionalAuth,
+  requireAdmin,
+} from "./api/middlewares/authenticate";
 import { requireVerified } from "./api/middlewares/requireVerified";
 import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 
@@ -28,7 +32,7 @@ export function createApp(): Application {
   // Endpoints de cálculo: requieren auth + email verificado + rate limit
   app.use(
     "/api/fourier",
-    authenticate,
+    optionalAuth,
     requireVerified,
     requireTierLimit,
     computeLimiter,
@@ -36,7 +40,7 @@ export function createApp(): Application {
   );
   app.use(
     "/api/simplify",
-    authenticate,
+    optionalAuth,
     requireVerified,
     requireTierLimit,
     computeLimiter,
@@ -44,7 +48,7 @@ export function createApp(): Application {
   );
   app.use(
     "/api/transforms",
-    authenticate,
+    optionalAuth,
     requireVerified,
     requireTierLimit,
     computeLimiter,
@@ -53,7 +57,7 @@ export function createApp(): Application {
   app.use(
     "/api/dft",
     dftRouter,
-    authenticate,
+    optionalAuth,
     requireVerified,
     requireTierLimit,
     computeLimiter,

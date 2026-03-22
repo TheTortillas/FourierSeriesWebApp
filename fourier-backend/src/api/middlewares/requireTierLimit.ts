@@ -9,7 +9,22 @@ export async function requireTierLimit(
   next: NextFunction,
 ): Promise<void> {
   if (!req.user) {
-    res.status(401).json({ error: "Unauthorized" });
+    const ip = req.ip ?? "0.0.0.0";
+    const limit = config.calcLimits.anonymous;
+    const count = await userRepository.getAnonymousWeeklyCount(ip);
+
+    if (count >= limit) {
+      res.status(429).json({
+        error: "Weekly calculation limit reached",
+        message: `Anonymous users can make ${limit} calculations per week. Create a free account for more.`,
+        limit,
+        current: count,
+        registerAvailable: true,
+      });
+      return;
+    }
+
+    next();
     return;
   }
 
@@ -38,6 +53,13 @@ export async function requireTierLimit(
   next();
 }
 
-export async function incrementCalculationCount(userId: string): Promise<void> {
-  await userRepository.incrementWeeklyCount(userId);
+export async function incrementCalculationCount(
+  userIdOrIp: string,
+  isAnonymous = false,
+): Promise<void> {
+  if (isAnonymous) {
+    await userRepository.incrementAnonymousCount(userIdOrIp);
+  } else {
+    await userRepository.incrementWeeklyCount(userIdOrIp);
+  }
 }

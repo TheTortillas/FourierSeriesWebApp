@@ -8,7 +8,7 @@ export async function requireVerified(
   next: NextFunction,
 ): Promise<void> {
   if (!req.user) {
-    res.status(401).json({ error: "Unauthorized" });
+    next();
     return;
   }
 

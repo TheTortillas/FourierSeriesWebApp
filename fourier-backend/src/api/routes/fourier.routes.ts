@@ -55,7 +55,11 @@ fourierRouter.post(
         return;
       }
       const result = await trigonometricService.calculate(input);
-      await incrementCalculationCount(req.user!.id);
+      if (req.user) {
+        await incrementCalculationCount(req.user.id);
+      } else {
+        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+      }
       res.json(result);
     } catch (err) {
       next(err);
@@ -148,7 +152,11 @@ fourierRouter.post(
         return;
       }
       const result = await halfRangeService.calculate(input);
-      await incrementCalculationCount(req.user!.id);
+      if (req.user) {
+        await incrementCalculationCount(req.user.id);
+      } else {
+        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+      }
       res.json(result);
     } catch (err) {
       next(err);
@@ -242,8 +250,11 @@ fourierRouter.post(
       }
 
       const result = await complexService.calculate(input);
-      await incrementCalculationCount(req.user!.id);
-
+      if (req.user) {
+        await incrementCalculationCount(req.user.id);
+      } else {
+        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+      }
       res.json(result);
     } catch (err) {
       next(err);

@@ -226,4 +226,44 @@ export class UserRepository implements IUserRepository {
       [userId, weekStart.toISOString().split("T")[0]],
     );
   }
+
+  async getAnonymousWeeklyCount(ip: string): Promise<number> {
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+    const result = await db.query(
+      `INSERT INTO anonymous_calculation_counters (ip_address, week_start, count)
+     VALUES ($1, $2, 0)
+     ON CONFLICT (ip_address) DO UPDATE
+       SET week_start = CASE
+         WHEN anonymous_calculation_counters.week_start < $2
+         THEN $2
+         ELSE anonymous_calculation_counters.week_start
+       END,
+       count = CASE
+         WHEN anonymous_calculation_counters.week_start < $2
+         THEN 0
+         ELSE anonymous_calculation_counters.count
+       END
+     RETURNING count`,
+      [ip, weekStart.toISOString().split("T")[0]],
+    );
+    return result.rows[0]?.count ?? 0;
+  }
+
+  async incrementAnonymousCount(ip: string): Promise<void> {
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+    await db.query(
+      `INSERT INTO anonymous_calculation_counters (ip_address, week_start, count)
+     VALUES ($1, $2, 1)
+     ON CONFLICT (ip_address) DO UPDATE
+       SET count = anonymous_calculation_counters.count + 1,
+           updated_at = NOW()`,
+      [ip, weekStart.toISOString().split("T")[0]],
+    );
+  }
 }

@@ -69,7 +69,11 @@ transformsRouter.post(
         return;
       }
       const result = await fourierTransformService.transform(input);
-      await incrementCalculationCount(req.user!.id);
+      if (req.user) {
+        await incrementCalculationCount(req.user.id);
+      } else {
+        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+      }
       res.json(result);
     } catch (err) {
       next(err);
@@ -130,7 +134,11 @@ transformsRouter.post(
         return;
       }
       const result = await fourierTransformService.inverseTransform(input);
-      await incrementCalculationCount(req.user!.id);
+      if (req.user) {
+        await incrementCalculationCount(req.user.id);
+      } else {
+        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+      }
       res.json(result);
     } catch (err) {
       next(err);
@@ -231,7 +239,11 @@ transformsRouter.post(
       }
 
       const result = await dftService.compute(input);
-      await incrementCalculationCount(req.user!.id);
+      if (req.user) {
+        await incrementCalculationCount(req.user.id);
+      } else {
+        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+      }
       res.json(result);
     } catch (err) {
       next(err);

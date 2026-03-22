@@ -198,6 +198,17 @@ CREATE TABLE calculation_history (
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- -------------------------------------------------------
+-- ANONYMOUS CALCULATION COUNTERS
+-- Contador semanal para límite de cálculos por IP
+-- -------------------------------------------------------  
+CREATE TABLE anonymous_calculation_counters (
+    ip_address   INET PRIMARY KEY,
+    week_start   DATE NOT NULL,
+    count        INTEGER NOT NULL DEFAULT 0,
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX idx_calc_history_user       ON calculation_history (user_id);
 CREATE INDEX idx_calc_history_type       ON calculation_history (type);
 CREATE INDEX idx_calc_history_favorite   ON calculation_history (user_id) WHERE is_favorite = TRUE;
