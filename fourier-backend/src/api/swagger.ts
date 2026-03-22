@@ -11,6 +11,13 @@ const options: Options = {
         "API para cálculo de series de Fourier trigonométricas, de medio rango y complejas",
     },
     components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
       schemas: {
         PiecewiseSegment: {
           type: "object",

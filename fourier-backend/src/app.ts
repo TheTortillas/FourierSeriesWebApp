@@ -9,6 +9,7 @@ import { transformsRouter } from "./api/routes/transforms.routes";
 import { cacheRouter } from "./api/routes/cache.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
 import { generalLimiter, computeLimiter } from "./api/middlewares/rateLimiter";
+import { authRouter } from "./api/routes/auth.routes";
 
 export function createApp(): Application {
   const app = express();
@@ -25,6 +26,7 @@ export function createApp(): Application {
   app.use("/api/simplify", computeLimiter, simplifyRouter);
   app.use("/api/transforms", computeLimiter, transformsRouter);
   app.use("/api/dft", dftRouter);
+  app.use("/api/auth", authRouter);
 
   app.use(errorHandler);
 
