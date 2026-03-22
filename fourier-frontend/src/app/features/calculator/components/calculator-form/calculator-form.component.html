@@ -1,0 +1,97 @@
+<div class="flex flex-col gap-5">
+
+  <!-- ── Tramos ─────────────────────────────────────────────────────────── -->
+  <section class="space-y-2">
+    <div class="flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+        Función a trozos
+      </h2>
+      <span class="text-[10px] text-muted font-mono">
+        Sintaxis Maxima: x^2, sin(x), %pi
+      </span>
+    </div>
+
+    <div class="space-y-2">
+      @for (seg of store.segments(); track seg.id; let i = $index) {
+        <app-segment-input
+          [segment]="seg"
+          [index]="i"
+          [isOnly]="store.segments().length === 1"
+          [error]="store.segmentErrors()[i]"
+        />
+      }
+    </div>
+
+    <!-- Add segment -->
+    <button
+      (click)="store.addSegment()"
+      type="button"
+      class="flex items-center gap-1.5 text-xs text-accent dark:text-accent
+             hover:underline cursor-pointer font-mono transition-opacity">
+      + añadir tramo
+    </button>
+  </section>
+
+  <!-- ── Tipo de serie ──────────────────────────────────────────────────── -->
+  <app-series-type-selector />
+
+  <!-- ── Número de términos ─────────────────────────────────────────────── -->
+  <div class="space-y-1.5">
+    <div class="flex items-center justify-between">
+      <p class="text-xs text-muted font-mono">Términos N</p>
+      <span class="text-xs font-mono text-ink dark:text-dark-ink font-semibold">
+        {{ store.nTerms() }}
+      </span>
+    </div>
+    <input
+      type="range" min="1" max="50" step="1"
+      [value]="store.nTerms()"
+      (input)="store.setNTerms(+$any($event.target).value)"
+      class="w-full accent-accent" />
+    <div class="flex justify-between text-[10px] text-muted font-mono">
+      <span>1</span><span>25</span><span>50</span>
+    </div>
+  </div>
+
+  <!-- ── Error ──────────────────────────────────────────────────────────── -->
+  @if (store.error()) {
+    <div class="rounded border border-red-300 dark:border-red-800
+                bg-red-50 dark:bg-red-950/30 px-3 py-2">
+      <p class="text-xs text-red-600 dark:text-red-400 font-mono">
+        {{ store.error() }}
+      </p>
+    </div>
+  }
+
+  <!-- ── Calcular ───────────────────────────────────────────────────────── -->
+  <button
+    (click)="store.calculate()"
+    [disabled]="!store.isValid() || store.loading()"
+    type="button"
+    class="w-full py-2.5 rounded font-semibold text-sm font-body
+           transition-all cursor-pointer
+           bg-accent text-paper hover:bg-accent/90 active:scale-[0.99]
+           disabled:opacity-40 disabled:cursor-not-allowed">
+    @if (store.loading()) {
+      <span class="flex items-center justify-center gap-2">
+        <span class="inline-block w-3.5 h-3.5 border-2 border-paper/40
+                     border-t-paper rounded-full animate-spin"></span>
+        Calculando…
+      </span>
+    } @else {
+      Calcular serie
+    }
+  </button>
+
+  <!-- ── Reset ─────────────────────────────────────────────────────────── -->
+  @if (store.hasResult()) {
+    <button
+      (click)="store.resetForm()"
+      type="button"
+      class="w-full py-1.5 rounded border border-border dark:border-dark-border
+             text-xs text-muted hover:text-ink dark:hover:text-dark-ink
+             hover:border-ink dark:hover:border-dark-ink transition-colors cursor-pointer font-mono">
+      Nuevo cálculo
+    </button>
+  }
+</div>
