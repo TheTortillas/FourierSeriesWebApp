@@ -10,6 +10,8 @@ import { cacheRouter } from "./api/routes/cache.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
 import { generalLimiter, computeLimiter } from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
+import { authenticate, optionalAuth } from "./api/middlewares/authenticate";
+import { requireVerified } from "./api/middlewares/requireVerified";
 
 export function createApp(): Application {
   const app = express();
@@ -22,10 +24,30 @@ export function createApp(): Application {
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.use("/api/cache", cacheRouter);
 
-  app.use("/api/fourier", computeLimiter, fourierRouter);
-  app.use("/api/simplify", computeLimiter, simplifyRouter);
-  app.use("/api/transforms", computeLimiter, transformsRouter);
-  app.use("/api/dft", dftRouter);
+  // Endpoints de cálculo: requieren auth + email verificado + rate limit
+  app.use(
+    "/api/fourier",
+    authenticate,
+    requireVerified,
+    computeLimiter,
+    fourierRouter,
+  );
+  app.use(
+    "/api/simplify",
+    authenticate,
+    requireVerified,
+    computeLimiter,
+    simplifyRouter,
+  );
+  app.use(
+    "/api/transforms",
+    authenticate,
+    requireVerified,
+    computeLimiter,
+    transformsRouter,
+  );
+
+  app.use("/api/dft", dftRouter, authenticate, requireVerified, computeLimiter);
   app.use("/api/auth", authRouter);
 
   app.use(errorHandler);

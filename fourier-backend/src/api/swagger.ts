@@ -10,6 +10,7 @@ const options: Options = {
       description:
         "API para cálculo de series de Fourier trigonométricas, de medio rango y complejas",
     },
+    security: [{ bearerAuth: [] }],
     components: {
       securitySchemes: {
         bearerAuth: {
