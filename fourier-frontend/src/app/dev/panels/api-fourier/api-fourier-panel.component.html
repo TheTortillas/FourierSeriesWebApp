@@ -1,0 +1,75 @@
+<div class="space-y-6">
+  <h2 class="text-yellow-400 font-bold text-lg border-b border-gray-700 pb-2">Fourier Series Endpoints</h2>
+
+  <!-- Input -->
+  <section class="border border-gray-700 rounded p-4 space-y-3">
+    <h3 class="text-gray-300 font-mono text-sm uppercase tracking-wider">Request</h3>
+
+    <div class="grid grid-cols-3 gap-2">
+      <div>
+        <label class="block text-gray-500 text-xs mb-1">Expresión (Maxima)</label>
+        <input [(ngModel)]="expr"
+          class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+      </div>
+      <div>
+        <label class="block text-gray-500 text-xs mb-1">Desde</label>
+        <input [(ngModel)]="from"
+          class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+      </div>
+      <div>
+        <label class="block text-gray-500 text-xs mb-1">Hasta</label>
+        <input [(ngModel)]="to"
+          class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-gray-500 text-xs mb-1">Variable de integración</label>
+        <input [(ngModel)]="intVar"
+          class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+      </div>
+      <div>
+        <label class="block text-gray-500 text-xs mb-1">Tipo de serie</label>
+        <select [(ngModel)]="seriesType"
+          class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500">
+          <option value="trigonometric">Trigonométrica</option>
+          <option value="complex">Compleja</option>
+          <option value="halfRange">Half-Range</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Request body preview -->
+    <pre class="bg-gray-900 text-gray-400 text-xs rounded p-2">{{ json({ segments: [{ expression: expr, from: from, to: to }], seriesType: seriesType, intVar: intVar }) }}</pre>
+  </section>
+
+  <!-- Actions -->
+  <section class="border border-gray-700 rounded p-4 space-y-3">
+    <div class="flex gap-3 flex-wrap">
+      <button (click)="calculate()"
+        class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-sm px-4 py-1.5 rounded transition-colors cursor-pointer">
+        POST /fourier/{{ seriesType }}
+      </button>
+    </div>
+    <div class="flex items-center gap-3">
+      <input [(ngModel)]="nTerms" type="number" min="1" max="50"
+        class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-24 focus:outline-none focus:border-yellow-500" />
+      <button (click)="calculateTerms()"
+        class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-sm px-4 py-1.5 rounded transition-colors cursor-pointer">
+        POST /fourier/{{ seriesType }}/terms (n={{ nTerms }})
+      </button>
+    </div>
+  </section>
+
+  <!-- Response -->
+  @if (loading()) {
+    <p class="text-yellow-400 font-mono text-sm animate-pulse">Calculando...</p>
+  }
+  @if (error()) {
+    <pre class="bg-red-950 text-red-300 rounded p-3 text-xs overflow-auto">{{ error() }}</pre>
+  }
+  @if (response()) {
+    <pre class="bg-gray-900 text-green-300 rounded p-3 text-xs overflow-auto max-h-96">{{ json(response()) }}</pre>
+  }
+</div>

@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { devOnlyGuard } from './core/guards/dev-only.guard';
+import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -33,6 +35,7 @@ export const routes: Routes = [
   },
   {
     path: 'history',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/history/history.component').then(
         (m) => m.HistoryComponent,
@@ -40,6 +43,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
+    canActivate: [authGuard, adminGuard],
     loadChildren: () =>
       import('./features/admin/admin.routes').then((m) => m.adminRoutes),
   },

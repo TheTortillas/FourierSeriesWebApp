@@ -1,3 +1,71 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+/* ─── Design System — Fourier Calculator ─────────────────────────────────────
+   Inspirado en funciones_integrales_especiales.html
+   Tipografía académica/editorial con paleta papel cálido
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Fuentes */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Source Serif 4', Georgia, serif;
+  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  /* Paleta Light (tema por defecto) */
+  --color-ink:      #1a1410;
+  --color-paper:    #f5f0e8;
+  --color-paper2:   #ede7d9;
+  --color-border:   #c8bca8;
+  --color-accent:   #8b2500;
+  --color-accent2:  #1a4a6b;
+  --color-accent3:  #2d5a27;
+  --color-gold:     #b8860b;
+  --color-muted:    #6b5e4e;
+
+  /* Paleta Dark (complementaria cálida) */
+  --color-dark-bg:      #1a1410;
+  --color-dark-surface: #2a2018;
+  --color-dark-surface2: #332a1e;
+  --color-dark-border:  #4a3d2e;
+  --color-dark-text:    #f5f0e8;
+  --color-dark-muted:   #a89880;
+  --color-dark-accent:  #c0402a;
+  --color-dark-accent2: #3a7ab0;
+  --color-dark-gold:    #d4a017;
+}
+
+/* ─── Estrategia de tema: clase 'dark' en <html> ────────────────────────── */
+@layer base {
+  :root {
+    color-scheme: light;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html.dark {
+    color-scheme: dark;
+    background-color: var(--color-dark-bg);
+    color: var(--color-dark-text);
+  }
+
+  /* Tipografía base */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    line-height: 1.2;
+  }
+
+  code, kbd, pre, samp {
+    font-family: var(--font-mono);
+  }
+
+  /* Scrollbar discreta */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+}
