@@ -122,10 +122,28 @@ Coeff_n: if not freeof(gamma_incomplete, Coeff_n)
     if cleaned = [] then Coeff_n else first(cleaned))
   else Coeff_n$
 block(
-  [cn_val, cn_neg_val, term_real, amp, ph, real_float],
+  [cn_val, cn_neg_val, term_real, amp, ph, real_float, cn_used_limit, cn_neg_used_limit],
   for i: 1 thru ${nTerms} do (
-    cn_val: ratsimp(factor(subst(n=i, Coeff_n))),
-    cn_neg_val: ratsimp(factor(subst(n=-i, Coeff_n))),
+    cn_used_limit: false,
+    cn_neg_used_limit: false,
+    cn_val: block([r: errcatch(ratsimp(subst(n=i, Coeff_n)))],
+      if r = [] then block([lim: errcatch(limit(Coeff_n, n, i))],
+        cn_used_limit: true,
+        if lim = [] then 0 else first(lim))
+      else block([val: first(r)],
+        if numberp(val) or freeof(n, val) then val
+        else block([lim: errcatch(limit(Coeff_n, n, i))],
+          cn_used_limit: true,
+          if lim = [] then val else first(lim)))),
+    cn_neg_val: block([r: errcatch(ratsimp(subst(n=-i, Coeff_n)))],
+      if r = [] then block([lim: errcatch(limit(Coeff_n, n, -i))],
+        cn_neg_used_limit: true,
+        if lim = [] then 0 else first(lim))
+      else block([val: first(r)],
+        if numberp(val) or freeof(n, val) then val
+        else block([lim: errcatch(limit(Coeff_n, n, -i))],
+          cn_neg_used_limit: true,
+          if lim = [] then val else first(lim)))),
     term_real: factor(ratsimp(realpart(rectform(
       cn_val * exp(%i * i * w0 * ${intVar}) + cn_neg_val * exp(-%i * i * w0 * ${intVar})
     )))),
@@ -161,7 +179,11 @@ block(
     print("__AMPLITUDE__"),
     print(string(amp)),
     print("__PHASE__"),
-    print(string(ph))
+    print(string(ph)),
+    print("__CN_USED_LIMIT__"),
+    print(string(cn_used_limit)),
+    print("__CN_NEG_USED_LIMIT__"),
+    print(string(cn_neg_used_limit))
   )
 )$
 kill(all)$
@@ -221,7 +243,25 @@ kill(all)$
         "__AMPLITUDE__",
         "__PHASE__",
       );
-      const phaseStr = this.extractBetween(block, "__PHASE__", null);
+      const phaseStr = this.extractBetween(
+        block,
+        "__PHASE__",
+        "__CN_USED_LIMIT__",
+      );
+      const cnUsedLimitStr = this.extractBetween(
+        block,
+        "__CN_USED_LIMIT__",
+        "__CN_NEG_USED_LIMIT__",
+      )
+        .replace(/false/g, "")
+        .trim();
+      const cnNegUsedLimitStr = this.extractBetween(
+        block,
+        "__CN_NEG_USED_LIMIT__",
+        null,
+      )
+        .replace(/false/g, "")
+        .trim();
 
       return {
         n,
@@ -237,6 +277,8 @@ kill(all)$
           parseFloat(
             phaseStr.replace(/false/g, "").trim().split("\n")[0] ?? "0",
           ) || 0,
+        cnUsedLimit: cnUsedLimitStr.includes("true"),
+        cnNegUsedLimit: cnNegUsedLimitStr.includes("true"),
       };
     });
   }

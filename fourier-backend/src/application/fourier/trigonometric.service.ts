@@ -141,7 +141,7 @@ FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
-Coeff_An: if not freeof(gamma_incomplete, Coeff_An) 
+Coeff_An: if not freeof(gamma_incomplete, Coeff_An)
   then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_An, ${intVar})))],
     if cleaned = [] then Coeff_An else first(cleaned))
   else Coeff_An$
@@ -152,8 +152,26 @@ Coeff_Bn: if not freeof(gamma_incomplete, Coeff_Bn)
 block(
   [],
   for i: 1 thru ${nTerms} do (
-    an_i: ratsimp(factor(subst(n=i, Coeff_An))),
-    bn_i: ratsimp(factor(subst(n=i, Coeff_Bn))),
+    an_used_limit: false,
+    bn_used_limit: false,
+    an_i: block([r: errcatch(ratsimp(factor(subst(n=i, Coeff_An))))],
+      if r = [] then block([lim: errcatch(limit(Coeff_An, n, i))],
+        an_used_limit: true,
+        if lim = [] then 0 else first(lim))
+      else block([val: first(r)],
+        if numberp(val) or freeof(n, val) then val
+        else block([lim: errcatch(limit(Coeff_An, n, i))],
+          an_used_limit: true,
+          if lim = [] then val else first(lim)))),
+    bn_i: block([r: errcatch(ratsimp(factor(subst(n=i, Coeff_Bn))))],
+      if r = [] then block([lim: errcatch(limit(Coeff_Bn, n, i))],
+        bn_used_limit: true,
+        if lim = [] then 0 else first(lim))
+      else block([val: first(r)],
+        if numberp(val) or freeof(n, val) then val
+        else block([lim: errcatch(limit(Coeff_Bn, n, i))],
+          bn_used_limit: true,
+          if lim = [] then val else first(lim)))),
     an_float: block([result: errcatch(float(an_i))],
       if result = [] or not numberp(first(result))
       then ${quadIntegralAn}
@@ -175,14 +193,18 @@ block(
     print("__AN_FLOAT__"),
     print(string(an_float)),
     print("__BN_FLOAT__"),
-    print(string(bn_float))
+    print(string(bn_float)),
+    print("__AN_USED_LIMIT__"),
+    print(string(an_used_limit)),
+    print("__BN_USED_LIMIT__"),
+    print(string(bn_used_limit))
   )
 )$
 kill(all)$
 `;
 
     const result = await this.runner.run({ script: termsScript });
-    // console.log("TERMS RAW:", JSON.stringify(result.raw.slice(0, 500)));
+    //console.log("TERMS RAW:", JSON.stringify(result.raw.slice(0, 500)));
 
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
@@ -230,7 +252,25 @@ kill(all)$
         "__AN_FLOAT__",
         "__BN_FLOAT__",
       );
-      const bnFloatStr = this.extractBetween(block, "__BN_FLOAT__", null);
+      const bnFloatStr = this.extractBetween(
+        block,
+        "__BN_FLOAT__",
+        "__AN_USED_LIMIT__",
+      );
+      const anUsedLimitStr = this.extractBetween(
+        block,
+        "__AN_USED_LIMIT__",
+        "__BN_USED_LIMIT__",
+      )
+        .replace(/false/g, "")
+        .trim();
+      const bnUsedLimitStr = this.extractBetween(
+        block,
+        "__BN_USED_LIMIT__",
+        null,
+      )
+        .replace(/false/g, "")
+        .trim();
 
       return {
         n,
@@ -241,6 +281,8 @@ kill(all)$
           parseFloat(
             bnFloatStr.replace(/false/g, "").trim().split("\n")[0] ?? "0",
           ) || 0,
+        anUsedLimit: anUsedLimitStr.includes("true"),
+        bnUsedLimit: bnUsedLimitStr.includes("true"),
       };
     });
   }

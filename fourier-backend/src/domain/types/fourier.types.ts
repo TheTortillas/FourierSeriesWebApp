@@ -130,6 +130,8 @@ export interface TrigonometricTerm {
   bn: SymbolicExpression;
   anFloat: number;
   bnFloat: number;
+  anUsedLimit?: boolean;
+  bnUsedLimit?: boolean;
 }
 
 export interface HalfRangeTerm {
@@ -138,6 +140,8 @@ export interface HalfRangeTerm {
   bn: SymbolicExpression;
   anFloat: number;
   bnFloat: number;
+  anUsedLimit?: boolean;
+  bnUsedLimit?: boolean;
 }
 
 export interface ComplexTerm {
@@ -148,6 +152,8 @@ export interface ComplexTerm {
   realFloat: number;
   amplitude: number;
   phase: number;
+  cnUsedLimit?: boolean;
+  cnNegUsedLimit?: boolean;
 }
 
 export interface TrigonometricTermsResult {
