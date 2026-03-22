@@ -10,13 +10,14 @@ import { provideTransloco } from '@jsverse/transloco';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 import { TranslocoHttpLoader } from './core/services/transloco-http-loader';
+import { tokenInterceptor } from './core/interceptors/token.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
     provideClientHydration(withEventReplay()),
-    provideHttpClient(withFetch(), withInterceptors([])),
+    provideHttpClient(withFetch(), withInterceptors([tokenInterceptor])),
     provideTransloco({
       config: {
         availableLangs: ['es', 'en'],
