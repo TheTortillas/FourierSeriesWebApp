@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-
-// tex2max uses a class-based API: new tex2max(options).toMaxima(latexString)
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const Tex2Max = require('tex2max');
+// tex2max is CommonJS — esbuild handles the CJS→ESM interop via allowedCommonJsDependencies.
+// Static import (not require()) is required for browser bundles.
+import Tex2Max from 'tex2max';
 
 export interface ConversionResult {
   maxima: string;
