@@ -8,6 +8,10 @@ import { ComplexService } from "../application/fourier/complex.service";
 import { FourierTransformService } from "../application/transforms/fourierTransform.service";
 import { DFTService } from "../application/transforms/dft.service";
 
+import { UserRepository } from "./persistence/UserRepository";
+import { TokenRepository } from "./persistence/TokenRepository";
+import { AuditRepository } from "./persistence/AuditRepository";
+
 const runner = new MaximaRunner();
 const postProcessor = new MaximaPostProcessor(runner);
 const auxiliaryService = new AuxiliaryService(runner);
@@ -30,6 +34,10 @@ const complexService = new ComplexService(
 const fourierTransformService = new FourierTransformService(runner);
 const dftService = new DFTService(runner);
 
+const userRepository = new UserRepository();
+const tokenRepository = new TokenRepository();
+const auditRepository = new AuditRepository();
+
 export {
   runner,
   postProcessor,
@@ -40,4 +48,7 @@ export {
   complexService,
   fourierTransformService,
   dftService,
+  userRepository,
+  tokenRepository,
+  auditRepository,
 };
