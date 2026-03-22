@@ -1,0 +1,29 @@
+<div class="flex h-screen bg-gray-950 text-gray-100 font-mono">
+
+  <!-- Sidebar -->
+  <aside class="w-64 shrink-0 border-r border-gray-800 flex flex-col">
+    <div class="p-4 border-b border-gray-800">
+      <span class="text-yellow-400 font-bold text-sm uppercase tracking-widest">Dev Sandbox</span>
+      <p class="text-gray-500 text-xs mt-1">Solo en desarrollo</p>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-2">
+      @for (panel of panels; track panel.route) {
+        <a
+          [routerLink]="panel.route"
+          routerLinkActive="bg-yellow-400 text-gray-900"
+          class="flex items-start gap-2 rounded px-3 py-2 text-sm hover:bg-gray-800 transition-colors cursor-pointer mb-1"
+        >
+          <span class="text-yellow-600 text-xs shrink-0 mt-0.5">{{ panel.phase }}</span>
+          <span>{{ panel.label }}</span>
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <!-- Content -->
+  <main class="flex-1 overflow-auto p-6">
+    <router-outlet />
+  </main>
+
+</div>

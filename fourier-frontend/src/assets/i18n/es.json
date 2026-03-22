@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "Fourier Calculator",
+    "tagline": "Calcula series e integrales de Fourier de forma simbólica"
+  },
+  "nav": {
+    "home": "Inicio",
+    "calculator": "Calculadora",
+    "history": "Historial",
+    "about": "Acerca de",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar sesión",
+    "profile": "Perfil"
+  },
+  "calculator": {
+    "title": "Calculadora de Fourier",
+    "addPiece": "Agregar tramo",
+    "removePiece": "Eliminar tramo",
+    "calculate": "Calcular",
+    "calculating": "Calculando...",
+    "intVar": "Variable de integración",
+    "seriesType": "Tipo de serie",
+    "types": {
+      "trigonometric": "Trigonométrica",
+      "complex": "Compleja",
+      "halfRange": "Medio rango",
+      "dft": "DFT"
+    }
+  },
+  "results": {
+    "coefficients": "Coeficientes",
+    "series": "Serie",
+    "period": "Período",
+    "frequency": "Frecuencia fundamental",
+    "terms": "Términos",
+    "executionTime": "Tiempo de cálculo",
+    "ms": "ms"
+  },
+  "auth": {
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "login": "Iniciar sesión",
+    "register": "Crear cuenta",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "continueWithGoogle": "Continuar con Google",
+    "verifyEmail": "Verificar correo",
+    "resendVerification": "Reenviar verificación"
+  },
+  "errors": {
+    "generic": "Ocurrió un error. Intenta de nuevo.",
+    "network": "Error de conexión. Verifica tu red.",
+    "unauthorized": "Sesión expirada. Inicia sesión nuevamente.",
+    "validation": "Por favor corrige los errores en el formulario."
+  },
+  "dev": {
+    "title": "Dev Sandbox",
+    "description": "Entorno de desarrollo para probar endpoints y componentes.",
+    "selectPanel": "Selecciona un panel"
+  }
+}
