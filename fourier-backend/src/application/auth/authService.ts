@@ -5,6 +5,12 @@ import { TokenService } from "./tokenService";
 import type { IUserRepository } from "../../domain/interfaces/repositories/IUserRepository";
 import type { ITokenRepository } from "../../domain/interfaces/repositories/ITokenRepository";
 import type { IAuditRepository } from "../../domain/interfaces/repositories/IAuditRepository";
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendRecoveryEmail,
+} from "../../infrastructure/email/emailService";
+import { db } from "../../infrastructure/database/db";
 
 const googleClient = new OAuth2Client(config.google.clientId);
 const BCRYPT_ROUNDS = 12;
@@ -69,6 +75,15 @@ export class AuthService {
       ipAddress: input.ipAddress,
       metadata: { provider: "email" },
     });
+
+    const emailToken = this.tokenService.generateEmailToken();
+    await this.tokenRepo.createEmailToken({
+      userId: user.id,
+      tokenHash: emailToken.hash,
+      purpose: "email_verification",
+      expiresAt: emailToken.expiresAt,
+    });
+    await sendVerificationEmail(user.email, user.firstName, emailToken.token);
 
     return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
   }
@@ -269,5 +284,79 @@ export class AuthService {
         emailVerified: user.emailVerified,
       },
     };
+  }
+  async verifyEmail(token: string): Promise<void> {
+    const hash = this.tokenService.hashToken(token);
+    const record = await this.tokenRepo.findEmailToken(
+      hash,
+      "email_verification",
+    );
+
+    if (!record) {
+      throw new Error("Invalid verification token");
+    }
+
+    if (record.usedAt) {
+      throw new Error("Token already used");
+    }
+
+    if (new Date() > record.expiresAt) {
+      throw new Error("Token expired");
+    }
+
+    await this.tokenRepo.markEmailTokenUsed(record.id);
+
+    await db.query(`UPDATE users SET email_verified = TRUE WHERE id = $1`, [
+      record.userId,
+    ]);
+  }
+
+  async forgotPassword(email: string, ipAddress?: string): Promise<void> {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) return; // No revelar si el email existe
+
+    const resetToken = this.tokenService.generatePasswordResetToken();
+    await this.tokenRepo.createPasswordReset({
+      userId: user.id,
+      tokenHash: resetToken.hash,
+      expiresAt: resetToken.expiresAt,
+    });
+
+    await sendPasswordResetEmail(user.email, user.firstName, resetToken.token);
+
+    await this.auditRepo.log({
+      userId: user.id,
+      action: "account_recovery_initiated",
+      ipAddress,
+    });
+  }
+
+  async resetPassword(input: {
+    token: string;
+    newPassword: string;
+    ipAddress?: string;
+  }): Promise<void> {
+    const hash = this.tokenService.hashToken(input.token);
+    const record = await this.tokenRepo.findPasswordReset(hash);
+
+    if (!record || record.usedAt || new Date() > record.expiresAt) {
+      throw new Error("Invalid or expired reset token");
+    }
+
+    const passwordHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
+
+    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [
+      passwordHash,
+      record.userId,
+    ]);
+
+    await this.tokenRepo.markPasswordResetUsed(record.id);
+    await this.tokenRepo.revokeAllUserTokens(record.userId);
+
+    await this.auditRepo.log({
+      userId: record.userId,
+      action: "password_change",
+      ipAddress: input.ipAddress,
+    });
   }
 }

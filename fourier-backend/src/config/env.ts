@@ -52,4 +52,15 @@ export const config = {
     free: parseInt(optionalEnv("CALC_LIMIT_FREE", "50")),
     premium: parseInt(optionalEnv("CALC_LIMIT_PREMIUM", "-1")),
   },
+  email: {
+    host: optionalEnv("SMTP_HOST", "smtp.ionos.com"),
+    port: parseInt(optionalEnv("SMTP_PORT", "587")),
+    secure: optionalEnv("SMTP_SECURE", "false") === "true",
+    user: requireEnv("SMTP_USER"),
+    pass: requireEnv("SMTP_PASS"),
+    from: requireEnv("SMTP_FROM"),
+  },
+  app: {
+    url: optionalEnv("APP_URL", "http://localhost:3000"),
+  },
 } as const;

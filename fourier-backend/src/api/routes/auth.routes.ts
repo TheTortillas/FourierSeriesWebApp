@@ -294,3 +294,77 @@ authRouter.get(
     res.json({ user: req.user });
   },
 );
+
+authRouter.get(
+  "/verify-email",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token } = req.query as { token: string };
+      if (!token) {
+        res.status(400).json({ error: "Token is required" });
+        return;
+      }
+      await authService.verifyEmail(token);
+      res.json({ message: "Email verified successfully" });
+    } catch (err) {
+      if (err instanceof Error) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      next(err);
+    }
+  },
+);
+
+authRouter.post(
+  "/forgot-password",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email } = req.body as { email: string };
+      if (!email) {
+        res.status(400).json({ error: "Email is required" });
+        return;
+      }
+      await authService.forgotPassword(email, req.ip);
+      res.json({
+        message: "If that email exists you will receive a reset link",
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+authRouter.post(
+  "/reset-password",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token, newPassword } = req.body as {
+        token: string;
+        newPassword: string;
+      };
+      if (!token || !newPassword) {
+        res.status(400).json({ error: "Token and newPassword are required" });
+        return;
+      }
+      if (newPassword.length < 8) {
+        res
+          .status(400)
+          .json({ error: "Password must be at least 8 characters" });
+        return;
+      }
+      await authService.resetPassword({
+        token,
+        newPassword,
+        ipAddress: req.ip,
+      });
+      res.json({ message: "Password reset successfully" });
+    } catch (err) {
+      if (err instanceof Error) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      next(err);
+    }
+  },
+);
