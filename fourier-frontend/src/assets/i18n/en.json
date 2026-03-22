@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "Fourier Calculator",
+    "tagline": "Symbolically compute Fourier series and integrals"
+  },
+  "nav": {
+    "home": "Home",
+    "calculator": "Calculator",
+    "history": "History",
+    "about": "About",
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out",
+    "profile": "Profile"
+  },
+  "calculator": {
+    "title": "Fourier Calculator",
+    "addPiece": "Add piece",
+    "removePiece": "Remove piece",
+    "calculate": "Calculate",
+    "calculating": "Calculating...",
+    "intVar": "Integration variable",
+    "seriesType": "Series type",
+    "types": {
+      "trigonometric": "Trigonometric",
+      "complex": "Complex",
+      "halfRange": "Half-range",
+      "dft": "DFT"
+    }
+  },
+  "results": {
+    "coefficients": "Coefficients",
+    "series": "Series",
+    "period": "Period",
+    "frequency": "Fundamental frequency",
+    "terms": "Terms",
+    "executionTime": "Execution time",
+    "ms": "ms"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "login": "Log in",
+    "register": "Create account",
+    "forgotPassword": "Forgot your password?",
+    "continueWithGoogle": "Continue with Google",
+    "verifyEmail": "Verify email",
+    "resendVerification": "Resend verification"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Connection error. Check your network.",
+    "unauthorized": "Session expired. Please log in again.",
+    "validation": "Please fix the errors in the form."
+  },
+  "dev": {
+    "title": "Dev Sandbox",
+    "description": "Development environment for testing endpoints and components.",
+    "selectPanel": "Select a panel"
+  }
+}
