@@ -21,8 +21,8 @@ export class DevSandboxComponent {
     // Fase 2 — Math input
     { label: 'LaTeX → Maxima',   route: 'latex-maxima', phase: 'F2', ready: true },
     { label: 'MathQuill fields',  route: 'mathquill',   phase: 'F2', ready: true },
-    // Fase 3 — Canvas (próximamente)
-    { label: 'Canvas básico',       route: 'canvas',      phase: 'F3', ready: false },
-    { label: 'Canvas — Plot función', route: 'canvas-plot', phase: 'F3', ready: false },
+    // Fase 3 — Canvas
+    { label: 'Canvas — Smoke test',      route: 'canvas',      phase: 'F3', ready: true },
+    { label: 'Canvas — Función + Fourier', route: 'canvas-plot', phase: 'F3', ready: true },
   ];
 }
