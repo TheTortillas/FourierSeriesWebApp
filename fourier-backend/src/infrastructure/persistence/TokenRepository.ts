@@ -33,8 +33,11 @@ export class TokenRepository implements ITokenRepository {
   async findRefreshToken(
     tokenHash: string,
   ): Promise<RefreshTokenRecord | null> {
-    const result = await db.query<RefreshTokenRecord>(
-      `SELECT * FROM user_refresh_tokens WHERE token_hash = $1`,
+    const result = await db.query(
+      `SELECT id, user_id as "userId", token_hash as "tokenHash",
+            family_id as "familyId", expires_at as "expiresAt",
+            revoked_at as "revokedAt", replaced_by as "replacedBy"
+     FROM user_refresh_tokens WHERE token_hash = $1`,
       [tokenHash],
     );
     return result.rows[0] ?? null;
@@ -50,7 +53,10 @@ export class TokenRepository implements ITokenRepository {
       await client.query("BEGIN");
 
       const old = await client.query<RefreshTokenRecord>(
-        `SELECT * FROM user_refresh_tokens WHERE id = $1`,
+        `SELECT id, user_id as "userId", token_hash as "tokenHash",
+              family_id as "familyId", expires_at as "expiresAt",
+              revoked_at as "revokedAt", replaced_by as "replacedBy"
+         FROM user_refresh_tokens WHERE id = $1`,
         [oldId],
       );
       const oldToken = old.rows[0]!;
@@ -148,9 +154,7 @@ export class TokenRepository implements ITokenRepository {
     );
   }
 
-  async findPasswordReset(
-    tokenHash: string,
-  ): Promise<{
+  async findPasswordReset(tokenHash: string): Promise<{
     id: string;
     userId: string;
     usedAt: Date | null;

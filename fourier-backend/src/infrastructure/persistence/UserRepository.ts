@@ -7,22 +7,42 @@ import type {
 
 export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<UserRecord | null> {
-    const result = await db.query<UserRecord>(
-      `SELECT u.*, p.first_name, p.last_name
-       FROM users u
-       JOIN persons p ON p.id = u.person_id
-       WHERE u.id = $1 AND u.deleted_at IS NULL`,
+    const result = await db.query(
+      `SELECT u.id, u.person_id as "personId", u.email,
+            u.email_verified as "emailVerified",
+            u.password_hash as "passwordHash",
+            u.role, u.tier,
+            u.is_active as "isActive",
+            u.created_at as "createdAt",
+            u.updated_at as "updatedAt",
+            u.last_login_at as "lastLoginAt",
+            u.deleted_at as "deletedAt",
+            p.first_name as "firstName",
+            p.last_name as "lastName"
+     FROM users u
+     JOIN persons p ON p.id = u.person_id
+     WHERE u.id = $1 AND u.deleted_at IS NULL`,
       [id],
     );
     return result.rows[0] ?? null;
   }
 
   async findByEmail(email: string): Promise<UserRecord | null> {
-    const result = await db.query<UserRecord>(
-      `SELECT u.*, p.first_name, p.last_name
-       FROM users u
-       JOIN persons p ON p.id = u.person_id
-       WHERE u.email = $1 AND u.deleted_at IS NULL`,
+    const result = await db.query(
+      `SELECT u.id, u.person_id as "personId", u.email,
+            u.email_verified as "emailVerified",
+            u.password_hash as "passwordHash",
+            u.role, u.tier,
+            u.is_active as "isActive",
+            u.created_at as "createdAt",
+            u.updated_at as "updatedAt",
+            u.last_login_at as "lastLoginAt",
+            u.deleted_at as "deletedAt",
+            p.first_name as "firstName",
+            p.last_name as "lastName"
+     FROM users u
+     JOIN persons p ON p.id = u.person_id
+     WHERE u.email = $1 AND u.deleted_at IS NULL`,
       [email],
     );
     return result.rows[0] ?? null;
@@ -30,13 +50,21 @@ export class UserRepository implements IUserRepository {
 
   async findByGoogleId(googleId: string): Promise<UserRecord | null> {
     const result = await db.query<UserRecord>(
-      `SELECT u.*, p.first_name, p.last_name
-       FROM users u
-       JOIN persons p ON p.id = u.person_id
-       JOIN user_auth_providers ap ON ap.user_id = u.id
-       WHERE ap.provider = 'google'
-         AND ap.provider_id = $1
-         AND u.deleted_at IS NULL`,
+      `SELECT u.id, u.person_id as "personId", u.email,
+            u.email_verified as "emailVerified",
+            u.password_hash as "passwordHash",
+            u.role, u.tier,
+            u.is_active as "isActive",
+            u.created_at as "createdAt",
+            u.updated_at as "updatedAt",
+            u.last_login_at as "lastLoginAt",
+            u.deleted_at as "deletedAt",
+            p.first_name as "firstName",
+            p.last_name as "lastName"
+      FROM users u
+      JOIN persons p ON p.id = u.person_id
+      JOIN user_auth_providers ap ON ap.user_id = u.id
+      WHERE ap.provider = 'google' AND ap.provider_id = $1 AND u.deleted_at IS NULL`,
       [googleId],
     );
     return result.rows[0] ?? null;
