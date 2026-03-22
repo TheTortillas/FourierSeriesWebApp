@@ -50,7 +50,8 @@ export class CanvasRendererService {
     vp: CanvasViewport,
     theme: CanvasTheme,
   ): void {
-    const step   = this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleX);
+    // X step must match the label step so grid lines align with labels
+    const step   = this.xStep(vp);
     const range  = this.t.visibleRange(vp);
 
     const xStart = Math.floor(range.xMin / step) * step;
@@ -119,9 +120,7 @@ export class CanvasRendererService {
     vp: CanvasViewport,
     theme: CanvasTheme,
   ): void {
-    const step  = vp.xAxisFormat === 'pi' ? this.niceStepPi(vp.unit * vp.scaleX)
-                : vp.xAxisFormat === 'e'  ? this.niceStepE(vp.unit * vp.scaleX)
-                : this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleX);
+    const step  = this.xStep(vp);
     const stepY = this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleY);
     const range = this.t.visibleRange(vp);
 
@@ -227,6 +226,16 @@ export class CanvasRendererService {
     if (n === 1)  return 'e';
     if (n === -1) return '−e';
     return `${n < 0 ? '−' : ''}${Math.abs(n)}e`;
+  }
+
+  // ── Shared X step (grid + labels must always agree) ──────────────────────
+
+  /** Returns the X grid/label step for the current viewport format. */
+  private xStep(vp: CanvasViewport): number {
+    const unitPx = vp.unit * vp.scaleX;
+    if (vp.xAxisFormat === 'pi') return this.niceStepPi(unitPx);
+    if (vp.xAxisFormat === 'e')  return this.niceStepE(unitPx);
+    return this.t.niceStep(TARGET_GRID_PX, unitPx);
   }
 
   // ── Constant-aligned nice steps ──────────────────────────────────────────

@@ -18,22 +18,26 @@ import { CanvasViewport, Curve, DARK_THEME, LIGHT_THEME } from '../../../core/se
 export interface PlotLayer {
   curves: Curve[];
   /** Called every frame — use for dynamic/animated content */
-  onDraw?: (
-    ctx: CanvasRenderingContext2D,
-    vp: CanvasViewport,
-  ) => void;
+  onDraw?: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => void;
 }
+
+type ZoomMode = 'both' | 'x' | 'y';
+
+/** Minimum and maximum unit values — effectively unlimited zoom */
+const MIN_UNIT = 1e-4;
+const MAX_UNIT = 1e9;
 
 /**
  * Reusable Cartesian canvas component.
  *
  * Features:
  * - Correct devicePixelRatio handling (sharp on HiDPI/Retina)
- * - Zoom: mouse wheel / pinch
+ * - Unlimited zoom in/out (mouse wheel / buttons)
+ * - Independent X / Y axis zoom mode
  * - Pan: click-drag
  * - Responsive resize with ResizeObserver
  * - Light/dark theme via ThemeService
- * - Accepts pre-sampled Curve layers via `layers` input
+ * - Dynamic curve layers via `onDraw` callback
  */
 @Component({
   selector: 'app-function-plot',
@@ -48,8 +52,22 @@ export interface PlotLayer {
         (pointerleave)="onPointerUp($event)"
       ></canvas>
 
-      <!-- Zoom controls -->
+      <!-- Controls overlay -->
       <div class="absolute bottom-3 right-3 flex flex-col gap-1">
+
+        <!-- Zoom mode selector -->
+        <div class="flex flex-col gap-0.5 mb-1">
+          @for (mode of zoomModes; track mode.value) {
+            <button (click)="setZoomMode(mode.value)"
+              [class]="zoomMode() === mode.value
+                ? 'w-7 h-5 bg-gray-600 border border-gray-400 rounded text-gray-100 text-[10px] cursor-pointer flex items-center justify-center'
+                : 'w-7 h-5 bg-white/70 dark:bg-gray-800/70 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-400 text-[10px] hover:bg-white dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-center justify-center'">
+              {{ mode.label }}
+            </button>
+          }
+        </div>
+
+        <!-- Zoom buttons -->
         <button (click)="zoom(1.25)"
           class="w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600
                  rounded text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-white dark:hover:bg-gray-700
@@ -68,22 +86,30 @@ export interface PlotLayer {
   host: { class: 'block w-full h-full' },
 })
 export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
-  // ── Injected services ────────────────────────────────────────────────────
+  // ── Services ──────────────────────────────────────────────────────────────
   private readonly theme    = inject(ThemeService);
   private readonly renderer = inject(CanvasRendererService);
   private readonly plotter  = inject(PlottingService);
   private readonly coords   = inject(CoordinateTransformService);
 
-  // ── Template refs ────────────────────────────────────────────────────────
+  // ── Template refs ─────────────────────────────────────────────────────────
   readonly canvasRef  = viewChild<ElementRef<HTMLCanvasElement>>('canvas');
   readonly wrapperRef = viewChild<ElementRef<HTMLDivElement>>('wrapper');
 
-  // ── Inputs ───────────────────────────────────────────────────────────────
+  // ── Inputs ────────────────────────────────────────────────────────────────
   readonly layers      = input<PlotLayer[]>([]);
   readonly initialUnit = input<number>(75);
   readonly xAxisFormat = input<CanvasViewport['xAxisFormat']>('integer');
 
-  // ── Viewport state ───────────────────────────────────────────────────────
+  // ── Zoom mode ─────────────────────────────────────────────────────────────
+  readonly zoomModes = [
+    { value: 'both' as ZoomMode, label: 'XY' },
+    { value: 'x'    as ZoomMode, label: 'X' },
+    { value: 'y'    as ZoomMode, label: 'Y' },
+  ];
+  readonly zoomMode = signal<ZoomMode>('both');
+
+  // ── Viewport state ────────────────────────────────────────────────────────
   private vp = signal<CanvasViewport>({
     cssWidth:    300,
     cssHeight:   200,
@@ -95,30 +121,17 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
     scaleY:      1,
   });
 
-  // ── Animation frame ──────────────────────────────────────────────────────
-  private raf: number | null = null;
-
-  // ── Interaction state ────────────────────────────────────────────────────
+  // ── RAF & interaction state ───────────────────────────────────────────────
+  private raf:         number | null = null;
   private dragging    = false;
   private lastPointer = { x: 0, y: 0 };
-
-  // ── Resize observer ──────────────────────────────────────────────────────
   private resizeObserver: ResizeObserver | null = null;
 
-  // ── Lifecycle ────────────────────────────────────────────────────────────
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   constructor() {
-    // Redraw whenever layers input changes
-    effect(() => {
-      void this.layers();
-      this.scheduleRedraw();
-    });
-    // Redraw on theme change
-    effect(() => {
-      void this.theme.theme();
-      this.scheduleRedraw();
-    });
-    // Sync xAxisFormat input to viewport
+    effect(() => { void this.layers();        this.scheduleRedraw(); });
+    effect(() => { void this.theme.theme();   this.scheduleRedraw(); });
     effect(() => {
       const fmt = this.xAxisFormat();
       this.vp.update((v) => ({ ...v, xAxisFormat: fmt }));
@@ -139,7 +152,6 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
       this.scheduleRedraw();
     });
     this.resizeObserver.observe(wrapper);
-
     this.scheduleRedraw();
   }
 
@@ -148,18 +160,51 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
     if (this.raf !== null) cancelAnimationFrame(this.raf);
   }
 
-  // ── Public API ───────────────────────────────────────────────────────────
+  // ── Public API ────────────────────────────────────────────────────────────
 
+  setZoomMode(mode: ZoomMode): void {
+    this.zoomMode.set(mode);
+  }
+
+  /**
+   * Zoom by `factor` centered on `cssCenter` (CSS pixel position).
+   * Respects current zoomMode: 'both' scales unit, 'x' scales scaleX, 'y' scales scaleY.
+   */
   zoom(factor: number, cssCenter?: { x: number; y: number }): void {
+    const mode = this.zoomMode();
     this.vp.update((v) => {
       const cx = cssCenter ? this.coords.cssToMathX(cssCenter.x, v) : v.originMath.x;
       const cy = cssCenter ? this.coords.cssToMathY(cssCenter.y, v) : v.originMath.y;
-      const newUnit = Math.max(8, Math.min(2000, v.unit * factor));
-      // Keep the zoom center fixed in math space:
-      //   newOrigin = zoomPt - (zoomPt - oldOrigin) * oldUnit / newUnit
+
+      if (mode === 'x') {
+        const newScaleX = Math.max(MIN_UNIT / v.unit, Math.min(MAX_UNIT / v.unit, v.scaleX * factor));
+        return {
+          ...v,
+          scaleX: newScaleX,
+          originMath: {
+            x: cx - (cx - v.originMath.x) * (v.scaleX / newScaleX),
+            y: v.originMath.y,
+          },
+        };
+      }
+
+      if (mode === 'y') {
+        const newScaleY = Math.max(MIN_UNIT / v.unit, Math.min(MAX_UNIT / v.unit, v.scaleY * factor));
+        return {
+          ...v,
+          scaleY: newScaleY,
+          originMath: {
+            x: v.originMath.x,
+            y: cy - (cy - v.originMath.y) * (v.scaleY / newScaleY),
+          },
+        };
+      }
+
+      // 'both' — scale unit, keep cursor fixed
+      const newUnit = Math.max(MIN_UNIT, Math.min(MAX_UNIT, v.unit * factor));
       return {
         ...v,
-        unit:       newUnit,
+        unit: newUnit,
         originMath: {
           x: cx - (cx - v.originMath.x) * (v.unit / newUnit),
           y: cy - (cy - v.originMath.y) * (v.unit / newUnit),
@@ -173,6 +218,8 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
     this.vp.update((v) => ({
       ...v,
       unit:       this.initialUnit(),
+      scaleX:     1,
+      scaleY:     1,
       originMath: { x: 0, y: 0 },
     }));
     this.scheduleRedraw();
@@ -182,7 +229,7 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
     return this.vp();
   }
 
-  // ── Event handlers ───────────────────────────────────────────────────────
+  // ── Event handlers ────────────────────────────────────────────────────────
 
   onWheel(e: WheelEvent): void {
     e.preventDefault();
@@ -238,13 +285,9 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
     const vp    = this.vp();
     const theme = this.theme.isDark ? DARK_THEME : LIGHT_THEME;
 
-    // Reset transform and apply DPR scale so all drawing is in CSS pixels
     ctx.setTransform(vp.dpr, 0, 0, vp.dpr, 0, 0);
-
-    // Background + grid + axes + labels
     this.renderer.drawBackground(ctx, vp, theme);
 
-    // Curve layers
     for (const layer of this.layers()) {
       for (const curve of layer.curves) {
         this.plotter.drawCurve(ctx, curve, vp);
@@ -255,18 +298,12 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
 
   // ── Resize ────────────────────────────────────────────────────────────────
 
-  private resizeCanvas(
-    canvas: HTMLCanvasElement,
-    wrapper: HTMLDivElement,
-  ): void {
+  private resizeCanvas(canvas: HTMLCanvasElement, wrapper: HTMLDivElement): void {
     const dpr = window.devicePixelRatio || 1;
     const w   = wrapper.clientWidth;
     const h   = wrapper.clientHeight;
-
-    // Physical pixels
     canvas.width  = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-
     this.vp.update((v) => ({ ...v, cssWidth: w, cssHeight: h, dpr }));
   }
 }
