@@ -36,7 +36,21 @@ export const devRoutes: Routes = [
             (m) => m.MathquillPanelComponent,
           ),
       },
-      // ── Fase 3: Canvas (próximamente) ───────────────────────────────────
+      // ── Fase 3: Canvas ──────────────────────────────────────────────────
+      {
+        path: 'canvas',
+        loadComponent: () =>
+          import('./panels/canvas/canvas-panel.component').then(
+            (m) => m.CanvasPanelComponent,
+          ),
+      },
+      {
+        path: 'canvas-plot',
+        loadComponent: () =>
+          import('./panels/canvas-plot/canvas-plot-panel.component').then(
+            (m) => m.CanvasPlotPanelComponent,
+          ),
+      },
     ],
   },
 ];
