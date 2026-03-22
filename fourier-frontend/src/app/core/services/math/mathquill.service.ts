@@ -97,13 +97,13 @@ export class MathquillService {
 
       const injectMathQuill = () => {
         injectScript(
-          'assets/vendor/mathquill.min.js',
+          '/assets/vendor/mathquill.min.js',
           () => {
             // Also inject MathQuill CSS if not already present
             if (!document.querySelector('link[href*="mathquill"]')) {
               const link = document.createElement('link');
               link.rel = 'stylesheet';
-              link.href = 'assets/vendor/mathquill.css';
+              link.href = '/assets/vendor/mathquill.css';
               document.head.appendChild(link);
             }
             done();
@@ -115,7 +115,7 @@ export class MathquillService {
       if (win['jQuery']) {
         injectMathQuill();
       } else {
-        injectScript('assets/vendor/jquery.min.js', injectMathQuill);
+        injectScript('/assets/vendor/jquery.min.js', injectMathQuill);
       }
     });
   }
