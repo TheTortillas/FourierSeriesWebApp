@@ -186,4 +186,44 @@ export class UserRepository implements IUserRepository {
       client.release();
     }
   }
+
+  async getWeeklyCount(userId: string): Promise<number> {
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+    const result = await db.query(
+      `INSERT INTO user_calculation_counters (user_id, week_start, count)
+     VALUES ($1, $2, 0)
+     ON CONFLICT (user_id) DO UPDATE
+       SET week_start = CASE
+         WHEN user_calculation_counters.week_start < $2
+         THEN $2
+         ELSE user_calculation_counters.week_start
+       END,
+       count = CASE
+         WHEN user_calculation_counters.week_start < $2
+         THEN 0
+         ELSE user_calculation_counters.count
+       END
+     RETURNING count, week_start`,
+      [userId, weekStart.toISOString().split("T")[0]],
+    );
+    return result.rows[0]?.count ?? 0;
+  }
+
+  async incrementWeeklyCount(userId: string): Promise<void> {
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+    await db.query(
+      `INSERT INTO user_calculation_counters (user_id, week_start, count)
+     VALUES ($1, $2, 1)
+     ON CONFLICT (user_id) DO UPDATE
+       SET count = user_calculation_counters.count + 1,
+           updated_at = NOW()`,
+      [userId, weekStart.toISOString().split("T")[0]],
+    );
+  }
 }

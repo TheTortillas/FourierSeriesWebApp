@@ -12,6 +12,7 @@ import { generalLimiter, computeLimiter } from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
 import { authenticate, optionalAuth } from "./api/middlewares/authenticate";
 import { requireVerified } from "./api/middlewares/requireVerified";
+import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 
 export function createApp(): Application {
   const app = express();
@@ -29,6 +30,7 @@ export function createApp(): Application {
     "/api/fourier",
     authenticate,
     requireVerified,
+    requireTierLimit,
     computeLimiter,
     fourierRouter,
   );
@@ -36,6 +38,7 @@ export function createApp(): Application {
     "/api/simplify",
     authenticate,
     requireVerified,
+    requireTierLimit,
     computeLimiter,
     simplifyRouter,
   );
@@ -43,11 +46,19 @@ export function createApp(): Application {
     "/api/transforms",
     authenticate,
     requireVerified,
+    requireTierLimit,
     computeLimiter,
     transformsRouter,
   );
+  app.use(
+    "/api/dft",
+    dftRouter,
+    authenticate,
+    requireVerified,
+    requireTierLimit,
+    computeLimiter,
+  );
 
-  app.use("/api/dft", dftRouter, authenticate, requireVerified, computeLimiter);
   app.use("/api/auth", authRouter);
 
   app.use(errorHandler);

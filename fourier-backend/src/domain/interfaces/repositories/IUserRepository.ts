@@ -35,4 +35,6 @@ export interface IUserRepository {
   linkGoogleAccount(userId: string, googleId: string): Promise<void>;
   hasProvider(userId: string, provider: "email" | "google"): Promise<boolean>;
   hardDeleteUnverified(id: string): Promise<void>;
+  getWeeklyCount(userId: string): Promise<number>;
+  incrementWeeklyCount(userId: string): Promise<void>;
 }

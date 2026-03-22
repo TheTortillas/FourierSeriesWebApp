@@ -7,6 +7,8 @@ import {
 import { validateFourierInput } from "../middlewares/validate";
 import type { PiecewiseFourierInput } from "../../domain/types/fourier.types";
 import { sanitizeSegments, sanitizeExpression } from "../middlewares/sanitize";
+import { incrementCalculationCount } from "../middlewares/requireTierLimit";
+import type { AuthenticatedRequest } from "../middlewares/authenticate";
 
 export const fourierRouter = Router();
 
@@ -44,7 +46,7 @@ export const fourierRouter = Router();
 fourierRouter.post(
   "/trigonometric",
   validateFourierInput,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const input = req.body as PiecewiseFourierInput;
       const sanitizeCheck = sanitizeSegments(input.segments);
@@ -53,6 +55,7 @@ fourierRouter.post(
         return;
       }
       const result = await trigonometricService.calculate(input);
+      await incrementCalculationCount(req.user!.id);
       res.json(result);
     } catch (err) {
       next(err);
@@ -136,7 +139,7 @@ fourierRouter.post(
 fourierRouter.post(
   "/half-range",
   validateFourierInput,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const input = req.body as PiecewiseFourierInput;
       const sanitizeCheck = sanitizeSegments(input.segments);
@@ -145,6 +148,7 @@ fourierRouter.post(
         return;
       }
       const result = await halfRangeService.calculate(input);
+      await incrementCalculationCount(req.user!.id);
       res.json(result);
     } catch (err) {
       next(err);
@@ -228,7 +232,7 @@ fourierRouter.post(
 fourierRouter.post(
   "/complex",
   validateFourierInput,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const input = req.body as PiecewiseFourierInput;
       const sanitizeCheck = sanitizeSegments(input.segments);
@@ -238,6 +242,8 @@ fourierRouter.post(
       }
 
       const result = await complexService.calculate(input);
+      await incrementCalculationCount(req.user!.id);
+
       res.json(result);
     } catch (err) {
       next(err);
