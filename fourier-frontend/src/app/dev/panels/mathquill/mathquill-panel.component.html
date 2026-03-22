@@ -1,0 +1,74 @@
+<div class="space-y-6">
+  <h2 class="text-yellow-400 font-bold text-lg border-b border-gray-700 pb-2">MathQuill — Input matemático</h2>
+
+  <!-- Estado de carga -->
+  @if (!mqReady() && !error()) {
+    <p class="text-yellow-400 font-mono text-sm animate-pulse">Cargando MathQuill…</p>
+  }
+  @if (error()) {
+    <pre class="bg-red-950 text-red-300 rounded p-3 text-xs overflow-auto">{{ error() }}</pre>
+  }
+
+  <!-- Campo MathQuill -->
+  <section class="border border-gray-700 rounded p-4 space-y-3">
+    <h3 class="text-gray-300 font-mono text-sm uppercase tracking-wider">Campo de entrada</h3>
+
+    <!-- El span que MathQuill convierte en input interactivo -->
+    <div class="bg-gray-800 border border-gray-600 rounded px-3 py-3 min-h-[44px]">
+      <span #mqContainer class="text-gray-100"></span>
+    </div>
+    <p class="text-gray-600 text-xs">Escribe directamente en el campo de arriba. MathQuill interpretará LaTeX al vuelo.</p>
+
+    <!-- Presets rápidos -->
+    <div class="flex flex-wrap gap-2">
+      @for (p of presets; track p.label) {
+        <button (click)="setLatex(p.latex)"
+          class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs px-3 py-1 rounded transition-colors cursor-pointer font-mono">
+          {{ p.label }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- Resultados de conversión -->
+  @if (mqReady()) {
+    <section class="border border-gray-700 rounded p-4 space-y-2">
+      <h3 class="text-gray-300 font-mono text-sm uppercase tracking-wider">Resultados</h3>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <p class="text-gray-600 mb-1">LaTeX (del campo):</p>
+          <pre class="bg-gray-900 text-yellow-300 rounded p-2 overflow-auto min-h-[32px]">{{ latex() || '—' }}</pre>
+        </div>
+        <div>
+          <p class="text-gray-600 mb-1">Maxima (convertido):</p>
+          <pre class="bg-gray-900 rounded p-2 overflow-auto min-h-[32px]"
+            [class]="maxima() ? 'text-green-300' : 'text-gray-600'">{{ maxima() || '—' }}</pre>
+        </div>
+      </div>
+
+      <!-- Evaluación JS -->
+      @if (maxima()) {
+        <div class="flex items-center gap-2 pt-1">
+          <span class="text-gray-600 text-xs">f(</span>
+          <input [(ngModel)]="evalX" type="number"
+            class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-gray-100 w-20 focus:outline-none focus:border-yellow-500" />
+          <span class="text-gray-600 text-xs">) =</span>
+          <span class="text-yellow-300 font-mono text-sm">{{ evalResult() ?? '?' }}</span>
+          <button (click)="evaluate()"
+            class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-xs px-3 py-1 rounded transition-colors cursor-pointer">
+            Evaluar
+          </button>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Nota sobre instalación -->
+  <section class="border border-gray-800 rounded p-4 text-xs text-gray-600 space-y-1">
+    <p class="text-gray-500 font-semibold">Nota de instalación:</p>
+    <p>MathQuill requiere <code class="text-gray-400">jquery</code> y <code class="text-gray-400">mathquill</code> como dependencias.</p>
+    <p>Si el campo no carga, instálalos con: <code class="text-gray-400">npm install jquery mathquill</code></p>
+    <p>Los tipos de TypeScript: <code class="text-gray-400">npm install -D @types/jquery @types/mathquill</code></p>
+  </section>
+</div>
