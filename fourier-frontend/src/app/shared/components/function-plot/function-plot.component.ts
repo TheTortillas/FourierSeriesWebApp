@@ -14,6 +14,7 @@ import { CanvasRendererService } from '../../../core/services/canvas/canvas-rend
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport, Curve, DARK_THEME, LIGHT_THEME } from '../../../core/services/canvas/canvas.types';
+export type { AxisConst } from '../../../core/services/canvas/canvas.types';
 
 export interface PlotLayer {
   curves: Curve[];
@@ -100,6 +101,7 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   readonly layers      = input<PlotLayer[]>([]);
   readonly initialUnit = input<number>(75);
   readonly xAxisFormat = input<CanvasViewport['xAxisFormat']>('integer');
+  readonly customConst = input<CanvasViewport['customConst']>({ symbol: 'T', value: 1 });
 
   // ── Zoom mode ─────────────────────────────────────────────────────────────
   readonly zoomModes = [
@@ -117,6 +119,7 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
     unit:        75,
     originMath:  { x: 0, y: 0 },
     xAxisFormat: 'integer',
+    customConst: { symbol: 'T', value: 1 },
     scaleX:      1,
     scaleY:      1,
   });
@@ -134,7 +137,27 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
     effect(() => { void this.theme.theme();   this.scheduleRedraw(); });
     effect(() => {
       const fmt = this.xAxisFormat();
-      this.vp.update((v) => ({ ...v, xAxisFormat: fmt }));
+      const cc  = this.customConst();
+      this.vp.update((v) => {
+        // When already in 'custom' mode and only the value changes,
+        // rescale X so that pixels-per-T-unit stays constant.
+        // This couples the grid marks and the curves together.
+        if (
+          fmt === 'custom' &&
+          v.xAxisFormat === 'custom' &&
+          cc.value > 0 &&
+          v.customConst.value > 0 &&
+          Math.abs(cc.value - v.customConst.value) > 1e-10
+        ) {
+          return {
+            ...v,
+            xAxisFormat: fmt,
+            customConst: cc,
+            scaleX: v.scaleX * v.customConst.value / cc.value,
+          };
+        }
+        return { ...v, xAxisFormat: fmt, customConst: cc };
+      });
       this.scheduleRedraw();
     });
   }

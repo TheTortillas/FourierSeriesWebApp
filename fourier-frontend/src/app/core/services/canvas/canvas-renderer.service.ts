@@ -140,7 +140,7 @@ export class CanvasRendererService {
       const sx = this.t.mathToScreenX(x, vp) / vp.dpr;
       if (sx - lastLabelX < MIN_LABEL_GAP) continue;
 
-      const label = this.formatX(x, step, vp.xAxisFormat);
+      const label = this.formatX(x, step, vp);
       ctx.textAlign = 'center';
       const labelY  = Math.min(Math.max(oy + 5, 5), vp.cssHeight - 18);
       ctx.fillText(label, sx, labelY);
@@ -177,13 +177,10 @@ export class CanvasRendererService {
 
   // ── Label formatting ──────────────────────────────────────────────────────
 
-  private formatX(
-    x: number,
-    step: number,
-    format: CanvasViewport['xAxisFormat'],
-  ): string {
-    if (format === 'pi') return this.formatPi(x, step);
-    if (format === 'e')  return this.formatE(x, step);
+  private formatX(x: number, step: number, vp: CanvasViewport): string {
+    if (vp.xAxisFormat === 'pi')     return this.formatPi(x, step);
+    if (vp.xAxisFormat === 'e')      return this.formatE(x, step);
+    if (vp.xAxisFormat === 'custom') return this.formatCustom(x, step, vp.customConst.symbol, vp.customConst.value);
     return this.formatNumber(x, step);
   }
 
@@ -198,34 +195,50 @@ export class CanvasRendererService {
   }
 
   private formatPi(x: number, step: number): string {
-    // Find which fraction of π this step represents
-    const piFractions = [1/4, 1/3, 1/2, 1, 2, 5, 10, 20, 50, 100];
-    const frac = piFractions.find(f => Math.abs(step - f * Math.PI) < step * 0.01) ?? 1;
-    const denom = Math.round(1 / frac); // e.g. frac=1/2 → denom=2
-
-    const n = Math.round(x / (frac * Math.PI));
-    if (n === 0) return '0';
-
-    if (denom === 1) {
-      if (n ===  1) return 'π';
-      if (n === -1) return '−π';
-      return `${n < 0 ? '−' : ''}${Math.abs(n)}π`;
-    }
-
-    // fractional labels: π/2, 3π/4, etc.
-    const num = Math.abs(n);
-    const sign = n < 0 ? '−' : '';
-    if (num === 1) return `${sign}π/${denom}`;
-    return `${sign}${num}π/${denom}`;
+    return this.formatConst(x, step, Math.PI, 'π');
   }
 
   private formatE(x: number, step: number): string {
-    void step;
-    const n = Math.round(x / Math.E);
-    if (n === 0)  return '0';
-    if (n === 1)  return 'e';
-    if (n === -1) return '−e';
-    return `${n < 0 ? '−' : ''}${Math.abs(n)}e`;
+    return this.formatConst(x, step, Math.E, 'e');
+  }
+
+  private formatCustom(x: number, step: number, symbol: string, value: number): string {
+    return this.formatConst(x, step, value, symbol);
+  }
+
+  /**
+   * Formats x as a fraction/multiple of `constVal` with `symbol`.
+   * Always reduces the fraction (uses GCD) so 4π/4 → π, 6π/3 → 2π.
+   */
+  private formatConst(x: number, step: number, constVal: number, symbol: string): string {
+    // Express step as k/d * constVal (find d from candidate steps)
+    const candidates = [1/4, 1/3, 1/2, 1, 2, 5, 10, 20, 50, 100];
+    const fracOfConst = candidates.find(f => Math.abs(step - f * constVal) < Math.abs(step) * 0.01) ?? 1;
+    // denom and numerator before reduction: x = (n/denom) * constVal
+    const denomRaw = Math.round(1 / fracOfConst); // e.g. step=π/2 → denom=2
+    const nRaw     = Math.round(x / (fracOfConst * constVal));
+
+    if (nRaw === 0) return '0';
+
+    // Reduce fraction n/denom
+    const g    = this.gcd(Math.abs(nRaw), denomRaw);
+    const num  = Math.abs(nRaw) / g;
+    const den  = denomRaw / g;
+    const sign = nRaw < 0 ? '−' : '';
+
+    if (den === 1) {
+      if (num === 1) return `${sign}${symbol}`;
+      return `${sign}${num}${symbol}`;
+    }
+    if (num === 1) return `${sign}${symbol}/${den}`;
+    return `${sign}${num}${symbol}/${den}`;
+  }
+
+  private gcd(a: number, b: number): number {
+    a = Math.round(Math.abs(a));
+    b = Math.round(Math.abs(b));
+    while (b) { const t = b; b = a % b; a = t; }
+    return a || 1;
   }
 
   // ── Shared X step (grid + labels must always agree) ──────────────────────
@@ -233,36 +246,27 @@ export class CanvasRendererService {
   /** Returns the X grid/label step for the current viewport format. */
   private xStep(vp: CanvasViewport): number {
     const unitPx = vp.unit * vp.scaleX;
-    if (vp.xAxisFormat === 'pi') return this.niceStepPi(unitPx);
-    if (vp.xAxisFormat === 'e')  return this.niceStepE(unitPx);
+    if (vp.xAxisFormat === 'pi')     return this.niceStepConst(unitPx, Math.PI);
+    if (vp.xAxisFormat === 'e')      return this.niceStepConst(unitPx, Math.E);
+    if (vp.xAxisFormat === 'custom') return this.niceStepConst(unitPx, vp.customConst.value);
     return this.t.niceStep(TARGET_GRID_PX, unitPx);
   }
 
   // ── Constant-aligned nice steps ──────────────────────────────────────────
 
-  /** Returns a step that is a "nice" multiple of π for the given unit (px/unit) */
-  private niceStepPi(unitPx: number): number {
-    const rawStep  = TARGET_GRID_PX / unitPx;
-    // Candidate steps as fractions/multiples of π
+  /**
+   * Returns a "nice" step that is a fraction/multiple of `constVal`.
+   * Works for any constant: π, e, T, L, etc.
+   */
+  private niceStepConst(unitPx: number, constVal: number): number {
+    const rawStep    = TARGET_GRID_PX / unitPx;
     const candidates = [
-      Math.PI / 4, Math.PI / 3, Math.PI / 2,
-      Math.PI,
-      2 * Math.PI, 5 * Math.PI, 10 * Math.PI,
-      20 * Math.PI, 50 * Math.PI, 100 * Math.PI,
-    ];
+      constVal / 4, constVal / 3, constVal / 2,
+      constVal,
+      2 * constVal, 5 * constVal, 10 * constVal,
+      20 * constVal, 50 * constVal, 100 * constVal,
+    ].filter(c => c > 0);
     return candidates.find(s => s >= rawStep) ?? candidates[candidates.length - 1];
   }
 
-  /** Returns a step that is a "nice" multiple of e for the given unit (px/unit) */
-  private niceStepE(unitPx: number): number {
-    const rawStep   = TARGET_GRID_PX / unitPx;
-    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep / Math.E)));
-    const normalized = rawStep / (Math.E * magnitude);
-    let nice: number;
-    if      (normalized < 1.5) nice = 1;
-    else if (normalized < 3.5) nice = 2;
-    else if (normalized < 7.5) nice = 5;
-    else                       nice = 10;
-    return nice * Math.E * magnitude;
-  }
 }

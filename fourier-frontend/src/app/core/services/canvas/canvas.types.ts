@@ -2,6 +2,14 @@
  * Immutable snapshot of the canvas viewport state.
  * All rendering services receive this value object — no mutable shared state.
  */
+/** User-defined constant for the 'custom' X-axis format (e.g. T=2.5, L=3) */
+export interface AxisConst {
+  /** Display symbol: single letter A-Z (not x, y) */
+  symbol: string;
+  /** Numeric value of the constant */
+  value: number;
+}
+
 export interface CanvasViewport {
   /** CSS width of the canvas element (logical pixels) */
   cssWidth: number;
@@ -14,7 +22,9 @@ export interface CanvasViewport {
   /** Math coordinate at the center of the canvas */
   originMath: { x: number; y: number };
   /** X-axis label format */
-  xAxisFormat: 'integer' | 'pi' | 'e';
+  xAxisFormat: 'integer' | 'pi' | 'e' | 'custom';
+  /** Used when xAxisFormat === 'custom' */
+  customConst: AxisConst;
   /** Independent scale multipliers (for non-square aspect ratios) */
   scaleX: number;
   scaleY: number;

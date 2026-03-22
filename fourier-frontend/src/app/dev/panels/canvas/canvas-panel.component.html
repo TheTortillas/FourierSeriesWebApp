@@ -4,20 +4,70 @@
   </h2>
 
   <!-- Controls -->
-  <div class="flex items-center gap-4 shrink-0 flex-wrap">
-    <div class="flex items-center gap-2">
-      <span class="text-gray-500 text-xs">Eje X:</span>
-      @for (fmt of xFormats; track fmt) {
-        <button (click)="setFormat(fmt)"
-          [class]="xFormat() === fmt
-            ? 'bg-yellow-400 text-gray-900 text-xs px-3 py-1 rounded font-semibold cursor-pointer'
-            : 'bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs px-3 py-1 rounded transition-colors cursor-pointer'">
-          {{ fmt }}
-        </button>
-      }
+  <div class="flex flex-wrap items-start gap-4 shrink-0">
+
+    <!-- Format selector -->
+    <div class="space-y-1">
+      <p class="text-gray-500 text-xs">Eje X:</p>
+      <div class="flex gap-1">
+        @for (fmt of xFormats; track fmt) {
+          <button (click)="setFormat(fmt)"
+            [class]="xFormat() === fmt
+              ? 'bg-yellow-400 text-gray-900 text-xs px-3 py-1 rounded font-semibold cursor-pointer'
+              : 'bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs px-3 py-1 rounded transition-colors cursor-pointer'">
+            {{ fmt }}
+          </button>
+        }
+      </div>
     </div>
+
+    <!-- Custom constant controls (only visible in custom mode) -->
+    @if (xFormat() === 'custom') {
+      <div class="space-y-1">
+        <p class="text-gray-500 text-xs">Símbolo:</p>
+        <!-- Uppercase row -->
+        <div class="flex gap-0.5 flex-wrap max-w-56">
+          @for (sym of upperSymbols; track sym) {
+            <button (click)="setSymbol(sym)"
+              [class]="customConst().symbol === sym
+                ? 'bg-yellow-400 text-gray-900 w-5 h-5 text-[10px] rounded font-bold cursor-pointer'
+                : 'bg-gray-700 hover:bg-gray-600 text-gray-300 w-5 h-5 text-[10px] rounded transition-colors cursor-pointer'">
+              {{ sym }}
+            </button>
+          }
+        </div>
+        <!-- Lowercase row -->
+        <div class="flex gap-0.5 flex-wrap max-w-56">
+          @for (sym of lowerSymbols; track sym) {
+            <button (click)="setSymbol(sym)"
+              [class]="customConst().symbol === sym
+                ? 'bg-yellow-400 text-gray-900 w-5 h-5 text-[10px] rounded font-bold cursor-pointer'
+                : 'bg-gray-600 hover:bg-gray-500 text-gray-400 w-5 h-5 text-[10px] rounded transition-colors cursor-pointer italic'">
+              {{ sym }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <p class="text-gray-500 text-xs">
+          Valor de {{ customConst().symbol }} = {{ customConst().value.toFixed(3) }}
+        </p>
+        <input type="range" min="0.1" max="10" step="0.01"
+          [value]="customConst().value"
+          (input)="setConstValue(+$any($event.target).value)"
+          class="w-44 accent-yellow-400" />
+        <div class="flex gap-2 text-xs text-gray-600 mt-1">
+          <button (click)="setConstValue(PI)"  class="hover:text-gray-400 cursor-pointer">π</button>
+          <button (click)="setConstValue(E)"   class="hover:text-gray-400 cursor-pointer">e</button>
+          <button (click)="setConstValue(1)"        class="hover:text-gray-400 cursor-pointer">1</button>
+          <button (click)="setConstValue(2)"        class="hover:text-gray-400 cursor-pointer">2</button>
+        </div>
+      </div>
+    }
+
     <button (click)="resetView()"
-      class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs px-3 py-1 rounded transition-colors cursor-pointer">
+      class="self-end bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs px-3 py-1 rounded transition-colors cursor-pointer">
       Reset view
     </button>
   </div>
@@ -25,16 +75,16 @@
   <!-- Leyenda -->
   <div class="flex gap-4 text-xs shrink-0 flex-wrap">
     <span class="flex items-center gap-1.5">
-      <span class="inline-block w-4 h-0.5 bg-[#8b2500]"></span> sin(x)
+      <span class="inline-block w-4 h-0.5 bg-accent"></span> sin(x)
     </span>
     <span class="flex items-center gap-1.5">
-      <span class="inline-block w-4 border-t border-dashed border-[#1a4a6b]"></span> cos(x)
+      <span class="inline-block w-4 border-t border-dashed border-accent2"></span> cos(x)
     </span>
     <span class="flex items-center gap-1.5">
-      <span class="inline-block w-4 h-0.5 bg-[#2d5a27]"></span> tan(x)
+      <span class="inline-block w-4 h-0.5 bg-accent3"></span> tan(x)
     </span>
     <span class="flex items-center gap-1.5">
-      <span class="inline-block w-4 h-0.5 bg-[#b8860b]"></span> x²/10
+      <span class="inline-block w-4 h-0.5 bg-gold"></span> x²/10
     </span>
   </div>
 
@@ -44,6 +94,7 @@
       [layers]="layers()"
       [initialUnit]="75"
       [xAxisFormat]="xFormat()"
+      [customConst]="customConst()"
     />
   </div>
 </div>
