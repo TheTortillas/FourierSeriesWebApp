@@ -34,4 +34,5 @@ export interface IUserRepository {
   softDelete(id: string): Promise<void>;
   linkGoogleAccount(userId: string, googleId: string): Promise<void>;
   hasProvider(userId: string, provider: "email" | "google"): Promise<boolean>;
+  hardDeleteUnverified(id: string): Promise<void>;
 }

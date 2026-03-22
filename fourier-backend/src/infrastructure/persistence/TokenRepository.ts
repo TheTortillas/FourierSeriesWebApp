@@ -175,4 +175,20 @@ export class TokenRepository implements ITokenRepository {
       [id],
     );
   }
+
+  async findPendingVerificationToken(
+    userId: string,
+  ): Promise<{ expiresAt: Date } | null> {
+    const result = await db.query(
+      `SELECT expires_at as "expiresAt"
+     FROM user_email_tokens
+     WHERE user_id = $1
+       AND purpose = 'email_verification'
+       AND used_at IS NULL
+     ORDER BY created_at DESC
+     LIMIT 1`,
+      [userId],
+    );
+    return result.rows[0] ?? null;
+  }
 }

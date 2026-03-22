@@ -46,13 +46,14 @@ export interface ITokenRepository {
     tokenHash: string;
     expiresAt: Date;
   }): Promise<void>;
-  findPasswordReset(
-    tokenHash: string,
-  ): Promise<{
+  findPasswordReset(tokenHash: string): Promise<{
     id: string;
     userId: string;
     usedAt: Date | null;
     expiresAt: Date;
   } | null>;
   markPasswordResetUsed(id: string): Promise<void>;
+  findPendingVerificationToken(
+    userId: string,
+  ): Promise<{ expiresAt: Date } | null>;
 }

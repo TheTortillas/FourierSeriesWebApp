@@ -368,3 +368,20 @@ authRouter.post(
     }
   },
 );
+
+authRouter.post(
+  "/resend-verification",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email } = req.body as { email: string };
+      if (!email) {
+        res.status(400).json({ error: "Email is required" });
+        return;
+      }
+      await authService.resendVerification(email, req.ip);
+      res.json({ message: "Verification email sent if account exists" });
+    } catch (err) {
+      next(err);
+    }
+  },
+);

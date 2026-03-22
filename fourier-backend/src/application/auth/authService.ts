@@ -45,8 +45,23 @@ export class AuthService {
     ipAddress?: string;
   }): Promise<AuthResult> {
     const existing = await this.userRepo.findByEmail(input.email);
+
     if (existing) {
-      throw new Error("Email already registered");
+      if (existing.emailVerified) {
+        throw new Error("Email already registered");
+      }
+
+      const pendingToken = await this.tokenRepo.findPendingVerificationToken(
+        existing.id,
+      );
+
+      if (pendingToken && new Date() < pendingToken.expiresAt) {
+        throw new Error(
+          "Email already registered but not verified. Check your inbox or request a new verification email.",
+        );
+      }
+
+      await this.userRepo.hardDeleteUnverified(existing.id);
     }
 
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
@@ -69,13 +84,6 @@ export class AuthService {
       expiresAt: tokens.expiresAt,
     });
 
-    await this.auditRepo.log({
-      userId: user.id,
-      action: "register",
-      ipAddress: input.ipAddress,
-      metadata: { provider: "email" },
-    });
-
     const emailToken = this.tokenService.generateEmailToken();
     await this.tokenRepo.createEmailToken({
       userId: user.id,
@@ -84,6 +92,13 @@ export class AuthService {
       expiresAt: emailToken.expiresAt,
     });
     await sendVerificationEmail(user.email, user.firstName, emailToken.token);
+
+    await this.auditRepo.log({
+      userId: user.id,
+      action: "register",
+      ipAddress: input.ipAddress,
+      metadata: { provider: "email" },
+    });
 
     return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
   }
@@ -358,5 +373,20 @@ export class AuthService {
       action: "password_change",
       ipAddress: input.ipAddress,
     });
+  }
+
+  async resendVerification(email: string, ipAddress?: string): Promise<void> {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user || user.emailVerified) return;
+
+    const emailToken = this.tokenService.generateEmailToken();
+    await this.tokenRepo.createEmailToken({
+      userId: user.id,
+      tokenHash: emailToken.hash,
+      purpose: "email_verification",
+      expiresAt: emailToken.expiresAt,
+    });
+
+    await sendVerificationEmail(user.email, user.firstName, emailToken.token);
   }
 }

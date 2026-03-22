@@ -154,4 +154,36 @@ export class UserRepository implements IUserRepository {
     );
     return (result.rowCount ?? 0) > 0;
   }
+
+  async hardDeleteUnverified(id: string): Promise<void> {
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(`DELETE FROM user_email_tokens WHERE user_id = $1`, [
+        id,
+      ]);
+      await client.query(`DELETE FROM user_refresh_tokens WHERE user_id = $1`, [
+        id,
+      ]);
+      await client.query(`DELETE FROM user_auth_providers WHERE user_id = $1`, [
+        id,
+      ]);
+      const personResult = await client.query(
+        `SELECT person_id FROM users WHERE id = $1`,
+        [id],
+      );
+      await client.query(`DELETE FROM users WHERE id = $1`, [id]);
+      if (personResult.rows[0]) {
+        await client.query(`DELETE FROM persons WHERE id = $1`, [
+          personResult.rows[0].person_id,
+        ]);
+      }
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
 }
