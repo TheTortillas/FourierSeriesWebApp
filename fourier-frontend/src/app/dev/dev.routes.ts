@@ -21,9 +21,22 @@ export const devRoutes: Routes = [
             (m) => m.ApiFourierPanelComponent,
           ),
       },
-      // ── Fases siguientes: se añadirán aquí ─────────────────────────────
-      // Fase 2: latex-maxima, mathquill
-      // Fase 3: canvas, canvas-plot
+      // ── Fase 2: Math input engine ───────────────────────────────────────
+      {
+        path: 'latex-maxima',
+        loadComponent: () =>
+          import('./panels/latex-maxima/latex-maxima-panel.component').then(
+            (m) => m.LatexMaximaPanelComponent,
+          ),
+      },
+      {
+        path: 'mathquill',
+        loadComponent: () =>
+          import('./panels/mathquill/mathquill-panel.component').then(
+            (m) => m.MathquillPanelComponent,
+          ),
+      },
+      // ── Fase 3: Canvas (próximamente) ───────────────────────────────────
     ],
   },
 ];

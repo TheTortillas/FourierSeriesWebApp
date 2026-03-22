@@ -1,0 +1,121 @@
+<div class="space-y-6">
+  <h2 class="text-yellow-400 font-bold text-lg border-b border-gray-700 pb-2">LaTeX → Maxima</h2>
+
+  <!-- Single converter -->
+  <section class="border border-gray-700 rounded p-4 space-y-3">
+    <h3 class="text-gray-300 font-mono text-sm uppercase tracking-wider">Conversión individual</h3>
+    <div class="flex gap-2">
+      <input [(ngModel)]="latex" placeholder="\frac{1}{2} ó x^2 + \sin(x)"
+        class="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:border-yellow-500" />
+      <input [(ngModel)]="evalX" type="number" placeholder="x ="
+        class="w-20 bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:border-yellow-500" />
+      <button (click)="convert()"
+        class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-sm px-4 py-1.5 rounded transition-colors cursor-pointer">
+        Convertir
+      </button>
+    </div>
+
+    @if (result(); as r) {
+      <div [class]="r.ok ? 'bg-gray-900 rounded p-3 space-y-1' : 'bg-red-950 rounded p-3'">
+        @if (r.ok) {
+          <p class="text-xs text-gray-500">LaTeX: <span class="text-gray-300 font-mono">{{ r.latex }}</span></p>
+          <p class="text-xs text-gray-500">Maxima: <span class="text-green-300 font-mono">{{ r.maxima }}</span></p>
+          <p class="text-xs text-gray-500">f({{ evalX }}) = <span class="text-yellow-300 font-mono">{{ r.evaluated }}</span></p>
+        } @else {
+          <p class="text-red-300 text-xs font-mono">{{ r.error }}</p>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Batch examples -->
+  <section class="border border-gray-700 rounded p-4 space-y-3">
+    <div class="flex items-center justify-between">
+      <h3 class="text-gray-300 font-mono text-sm uppercase tracking-wider">Ejemplos batch</h3>
+      <button (click)="runBatch()"
+        class="bg-gray-700 hover:bg-gray-600 text-yellow-400 text-xs px-3 py-1 rounded transition-colors cursor-pointer">
+        Ejecutar todos
+      </button>
+    </div>
+
+    <table class="w-full text-xs">
+      <thead>
+        <tr class="text-gray-600 border-b border-gray-800">
+          <th class="text-left py-1 pr-4">LaTeX</th>
+          <th class="text-left py-1 pr-4">Maxima</th>
+          <th class="text-left py-1 pr-4">f(1)</th>
+          <th class="text-left py-1">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ex of examples; track ex.label; let i = $index) {
+          @if (batchResults()[i]; as r) {
+            <tr class="border-b border-gray-900">
+              <td class="py-1 pr-4 font-mono text-gray-400">{{ ex.latex }}</td>
+              <td class="py-1 pr-4 font-mono" [class]="r.ok ? 'text-green-300' : 'text-red-400'">
+                {{ r.ok ? r.maxima : r.error }}
+              </td>
+              <td class="py-1 pr-4 font-mono text-yellow-300">{{ r.evaluated ?? '—' }}</td>
+              <td class="py-1">
+                <span [class]="r.ok ? 'text-green-400' : 'text-red-400'">{{ r.ok ? '✓' : '✗' }}</span>
+              </td>
+            </tr>
+          } @else {
+            <tr class="border-b border-gray-900">
+              <td class="py-1 pr-4 font-mono text-gray-600">{{ ex.latex }}</td>
+              <td colspan="3" class="py-1 text-gray-700 italic">— pendiente —</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Validator -->
+  <section class="border border-gray-700 rounded p-4 space-y-3">
+    <div class="flex items-center justify-between">
+      <h3 class="text-gray-300 font-mono text-sm uppercase tracking-wider">FourierValidator — segmentos</h3>
+      <div class="flex gap-2">
+        <button (click)="addSegment()"
+          class="bg-gray-700 hover:bg-gray-600 text-yellow-400 text-xs px-3 py-1 rounded transition-colors cursor-pointer">
+          + Tramo
+        </button>
+        <button (click)="validateSegments()"
+          class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-xs px-3 py-1 rounded transition-colors cursor-pointer">
+          Validar
+        </button>
+      </div>
+    </div>
+
+    @for (seg of segments; track trackByIndex($index)) {
+      <div class="grid grid-cols-3 gap-2 items-end">
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Expresión (Maxima) — Tramo {{ $index + 1 }}</label>
+          <input [(ngModel)]="seg.expression"
+            class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+        </div>
+        <div>
+          <label class="block text-gray-600 text-xs mb-1">Desde</label>
+          <input [(ngModel)]="seg.from"
+            class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label class="block text-gray-600 text-xs mb-1">Hasta</label>
+            <input [(ngModel)]="seg.to"
+              class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+          </div>
+          @if (segments.length > 1) {
+            <button (click)="removeSegment($index)"
+              class="text-red-600 hover:text-red-400 text-xs self-end pb-1.5 cursor-pointer">×</button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (validationJson(); as v) {
+      <pre class="bg-gray-900 text-xs rounded p-2 overflow-auto"
+        [class]="v.includes('true') ? 'text-green-300' : 'text-red-300'">{{ v }}</pre>
+    }
+  </section>
+</div>
