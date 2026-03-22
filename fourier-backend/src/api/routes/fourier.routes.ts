@@ -9,6 +9,7 @@ import type { PiecewiseFourierInput } from "../../domain/types/fourier.types";
 import { sanitizeSegments, sanitizeExpression } from "../middlewares/sanitize";
 import { incrementCalculationCount } from "../middlewares/requireTierLimit";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
+import { historyRepository } from "../../infrastructure/container";
 
 export const fourierRouter = Router();
 
@@ -57,6 +58,12 @@ fourierRouter.post(
       const result = await trigonometricService.calculate(input);
       if (req.user) {
         await incrementCalculationCount(req.user.id);
+        await historyRepository.create({
+          userId: req.user.id,
+          type: "trigonometric",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       } else {
         await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
       }
@@ -154,6 +161,12 @@ fourierRouter.post(
       const result = await halfRangeService.calculate(input);
       if (req.user) {
         await incrementCalculationCount(req.user.id);
+        await historyRepository.create({
+          userId: req.user.id,
+          type: "trigonometric",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       } else {
         await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
       }
@@ -252,6 +265,12 @@ fourierRouter.post(
       const result = await complexService.calculate(input);
       if (req.user) {
         await incrementCalculationCount(req.user.id);
+        await historyRepository.create({
+          userId: req.user.id,
+          type: "complex",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       } else {
         await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
       }

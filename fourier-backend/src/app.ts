@@ -17,6 +17,7 @@ import {
 } from "./api/middlewares/authenticate";
 import { requireVerified } from "./api/middlewares/requireVerified";
 import { requireTierLimit } from "./api/middlewares/requireTierLimit";
+import { historyRouter } from "./api/routes/history.routes";
 
 export function createApp(): Application {
   const app = express();
@@ -64,6 +65,8 @@ export function createApp(): Application {
   );
 
   app.use("/api/auth", authRouter);
+
+  app.use("/api/history", historyRouter);
 
   app.use(errorHandler);
 
