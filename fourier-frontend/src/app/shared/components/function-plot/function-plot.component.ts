@@ -155,13 +155,14 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
       const cx = cssCenter ? this.coords.cssToMathX(cssCenter.x, v) : v.originMath.x;
       const cy = cssCenter ? this.coords.cssToMathY(cssCenter.y, v) : v.originMath.y;
       const newUnit = Math.max(8, Math.min(2000, v.unit * factor));
-      // Keep the zoom center fixed in math space
+      // Keep the zoom center fixed in math space:
+      //   newOrigin = zoomPt - (zoomPt - oldOrigin) * oldUnit / newUnit
       return {
         ...v,
         unit:       newUnit,
         originMath: {
-          x: cx - (cx - v.originMath.x) * (newUnit / v.unit),
-          y: cy - (cy - v.originMath.y) * (newUnit / v.unit),
+          x: cx - (cx - v.originMath.x) * (v.unit / newUnit),
+          y: cy - (cy - v.originMath.y) * (v.unit / newUnit),
         },
       };
     });

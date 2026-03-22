@@ -3,10 +3,10 @@
     Canvas — Función + Aproximación Fourier
   </h2>
 
-  <!-- Controls -->
+  <!-- Controls row -->
   <div class="flex flex-wrap gap-4 shrink-0">
 
-    <!-- Preset selector -->
+    <!-- Preset -->
     <div class="space-y-1">
       <p class="text-gray-500 text-xs">Función:</p>
       <div class="flex gap-2 flex-wrap">
@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <!-- N terms slider -->
+    <!-- N terms -->
     <div class="space-y-1">
       <p class="text-gray-500 text-xs">Términos N = {{ nTerms() }}</p>
       <input type="range" min="1" max="20" [value]="nTerms()"
@@ -33,15 +33,15 @@
     <div class="flex gap-3 items-end">
       <button (click)="toggleOriginal()"
         [class]="showOriginal()
-          ? 'flex items-center gap-1.5 text-xs px-3 py-1 rounded border border-[#8b2500] text-[#8b2500] cursor-pointer'
+          ? 'flex items-center gap-1.5 text-xs px-3 py-1 rounded border border-accent text-accent cursor-pointer'
           : 'flex items-center gap-1.5 text-xs px-3 py-1 rounded border border-gray-700 text-gray-600 cursor-pointer'">
-        <span class="inline-block w-3 h-0.5 bg-[#8b2500]"></span> Original
+        <span class="inline-block w-3 h-0.5 bg-accent"></span> Original
       </button>
       <button (click)="toggleApprox()"
         [class]="showApprox()
-          ? 'flex items-center gap-1.5 text-xs px-3 py-1 rounded border border-[#1a4a6b] text-[#1a4a6b] cursor-pointer'
+          ? 'flex items-center gap-1.5 text-xs px-3 py-1 rounded border border-accent2 text-accent2 cursor-pointer'
           : 'flex items-center gap-1.5 text-xs px-3 py-1 rounded border border-gray-700 text-gray-600 cursor-pointer'">
-        <span class="inline-block w-3 h-0.5 bg-[#1a4a6b]"></span> Aproximación
+        <span class="inline-block w-3 h-0.5 bg-accent2"></span> Aproximación
       </button>
     </div>
   </div>
@@ -55,7 +55,6 @@
     />
   </div>
 
-  <!-- Info -->
   <p class="text-gray-700 text-xs shrink-0">
     Los coeficientes son numéricos de ejemplo. En producción vendrán del endpoint
     <code class="text-gray-500">POST /fourier/trigonometric/terms</code>.

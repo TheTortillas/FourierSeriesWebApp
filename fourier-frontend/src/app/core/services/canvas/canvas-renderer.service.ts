@@ -51,11 +51,9 @@ export class CanvasRendererService {
     theme: CanvasTheme,
   ): void {
     const step   = this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleX);
-    const stepPx = step * vp.unit * vp.scaleX;   // CSS pixels between lines
     const range  = this.t.visibleRange(vp);
 
     const xStart = Math.floor(range.xMin / step) * step;
-    const yStart = Math.floor(range.yMin / step) * step;
 
     ctx.beginPath();
     const minorPath = new Path2D();
@@ -71,10 +69,8 @@ export class CanvasRendererService {
     }
 
     // Horizontal lines (use same step — symmetric grid)
-    const stepY    = this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleY);
-    const stepYPx  = stepY * vp.unit * vp.scaleY;
-    const yStartH  = Math.floor(range.yMin / stepY) * stepY;
-    void stepPx; void stepYPx; // used implicitly through grid density
+    const stepY   = this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleY);
+    const yStartH = Math.floor(range.yMin / stepY) * stepY;
 
     for (let y = yStartH; y <= range.yMax + stepY; y += stepY) {
       const sy = this.t.mathToScreenY(y, vp) / vp.dpr;
@@ -123,7 +119,9 @@ export class CanvasRendererService {
     vp: CanvasViewport,
     theme: CanvasTheme,
   ): void {
-    const step  = this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleX);
+    const step  = vp.xAxisFormat === 'pi' ? this.niceStepPi(vp.unit * vp.scaleX)
+                : vp.xAxisFormat === 'e'  ? this.niceStepE(vp.unit * vp.scaleX)
+                : this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleX);
     const stepY = this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleY);
     const range = this.t.visibleRange(vp);
 
@@ -201,27 +199,61 @@ export class CanvasRendererService {
   }
 
   private formatPi(x: number, step: number): string {
-    const n = Math.round(x / Math.PI);
-    if (n === 0)  return '0';
-    if (n === 1)  return 'π';
-    if (n === -1) return '−π';
+    // Find which fraction of π this step represents
+    const piFractions = [1/4, 1/3, 1/2, 1, 2, 5, 10, 20, 50, 100];
+    const frac = piFractions.find(f => Math.abs(step - f * Math.PI) < step * 0.01) ?? 1;
+    const denom = Math.round(1 / frac); // e.g. frac=1/2 → denom=2
 
-    // Check if step is a fraction of π
-    const frac = Math.round(x / (Math.PI / 2));
-    if (Math.abs(x - frac * Math.PI / 2) < step * 0.01) {
-      if (frac === 0)  return '0';
-      if (frac === 1)  return 'π/2';
-      if (frac === -1) return '−π/2';
+    const n = Math.round(x / (frac * Math.PI));
+    if (n === 0) return '0';
+
+    if (denom === 1) {
+      if (n ===  1) return 'π';
+      if (n === -1) return '−π';
+      return `${n < 0 ? '−' : ''}${Math.abs(n)}π`;
     }
 
-    return `${n}π`;
+    // fractional labels: π/2, 3π/4, etc.
+    const num = Math.abs(n);
+    const sign = n < 0 ? '−' : '';
+    if (num === 1) return `${sign}π/${denom}`;
+    return `${sign}${num}π/${denom}`;
   }
 
   private formatE(x: number, step: number): string {
+    void step;
     const n = Math.round(x / Math.E);
     if (n === 0)  return '0';
     if (n === 1)  return 'e';
     if (n === -1) return '−e';
-    return `${n}e`;
+    return `${n < 0 ? '−' : ''}${Math.abs(n)}e`;
+  }
+
+  // ── Constant-aligned nice steps ──────────────────────────────────────────
+
+  /** Returns a step that is a "nice" multiple of π for the given unit (px/unit) */
+  private niceStepPi(unitPx: number): number {
+    const rawStep  = TARGET_GRID_PX / unitPx;
+    // Candidate steps as fractions/multiples of π
+    const candidates = [
+      Math.PI / 4, Math.PI / 3, Math.PI / 2,
+      Math.PI,
+      2 * Math.PI, 5 * Math.PI, 10 * Math.PI,
+      20 * Math.PI, 50 * Math.PI, 100 * Math.PI,
+    ];
+    return candidates.find(s => s >= rawStep) ?? candidates[candidates.length - 1];
+  }
+
+  /** Returns a step that is a "nice" multiple of e for the given unit (px/unit) */
+  private niceStepE(unitPx: number): number {
+    const rawStep   = TARGET_GRID_PX / unitPx;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep / Math.E)));
+    const normalized = rawStep / (Math.E * magnitude);
+    let nice: number;
+    if      (normalized < 1.5) nice = 1;
+    else if (normalized < 3.5) nice = 2;
+    else if (normalized < 7.5) nice = 5;
+    else                       nice = 10;
+    return nice * Math.E * magnitude;
   }
 }
