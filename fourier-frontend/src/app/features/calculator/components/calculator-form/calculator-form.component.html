@@ -1,14 +1,20 @@
 <div class="flex flex-col gap-5">
 
+  <!-- ── Live f(x) preview ──────────────────────────────────────────────── -->
+  @if (store.previewLatex()) {
+    <div class="rounded border border-border dark:border-dark-border
+                bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto text-center">
+      <span class="text-ink dark:text-dark-ink text-base"
+            [mathjax]="'\\[' + store.previewLatex() + '\\]'"></span>
+    </div>
+  }
+
   <!-- ── Tramos ─────────────────────────────────────────────────────────── -->
   <section class="space-y-2">
     <div class="flex items-center justify-between">
       <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
         Función a trozos
       </h2>
-      <span class="text-[10px] text-muted font-mono">
-        Sintaxis Maxima: x^2, sin(x), %pi
-      </span>
     </div>
 
     <div class="space-y-2">

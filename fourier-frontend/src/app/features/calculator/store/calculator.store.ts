@@ -17,10 +17,16 @@ export interface SegmentDraft {
   id: string;
   /** Expression in Maxima syntax (e.g. "x^2", "sin(x)", "%pi") */
   expression: string;
+  /** Expression as LaTeX from MathQuill (for preview rendering) */
+  expressionTex: string;
   /** Lower bound in Maxima syntax (e.g. "-%pi", "0") */
   from: string;
+  /** Lower bound as LaTeX */
+  fromTex: string;
   /** Upper bound in Maxima syntax (e.g. "%pi") */
   to: string;
+  /** Upper bound as LaTeX */
+  toTex: string;
 }
 
 export type SeriesType = 'trigonometric' | 'complex' | 'halfRange';
@@ -36,7 +42,7 @@ let _nextId = 0;
 function nextId(): string { return `seg-${++_nextId}`; }
 
 function defaultSegment(): SegmentDraft {
-  return { id: nextId(), expression: 'x', from: '-%pi', to: '%pi' };
+  return { id: nextId(), expression: 'x', expressionTex: 'x', from: '-%pi', fromTex: '-\\pi', to: '%pi', toTex: '\\pi' };
 }
 
 function segmentError(s: SegmentDraft): string | null {
@@ -74,6 +80,21 @@ export class CalculatorStore {
 
   readonly hasResult = computed(() => this.result() !== null);
 
+  /** LaTeX string for the live f(x) = … preview above the inputs */
+  readonly previewLatex = computed(() => {
+    const segs = this.segments();
+    if (segs.length === 0) return null;
+    if (segs.length === 1) {
+      const s = segs[0];
+      if (!s.expressionTex && !s.fromTex && !s.toTex) return null;
+      return `f(x) = ${s.expressionTex || '\\square'}, \\quad ${s.fromTex || '\\square'} < x < ${s.toTex || '\\square'}`;
+    }
+    const rows = segs.map((s) =>
+      `${s.expressionTex || '\\square'} & ${s.fromTex || '\\square'} < x < ${s.toTex || '\\square'}`
+    ).join(' \\\\ ');
+    return `f(x) = \\begin{cases} ${rows} \\end{cases}`;
+  });
+
   /** Compiled JS functions for live canvas preview (one per segment) */
   readonly previewFunctions = computed(() =>
     this.segments().map((s) => ({
@@ -88,7 +109,7 @@ export class CalculatorStore {
   addSegment(): void {
     this.segments.update((segs) => [
       ...segs,
-      { id: nextId(), expression: '', from: segs.at(-1)?.to ?? '0', to: '' },
+      { id: nextId(), expression: '', expressionTex: '', from: segs.at(-1)?.to ?? '0', fromTex: segs.at(-1)?.toTex ?? '0', to: '', toTex: '' },
     ]);
   }
 

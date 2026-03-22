@@ -37,7 +37,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    computeLimiter,
+
     fourierRouter,
   );
   app.use(
