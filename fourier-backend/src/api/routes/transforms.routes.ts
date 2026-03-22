@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import {
   fourierTransformService,
   dftService,
+  historyRepository,
 } from "../../infrastructure/container";
 import type {
   FourierTransformInput,
@@ -71,6 +72,12 @@ transformsRouter.post(
       const result = await fourierTransformService.transform(input);
       if (req.user) {
         await incrementCalculationCount(req.user.id);
+        await historyRepository.create({
+          userId: req.user.id,
+          type: "trigonometric",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       } else {
         await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
       }
@@ -136,6 +143,12 @@ transformsRouter.post(
       const result = await fourierTransformService.inverseTransform(input);
       if (req.user) {
         await incrementCalculationCount(req.user.id);
+        await historyRepository.create({
+          userId: req.user.id,
+          type: "trigonometric",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       } else {
         await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
       }
@@ -241,6 +254,12 @@ transformsRouter.post(
       const result = await dftService.compute(input);
       if (req.user) {
         await incrementCalculationCount(req.user.id);
+        await historyRepository.create({
+          userId: req.user.id,
+          type: "trigonometric",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       } else {
         await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
       }
