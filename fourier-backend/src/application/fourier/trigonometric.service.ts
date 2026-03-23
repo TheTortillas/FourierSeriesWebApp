@@ -79,9 +79,13 @@ export class TrigonometricService {
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
-/* Float de a0 */
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+__A0_CLEAN__: if not freeof(gamma_incomplete, Coeff_A0_Raw)
+  then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_A0_Raw, ${intVar})))],
+    if cleaned = [] then Coeff_A0_Raw else first(cleaned))
+  else Coeff_A0_Raw$
 __A0_FLOAT_VAL__: block(
-  [r: errcatch(float(Coeff_A0_Raw))],
+  [r: errcatch(float(realpart(rectform(__A0_CLEAN__))))],
   if r = [] or not numberp(first(r))
   then block([q: errcatch(${quadIntegralA0})],
     if q = [] then "NaN" else q)

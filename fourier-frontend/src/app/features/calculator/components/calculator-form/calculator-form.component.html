@@ -50,12 +50,12 @@
       </span>
     </div>
     <input
-      type="range" min="1" max="50" step="1"
+      type="range" min="0" max="50" step="1"
       [value]="store.nTerms()"
       (input)="store.setNTerms(+$any($event.target).value)"
       class="w-full accent-accent" />
     <div class="flex justify-between text-[10px] text-muted font-mono">
-      <span>1</span><span>25</span><span>50</span>
+      <span>0</span><span>25</span><span>50</span>
     </div>
   </div>
 

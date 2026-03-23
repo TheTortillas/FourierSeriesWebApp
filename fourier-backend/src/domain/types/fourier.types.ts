@@ -156,10 +156,12 @@ export interface ComplexTerm {
   cn: SymbolicExpression;
   cnNeg: SymbolicExpression;
   real: SymbolicExpression;
-  realFloat: number;
+  cosFloat: number;
+  sinFloat: number;
   amplitude: number;
   phase: number;
   cnUsedLimit?: boolean;
+  cnNegUsedLimit?: boolean;
 }
 
 export interface TrigonometricTermsResult {

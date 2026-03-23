@@ -25,16 +25,83 @@
   </div>
 
   <!-- ── Result panel ───────────────────────────────────────────────────── -->
-  @if (store.hasResult() && coeffTex()) {
+  @if (store.hasResult() && activeCoeffTex()) {
     <div class="border border-border dark:border-dark-border rounded divide-y divide-border dark:divide-dark-border bg-paper dark:bg-dark-surface">
 
       <!-- Header -->
-      <div class="px-4 py-3 flex items-center justify-between">
-        <h3 class="font-semibold text-sm text-ink dark:text-dark-ink font-body">
+      <div class="px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+        <h3 class="font-semibold text-sm text-ink dark:text-dark-ink font-body shrink-0">
           Coeficientes
         </h3>
+
+        <!-- Half-range series toggle -->
+        @if (store.result()?.type === 'halfRange') {
+          <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+            <button
+              type="button"
+              (click)="setHalfRangeMode('cosine')"
+              [class]="halfRangeMode() === 'cosine'
+                ? 'px-2 py-1 bg-accent text-white font-semibold'
+                : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'"
+            >Coseno</button>
+            <button
+              type="button"
+              (click)="setHalfRangeMode('sine')"
+              [class]="halfRangeMode() === 'sine'
+                ? 'px-2 py-1 bg-accent text-white font-semibold'
+                : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'"
+            >Seno</button>
+          </div>
+        }
+
+        <!-- Profile segmented control -->
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+            @for (opt of profileOptions; track opt.value) {
+              <button
+                type="button"
+                (click)="setProfile(opt.value)"
+                [class]="
+                  simplifyProfile() === opt.value
+                    ? 'px-2 py-1 bg-accent text-white dark:text-white font-semibold'
+                    : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                "
+              >{{ opt.label }}</button>
+            }
+          </div>
+
+          <!-- Exponential sub-flags (only when profile = 'exponential') -->
+          @if (simplifyProfile() === 'exponential') {
+            <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+              <button
+                type="button"
+                (click)="setExpFlag('exponentialize')"
+                [class]="
+                  expFlag() === 'exponentialize'
+                    ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                    : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                "
+              >e^ix</button>
+              <button
+                type="button"
+                (click)="setExpFlag('demoivre')"
+                [class]="
+                  expFlag() === 'demoivre'
+                    ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                    : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                "
+              >De Moivre</button>
+            </div>
+          }
+
+          <!-- Spinning indicator -->
+          @if (simplifying()) {
+            <span class="inline-block w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0"></span>
+          }
+        </div>
+
         @if (execTime()) {
-          <span class="text-[10px] text-muted dark:text-dark-muted font-mono">
+          <span class="text-[10px] text-muted dark:text-dark-muted font-mono shrink-0">
             {{ execTime() }} ms
           </span>
         }
@@ -42,40 +109,40 @@
 
       <!-- Coefficients rendered with MathJax -->
       <div class="px-4 py-3 space-y-3 overflow-x-auto">
-        @if (coeffTex()!.w0) {
+        @if (activeCoeffTex()!.w0) {
           <div class="flex gap-3 items-center">
             <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">ω₀ =</span>
-            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.w0"></span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="activeCoeffTex()!.w0"></span>
           </div>
         }
-        @if (coeffTex()!.a0) {
+        @if (activeCoeffTex()!.a0) {
           <div class="flex gap-3 items-center">
             <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">a₀ =</span>
-            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.a0"></span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="activeCoeffTex()!.a0"></span>
           </div>
         }
-        @if (coeffTex()!.an) {
+        @if (activeCoeffTex()!.an) {
           <div class="flex gap-3 items-center">
             <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">aₙ =</span>
-            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.an"></span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="activeCoeffTex()!.an"></span>
           </div>
         }
-        @if (coeffTex()!.bn) {
+        @if (activeCoeffTex()!.bn) {
           <div class="flex gap-3 items-center">
             <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">bₙ =</span>
-            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.bn"></span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="activeCoeffTex()!.bn"></span>
           </div>
         }
-        @if (coeffTex()!.c0) {
+        @if (activeCoeffTex()!.c0) {
           <div class="flex gap-3 items-center">
             <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">c₀ =</span>
-            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.c0"></span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="activeCoeffTex()!.c0"></span>
           </div>
         }
-        @if (coeffTex()!.cn) {
+        @if (activeCoeffTex()!.cn) {
           <div class="flex gap-3 items-center">
             <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">cₙ =</span>
-            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="coeffTex()!.cn"></span>
+            <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="activeCoeffTex()!.cn"></span>
           </div>
         }
       </div>
@@ -84,7 +151,7 @@
       @if (termRows().length > 0) {
         <div class="px-4 py-3 overflow-x-auto">
           <p class="text-[10px] text-muted dark:text-dark-muted font-mono mb-2">
-            Primeros {{ termRows().length }} términos numéricos
+            {{ termRows().length }} términos numéricos
           </p>
           <table class="w-full text-xs font-mono">
             <thead>

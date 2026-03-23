@@ -33,22 +33,32 @@ export type SeriesType = 'trigonometric' | 'complex' | 'halfRange';
 
 export type CalculatorResult =
   | { type: 'trigonometric'; data: TrigonometricResponse; terms: TrigonometricTermsResponse }
-  | { type: 'complex';       data: ComplexResponse;       terms: ComplexTermsResponse       }
-  | { type: 'halfRange';     data: HalfRangeResponse;     terms: TrigonometricTermsResponse };
+  | { type: 'complex'; data: ComplexResponse; terms: ComplexTermsResponse }
+  | { type: 'halfRange'; data: HalfRangeResponse; terms: TrigonometricTermsResponse };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 let _nextId = 0;
-function nextId(): string { return `seg-${++_nextId}`; }
+function nextId(): string {
+  return `seg-${++_nextId}`;
+}
 
 function defaultSegment(): SegmentDraft {
-  return { id: nextId(), expression: 'x', expressionTex: 'x', from: '-%pi', fromTex: '-\\pi', to: '%pi', toTex: '\\pi' };
+  return {
+    id: nextId(),
+    expression: 'x',
+    expressionTex: 'x',
+    from: '-%pi',
+    fromTex: '-\\pi',
+    to: '%pi',
+    toTex: '\\pi',
+  };
 }
 
 function segmentError(s: SegmentDraft): string | null {
   if (!s.expression.trim()) return 'Expresión requerida';
-  if (!s.from.trim())       return 'Límite inferior requerido';
-  if (!s.to.trim())         return 'Límite superior requerido';
+  if (!s.from.trim()) return 'Límite inferior requerido';
+  if (!s.to.trim()) return 'Límite superior requerido';
   return null;
 }
 
@@ -56,27 +66,23 @@ function segmentError(s: SegmentDraft): string | null {
 
 @Injectable({ providedIn: 'root' })
 export class CalculatorStore {
-  private readonly api   = inject(ApiService);
-  private readonly math  = inject(MathUtilsService);
+  private readonly api = inject(ApiService);
+  private readonly math = inject(MathUtilsService);
 
   // ── Form state ─────────────────────────────────────────────────────────────
-  readonly segments   = signal<SegmentDraft[]>([defaultSegment()]);
+  readonly segments = signal<SegmentDraft[]>([defaultSegment()]);
   readonly seriesType = signal<SeriesType>('trigonometric');
-  readonly nTerms     = signal<number>(10);
+  readonly nTerms = signal<number>(10);
 
   // ── Result state ───────────────────────────────────────────────────────────
   readonly loading = signal(false);
-  readonly error   = signal<string | null>(null);
-  readonly result  = signal<CalculatorResult | null>(null);
+  readonly error = signal<string | null>(null);
+  readonly result = signal<CalculatorResult | null>(null);
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  readonly segmentErrors = computed(() =>
-    this.segments().map(segmentError),
-  );
+  readonly segmentErrors = computed(() => this.segments().map(segmentError));
 
-  readonly isValid = computed(() =>
-    this.segmentErrors().every((e) => e === null),
-  );
+  readonly isValid = computed(() => this.segmentErrors().every((e) => e === null));
 
   readonly hasResult = computed(() => this.result() !== null);
 
@@ -89,18 +95,21 @@ export class CalculatorStore {
       if (!s.expressionTex && !s.fromTex && !s.toTex) return null;
       return `f(x) = ${s.expressionTex || '\\square'}, \\quad ${s.fromTex || '\\square'} < x < ${s.toTex || '\\square'}`;
     }
-    const rows = segs.map((s) =>
-      `${s.expressionTex || '\\square'} & ${s.fromTex || '\\square'} < x < ${s.toTex || '\\square'}`
-    ).join(' \\\\ ');
+    const rows = segs
+      .map(
+        (s) =>
+          `${s.expressionTex || '\\square'} & ${s.fromTex || '\\square'} < x < ${s.toTex || '\\square'}`,
+      )
+      .join(' \\\\ ');
     return `f(x) = \\begin{cases} ${rows} \\end{cases}`;
   });
 
   /** Compiled JS functions for live canvas preview (one per segment) */
   readonly previewFunctions = computed(() =>
     this.segments().map((s) => ({
-      fn:   this.math.compile(s.expression),
+      fn: this.math.compile(s.expression),
       from: this.parseFloat(s.from),
-      to:   this.parseFloat(s.to),
+      to: this.parseFloat(s.to),
     })),
   );
 
@@ -109,20 +118,24 @@ export class CalculatorStore {
   addSegment(): void {
     this.segments.update((segs) => [
       ...segs,
-      { id: nextId(), expression: '', expressionTex: '', from: segs.at(-1)?.to ?? '0', fromTex: segs.at(-1)?.toTex ?? '0', to: '', toTex: '' },
+      {
+        id: nextId(),
+        expression: '',
+        expressionTex: '',
+        from: segs.at(-1)?.to ?? '0',
+        fromTex: segs.at(-1)?.toTex ?? '0',
+        to: '',
+        toTex: '',
+      },
     ]);
   }
 
   removeSegment(id: string): void {
-    this.segments.update((segs) =>
-      segs.length > 1 ? segs.filter((s) => s.id !== id) : segs,
-    );
+    this.segments.update((segs) => (segs.length > 1 ? segs.filter((s) => s.id !== id) : segs));
   }
 
   updateSegment(id: string, patch: Partial<Omit<SegmentDraft, 'id'>>): void {
-    this.segments.update((segs) =>
-      segs.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-    );
+    this.segments.update((segs) => segs.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   }
 
   setSeriesType(type: SeriesType): void {
@@ -130,7 +143,7 @@ export class CalculatorStore {
   }
 
   setNTerms(n: number): void {
-    this.nTerms.set(Math.max(1, Math.min(50, n)));
+    this.nTerms.set(Math.max(0, Math.min(100, n)));
   }
 
   resetForm(): void {
@@ -150,8 +163,8 @@ export class CalculatorStore {
     const req = {
       segments: this.segments().map((s) => ({
         expression: s.expression,
-        from:       s.from,
-        to:         s.to,
+        from: s.from,
+        to: s.to,
       })),
       seriesType: type,
     };
@@ -223,8 +236,8 @@ export class CalculatorStore {
     if (!maxima.trim()) return NaN;
     const js = maxima
       .replace(/%pi/g, String(Math.PI))
-      .replace(/%e/g,  String(Math.E))
-      .replace(/\^/g,  '**');
+      .replace(/%e/g, String(Math.E))
+      .replace(/\^/g, '**');
     try {
       // eslint-disable-next-line no-new-func
       const v = new Function(`return (${js})`)() as number;

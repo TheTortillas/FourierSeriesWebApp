@@ -71,7 +71,7 @@ export class HalfRangeService {
     const quadIntegralA0 = input.segments
       .map(
         (s) =>
-          `first(quad_qags((1/T) * (${s.expression}), ${intVar}, ${s.from}, ${s.to}))`,
+          `first(quad_qags((2/T) * (${s.expression}), ${intVar}, ${s.from}, ${s.to}))`,
       )
       .join(" + ");
 
@@ -79,11 +79,18 @@ export class HalfRangeService {
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+__A0_CLEAN__: if not freeof(gamma_incomplete, Coeff_A0_Raw)
+  then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_A0_Raw, ${intVar})))],
+    if cleaned = [] then Coeff_A0_Raw else first(cleaned))
+  else Coeff_A0_Raw$
 __A0_FLOAT_VAL__: block(
-  [r: errcatch(float(Coeff_A0))],
+  [r: if freeof('integrate, __A0_CLEAN__)
+    then errcatch(float(realpart(rectform(__A0_CLEAN__))))
+    else []],
   if r = [] or not numberp(first(r))
   then block([q: errcatch(${quadIntegralA0})],
-    if q = [] then "NaN" else q)
+    if q = [] then "NaN" else first(q))
   else first(r))$
 print("__A0_FLOAT__")$
 print(string(__A0_FLOAT_VAL__))$

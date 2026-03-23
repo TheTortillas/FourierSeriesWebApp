@@ -37,10 +37,7 @@ export class ComplexService {
   async calculate(input: PiecewiseFourierInput): Promise<ComplexFourierResult> {
     const cacheKey = buildCacheKey(input);
     const cached = getFromCache(cacheKey);
-    if (cached) {
-      //console.log(`Cache hit: ${cacheKey}`);
-      return cached as ComplexFourierResult;
-    }
+    if (cached) return cached as ComplexFourierResult;
 
     const startTime = Date.now();
     const intVar = input.intVar ?? "x";
@@ -77,7 +74,6 @@ export class ComplexService {
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
-/* Float de c0 — parte real */
 __C0_FLOAT_VAL__: block(
   [r: errcatch(float(realpart(rectform(Coeff_c0))))],
   if r = [] or not numberp(first(r))
@@ -90,10 +86,6 @@ kill(all)$
 `;
 
     const result = await this.runner.run({ script: fullScript });
-    console.log(
-      "COMPLEX RAW (last 300):",
-      JSON.stringify(result.raw.slice(-300)),
-    );
 
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
@@ -125,6 +117,7 @@ kill(all)$
     setInCache(cacheKey, complexResult);
     return complexResult;
   }
+
   async calculateTerms(
     input: PiecewiseFourierInput,
     nTerms: number,
@@ -134,10 +127,17 @@ kill(all)$
     const script = await loadScript("complex", "complex_coeffs.mac");
     const funcInput = this.buildFuncInput(input.segments);
 
-    const quadIntegralReal = input.segments
+    const quadCos = input.segments
       .map(
         (s) =>
-          `float(realpart(rectform((1/T) * integrate((${s.expression}) * (exp(%i*i*w0*${intVar}) + exp(-%i*i*w0*${intVar})), ${intVar}, ${s.from}, ${s.to}))))`,
+          `first(quad_qags((2/T) * (${s.expression}) * cos(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
+      )
+      .join(" + ");
+
+    const quadSin = input.segments
+      .map(
+        (s) =>
+          `first(quad_qags((2/T) * (${s.expression}) * sin(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
       )
       .join(" + ");
 
@@ -151,9 +151,10 @@ Coeff_n: if not freeof(gamma_incomplete, Coeff_n)
     if cleaned = [] then Coeff_n else first(cleaned))
   else Coeff_n$
 block(
-  [cn_val, cn_neg_val, term_real, amp, ph, real_float, cn_used_limit],
+  [cn_val, cn_neg_val, term_real, cos_coeff, sin_coeff, amp, ph, cn_used_limit, cn_neg_used_limit],
   for i: 1 thru ${nTerms} do (
     cn_used_limit: false,
+    cn_neg_used_limit: false,
     cn_val: block([r: errcatch(ratsimp(subst(n=i, Coeff_n)))],
       if r = [] then block([lim: errcatch(limit(Coeff_n, n, i))],
         cn_used_limit: true,
@@ -163,21 +164,30 @@ block(
         else block([lim: errcatch(limit(Coeff_n, n, i))],
           cn_used_limit: true,
           if lim = [] then val else first(lim)))),
-    cn_neg_val: conjugate(cn_val),
-    term_real: factor(ratsimp(realpart(rectform(
+    cn_neg_val: block([r: errcatch(ratsimp(subst(n=-i, Coeff_n)))],
+      if r = [] then block([lim: errcatch(limit(Coeff_n, n, -i))],
+        cn_neg_used_limit: true,
+        if lim = [] then 0 else first(lim))
+      else block([val: first(r)],
+        if numberp(val) or freeof(n, val) then val
+        else block([lim: errcatch(limit(Coeff_n, n, -i))],
+          cn_neg_used_limit: true,
+          if lim = [] then val else first(lim)))),
+    term_real: fullratsimp(demoivre(
       cn_val * exp(%i * i * w0 * ${intVar}) + cn_neg_val * exp(-%i * i * w0 * ${intVar})
-    )))),
-    term_real: block([cleaned: errcatch(simplify_expint(clean_integral(term_real, ${intVar})))],
-      if cleaned = [] then term_real else first(cleaned)),
-    real_float: block(
-      [cos_coeff: coeff(term_real, cos(i * w0 * ${intVar})),
-       sin_coeff: coeff(term_real, sin(i * w0 * ${intVar})),
-       result],
-      result: errcatch(float(cos_coeff + sin_coeff)),
-      if result = [] or not numberp(first(result))
-      then ${quadIntegralReal}
-      else first(result)
-    ),
+    )),
+    cos_coeff: block(
+      [expanded: expand(term_real),
+      r: errcatch(float(coeff(expand(term_real), cos(i * w0 * ${intVar}))))],
+      if r = [] or not numberp(first(r))
+      then ${quadCos}
+      else first(r)),
+    sin_coeff: block(
+      [expanded: expand(term_real),
+      r: errcatch(float(coeff(expand(term_real), sin(i * w0 * ${intVar}))))],
+      if r = [] or not numberp(first(r))
+      then ${quadSin}
+      else first(r)),
     amp: float(abs(cn_val)),
     ph: float(carg(cn_val)),
     print("__TERM_START__"),
@@ -194,21 +204,24 @@ block(
     print(string(term_real)),
     print("__REAL_TEX__"),
     tex(term_real),
-    print("__REAL_FLOAT__"),
-    print(string(real_float)),
+    print("__COS_FLOAT__"),
+    print(string(cos_coeff)),
+    print("__SIN_FLOAT__"),
+    print(string(sin_coeff)),
     print("__AMPLITUDE__"),
     print(string(amp)),
     print("__PHASE__"),
     print(string(ph)),
     print("__CN_USED_LIMIT__"),
-    print(string(cn_used_limit))
+    print(string(cn_used_limit)),
+    print("__CN_NEG_USED_LIMIT__"),
+    print(string(cn_neg_used_limit))
   )
 )$
 kill(all)$
 `;
 
     const result = await this.runner.run({ script: termsScript });
-    console.log("COMPLEX TERMS RAW:", JSON.stringify(result.raw.slice(0, 600)));
 
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
@@ -250,11 +263,16 @@ kill(all)$
         "__REAL_TEX__",
       );
       const realTex = this.extractTex(
-        this.extractBetween(block, "__REAL_TEX__", "__REAL_FLOAT__"),
+        this.extractBetween(block, "__REAL_TEX__", "__COS_FLOAT__"),
       );
-      const realFloatStr = this.extractBetween(
+      const cosFloatStr = this.extractBetween(
         block,
-        "__REAL_FLOAT__",
+        "__COS_FLOAT__",
+        "__SIN_FLOAT__",
+      );
+      const sinFloatStr = this.extractBetween(
+        block,
+        "__SIN_FLOAT__",
         "__AMPLITUDE__",
       );
       const amplitudeStr = this.extractBetween(
@@ -274,13 +292,13 @@ kill(all)$
       )
         .replace(/false/g, "")
         .trim();
-
-      const c0FloatRaw =
-        this.extractBetween(block, "__C0_FLOAT__", null)
-          .replace(/false/g, "")
-          .trim()
-          .split("\n")[0] ?? "NaN";
-      const c0Float = parseFloat(c0FloatRaw);
+      const cnNegUsedLimitStr = this.extractBetween(
+        block,
+        "__CN_NEG_USED_LIMIT__",
+        null,
+      )
+        .replace(/false/g, "")
+        .trim();
 
       return {
         n,
@@ -290,13 +308,15 @@ kill(all)$
           tex: cnNegTex,
         },
         real: { maxima: realMaxima.replace(/false/g, "").trim(), tex: realTex },
-        realFloat: parseFloat(realFloatStr.replace(/false/g, "").trim()) || 0,
+        cosFloat: parseFloat(cosFloatStr.replace(/false/g, "").trim()) || 0,
+        sinFloat: parseFloat(sinFloatStr.replace(/false/g, "").trim()) || 0,
         amplitude: parseFloat(amplitudeStr.replace(/false/g, "").trim()) || 0,
         phase:
           parseFloat(
             phaseStr.replace(/false/g, "").trim().split("\n")[0] ?? "0",
           ) || 0,
         cnUsedLimit: cnUsedLimitStr.includes("true"),
+        cnNegUsedLimit: cnNegUsedLimitStr.includes("true"),
       };
     });
   }

@@ -12,8 +12,10 @@ export interface TrigNumericTerm {
 /** Numeric-only subset of ComplexTerm needed for reconstruction */
 export interface ComplexNumericTerm {
   n: number;
-  amplitude: number;
-  phase: number;
+  cosFloat: number;
+  sinFloat: number;
+  amplitude: number; // kept for spectrum table display
+  phase: number; // kept for spectrum table display
   cnUsedLimit?: boolean;
   cnNegUsedLimit?: boolean;
 }
@@ -29,7 +31,6 @@ export interface ComplexNumericTerm {
  */
 @Injectable({ providedIn: 'root' })
 export class FourierReconstructionService {
-
   // ── Trigonometric ─────────────────────────────────────────────────────────
 
   /**
@@ -48,7 +49,7 @@ export class FourierReconstructionService {
   ): (x: number) => number {
     const limit = nMax !== undefined ? Math.min(nMax, terms.length) : terms.length;
     const slice = terms.slice(0, limit);
-    const dc    = a0 / 2;
+    const dc = a0 / 2; // DC component is a0/2 in the trigonometric form
 
     return (x: number): number => {
       let sum = dc;
@@ -60,24 +61,64 @@ export class FourierReconstructionService {
     };
   }
 
+  // ── Half-range expansions ─────────────────────────────────────────────────
+
+  /**
+   * Builds the half-range cosine expansion:
+   *   f_N(x) = a0/2 + Σ_{n=1}^{N} aₙ·cos(n·w0·x)
+   */
+  buildCosineOnly(
+    a0: number,
+    terms: TrigNumericTerm[],
+    w0: number,
+    nMax?: number,
+  ): (x: number) => number {
+    const limit = nMax !== undefined ? Math.min(nMax, terms.length) : terms.length;
+    const slice = terms.slice(0, limit);
+    const dc = a0 / 2;
+
+    return (x: number): number => {
+      let sum = dc;
+      for (const { n, anFloat } of slice) {
+        sum += anFloat * Math.cos(n * w0 * x);
+      }
+      return sum;
+    };
+  }
+
+  /**
+   * Builds the half-range sine expansion:
+   *   f_N(x) = Σ_{n=1}^{N} bₙ·sin(n·w0·x)
+   */
+  buildSineOnly(terms: TrigNumericTerm[], w0: number, nMax?: number): (x: number) => number {
+    const limit = nMax !== undefined ? Math.min(nMax, terms.length) : terms.length;
+    const slice = terms.slice(0, limit);
+
+    return (x: number): number => {
+      let sum = 0;
+      for (const { n, bnFloat } of slice) {
+        sum += bnFloat * Math.sin(n * w0 * x);
+      }
+      return sum;
+    };
+  }
+
   // ── Complex ───────────────────────────────────────────────────────────────
 
   /**
-   * Builds f_N(x) = Σ_{n=-N}^{N} c_n · e^{i·n·w0·x}
+   * Builds the real reconstruction of the complex Fourier series:
+   *   f_N(x) = c0 + Σ_{n=1}^{N} [cosFloat·cos(n·w0·x) + sinFloat·sin(n·w0·x)]
    *
-   * For real-valued functions c_{-n} = conj(c_n), so the sum collapses to:
-   *   c0 + 2 · Σ_{n=1}^{N} [ Re(c_n)·cos(n·w0·x) − Im(c_n)·sin(n·w0·x) ]
+   * `cosFloat` and `sinFloat` are precomputed by the backend so that this is
+   * equivalent to c_n·e^{inw0x} + c_{-n}·e^{-inw0x} for each harmonic.
    *
-   * The backend's ComplexTerm includes `realFloat` = 2·Re(c_n) for the
-   * real reconstruction, and `amplitude` / `phase` for the spectrum.
-   *
-   * @param c0Real  Real part of c0 (= a0/2)
-   * @param terms   Array of { n, realFloat, amplitude, phase }
+   * @param c0      Numeric value of c0 (always real for real-valued functions)
+   * @param terms   Array of { n, cosFloat, sinFloat } from the backend
    * @param w0      Fundamental angular frequency
    * @param nMax    Number of harmonics to include
    */
   buildComplex(
-    c0Real: number,
+    c0: number,
     terms: ComplexNumericTerm[],
     w0: number,
     nMax?: number,
@@ -86,10 +127,10 @@ export class FourierReconstructionService {
     const slice = terms.slice(0, limit);
 
     return (x: number): number => {
-      // c0 + Σ 2·Re(c_n·e^{inw0x}) = c0 + Σ amplitude·cos(n·w0·x + phase)
-      let sum = c0Real;
-      for (const { n, amplitude, phase } of slice) {
-        sum += amplitude * Math.cos(n * w0 * x + phase);
+      let sum = c0;
+      for (const { n, cosFloat, sinFloat } of slice) {
+        const arg = n * w0 * x;
+        sum += cosFloat * Math.cos(arg) + sinFloat * Math.sin(arg);
       }
       return sum;
     };
@@ -101,12 +142,7 @@ export class FourierReconstructionService {
    * Evaluates an arbitrary series Σ_{n=1}^{N} term(n, x).
    * Useful for custom series or testing.
    */
-  sumSeries(
-    termFn: (n: number, x: number) => number,
-    nTerms: number,
-    x: number,
-    dc = 0,
-  ): number {
+  sumSeries(termFn: (n: number, x: number) => number, nTerms: number, x: number, dc = 0): number {
     let sum = dc;
     for (let n = 1; n <= nTerms; n++) {
       sum += termFn(n, x);
@@ -126,8 +162,8 @@ export class FourierReconstructionService {
   parseW0(maxima: string): number {
     const js = maxima
       .replace(/%pi/g, String(Math.PI))
-      .replace(/%e/g,  String(Math.E))
-      .replace(/\^/g,  '**');
+      .replace(/%e/g, String(Math.E))
+      .replace(/\^/g, '**');
     try {
       // eslint-disable-next-line no-new-func
       const result = new Function(`return (${js})`)() as number;
