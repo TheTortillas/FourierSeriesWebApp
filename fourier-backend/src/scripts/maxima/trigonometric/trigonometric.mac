@@ -36,10 +36,10 @@ for i:1 thru pieces do (
 );
 
 /* Coeficientes crudos */
-Coeff_A0_Raw: a0_acum;
-Coeff_A0: a0_acum / 2;
-Coeff_An: an_acum;
-Coeff_Bn: bn_acum;
+Coeff_A0_Raw: fullratsimp(a0_acum);
+Coeff_A0: fullratsimp(a0_acum / 2);
+Coeff_An: fullratsimp(an_acum);
+Coeff_Bn: fullratsimp(bn_acum);
 
 /* Serie general formal */
 serie_general: Coeff_A0 + 'sum(Coeff_An * cos(n * w0 * INTVAR) + Coeff_Bn * sin(n * w0 * INTVAR), n, 1, inf);

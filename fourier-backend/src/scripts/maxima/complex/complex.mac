@@ -39,8 +39,8 @@ for i:1 thru pieces do (
 )$
 
 /* Coeficientes */
-Coeff_0: c0_acum;
-Coeff_n: cn_acum;
+Coeff_0: fullratsimp(c0_acum);
+Coeff_n: fullratsimp(cn_acum);
 
 /* Serie formal compleja */
 serie_compleja: 'sum(Coeff_n * exp(%i * n * w0 * INTVAR), n, minf, inf);

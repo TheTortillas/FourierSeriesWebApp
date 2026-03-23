@@ -20,12 +20,17 @@ export class MaximaPostProcessor implements IPostProcessor {
       ...result.simplifications,
     };
 
+    const numericFields = new Set(["a0Float", "c0Float"]);
+
     for (const [key, expr] of Object.entries(result.coefficients)) {
-      if (!expr || !this.canProcess(expr)) continue;
+      if (numericFields.has(key)) continue;
+      if (!expr || !this.canProcess(expr as SymbolicExpression)) continue;
+
+      const symbolicExpr = expr as SymbolicExpression;
 
       const call = `
 block(
-  [_expr: simplify_expint(clean_integral(${expr.maxima}, x))],
+  [_expr: simplify_expint(clean_integral(${symbolicExpr.maxima}, x))],
   print(string(_expr)),
   tex(_expr)
 );`;
@@ -35,8 +40,8 @@ block(
       });
 
       if (maxResult.success) {
-        simplifications[`${key}_gamma`] = expr;
-        updatedCoefficients[key as keyof typeof updatedCoefficients] =
+        simplifications[`${key}_gamma`] = symbolicExpr;
+        (updatedCoefficients as Record<string, unknown>)[key] =
           this.parseResult(maxResult.raw);
       }
     }

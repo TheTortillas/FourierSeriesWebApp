@@ -29,6 +29,7 @@ const TRIG_MARKERS = [
   "__W0_TEX__",
   "__SERIES_MAXIMA__",
   "__SERIES_TEX__",
+  "__A0_FLOAT__",
 ];
 
 export class TrigonometricService {
@@ -67,10 +68,26 @@ export class TrigonometricService {
     const script = await loadScript("trigonometric", "trigonometric.mac");
     const funcInput = this.buildFuncInput(input.segments);
 
+    const quadIntegralA0 = input.segments
+      .map(
+        (s) =>
+          `first(quad_qags((1/T) * (${s.expression}), ${intVar}, ${s.from}, ${s.to}))`,
+      )
+      .join(" + ");
+
     const fullScript = `
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
+/* Float de a0 */
+__A0_FLOAT_VAL__: block(
+  [r: errcatch(float(Coeff_A0_Raw))],
+  if r = [] or not numberp(first(r))
+  then block([q: errcatch(${quadIntegralA0})],
+    if q = [] then "NaN" else q)
+  else first(r))$
+print("__A0_FLOAT__")$
+print(string(__A0_FLOAT_VAL__))$
 kill(all)$
 `;
 
@@ -83,10 +100,18 @@ kill(all)$
 
     const parsed = parseMarkeredOutput(result.raw, TRIG_MARKERS);
 
+    const a0FloatRaw =
+      this.extractBetween(result.raw, "__A0_FLOAT__", null)
+        .replace(/false/g, "")
+        .trim()
+        .split("\n")[0] ?? "NaN";
+    const a0Float = parseFloat(a0FloatRaw);
+
     const fourierResult: FourierResult = {
       input,
       coefficients: {
         a0: parsed["a0"],
+        a0Float: isNaN(a0Float) ? undefined : a0Float,
         an: parsed["an"],
         bn: parsed["bn"],
       },
@@ -96,7 +121,6 @@ kill(all)$
       validation,
       executionTimeMs: Date.now() - startTime,
     };
-
     if (
       (parsed["an"] && this.postProcessor.canProcess(parsed["an"])) ||
       (parsed["bn"] && this.postProcessor.canProcess(parsed["bn"]))
@@ -271,6 +295,12 @@ kill(all)$
       )
         .replace(/false/g, "")
         .trim();
+      const a0FloatRaw =
+        this.extractBetween(raw, "__A0_FLOAT__", null)
+          .replace(/false/g, "")
+          .trim()
+          .split("\n")[0] ?? "NaN";
+      const a0Float = parseFloat(a0FloatRaw);
 
       return {
         n,
@@ -283,6 +313,7 @@ kill(all)$
           ) || 0,
         anUsedLimit: anUsedLimitStr.includes("true"),
         bnUsedLimit: bnUsedLimitStr.includes("true"),
+        a0Float: isNaN(a0Float) ? 0 : a0Float,
       };
     });
   }

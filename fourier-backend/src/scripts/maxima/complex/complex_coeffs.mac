@@ -17,4 +17,4 @@ for i:1 thru pieces do (
     cn_acum: cn_acum + (1/T) * integrate(f_i * exp(-%i * n * w0 * INTVAR), INTVAR, a, b)
 )$
 
-Coeff_n: cn_acum$
+Coeff_n: fullratsimp(cn_acum)$

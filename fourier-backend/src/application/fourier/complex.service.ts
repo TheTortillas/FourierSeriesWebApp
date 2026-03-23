@@ -66,14 +66,34 @@ export class ComplexService {
     const script = await loadScript("complex", "complex.mac");
     const funcInput = this.buildFuncInput(input.segments);
 
+    const quadIntegralC0 = input.segments
+      .map(
+        (s) =>
+          `first(quad_qags((1/T) * (${s.expression}), ${intVar}, ${s.from}, ${s.to}))`,
+      )
+      .join(" + ");
+
     const fullScript = `
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
+/* Float de c0 — parte real */
+__C0_FLOAT_VAL__: block(
+  [r: errcatch(float(realpart(rectform(Coeff_c0))))],
+  if r = [] or not numberp(first(r))
+  then block([q: errcatch(${quadIntegralC0})],
+    if q = [] then "NaN" else q)
+  else first(r))$
+print("__C0_FLOAT__")$
+print(string(__C0_FLOAT_VAL__))$
 kill(all)$
 `;
 
     const result = await this.runner.run({ script: fullScript });
+    console.log(
+      "COMPLEX RAW (last 300):",
+      JSON.stringify(result.raw.slice(-300)),
+    );
 
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
@@ -81,10 +101,19 @@ kill(all)$
 
     const parsed = parseMarkeredOutput(result.raw, COMPLEX_MARKERS);
 
+    const c0FloatRaw =
+      this.extractBetween(result.raw, "__C0_FLOAT__", null)
+        .replace(/false/g, "")
+        .replace(/[\[\]]/g, "")
+        .trim()
+        .split("\n")[0] ?? "NaN";
+    const c0Float = parseFloat(c0FloatRaw);
+
     const complexResult: ComplexFourierResult = {
       input,
       coefficients: {
         c0: parsed["c0"] ?? { tex: "", maxima: "" },
+        c0Float: isNaN(c0Float) ? undefined : c0Float,
         cn: parsed["cn"] ?? { tex: "", maxima: "" },
       },
       seriesComplex: parsed["series_complex"] ?? { tex: "", maxima: "" },
@@ -122,10 +151,9 @@ Coeff_n: if not freeof(gamma_incomplete, Coeff_n)
     if cleaned = [] then Coeff_n else first(cleaned))
   else Coeff_n$
 block(
-  [cn_val, cn_neg_val, term_real, amp, ph, real_float, cn_used_limit, cn_neg_used_limit],
+  [cn_val, cn_neg_val, term_real, amp, ph, real_float, cn_used_limit],
   for i: 1 thru ${nTerms} do (
     cn_used_limit: false,
-    cn_neg_used_limit: false,
     cn_val: block([r: errcatch(ratsimp(subst(n=i, Coeff_n)))],
       if r = [] then block([lim: errcatch(limit(Coeff_n, n, i))],
         cn_used_limit: true,
@@ -135,15 +163,7 @@ block(
         else block([lim: errcatch(limit(Coeff_n, n, i))],
           cn_used_limit: true,
           if lim = [] then val else first(lim)))),
-    cn_neg_val: block([r: errcatch(ratsimp(subst(n=-i, Coeff_n)))],
-      if r = [] then block([lim: errcatch(limit(Coeff_n, n, -i))],
-        cn_neg_used_limit: true,
-        if lim = [] then 0 else first(lim))
-      else block([val: first(r)],
-        if numberp(val) or freeof(n, val) then val
-        else block([lim: errcatch(limit(Coeff_n, n, -i))],
-          cn_neg_used_limit: true,
-          if lim = [] then val else first(lim)))),
+    cn_neg_val: conjugate(cn_val),
     term_real: factor(ratsimp(realpart(rectform(
       cn_val * exp(%i * i * w0 * ${intVar}) + cn_neg_val * exp(-%i * i * w0 * ${intVar})
     )))),
@@ -181,15 +201,14 @@ block(
     print("__PHASE__"),
     print(string(ph)),
     print("__CN_USED_LIMIT__"),
-    print(string(cn_used_limit)),
-    print("__CN_NEG_USED_LIMIT__"),
-    print(string(cn_neg_used_limit))
+    print(string(cn_used_limit))
   )
 )$
 kill(all)$
 `;
 
     const result = await this.runner.run({ script: termsScript });
+    console.log("COMPLEX TERMS RAW:", JSON.stringify(result.raw.slice(0, 600)));
 
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
@@ -255,13 +274,13 @@ kill(all)$
       )
         .replace(/false/g, "")
         .trim();
-      const cnNegUsedLimitStr = this.extractBetween(
-        block,
-        "__CN_NEG_USED_LIMIT__",
-        null,
-      )
-        .replace(/false/g, "")
-        .trim();
+
+      const c0FloatRaw =
+        this.extractBetween(block, "__C0_FLOAT__", null)
+          .replace(/false/g, "")
+          .trim()
+          .split("\n")[0] ?? "NaN";
+      const c0Float = parseFloat(c0FloatRaw);
 
       return {
         n,
@@ -278,7 +297,6 @@ kill(all)$
             phaseStr.replace(/false/g, "").trim().split("\n")[0] ?? "0",
           ) || 0,
         cnUsedLimit: cnUsedLimitStr.includes("true"),
-        cnNegUsedLimit: cnNegUsedLimitStr.includes("true"),
       };
     });
   }

@@ -43,10 +43,7 @@ export class HalfRangeService {
   async calculate(input: PiecewiseFourierInput): Promise<HalfRangeResult> {
     const cacheKey = buildCacheKey(input);
     const cached = getFromCache(cacheKey);
-    if (cached) {
-      //console.log(`Cache hit: ${cacheKey}`);
-      return cached as HalfRangeResult;
-    }
+    if (cached) return cached as HalfRangeResult;
 
     const startTime = Date.now();
     const intVar = input.intVar ?? "x";
@@ -71,10 +68,25 @@ export class HalfRangeService {
     const script = await loadScript("halfRange", "halfRange.mac");
     const funcInput = this.buildFuncInput(input.segments);
 
+    const quadIntegralA0 = input.segments
+      .map(
+        (s) =>
+          `first(quad_qags((1/T) * (${s.expression}), ${intVar}, ${s.from}, ${s.to}))`,
+      )
+      .join(" + ");
+
     const fullScript = `
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
+__A0_FLOAT_VAL__: block(
+  [r: errcatch(float(Coeff_A0))],
+  if r = [] or not numberp(first(r))
+  then block([q: errcatch(${quadIntegralA0})],
+    if q = [] then "NaN" else q)
+  else first(r))$
+print("__A0_FLOAT__")$
+print(string(__A0_FLOAT_VAL__))$
 kill(all)$
 `;
 
@@ -86,10 +98,18 @@ kill(all)$
 
     const parsed = parseMarkeredOutput(result.raw, HALF_RANGE_MARKERS);
 
+    const a0FloatRaw =
+      this.extractBetween(result.raw, "__A0_FLOAT__", null)
+        .replace(/false/g, "")
+        .trim()
+        .split("\n")[0] ?? "NaN";
+    const a0Float = parseFloat(a0FloatRaw);
+
     const halfRangeResult: HalfRangeResult = {
       input,
       coefficients: {
         a0: parsed["a0"],
+        a0Float: isNaN(a0Float) ? undefined : a0Float,
         an: parsed["an"],
         bn: parsed["bn"],
       },
@@ -185,11 +205,11 @@ block(
     print("__AN_FLOAT__"),
     print(string(an_float)),
     print("__BN_FLOAT__"),
+    print(string(bn_float)),
     print("__AN_USED_LIMIT__"),
     print(string(an_used_limit)),
     print("__BN_USED_LIMIT__"),
     print(string(bn_used_limit))
-    print(string(an_used_limit or bn_used_limit))
   )
 )$
 kill(all)$
@@ -265,8 +285,8 @@ kill(all)$
           parseFloat(
             bnFloatStr.replace(/false/g, "").trim().split("\n")[0] ?? "0",
           ) || 0,
-        usedLimit:
-          anUsedLimitStr.includes("true") || bnUsedLimitStr.includes("true"),
+        anUsedLimit: anUsedLimitStr.includes("true"),
+        bnUsedLimit: bnUsedLimitStr.includes("true"),
       };
     });
   }

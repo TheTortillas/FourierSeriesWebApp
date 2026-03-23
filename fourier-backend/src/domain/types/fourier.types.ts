@@ -20,9 +20,13 @@ export interface PiecewiseFourierInput {
 
 export interface FourierCoefficients {
   a0?: SymbolicExpression;
+  a0Raw?: SymbolicExpression;
+  a0Float?: number;
   an?: SymbolicExpression;
   bn?: SymbolicExpression;
   cn?: SymbolicExpression;
+  c0?: SymbolicExpression;
+  c0Float?: number;
 }
 
 export interface FourierResult {
@@ -31,6 +35,7 @@ export interface FourierResult {
   series: SymbolicExpression;
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
+  a0Float?: number;
   simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   executionTimeMs: number;
@@ -43,6 +48,7 @@ export interface HalfRangeResult {
   seriesSine: SymbolicExpression;
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
+  a0Float?: number;
   validation?: ValidationResult;
   executionTimeMs: number;
 }
@@ -51,6 +57,7 @@ export interface ComplexFourierResult {
   input: PiecewiseFourierInput;
   coefficients: {
     c0: SymbolicExpression;
+    c0Float?: number;
     cn: SymbolicExpression;
   };
   seriesComplex: SymbolicExpression;
@@ -153,7 +160,6 @@ export interface ComplexTerm {
   amplitude: number;
   phase: number;
   cnUsedLimit?: boolean;
-  cnNegUsedLimit?: boolean;
 }
 
 export interface TrigonometricTermsResult {
