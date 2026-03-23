@@ -217,6 +217,65 @@ export class CalculatorStore {
     }
   }
 
+  // ── URL state persistence ──────────────────────────────────────────────────
+
+  /**
+   * Serializes the current form state (segments, seriesType, nTerms) to a
+   * compact base64 string suitable for use as a URL query parameter.
+   */
+  encodeState(): string {
+    const state = {
+      seg: this.segments().map((s) => ({
+        e: s.expression, et: s.expressionTex,
+        f: s.from,       ft: s.fromTex,
+        t: s.to,         tt: s.toTex,
+      })),
+      type: this.seriesType(),
+      n: this.nTerms(),
+    };
+    try {
+      // encodeURIComponent+unescape is the classic safe UTF-8→base64 path
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * Decodes a URL state string produced by encodeState() and applies it to the
+   * store.  Returns true if the state was valid and successfully restored.
+   */
+  restoreState(encoded: string): boolean {
+    try {
+      const json = decodeURIComponent(escape(atob(encoded)));
+      const s = JSON.parse(json) as {
+        seg: Array<{ e: string; et: string; f: string; ft: string; t: string; tt: string }>;
+        type: SeriesType;
+        n: number;
+      };
+
+      const validTypes: SeriesType[] = ['trigonometric', 'complex', 'halfRange'];
+      if (!Array.isArray(s.seg) || !s.seg.length || !validTypes.includes(s.type)) return false;
+
+      this.segments.set(
+        s.seg.map((seg) => ({
+          id: nextId(),
+          expression:    seg.e  ?? '',
+          expressionTex: seg.et ?? '',
+          from:          seg.f  ?? '',
+          fromTex:       seg.ft ?? '',
+          to:            seg.t  ?? '',
+          toTex:         seg.tt ?? '',
+        })),
+      );
+      this.seriesType.set(s.type);
+      if (typeof s.n === 'number') this.setNTerms(s.n);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private handleError(e: unknown): void {

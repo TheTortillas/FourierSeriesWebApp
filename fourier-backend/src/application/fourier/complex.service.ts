@@ -74,11 +74,18 @@ export class ComplexService {
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+__C0_CLEAN__: if not freeof(gamma_incomplete, Coeff_0)
+  then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_0, ${intVar})))],
+    if cleaned = [] then Coeff_0 else first(cleaned))
+  else Coeff_0$
 __C0_FLOAT_VAL__: block(
-  [r: errcatch(float(realpart(rectform(Coeff_c0))))],
+  [r: if freeof('integrate, __C0_CLEAN__)
+    then errcatch(float(realpart(rectform(__C0_CLEAN__))))
+    else []],
   if r = [] or not numberp(first(r))
   then block([q: errcatch(${quadIntegralC0})],
-    if q = [] then "NaN" else q)
+    if q = [] then "NaN" else first(q))
   else first(r))$
 print("__C0_FLOAT__")$
 print(string(__C0_FLOAT_VAL__))$
