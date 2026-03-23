@@ -1,13 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { CalculatorFormComponent } from './components/calculator-form/calculator-form.component';
 import { ResultsSummaryComponent } from './components/results-summary/results-summary.component';
-import { ThemeService } from '../../core/services/theme/theme.service';
+import { NavComponent } from '../../shared/components/nav/nav.component';
 
 @Component({
   selector: 'app-calculator',
-  imports: [CalculatorFormComponent, ResultsSummaryComponent],
+  imports: [NavComponent, CalculatorFormComponent, ResultsSummaryComponent],
   templateUrl: './calculator.component.html',
 })
-export class CalculatorComponent {
-  readonly theme = inject(ThemeService);
-}
+export class CalculatorComponent {}
