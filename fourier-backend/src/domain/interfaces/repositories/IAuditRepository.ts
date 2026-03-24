@@ -31,5 +31,6 @@ export interface IAuditRepository {
   log(input: AuditLogInput): Promise<void>;
   findByUser(userId: string, limit?: number): Promise<AuditLogInput[]>;
   findAll(limit?: number, offset?: number): Promise<AuditLogInput[]>;
+  countAll(): Promise<number>;
   clearByAction(action: AuditAction, olderThanDays: number): Promise<number>;
 }

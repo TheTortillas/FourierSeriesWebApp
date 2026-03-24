@@ -57,6 +57,11 @@ export class AuditRepository implements IAuditRepository {
     return result.rows.map(mapRow);
   }
 
+  async countAll(): Promise<number> {
+    const result = await db.query(`SELECT COUNT(*) FROM audit_log`);
+    return parseInt(result.rows[0].count, 10);
+  }
+
   async clearByAction(
     action: AuditAction,
     olderThanDays: number,
