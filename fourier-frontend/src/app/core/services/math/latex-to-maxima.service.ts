@@ -87,13 +87,16 @@ export class LatexToMaximaService {
       .replace(/\bpi\b/g, '%pi')
       .replace(/(?<![a-zA-Z0-9_%])e(?![a-zA-Z0-9_%])/g, '%e')
       // Maxima function name normalization
-      .replace(/\barcsin\b/g, 'asin')
-      .replace(/\barccos\b/g, 'acos')
-      .replace(/\barctan\b/g, 'atan')
-      .replace(/\bln\b/g,     'log')
-      .replace(/\bsen\b/g,    'sin')
-      .replace(/\btg\b/g,     'tan')
-      .replace(/\bsenh\b/g,   'sinh')
-      .replace(/\bctg\b/g,    'cot');
+      .replace(/\barcsin\b/g,  'asin')
+      .replace(/\barccos\b/g,  'acos')
+      .replace(/\barctan\b/g,  'atan')
+      .replace(/\barccot\b/g,  'acot')
+      .replace(/\barcsec\b/g,  'asec')
+      .replace(/\barccsc\b/g,  'acsc')
+      .replace(/\bln\b/g,      'log')
+      .replace(/\bsen\b/g,     'sin')
+      .replace(/\btg\b/g,      'tan')
+      .replace(/\bsenh\b/g,    'sinh')
+      .replace(/\bctg\b/g,     'cot');
   }
 }

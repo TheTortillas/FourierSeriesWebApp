@@ -11,6 +11,7 @@ import {
   GoogleLoginRequest,
   RefreshTokenRequest,
   User,
+  QuotaResponse,
   // Fourier
   FourierSeriesRequest,
   FourierTermsRequest,
@@ -73,6 +74,10 @@ export class ApiService {
 
   getMe(): Observable<{ user: User }> {
     return this.http.get<{ user: User }>(`${this.base}/auth/me`);
+  }
+
+  getQuota(): Observable<QuotaResponse> {
+    return this.http.get<QuotaResponse>(`${this.base}/auth/quota`);
   }
 
   verifyEmail(token: string): Observable<{ message: string }> {

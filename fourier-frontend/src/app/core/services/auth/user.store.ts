@@ -1,5 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
-import { User } from '../../../domain';
+import { User, QuotaResponse } from '../../../domain';
 
 /**
  * Estado global reactivo del usuario autenticado.
@@ -9,10 +9,12 @@ import { User } from '../../../domain';
 export class UserStore {
   private readonly _user = signal<User | null>(null);
   private readonly _loading = signal(false);
+  private readonly _quota = signal<QuotaResponse | null>(null);
 
   // Señales públicas de solo lectura
   readonly user = this._user.asReadonly();
   readonly loading = this._loading.asReadonly();
+  readonly quota = this._quota.asReadonly();
 
   // Señales derivadas
   readonly isAuthenticated = computed(() => this._user() !== null);
@@ -34,5 +36,9 @@ export class UserStore {
 
   setLoading(value: boolean): void {
     this._loading.set(value);
+  }
+
+  setQuota(quota: QuotaResponse): void {
+    this._quota.set(quota);
   }
 }

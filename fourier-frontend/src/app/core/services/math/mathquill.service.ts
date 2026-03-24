@@ -67,7 +67,8 @@ export class MathquillService {
       spaceBehavesLikeTab: true,
       autoCommands: 'pi theta sqrt sum int',
       autoOperatorNames:
-        'sin cos tan asin acos atan sinh cosh tanh log ln exp abs ' +
+        'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
+        'sinh cosh tanh asinh acosh atanh log ln exp abs ' +
         'sen tg senh ctg arcsin arccos arctan',
       charsThatBreakOutOfSupSub: '+-*/=<>',
     };

@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { authService } from "../../infrastructure/container";
-import { authenticate } from "../middlewares/authenticate";
+import { authService, userRepository } from "../../infrastructure/container";
+import { authenticate, optionalAuth } from "../middlewares/authenticate";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
+import { config } from "../../config/env";
 
 export const authRouter = Router();
 
@@ -380,6 +381,48 @@ authRouter.post(
       }
       await authService.resendVerification(email, req.ip);
       res.json({ message: "Verification email sent if account exists" });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/auth/quota:
+ *   get:
+ *     summary: Obtener cuota de cálculos semanal del usuario actual
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cuota de cálculos
+ */
+authRouter.get(
+  "/quota",
+  optionalAuth,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      let used: number;
+      let limit: number;
+
+      if (req.user) {
+        const tier = req.user.tier;
+        limit =
+          tier === "premium"
+            ? config.calcLimits.premium
+            : config.calcLimits.free;
+        used = await userRepository.getWeeklyCount(req.user.id);
+      } else {
+        limit = config.calcLimits.anonymous;
+        used = await userRepository.getAnonymousWeeklyCount(
+          req.ip ?? "0.0.0.0",
+        );
+      }
+
+      const remaining = limit === -1 ? null : Math.max(0, limit - used);
+      res.json({ used, limit, remaining });
     } catch (err) {
       next(err);
     }

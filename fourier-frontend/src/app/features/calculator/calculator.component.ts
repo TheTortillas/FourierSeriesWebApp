@@ -28,6 +28,8 @@ export class CalculatorComponent {
     const encoded = this.route.snapshot.queryParamMap.get('s');
     if (encoded) {
       this.needsCalculate = this.store.restoreState(encoded);
+    } else {
+      this.store.resetForm();
     }
 
     // ── 2. Auto-calculate once the browser has fully rendered ─────────────

@@ -43,21 +43,38 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   // ── Math keyboard button groups ────────────────────────────────────────────
 
   readonly keyGroups: KeyBtn[][] = [
+    // Basic trig
     [
       { label: 'sin',  typedText: 'sin('  },
       { label: 'cos',  typedText: 'cos('  },
       { label: 'tan',  typedText: 'tan('  },
+      { label: 'cot',  typedText: 'cot('  },
+      { label: 'sec',  typedText: 'sec('  },
+      { label: 'csc',  typedText: 'csc('  },
+    ],
+    // Inverse trig
+    [
       { label: 'asin', typedText: 'asin(' },
       { label: 'acos', typedText: 'acos(' },
       { label: 'atan', typedText: 'atan(' },
-      { label: 'sinh', typedText: 'sinh(' },
-      { label: 'cosh', typedText: 'cosh(' },
-      { label: 'tanh', typedText: 'tanh(' },
+      { label: 'acot', typedText: 'acot(' },
+      { label: 'asec', typedText: 'asec(' },
+      { label: 'acsc', typedText: 'acsc(' },
+    ],
+    // Hyperbolic + inverse hyperbolic
+    [
+      { label: 'sinh',  typedText: 'sinh('  },
+      { label: 'cosh',  typedText: 'cosh('  },
+      { label: 'tanh',  typedText: 'tanh('  },
+      { label: 'asinh', typedText: 'asinh(' },
+      { label: 'acosh', typedText: 'acosh(' },
+      { label: 'atanh', typedText: 'atanh(' },
+    ],
+    // Misc
+    [
       { label: 'log',  typedText: 'log('  },
       { label: 'ln',   typedText: 'ln('   },
       { label: 'exp',  typedText: 'exp('  },
-    ],
-    [
       { label: '√·',  cmd:        '\\sqrt'     },
       { label: '|·|', typedText:  'abs('       },
       { label: 'π',   typedText:  'pi'         },

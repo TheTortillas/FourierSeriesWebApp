@@ -48,3 +48,11 @@ export interface ResetPasswordRequest {
 export interface ResendVerificationRequest {
   email: string;
 }
+
+export interface QuotaResponse {
+  used: number;
+  /** -1 = unlimited (premium) */
+  limit: number;
+  /** null = unlimited */
+  remaining: number | null;
+}
