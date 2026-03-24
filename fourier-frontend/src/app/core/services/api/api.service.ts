@@ -9,7 +9,6 @@ import {
   RegisterRequest,
   LoginRequest,
   GoogleLoginRequest,
-  RefreshTokenRequest,
   User,
   QuotaResponse,
   // Fourier
@@ -53,23 +52,23 @@ export class ApiService {
   // ─── Auth ────────────────────────────────────────────────────────────────
 
   register(body: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.base}/auth/register`, body);
+    return this.http.post<AuthResponse>(`${this.base}/auth/register`, body, { withCredentials: true });
   }
 
   login(body: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.base}/auth/login`, body);
+    return this.http.post<AuthResponse>(`${this.base}/auth/login`, body, { withCredentials: true });
   }
 
   loginWithGoogle(body: GoogleLoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.base}/auth/google`, body);
+    return this.http.post<AuthResponse>(`${this.base}/auth/google`, body, { withCredentials: true });
   }
 
-  refreshToken(body: RefreshTokenRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.base}/auth/refresh`, body);
+  refreshToken(): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.base}/auth/refresh`, {}, { withCredentials: true });
   }
 
-  logout(refreshToken: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.base}/auth/logout`, { refreshToken });
+  logout(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/auth/logout`, {}, { withCredentials: true });
   }
 
   getMe(): Observable<{ user: User }> {
