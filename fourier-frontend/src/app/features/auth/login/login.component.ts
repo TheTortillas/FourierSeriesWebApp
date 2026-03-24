@@ -1,0 +1,44 @@
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { NavComponent } from '../../../shared/components/nav/nav.component';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  imports: [ReactiveFormsModule, RouterLink, NavComponent],
+})
+export class LoginComponent {
+  private readonly fb     = inject(FormBuilder);
+  private readonly auth   = inject(AuthService);
+  private readonly router = inject(Router);
+
+  readonly form = this.fb.nonNullable.group({
+    email:    ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required],
+  });
+
+  readonly loading  = signal(false);
+  readonly apiError = signal<string | null>(null);
+  readonly showPass = signal(false);
+
+  get email()    { return this.form.controls.email; }
+  get password() { return this.form.controls.password; }
+
+  onSubmit(): void {
+    if (this.form.invalid || this.loading()) return;
+
+    this.apiError.set(null);
+    this.loading.set(true);
+
+    this.auth.login(this.form.getRawValue()).subscribe({
+      next: () => this.router.navigate(['/home']),
+      error: (err) => {
+        this.apiError.set(err?.error?.error ?? 'Error al iniciar sesión');
+        this.loading.set(false);
+      },
+    });
+  }
+}
