@@ -100,6 +100,13 @@ export class ApiService {
     return this.http.post<{ message: string }>(`${this.base}/auth/resend-verification`, { email });
   }
 
+  changePassword(currentPassword: string, newPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/auth/change-password`, {
+      currentPassword,
+      newPassword,
+    });
+  }
+
   // ─── Fourier Series ──────────────────────────────────────────────────────
 
   calculateTrigonometric(body: FourierSeriesRequest): Observable<TrigonometricResponse> {

@@ -41,8 +41,11 @@
 
     @if (userStore.isAuthenticated()) {
       <!-- Authenticated: display name + logout -->
-      <span class="hidden sm:flex items-center gap-1.5 px-2 py-1.5
-                   text-xs font-mono text-muted dark:text-dark-muted select-none">
+      <a routerLink="/profile"
+         class="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded
+                text-xs font-mono text-muted dark:text-dark-muted
+                hover:text-ink dark:hover:text-dark-ink
+                hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
              class="w-3.5 h-3.5 shrink-0">
@@ -50,7 +53,7 @@
           <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
         </svg>
         {{ userStore.displayName() }}
-      </span>
+      </a>
 
       <button
         type="button"
