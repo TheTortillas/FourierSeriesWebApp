@@ -29,11 +29,13 @@ export class AuthService {
   private saveTokens(response: AuthResponse): void {
     this._accessToken.set(response.accessToken);
     this.store.setUser(response.user);
+    this.store.refreshQuota();
   }
 
   private clearTokens(): void {
     this._accessToken.set(null);
     this.store.clearUser();
+    this.store.refreshQuota(); // Obtiene cuota anónima tras cerrar sesión
   }
 
   // ─── Auth operations ─────────────────────────────────────────────────────
@@ -62,6 +64,15 @@ export class AuthService {
     this.router.navigate(['/home']);
   }
 
+  /** Recarga los datos del usuario desde la DB y actualiza el store. */
+  refreshUser(): void {
+    if (!this.store.isAuthenticated()) return;
+    this.api.getMe().subscribe({
+      next: (res) => this.store.setUser(res.user),
+      error: () => {},
+    });
+  }
+
   /**
    * Intenta un silent refresh al iniciar la app.
    * Si hay una cookie httpOnly válida, recupera el access token en memoria.
@@ -70,9 +81,13 @@ export class AuthService {
   initFromStorage(): void {
     this.store.setLoading(true);
     this.refresh().subscribe({
-      next: () => { this.store.setLoading(false); this.store.setInitialized(); },
+      next: () => {
+        this.store.setLoading(false);
+        this.store.setInitialized();
+        // refreshQuota ya fue llamado por saveTokens vía refresh()
+      },
       error: () => {
-        this.clearTokens();
+        this.clearTokens();          // llama refreshQuota → cuota anónima
         this.store.setLoading(false);
         this.store.setInitialized();
       },

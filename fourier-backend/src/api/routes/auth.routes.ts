@@ -315,8 +315,13 @@ authRouter.post(
 authRouter.get(
   "/me",
   authenticate,
-  (req: AuthenticatedRequest, res: Response) => {
-    res.json({ user: req.user });
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const user = await userRepository.findById(req.user!.id);
+      if (!user) { res.status(401).json({ error: "User not found" }); return; }
+      const { passwordHash: _, ...safeUser } = user;
+      res.json({ user: safeUser });
+    } catch (err) { next(err); }
   },
 );
 

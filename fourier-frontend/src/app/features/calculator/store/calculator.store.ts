@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../../../core/services/api/api.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
+import { UserStore } from '../../../core/services/auth/user.store';
 import {
   TrigonometricResponse,
   TrigonometricTermsResponse,
@@ -66,8 +67,9 @@ function segmentError(s: SegmentDraft): string | null {
 
 @Injectable({ providedIn: 'root' })
 export class CalculatorStore {
-  private readonly api = inject(ApiService);
-  private readonly math = inject(MathUtilsService);
+  private readonly api       = inject(ApiService);
+  private readonly math      = inject(MathUtilsService);
+  private readonly userStore = inject(UserStore);
 
   // ── Form state ─────────────────────────────────────────────────────────────
   readonly segments = signal<SegmentDraft[]>([defaultSegment()]);
@@ -203,6 +205,7 @@ export class CalculatorStore {
             next: (data) => {
               this.result.set({ type: 'trigonometric', data, terms });
               this.loading.set(false);
+              this.userStore.refreshQuota();
             },
             error: (e) => this.handleError(e),
           });
@@ -216,6 +219,7 @@ export class CalculatorStore {
             next: (data) => {
               this.result.set({ type: 'complex', data, terms });
               this.loading.set(false);
+              this.userStore.refreshQuota();
             },
             error: (e) => this.handleError(e),
           });
@@ -229,6 +233,7 @@ export class CalculatorStore {
             next: (data) => {
               this.result.set({ type: 'halfRange', data, terms });
               this.loading.set(false);
+              this.userStore.refreshQuota();
             },
             error: (e) => this.handleError(e),
           });

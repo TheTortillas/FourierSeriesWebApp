@@ -1,5 +1,6 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { User, QuotaResponse } from '../../../domain';
+import { ApiService } from '../api/api.service';
 
 /**
  * Estado global reactivo del usuario autenticado.
@@ -7,6 +8,7 @@ import { User, QuotaResponse } from '../../../domain';
  */
 @Injectable({ providedIn: 'root' })
 export class UserStore {
+  private readonly api          = inject(ApiService);
   private readonly _user        = signal<User | null>(null);
   private readonly _loading     = signal(false);
   private readonly _quota       = signal<QuotaResponse | null>(null);
@@ -43,6 +45,13 @@ export class UserStore {
 
   setQuota(quota: QuotaResponse): void {
     this._quota.set(quota);
+  }
+
+  refreshQuota(): void {
+    this.api.getQuota().subscribe({
+      next: (q) => this._quota.set(q),
+      error: () => {},
+    });
   }
 
   setInitialized(): void {
