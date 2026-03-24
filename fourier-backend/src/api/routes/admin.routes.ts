@@ -63,7 +63,7 @@ adminRouter.get(
       ]);
 
       const safeUsers = users.map(({ passwordHash: _, ...u }) => u);
-      res.json({ users: safeUsers, total, limit, offset });
+      res.json({ entries: safeUsers, total, limit, offset });
     } catch (err) {
       next(err);
     }

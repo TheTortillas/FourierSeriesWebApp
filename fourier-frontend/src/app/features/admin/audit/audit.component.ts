@@ -80,8 +80,11 @@ export class AuditComponent implements OnInit {
     return 'bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border';
   }
 
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleString('es', {
+  formatDate(value: string | Date | undefined): string {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString('es', {
       day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit',
     });
   }

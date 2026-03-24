@@ -5,6 +5,20 @@ import type {
   AuditAction,
 } from "../../domain/interfaces/repositories/IAuditRepository";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRow(row: any): AuditLogInput {
+  return {
+    id:         row.id,
+    userId:     row.user_id,
+    action:     row.action,
+    targetType: row.target_type,
+    targetId:   row.target_id,
+    metadata:   row.metadata,
+    ipAddress:  row.ip_address,
+    createdAt:  row.created_at,
+  };
+}
+
 export class AuditRepository implements IAuditRepository {
   async log(input: AuditLogInput): Promise<void> {
     await db.query(
@@ -30,7 +44,7 @@ export class AuditRepository implements IAuditRepository {
        LIMIT $2`,
       [userId, limit],
     );
-    return result.rows;
+    return result.rows.map(mapRow);
   }
 
   async findAll(limit = 100, offset = 0): Promise<AuditLogInput[]> {
@@ -40,7 +54,7 @@ export class AuditRepository implements IAuditRepository {
        LIMIT $1 OFFSET $2`,
       [limit, offset],
     );
-    return result.rows;
+    return result.rows.map(mapRow);
   }
 
   async clearByAction(

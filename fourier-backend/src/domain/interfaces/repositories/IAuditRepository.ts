@@ -17,12 +17,14 @@ export type AuditAction =
   | "audit_log_cleared";
 
 export interface AuditLogInput {
+  id?: string;
   userId?: string;
   action: AuditAction;
   targetType?: string;
   targetId?: string;
   metadata?: Record<string, unknown>;
   ipAddress?: string;
+  createdAt?: Date;
 }
 
 export interface IAuditRepository {

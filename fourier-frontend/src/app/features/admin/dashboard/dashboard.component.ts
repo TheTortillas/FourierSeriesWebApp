@@ -58,10 +58,11 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleString('es', {
-      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-    });
+  formatDate(value: string | Date | undefined): string {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString('es', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
 
   auditBadgeClass(action: string): string {
