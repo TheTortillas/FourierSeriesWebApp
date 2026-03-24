@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 
 import { ApiService } from '../../core/services/api/api.service';
@@ -14,7 +15,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
-  imports: [ReactiveFormsModule, NavComponent],
+  imports: [ReactiveFormsModule, NavComponent, RouterLink],
 })
 export class ProfileComponent {
   readonly store = inject(UserStore);
