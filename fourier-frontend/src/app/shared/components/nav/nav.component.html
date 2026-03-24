@@ -22,6 +22,22 @@
   <!-- Actions -->
   <div class="flex items-center gap-0.5">
 
+    <!-- Nav links -->
+    <a routerLink="/calculator" routerLinkActive="text-accent"
+       class="hidden sm:flex px-2 py-1.5 rounded text-xs font-mono
+              text-muted dark:text-dark-muted
+              hover:text-ink dark:hover:text-dark-ink
+              hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+      Series
+    </a>
+    <a routerLink="/transforms" routerLinkActive="text-accent"
+       class="hidden sm:flex px-2 py-1.5 rounded text-xs font-mono
+              text-muted dark:text-dark-muted
+              hover:text-ink dark:hover:text-dark-ink
+              hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+      Transformadas
+    </a>
+
     <!-- Remaining calculations badge -->
     @if (userStore.quota()?.remaining !== null && userStore.quota()?.remaining !== undefined) {
       <span

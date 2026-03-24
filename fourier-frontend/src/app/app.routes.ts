@@ -22,6 +22,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'transforms',
+    loadChildren: () =>
+      import('./features/transforms/transforms.routes').then(
+        (m) => m.transformRoutes,
+      ),
+  },
+  {
     path: 'results',
     loadChildren: () =>
       import('./features/results/results.routes').then((m) => m.resultsRoutes),

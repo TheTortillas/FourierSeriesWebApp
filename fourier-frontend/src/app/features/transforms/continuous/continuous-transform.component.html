@@ -1,0 +1,308 @@
+<app-nav />
+
+<main class="max-w-3xl mx-auto px-4 py-8 flex flex-col gap-6">
+
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
+  <div class="flex flex-col gap-1">
+    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">
+      Transformada de Fourier
+    </h1>
+    <p class="text-sm font-mono text-muted dark:text-dark-muted">
+      Calcula la transformada continua o inversa de una función definida por tramos.
+    </p>
+  </div>
+
+  <!-- ── Mode toggle ──────────────────────────────────────────────────────── -->
+  <div class="inline-flex rounded-lg border border-border dark:border-dark-border
+              bg-paper2 dark:bg-dark-surface p-0.5 self-start">
+    <button type="button"
+            (click)="setMode('ft')"
+            [class]="mode() === 'ft'
+              ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
+              : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
+      Directa
+    </button>
+    <button type="button"
+            (click)="setMode('ift')"
+            [class]="mode() === 'ift'
+              ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
+              : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
+      Inversa
+    </button>
+  </div>
+
+  <!-- ── Variable pair selector ───────────────────────────────────────────── -->
+  <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                  rounded-xl p-4 flex flex-col gap-3">
+
+    <h2 class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+      Variables
+    </h2>
+
+    <div class="flex flex-wrap gap-2">
+      @for (pair of varPairs; track pair.id) {
+        @if (pair.id !== 'custom') {
+          <button type="button"
+                  (click)="varPairId.set(pair.id)"
+                  [class]="varPairId() === pair.id
+                    ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                    : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+            @if (mode() === 'ft') {
+              {{ pair.timeDisplay }} → {{ pair.freqDisplay }}
+            } @else {
+              {{ pair.freqDisplay }} → {{ pair.timeDisplay }}
+            }
+          </button>
+        }
+      }
+      <button type="button"
+              (click)="varPairId.set('custom')"
+              [class]="varPairId() === 'custom'
+                ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+        Custom
+      </button>
+    </div>
+
+    @if (varPairId() === 'custom') {
+      <div class="flex items-center gap-3 pt-1">
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+            Var. {{ mode() === 'ft' ? 'temporal' : 'frecuencia' }}
+          </label>
+          <input type="text" [ngModel]="customTime()" (ngModelChange)="customTime.set($event)"
+                 placeholder="t"
+                 class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border
+                        bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink
+                        focus:outline-none focus:border-accent"/>
+        </div>
+        <span class="text-muted font-mono mt-4">→</span>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+            Var. {{ mode() === 'ft' ? 'frecuencia' : 'temporal' }}
+          </label>
+          <input type="text" [ngModel]="customFreq()" (ngModelChange)="customFreq.set($event)"
+                 placeholder="w"
+                 class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border
+                        bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink
+                        focus:outline-none focus:border-accent"/>
+        </div>
+        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-4 ml-1">
+          Usa nombres Maxima: <code class="text-accent">nu</code>,
+          <code class="text-accent">xi</code>, <code class="text-accent">omega</code>…
+        </p>
+      </div>
+    }
+
+    <!-- Active variable summary -->
+    <p class="text-[11px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border pt-2">
+      @if (mode() === 'ft') {
+        Calculará
+        <span class="text-ink dark:text-dark-ink">
+          F({{ activePair().freqDisplay || activePair().freq }})
+          = ∫ f({{ activePair().timeDisplay || activePair().time }}) e<sup>−i{{ activePair().freqDisplay || activePair().freq }}{{ activePair().timeDisplay || activePair().time }}</sup>
+          d{{ activePair().timeDisplay || activePair().time }}
+        </span>
+      } @else {
+        Calculará
+        <span class="text-ink dark:text-dark-ink">
+          f({{ activePair().timeDisplay || activePair().time }})
+          = (1/2π) ∫ F({{ activePair().freqDisplay || activePair().freq }}) e<sup>i{{ activePair().freqDisplay || activePair().freq }}{{ activePair().timeDisplay || activePair().time }}</sup>
+          d{{ activePair().freqDisplay || activePair().freq }}
+        </span>
+      }
+    </p>
+  </section>
+
+  <!-- ── Segments ─────────────────────────────────────────────────────────── -->
+  <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                  rounded-xl p-4 flex flex-col gap-3">
+
+    <h2 class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+      {{ inputFnLabel() }}
+    </h2>
+
+    @for (seg of segments(); track seg.id; let i = $index) {
+      <app-transform-segment
+        [segment]="seg"
+        [index]="i"
+        [isOnly]="segments().length === 1"
+        [intVar]="intVar()"
+        (updated)="updateSegment($event.id, $event.changes)"
+        (removed)="removeSegment($event)" />
+    }
+
+    <button type="button" (click)="addSegment()"
+            class="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono
+                   border border-dashed border-border dark:border-dark-border
+                   text-muted dark:text-dark-muted
+                   hover:border-accent hover:text-accent transition-colors cursor-pointer">
+      <span class="text-base leading-none">+</span>
+      Agregar tramo
+    </button>
+  </section>
+
+  <!-- ── Calculate button ─────────────────────────────────────────────────── -->
+  <button type="button"
+          (click)="calculate()"
+          [disabled]="!canCalculate() || loading()"
+          class="self-start px-6 py-2.5 rounded-xl text-sm font-mono font-medium
+                 bg-accent text-white border border-accent
+                 hover:bg-accent/90 transition-colors
+                 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+    @if (loading()) {
+      <span class="flex items-center gap-2">
+        <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+             viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        Calculando…
+      </span>
+    } @else {
+      Calcular
+    }
+  </button>
+
+  <!-- ── Error ────────────────────────────────────────────────────────────── -->
+  @if (errorMsg()) {
+    <div class="rounded-xl border border-red-200 dark:border-red-800
+                bg-red-50 dark:bg-red-950/20 px-4 py-3">
+      <p class="text-sm font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- ── FT Results ──────────────────────────────────────────────────────── -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  @if (ftResult(); as res) {
+    <section class="flex flex-col gap-4">
+
+      <div class="flex items-center gap-3">
+        <h2 class="font-display text-lg text-ink dark:text-dark-ink">Resultado</h2>
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">
+          {{ res.executionTimeMs }} ms
+        </span>
+      </div>
+
+      @if (!res.exists) {
+        <div class="rounded-xl border border-amber-200 dark:border-amber-800
+                    bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
+          <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
+            La transformada no existe para esta función (integral divergente).
+          </p>
+        </div>
+
+      } @else {
+
+        <!-- Full transform F(ω) -->
+        @if (res.F?.tex) {
+          <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                      rounded-xl p-4 flex flex-col gap-2">
+            <span class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+              Transformada completa
+            </span>
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="text-sm font-mono text-muted dark:text-dark-muted shrink-0">
+                F({{ resultVarDisplay() }}) =
+              </span>
+              <span [mathjax]="display(res.F!.tex)"
+                    class="text-ink dark:text-dark-ink overflow-x-auto max-w-full"></span>
+            </div>
+          </div>
+        }
+
+        <!-- Real and imaginary parts -->
+        @if (res.realPart?.tex || res.imagPart?.tex) {
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+            @if (res.realPart?.tex) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                          rounded-xl p-4 flex flex-col gap-2">
+                <span class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                  Parte real
+                </span>
+                <div class="flex items-baseline gap-2 flex-wrap">
+                  <span class="text-sm font-mono text-muted dark:text-dark-muted shrink-0 text-blue-600 dark:text-blue-400">
+                    Re&#x7B;F&#x7D; =
+                  </span>
+                  <span [mathjax]="display(res.realPart!.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto max-w-full"></span>
+                </div>
+              </div>
+            }
+
+            @if (res.imagPart?.tex) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                          rounded-xl p-4 flex flex-col gap-2">
+                <span class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                  Parte imaginaria
+                </span>
+                <div class="flex items-baseline gap-2 flex-wrap">
+                  <span class="text-sm font-mono text-amber-600 dark:text-amber-400 shrink-0">
+                    Im&#x7B;F&#x7D; =
+                  </span>
+                  <span [mathjax]="display(res.imagPart!.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto max-w-full"></span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+      }
+    </section>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- ── IFT Results ─────────────────────────────────────────────────────── -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  @if (iftResult(); as res) {
+    <section class="flex flex-col gap-4">
+
+      <div class="flex items-center gap-3">
+        <h2 class="font-display text-lg text-ink dark:text-dark-ink">Resultado</h2>
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">
+          {{ res.executionTimeMs }} ms
+        </span>
+      </div>
+
+      @if (!res.exists) {
+        <div class="rounded-xl border border-amber-200 dark:border-amber-800
+                    bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
+          <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
+            La transformada inversa no existe para esta función.
+          </p>
+        </div>
+
+      } @else if (res.results && res.results.length > 0) {
+
+        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                    rounded-xl p-4 flex flex-col gap-4">
+          <span class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+            f({{ resultVarDisplay() }})
+          </span>
+
+          @for (r of res.results; track r.condition) {
+            <div class="flex flex-col gap-1 border-t border-border dark:border-dark-border pt-3 first:border-t-0 first:pt-0">
+              @if (r.condition && r.condition !== 'all') {
+                <span class="text-xs font-mono text-accent">
+                  {{ r.condition }}
+                </span>
+              }
+              <span [mathjax]="display(r.f.tex)"
+                    class="text-ink dark:text-dark-ink overflow-x-auto max-w-full"></span>
+            </div>
+          }
+        </div>
+
+      } @else {
+        <p class="text-sm font-mono text-muted dark:text-dark-muted">
+          No se encontraron resultados.
+        </p>
+      }
+    </section>
+  }
+
+</main>
