@@ -8,8 +8,10 @@ import {
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
+import { GoogleSignInComponent } from '../../../shared/components/google-sign-in/google-sign-in.component';
 
 function passwordsMatch(ctrl: AbstractControl): ValidationErrors | null {
   const pw  = ctrl.get('password')?.value;
@@ -20,11 +22,12 @@ function passwordsMatch(ctrl: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
-  imports: [ReactiveFormsModule, RouterLink, NavComponent],
+  imports: [ReactiveFormsModule, RouterLink, NavComponent, GoogleSignInComponent],
 })
 export class RegisterComponent {
-  private readonly fb   = inject(FormBuilder);
-  private readonly auth = inject(AuthService);
+  private readonly fb     = inject(FormBuilder);
+  private readonly auth   = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly form = this.fb.nonNullable.group(
     {
@@ -48,6 +51,18 @@ export class RegisterComponent {
   get password()        { return this.form.controls.password; }
   get confirmPassword() { return this.form.controls.confirmPassword; }
   get mismatch()        { return this.form.hasError('passwordsMismatch') && this.confirmPassword.touched; }
+
+  onGoogleCredential(idToken: string): void {
+    this.apiError.set(null);
+    this.loading.set(true);
+    this.auth.loginWithGoogle({ idToken }).subscribe({
+      next: () => this.router.navigate(['/home']),
+      error: (err) => {
+        this.apiError.set(err?.error?.error ?? 'Error al continuar con Google');
+        this.loading.set(false);
+      },
+    });
+  }
 
   onSubmit(): void {
     if (this.form.invalid || this.loading()) return;

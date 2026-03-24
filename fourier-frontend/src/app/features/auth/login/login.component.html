@@ -36,6 +36,16 @@
           </div>
         }
 
+        <!-- Google Sign-In -->
+        <app-google-sign-in (credential)="onGoogleCredential($event)" />
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3">
+          <div class="flex-1 h-px bg-border dark:bg-dark-border"></div>
+          <span class="text-[11px] font-mono text-muted dark:text-dark-muted">o continúa con email</span>
+          <div class="flex-1 h-px bg-border dark:bg-dark-border"></div>
+        </div>
+
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4" novalidate>
 
           <!-- Email -->

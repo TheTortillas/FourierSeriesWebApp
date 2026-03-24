@@ -4,11 +4,12 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
+import { GoogleSignInComponent } from '../../../shared/components/google-sign-in/google-sign-in.component';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  imports: [ReactiveFormsModule, RouterLink, NavComponent],
+  imports: [ReactiveFormsModule, RouterLink, NavComponent, GoogleSignInComponent],
 })
 export class LoginComponent {
   private readonly fb     = inject(FormBuilder);
@@ -26,6 +27,18 @@ export class LoginComponent {
 
   get email()    { return this.form.controls.email; }
   get password() { return this.form.controls.password; }
+
+  onGoogleCredential(idToken: string): void {
+    this.apiError.set(null);
+    this.loading.set(true);
+    this.auth.loginWithGoogle({ idToken }).subscribe({
+      next: () => this.router.navigate(['/home']),
+      error: (err) => {
+        this.apiError.set(err?.error?.error ?? 'Error al iniciar sesión con Google');
+        this.loading.set(false);
+      },
+    });
+  }
 
   onSubmit(): void {
     if (this.form.invalid || this.loading()) return;
