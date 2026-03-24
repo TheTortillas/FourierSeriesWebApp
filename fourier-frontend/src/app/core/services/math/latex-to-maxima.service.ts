@@ -48,13 +48,15 @@ export class LatexToMaximaService {
    * - Spanish operator names (sen, tg, senh, ctg) → standard LaTeX
    * - arcsin/arccos/arctan → asin/acos/atan operatorname (Maxima names)
    * - \\ln → \\log (Maxima's natural-log function is log)
+   * - \\operatorname{exp}(…) → e^{(…)}  tex2max can't handle \operatorname{exp}
+   *   but handles e^{x} perfectly, and %e^(x) is valid Maxima for exp(x).
    */
   private preProcess(latex: string): string {
-    return latex
-      .replace(/\\operatorname\{sen\}/g,  '\\sin')
-      .replace(/\\operatorname\{tg\}/g,   '\\tan')
+    let s = latex
+      .replace(/\\operatorname\{sen\}/g, '\\sin')
+      .replace(/\\operatorname\{tg\}/g, '\\tan')
       .replace(/\\operatorname\{senh\}/g, '\\sinh')
-      .replace(/\\operatorname\{ctg\}/g,  '\\cot')
+      .replace(/\\operatorname\{ctg\}/g, '\\cot')
       .replace(/\\arcsin/g, '\\operatorname{asin}')
       .replace(/\\arccos/g, '\\operatorname{acos}')
       .replace(/\\arctan/g, '\\operatorname{atan}')
@@ -63,6 +65,47 @@ export class LatexToMaximaService {
       .replace(/\\operatorname\{arctan\}/g, '\\operatorname{atan}')
       .replace(/\\operatorname\{ln\}/g, '\\log')
       .replace(/\\ln\b/g, '\\log');
+
+    // tex2max crashes on \operatorname{exp} (not in its whitelist).
+    // Convert \operatorname{exp}(arg) → e^{(arg)} with balanced-paren extraction
+    // so tex2max sees plain e^{…} and produces e^(…) → postProcess gives %e^(…).
+    s = this.substituteExp(s);
+    return s;
+  }
+
+  /**
+   * Replaces every \operatorname{exp}(…) with e^{(…)} using balanced-paren
+   * extraction so nested expressions like exp((x+1)^2) are handled correctly.
+   */
+  private substituteExp(latex: string): string {
+    const marker = '\\operatorname{exp}(';
+    let result = '';
+    let i = 0;
+    while (i < latex.length) {
+      const idx = latex.indexOf(marker, i);
+      if (idx === -1) {
+        result += latex.slice(i);
+        break;
+      }
+      result += latex.slice(i, idx) + 'e^{(';
+      i = idx + marker.length;
+      let depth = 1;
+      while (i < latex.length && depth > 0) {
+        const c = latex[i];
+        if (c === '(') depth++;
+        else if (c === ')') {
+          depth--;
+          if (depth === 0) {
+            result += ')}';
+            i++;
+            break;
+          }
+        }
+        result += c;
+        i++;
+      }
+    }
+    return result;
   }
 
   /**
@@ -83,20 +126,23 @@ export class LatexToMaximaService {
    * but using `%e` is more explicit and canonical.
    */
   private postProcess(raw: string): string {
-    return raw
-      .replace(/\bpi\b/g, '%pi')
-      .replace(/(?<![a-zA-Z0-9_%])e(?![a-zA-Z0-9_%])/g, '%e')
-      // Maxima function name normalization
-      .replace(/\barcsin\b/g,  'asin')
-      .replace(/\barccos\b/g,  'acos')
-      .replace(/\barctan\b/g,  'atan')
-      .replace(/\barccot\b/g,  'acot')
-      .replace(/\barcsec\b/g,  'asec')
-      .replace(/\barccsc\b/g,  'acsc')
-      .replace(/\bln\b/g,      'log')
-      .replace(/\bsen\b/g,     'sin')
-      .replace(/\btg\b/g,      'tan')
-      .replace(/\bsenh\b/g,    'sinh')
-      .replace(/\bctg\b/g,     'cot');
+    return (
+      raw
+        .replace(/\bpi\b/g, '%pi')
+        .replace(/(?<![a-zA-Z0-9_%])e(?![a-zA-Z0-9_%])/g, '%e')
+        // Maxima function name normalization
+        .replace(/\bexp\b/g, 'exp')
+        .replace(/\barcsin\b/g, 'asin')
+        .replace(/\barccos\b/g, 'acos')
+        .replace(/\barctan\b/g, 'atan')
+        .replace(/\barccot\b/g, 'acot')
+        .replace(/\barcsec\b/g, 'asec')
+        .replace(/\barccsc\b/g, 'acsc')
+        .replace(/\bln\b/g, 'log')
+        .replace(/\bsen\b/g, 'sin')
+        .replace(/\btg\b/g, 'tan')
+        .replace(/\bsenh\b/g, 'sinh')
+        .replace(/\bctg\b/g, 'cot')
+    );
   }
 }

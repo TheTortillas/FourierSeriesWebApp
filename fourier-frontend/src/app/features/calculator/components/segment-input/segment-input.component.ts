@@ -152,6 +152,16 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
+  onKeyDown(e: KeyboardEvent): void {
+    if (e.key === '^') {
+      const field = this.fields[this.focusedFieldIdx];
+      if (field) {
+        e.preventDefault();
+        field.typedText('^');
+      }
+    }
+  }
+
   focusField(idx: 0 | 1 | 2): void {
     this.focusedFieldIdx = idx;
     this.fields[idx]?.focus();

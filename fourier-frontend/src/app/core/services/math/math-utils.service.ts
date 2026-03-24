@@ -26,7 +26,7 @@ export class MathUtilsService {
     try {
       const js = this.maximaToJs(maxima);
       // eslint-disable-next-line no-new-func
-      const fn = new Function(variable, `"use strict"; return (${js});`) as JsFunction;
+      const fn = new Function(variable, `"use strict"; ${this._helpers} return (${js});`) as JsFunction;
       // Smoke-test: evaluate at 0 to catch obvious syntax errors
       const test = fn(0);
       if (typeof test !== 'number') return null;
@@ -83,14 +83,14 @@ export class MathUtilsService {
   // ── Translation ────────────────────────────────────────────────────────────
 
   private maximaToJs(expr: string): string {
-    return expr
+    let s = expr
       // Constants
       .replace(/%pi\b/g, 'Math.PI')
       .replace(/%e\b/g, 'Math.E')
       .replace(/\binf\b/g, 'Infinity')
       // Power operator: ^ → **
       .replace(/\^/g, '**')
-      // Functions — order matters (longer names first)
+      // Functions — order matters (longer names first to avoid partial matches)
       .replace(/\basinh\b/g, 'Math.asinh')
       .replace(/\bacosh\b/g, 'Math.acosh')
       .replace(/\batanh\b/g, 'Math.atanh')
@@ -98,12 +98,20 @@ export class MathUtilsService {
       .replace(/\bacos\b/g, 'Math.acos')
       .replace(/\batan2\b/g, 'Math.atan2')
       .replace(/\batan\b/g, 'Math.atan')
+      // Reciprocal inverses (no JS native — express via Math.asin/acos/atan)
+      .replace(/\bacot\b/g, '_acot')
+      .replace(/\basec\b/g, '_asec')
+      .replace(/\bacsc\b/g, '_acsc')
       .replace(/\bsinh\b/g, 'Math.sinh')
       .replace(/\bcosh\b/g, 'Math.cosh')
       .replace(/\btanh\b/g, 'Math.tanh')
       .replace(/\bsin\b/g, 'Math.sin')
       .replace(/\bcos\b/g, 'Math.cos')
       .replace(/\btan\b/g, 'Math.tan')
+      // Reciprocals (no JS native — express via sin/cos/tan)
+      .replace(/\bcot\b/g, '_cot')
+      .replace(/\bsec\b/g, '_sec')
+      .replace(/\bcsc\b/g, '_csc')
       .replace(/\bsqrt\b/g, 'Math.sqrt')
       .replace(/\bexp\b/g, 'Math.exp')
       .replace(/\blog\b/g, 'Math.log')   // Maxima log = natural log
@@ -113,5 +121,25 @@ export class MathUtilsService {
       .replace(/\bmax\b/g, 'Math.max')
       .replace(/\bmin\b/g, 'Math.min')
       .replace(/\bsign\b/g, 'Math.sign');
+
+    // Fix JS SyntaxError: unary minus directly before ** is ambiguous.
+    // e.g. (-x**2) → (-(x**2))
+    // Apply twice to catch patterns after the first pass.
+    for (let i = 0; i < 2; i++) {
+      s = s.replace(/\(-([\w.]+)\*\*([\w.]+)\)/g, '(-(($1)**($2)))');
+    }
+
+    return s;
   }
+
+  // ── Reciprocal / inverse-reciprocal helpers (inlined at eval time) ──────────
+
+  private readonly _helpers = `
+    function _cot(x)  { return 1 / Math.tan(x); }
+    function _sec(x)  { return 1 / Math.cos(x); }
+    function _csc(x)  { return 1 / Math.sin(x); }
+    function _acot(x) { return Math.PI / 2 - Math.atan(x); }
+    function _asec(x) { return Math.acos(1 / x); }
+    function _acsc(x) { return Math.asin(1 / x); }
+  `;
 }
