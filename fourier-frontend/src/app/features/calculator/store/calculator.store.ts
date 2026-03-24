@@ -307,6 +307,35 @@ export class CalculatorStore {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
+  /**
+   * Restores form from a raw history input record.
+   * Uses Maxima expressions directly (no LaTeX available in history).
+   */
+  restoreFromInput(input: Record<string, unknown>): void {
+    const segments = input['segments'] as Array<{ expression: string; from: string; to: string }> | undefined;
+    if (!segments?.length) return;
+
+    const validTypes: SeriesType[] = ['trigonometric', 'complex', 'halfRange'];
+    const type = input['seriesType'] as SeriesType | undefined;
+    const harmonics = input['harmonics'] as number | undefined;
+    const intVar = input['intVar'] as string | undefined;
+
+    this.segments.set(
+      segments.map((seg) => ({
+        id: nextId(),
+        expression:    seg.expression ?? '',
+        expressionTex: seg.expression ?? '',
+        from:          seg.from ?? '',
+        fromTex:       seg.from ?? '',
+        to:            seg.to ?? '',
+        toTex:         seg.to ?? '',
+      })),
+    );
+    if (type && validTypes.includes(type)) this.seriesType.set(type);
+    if (typeof harmonics === 'number') this.setNTerms(harmonics);
+    if (intVar) this.intVar.set(intVar);
+  }
+
   private handleError(e: unknown): void {
     this.loading.set(false);
     if (e instanceof HttpErrorResponse) {

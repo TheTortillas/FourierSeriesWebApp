@@ -25,8 +25,15 @@ export class CalculatorComponent {
     // ── 1. Restore state from URL BEFORE children mount ───────────────────
     // afterNextRender would be too late for MathQuill initialization, which
     // reads the store in ngAfterViewInit of each SegmentInputComponent.
+    const navState = this.router.getCurrentNavigation()?.extras.state as
+      { restoreInput?: Record<string, unknown> } | undefined;
+
     const encoded = this.route.snapshot.queryParamMap.get('s');
-    if (encoded) {
+
+    if (navState?.restoreInput) {
+      this.store.restoreFromInput(navState.restoreInput);
+      this.needsCalculate = true;
+    } else if (encoded) {
       this.needsCalculate = this.store.restoreState(encoded);
     } else {
       this.store.resetForm();
