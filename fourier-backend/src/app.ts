@@ -1,5 +1,6 @@
 import express, { Application } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./api/swagger";
 import { fourierRouter } from "./api/routes/fourier.routes";
@@ -19,11 +20,16 @@ import { requireVerified } from "./api/middlewares/requireVerified";
 import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 import { historyRouter } from "./api/routes/history.routes";
 import { adminRouter } from "./api/routes/admin.routes";
+import { config } from "./config/env";
 
 export function createApp(): Application {
   const app = express();
 
-  app.use(cors());
+  app.use(cors({
+    origin: config.cors.allowedOrigins,
+    credentials: true,
+  }));
+  app.use(cookieParser());
   app.use(express.json());
 
   app.use(generalLimiter);
@@ -37,7 +43,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-
+    // computeLimiter,
     fourierRouter,
   );
   app.use(
@@ -45,7 +51,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    computeLimiter,
+    // computeLimiter,
     simplifyRouter,
   );
   app.use(
@@ -53,7 +59,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    computeLimiter,
+    // computeLimiter,
     transformsRouter,
   );
   app.use(
@@ -62,7 +68,6 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    computeLimiter,
   );
 
   app.use("/api/auth", authRouter);

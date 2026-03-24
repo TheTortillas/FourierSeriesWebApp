@@ -63,4 +63,9 @@ export const config = {
   app: {
     url: optionalEnv("APP_URL", "http://localhost:3000"),
   },
+  cors: {
+    allowedOrigins: optionalEnv("ALLOWED_ORIGINS", "http://localhost:4200")
+      .split(",")
+      .map((o) => o.trim()),
+  },
 } as const;
