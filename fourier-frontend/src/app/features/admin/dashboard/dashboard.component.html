@@ -1,0 +1,124 @@
+<div class="p-6 flex flex-col gap-6 max-w-5xl">
+
+  <!-- Page title -->
+  <div>
+    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Dashboard</h1>
+    <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">Vista general del sistema</p>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center gap-2 text-muted dark:text-dark-muted text-sm font-mono">
+      <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
+      </svg>
+      Cargando…
+    </div>
+  } @else {
+
+    <!-- ── Stats cards ─────────────────────────────────────────────────── -->
+    @if (stats(); as s) {
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                    rounded-xl p-4 flex flex-col gap-1">
+          <span class="text-xs font-mono text-muted dark:text-dark-muted">Total usuarios</span>
+          <span class="font-display text-3xl text-ink dark:text-dark-ink">{{ s.total }}</span>
+          <a routerLink="../users" class="text-[11px] font-mono text-accent hover:underline mt-1">Ver todos →</a>
+        </div>
+
+        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                    rounded-xl p-4 flex flex-col gap-1">
+          <span class="text-xs font-mono text-muted dark:text-dark-muted">Premium</span>
+          <span class="font-display text-3xl text-amber-600 dark:text-amber-400">{{ s.premium }}</span>
+          <span class="text-[11px] font-mono text-muted dark:text-dark-muted mt-1">
+            {{ s.total > 0 ? ((s.premium / s.total) * 100).toFixed(0) : 0 }}% del total
+          </span>
+        </div>
+
+        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                    rounded-xl p-4 flex flex-col gap-1">
+          <span class="text-xs font-mono text-muted dark:text-dark-muted">Free</span>
+          <span class="font-display text-3xl text-ink dark:text-dark-ink">{{ s.free }}</span>
+          <span class="text-[11px] font-mono text-muted dark:text-dark-muted mt-1">
+            {{ s.total > 0 ? ((s.free / s.total) * 100).toFixed(0) : 0 }}% del total
+          </span>
+        </div>
+
+        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                    rounded-xl p-4 flex flex-col gap-1">
+          <span class="text-xs font-mono text-muted dark:text-dark-muted">Inactivos</span>
+          <span class="font-display text-3xl text-red-500">{{ s.inactive }}</span>
+          <a routerLink="../users" [queryParams]="{isActive: false}"
+             class="text-[11px] font-mono text-accent hover:underline mt-1">Ver →</a>
+        </div>
+
+      </div>
+    }
+
+    <!-- ── Recent activity + Recent calcs ─────────────────────────────── -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Recent audit -->
+      <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+          <h2 class="font-mono text-sm text-ink dark:text-dark-ink">Actividad reciente</h2>
+          <a routerLink="../audit" class="text-[11px] font-mono text-accent hover:underline">Ver todo →</a>
+        </div>
+        <div class="divide-y divide-border dark:divide-dark-border">
+          @for (entry of recentAudit(); track entry.id) {
+            <div class="px-4 py-2.5 flex items-start gap-3">
+              <span [class]="'shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded border ' + auditBadgeClass(entry.action)">
+                {{ entry.action }}
+              </span>
+              <div class="flex-1 min-w-0">
+                <p class="text-[11px] font-mono text-muted dark:text-dark-muted truncate">
+                  {{ entry.userId ? entry.userId.slice(0, 8) + '…' : 'anónimo' }}
+                </p>
+                <p class="text-[10px] font-mono text-muted/60 dark:text-dark-muted/60">
+                  {{ formatDate(entry.createdAt) }}
+                </p>
+              </div>
+            </div>
+          } @empty {
+            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">Sin actividad</p>
+          }
+        </div>
+      </div>
+
+      <!-- Recent calculations -->
+      <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+          <h2 class="font-mono text-sm text-ink dark:text-dark-ink">Cálculos recientes</h2>
+          <a routerLink="../history" class="text-[11px] font-mono text-accent hover:underline">Ver todo →</a>
+        </div>
+        <div class="divide-y divide-border dark:divide-dark-border">
+          @for (entry of recentCalcs(); track entry.id) {
+            <div class="px-4 py-2.5 flex items-center gap-3">
+              <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded border
+                           bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400
+                           border-blue-200 dark:border-blue-800">
+                {{ calcLabel(entry.type) }}
+              </span>
+              <div class="flex-1 min-w-0">
+                <p class="text-[11px] font-mono text-muted dark:text-dark-muted truncate">
+                  {{ entry.userId ? entry.userId.slice(0, 8) + '…' : 'anónimo' }}
+                </p>
+                <p class="text-[10px] font-mono text-muted/60 dark:text-dark-muted/60">
+                  {{ formatDate(entry.createdAt) }}
+                  @if (entry.executionMs) {
+                    · {{ entry.executionMs }}ms
+                  }
+                </p>
+              </div>
+            </div>
+          } @empty {
+            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">Sin cálculos</p>
+          }
+        </div>
+      </div>
+
+    </div>
+  }
+
+</div>
