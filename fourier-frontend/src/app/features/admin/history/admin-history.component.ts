@@ -68,6 +68,59 @@ export class AdminHistoryComponent implements OnInit {
     this.applyFilters();
   }
 
+  /** Expaned row IDs for showing full input JSON */
+  readonly expandedIds = signal<Set<string>>(new Set());
+
+  toggleExpand(id: string): void {
+    this.expandedIds.update((s) => {
+      const next = new Set(s);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  isExpanded(id: string): boolean {
+    return this.expandedIds().has(id);
+  }
+
+  /**
+   * Returns a short human-readable preview of what was calculated.
+   * - Segment-based (fourier series): shows first segment expression + period info
+   * - Transform: shows the expression
+   * - DFT: shows number of points
+   */
+  inputPreview(entry: HistoryEntry): string {
+    const inp = entry.input;
+    if (!inp) return '—';
+
+    // Segment-based series: { segments: [{expression, from, to}], harmonics?, variable? }
+    const segments = inp['segments'] as Array<{ expression?: string; from?: string; to?: string }> | undefined;
+    if (segments?.length) {
+      const first = segments[0];
+      const expr  = first.expression ?? '?';
+      const range = (first.from !== undefined && first.to !== undefined)
+        ? ` [${first.from}, ${first.to}]`
+        : '';
+      const more  = segments.length > 1 ? ` +${segments.length - 1} tramo${segments.length > 2 ? 's' : ''}` : '';
+      const n     = inp['harmonics'] !== undefined ? `, n=${inp['harmonics']}` : '';
+      return `${expr}${range}${more}${n}`;
+    }
+
+    // Transform: { expression: string }
+    const expr = inp['expression'] as string | undefined;
+    if (expr) return expr;
+
+    // DFT: { points: [...] }
+    const points = inp['points'] as unknown[] | undefined;
+    if (points) return `${points.length} puntos`;
+
+    return JSON.stringify(inp).slice(0, 60);
+  }
+
+  inputJson(entry: HistoryEntry): string {
+    return JSON.stringify(entry.input, null, 2);
+  }
+
   formatDate(iso: string): string {
     return new Date(iso).toLocaleString('es', {
       day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',

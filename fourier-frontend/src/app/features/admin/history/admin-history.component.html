@@ -70,16 +70,31 @@
           <thead>
             <tr class="border-b border-border dark:border-dark-border
                        bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted text-left">
+              <th class="px-4 py-2.5 font-medium w-6"></th>
               <th class="px-4 py-2.5 font-medium">Fecha</th>
               <th class="px-4 py-2.5 font-medium">Tipo</th>
+              <th class="px-4 py-2.5 font-medium">Entrada</th>
               <th class="px-4 py-2.5 font-medium">Usuario</th>
-              <th class="px-4 py-2.5 font-medium">Duración</th>
-              <th class="px-4 py-2.5 font-medium">Favorito</th>
+              <th class="px-4 py-2.5 font-medium">ms</th>
+              <th class="px-4 py-2.5 font-medium">★</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border dark:divide-dark-border">
             @for (entry of entries(); track entry.id) {
-              <tr class="hover:bg-paper dark:hover:bg-dark-bg transition-colors">
+              <!-- Main row -->
+              <tr class="hover:bg-paper dark:hover:bg-dark-bg transition-colors cursor-pointer"
+                  (click)="toggleExpand(entry.id)">
+
+                <!-- Expand toggle -->
+                <td class="pl-3 py-2.5 text-muted dark:text-dark-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+                       class="w-3 h-3 transition-transform"
+                       [class.rotate-90]="isExpanded(entry.id)">
+                    <path fill-rule="evenodd"
+                          d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z"
+                          clip-rule="evenodd"/>
+                  </svg>
+                </td>
 
                 <td class="px-4 py-2.5 text-muted dark:text-dark-muted whitespace-nowrap">
                   {{ formatDate(entry.createdAt) }}
@@ -91,9 +106,17 @@
                   </span>
                 </td>
 
+                <!-- Input preview -->
+                <td class="px-4 py-2.5 max-w-[260px]">
+                  <span class="text-ink dark:text-dark-ink truncate block"
+                        [title]="inputPreview(entry)">
+                    {{ inputPreview(entry) }}
+                  </span>
+                </td>
+
                 <td class="px-4 py-2.5">
                   @if (entry.userId) {
-                    <button type="button" (click)="filterByUser(entry.userId)"
+                    <button type="button" (click)="filterByUser(entry.userId); $event.stopPropagation()"
                             class="text-accent hover:underline cursor-pointer"
                             [title]="entry.userId">
                       {{ entry.userId.slice(0, 12) }}…
@@ -104,28 +127,40 @@
                 </td>
 
                 <td class="px-4 py-2.5 text-muted dark:text-dark-muted">
-                  @if (entry.executionMs) {
-                    {{ entry.executionMs }}ms
-                  } @else {
-                    —
-                  }
+                  {{ entry.executionMs || '—' }}
                 </td>
 
                 <td class="px-4 py-2.5">
                   @if (entry.isFavorite) {
-                    <span class="text-amber-500" title="{{ entry.name ?? 'favorito' }}">★</span>
-                    @if (entry.name) {
-                      <span class="text-muted dark:text-dark-muted ml-1">{{ entry.name }}</span>
-                    }
+                    <span class="text-amber-500" [title]="entry.name ?? 'favorito'">★</span>
                   } @else {
                     <span class="text-muted/30">☆</span>
                   }
                 </td>
 
               </tr>
+
+              <!-- Expanded input JSON -->
+              @if (isExpanded(entry.id)) {
+                <tr class="bg-paper dark:bg-dark-bg">
+                  <td colspan="7" class="px-4 py-3">
+                    <div class="flex items-start gap-2">
+                      <span class="text-[10px] font-mono text-muted dark:text-dark-muted mt-0.5 shrink-0">input:</span>
+                      <pre class="text-[10px] font-mono text-ink dark:text-dark-ink
+                                  bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                                  rounded p-2 overflow-x-auto flex-1 whitespace-pre-wrap break-all">{{ inputJson(entry) }}</pre>
+                    </div>
+                    @if (entry.isFavorite && entry.name) {
+                      <p class="text-[10px] font-mono text-amber-600 dark:text-amber-400 mt-1.5">
+                        ★ Guardado como: "{{ entry.name }}"
+                      </p>
+                    }
+                  </td>
+                </tr>
+              }
             } @empty {
               <tr>
-                <td colspan="5" class="px-4 py-8 text-center text-muted dark:text-dark-muted">
+                <td colspan="7" class="px-4 py-8 text-center text-muted dark:text-dark-muted">
                   No hay cálculos registrados
                 </td>
               </tr>
