@@ -71,7 +71,7 @@ export class TrigonometricService {
     const quadIntegralA0 = input.segments
       .map(
         (s) =>
-          `first(quad_qags((1/T) * (${s.expression}), ${intVar}, ${s.from}, ${s.to}))`,
+          `first(quad_qags((2/T) * (${s.expression}), ${intVar}, ${s.from}, ${s.to}))`,
       )
       .join(" + ");
 
