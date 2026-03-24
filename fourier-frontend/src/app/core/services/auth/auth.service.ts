@@ -1,9 +1,8 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
 import { ApiService } from '../api/api.service';
-import { PlatformService } from '../platform/platform.service';
 import { UserStore } from './user.store';
 import {
   AuthResponse,
@@ -12,35 +11,28 @@ import {
   GoogleLoginRequest,
 } from '../../../domain';
 
-const ACCESS_TOKEN_KEY  = 'fourier-access-token';
-const REFRESH_TOKEN_KEY = 'fourier-refresh-token';
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly api      = inject(ApiService);
-  private readonly platform = inject(PlatformService);
-  private readonly store    = inject(UserStore);
-  private readonly router   = inject(Router);
+  private readonly api   = inject(ApiService);
+  private readonly store = inject(UserStore);
+  private readonly router = inject(Router);
+
+  /** Access token lives only in memory — lost on page refresh, recovered via cookie. */
+  private readonly _accessToken = signal<string | null>(null);
 
   // ─── Token management ────────────────────────────────────────────────────
 
   getAccessToken(): string | null {
-    return this.platform.getLocalStorageItem(ACCESS_TOKEN_KEY);
-  }
-
-  getRefreshToken(): string | null {
-    return this.platform.getLocalStorageItem(REFRESH_TOKEN_KEY);
+    return this._accessToken();
   }
 
   private saveTokens(response: AuthResponse): void {
-    this.platform.setLocalStorageItem(ACCESS_TOKEN_KEY, response.accessToken);
-    this.platform.setLocalStorageItem(REFRESH_TOKEN_KEY, response.refreshToken);
+    this._accessToken.set(response.accessToken);
     this.store.setUser(response.user);
   }
 
   private clearTokens(): void {
-    this.platform.removeLocalStorageItem(ACCESS_TOKEN_KEY);
-    this.platform.removeLocalStorageItem(REFRESH_TOKEN_KEY);
+    this._accessToken.set(null);
     this.store.clearUser();
   }
 
@@ -58,42 +50,30 @@ export class AuthService {
     return this.api.loginWithGoogle(body).pipe(tap((res) => this.saveTokens(res)));
   }
 
+  /** Refresh via httpOnly cookie — no token in body needed. */
   refresh(): Observable<AuthResponse> {
-    const refreshToken = this.getRefreshToken() ?? '';
-    return this.api.refreshToken({ refreshToken }).pipe(tap((res) => this.saveTokens(res)));
+    return this.api.refreshToken().pipe(tap((res) => this.saveTokens(res)));
   }
 
   logout(): void {
-    const refreshToken = this.getRefreshToken();
-    if (refreshToken) {
-      // Fire-and-forget: el servidor invalida el refresh token
-      this.api.logout(refreshToken).subscribe({ error: () => {} });
-    }
+    // Fire-and-forget: el servidor revoca la familia de tokens via cookie.
+    this.api.logout().subscribe({ error: () => {} });
     this.clearTokens();
     this.router.navigate(['/home']);
   }
 
-  /** Inicializa el estado del usuario desde el token almacenado.
-   *  Debe llamarse al inicio de la app si hay un token. */
+  /**
+   * Intenta un silent refresh al iniciar la app.
+   * Si hay una cookie httpOnly válida, recupera el access token en memoria.
+   * Si no hay sesión activa, simplemente deja al usuario anónimo.
+   */
   initFromStorage(): void {
-    const token = this.getAccessToken();
-    if (!token) return;
-
     this.store.setLoading(true);
-    this.api.getMe().subscribe({
-      next: ({ user }) => {
-        this.store.setUser(user);
-        this.store.setLoading(false);
-      },
+    this.refresh().subscribe({
+      next: () => this.store.setLoading(false),
       error: () => {
-        // Token expirado o inválido — intentar refresh
-        this.refresh().subscribe({
-          next: () => this.store.setLoading(false),
-          error: () => {
-            this.clearTokens();
-            this.store.setLoading(false);
-          },
-        });
+        this.clearTokens();
+        this.store.setLoading(false);
       },
     });
   }
