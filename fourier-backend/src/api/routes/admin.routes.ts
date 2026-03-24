@@ -378,6 +378,7 @@ adminRouter.get(
       const filters = {
         userId: req.query["userId"] as string | undefined,
         type: req.query["type"] as string | undefined,
+        anonymousOnly: req.query["anonymousOnly"] === "true",
       };
 
       const [entries, total] = await Promise.all([

@@ -9,7 +9,8 @@ export type CalculationType =
 
 export interface HistoryRecord {
   id: string;
-  userId: string;
+  userId: string | null;
+  ipAddress: string | null;
   type: CalculationType;
   input: Record<string, unknown>;
   isFavorite: boolean;
@@ -20,7 +21,8 @@ export interface HistoryRecord {
 
 export interface IHistoryRepository {
   create(input: {
-    userId: string;
+    userId?: string;
+    ipAddress?: string;
     type: CalculationType;
     input: Record<string, unknown>;
     executionMs?: number;
@@ -44,10 +46,12 @@ export interface IHistoryRepository {
     filters?: {
       userId?: string;
       type?: CalculationType;
+      anonymousOnly?: boolean;
     },
   ): Promise<HistoryRecord[]>;
   countAll(filters?: {
     userId?: string;
     type?: CalculationType;
+    anonymousOnly?: boolean;
   }): Promise<number>;
 }

@@ -74,12 +74,18 @@ transformsRouter.post(
         await incrementCalculationCount(req.user.id);
         await historyRepository.create({
           userId: req.user.id,
-          type: "trigonometric",
+          type: "fourier_transform",
           input: input as unknown as Record<string, unknown>,
           executionMs: result.executionTimeMs,
         });
       } else {
         await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        await historyRepository.create({
+          ipAddress: req.ip ?? undefined,
+          type: "fourier_transform",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {
@@ -145,12 +151,18 @@ transformsRouter.post(
         await incrementCalculationCount(req.user.id);
         await historyRepository.create({
           userId: req.user.id,
-          type: "trigonometric",
+          type: "inverse_fourier_transform",
           input: input as unknown as Record<string, unknown>,
           executionMs: result.executionTimeMs,
         });
       } else {
         await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        await historyRepository.create({
+          ipAddress: req.ip ?? undefined,
+          type: "inverse_fourier_transform",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {
@@ -256,12 +268,18 @@ transformsRouter.post(
         await incrementCalculationCount(req.user.id);
         await historyRepository.create({
           userId: req.user.id,
-          type: "trigonometric",
+          type: "dft_signal",
           input: input as unknown as Record<string, unknown>,
           executionMs: result.executionTimeMs,
         });
       } else {
         await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        await historyRepository.create({
+          ipAddress: req.ip ?? undefined,
+          type: "dft_signal",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {

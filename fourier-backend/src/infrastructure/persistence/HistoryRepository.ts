@@ -7,26 +7,29 @@ import type {
 
 export class HistoryRepository implements IHistoryRepository {
   async create(input: {
-    userId: string;
+    userId?: string;
+    ipAddress?: string;
     type: CalculationType;
     input: Record<string, unknown>;
     executionMs?: number;
   }): Promise<HistoryRecord> {
     const result = await db.query(
       `INSERT INTO calculation_history
-         (user_id, type, input, execution_ms)
-       VALUES ($1, $2, $3, $4)
-       RETURNING
-         id,
-         user_id as "userId",
-         type,
-         input,
-         is_favorite as "isFavorite",
-         favorite_name as "favoriteName",
-         execution_ms as "executionMs",
-         created_at as "createdAt"`,
+       (user_id, ip_address, type, input, execution_ms)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING
+       id,
+       user_id as "userId",
+       ip_address as "ipAddress",
+       type,
+       input,
+       is_favorite as "isFavorite",
+       favorite_name as "favoriteName",
+       execution_ms as "executionMs",
+       created_at as "createdAt"`,
       [
-        input.userId,
+        input.userId ?? null,
+        input.ipAddress ?? null,
         input.type,
         JSON.stringify(input.input),
         input.executionMs ?? null,
@@ -129,7 +132,7 @@ export class HistoryRepository implements IHistoryRepository {
   async findAll(
     limit: number,
     offset: number,
-    filters?: { userId?: string; type?: string },
+    filters?: { userId?: string; type?: string; anonymousOnly?: boolean },
   ): Promise<HistoryRecord[]> {
     const conditions: string[] = [];
     const params: unknown[] = [];
@@ -143,6 +146,9 @@ export class HistoryRepository implements IHistoryRepository {
       conditions.push(`type = $${paramIdx++}`);
       params.push(filters.type);
     }
+    if (filters?.anonymousOnly) {
+      conditions.push(`user_id IS NULL`);
+    }
 
     const where =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -152,6 +158,7 @@ export class HistoryRepository implements IHistoryRepository {
       `SELECT
        id,
        user_id as "userId",
+       ip_address as "ipAddress",
        type,
        input,
        is_favorite as "isFavorite",
@@ -170,6 +177,7 @@ export class HistoryRepository implements IHistoryRepository {
   async countAll(filters?: {
     userId?: string;
     type?: string;
+    anonymousOnly?: boolean;
   }): Promise<number> {
     const conditions: string[] = [];
     const params: unknown[] = [];
@@ -182,6 +190,9 @@ export class HistoryRepository implements IHistoryRepository {
     if (filters?.type) {
       conditions.push(`type = $${paramIdx++}`);
       params.push(filters.type);
+    }
+    if (filters?.anonymousOnly) {
+      conditions.push(`user_id IS NULL`);
     }
 
     const where =

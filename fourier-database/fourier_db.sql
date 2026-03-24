@@ -189,11 +189,12 @@ CREATE TABLE user_recovery_emails (
 -- -------------------------------------------------------
 CREATE TABLE calculation_history (
     id               TEXT PRIMARY KEY DEFAULT gen_ulid(),
-    user_id          TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id          TEXT REFERENCES users(id) ON DELETE CASCADE,
     type             calculation_type NOT NULL,
     input            JSONB NOT NULL,
     is_favorite      BOOLEAN NOT NULL DEFAULT FALSE,
     favorite_name    VARCHAR(100),
+    ip_address       INET,
     execution_ms     INTEGER,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
