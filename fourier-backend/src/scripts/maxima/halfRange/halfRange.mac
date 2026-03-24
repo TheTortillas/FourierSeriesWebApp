@@ -43,7 +43,7 @@ Coeff_An: fullratsimp(an_acum);
 Coeff_Bn: fullratsimp(bn_acum);
 
 /* Series generales formales */
-serie_coseno: Coeff_A0 + 'sum(Coeff_An * cos(n * w0 * INTVAR), n, 1, inf);
+serie_coseno: 'sum(Coeff_An * cos(n * w0 * INTVAR), n, 1, inf);
 serie_seno: 'sum(Coeff_Bn * sin(n * w0 * INTVAR), n, 1, inf);
 
 /* Output estructurado */

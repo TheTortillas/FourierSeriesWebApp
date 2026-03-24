@@ -73,6 +73,7 @@ export class CalculatorStore {
   readonly segments = signal<SegmentDraft[]>([defaultSegment()]);
   readonly seriesType = signal<SeriesType>('trigonometric');
   readonly nTerms = signal<number>(10);
+  readonly intVar = signal<string>('x');
 
   // ── Result state ───────────────────────────────────────────────────────────
   readonly loading = signal(false);
@@ -89,19 +90,20 @@ export class CalculatorStore {
   /** LaTeX string for the live f(x) = … preview above the inputs */
   readonly previewLatex = computed(() => {
     const segs = this.segments();
+    const v = this.intVar();
     if (segs.length === 0) return null;
     if (segs.length === 1) {
       const s = segs[0];
       if (!s.expressionTex && !s.fromTex && !s.toTex) return null;
-      return `f(x) = ${s.expressionTex || '\\square'}, \\quad ${s.fromTex || '\\square'} < x < ${s.toTex || '\\square'}`;
+      return `f(${v}) = ${s.expressionTex || '\\square'}, \\quad ${s.fromTex || '\\square'} < ${v} < ${s.toTex || '\\square'}`;
     }
     const rows = segs
       .map(
         (s) =>
-          `${s.expressionTex || '\\square'} & ${s.fromTex || '\\square'} < x < ${s.toTex || '\\square'}`,
+          `${s.expressionTex || '\\square'}, & ${s.fromTex || '\\square'} < ${v} < ${s.toTex || '\\square'}`,
       )
       .join(' \\\\ ');
-    return `f(x) = \\begin{cases} ${rows} \\end{cases}`;
+    return `f(${v}) = \\begin{cases} ${rows} \\end{cases}`;
   });
 
   /** Compiled JS functions for live canvas preview (one per segment) */
@@ -146,10 +148,15 @@ export class CalculatorStore {
     this.nTerms.set(Math.max(0, Math.min(100, n)));
   }
 
+  setIntVar(v: string): void {
+    this.intVar.set(v || 'x');
+  }
+
   resetForm(): void {
     this.segments.set([defaultSegment()]);
     this.seriesType.set('trigonometric');
     this.nTerms.set(10);
+    this.intVar.set('x');
     this.result.set(null);
     this.error.set(null);
   }
@@ -167,6 +174,7 @@ export class CalculatorStore {
         to: s.to,
       })),
       seriesType: type,
+      intVar: this.intVar(),
     };
 
     this.loading.set(true);
@@ -232,6 +240,7 @@ export class CalculatorStore {
       })),
       type: this.seriesType(),
       n: this.nTerms(),
+      iv: this.intVar(),
     };
     try {
       // encodeURIComponent+unescape is the classic safe UTF-8→base64 path
@@ -252,6 +261,7 @@ export class CalculatorStore {
         seg: Array<{ e: string; et: string; f: string; ft: string; t: string; tt: string }>;
         type: SeriesType;
         n: number;
+        iv?: string;
       };
 
       const validTypes: SeriesType[] = ['trigonometric', 'complex', 'halfRange'];
@@ -270,6 +280,7 @@ export class CalculatorStore {
       );
       this.seriesType.set(s.type);
       if (typeof s.n === 'number') this.setNTerms(s.n);
+      if (s.iv) this.intVar.set(s.iv);
       return true;
     } catch {
       return false;

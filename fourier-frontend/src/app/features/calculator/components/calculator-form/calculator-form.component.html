@@ -38,6 +38,21 @@
     </button>
   </section>
 
+  <!-- ── Variable de integración ───────────────────────────────────────── -->
+  <div class="flex items-center gap-2">
+    <p class="text-xs text-muted font-mono shrink-0">Variable</p>
+    <div class="flex gap-1">
+      @for (v of ['x','t','u','s']; track v) {
+        <button type="button" (click)="store.setIntVar(v)"
+          [class]="store.intVar() === v
+            ? 'w-7 h-7 rounded text-xs font-mono font-semibold bg-accent text-paper cursor-pointer'
+            : 'w-7 h-7 rounded text-xs font-mono text-ink dark:text-dark-ink border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent transition-colors cursor-pointer'">
+          {{ v }}
+        </button>
+      }
+    </div>
+  </div>
+
   <!-- ── Tipo de serie ──────────────────────────────────────────────────── -->
   <app-series-type-selector />
 

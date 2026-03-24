@@ -41,8 +41,8 @@ Coeff_A0: fullratsimp(a0_acum / 2);
 Coeff_An: fullratsimp(an_acum);
 Coeff_Bn: fullratsimp(bn_acum);
 
-/* Serie general formal */
-serie_general: Coeff_A0 + 'sum(Coeff_An * cos(n * w0 * INTVAR) + Coeff_Bn * sin(n * w0 * INTVAR), n, 1, inf);
+/* Serie general formal (sin a0/2: el front lo añade según corresponda) */
+serie_general: 'sum(Coeff_An * cos(n * w0 * INTVAR) + Coeff_Bn * sin(n * w0 * INTVAR), n, 1, inf);
 
 /* Output estructurado */
 print("__A0RAW_MAXIMA__")$ print(string(Coeff_A0_Raw))$

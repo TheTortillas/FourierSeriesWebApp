@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
+import { Component, computed, inject, signal, DestroyRef, effect, ElementRef, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, finalize } from 'rxjs';
 import { CalculatorStore } from '../../store/calculator.store';
@@ -15,6 +15,19 @@ import { PlottingService } from '../../../../core/services/canvas/plotting.servi
 import { MathjaxDirective } from '../../../../shared/directives/mathjax.directive';
 import { ApiService } from '../../../../core/services/api/api.service';
 import { SimplifyProfile } from '../../../../domain';
+import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
+
+/** Cycling hue palette for individual harmonics */
+const HARMONIC_COLORS = [
+  'hsla(217, 70%, 55%, 0.55)',
+  'hsla(145, 60%, 45%, 0.55)',
+  'hsla(38,  80%, 50%, 0.55)',
+  'hsla(270, 60%, 60%, 0.55)',
+  'hsla(0,   70%, 55%, 0.55)',
+  'hsla(185, 65%, 45%, 0.55)',
+  'hsla(320, 60%, 55%, 0.55)',
+  'hsla(60,  70%, 45%, 0.55)',
+];
 
 @Component({
   selector: 'app-results-summary',
@@ -27,6 +40,21 @@ export class ResultsSummaryComponent {
   readonly plotter = inject(PlottingService);
   readonly api = inject(ApiService);
   readonly destroyRef = inject(DestroyRef);
+
+  // ── Canvas settings ──────────────────────────────────────────────────────
+  readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('pi');
+  readonly showHarmonics = signal(false);
+  readonly originalColor = signal('#8b2500');
+  readonly approxColor = signal('#1a4a6b');
+  readonly originalLineWidth = signal(2.5);
+  readonly approxLineWidth = signal(1.75);
+  readonly showCanvasSettings = signal(false);
+  readonly isFullscreen = signal(false);
+  readonly showShareDialog = signal(false);
+  readonly urlCopied = signal(false);
+
+  // ── Canvas wrapper ref (for Fullscreen API) ───────────────────────────────
+  readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
 
   // ── Simplify state ──────────────────────────────────────────────────────────
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
@@ -51,7 +79,7 @@ export class ResultsSummaryComponent {
     }
   }
 
-  /** Canvas layers: original function + Fourier approximation */
+  /** Canvas layers: original function + harmonics + Fourier approximation */
   readonly layers = computed<PlotLayer[]>(() => {
     const result = this.store.result();
     const previews = this.store.previewFunctions();
@@ -59,9 +87,13 @@ export class ResultsSummaryComponent {
     const hrMode = this.halfRangeMode();
     const plotter = this.plotter;
     const rec = this.reconstruction;
+    const showHarmonics = this.showHarmonics();
+    const origColor = this.originalColor();
+    const approxColorVal = this.approxColor();
+    const origWidth = this.originalLineWidth();
+    const approxWidth = this.approxLineWidth();
 
     if (!result) {
-      // No result yet: only show the original function preview
       return [
         {
           curves: [],
@@ -69,8 +101,8 @@ export class ResultsSummaryComponent {
             for (const { fn, from, to } of previews) {
               if (fn && isFinite(from) && isFinite(to)) {
                 plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
-                  color: '#8b2500',
-                  lineWidth: 2.5,
+                  color: origColor,
+                  lineWidth: origWidth,
                 });
               }
             }
@@ -79,45 +111,84 @@ export class ResultsSummaryComponent {
       ];
     }
 
-    // Build approximation function from result
     const w0 = rec.parseW0(result.data.w0.maxima);
 
     let approxFn: ((x: number) => number) | null = null;
+    let harmonicFns: Array<(x: number) => number> = [];
 
     if (result.type === 'trigonometric') {
       const terms = result.terms.terms as TrigNumericTerm[];
       const a0 = result.data.coefficients.a0Float ?? 0;
       approxFn = rec.buildTrigonometric(a0, terms, w0, nTerms);
+      if (showHarmonics) {
+        const limit = Math.min(nTerms, terms.length);
+        harmonicFns = terms.slice(0, limit).map((t) => {
+          const { n, anFloat, bnFloat } = t;
+          return (x: number) => anFloat * Math.cos(n * w0 * x) + bnFloat * Math.sin(n * w0 * x);
+        });
+      }
     } else if (result.type === 'halfRange') {
       const terms = result.terms.terms as TrigNumericTerm[];
       if (hrMode === 'cosine') {
         const a0 = result.data.coefficients.a0Float ?? 0;
         approxFn = rec.buildCosineOnly(a0, terms, w0, nTerms);
+        if (showHarmonics) {
+          const limit = Math.min(nTerms, terms.length);
+          harmonicFns = terms.slice(0, limit).map((t) => {
+            const { n, anFloat } = t;
+            return (x: number) => anFloat * Math.cos(n * w0 * x);
+          });
+        }
       } else {
         approxFn = rec.buildSineOnly(terms, w0, nTerms);
+        if (showHarmonics) {
+          const limit = Math.min(nTerms, terms.length);
+          harmonicFns = terms.slice(0, limit).map((t) => {
+            const { n, bnFloat } = t;
+            return (x: number) => bnFloat * Math.sin(n * w0 * x);
+          });
+        }
       }
     } else if (result.type === 'complex') {
       const terms = result.terms.terms as ComplexNumericTerm[];
       const c0 =
         result.data.coefficients.c0Float ?? this.parseMaxima(result.data.coefficients.c0.maxima);
       approxFn = rec.buildComplex(c0, terms, w0, nTerms);
+      if (showHarmonics) {
+        const limit = Math.min(nTerms, terms.length);
+        harmonicFns = terms.slice(0, limit).map((t) => {
+          const { n, cosFloat, sinFloat } = t;
+          return (x: number) => cosFloat * Math.cos(n * w0 * x) + sinFloat * Math.sin(n * w0 * x);
+        });
+      }
     }
 
     const localApprox = approxFn;
+    const localHarmonics = harmonicFns;
 
     return [
       {
         curves: [],
         onDraw(ctx, vp) {
+          // Harmonics (drawn first, behind everything)
+          for (let i = 0; i < localHarmonics.length; i++) {
+            plotter.plotFn(ctx, localHarmonics[i], vp, {
+              color: HARMONIC_COLORS[i % HARMONIC_COLORS.length],
+              lineWidth: 1,
+            });
+          }
           // Original function (bounded to piece intervals)
           for (const { fn, from, to } of previews) {
             if (fn && isFinite(from) && isFinite(to)) {
-              plotter.plotFnRange(ctx, fn, from, to, 400, vp, { color: '#8b2500', lineWidth: 2.5 });
+              plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
+                color: origColor,
+                lineWidth: origWidth,
+              });
             }
           }
           // Fourier approximation (fills visible range)
           if (localApprox) {
-            plotter.plotFn(ctx, localApprox, vp, { color: '#1a4a6b', lineWidth: 1.75 });
+            plotter.plotFn(ctx, localApprox, vp, { color: approxColorVal, lineWidth: approxWidth });
           }
         },
       },
@@ -175,101 +246,139 @@ export class ResultsSummaryComponent {
     return r ? r.data.executionTimeMs : null;
   });
 
-  readonly termTableHeader = computed<[string, string]>(() => {
-    const r = this.store.result();
-    if (r?.type === 'complex') return ['|cₙ|', '∠cₙ (rad)'];
-    if (r?.type === 'halfRange') {
-      return this.halfRangeMode() === 'cosine' ? ['aₙ', '—'] : ['bₙ', '—'];
-    }
-    return ['aₙ', 'bₙ'];
-  });
+  // ── Tab state ─────────────────────────────────────────────────────────────
+  readonly activeTab = signal<'coefficients' | 'terms' | 'validation'>('coefficients');
 
-  /** Numeric terms rows for the table (all terms, including n=0) */
-  readonly termRows = computed<
-    { n: number; col1: string; col2: string; lim1: boolean; lim2: boolean }[]
-  >(() => {
+  /**
+   * Series LaTeX composed from active coefficient values.
+   * Automatically reflects simplification — no separate series API call needed.
+   * Rules:
+   *  - w0 = 1 → omit from the argument (write nx instead of n·1·x)
+   *  - zero coefficients → skip that term entirely
+   *  - complex → full double-sided sum Σ_{n=-∞}^∞
+   */
+  readonly composedSeriesTex = computed(() => {
     const r = this.store.result();
-    if (!r) return [];
+    const coeffs = this.activeCoeffTex();
+    if (!r || !coeffs) return null;
+
+    const intVar = r.data.input.intVar ?? 'x';
+    const w0Tex = coeffs.w0;
+    const w0IsOne = w0Tex === '1';
+    const omega = w0IsOne ? `n\\,${intVar}` : `n\\,${w0Tex}\\,${intVar}`;
 
     if (r.type === 'trigonometric') {
+      const { a0, an, bn } = coeffs;
       const a0Float = r.data.coefficients.a0Float;
-      // a0Float is Coeff_A0_Raw; a0Float/2 = Coeff_A0 is the actual a₀ in the series
-      const row0 =
-        a0Float !== undefined
-          ? [{ n: 0, col1: (a0Float / 2).toFixed(6), col2: '—', lim1: false, lim2: false }]
-          : [];
-      const rows = r.terms.terms.map((t) => {
-        const term = t as TrigNumericTerm;
-        return {
-          n: term.n,
-          col1: term.anFloat.toFixed(6),
-          col2: term.bnFloat.toFixed(6),
-          lim1: !!term.anUsedLimit,
-          lim2: !!term.bnUsedLimit,
-        };
-      });
-      return [...row0, ...rows];
+      const a0IsZero = a0Float === undefined || Math.abs(a0Float) < 1e-12;
+      const anIsZero = !an || an === '0';
+      const bnIsZero = !bn || bn === '0';
+
+      const parts: string[] = [];
+      if (!anIsZero) parts.push(`${an}\\cos\\!\\left(${omega}\\right)`);
+      if (!bnIsZero) parts.push(`${bn}\\sin\\!\\left(${omega}\\right)`);
+
+      if (parts.length === 0) return a0IsZero ? '0' : (a0 ?? '0');
+
+      const body = `\\sum_{n=1}^{\\infty}\\left(${parts.join('+')}\\right)`;
+      if (!a0IsZero && a0) {
+        const sep = body.startsWith('-') ? ' ' : ' + ';
+        return `${a0}${sep}${body}`;
+      }
+      return body;
     }
 
     if (r.type === 'halfRange') {
-      const isSine = this.halfRangeMode() === 'sine';
-      const a0Float = r.data.coefficients.a0Float;
-      // Cosine expansion: n=0 shows a₀ = a0Float/2 (the actual constant term)
-      // Sine expansion: no constant term, so no n=0 row
-      const row0 =
-        !isSine && a0Float !== undefined
-          ? [{ n: 0, col1: (a0Float / 2).toFixed(6), col2: '—', lim1: false, lim2: false }]
-          : [];
-      const rows = r.terms.terms.map((t) => {
-        const term = t as TrigNumericTerm;
-        return isSine
-          ? {
-              n: term.n,
-              col1: term.bnFloat.toFixed(6),
-              col2: '—',
-              lim1: !!term.bnUsedLimit,
-              lim2: false,
-            }
-          : {
-              n: term.n,
-              col1: term.anFloat.toFixed(6),
-              col2: '—',
-              lim1: !!term.anUsedLimit,
-              lim2: false,
-            };
-      });
-      return [...row0, ...rows];
+      const hrMode = this.halfRangeMode();
+      const { a0, an, bn } = coeffs;
+      if (hrMode === 'cosine') {
+        const a0Float = r.data.coefficients.a0Float;
+        const a0IsZero = a0Float === undefined || Math.abs(a0Float) < 1e-12;
+        const anIsZero = !an || an === '0';
+
+        if (anIsZero) return a0IsZero ? '0' : (a0 ?? '0');
+
+        const body = `\\sum_{n=1}^{\\infty}${an}\\cos\\!\\left(${omega}\\right)`;
+        if (!a0IsZero && a0) {
+          const sep = body.startsWith('-') ? ' ' : ' + ';
+          return `${a0}${sep}${body}`;
+        }
+        return body;
+      }
+      const bnIsZero = !bn || bn === '0';
+      if (bnIsZero) return '0';
+      return `\\sum_{n=1}^{\\infty}${bn}\\sin\\!\\left(${omega}\\right)`;
     }
 
     if (r.type === 'complex') {
-      const c0Float = r.data.coefficients.c0Float;
-      const row0 =
-        c0Float !== undefined
-          ? [
-              {
-                n: 0,
-                col1: Math.abs(c0Float).toFixed(6),
-                col2: '0.000000',
-                lim1: false,
-                lim2: false,
-              },
-            ]
-          : [];
-      const rows = r.terms.terms.map((t) => {
-        const term = t as ComplexNumericTerm;
-        return {
-          n: term.n,
-          col1: term.amplitude.toFixed(6),
-          col2: term.phase.toFixed(6),
-          lim1: !!term.cnUsedLimit,
-          lim2: !!term.cnNegUsedLimit,
-        };
-      });
-      return [...row0, ...rows];
+      const { cn } = coeffs;
+      const cnIsZero = !cn || cn === '0';
+      if (cnIsZero) return '0';
+      return `\\sum_{n=-\\infty}^{\\infty}\\left(${cn}\\right)e^{i${omega}}`;
     }
 
-    return [];
+    return null;
   });
+
+  // ── Validation ────────────────────────────────────────────────────────────
+  readonly validation = computed(() => this.store.result()?.data.validation ?? null);
+
+  readonly hasValidationWarning = computed(() => {
+    const v = this.validation();
+    return !!v && v.decision !== 'proceed';
+  });
+
+  // ── Typed term arrays for the terms tab ────────────────────────────────────
+  readonly trigTerms = computed<TrigonometricTerm[] | null>(() => {
+    const r = this.store.result();
+    if (r?.type === 'trigonometric' || r?.type === 'halfRange') return r.terms.terms;
+    return null;
+  });
+
+  readonly complexTerms = computed<ComplexTerm[] | null>(() => {
+    const r = this.store.result();
+    if (r?.type === 'complex') return r.terms.terms;
+    return null;
+  });
+
+  /** Typed tabs array so the template gets literal types */
+  readonly tabs: { id: 'coefficients' | 'terms' | 'validation'; label: string }[] = [
+    { id: 'coefficients', label: 'Coeficientes' },
+    { id: 'terms',        label: 'Términos'      },
+    { id: 'validation',   label: 'Validación'    },
+  ];
+
+  /** Context for the terms tab — trig / half-range branch */
+  readonly termsTrigCtx = computed(() => {
+    const r = this.store.result();
+    if (r?.type !== 'trigonometric' && r?.type !== 'halfRange') return null;
+    const c = r.data.coefficients;
+    return {
+      a0Float: c.a0Float,
+      a0Half:  c.a0Float !== undefined ? c.a0Float / 2 : undefined,
+      a0Tex:   c.a0?.tex ?? null,
+    };
+  });
+
+  /** Context for the terms tab — complex branch */
+  readonly termsComplexCtx = computed(() => {
+    const r = this.store.result();
+    if (r?.type !== 'complex') return null;
+    const c = r.data.coefficients;
+    return {
+      c0Float:    c.c0Float,
+      c0FloatAbs: c.c0Float !== undefined ? Math.abs(c.c0Float) : undefined,
+      c0Tex:      c.c0?.tex ?? null,
+    };
+  });
+
+  readonly singularityLabels: Record<string, string | undefined> = {
+    removible:        'Removible',
+    salto:            'Salto',
+    asintotica:       'Asintótica',
+    esencial:         'Esencial',
+    fuera_de_dominio: 'Fuera del dominio',
+  };
 
   // ── Profile selector options ────────────────────────────────────────────────
   readonly profileOptions: { value: SimplifyProfile; label: string }[] = [
@@ -280,13 +389,80 @@ export class ResultsSummaryComponent {
     { value: 'complete', label: 'Completo' },
   ];
 
-  // ── Simplify actions ────────────────────────────────────────────────────────
+  // ── Lifecycle ────────────────────────────────────────────────────────────────
+
+  constructor() {
+    // Reset all local state whenever a new result arrives
+    effect(() => {
+      if (this.store.result()) {
+        this.activeTab.set('coefficients');
+        this.simplifiedCoeffs.set(null);
+        this.simplifyProfile.set('raw');
+        this.halfRangeMode.set('cosine');
+      }
+    });
+
+    // Track native fullscreen changes
+    if (typeof document !== 'undefined') {
+      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
+      document.addEventListener('fullscreenchange', handler);
+      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
+    }
+  }
+
+  // ── Tab & mode actions ────────────────────────────────────────────────────
+
+  setTab(tab: 'coefficients' | 'terms' | 'validation'): void {
+    this.activeTab.set(tab);
+  }
 
   setHalfRangeMode(mode: 'cosine' | 'sine'): void {
     this.halfRangeMode.set(mode);
     this.simplifiedCoeffs.set(null);
     this.simplifyProfile.set('raw');
   }
+
+  // ── Canvas actions ────────────────────────────────────────────────────────
+
+  toggleFullscreen(): void {
+    const el = this.canvasWrapper()?.nativeElement;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void el.requestFullscreen();
+    }
+  }
+
+  downloadCanvas(): void {
+    const canvas = this.canvasWrapper()?.nativeElement?.querySelector('canvas');
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fourier-series.png';
+    a.click();
+  }
+
+  get shareHref(): string {
+    return typeof window !== 'undefined' ? window.location.href : '';
+  }
+
+  openShareDialog(): void {
+    this.showShareDialog.set(true);
+  }
+
+  async copyShareUrl(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this.urlCopied.set(true);
+      setTimeout(() => this.urlCopied.set(false), 2000);
+    } catch {
+      // fallback: do nothing
+    }
+  }
+
+  // ── Simplify actions ──────────────────────────────────────────────────────
 
   setProfile(profile: SimplifyProfile): void {
     this.simplifyProfile.set(profile);
@@ -344,12 +520,10 @@ export class ResultsSummaryComponent {
       }
     } else if (result.type === 'complex') {
       const c = result.data.coefficients;
-      if (c.c0?.maxima) {
+      if (c.c0?.maxima)
         calls['c0'] = this.api.simplify({ expression: c.c0.maxima, profile, displayFlags });
-      }
-      if (c.cn?.maxima) {
+      if (c.cn?.maxima)
         calls['cn'] = this.api.simplify({ expression: c.cn.maxima, profile, displayFlags });
-      }
     }
 
     if (Object.keys(calls).length === 0) {
