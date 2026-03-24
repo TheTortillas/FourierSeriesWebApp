@@ -375,6 +375,32 @@ export class AuthService {
     });
   }
 
+  async changePassword(input: {
+    userId: string;
+    currentPassword: string;
+    newPassword: string;
+    ipAddress?: string;
+  }): Promise<void> {
+    const user = await this.userRepo.findById(input.userId);
+    if (!user) throw new Error("User not found");
+
+    if (!user.passwordHash) {
+      throw new Error("Account uses Google sign-in. Use forgot password to set a password.");
+    }
+
+    const valid = await bcrypt.compare(input.currentPassword, user.passwordHash);
+    if (!valid) throw new Error("Current password is incorrect");
+
+    const newHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
+    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, input.userId]);
+
+    await this.auditRepo.log({
+      userId: input.userId,
+      action: "password_change",
+      ipAddress: input.ipAddress,
+    });
+  }
+
   async resendVerification(email: string, ipAddress?: string): Promise<void> {
     const user = await this.userRepo.findByEmail(email);
     if (!user || user.emailVerified) return;

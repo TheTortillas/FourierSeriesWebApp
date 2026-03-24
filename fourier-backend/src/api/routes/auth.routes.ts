@@ -452,3 +452,41 @@ authRouter.get(
     }
   },
 );
+
+authRouter.post(
+  "/change-password",
+  authenticate,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { currentPassword, newPassword } = req.body as {
+        currentPassword: string;
+        newPassword: string;
+      };
+
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({ error: "currentPassword and newPassword are required" });
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        res.status(400).json({ error: "Password must be at least 8 characters" });
+        return;
+      }
+
+      await authService.changePassword({
+        userId: req.user!.id,
+        currentPassword,
+        newPassword,
+        ipAddress: req.ip,
+      });
+
+      res.json({ message: "Password changed successfully" });
+    } catch (err) {
+      if (err instanceof Error) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      next(err);
+    }
+  },
+);
