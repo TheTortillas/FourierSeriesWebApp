@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal, DestroyRef, effect, ElementRef, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, finalize } from 'rxjs';
 import { CalculatorStore } from '../../store/calculator.store';
@@ -14,7 +15,8 @@ import {
 import { PlottingService } from '../../../../core/services/canvas/plotting.service';
 import { MathjaxDirective } from '../../../../shared/directives/mathjax.directive';
 import { ApiService } from '../../../../core/services/api/api.service';
-import { SimplifyProfile } from '../../../../domain';
+import { UserStore } from '../../../../core/services/auth/user.store';
+import { SimplifyProfile, HistoryEntry } from '../../../../domain';
 import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
 
 /** Cycling hue palette for individual harmonics */
@@ -31,7 +33,7 @@ const HARMONIC_COLORS = [
 
 @Component({
   selector: 'app-results-summary',
-  imports: [FunctionPlotComponent, MathjaxDirective],
+  imports: [FunctionPlotComponent, MathjaxDirective, FormsModule],
   templateUrl: './results-summary.component.html',
 })
 export class ResultsSummaryComponent {
@@ -39,6 +41,7 @@ export class ResultsSummaryComponent {
   readonly reconstruction = inject(FourierReconstructionService);
   readonly plotter = inject(PlottingService);
   readonly api = inject(ApiService);
+  readonly userStore = inject(UserStore);
   readonly destroyRef = inject(DestroyRef);
 
   // ── Canvas settings ──────────────────────────────────────────────────────
@@ -52,6 +55,12 @@ export class ResultsSummaryComponent {
   readonly isFullscreen = signal(false);
   readonly showShareDialog = signal(false);
   readonly urlCopied = signal(false);
+
+  // ── Favorite state ────────────────────────────────────────────────────────
+  readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
+  readonly favoriteLoading = signal(false);
+  readonly showFavoriteDialog = signal(false);
+  favoriteName = '';
 
   // ── Canvas wrapper ref (for Fullscreen API) ───────────────────────────────
   readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
@@ -392,13 +401,22 @@ export class ResultsSummaryComponent {
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   constructor() {
-    // Reset all local state whenever a new result arrives
+    // Reset all local state whenever a new result arrives; also fetch latest history entry for favorite
     effect(() => {
-      if (this.store.result()) {
+      const result = this.store.result();
+      if (result) {
         this.activeTab.set('coefficients');
         this.simplifiedCoeffs.set(null);
         this.simplifyProfile.set('raw');
         this.halfRangeMode.set('cosine');
+        this.showFavoriteDialog.set(false);
+        this.latestHistoryEntry.set(null);
+        this.favoriteName = '';
+
+        // Pre-fetch the history entry so the star button can resolve immediately on click
+        if (this.userStore.isAuthenticated()) {
+          this.fetchLatestEntry();
+        }
       }
     });
 
@@ -460,6 +478,71 @@ export class ResultsSummaryComponent {
     } catch {
       // fallback: do nothing
     }
+  }
+
+  // ── Favorite actions ──────────────────────────────────────────────────────
+
+  openFavoriteDialog(): void {
+    const entry = this.latestHistoryEntry();
+    if (entry) {
+      this.doToggle(entry);
+    } else {
+      // Entry not loaded yet — fetch first, then toggle
+      this.favoriteLoading.set(true);
+      this.fetchLatestEntry(() => {
+        this.favoriteLoading.set(false);
+        const loaded = this.latestHistoryEntry();
+        if (loaded) this.doToggle(loaded);
+      });
+    }
+  }
+
+  private fetchLatestEntry(callback?: () => void): void {
+    this.api.getHistory({ limit: 1 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.latestHistoryEntry.set(res.entries[0] ?? null);
+          callback?.();
+        },
+        error: () => callback?.(),
+      });
+  }
+
+  private doToggle(entry: HistoryEntry): void {
+    if (entry.isFavorite) {
+      this.favoriteLoading.set(true);
+      this.api.toggleFavorite(entry.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (updated) => { this.latestHistoryEntry.set(updated); this.favoriteLoading.set(false); },
+          error: () => this.favoriteLoading.set(false),
+        });
+    } else {
+      this.showFavoriteDialog.set(true);
+    }
+  }
+
+  confirmFavorite(): void {
+    const entry = this.latestHistoryEntry();
+    if (!entry) return;
+    this.favoriteLoading.set(true);
+    this.showFavoriteDialog.set(false);
+    this.api.toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.latestHistoryEntry.set(updated);
+          this.favoriteLoading.set(false);
+          this.favoriteName = '';
+        },
+        error: () => this.favoriteLoading.set(false),
+      });
+  }
+
+  cancelFavoriteDialog(): void {
+    this.showFavoriteDialog.set(false);
+    this.favoriteName = '';
   }
 
   // ── Simplify actions ──────────────────────────────────────────────────────

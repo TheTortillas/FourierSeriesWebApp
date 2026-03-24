@@ -76,6 +76,24 @@
             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
           </svg>
         </button>
+
+        <!-- Save as favorite (authenticated users only) -->
+        @if (userStore.isAuthenticated()) {
+          <button type="button" (click)="openFavoriteDialog()"
+            [title]="latestHistoryEntry()?.isFavorite ? 'Quitar de favoritos' : 'Guardar como favorito'"
+            [class]="latestHistoryEntry()?.isFavorite
+              ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center'
+              : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center'">
+            @if (favoriteLoading()) {
+              <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+            } @else {
+              <span class="text-sm leading-none">★</span>
+            }
+          </button>
+        }
       }
     </div>
   </div>
@@ -145,6 +163,31 @@
                       bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center" />
       </div>
 
+    </div>
+  }
+
+  <!-- ── Favorite name dialog ──────────────────────────────────────────────── -->
+  @if (showFavoriteDialog()) {
+    <div class="border border-amber-300 dark:border-amber-700 rounded p-3 bg-amber-50/60 dark:bg-amber-950/20
+                shrink-0 flex items-center gap-2 flex-wrap text-xs font-mono">
+      <span class="text-amber-700 dark:text-amber-400 shrink-0">Nombre del favorito:</span>
+      <input type="text" [(ngModel)]="favoriteName"
+             placeholder="ej. Serie de cos(x)"
+             (keydown.enter)="confirmFavorite()"
+             (keydown.escape)="cancelFavoriteDialog()"
+             autofocus
+             class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700
+                    bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink
+                    focus:outline-none focus:border-amber-500" />
+      <button type="button" (click)="confirmFavorite()"
+              class="px-2.5 py-1 rounded bg-amber-500 text-white hover:bg-amber-600 transition-colors cursor-pointer shrink-0">
+        Guardar
+      </button>
+      <button type="button" (click)="cancelFavoriteDialog()"
+              class="px-2.5 py-1 rounded border border-border dark:border-dark-border
+                     text-muted dark:text-dark-muted hover:text-ink transition-colors cursor-pointer shrink-0">
+        Cancelar
+      </button>
     </div>
   }
 
