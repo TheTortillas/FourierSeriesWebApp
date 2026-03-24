@@ -132,7 +132,7 @@
 
                 <td class="px-4 py-2.5">
                   @if (entry.isFavorite) {
-                    <span class="text-amber-500" [title]="entry.name ?? 'favorito'">★</span>
+                    <span class="text-amber-500" [title]="entry.favoriteName ?? 'favorito'">★</span>
                   } @else {
                     <span class="text-muted/30">☆</span>
                   }
@@ -150,9 +150,9 @@
                                   bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
                                   rounded p-2 overflow-x-auto flex-1 whitespace-pre-wrap break-all">{{ inputJson(entry) }}</pre>
                     </div>
-                    @if (entry.isFavorite && entry.name) {
+                    @if (entry.isFavorite && entry.favoriteName) {
                       <p class="text-[10px] font-mono text-amber-600 dark:text-amber-400 mt-1.5">
-                        ★ Guardado como: "{{ entry.name }}"
+                        ★ Guardado como: "{{ entry.favoriteName }}"
                       </p>
                     }
                   </td>

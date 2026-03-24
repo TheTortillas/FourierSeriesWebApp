@@ -31,6 +31,7 @@ export interface IHistoryRepository {
     userId: string,
     limit: number,
     offset: number,
+    favoritesOnly?: boolean,
   ): Promise<HistoryRecord[]>;
   findById(id: string): Promise<HistoryRecord | null>;
   toggleFavorite(
@@ -39,7 +40,7 @@ export interface IHistoryRepository {
     name?: string,
   ): Promise<HistoryRecord>;
   delete(id: string, userId: string): Promise<void>;
-  countByUser(userId: string): Promise<number>;
+  countByUser(userId: string, favoritesOnly?: boolean): Promise<number>;
   findAll(
     limit: number,
     offset: number,

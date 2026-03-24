@@ -6,7 +6,7 @@ export interface HistoryEntry {
   executionMs: number;
   createdAt: string;
   isFavorite: boolean;
-  name?: string;
+  favoriteName: string | null;
 }
 
 export interface HistoryListResponse {

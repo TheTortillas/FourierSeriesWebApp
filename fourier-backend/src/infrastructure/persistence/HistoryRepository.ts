@@ -42,6 +42,7 @@ export class HistoryRepository implements IHistoryRepository {
     userId: string,
     limit: number,
     offset: number,
+    favoritesOnly = false,
   ): Promise<HistoryRecord[]> {
     const result = await db.query(
       `SELECT
@@ -54,7 +55,7 @@ export class HistoryRepository implements IHistoryRepository {
          execution_ms as "executionMs",
          created_at as "createdAt"
        FROM calculation_history
-       WHERE user_id = $1
+       WHERE user_id = $1${favoritesOnly ? ' AND is_favorite = true' : ''}
        ORDER BY created_at DESC
        LIMIT $2 OFFSET $3`,
       [userId, limit, offset],
@@ -121,9 +122,9 @@ export class HistoryRepository implements IHistoryRepository {
     }
   }
 
-  async countByUser(userId: string): Promise<number> {
+  async countByUser(userId: string, favoritesOnly = false): Promise<number> {
     const result = await db.query(
-      `SELECT COUNT(*) as count FROM calculation_history WHERE user_id = $1`,
+      `SELECT COUNT(*) as count FROM calculation_history WHERE user_id = $1${favoritesOnly ? ' AND is_favorite = true' : ''}`,
       [userId],
     );
     return parseInt(result.rows[0]?.count ?? "0");

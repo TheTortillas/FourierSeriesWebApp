@@ -35,12 +35,11 @@ historyRouter.get(
     try {
       const limit = parseInt(req.query["limit"] as string) || 20;
       const offset = parseInt(req.query["offset"] as string) || 0;
-      const total = await historyRepository.countByUser(req.user!.id);
-      const entries = await historyRepository.findByUser(
-        req.user!.id,
-        limit,
-        offset,
-      );
+      const favoritesOnly = req.query["favorites"] === "true";
+      const [total, entries] = await Promise.all([
+        historyRepository.countByUser(req.user!.id, favoritesOnly),
+        historyRepository.findByUser(req.user!.id, limit, offset, favoritesOnly),
+      ]);
       res.json({ entries, total, limit, offset });
     } catch (err) {
       next(err);
