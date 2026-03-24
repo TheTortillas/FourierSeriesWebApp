@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { UserStore } from '../../../core/services/auth/user.store';
+import { AuthService } from '../../../core/services/auth/auth.service';
 import { ApiService } from '../../../core/services/api/api.service';
 
 @Component({
@@ -12,6 +13,7 @@ import { ApiService } from '../../../core/services/api/api.service';
 export class NavComponent {
   readonly theme     = inject(ThemeService);
   readonly userStore = inject(UserStore);
+  readonly auth      = inject(AuthService);
   private readonly api = inject(ApiService);
 
   constructor() {

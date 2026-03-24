@@ -1,6 +1,7 @@
 import { Component, inject, afterNextRender } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ThemeService } from './core/services/theme/theme.service';
+import { AuthService } from './core/services/auth/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -9,11 +10,13 @@ import { ThemeService } from './core/services/theme/theme.service';
 })
 export class App {
   private readonly theme = inject(ThemeService);
+  private readonly auth  = inject(AuthService);
 
   constructor() {
-    // afterNextRender es SSR-safe: solo se ejecuta en el browser tras el primer render
     afterNextRender(() => {
       this.theme.applyToDocument();
+      // Intenta recuperar sesión via cookie httpOnly al iniciar la app
+      this.auth.initFromStorage();
     });
   }
 }

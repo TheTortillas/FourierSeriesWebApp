@@ -5,7 +5,6 @@
   <a routerLink="/home"
      class="flex items-center gap-2 text-ink dark:text-dark-ink
             hover:text-accent dark:hover:text-accent transition-colors group">
-    <!-- Sigma icon (sum-sign.svg path, fill=currentColor) -->
     <svg viewBox="0 0 484.21 484.21" fill="currentColor"
          class="w-4 h-4 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
          aria-hidden="true">
@@ -22,27 +21,6 @@
 
   <!-- Actions -->
   <div class="flex items-center gap-0.5">
-
-    <!-- Language (placeholder) -->
-    <button
-      type="button"
-      title="Idioma"
-      class="flex items-center gap-1 px-2 py-1.5 rounded
-             text-muted dark:text-dark-muted text-xs font-mono
-             hover:text-ink dark:hover:text-dark-ink
-             hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
-           class="w-3.5 h-3.5 shrink-0">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-      </svg>
-      <span>ES</span>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-           class="w-2.5 h-2.5 shrink-0 opacity-60">
-        <path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/>
-      </svg>
-    </button>
 
     <!-- Remaining calculations badge -->
     @if (userStore.quota()?.remaining !== null && userStore.quota()?.remaining !== undefined) {
@@ -61,20 +39,54 @@
       </span>
     }
 
-    <!-- Profile placeholder -->
-    <button
-      type="button"
-      title="Perfil"
-      class="p-2 rounded-full text-muted dark:text-dark-muted
-             hover:text-ink dark:hover:text-dark-ink
-             hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
-           class="w-4 h-4">
-        <circle cx="12" cy="8" r="4"/>
-        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-      </svg>
-    </button>
+    @if (userStore.isAuthenticated()) {
+      <!-- Authenticated: display name + logout -->
+      <span class="hidden sm:flex items-center gap-1.5 px-2 py-1.5
+                   text-xs font-mono text-muted dark:text-dark-muted select-none">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+             class="w-3.5 h-3.5 shrink-0">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        {{ userStore.displayName() }}
+      </span>
+
+      <button
+        type="button"
+        (click)="auth.logout()"
+        title="Cerrar sesión"
+        class="flex items-center gap-1 px-2 py-1.5 rounded
+               text-muted dark:text-dark-muted text-xs font-mono
+               hover:text-red-500 dark:hover:text-red-400
+               hover:bg-red-50 dark:hover:bg-red-950/30
+               transition-colors cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+             class="w-3.5 h-3.5 shrink-0">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span class="hidden sm:inline">Salir</span>
+      </button>
+
+    } @else {
+      <!-- Guest: login + register -->
+      <a routerLink="/auth/login"
+         class="flex items-center px-2 py-1.5 rounded
+                text-muted dark:text-dark-muted text-xs font-mono
+                hover:text-ink dark:hover:text-dark-ink
+                hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+        Ingresar
+      </a>
+      <a routerLink="/auth/register"
+         class="flex items-center px-2.5 py-1.5 rounded
+                bg-accent text-white text-xs font-mono
+                hover:bg-accent/90 transition-colors">
+        Registrarse
+      </a>
+    }
 
     <!-- Theme toggle -->
     <button
