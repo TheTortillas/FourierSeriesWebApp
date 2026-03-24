@@ -107,13 +107,14 @@ export class CalculatorStore {
   });
 
   /** Compiled JS functions for live canvas preview (one per segment) */
-  readonly previewFunctions = computed(() =>
-    this.segments().map((s) => ({
-      fn: this.math.compile(s.expression),
+  readonly previewFunctions = computed(() => {
+    const v = this.intVar();
+    return this.segments().map((s) => ({
+      fn: this.math.compile(s.expression, v),
       from: this.parseFloat(s.from),
       to: this.parseFloat(s.to),
-    })),
-  );
+    }));
+  });
 
   // ── Segment mutations ──────────────────────────────────────────────────────
 
@@ -149,7 +150,19 @@ export class CalculatorStore {
   }
 
   setIntVar(v: string): void {
-    this.intVar.set(v || 'x');
+    const next = v || 'x';
+    const prev = this.intVar();
+    if (prev === next) return;
+    this.intVar.set(next);
+    // Rename the old variable in all segment expressions (word-boundary safe)
+    const re = new RegExp(`\\b${prev}\\b`, 'g');
+    this.segments.update((segs) =>
+      segs.map((s) => ({
+        ...s,
+        expression:    s.expression.replace(re, next),
+        expressionTex: s.expressionTex.replace(re, next),
+      })),
+    );
   }
 
   resetForm(): void {

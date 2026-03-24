@@ -17,17 +17,17 @@ export type JsFunction = (x: number) => number;
 @Injectable({ providedIn: 'root' })
 export class MathUtilsService {
   /**
-   * Compiles a Maxima expression string to a JS function of `x`.
+   * Compiles a Maxima expression string to a JS function of `variable` (default `'x'`).
    * Returns null if the expression cannot be compiled.
    */
-  compile(maxima: string): JsFunction | null {
+  compile(maxima: string, variable = 'x'): JsFunction | null {
     if (!maxima.trim()) return null;
 
     try {
       const js = this.maximaToJs(maxima);
       // eslint-disable-next-line no-new-func
-      const fn = new Function('x', `"use strict"; return (${js});`) as JsFunction;
-      // Smoke-test: evaluate at x=0 to catch obvious syntax errors
+      const fn = new Function(variable, `"use strict"; return (${js});`) as JsFunction;
+      // Smoke-test: evaluate at 0 to catch obvious syntax errors
       const test = fn(0);
       if (typeof test !== 'number') return null;
       return fn;
@@ -37,11 +37,11 @@ export class MathUtilsService {
   }
 
   /**
-   * Evaluates a Maxima expression at a given x value.
+   * Evaluates a Maxima expression at a given value.
    * Returns NaN if compilation fails or the result is non-finite.
    */
-  evaluate(maxima: string, x: number): number {
-    const fn = this.compile(maxima);
+  evaluate(maxima: string, x: number, variable = 'x'): number {
+    const fn = this.compile(maxima, variable);
     if (!fn) return NaN;
     try {
       const result = fn(x);
@@ -60,8 +60,9 @@ export class MathUtilsService {
     from: number,
     to: number,
     n = 500,
+    variable = 'x',
   ): { x: number; y: number }[] {
-    const fn = this.compile(maxima);
+    const fn = this.compile(maxima, variable);
     if (!fn) return [];
 
     const points: { x: number; y: number }[] = [];
