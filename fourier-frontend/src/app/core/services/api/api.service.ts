@@ -224,4 +224,10 @@ export class ApiService {
     if (query?.type) params = params.set('type', query.type);
     return this.http.get<HistoryListResponse>(`${this.base}/admin/history`, { params });
   }
+
+  clearAuditLog(action: string, olderThanDays: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.base}/admin/audit/clear`, {
+      body: { action, olderThanDays },
+    });
+  }
 }
