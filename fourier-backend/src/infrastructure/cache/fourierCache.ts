@@ -13,11 +13,14 @@ const cache = new LRUCache<string, CacheValue>({
   max: config.cache.maxSize,
 });
 
+/** Bump this whenever the Maxima scripts change to invalidate stale cache entries */
+const CACHE_VERSION = "5";
+
 export function buildCacheKey(input: PiecewiseFourierInput): string {
   const segments = input.segments
     .map((s) => `${s.expression}|${s.from}|${s.to}`)
     .join("::");
-  return `${input.seriesType}::${input.intVar ?? "x"}::${segments}`;
+  return `v${CACHE_VERSION}::${input.seriesType}::${input.intVar ?? "x"}::${segments}`;
 }
 
 export function getFromCache(key: string): CacheValue | undefined {
