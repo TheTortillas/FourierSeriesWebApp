@@ -6,6 +6,10 @@ export interface MathField {
   latex(value: string): void;
   focus(): void;
   reflow(): void;
+  typedText(text: string): void;
+  write(latex: string): void;
+  cmd(latex: string): void;
+  keystroke(keys: string): void;
 }
 
 export interface MathQuillStatic {
@@ -62,7 +66,9 @@ export class MathquillService {
     return {
       spaceBehavesLikeTab: true,
       autoCommands: 'pi theta sqrt sum int',
-      autoOperatorNames: 'sin cos tan asin acos atan sinh cosh tanh log exp abs',
+      autoOperatorNames:
+        'sin cos tan asin acos atan sinh cosh tanh log ln exp abs ' +
+        'sen tg senh ctg arcsin arccos arctan',
       charsThatBreakOutOfSupSub: '+-*/=<>',
     };
   }

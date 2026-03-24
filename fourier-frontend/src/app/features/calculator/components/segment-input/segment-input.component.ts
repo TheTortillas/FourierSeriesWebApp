@@ -6,67 +6,17 @@ import { SegmentDraft, CalculatorStore } from '../../store/calculator.store';
 import { MathquillService, MathField } from '../../../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../../../core/services/math/latex-to-maxima.service';
 
-/**
- * One row of the piecewise function input.
- * All three fields use MathQuill: LaTeX → tex2max → Maxima stored in draft.
- * LaTeX is also stored (as *Tex) for the live f(x) preview.
- *
- * Layout: styled outer wrapper div + inner div that MathQuill transforms.
- * This keeps our bg/border styling intact even after MathQuill's CSS loads.
- */
+export interface KeyBtn {
+  label: string;
+  typedText?: string;
+  cmd?: string;
+  write?: string;
+  keystroke?: string;
+}
+
 @Component({
   selector: 'app-segment-input',
-  template: `
-    <div class="flex items-start gap-2 group">
-
-      <!-- Index badge -->
-      <div class="shrink-0 w-5 flex items-center justify-center
-                  text-xs text-muted font-mono mt-8">
-        {{ index() + 1 }}
-      </div>
-
-      <!-- Expression (f(x)) -->
-      <div class="flex-1 min-w-0">
-        <label class="block text-[10px] text-muted font-mono mb-0.5">f(x)</label>
-        <div [class]="wrapClass(hasExpressionError())" (click)="fields[0]?.focus()">
-          <div #mqExpr></div>
-        </div>
-        @if (hasExpressionError()) {
-          <p class="text-[10px] text-red-400 mt-0.5">{{ error() }}</p>
-        }
-        @if (conversionErrors[0]) {
-          <p class="text-[10px] text-amber-500 mt-0.5">{{ conversionErrors[0] }}</p>
-        }
-      </div>
-
-      <!-- From -->
-      <div class="w-24 shrink-0">
-        <label class="block text-[10px] text-muted font-mono mb-0.5">desde</label>
-        <div [class]="wrapClass(false)" (click)="fields[1]?.focus()">
-          <div #mqFrom></div>
-        </div>
-      </div>
-
-      <!-- To -->
-      <div class="w-24 shrink-0">
-        <label class="block text-[10px] text-muted font-mono mb-0.5">hasta</label>
-        <div [class]="wrapClass(false)" (click)="fields[2]?.focus()">
-          <div #mqTo></div>
-        </div>
-      </div>
-
-      <!-- Remove -->
-      <button
-        (click)="store.removeSegment(segment().id)"
-        [disabled]="isOnly()"
-        title="Eliminar tramo"
-        class="shrink-0 mt-6 w-7 h-7 flex items-center justify-center rounded
-               text-muted hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30
-               disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer">
-        ×
-      </button>
-    </div>
-  `,
+  templateUrl: './segment-input.component.html',
 })
 export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mqExpr') mqExprRef!: ElementRef<HTMLElement>;
@@ -82,16 +32,61 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   readonly isOnly  = input<boolean>(false);
   readonly error   = input<string | null>(null);
 
+  showKeyboard = false;
+  focusedFieldIdx: 0 | 1 | 2 = 0;
   conversionErrors: [string | null, string | null, string | null] = [null, null, null];
   fields: [MathField | null, MathField | null, MathField | null] = [null, null, null];
 
+  // Guard against latex() setter triggering the edit handler
+  private _syncingFromStore = false;
+
+  // ── Math keyboard button groups ────────────────────────────────────────────
+
+  readonly keyGroups: KeyBtn[][] = [
+    [
+      { label: 'sin',  typedText: 'sin('  },
+      { label: 'cos',  typedText: 'cos('  },
+      { label: 'tan',  typedText: 'tan('  },
+      { label: 'asin', typedText: 'asin(' },
+      { label: 'acos', typedText: 'acos(' },
+      { label: 'atan', typedText: 'atan(' },
+      { label: 'sinh', typedText: 'sinh(' },
+      { label: 'cosh', typedText: 'cosh(' },
+      { label: 'tanh', typedText: 'tanh(' },
+      { label: 'log',  typedText: 'log('  },
+      { label: 'ln',   typedText: 'ln('   },
+      { label: 'exp',  typedText: 'exp('  },
+    ],
+    [
+      { label: '√·',  cmd:        '\\sqrt'     },
+      { label: '|·|', typedText:  'abs('       },
+      { label: 'π',   typedText:  'pi'         },
+      { label: 'eˣ',  typedText:  'e^'         },
+      { label: 'xⁿ',  typedText:  '^'          },
+      { label: '(',   typedText:  '('          },
+      { label: ')',   typedText:  ')'          },
+      { label: '−',   write:      '-'          },
+      { label: '/',   typedText:  '/'          },
+      { label: '⌫',   keystroke:  'Backspace'  },
+    ],
+  ];
+
   constructor() {
-    // When the store resets a segment, clear the MathQuill fields
+    // Sync MathQuill display whenever the store segment or intVar changes
     effect(() => {
+      this.store.intVar(); // subscribe so rename triggers sync
       const seg = this.segment();
-      if (!seg.expression   && this.fields[0]) this.fields[0].latex('');
-      if (!seg.from         && this.fields[1]) this.fields[1].latex('');
-      if (!seg.to           && this.fields[2]) this.fields[2].latex('');
+      const pairs: [number, string][] = [
+        [0, seg.expressionTex || ''],
+        [1, seg.fromTex || ''],
+        [2, seg.toTex || ''],
+      ];
+      this._syncingFromStore = true;
+      for (const [i, tex] of pairs) {
+        const f = this.fields[i];
+        if (f && f.latex() !== tex) f.latex(tex);
+      }
+      this._syncingFromStore = false;
     });
   }
 
@@ -109,6 +104,7 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
         ...this.mqs.defaultConfig(),
         handlers: {
           edit: (mf: MathField) => {
+            if (this._syncingFromStore) return;
             const latex = mf.latex().trim();
             if (!latex) {
               this.conversionErrors[i] = null;
@@ -120,7 +116,6 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
               this.conversionErrors[i] = null;
               this.store.updateSegment(this.segment().id, { [maximaKey]: result.maxima, [texKey]: latex });
             } else {
-              // Still update the LaTeX for preview even if Maxima conversion fails
               this.conversionErrors[i] = result.error ?? null;
               this.store.updateSegment(this.segment().id, { [texKey]: latex });
             }
@@ -128,7 +123,6 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
         },
       });
       this.fields[i] = field;
-      // Restore initial LaTeX (e.g. default segment has x, -π, π)
       if (initialLatex && field) field.latex(initialLatex);
     }
   }
@@ -139,10 +133,26 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  // ── Actions ────────────────────────────────────────────────────────────────
+
+  focusField(idx: 0 | 1 | 2): void {
+    this.focusedFieldIdx = idx;
+    this.fields[idx]?.focus();
+  }
+
+  insertKey(btn: KeyBtn): void {
+    const field = this.fields[this.focusedFieldIdx];
+    if (!field) return;
+    field.focus();
+    if      (btn.typedText !== undefined) field.typedText(btn.typedText);
+    else if (btn.cmd       !== undefined) field.cmd(btn.cmd);
+    else if (btn.write     !== undefined) field.write(btn.write);
+    else if (btn.keystroke !== undefined) field.keystroke(btn.keystroke);
+  }
+
   readonly hasExpressionError = () =>
     !!this.error() && !this.segment().expression.trim();
 
-  /** Outer wrapper: our bg + border. MathQuill only touches the inner div. */
   wrapClass(hasError: boolean): string {
     const base =
       'w-full px-2 py-1 min-h-[2rem] text-sm rounded border cursor-text ' +

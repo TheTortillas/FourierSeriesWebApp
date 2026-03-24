@@ -88,7 +88,7 @@ __A0_FLOAT_VAL__: block(
   [r: errcatch(float(realpart(rectform(__A0_CLEAN__))))],
   if r = [] or not numberp(first(r))
   then block([q: errcatch(${quadIntegralA0})],
-    if q = [] then "NaN" else q)
+    if q = [] then "NaN" else first(q))
   else first(r))$
 print("__A0_FLOAT__")$
 print(string(__A0_FLOAT_VAL__))$

@@ -33,13 +33,36 @@ export class LatexToMaximaService {
     }
 
     try {
-      const raw: string = this.converter.toMaxima(latex.trim());
+      const preprocessed = this.preProcess(latex.trim());
+      const raw: string = this.converter.toMaxima(preprocessed);
       const maxima = this.postProcess(raw);
       return { maxima, ok: true };
     } catch (e) {
       const error = e instanceof Error ? e.message : String(e);
       return { maxima: '', ok: false, error };
     }
+  }
+
+  /**
+   * Normalise LaTeX before tex2max sees it:
+   * - Spanish operator names (sen, tg, senh, ctg) → standard LaTeX
+   * - arcsin/arccos/arctan → asin/acos/atan operatorname (Maxima names)
+   * - \\ln → \\log (Maxima's natural-log function is log)
+   */
+  private preProcess(latex: string): string {
+    return latex
+      .replace(/\\operatorname\{sen\}/g,  '\\sin')
+      .replace(/\\operatorname\{tg\}/g,   '\\tan')
+      .replace(/\\operatorname\{senh\}/g, '\\sinh')
+      .replace(/\\operatorname\{ctg\}/g,  '\\cot')
+      .replace(/\\arcsin/g, '\\operatorname{asin}')
+      .replace(/\\arccos/g, '\\operatorname{acos}')
+      .replace(/\\arctan/g, '\\operatorname{atan}')
+      .replace(/\\operatorname\{arcsin\}/g, '\\operatorname{asin}')
+      .replace(/\\operatorname\{arccos\}/g, '\\operatorname{acos}')
+      .replace(/\\operatorname\{arctan\}/g, '\\operatorname{atan}')
+      .replace(/\\operatorname\{ln\}/g, '\\log')
+      .replace(/\\ln\b/g, '\\log');
   }
 
   /**
@@ -62,7 +85,15 @@ export class LatexToMaximaService {
   private postProcess(raw: string): string {
     return raw
       .replace(/\bpi\b/g, '%pi')
-      // Replace standalone `e` (not part of a longer identifier) with `%e`
-      .replace(/(?<![a-zA-Z0-9_%])e(?![a-zA-Z0-9_%])/g, '%e');
+      .replace(/(?<![a-zA-Z0-9_%])e(?![a-zA-Z0-9_%])/g, '%e')
+      // Maxima function name normalization
+      .replace(/\barcsin\b/g, 'asin')
+      .replace(/\barccos\b/g, 'acos')
+      .replace(/\barctan\b/g, 'atan')
+      .replace(/\bln\b/g,     'log')
+      .replace(/\bsen\b/g,    'sin')
+      .replace(/\btg\b/g,     'tan')
+      .replace(/\bsenh\b/g,   'sinh')
+      .replace(/\bctg\b/g,    'cot');
   }
 }
