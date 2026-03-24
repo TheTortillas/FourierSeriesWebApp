@@ -70,10 +70,11 @@ export class AuthService {
   initFromStorage(): void {
     this.store.setLoading(true);
     this.refresh().subscribe({
-      next: () => this.store.setLoading(false),
+      next: () => { this.store.setLoading(false); this.store.setInitialized(); },
       error: () => {
         this.clearTokens();
         this.store.setLoading(false);
+        this.store.setInitialized();
       },
     });
   }

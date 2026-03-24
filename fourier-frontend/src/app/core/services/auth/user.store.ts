@@ -7,14 +7,17 @@ import { User, QuotaResponse } from '../../../domain';
  */
 @Injectable({ providedIn: 'root' })
 export class UserStore {
-  private readonly _user = signal<User | null>(null);
-  private readonly _loading = signal(false);
-  private readonly _quota = signal<QuotaResponse | null>(null);
+  private readonly _user        = signal<User | null>(null);
+  private readonly _loading     = signal(false);
+  private readonly _quota       = signal<QuotaResponse | null>(null);
+  private readonly _initialized = signal(false);
 
   // Señales públicas de solo lectura
-  readonly user = this._user.asReadonly();
-  readonly loading = this._loading.asReadonly();
-  readonly quota = this._quota.asReadonly();
+  readonly user        = this._user.asReadonly();
+  readonly loading     = this._loading.asReadonly();
+  readonly quota       = this._quota.asReadonly();
+  /** true una vez que initFromStorage() completó (con o sin sesión). */
+  readonly initialized = this._initialized.asReadonly();
 
   // Señales derivadas
   readonly isAuthenticated = computed(() => this._user() !== null);
@@ -40,5 +43,9 @@ export class UserStore {
 
   setQuota(quota: QuotaResponse): void {
     this._quota.set(quota);
+  }
+
+  setInitialized(): void {
+    this._initialized.set(true);
   }
 }
