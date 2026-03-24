@@ -1,0 +1,512 @@
+/* ═══════════════════════════════════════════════════════════════════
+   fourier_transforms.mac  —  Biblioteca unificada de Transformadas
+   Versión backend — cargada por los wrappers de transforms/
+   ═══════════════════════════════════════════════════════════════════ */
+
+display2d: false$
+%iargs: false$
+
+declare(delta, real)$
+declare(u,     real)$
+declare(sgn,   real)$
+
+/* clean_integral se carga desde el wrapper, no aquí */
+
+/* ════════════════════════════════════════════════════════════════════
+   BLOQUE 2 — Auxiliares
+   ════════════════════════════════════════════════════════════════════ */
+
+FT_is_minf(x) := is(x = minf) or is(x = -inf)$
+FT_is_inf(x)  := is(x = inf)  or is(x = +inf)$
+
+FT_delta_shift(expr, t_var) := block(
+    [arg, res],
+    res: false,
+    if not atom(expr) then (
+        if is(op(expr) = 'delta) then (
+            arg: part(expr, 1),
+            if arg = t_var
+            then res: 0
+            else res: ratsimp(t_var - arg)
+        )
+    ),
+    res
+)$
+
+FT_match_delta(expr, t_var) := block(
+    [e, sh, delta_part, coef, sh2, res],
+    e: expand(expr),
+    res: false,
+    if not atom(e) then (
+        sh: FT_delta_shift(e, t_var),
+        if is(sh # false)
+        then res: [1, sh]
+        else if is(op(e) = "*") then (
+            delta_part: false,
+            coef: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'delta)
+                then delta_part: s
+                else coef: coef * s
+            ),
+            if is(delta_part # false) then (
+                sh2: FT_delta_shift(delta_part, t_var),
+                if is(sh2 # false) then res: [coef, sh2]
+            )
+        )
+    ),
+    res
+)$
+
+FT_match_u(expr, t_var) := block(
+    [e, u_part, coef, res],
+    e: expand(expr),
+    res: false,
+    if not atom(e) then (
+        if is(op(e) = 'u) and part(e,1) = t_var
+        then res: [1]
+        else if is(op(e) = "*") then (
+            u_part: false,
+            coef: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'u) and part(s,1) = t_var
+                then u_part: s
+                else coef: coef * s
+            ),
+            if is(u_part # false) then res: [coef]
+        )
+    ),
+    res
+)$
+
+FT_match_sgn(expr, t_var) := block(
+    [e, sgn_part, coef, res],
+    e: expand(expr),
+    res: false,
+    if not atom(e) then (
+        if is(op(e) = 'sgn) and part(e,1) = t_var
+        then res: [1]
+        else if is(op(e) = "*") then (
+            sgn_part: false,
+            coef: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'sgn) and part(s,1) = t_var
+                then sgn_part: s
+                else coef: coef * s
+            ),
+            if is(sgn_part # false) then res: [coef]
+        )
+    ),
+    res
+)$
+
+/* ════════════════════════════════════════════════════════════════════
+   BLOQUE 3 — Core
+   ════════════════════════════════════════════════════════════════════ */
+
+FT_expand_abs(trozo, t_var) := block(
+    [f_i, ai, bi, f_neg, f_pos, res],
+    f_i : trozo[1],
+    ai  : trozo[2],
+    bi  : trozo[3],
+    if freeof('abs, f_i)
+    then res: [trozo]
+    else (
+        if float(ai) >= 0
+        then res: [[ratsimp(subst(abs(t_var) =  t_var, f_i)), ai, bi]]
+        else if float(bi) <= 0
+        then res: [[ratsimp(subst(abs(t_var) = -t_var, f_i)), ai, bi]]
+        else (
+            f_neg: ratsimp(subst(abs(t_var) = -t_var, f_i)),
+            f_pos: ratsimp(subst(abs(t_var) =  t_var, f_i)),
+            res: [[f_neg, ai, 0], [f_pos, 0, bi]]
+        )
+    ),
+    res
+)$
+
+FT_raw(f_expr, t_var, w_var, a, b) := block(
+    [kernel, raw, cleaned],
+    kernel : f_expr * exp(-%i * w_var * t_var),
+    raw    : errcatch(integrate(kernel, t_var, a, b)),
+    if raw = [] then raw: 'failed
+    else (
+        raw : first(raw),
+        if not freeof('gamma_incomplete, raw) then (
+            cleaned : errcatch(clean_integral(raw, t_var)),
+            if cleaned # [] then raw : first(cleaned)
+        )
+    ),
+    raw
+)$
+
+FT_simplify(expr) := block(
+    [e, ef],
+    e  : ratsimp(rectform(expr)),
+    ef : errcatch(factor(e)),
+    if ef # [] then first(ef) else e
+)$
+
+FT_exists(expr) :=
+    freeof('integrate,        expr) and
+    freeof('limit,            expr) and
+    freeof('gamma_incomplete, expr)$
+
+IFT_expand_abs(trozo, w_var) := block(
+    [F_i, ai, bi, F_neg, F_pos, res],
+    F_i : trozo[1],
+    ai  : trozo[2],
+    bi  : trozo[3],
+    if freeof('abs, F_i)
+    then res: [trozo]
+    else (
+        if float(ai) >= 0
+        then res: [[ratsimp(subst(abs(w_var) =  w_var, F_i)), ai, bi]]
+        else if float(bi) <= 0
+        then res: [[ratsimp(subst(abs(w_var) = -w_var, F_i)), ai, bi]]
+        else (
+            F_neg: ratsimp(subst(abs(w_var) = -w_var, F_i)),
+            F_pos: ratsimp(subst(abs(w_var) =  w_var, F_i)),
+            res: [[F_neg, ai, 0], [F_pos, 0, bi]]
+        )
+    ),
+    res
+)$
+
+IFT_raw(F_expr, w_var, t_var, a, b) := block(
+    [kernel, raw, cleaned],
+    kernel : (1/(2*%pi)) * F_expr * exp(%i * w_var * t_var),
+    raw    : errcatch(integrate(kernel, w_var, a, b)),
+    if raw = [] then raw: 'failed
+    else (
+        raw : first(raw),
+        if not freeof('gamma_incomplete, raw) then (
+            cleaned : errcatch(clean_integral(raw, w_var)),
+            if cleaned # [] then raw : first(cleaned)
+        )
+    ),
+    raw
+)$
+
+IFT_simplify(expr) := block(
+    [e, ef],
+    e  : ratsimp(rectform(expr)),
+    ef : errcatch(factor(e)),
+    if ef # [] then first(ef) else e
+)$
+
+IFT_exists(expr) :=
+    freeof('integrate,        expr) and
+    freeof('limit,            expr) and
+    freeof('gamma_incomplete, expr)$
+
+/* ════════════════════════════════════════════════════════════════════
+   BLOQUE 4 — Pattern lookups
+   ════════════════════════════════════════════════════════════════════ */
+
+FT_pattern_lookup(f_expr, t_var, w_var) := block(
+    [e, dm, um, sm, k, a, w0, arg, res],
+    e: expand(f_expr),
+    res: false,
+
+    dm: FT_match_delta(e, t_var),
+    if is(dm # false) then (
+        k: dm[1],  a: dm[2],
+        if a = 0
+        then res: [k * 1,                "delta(t) -> 1"]
+        else res: [k * exp(-%i*w_var*a), concat("delta(t-a) -> e^{-iwa}, a=", string(a))]
+    ),
+
+    if is(res = false) then (
+        if freeof(t_var, e) and e # 0 then
+            res: [2*%pi*e*delta(w_var), concat("c -> 2pi*c*delta(w), c=", string(e))]
+    ),
+
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "^") then (
+            arg: part(e, 2),
+            if not freeof(%i, arg) then (
+                w0: ratsimp(arg / (%i * t_var)),
+                if freeof(t_var, w0) then
+                    res: [2*%pi*delta(w_var - w0),
+                          concat("e^{iw0t} -> 2pi*delta(w-w0), w0=", string(w0))]
+            )
+        )
+    ),
+
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = 'cos) then (
+            arg: part(e, 1),
+            w0: ratsimp(arg / t_var),
+            if freeof(t_var, w0) then
+                res: [%pi*(delta(w_var-w0) + delta(w_var+w0)),
+                      concat("cos(w0t) -> pi[delta(w-w0)+delta(w+w0)], w0=", string(w0))]
+        )
+    ),
+
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = 'sin) then (
+            arg: part(e, 1),
+            w0: ratsimp(arg / t_var),
+            if freeof(t_var, w0) then
+                res: [%i*%pi*(delta(w_var+w0) - delta(w_var-w0)),
+                      concat("sin(w0t) -> i*pi[delta(w+w0)-delta(w-w0)], w0=", string(w0))]
+        )
+    ),
+
+    if is(res = false) then (
+        um: FT_match_u(e, t_var),
+        if is(um # false) then (
+            k: um[1],
+            res: [k * (%pi*delta(w_var) + 1/(%i*w_var)), "u(t) -> pi*delta(w) + 1/(iw)"]
+        )
+    ),
+
+    if is(res = false) then (
+        sm: FT_match_sgn(e, t_var),
+        if is(sm # false) then (
+            k: sm[1],
+            res: [k * 2/(%i*w_var), "sgn(t) -> 2/(iw)"]
+        )
+    ),
+
+    res
+)$
+
+IFT_pattern_lookup(F_expr, w_var, t_var) := block(
+    [e, dm, k, a, s, has_delta, has_iw, res],
+    e: expand(F_expr),
+    res: false,
+
+    if is(res = false) then (
+        if e = 1 then res: [delta(t_var), "1 -> delta(t)"]
+    ),
+
+    if is(res = false) then (
+        dm: FT_match_delta(e, w_var),
+        if is(dm # false) then (
+            k: dm[1],  a: dm[2],
+            if a = 0
+            then res: [k/(2*%pi),                 "delta(w) -> 1/(2pi)"]
+            else res: [k*exp(%i*a*t_var)/(2*%pi), concat("delta(w-a) -> e^{iat}/(2pi), a=", string(a))]
+        )
+    ),
+
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "*") then (
+            block(
+                [has_2pi, rest, dm2],
+                has_2pi: false,
+                rest: 1,
+                for s in args(e) do (
+                    if ratsimp(s - 2*%pi) = 0
+                    then has_2pi: true
+                    else rest: rest * s
+                ),
+                if has_2pi then (
+                    dm2: FT_match_delta(rest, w_var),
+                    if is(dm2 # false) then (
+                        k: dm2[1],  a: dm2[2],
+                        res: [k * exp(%i*a*t_var),
+                              concat("2pi*delta(w-a) -> e^{iat}, a=", string(a))]
+                    )
+                )
+            )
+        )
+    ),
+
+    if is(res = false) then (
+        if ratsimp(e - 1/(%i*w_var)) = 0 then
+            res: [sgn(t_var)/2, "1/(iw) -> sgn(t)/2"]
+    ),
+
+    if is(res = false) then (
+        if not freeof('delta, e) and not freeof(w_var, e) then (
+            has_delta: false,
+            has_iw: false,
+            for s in (if is(op(e) = "+") then args(e) else [e]) do (
+                if not freeof('delta, s) then has_delta: true,
+                if ratsimp(s - 1/(%i*w_var)) = 0 then has_iw: true
+            ),
+            if has_delta and has_iw then
+                res: [u(t_var), "pi*delta(w)+1/(iw) -> u(t)"]
+        )
+    ),
+
+    res
+)$
+
+/* ════════════════════════════════════════════════════════════════════
+   BLOQUE 5 — FT principal (sin output, solo devuelve valores)
+   ════════════════════════════════════════════════════════════════════ */
+
+FT(FUNC_INPUT, t_var, w_var) := block(
+    [n_orig, expanded, pieces, F_acum, F,
+     F_real, F_imag, exists, had_error, pattern, done,
+     trozo, f_i, ai, bi, contrib],
+
+    declare(w_var, real),
+
+    n_orig : length(FUNC_INPUT),
+    done   : false,
+
+    if n_orig = 1 then (
+        block([tr],
+            tr: FUNC_INPUT[1],
+            if FT_is_minf(tr[2]) and FT_is_inf(tr[3]) then (
+                pattern: FT_pattern_lookup(tr[1], t_var, w_var),
+                if is(pattern # false) then (
+                    F      : pattern[1],
+                    F_real : ratsimp(realpart(F)),
+                    F_imag : ratsimp(imagpart(F)),
+                    done   : true
+                )
+            )
+        )
+    ),
+
+    if not done then (
+        expanded : [],
+        for i : 1 thru n_orig do
+            expanded : append(expanded, FT_expand_abs(FUNC_INPUT[i], t_var)),
+
+        pieces    : length(expanded),
+        F_acum    : 0,
+        had_error : false,
+
+        for i : 1 thru pieces do (
+            trozo   : expanded[i],
+            f_i     : trozo[1],
+            ai      : trozo[2],
+            bi      : trozo[3],
+            contrib : FT_raw(f_i, t_var, w_var, ai, bi),
+            if contrib = 'failed
+            then (
+                had_error : true,
+                F_acum : F_acum + 'integrate(
+                    f_i * exp(-%i * w_var * t_var), t_var, ai, bi)
+            )
+            else F_acum : F_acum + contrib
+        ),
+
+        F : errcatch(FT_simplify(F_acum)),
+        F : if F = [] then F_acum else first(F),
+
+        if not freeof('expintegral_shi, F) or
+           not freeof('expintegral_chi, F) then (
+            F : errcatch(simplify_expint(F)),
+            F : if F = [] then F else first(F)
+        ),
+
+        exists : FT_exists(F) and not had_error,
+
+        F_real : errcatch(ratsimp(realpart(F))),
+        F_real : if F_real = [] then 'unknown else first(F_real),
+        F_imag : errcatch(ratsimp(imagpart(F))),
+        F_imag : if F_imag = [] then 'unknown else first(F_imag)
+    ),
+
+    [F, F_real, F_imag, if done then true else exists]
+)$
+
+/* ════════════════════════════════════════════════════════════════════
+   BLOQUE 6 — IFT principal (sin output, solo devuelve valores)
+   ════════════════════════════════════════════════════════════════════ */
+
+IFT(FUNC_INPUT, w_var, t_var) := block(
+    [n_orig, expanded, pieces, f_acum, f,
+     f_real, f_imag, exists, had_error, pattern, done,
+     trozo, F_i, ai, bi, contrib],
+
+    declare(t_var, real),
+
+    n_orig : length(FUNC_INPUT),
+    done   : false,
+
+    if n_orig = 1 then (
+        block([tr],
+            tr: FUNC_INPUT[1],
+            if FT_is_minf(tr[2]) and FT_is_inf(tr[3]) then (
+                pattern: IFT_pattern_lookup(tr[1], w_var, t_var),
+                if is(pattern # false) then (
+                    f      : pattern[1],
+                    f_real : ratsimp(realpart(f)),
+                    f_imag : ratsimp(imagpart(f)),
+                    done   : true
+                )
+            )
+        )
+    ),
+
+    if not done then (
+        expanded : [],
+        for i : 1 thru n_orig do
+            expanded : append(expanded, IFT_expand_abs(FUNC_INPUT[i], w_var)),
+
+        pieces    : length(expanded),
+        f_acum    : 0,
+        had_error : false,
+
+        for i : 1 thru pieces do (
+            trozo   : expanded[i],
+            F_i     : trozo[1],
+            ai      : trozo[2],
+            bi      : trozo[3],
+            contrib : IFT_raw(F_i, w_var, t_var, ai, bi),
+            if contrib = 'failed
+            then (
+                had_error : true,
+                f_acum : f_acum + (1/(2*%pi)) * 'integrate(
+                    F_i * exp(%i * w_var * t_var), w_var, ai, bi)
+            )
+            else f_acum : f_acum + contrib
+        ),
+
+        f : errcatch(IFT_simplify(f_acum)),
+        f : if f = [] then f_acum else first(f),
+
+        if not freeof('expintegral_shi, f) or
+           not freeof('expintegral_chi, f) then (
+            f : errcatch(simplify_expint(f)),
+            f : if f = [] then f else first(f)
+        ),
+
+        exists : IFT_exists(f) and not had_error,
+
+        f_real : errcatch(ratsimp(realpart(f))),
+        f_real : if f_real = [] then 'unknown else first(f_real),
+        f_imag : errcatch(ratsimp(imagpart(f))),
+        f_imag : if f_imag = [] then 'unknown else first(f_imag)
+    ),
+
+    [f, f_real, f_imag, if done then true else exists]
+)$
+
+/* ════════════════════════════════════════════════════════════════════
+   BLOQUE 7 — IFT_bilateral
+   ════════════════════════════════════════════════════════════════════ */
+
+IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
+    [rp, rn, f_pos, f_neg, f_combined, fn_flip, dcheck],
+
+    assume(t_var > 0),
+    rp    : IFT(FUNC_INPUT, w_var, t_var),
+    f_pos : first(rp),
+    forget(t_var > 0),
+
+    assume(t_var < 0),
+    rn    : IFT(FUNC_INPUT, w_var, t_var),
+    f_neg : first(rn),
+    forget(t_var < 0),
+
+    fn_flip: ratsimp(subst(t_var = -t_var, f_neg)),
+    dcheck:  ratsimp(fn_flip - f_pos),
+
+    f_combined: if dcheck = 0
+        then ratsimp(subst(t_var = abs(t_var), f_pos))
+        else if ratsimp(f_neg) = 0 then f_pos
+        else if ratsimp(f_pos) = 0 then f_neg
+        else false,
+
+    [f_pos, f_neg, f_combined]
+)$

@@ -8,6 +8,7 @@ import type {
   InverseFourierTransformResult,
   PiecewiseSegment,
 } from "../../domain/types/fourier.types";
+import path from "path/win32";
 
 const TRANSFORM_MARKERS = [
   "__EXISTS__",
@@ -30,7 +31,17 @@ export class FourierTransformService {
     const intVar = input.intVar ?? "t";
     const transVar = input.transVar ?? "w";
 
-    const script = await loadScript("transforms", "fourier_transform.mac");
+    const libPath = path
+      .join(process.cwd(), "src/scripts/maxima/lib/fourier_transforms.mac")
+      .replace(/\\/g, "/");
+    const cleanPath = path
+      .join(process.cwd(), "src/scripts/maxima/auxiliary/clean_integral.mac")
+      .replace(/\\/g, "/");
+
+    const script = (await loadScript("transforms", "fourier_transform.mac"))
+      .replace("CLEAN_INTEGRAL_PATH", cleanPath)
+      .replace("LIB_PATH", libPath);
+
     const funcInput = this.buildFuncInput(input.segments);
 
     const fullScript = `
@@ -42,7 +53,11 @@ kill(all)$
 `;
 
     const result = await this.runner.run({ script: fullScript });
-
+    console.log("FT RAW:", JSON.stringify(result.raw.slice(0, 500)));
+    console.log("SUCCESS:", result.success);
+    console.log("ERROR:", result.error);
+    console.log("CLEAN PATH:", cleanPath);
+    console.log("LIB PATH:", libPath);
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
     }
@@ -96,42 +111,29 @@ kill(all)$
     const startTime = Date.now();
     const intVar = input.intVar ?? "w";
     const transVar = input.transVar ?? "t";
-    const regions = input.regions ?? [
-      { condition: `${transVar} > 0` },
-      { condition: `${transVar} < 0` },
-    ];
 
-    const script = await loadScript(
+    const libPath = path
+      .join(process.cwd(), "src/scripts/maxima/lib/fourier_transforms.mac")
+      .replace(/\\/g, "/");
+    const cleanPath = path
+      .join(process.cwd(), "src/scripts/maxima/auxiliary/clean_integral.mac")
+      .replace(/\\/g, "/");
+
+    const scriptRaw = await loadScript(
       "transforms",
       "inverse_fourier_transform.mac",
     );
-    const funcInput = this.buildFuncInput(input.segments);
+    const script = scriptRaw
+      .replace("CLEAN_INTEGRAL_PATH", cleanPath)
+      .replace("LIB_PATH", libPath);
 
-    const regionsScript = regions
-      .map((region, idx) => {
-        const assumptions = region.condition
-          .split(",")
-          .map((c) => `parse_string("${c.trim()}")`)
-          .join(", ");
-        return `
-result_${idx}: errcatch(compute_inverse([${assumptions}]))$
-print("__REGION_${idx}__")$
-if result_${idx} = [] 
-  then print("__FAILED__")
-  else (
-    print(string(first(result_${idx}))),
-    print("__TEX_${idx}__"),
-    tex(first(result_${idx}))
-  )$`;
-      })
-      .join("\n");
+    const funcInput = this.buildFuncInput(input.segments);
 
     const fullScript = `
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 TRANSVAR: ${transVar};
 ${script}
-${regionsScript}
 kill(all)$
 `;
 
@@ -139,44 +141,60 @@ kill(all)$
       script: fullScript,
       timeoutMs: 60000,
     });
+    console.log("IFT RAW:", JSON.stringify(result.raw.slice(0, 500)));
+    console.log("SUCCESS:", result.success);
+    console.log("ERROR:", result.error);
 
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
     }
 
     const raw = result.raw;
-    const results: InverseFourierTransformRegionResult[] = [];
-    let exists = true;
 
-    for (let idx = 0; idx < regions.length; idx++) {
-      const regionRaw = this.extractBetween(
-        raw,
-        `__REGION_${idx}__`,
-        idx < regions.length - 1 ? `__REGION_${idx + 1}__` : null,
-      );
-
-      if (regionRaw.includes("__FAILED__")) {
-        exists = false;
-        continue;
-      }
-
-      const fMaxima = this.extractBetween(regionRaw, "", `__TEX_${idx}__`)
+    const fPosMaxima = this.extractBetween(
+      raw,
+      "__F_POS_MAXIMA__",
+      "__F_POS_TEX__",
+    )
+      .replace(/false/g, "")
+      .trim();
+    const fPosTex = this.extractTex(
+      this.extractBetween(raw, "__F_POS_TEX__", "__F_NEG_MAXIMA__"),
+    );
+    const fNegMaxima = this.extractBetween(
+      raw,
+      "__F_NEG_MAXIMA__",
+      "__F_NEG_TEX__",
+    )
+      .replace(/false/g, "")
+      .trim();
+    const fNegTex = this.extractTex(
+      this.extractBetween(raw, "__F_NEG_TEX__", "__HAS_COMBINED__"),
+    );
+    const hasCombined =
+      this.extractBetween(raw, "__HAS_COMBINED__", "__F_COMBINED_MAXIMA__")
         .replace(/false/g, "")
-        .trim();
-      const fTex = this.extractTex(
-        this.extractBetween(regionRaw, `__TEX_${idx}__`, null),
-      );
-
-      results.push({
-        condition: regions[idx]!.condition,
-        f: { maxima: fMaxima, tex: fTex },
-      });
-    }
+        .trim() === "true";
+    const fCombinedMaxima = this.extractBetween(
+      raw,
+      "__F_COMBINED_MAXIMA__",
+      "__F_COMBINED_TEX__",
+    )
+      .replace(/false/g, "")
+      .trim();
+    const fCombinedTex = this.extractTex(
+      this.extractBetween(raw, "__F_COMBINED_TEX__", null),
+    );
 
     return {
       input,
-      exists,
-      results: exists ? results : undefined,
+      exists: fPosMaxima !== "" || fNegMaxima !== "",
+      fPositive: fPosMaxima ? { maxima: fPosMaxima, tex: fPosTex } : undefined,
+      fNegative: fNegMaxima ? { maxima: fNegMaxima, tex: fNegTex } : undefined,
+      fCombined:
+        hasCombined && fCombinedMaxima
+          ? { maxima: fCombinedMaxima, tex: fCombinedTex }
+          : undefined,
       executionTimeMs: Date.now() - startTime,
     };
   }

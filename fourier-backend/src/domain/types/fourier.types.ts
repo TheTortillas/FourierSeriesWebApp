@@ -214,7 +214,9 @@ export interface InverseFourierTransformRegionResult {
 export interface InverseFourierTransformResult {
   input: InverseFourierTransformInput;
   exists: boolean;
-  results?: InverseFourierTransformRegionResult[];
+  fPositive?: SymbolicExpression;
+  fNegative?: SymbolicExpression;
+  fCombined?: SymbolicExpression;
   executionTimeMs: number;
 }
 
