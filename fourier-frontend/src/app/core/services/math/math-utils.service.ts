@@ -120,7 +120,11 @@ export class MathUtilsService {
       .replace(/\bceiling\b/g, 'Math.ceil')
       .replace(/\bmax\b/g, 'Math.max')
       .replace(/\bmin\b/g, 'Math.min')
-      .replace(/\bsign\b/g, 'Math.sign');
+      .replace(/\bsign\b/g, 'Math.sign')
+      // Special functions for Fourier / transform contexts
+      .replace(/\bdelta\b\s*\([^)]*\)/g, '0')             // Dirac delta → 0 (not plottable as a function)
+      .replace(/\bsgn\b\s*\(/g, 'Math.sign(')             // signum
+      .replace(/\bu\b\s*\(([^)]*)\)/g, '($1 >= 0 ? 1 : 0)'); // unit step
 
     // Fix JS SyntaxError: unary minus directly before ** is ambiguous.
     // e.g. (-x**2) → (-(x**2))

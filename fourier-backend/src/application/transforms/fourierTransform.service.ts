@@ -141,9 +141,9 @@ kill(all)$
       script: fullScript,
       timeoutMs: 60000,
     });
-    console.log("IFT RAW:", JSON.stringify(result.raw.slice(0, 500)));
-    console.log("SUCCESS:", result.success);
-    console.log("ERROR:", result.error);
+    // console.log("IFT RAW:", JSON.stringify(result.raw.slice(0, 500)));
+    // console.log("SUCCESS:", result.success);
+    // console.log("ERROR:", result.error);
 
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);

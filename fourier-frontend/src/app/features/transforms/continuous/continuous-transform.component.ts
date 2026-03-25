@@ -1,5 +1,16 @@
-import { Component, computed, inject, signal, DestroyRef } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  DestroyRef,
+  viewChild,
+  ElementRef,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -10,6 +21,7 @@ import {
 } from '../../../shared/components/function-plot/function-plot.component';
 import { ApiService } from '../../../core/services/api/api.service';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
+import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
 import {
   FourierTransformResponse,
@@ -62,7 +74,10 @@ const VAR_PAIRS: VarPair[] = [
 export class ContinuousTransformComponent {
   readonly api = inject(ApiService);
   readonly plotter = inject(PlottingService);
+  private readonly mathUtils = inject(MathUtilsService);
   readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly mode = signal<'ft' | 'ift'>('ft');
   readonly varPairId = signal<string>('t-w');
@@ -80,7 +95,71 @@ export class ContinuousTransformComponent {
   readonly showImag = signal(true);
   readonly showMag = signal(false);
 
+  // ── Canvas style settings ────────────────────────────────────────────────
+  readonly xAxisFormat = signal<'integer' | 'pi' | 'e'>('integer');
+  readonly originalColor = signal('#c14030');
+  readonly resultColor = signal('#2563eb');
+  readonly imagColor = signal('#d97706');
+  readonly magColor = signal('#16a34a');
+  readonly originalLineWidth = signal(2);
+  readonly resultLineWidth = signal(2);
+  readonly showCanvasSettings = signal(false);
+
+  // ── Share / fullscreen ────────────────────────────────────────────────────
+  readonly showShareDialog = signal(false);
+  readonly urlCopied = signal(false);
+  readonly isFullscreen = signal(false);
+
+  readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
+  readonly plotComponent = viewChild(FunctionPlotComponent);
+
   readonly varPairs = VAR_PAIRS;
+
+  private urlPopulated = false;
+
+  constructor() {
+    // Track native fullscreen changes
+    if (typeof document !== 'undefined') {
+      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
+      document.addEventListener('fullscreenchange', handler);
+      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
+    }
+
+    // ── 1. Restore state from URL ─────────────────────────────────────────
+    const encoded = this.route.snapshot.queryParamMap.get('s');
+    let needsCalculate = false;
+    if (encoded) needsCalculate = this.restoreState(encoded);
+
+    // ── 2. Auto-calculate after browser render ────────────────────────────
+    afterNextRender(() => {
+      if (needsCalculate) {
+        needsCalculate = false;
+        this.calculate();
+      }
+    });
+
+    // ── 3. Sync result → URL ──────────────────────────────────────────────
+    effect(() => {
+      const ft = this.ftResult();
+      const ift = this.iftResult();
+      if (ft || ift) {
+        this.urlPopulated = true;
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { s: this.encodeState() },
+          replaceUrl: true,
+        });
+      } else if (this.urlPopulated) {
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true,
+        });
+      }
+    });
+  }
+
+  // ── Computed ──────────────────────────────────────────────────────────────
 
   readonly activePair = computed<VarPair>(() => {
     const id = this.varPairId();
@@ -117,7 +196,7 @@ export class ContinuousTransformComponent {
     this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()),
   );
 
-  // ── Canvas layers ────────────────────────────────────────────────────────
+  // ── Canvas layers ─────────────────────────────────────────────────────────
 
   readonly layers = computed<PlotLayer[]>(() => {
     const ft = this.ftResult();
@@ -131,27 +210,37 @@ export class ContinuousTransformComponent {
     const showIm = this.showImag();
     const showM = this.showMag();
 
-    const plotter = this.plotter;
+    const origColor = this.originalColor();
+    const reColor = this.resultColor();
+    const imColor = this.imagColor();
+    const mgColor = this.magColor();
+    const origLW = this.originalLineWidth();
+    const resLW = this.resultLineWidth();
 
-    const ORIGINAL_COLOR = 'hsla(10,  70%, 45%, 0.75)';
-    const REAL_COLOR = 'hsla(217, 70%, 55%, 0.85)';
-    const IMAG_COLOR = 'hsla(38,  80%, 50%, 0.85)';
-    const MAG_COLOR = 'hsla(145, 60%, 45%, 0.85)';
+    const plotter = this.plotter;
 
     const layer: PlotLayer = {
       curves: [],
       onDraw: (ctx, vp) => {
-        // ── Original input function (piecewise) ──────────────────────────
+        // ── Original input function (piecewise) ─────────────────────────
         if (showOrig) {
           for (const seg of segs) {
-            const fn = this.buildMaximaFn(seg.expression, intVariable);
+            const fn = this.mathUtils.compile(seg.expression, intVariable);
             const from = this.parseLimit(seg.from);
             const to = this.parseLimit(seg.to);
-            if (fn && isFinite(from) && isFinite(to)) {
+            if (!fn) continue;
+            if (isFinite(from) && isFinite(to)) {
+              // Bounded segment: sample exactly within [from, to]
               plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
-                color: ORIGINAL_COLOR,
-                lineWidth: 2,
+                color: origColor,
+                lineWidth: origLW,
               });
+            } else {
+              // Infinite/semi-infinite domain: gate function and use
+              // viewport-based sampling so the canvas always shows something.
+              // x >= -Infinity and x <= Infinity are always true in JS.
+              const gated = (x: number) => (x >= from && x <= to ? fn(x) : NaN);
+              plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW });
             }
           }
         }
@@ -160,40 +249,36 @@ export class ContinuousTransformComponent {
         if (ft?.exists) {
           const reFn =
             showRe && ft.realPart?.maxima
-              ? this.buildMaximaFn(ft.realPart.maxima, transVariable)
+              ? this.mathUtils.compile(ft.realPart.maxima, transVariable)
               : null;
           const imFn =
             showIm && ft.imagPart?.maxima
-              ? this.buildMaximaFn(ft.imagPart.maxima, transVariable)
+              ? this.mathUtils.compile(ft.imagPart.maxima, transVariable)
               : null;
           const magFn =
             showM && ft.realPart?.maxima && ft.imagPart?.maxima
               ? this.buildMagFn(ft.realPart.maxima, ft.imagPart.maxima, transVariable)
               : null;
 
-          if (reFn) plotter.plotFn(ctx, reFn, vp, { color: REAL_COLOR, lineWidth: 2 });
-          if (imFn) plotter.plotFn(ctx, imFn, vp, { color: IMAG_COLOR, lineWidth: 2 });
-          if (magFn) plotter.plotFn(ctx, magFn, vp, { color: MAG_COLOR, lineWidth: 2 });
+          if (reFn) plotter.plotFn(ctx, reFn, vp, { color: reColor, lineWidth: resLW });
+          if (imFn) plotter.plotFn(ctx, imFn, vp, { color: imColor, lineWidth: resLW });
+          if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW });
         }
 
-        // ── IFT result layers ────────────────────────────────────────────
+        // ── IFT result layers ─────────────────────────────────────────────
+        // Plot fPositive/fNegative with half-range gating instead of
+        // fCombined over all t — fCombined may equal fPositive when fNegative
+        // = 0, which causes exponential blow-up for causal signals.
         if (ift?.exists && showRe) {
-          if (ift.fCombined?.maxima) {
-            // Combined form: plot across full visible range
-            const fn = this.buildMaximaFn(ift.fCombined.maxima, transVariable);
-            if (fn) plotter.plotFn(ctx, fn, vp, { color: REAL_COLOR, lineWidth: 2 });
-          } else {
-            // Piecewise: positive half for t > 0, negative half for t < 0
-            if (ift.fPositive?.maxima) {
-              const fn = this.buildMaximaFn(ift.fPositive.maxima, transVariable);
-              if (fn)
-                plotter.plotFnRange(ctx, fn, 0, 1e4, 600, vp, { color: REAL_COLOR, lineWidth: 2 });
-            }
-            if (ift.fNegative?.maxima) {
-              const fn = this.buildMaximaFn(ift.fNegative.maxima, transVariable);
-              if (fn)
-                plotter.plotFnRange(ctx, fn, -1e4, 0, 600, vp, { color: REAL_COLOR, lineWidth: 2 });
-            }
+          if (ift.fPositive?.maxima) {
+            const raw = this.mathUtils.compile(ift.fPositive.maxima, transVariable);
+            const fn = raw ? (x: number) => (x >= 0 ? raw(x) : NaN) : null;
+            if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW });
+          }
+          if (ift.fNegative?.maxima) {
+            const raw = this.mathUtils.compile(ift.fNegative.maxima, transVariable);
+            const fn = raw ? (x: number) => (x <= 0 ? raw(x) : NaN) : null;
+            if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW });
           }
         }
       },
@@ -248,12 +333,11 @@ export class ContinuousTransformComponent {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
-            console.log('[transforms] FT response →', res);
             this.ftResult.set(res);
             this.loading.set(false);
+            this.plotComponent()?.resetView();
           },
           error: (e) => {
-            console.error('[transforms] FT error →', e);
             this.errorMsg.set(e?.error?.error ?? 'Error al calcular la transformada');
             this.loading.set(false);
           },
@@ -264,17 +348,113 @@ export class ContinuousTransformComponent {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
-            console.log('[transforms] IFT response →', res);
             this.iftResult.set(res);
             this.loading.set(false);
+            this.plotComponent()?.resetView();
           },
           error: (e) => {
-            console.error('[transforms] IFT error →', e);
             this.errorMsg.set(e?.error?.error ?? 'Error al calcular la transformada inversa');
             this.loading.set(false);
           },
         });
     }
+  }
+
+  // ── URL state persistence ─────────────────────────────────────────────────
+
+  encodeState(): string {
+    const state = {
+      m: this.mode(),
+      vp: this.varPairId(),
+      ct: this.customTime(),
+      cf: this.customFreq(),
+      seg: this.segments().map((s) => ({
+        e: s.expression,
+        et: s.expressionTex,
+        f: s.from,
+        ft: s.fromTex,
+        t: s.to,
+        tt: s.toTex,
+      })),
+    };
+    try {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    } catch {
+      return '';
+    }
+  }
+
+  restoreState(encoded: string): boolean {
+    try {
+      const json = decodeURIComponent(escape(atob(encoded)));
+      const s = JSON.parse(json) as {
+        m?: string;
+        vp?: string;
+        ct?: string;
+        cf?: string;
+        seg: Array<{ e: string; et: string; f: string; ft: string; t: string; tt: string }>;
+      };
+      if (!Array.isArray(s.seg) || !s.seg.length) return false;
+
+      if (s.m === 'ft' || s.m === 'ift') this.mode.set(s.m);
+      if (s.vp) this.varPairId.set(s.vp);
+      if (s.ct) this.customTime.set(s.ct);
+      if (s.cf) this.customFreq.set(s.cf);
+      this.segments.set(
+        s.seg.map((seg) => ({
+          id: mkId(),
+          expression: seg.e ?? '',
+          expressionTex: seg.et ?? '',
+          from: seg.f ?? '',
+          fromTex: seg.ft ?? '',
+          to: seg.t ?? '',
+          toTex: seg.tt ?? '',
+        })),
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // ── Share ──────────────────────────────────────────────────────────────────
+
+  get shareHref(): string {
+    return typeof window !== 'undefined' ? window.location.href : '';
+  }
+
+  openShareDialog(): void {
+    this.showShareDialog.set(true);
+  }
+
+  async copyShareUrl(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this.urlCopied.set(true);
+      setTimeout(() => this.urlCopied.set(false), 2000);
+    } catch {
+      // clipboard not available
+    }
+  }
+
+  toggleFullscreen(): void {
+    const el = this.canvasWrapper()?.nativeElement;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void el.requestFullscreen();
+    }
+  }
+
+  downloadCanvas(): void {
+    const canvas = this.canvasWrapper()?.nativeElement?.querySelector('canvas');
+    if (!canvas) return;
+    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fourier-transform.png';
+    a.click();
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -283,54 +463,13 @@ export class ContinuousTransformComponent {
     return `\\[${tex}\\]`;
   }
 
-  /** Convert a Maxima expression string to a JS function of one variable.
-   *  Returns null if the expression is empty or can't be parsed. */
-  buildMaximaFn(maximaExpr: string, variable: string): ((x: number) => number) | null {
-    if (!maximaExpr?.trim()) return null;
-    try {
-      const js = maximaExpr
-        // Constants
-        .replace(/%pi/g, String(Math.PI))
-        .replace(/%e(?![a-zA-Z_0-9])/g, String(Math.E))
-        // Power operator
-        .replace(/\^/g, '**')
-        // Math functions
-        .replace(/\babs\b/g, 'Math.abs')
-        .replace(/\bsqrt\b/g, 'Math.sqrt')
-        .replace(/\bsin\b/g, 'Math.sin')
-        .replace(/\bcos\b/g, 'Math.cos')
-        .replace(/\btan\b/g, 'Math.tan')
-        .replace(/\bsinh\b/g, 'Math.sinh')
-        .replace(/\bcosh\b/g, 'Math.cosh')
-        .replace(/\btanh\b/g, 'Math.tanh')
-        .replace(/\bexp\b/g, 'Math.exp')
-        .replace(/\blog\b/g, 'Math.log')
-        // Special transform functions
-        .replace(/\bdelta\b\s*\([^)]*\)/g, '0') // Dirac delta → 0 (non-plottable)
-        .replace(/\bu\b\s*\(([^)]*)\)/g, '($1 >= 0 ? 1 : 0)') // Heaviside step
-        .replace(/\bsgn\b\s*\(/g, 'Math.sign(') // Sign function
-        // Remove trailing Maxima terminators
-        .replace(/\$+\s*$/g, '');
-
-      // eslint-disable-next-line no-new-func
-      const fn = new Function(
-        variable,
-        `try { const _r = (${js}); return isFinite(_r) ? _r : NaN; } catch { return NaN; }`,
-      );
-      return fn as (x: number) => number;
-    } catch {
-      return null;
-    }
-  }
-
-  /** Builds |F(ω)| = sqrt(Re² + Im²) from two Maxima expressions. */
   private buildMagFn(
     reExpr: string,
     imExpr: string,
     variable: string,
   ): ((x: number) => number) | null {
-    const reFn = this.buildMaximaFn(reExpr, variable);
-    const imFn = this.buildMaximaFn(imExpr, variable);
+    const reFn = this.mathUtils.compile(reExpr, variable);
+    const imFn = this.mathUtils.compile(imExpr, variable);
     if (!reFn || !imFn) return null;
     return (x: number) => {
       const re = reFn(x);
@@ -344,15 +483,9 @@ export class ContinuousTransformComponent {
     if (!s?.trim()) return NaN;
     if (s === 'inf' || s === '+inf') return Infinity;
     if (s === 'minf' || s === '-inf') return -Infinity;
-    try {
-      const js = s
-        .replace(/%pi/g, String(Math.PI))
-        .replace(/%e(?![a-zA-Z_0-9])/g, String(Math.E))
-        .replace(/\^/g, '**');
-      // eslint-disable-next-line no-new-func
-      return new Function(`return (${js})`)() as number;
-    } catch {
-      return NaN;
-    }
+    // Reuse the shared service so limit expressions benefit from the same
+    // constant/operator handling (e.g. %pi, %e, ^).
+    const result = this.mathUtils.evaluate(s, 0, '_');
+    return isFinite(result) ? result : NaN;
   }
 }
