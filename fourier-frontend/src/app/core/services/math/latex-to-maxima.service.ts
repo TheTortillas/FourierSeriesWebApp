@@ -64,7 +64,30 @@ export class LatexToMaximaService {
       .replace(/\\operatorname\{arccos\}/g, '\\operatorname{acos}')
       .replace(/\\operatorname\{arctan\}/g, '\\operatorname{atan}')
       .replace(/\\operatorname\{ln\}/g, '\\log')
-      .replace(/\\ln\b/g, '\\log');
+      .replace(/\\ln\b/g, '\\log')
+      // Special functions used in Fourier transforms
+      // delta: tex2max cannot handle \delta or \operatorname{delta} — it either
+      // interprets the Greek letter command or splits the operatorname content
+      // into individual letters.  Replace with a token BEFORE tex2max (same
+      // strategy as \infty → TMINF) and restore in postProcess.
+      // Handle \operatorname{delta} first (produced by MathQuill autoOperatorNames),
+      // then bare \delta (produced by direct LaTeX or history restore).
+      .replace(/\\operatorname\{delta\}/g, 'TMDELTA')
+      .replace(/\\delta\b/g, 'TMDELTA')
+      // Heaviside u(...) and sgn(...) pass through tex2max as raw letter sequences
+      // (identifiers); the spurious * they may get is removed in convertForTransforms.
+      // Imaginary unit: the keyboard button inserts \mathrm{i}.
+      // Replace with \operatorname{imagunit} so tex2max emits `imagunit` as a
+      // standalone named token; addTimesSign:true then inserts * between it and
+      // adjacent single-letter variables (e.g. imagunit*w).
+      // convertForTransforms maps imagunit → %i.
+      .replace(/\\mathrm\{i\}/g, '\\operatorname{imagunit}')
+      // Infinity: tex2max cannot handle \infty (\operatorname{inf} would be
+      // treated as a function call without args and throw). Replace with unique
+      // tokens BEFORE tex2max so they pass as plain variable identifiers.
+      // Handle -\infty before +\infty to avoid double-replacement.
+      .replace(/-\s*\\infty/g, 'TMMINF')
+      .replace(/\\infty/g,     'TMINF');
 
     // tex2max crashes on \operatorname{exp} (not in its whitelist).
     // Convert \operatorname{exp}(arg) → e^{(arg)} with balanced-paren extraction
@@ -118,6 +141,46 @@ export class LatexToMaximaService {
   }
 
   /**
+   * Same as convert() but also maps the imaginary unit to `%i` (Maxima).
+   * Use this for Fourier transform inputs where `i` means the imaginary unit,
+   * not a variable. Do NOT use for series calculations where `i` is an index.
+   */
+  convertForTransforms(latex: string): ConversionResult {
+    const base = this.convert(latex);
+    if (!base.ok) return base;
+
+    let maxima = base.maxima;
+
+    // tex2max doesn't know u, sgn, delta, rect, sinc as function names, so it
+    // may emit e.g. `u*(t)` instead of `u(t)`.  Remove the spurious multiplication.
+    maxima = maxima.replace(/\b(u|sgn|delta|imagunit|rect|sinc)\s*\*\s*\(/g, '$1(');
+
+    // ── Imaginary unit resolution ────────────────────────────────────────────
+    // Priority order matters here.
+
+    // 1. Button-inserted i (\mathrm{i} → \operatorname{imagunit} in preProcess).
+    //    tex2max may merge it with an adjacent single-letter variable (e.g.
+    //    `imagunitw` instead of `imagunit*w`).  Handle both merged and separated.
+    maxima = maxima.replace(/\bimagunit([a-zA-Z])(?![a-zA-Z0-9_%])/g, '%i*$1');
+    maxima = maxima.replace(/\bimagunit\b/g, '%i');
+
+    // 2a. `i` fused BEFORE a single-letter variable (e.g. `iw` → `%i*w`).
+    //     \bi ensures `i` is at a word start; lookahead prevents matching
+    //     multi-letter identifiers like `imagunit`, `sinh`, etc.
+    maxima = maxima.replace(/\bi([a-zA-Z])(?![a-zA-Z0-9_%])/g, '%i*$1');
+
+    // 2b. `i` fused AFTER a single-letter variable (e.g. `wi` → `w*%i`).
+    //     Lookbehind `(?<![a-zA-Z0-9_%])` prevents matching inside longer words
+    //     like `sin`, `%pi`, etc. — those have a letter/% before the preceding char.
+    maxima = maxima.replace(/(?<![a-zA-Z0-9_%])([a-zA-Z])i(?![a-zA-Z0-9_%])/g, '$1*%i');
+
+    // 3. Any remaining isolated bare `i` → `%i`.
+    maxima = maxima.replace(/(?<![a-zA-Z0-9_%])i(?![a-zA-Z0-9_%])/g, '%i');
+
+    return { ...base, maxima };
+  }
+
+  /**
    * Post-processing to align tex2max output with Maxima conventions:
    * - `pi` → `%pi`
    * - standalone `e` (Euler's number) → `%e`
@@ -143,6 +206,10 @@ export class LatexToMaximaService {
         .replace(/\btg\b/g, 'tan')
         .replace(/\bsenh\b/g, 'sinh')
         .replace(/\bctg\b/g, 'cot')
+        // Restore tokens inserted by preProcess to bypass tex2max
+        .replace(/\bTMMINF\b/g,  'minf')
+        .replace(/\bTMINF\b/g,   'inf')
+        .replace(/\bTMDELTA\b/g, 'delta')
     );
   }
 }

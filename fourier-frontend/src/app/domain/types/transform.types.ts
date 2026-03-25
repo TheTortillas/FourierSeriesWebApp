@@ -31,15 +31,15 @@ export interface FourierTransformResponse {
   executionTimeMs: number;
 }
 
-export interface InverseFourierResult {
-  condition: string;
-  f: SymbolicExpression;
-}
-
 export interface InverseFourierTransformResponse {
   input: InverseFourierTransformRequest;
   exists: boolean;
-  results?: InverseFourierResult[];
+  /** Recovered function for the region where the time variable > 0 */
+  fPositive?: SymbolicExpression;
+  /** Recovered function for the region where the time variable < 0 */
+  fNegative?: SymbolicExpression;
+  /** Combined/simplified form when both regions yield a clean expression */
+  fCombined?: SymbolicExpression;
   executionTimeMs: number;
 }
 

@@ -1,6 +1,6 @@
 <app-nav />
 
-<main class="max-w-3xl mx-auto px-4 py-8 flex flex-col gap-6">
+<main class="max-w-5xl mx-auto px-4 py-8 flex flex-col gap-6">
 
   <!-- ── Page header ──────────────────────────────────────────────────────── -->
   <div class="flex flex-col gap-1">
@@ -12,297 +12,350 @@
     </p>
   </div>
 
-  <!-- ── Mode toggle ──────────────────────────────────────────────────────── -->
-  <div class="inline-flex rounded-lg border border-border dark:border-dark-border
-              bg-paper2 dark:bg-dark-surface p-0.5 self-start">
-    <button type="button"
-            (click)="setMode('ft')"
-            [class]="mode() === 'ft'
-              ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-              : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
-      Directa
-    </button>
-    <button type="button"
-            (click)="setMode('ift')"
-            [class]="mode() === 'ift'
-              ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-              : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
-      Inversa
-    </button>
-  </div>
+  <!-- ── Main layout: left = controls, right = canvas ────────────────────── -->
+  <div class="flex flex-col lg:flex-row gap-6 items-start">
 
-  <!-- ── Variable pair selector ───────────────────────────────────────────── -->
-  <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                  rounded-xl p-4 flex flex-col gap-3">
+    <!-- ── LEFT COLUMN: controls ──────────────────────────────────────────── -->
+    <div class="w-full lg:w-[480px] shrink-0 flex flex-col gap-4">
 
-    <h2 class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-      Variables
-    </h2>
+      <!-- Mode toggle -->
+      <div class="inline-flex rounded-lg border border-border dark:border-dark-border
+                  bg-paper2 dark:bg-dark-surface p-0.5 self-start">
+        <button type="button" (click)="setMode('ft')"
+                [class]="mode() === 'ft'
+                  ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
+                  : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
+          Directa
+        </button>
+        <button type="button" (click)="setMode('ift')"
+                [class]="mode() === 'ift'
+                  ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
+                  : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
+          Inversa
+        </button>
+      </div>
 
-    <div class="flex flex-wrap gap-2">
-      @for (pair of varPairs; track pair.id) {
-        @if (pair.id !== 'custom') {
+      <!-- Variable pair selector -->
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                      rounded-xl p-4 flex flex-col gap-3">
+
+        <h2 class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+          Variables
+        </h2>
+
+        <div class="flex flex-wrap gap-2">
+          @for (pair of varPairs; track pair.id) {
+            @if (pair.id !== 'custom') {
+              <button type="button"
+                      (click)="varPairId.set(pair.id)"
+                      [class]="varPairId() === pair.id
+                        ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                        : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                @if (mode() === 'ft') { {{ pair.timeDisplay }} → {{ pair.freqDisplay }}
+                } @else { {{ pair.freqDisplay }} → {{ pair.timeDisplay }} }
+              </button>
+            }
+          }
           <button type="button"
-                  (click)="varPairId.set(pair.id)"
-                  [class]="varPairId() === pair.id
+                  (click)="varPairId.set('custom')"
+                  [class]="varPairId() === 'custom'
                     ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
                     : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-            @if (mode() === 'ft') {
-              {{ pair.timeDisplay }} → {{ pair.freqDisplay }}
-            } @else {
-              {{ pair.freqDisplay }} → {{ pair.timeDisplay }}
-            }
+            Custom
           </button>
-        }
-      }
-      <button type="button"
-              (click)="varPairId.set('custom')"
-              [class]="varPairId() === 'custom'
-                ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
-                : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-        Custom
-      </button>
-    </div>
-
-    @if (varPairId() === 'custom') {
-      <div class="flex items-center gap-3 pt-1">
-        <div class="flex flex-col gap-1">
-          <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
-            Var. {{ mode() === 'ft' ? 'temporal' : 'frecuencia' }}
-          </label>
-          <input type="text" [ngModel]="customTime()" (ngModelChange)="customTime.set($event)"
-                 placeholder="t"
-                 class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border
-                        bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink
-                        focus:outline-none focus:border-accent"/>
-        </div>
-        <span class="text-muted font-mono mt-4">→</span>
-        <div class="flex flex-col gap-1">
-          <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
-            Var. {{ mode() === 'ft' ? 'frecuencia' : 'temporal' }}
-          </label>
-          <input type="text" [ngModel]="customFreq()" (ngModelChange)="customFreq.set($event)"
-                 placeholder="w"
-                 class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border
-                        bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink
-                        focus:outline-none focus:border-accent"/>
-        </div>
-        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-4 ml-1">
-          Usa nombres Maxima: <code class="text-accent">nu</code>,
-          <code class="text-accent">xi</code>, <code class="text-accent">omega</code>…
-        </p>
-      </div>
-    }
-
-    <!-- Active variable summary -->
-    <p class="text-[11px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border pt-2">
-      @if (mode() === 'ft') {
-        Calculará
-        <span class="text-ink dark:text-dark-ink">
-          F({{ activePair().freqDisplay || activePair().freq }})
-          = ∫ f({{ activePair().timeDisplay || activePair().time }}) e<sup>−i{{ activePair().freqDisplay || activePair().freq }}{{ activePair().timeDisplay || activePair().time }}</sup>
-          d{{ activePair().timeDisplay || activePair().time }}
-        </span>
-      } @else {
-        Calculará
-        <span class="text-ink dark:text-dark-ink">
-          f({{ activePair().timeDisplay || activePair().time }})
-          = (1/2π) ∫ F({{ activePair().freqDisplay || activePair().freq }}) e<sup>i{{ activePair().freqDisplay || activePair().freq }}{{ activePair().timeDisplay || activePair().time }}</sup>
-          d{{ activePair().freqDisplay || activePair().freq }}
-        </span>
-      }
-    </p>
-  </section>
-
-  <!-- ── Segments ─────────────────────────────────────────────────────────── -->
-  <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                  rounded-xl p-4 flex flex-col gap-3">
-
-    <h2 class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-      {{ inputFnLabel() }}
-    </h2>
-
-    @for (seg of segments(); track seg.id; let i = $index) {
-      <app-transform-segment
-        [segment]="seg"
-        [index]="i"
-        [isOnly]="segments().length === 1"
-        [intVar]="intVar()"
-        (updated)="updateSegment($event.id, $event.changes)"
-        (removed)="removeSegment($event)" />
-    }
-
-    <button type="button" (click)="addSegment()"
-            class="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono
-                   border border-dashed border-border dark:border-dark-border
-                   text-muted dark:text-dark-muted
-                   hover:border-accent hover:text-accent transition-colors cursor-pointer">
-      <span class="text-base leading-none">+</span>
-      Agregar tramo
-    </button>
-  </section>
-
-  <!-- ── Calculate button ─────────────────────────────────────────────────── -->
-  <button type="button"
-          (click)="calculate()"
-          [disabled]="!canCalculate() || loading()"
-          class="self-start px-6 py-2.5 rounded-xl text-sm font-mono font-medium
-                 bg-accent text-white border border-accent
-                 hover:bg-accent/90 transition-colors
-                 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-    @if (loading()) {
-      <span class="flex items-center gap-2">
-        <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
-             viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-        </svg>
-        Calculando…
-      </span>
-    } @else {
-      Calcular
-    }
-  </button>
-
-  <!-- ── Error ────────────────────────────────────────────────────────────── -->
-  @if (errorMsg()) {
-    <div class="rounded-xl border border-red-200 dark:border-red-800
-                bg-red-50 dark:bg-red-950/20 px-4 py-3">
-      <p class="text-sm font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
-    </div>
-  }
-
-  <!-- ══════════════════════════════════════════════════════════════════════ -->
-  <!-- ── FT Results ──────────────────────────────────────────────────────── -->
-  <!-- ══════════════════════════════════════════════════════════════════════ -->
-  @if (ftResult(); as res) {
-    <section class="flex flex-col gap-4">
-
-      <div class="flex items-center gap-3">
-        <h2 class="font-display text-lg text-ink dark:text-dark-ink">Resultado</h2>
-        <span class="text-xs font-mono text-muted dark:text-dark-muted">
-          {{ res.executionTimeMs }} ms
-        </span>
-      </div>
-
-      @if (!res.exists) {
-        <div class="rounded-xl border border-amber-200 dark:border-amber-800
-                    bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
-          <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
-            La transformada no existe para esta función (integral divergente).
-          </p>
         </div>
 
-      } @else {
-
-        <!-- Full transform F(ω) -->
-        @if (res.F?.tex) {
-          <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                      rounded-xl p-4 flex flex-col gap-2">
-            <span class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-              Transformada completa
-            </span>
-            <div class="flex items-baseline gap-2 flex-wrap">
-              <span class="text-sm font-mono text-muted dark:text-dark-muted shrink-0">
-                F({{ resultVarDisplay() }}) =
-              </span>
-              <span [mathjax]="display(res.F!.tex)"
-                    class="text-ink dark:text-dark-ink overflow-x-auto max-w-full"></span>
+        @if (varPairId() === 'custom') {
+          <div class="flex items-center gap-3 pt-1 flex-wrap">
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                Var. {{ mode() === 'ft' ? 'temporal' : 'frecuencia' }}
+              </label>
+              <input type="text" [ngModel]="customTime()" (ngModelChange)="customTime.set($event)"
+                     placeholder="t"
+                     class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border
+                            bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink
+                            focus:outline-none focus:border-accent"/>
             </div>
+            <span class="text-muted font-mono mt-4">→</span>
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                Var. {{ mode() === 'ft' ? 'frecuencia' : 'temporal' }}
+              </label>
+              <input type="text" [ngModel]="customFreq()" (ngModelChange)="customFreq.set($event)"
+                     placeholder="w"
+                     class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border
+                            bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink
+                            focus:outline-none focus:border-accent"/>
+            </div>
+            <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-4">
+              Usa nombres Maxima: <code class="text-accent">nu</code>,
+              <code class="text-accent">xi</code>, <code class="text-accent">omega</code>…
+            </p>
           </div>
         }
 
-        <!-- Real and imaginary parts -->
-        @if (res.realPart?.tex || res.imagPart?.tex) {
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Formula summary -->
+        <p class="text-[11px] font-mono text-muted dark:text-dark-muted
+                  border-t border-border dark:border-dark-border pt-2">
+          @if (mode() === 'ft') {
+            F({{ activePair().freqDisplay || activePair().freq }})
+            = ∫ f({{ activePair().timeDisplay || activePair().time }})
+            e<sup>−i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup>
+            d{{ activePair().timeDisplay || activePair().time }}
+          } @else {
+            f({{ activePair().timeDisplay || activePair().time }})
+            = (1/2π) ∫ F({{ activePair().freqDisplay || activePair().freq }})
+            e<sup>i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup>
+            d{{ activePair().freqDisplay || activePair().freq }}
+          }
+        </p>
+      </section>
 
-            @if (res.realPart?.tex) {
+      <!-- Segments -->
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                      rounded-xl p-4 flex flex-col gap-3">
+
+        <h2 class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+          {{ inputFnLabel() }}
+        </h2>
+
+        @for (seg of segments(); track seg.id; let i = $index) {
+          <app-transform-segment
+            [segment]="seg"
+            [index]="i"
+            [isOnly]="segments().length === 1"
+            [intVar]="intVar()"
+            (updated)="updateSegment($event.id, $event.changes)"
+            (removed)="removeSegment($event)" />
+        }
+
+        <button type="button" (click)="addSegment()"
+                class="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono
+                       border border-dashed border-border dark:border-dark-border
+                       text-muted dark:text-dark-muted
+                       hover:border-accent hover:text-accent transition-colors cursor-pointer">
+          <span class="text-base leading-none">+</span>
+          Agregar tramo
+        </button>
+      </section>
+
+      <!-- Calculate -->
+      <button type="button"
+              (click)="calculate()"
+              [disabled]="!canCalculate() || loading()"
+              class="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-mono font-medium
+                     bg-accent text-white border border-accent
+                     hover:bg-accent/90 transition-colors
+                     disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+        @if (loading()) {
+          <span class="flex items-center justify-center gap-2">
+            <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                 fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10"
+                      stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Calculando…
+          </span>
+        } @else {
+          Calcular
+        }
+      </button>
+
+      <!-- Error -->
+      @if (errorMsg()) {
+        <div class="rounded-xl border border-red-200 dark:border-red-800
+                    bg-red-50 dark:bg-red-950/20 px-4 py-3">
+          <p class="text-sm font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
+        </div>
+      }
+
+      <!-- ── FT symbolic results ─────────────────────────────────────────── -->
+      @if (ftResult(); as res) {
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2">
+            <h2 class="font-display text-base text-ink dark:text-dark-ink">Resultado</h2>
+            <span class="text-xs font-mono text-muted dark:text-dark-muted">
+              {{ res.executionTimeMs }} ms
+            </span>
+          </div>
+
+          @if (!res.exists) {
+            <div class="rounded-xl border border-amber-200 dark:border-amber-800
+                        bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
+              <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
+                La transformada no existe para esta función (integral divergente).
+              </p>
+            </div>
+          } @else {
+
+            @if (res.F?.tex) {
               <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                          rounded-xl p-4 flex flex-col gap-2">
-                <span class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-                  Parte real
+                          rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                  Transformada completa
                 </span>
                 <div class="flex items-baseline gap-2 flex-wrap">
-                  <span class="text-sm font-mono text-muted dark:text-dark-muted shrink-0 text-blue-600 dark:text-blue-400">
-                    Re&#x7B;F&#x7D; =
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">
+                    F({{ resultVarDisplay() }}) =
+                  </span>
+                  <span [mathjax]="display(res.F!.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                </div>
+              </div>
+            }
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              @if (res.realPart?.tex) {
+                <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                            rounded-xl px-4 py-3 flex flex-col gap-1">
+                  <span class="text-[10px] font-mono text-blue-600 dark:text-blue-400
+                               uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                    Parte real
                   </span>
                   <span [mathjax]="display(res.realPart!.tex)"
-                        class="text-ink dark:text-dark-ink overflow-x-auto max-w-full"></span>
+                        class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
                 </div>
-              </div>
-            }
-
-            @if (res.imagPart?.tex) {
-              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                          rounded-xl p-4 flex flex-col gap-2">
-                <span class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-                  Parte imaginaria
-                </span>
-                <div class="flex items-baseline gap-2 flex-wrap">
-                  <span class="text-sm font-mono text-amber-600 dark:text-amber-400 shrink-0">
-                    Im&#x7B;F&#x7D; =
+              }
+              @if (res.imagPart?.tex) {
+                <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                            rounded-xl px-4 py-3 flex flex-col gap-1">
+                  <span class="text-[10px] font-mono text-amber-600 dark:text-amber-400
+                               uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                    Parte imaginaria
                   </span>
                   <span [mathjax]="display(res.imagPart!.tex)"
-                        class="text-ink dark:text-dark-ink overflow-x-auto max-w-full"></span>
+                        class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
                 </div>
-              </div>
-            }
-          </div>
-        }
-
-      }
-    </section>
-  }
-
-  <!-- ══════════════════════════════════════════════════════════════════════ -->
-  <!-- ── IFT Results ─────────────────────────────────────────────────────── -->
-  <!-- ══════════════════════════════════════════════════════════════════════ -->
-  @if (iftResult(); as res) {
-    <section class="flex flex-col gap-4">
-
-      <div class="flex items-center gap-3">
-        <h2 class="font-display text-lg text-ink dark:text-dark-ink">Resultado</h2>
-        <span class="text-xs font-mono text-muted dark:text-dark-muted">
-          {{ res.executionTimeMs }} ms
-        </span>
-      </div>
-
-      @if (!res.exists) {
-        <div class="rounded-xl border border-amber-200 dark:border-amber-800
-                    bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
-          <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
-            La transformada inversa no existe para esta función.
-          </p>
-        </div>
-
-      } @else if (res.results && res.results.length > 0) {
-
-        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                    rounded-xl p-4 flex flex-col gap-4">
-          <span class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-            f({{ resultVarDisplay() }})
-          </span>
-
-          @for (r of res.results; track r.condition) {
-            <div class="flex flex-col gap-1 border-t border-border dark:border-dark-border pt-3 first:border-t-0 first:pt-0">
-              @if (r.condition && r.condition !== 'all') {
-                <span class="text-xs font-mono text-accent">
-                  {{ r.condition }}
-                </span>
               }
-              <span [mathjax]="display(r.f.tex)"
-                    class="text-ink dark:text-dark-ink overflow-x-auto max-w-full"></span>
             </div>
           }
         </div>
+      }
 
-      } @else {
-        <p class="text-sm font-mono text-muted dark:text-dark-muted">
-          No se encontraron resultados.
+      <!-- ── IFT symbolic results ────────────────────────────────────────── -->
+      @if (iftResult(); as res) {
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2">
+            <h2 class="font-display text-base text-ink dark:text-dark-ink">Resultado</h2>
+            <span class="text-xs font-mono text-muted dark:text-dark-muted">
+              {{ res.executionTimeMs }} ms
+            </span>
+          </div>
+
+          @if (!res.exists) {
+            <div class="rounded-xl border border-amber-200 dark:border-amber-800
+                        bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
+              <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
+                La transformada inversa no existe para esta función.
+              </p>
+            </div>
+          } @else {
+            <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                        rounded-xl px-4 py-3 flex flex-col gap-3">
+              <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider
+                           flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                f({{ resultVarDisplay() }})
+              </span>
+
+              @if (res.fCombined) {
+                <span [mathjax]="display(res.fCombined.tex)"
+                      class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+              } @else {
+                @if (res.fPositive) {
+                  <div class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2 first:border-t-0 first:pt-0">
+                    <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
+                    <span [mathjax]="display(res.fPositive.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  </div>
+                }
+                @if (res.fNegative) {
+                  <div class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2">
+                    <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
+                    <span [mathjax]="display(res.fNegative.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+
+    </div><!-- /LEFT COLUMN -->
+
+    <!-- ── RIGHT COLUMN: canvas ───────────────────────────────────────────── -->
+    <div class="w-full lg:flex-1 flex flex-col gap-3">
+
+      <!-- Layer toggles -->
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">Mostrar:</span>
+
+        <button type="button" (click)="showOriginal.set(!showOriginal())"
+                [class]="showOriginal()
+                  ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-[#c14030] bg-[#c14030]/10 text-[#c14030]'
+                  : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'">
+          <span class="w-2 h-2 rounded-full shrink-0"
+                [style.background]="showOriginal() ? '#c14030' : 'currentColor'"></span>
+          {{ inputFnLabel() }}
+        </button>
+
+        @if (ftResult()?.exists || iftResult()?.exists) {
+          <button type="button" (click)="showReal.set(!showReal())"
+                  [class]="showReal()
+                    ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                    : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'">
+            <span class="w-2 h-2 rounded-full shrink-0 bg-blue-500"></span>
+            @if (mode() === 'ft') { Re&#x7B;F&#x7D; } @else { f({{ resultVarDisplay() }}) }
+          </button>
+
+          @if (mode() === 'ft') {
+            <button type="button" (click)="showImag.set(!showImag())"
+                    [class]="showImag()
+                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                      : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'">
+              <span class="w-2 h-2 rounded-full shrink-0 bg-amber-500"></span>
+              Im&#x7B;F&#x7D;
+            </button>
+
+            <button type="button" (click)="showMag.set(!showMag())"
+                    [class]="showMag()
+                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-green-500 bg-green-500/10 text-green-600 dark:text-green-400'
+                      : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'">
+              <span class="w-2 h-2 rounded-full shrink-0 bg-green-500"></span>
+              |F|
+            </button>
+          }
+        }
+      </div>
+
+      <!-- Canvas -->
+      <div class="rounded-xl overflow-hidden border border-border dark:border-dark-border
+                  bg-paper dark:bg-dark-bg" style="height: 420px;">
+        <app-function-plot
+          [layers]="layers()"
+          xAxisFormat="integer"
+          class="w-full h-full block" />
+      </div>
+
+      <!-- Legend -->
+      @if (ftResult()?.exists || iftResult()?.exists) {
+        <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+          Arrastra para hacer pan · Scroll para zoom
+          @if (mode() === 'ft') {
+            · El eje X representa {{ activePair().freqDisplay || activePair().freq }}
+          } @else {
+            · El eje X representa {{ activePair().timeDisplay || activePair().time }}
+          }
         </p>
       }
-    </section>
-  }
+    </div><!-- /RIGHT COLUMN -->
+
+  </div><!-- /Main layout -->
 
 </main>

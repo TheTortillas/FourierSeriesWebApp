@@ -53,11 +53,11 @@ kill(all)$
 `;
 
     const result = await this.runner.run({ script: fullScript });
-    console.log("FT RAW:", JSON.stringify(result.raw.slice(0, 500)));
-    console.log("SUCCESS:", result.success);
-    console.log("ERROR:", result.error);
-    console.log("CLEAN PATH:", cleanPath);
-    console.log("LIB PATH:", libPath);
+    // console.log("FT RAW:", JSON.stringify(result.raw.slice(0, 500)));
+    // console.log("SUCCESS:", result.success);
+    // console.log("ERROR:", result.error);
+    // console.log("CLEAN PATH:", cleanPath);
+    // console.log("LIB PATH:", libPath);
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
     }

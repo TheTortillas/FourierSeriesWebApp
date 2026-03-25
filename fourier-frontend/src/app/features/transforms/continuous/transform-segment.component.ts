@@ -48,6 +48,16 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   private _syncing = false;
 
   readonly keyGroups: KeyBtn[][] = [
+    // Special functions for transforms
+    [
+      { label: 'δ(·)',  typedText: 'delta('    },
+      { label: 'u(·)',  typedText: 'u('        },
+      { label: 'sgn',   typedText: 'sgn('      },
+      { label: 'i',     write:     '\\mathrm{i}' },
+      { label: '∞',     write:     '\\infty'   },
+      { label: '-∞',    write:     '-\\infty'  },
+    ],
+    // Standard trig/hyperbolic
     [
       { label: 'sin',  typedText: 'sin('  },
       { label: 'cos',  typedText: 'cos('  },
@@ -56,6 +66,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
       { label: 'sinh', typedText: 'sinh(' },
       { label: 'cosh', typedText: 'cosh(' },
     ],
+    // Misc
     [
       { label: 'log',  typedText: 'log('  },
       { label: 'ln',   typedText: 'ln('   },
@@ -114,7 +125,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
               this.updated.emit({ id: this.segment().id, changes: { [maximaKey]: '', [texKey]: '' } });
               return;
             }
-            const res = this.tex2max.convert(latex);
+            const res = this.tex2max.convertForTransforms(latex);
             if (res.ok) {
               this.conversionErrors[i] = null;
               this.updated.emit({ id: this.segment().id,
