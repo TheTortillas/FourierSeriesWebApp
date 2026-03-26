@@ -1,24 +1,45 @@
 /* ═══════════════════════════════════════════════════════════════════
    fourier_transforms.mac  —  Biblioteca unificada de Transformadas
    Versión backend — cargada por los wrappers de transforms/
+
+   Cambios respecto a versión anterior:
+     - ratprint:false  — silencia advertencias de rat()
+     - FT_pattern_lookup ampliado:
+         k/(a^2+t^2), cos(bt)/(a^2+t^2), sin(bt)/(a^2+t^2)
+     - IFT_pattern_lookup ampliado:
+         k/(iw+a), k/(iw+a)^2,
+         b/((iw+a)^2+b^2), (iw+a)/((iw+a)^2+b^2),
+         (pi/a)*e^{-a|w|}
+     - Detectores de racionales usan rat() y coeff() para evitar
+       flotantes en sqrt y preservar estructura op="/"
+     - %piexact guarda %pi antes de que rat() lo contamine
+     - FT/IFT usan freeof(%i) para Re/Im exactos en patrones reales
+
+   NOTAS DE IMPLEMENTACION:
+     - return() dentro de block() anidado NO escapa de la funcion
+       en Maxima. Toda la logica usa variables res sin return.
+     - expand() sobre fraccion racional puede cambiar op de "/" a "+"
+       (fracciones parciales). Los detectores IFT usan er=rat(F_expr)
+       para preservar op="/".
+     - rat() sobre denominadores evita flotantes en coeff/sqrt.
    ═══════════════════════════════════════════════════════════════════ */
 
-display2d: false$
-%iargs: false$
+display2d : false$
+%iargs    : false$
+ratprint  : false$
 
 declare(delta, real)$
 declare(u,     real)$
 declare(sgn,   real)$
 
-/* clean_integral se carga desde el wrapper, no aquí */
-
 /* ════════════════════════════════════════════════════════════════════
-   BLOQUE 2 — Auxiliares
+   BLOQUE 2 — Auxiliares de reconocimiento
    ════════════════════════════════════════════════════════════════════ */
 
 FT_is_minf(x) := is(x = minf) or is(x = -inf)$
 FT_is_inf(x)  := is(x = inf)  or is(x = +inf)$
 
+/* Extrae a de delta(t-a). Devuelve 0 si delta(t), false si no es delta */
 FT_delta_shift(expr, t_var) := block(
     [arg, res],
     res: false,
@@ -33,6 +54,7 @@ FT_delta_shift(expr, t_var) := block(
     res
 )$
 
+/* Detecta k*delta(t-a). Devuelve [k, a] o false */
 FT_match_delta(expr, t_var) := block(
     [e, sh, delta_part, coef, sh2, res],
     e: expand(expr),
@@ -58,6 +80,7 @@ FT_match_delta(expr, t_var) := block(
     res
 )$
 
+/* Detecta k*u(t). Devuelve [k] o false */
 FT_match_u(expr, t_var) := block(
     [e, u_part, coef, res],
     e: expand(expr),
@@ -79,6 +102,7 @@ FT_match_u(expr, t_var) := block(
     res
 )$
 
+/* Detecta k*sgn(t). Devuelve [k] o false */
 FT_match_sgn(expr, t_var) := block(
     [e, sgn_part, coef, res],
     e: expand(expr),
@@ -101,7 +125,7 @@ FT_match_sgn(expr, t_var) := block(
 )$
 
 /* ════════════════════════════════════════════════════════════════════
-   BLOQUE 3 — Core
+   BLOQUE 3 — Core: expand_abs, raw, simplify, exists
    ════════════════════════════════════════════════════════════════════ */
 
 FT_expand_abs(trozo, t_var) := block(
@@ -204,11 +228,25 @@ IFT_exists(expr) :=
    BLOQUE 4 — Pattern lookups
    ════════════════════════════════════════════════════════════════════ */
 
+/* ────────────────────────────────────────────────────────────────
+   FT_PATTERN_LOOKUP
+   Patrones cubiertos:
+     delta(t-a), constante, e^{iw0t}
+     cos(w0t), sin(w0t), u(t), sgn(t)
+     k/(a^2+t^2)
+     cos(bt)/(a^2+t^2)  — detecta op="/" y op="*"
+     sin(bt)/(a^2+t^2)  — detecta op="/" y op="*"
+
+   %piexact guarda %pi antes de que rat() lo contamine al
+   procesar denominadores racionales.
+   ──────────────────────────────────────────────────────────────── */
 FT_pattern_lookup(f_expr, t_var, w_var) := block(
-    [e, dm, um, sm, k, a, w0, arg, res],
+    [e, dm, um, sm, k, a, w0, arg, %piexact, res],
+    %piexact: %pi,
     e: expand(f_expr),
     res: false,
 
+    /* ── delta(t-a) ── */
     dm: FT_match_delta(e, t_var),
     if is(dm # false) then (
         k: dm[1],  a: dm[2],
@@ -217,51 +255,57 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         else res: [k * exp(-%i*w_var*a), concat("delta(t-a) -> e^{-iwa}, a=", string(a))]
     ),
 
+    /* ── constante ── */
     if is(res = false) then (
         if freeof(t_var, e) and e # 0 then
-            res: [2*%pi*e*delta(w_var), concat("c -> 2pi*c*delta(w), c=", string(e))]
+            res: [2*%piexact*e*delta(w_var), concat("c -> 2pi*c*delta(w), c=", string(e))]
     ),
 
+    /* ── e^{iw0t} — op es "^" en Maxima, no 'exp ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "^") then (
             arg: part(e, 2),
             if not freeof(%i, arg) then (
                 w0: ratsimp(arg / (%i * t_var)),
                 if freeof(t_var, w0) then
-                    res: [2*%pi*delta(w_var - w0),
+                    res: [2*%piexact*delta(w_var - w0),
                           concat("e^{iw0t} -> 2pi*delta(w-w0), w0=", string(w0))]
             )
         )
     ),
 
+    /* ── cos(w0t) ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = 'cos) then (
             arg: part(e, 1),
             w0: ratsimp(arg / t_var),
             if freeof(t_var, w0) then
-                res: [%pi*(delta(w_var-w0) + delta(w_var+w0)),
+                res: [%piexact*(delta(w_var-w0) + delta(w_var+w0)),
                       concat("cos(w0t) -> pi[delta(w-w0)+delta(w+w0)], w0=", string(w0))]
         )
     ),
 
+    /* ── sin(w0t) ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = 'sin) then (
             arg: part(e, 1),
             w0: ratsimp(arg / t_var),
             if freeof(t_var, w0) then
-                res: [%i*%pi*(delta(w_var+w0) - delta(w_var-w0)),
+                res: [%i*%piexact*(delta(w_var+w0) - delta(w_var-w0)),
                       concat("sin(w0t) -> i*pi[delta(w+w0)-delta(w-w0)], w0=", string(w0))]
         )
     ),
 
+    /* ── u(t) ── */
     if is(res = false) then (
         um: FT_match_u(e, t_var),
         if is(um # false) then (
             k: um[1],
-            res: [k * (%pi*delta(w_var) + 1/(%i*w_var)), "u(t) -> pi*delta(w) + 1/(iw)"]
+            res: [k * (%piexact*delta(w_var) + 1/(%i*w_var)), "u(t) -> pi*delta(w) + 1/(iw)"]
         )
     ),
 
+    /* ── sgn(t) ── */
     if is(res = false) then (
         sm: FT_match_sgn(e, t_var),
         if is(sm # false) then (
@@ -270,18 +314,192 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k/(a^2+t^2) -> (k*pi/a)*e^{-a|w|}  (a > 0) ──
+       Usa rat() y coeff() para evitar flotantes en sqrt.          */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "/") then block(
+            [numer, denom, sqterm, dconst, a_cand],
+            numer: part(e, 1),
+            denom: rat(rationalize(expand(part(e, 2)))),
+            if freeof(t_var, numer) and not freeof(t_var, denom) then (
+                sqterm: rat(coeff(denom, t_var, 2)),
+                dconst: ratsimp(subst(t_var=0, denom)),
+                if freeof(t_var, sqterm) and freeof(t_var, dconst)
+                   and is(sqterm > 0) and is(dconst > 0) then (
+                    a_cand: sqrt(dconst / sqterm),
+                    if freeof(t_var, a_cand) and is(a_cand > 0) then (
+                        k: ratsimp(numer / sqterm),
+                        res: [k * (%piexact/a_cand) * exp(-a_cand*abs(w_var)),
+                              concat("k/(a^2+t^2) -> (k*pi/a)*e^{-a|w|}, a=", string(a_cand))]
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── cos(bt)/(a^2+t^2) -> (pi/2a)*[e^{-a|w-b|}+e^{-a|w+b|}] ──
+       Detecta dos formas:
+         op="/"  con numerador cos(bt)
+         op="*"  con factor cos(bt) y factor k/(a^2+t^2)           */
+    if is(res = false) then block(
+        [enum, eden, cos_arg, bb, sqt, dct, ac, kk,
+         cos_part, rest, denom2, sq2, dc2, aa2],
+
+        /* caso op="/" con numerador trigonometrico */
+        if not atom(e) and is(op(e) = "/") then (
+            enum: expand(part(e, 1)),
+            eden: rat(rationalize(expand(part(e, 2)))),
+            if not atom(enum) and is(op(enum) = 'cos)
+               and not freeof(t_var, eden) then (
+                cos_arg: part(enum, 1),
+                bb: ratsimp(cos_arg / t_var),
+                if freeof(t_var, bb) then (
+                    sqt: rat(coeff(eden, t_var, 2)),
+                    dct: ratsimp(subst(t_var=0, eden)),
+                    if freeof(t_var, sqt) and freeof(t_var, dct)
+                       and is(sqt > 0) and is(dct > 0) then (
+                        ac: sqrt(dct / sqt),
+                        if freeof(t_var, ac) and is(ac > 0) then (
+                            kk: ratsimp(1 / sqt),
+                            res: [kk * (%piexact/(2*ac)) *
+                                  (exp(-ac*abs(w_var-bb)) + exp(-ac*abs(w_var+bb))),
+                                  concat("cos(bt)/(a^2+t^2) -> (pi/2a)[e^{-a|w-b|}+e^{-a|w+b|}], a=",
+                                         string(ac), ", b=", string(bb))]
+                        )
+                    )
+                )
+            )
+        ),
+
+        /* caso op="*": cos(bt) * k/(a^2+t^2) */
+        if is(res = false) and not atom(e) and is(op(e) = "*") then (
+            cos_part: false,
+            rest: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'cos)
+                then cos_part: s
+                else rest: rest * s
+            ),
+            if is(cos_part # false) then (
+                cos_arg: part(cos_part, 1),
+                bb: ratsimp(cos_arg / t_var),
+                if freeof(t_var, bb) then (
+                    if not atom(rest) and is(op(rest) = "/") then (
+                        denom2: rat(rationalize(expand(part(rest, 2)))),
+                        sq2: rat(coeff(denom2, t_var, 2)),
+                        dc2: ratsimp(subst(t_var=0, denom2)),
+                        if freeof(t_var, sq2) and freeof(t_var, dc2)
+                           and is(sq2 > 0) and is(dc2 > 0) then (
+                            aa2: sqrt(dc2 / sq2),
+                            if freeof(t_var, aa2) and is(aa2 > 0) then (
+                                kk: ratsimp(part(rest,1) / sq2),
+                                res: [kk * (%piexact/(2*aa2)) *
+                                      (exp(-aa2*abs(w_var-bb)) + exp(-aa2*abs(w_var+bb))),
+                                      concat("cos(bt)/(a^2+t^2) -> (pi/2a)[e^{-a|w-b|}+e^{-a|w+b|}], a=",
+                                             string(aa2), ", b=", string(bb))]
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── sin(bt)/(a^2+t^2) -> (pi/2ai)*[e^{-a|w-b|}-e^{-a|w+b|}] ──
+       Misma doble deteccion que cos.                               */
+    if is(res = false) then block(
+        [enum2, eden2, sin_arg, bb2, sqt2, dct2, ac2, kk2,
+         sin_part, rest3, denom3, sq3, dc3, aa3],
+
+        /* caso op="/" con numerador sin */
+        if not atom(e) and is(op(e) = "/") then (
+            enum2: expand(part(e, 1)),
+            eden2: rat(rationalize(expand(part(e, 2)))),
+            if not atom(enum2) and is(op(enum2) = 'sin)
+               and not freeof(t_var, eden2) then (
+                sin_arg: part(enum2, 1),
+                bb2: ratsimp(sin_arg / t_var),
+                if freeof(t_var, bb2) then (
+                    sqt2: rat(coeff(eden2, t_var, 2)),
+                    dct2: ratsimp(subst(t_var=0, eden2)),
+                    if freeof(t_var, sqt2) and freeof(t_var, dct2)
+                       and is(sqt2 > 0) and is(dct2 > 0) then (
+                        ac2: sqrt(dct2 / sqt2),
+                        if freeof(t_var, ac2) and is(ac2 > 0) then (
+                            kk2: ratsimp(1 / sqt2),
+                            res: [kk2 * (%piexact/(2*ac2*%i)) *
+                                  (exp(-ac2*abs(w_var-bb2)) - exp(-ac2*abs(w_var+bb2))),
+                                  concat("sin(bt)/(a^2+t^2) -> (pi/2ai)[e^{-a|w-b|}-e^{-a|w+b|}], a=",
+                                         string(ac2), ", b=", string(bb2))]
+                        )
+                    )
+                )
+            )
+        ),
+
+        /* caso op="*": sin(bt) * k/(a^2+t^2) */
+        if is(res = false) and not atom(e) and is(op(e) = "*") then (
+            sin_part: false,
+            rest3: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'sin)
+                then sin_part: s
+                else rest3: rest3 * s
+            ),
+            if is(sin_part # false) then (
+                sin_arg: part(sin_part, 1),
+                bb2: ratsimp(sin_arg / t_var),
+                if freeof(t_var, bb2) then (
+                    if not atom(rest3) and is(op(rest3) = "/") then (
+                        denom3: rat(rationalize(expand(part(rest3, 2)))),
+                        sq3: rat(coeff(denom3, t_var, 2)),
+                        dc3: ratsimp(subst(t_var=0, denom3)),
+                        if freeof(t_var, sq3) and freeof(t_var, dc3)
+                           and is(sq3 > 0) and is(dc3 > 0) then (
+                            aa3: sqrt(dc3 / sq3),
+                            if freeof(t_var, aa3) and is(aa3 > 0) then (
+                                kk2: ratsimp(part(rest3,1) / sq3),
+                                res: [kk2 * (%piexact/(2*aa3*%i)) *
+                                      (exp(-aa3*abs(w_var-bb2)) - exp(-aa3*abs(w_var+bb2))),
+                                      concat("sin(bt)/(a^2+t^2) -> (pi/2ai)[e^{-a|w-b|}-e^{-a|w+b|}], a=",
+                                             string(aa3), ", b=", string(bb2))]
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
     res
 )$
 
+/* ────────────────────────────────────────────────────────────────
+   IFT_PATTERN_LOOKUP
+   Patrones cubiertos:
+     1, delta(w-a), 2pi*delta(w-a)
+     1/(iw), pi*delta(w)+1/(iw)
+     k/(iw+a)
+     k/(iw+a)^2         — detecta forma expandida
+     b/((iw+a)^2+b^2)
+     (iw+a)/((iw+a)^2+b^2)
+     (pi/a)*e^{-a|w|}
+
+   Opera sobre er=rat(F_expr) para preservar op="/" y evitar
+   que expand() descomponga fracciones en sumas parciales.
+   ──────────────────────────────────────────────────────────────── */
 IFT_pattern_lookup(F_expr, w_var, t_var) := block(
-    [e, dm, k, a, s, has_delta, has_iw, res],
-    e: expand(F_expr),
+    [e, er, dm, k, a, b, s, has_delta, has_iw, res],
+    e:  expand(F_expr),
+    er: rat(F_expr),
     res: false,
 
+    /* ── 1 -> delta(t) ── */
     if is(res = false) then (
         if e = 1 then res: [delta(t_var), "1 -> delta(t)"]
     ),
 
+    /* ── delta(w-a) -> e^{iat}/(2pi) ── */
     if is(res = false) then (
         dm: FT_match_delta(e, w_var),
         if is(dm # false) then (
@@ -292,6 +510,7 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── 2pi*delta(w-a) -> e^{iat} ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "*") then (
             block(
@@ -315,11 +534,13 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── 1/(iw) -> sgn(t)/2 ── */
     if is(res = false) then (
         if ratsimp(e - 1/(%i*w_var)) = 0 then
             res: [sgn(t_var)/2, "1/(iw) -> sgn(t)/2"]
     ),
 
+    /* ── pi*delta(w) + 1/(iw) -> u(t) ── */
     if is(res = false) then (
         if not freeof('delta, e) and not freeof(w_var, e) then (
             has_delta: false,
@@ -330,6 +551,135 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             ),
             if has_delta and has_iw then
                 res: [u(t_var), "pi*delta(w)+1/(iw) -> u(t)"]
+        )
+    ),
+
+    /* ── k/(iw+a) -> k*e^{-at}*u(t)  (a > 0) ── */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [numer2, denom2, coef_w, coef_0],
+            numer2: part(er, 1),
+            denom2: rat(expand(part(er, 2))),
+            if freeof(w_var, numer2) and not freeof(w_var, denom2) then (
+                coef_w: ratsimp(diff(denom2, w_var)),
+                coef_0: ratsimp(subst(w_var=0, denom2)),
+                if ratsimp(coef_w - %i) = 0 and freeof(w_var, coef_0)
+                   and is(coef_0 > 0) then (
+                    a: coef_0,
+                    k: numer2,
+                    res: [k * exp(-a*t_var) * u(t_var),
+                          concat("k/(iw+a) -> k*e^{-at}*u(t), a=", string(a))]
+                )
+            )
+        )
+    ),
+
+    /* ── k/(iw+a)^2 -> k*t*e^{-at}*u(t)  (a > 0) ──
+       Forma expandida: num/(w^2+a^2)^2 con num proporcional a
+       -(w^2+2iaw-a^2). Verifica denom = (w^2+a^2)^2.            */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [numer3, denom3, d4, d2, d0, aa, expected_num, kk],
+            numer3: expand(part(er, 1)),
+            denom3: rat(expand(part(er, 2))),
+            d4: ratsimp(diff(denom3, w_var, 4) / 24),
+            if ratsimp(d4 - 1) = 0 then (
+                d2: ratsimp(subst(w_var=0, diff(denom3, w_var, 2)) / 2),
+                d0: ratsimp(subst(w_var=0, denom3)),
+                if freeof(w_var, d2) and is(d2 > 0)
+                   and ratsimp(d0 - d2^2) = 0 then (
+                    aa: sqrt(d2),
+                    expected_num: -(w_var^2 + 2*%i*aa*w_var - aa^2),
+                    kk: errcatch(ratsimp(numer3 / expand(expected_num))),
+                    if kk # [] and freeof(w_var, first(kk)) then (
+                        kk: first(kk),
+                        res: [kk * t_var * exp(-aa*t_var) * u(t_var),
+                              concat("k/(iw+a)^2 -> k*t*e^{-at}*u(t), a=", string(aa))]
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── b/((iw+a)^2+b^2) -> e^{-at}*sin(bt)*u(t)  (a,b > 0) ──
+       Forma expandida: b/(w^2+2iaw+b^2-a^2)                      */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [numer4, denom4, c2, c1, c0, aa, bb],
+            numer4: part(er, 1),
+            denom4: rat(expand(part(er, 2))),
+            if freeof(w_var, numer4) and not freeof(w_var, denom4) then (
+                c2: ratsimp(diff(denom4, w_var, 2) / 2),
+                if ratsimp(c2 - 1) = 0 then (
+                    c1: ratsimp(diff(denom4, w_var) - 2*w_var),
+                    c0: ratsimp(subst(w_var=0, denom4)),
+                    aa: ratsimp(c1 / (2*%i)),
+                    if freeof(w_var, aa) and is(aa > 0) then (
+                        bb: sqrt(ratsimp(c0 + aa^2)),
+                        if freeof(w_var, bb) and is(bb > 0)
+                           and ratsimp(numer4 - bb) = 0 then
+                            res: [exp(-aa*t_var) * sin(bb*t_var) * u(t_var),
+                                  concat("b/((iw+a)^2+b^2) -> e^{-at}sin(bt)u(t), a=",
+                                         string(aa), ", b=", string(bb))]
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── (iw+a)/((iw+a)^2+b^2) -> e^{-at}*cos(bt)*u(t)  (a,b > 0) ──
+       Opera sobre er=rat(F_expr) para preservar op="/".
+       expand() descompondria en suma parcial cambiando op a "+".  */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [numer5, denom5, nc1, nc0, c2, c1, c0, aa, bb],
+            numer5: rat(expand(part(er, 1))),
+            denom5: rat(expand(part(er, 2))),
+            if not freeof(w_var, numer5) and not freeof(w_var, denom5) then (
+                nc1: ratsimp(diff(numer5, w_var)),
+                nc0: ratsimp(subst(w_var=0, numer5)),
+                if ratsimp(nc1 - %i) = 0 and freeof(w_var, nc0) then (
+                    aa: nc0,
+                    if is(aa > 0) then (
+                        c2: ratsimp(diff(denom5, w_var, 2) / 2),
+                        if ratsimp(c2 - 1) = 0 then (
+                            c1: ratsimp(diff(denom5, w_var) - 2*w_var),
+                            c0: ratsimp(subst(w_var=0, denom5)),
+                            if ratsimp(c1 / (2*%i) - aa) = 0 then (
+                                bb: sqrt(ratsimp(c0 + aa^2)),
+                                if freeof(w_var, bb) and is(bb > 0) then
+                                    res: [exp(-aa*t_var) * cos(bb*t_var) * u(t_var),
+                                          concat("(iw+a)/((iw+a)^2+b^2) -> e^{-at}cos(bt)u(t), a=",
+                                                 string(aa), ", b=", string(bb))]
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── (pi/a)*e^{-a|w|} -> 1/(a^2+t^2)  (a > 0) ──
+       Detecta k*exp(-a*abs(w_var)) con k = pi/a.                  */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "*") then block(
+            [exp_part, coef5, exp_arg, aa],
+            exp_part: false,
+            coef5: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = "^")
+                   and not freeof('abs, s)
+                then exp_part: s
+                else coef5: coef5 * s
+            ),
+            if is(exp_part # false) then (
+                exp_arg: part(exp_part, 2),
+                aa: ratsimp(exp_arg / (-abs(w_var))),
+                if freeof(w_var, aa) and is(aa > 0)
+                   and ratsimp(coef5 - %pi/aa) = 0 then
+                    res: [1/(aa^2 + t_var^2),
+                          concat("(pi/a)*e^{-a|w|} -> 1/(a^2+t^2), a=", string(aa))]
+            )
         )
     ),
 
@@ -350,6 +700,7 @@ FT(FUNC_INPUT, t_var, w_var) := block(
     n_orig : length(FUNC_INPUT),
     done   : false,
 
+    /* ── intento de patron para intervalo completo ── */
     if n_orig = 1 then (
         block([tr],
             tr: FUNC_INPUT[1],
@@ -357,14 +708,15 @@ FT(FUNC_INPUT, t_var, w_var) := block(
                 pattern: FT_pattern_lookup(tr[1], t_var, w_var),
                 if is(pattern # false) then (
                     F      : pattern[1],
-                    F_real : ratsimp(realpart(F)),
-                    F_imag : ratsimp(imagpart(F)),
+                    F_real : if freeof(%i, F) then F else ratsimp(realpart(F)),
+                    F_imag : if freeof(%i, F) then 0 else ratsimp(imagpart(F)),
                     done   : true
                 )
             )
         )
     ),
 
+    /* ── integracion por tramos si no hubo patron ── */
     if not done then (
         expanded : [],
         for i : 1 thru n_orig do
@@ -423,6 +775,7 @@ IFT(FUNC_INPUT, w_var, t_var) := block(
     n_orig : length(FUNC_INPUT),
     done   : false,
 
+    /* ── intento de patron para intervalo completo ── */
     if n_orig = 1 then (
         block([tr],
             tr: FUNC_INPUT[1],
@@ -430,14 +783,15 @@ IFT(FUNC_INPUT, w_var, t_var) := block(
                 pattern: IFT_pattern_lookup(tr[1], w_var, t_var),
                 if is(pattern # false) then (
                     f      : pattern[1],
-                    f_real : ratsimp(realpart(f)),
-                    f_imag : ratsimp(imagpart(f)),
+                    f_real : if freeof(%i, f) then f else ratsimp(realpart(f)),
+                    f_imag : if freeof(%i, f) then 0 else ratsimp(imagpart(f)),
                     done   : true
                 )
             )
         )
     ),
 
+    /* ── integracion por tramos si no hubo patron ── */
     if not done then (
         expanded : [],
         for i : 1 thru n_orig do
