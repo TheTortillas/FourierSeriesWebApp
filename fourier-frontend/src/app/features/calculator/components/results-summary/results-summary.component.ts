@@ -50,10 +50,22 @@ export class ResultsSummaryComponent {
 
   // ── Free-parameter sliders ────────────────────────────────────────────────
   readonly paramValues  = signal<ParamValues>({});
-  readonly activeParams = computed<string[]>(() => this.store.result()?.params ?? []);
+  readonly activeParams = computed<string[]>(() => this.store.result()?.data.params ?? []);
+
+  /** Name of the param currently used for the custom axis unit (null = first param). */
+  readonly customConstName = signal<string | null>(null);
+
+  /** Axis constant used when xAxisFormat === 'custom'. */
+  readonly customConst = computed(() => {
+    const params = this.activeParams();
+    const pv     = this.paramValues();
+    const name   = this.customConstName() ?? params[0];
+    if (!name) return { symbol: 'T', value: 1 };
+    return { symbol: name, value: pv[name] ?? 1 };
+  });
 
   // ── Canvas settings ──────────────────────────────────────────────────────
-  readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('pi');
+  readonly xAxisFormat = signal<'pi' | 'e' | 'integer' | 'custom'>('pi');
   readonly showHarmonics = signal(false);
   readonly originalColor = signal('#8b2500');
   readonly approxColor = signal('#1a4a6b');
@@ -118,11 +130,17 @@ export class ResultsSummaryComponent {
     const segs   = hasPv ? this.store.segments() : null;
     const intVar = hasPv ? this.store.intVar()   : null;
     const origFns = hasPv && segs && intVar
-      ? segs.map((s, i) => ({
-          fn:   math.compile(s.expression, intVar, pv),
-          from: previews[i]?.from ?? NaN,
-          to:   previews[i]?.to   ?? NaN,
-        }))
+      ? segs.map((s, i) => {
+          const fromFn = math.compile(s.from, '_', pv);
+          const toFn   = math.compile(s.to,   '_', pv);
+          const fromV  = fromFn?.(0);
+          const toV    = toFn?.(0);
+          return {
+            fn:   math.compile(s.expression, intVar, pv),
+            from: (fromV !== undefined && isFinite(fromV)) ? fromV : (previews[i]?.from ?? NaN),
+            to:   (toV   !== undefined && isFinite(toV))   ? toV   : (previews[i]?.to   ?? NaN),
+          };
+        })
       : previews;
 
     if (!result) {
@@ -143,14 +161,33 @@ export class ResultsSummaryComponent {
       ];
     }
 
-    const w0 = rec.parseW0(result.data.w0.maxima);
+    const w0Base = rec.parseW0(result.data.w0.maxima);
+    const w0fn   = hasPv ? math.compile(result.data.w0.maxima, '_', pv) : null;
+    const w0v    = w0fn?.(0);
+    const w0     = (w0v !== undefined && isFinite(w0v)) ? w0v : w0Base;
 
     let approxFn: ((x: number) => number) | null = null;
     let harmonicFns: Array<(x: number) => number> = [];
 
     if (result.type === 'trigonometric') {
-      const terms = result.terms.terms as TrigNumericTerm[];
-      const a0 = result.data.coefficients.a0Float ?? 0;
+      const rawTerms = result.terms.terms as TrigNumericTerm[];
+      const c = result.data.coefficients;
+      let a0 = c.a0Float ?? 0;
+      let terms = rawTerms;
+      if (hasPv) {
+        if (c.a0?.maxima) { const fn = math.compile(c.a0.maxima, '_', pv); const v = fn?.(0); if (v !== undefined && isFinite(v)) a0 = v; }
+        const anFn = c.an?.maxima ? math.compile(c.an.maxima, 'n', pv) : null;
+        const bnFn = c.bn?.maxima ? math.compile(c.bn.maxima, 'n', pv) : null;
+        if (anFn || bnFn) {
+          terms = rawTerms.map(t => {
+            const anv = anFn?.(t.n); const bnv = bnFn?.(t.n);
+            return { ...t,
+              anFloat: (anv !== undefined && isFinite(anv)) ? anv : t.anFloat,
+              bnFloat: (bnv !== undefined && isFinite(bnv)) ? bnv : t.bnFloat,
+            };
+          });
+        }
+      }
       approxFn = rec.buildTrigonometric(a0, terms, w0, nTerms);
       if (showHarmonics) {
         const limit = Math.min(nTerms, terms.length);
@@ -160,9 +197,25 @@ export class ResultsSummaryComponent {
         });
       }
     } else if (result.type === 'halfRange') {
-      const terms = result.terms.terms as TrigNumericTerm[];
+      const rawTerms = result.terms.terms as TrigNumericTerm[];
+      const c = result.data.coefficients;
+      let terms = rawTerms;
+      if (hasPv) {
+        const anFn = c.an?.maxima ? math.compile(c.an.maxima, 'n', pv) : null;
+        const bnFn = c.bn?.maxima ? math.compile(c.bn.maxima, 'n', pv) : null;
+        if (anFn || bnFn) {
+          terms = rawTerms.map(t => {
+            const anv = anFn?.(t.n); const bnv = bnFn?.(t.n);
+            return { ...t,
+              anFloat: (anv !== undefined && isFinite(anv)) ? anv : t.anFloat,
+              bnFloat: (bnv !== undefined && isFinite(bnv)) ? bnv : t.bnFloat,
+            };
+          });
+        }
+      }
       if (hrMode === 'cosine') {
-        const a0 = result.data.coefficients.a0Float ?? 0;
+        let a0 = c.a0Float ?? 0;
+        if (hasPv && c.a0?.maxima) { const fn = math.compile(c.a0.maxima, '_', pv); const v = fn?.(0); if (v !== undefined && isFinite(v)) a0 = v; }
         approxFn = rec.buildCosineOnly(a0, terms, w0, nTerms);
         if (showHarmonics) {
           const limit = Math.min(nTerms, terms.length);
@@ -183,8 +236,9 @@ export class ResultsSummaryComponent {
       }
     } else if (result.type === 'complex') {
       const terms = result.terms.terms as ComplexNumericTerm[];
-      const c0 =
-        result.data.coefficients.c0Float ?? this.parseMaxima(result.data.coefficients.c0.maxima);
+      const c = result.data.coefficients;
+      let c0 = c.c0Float ?? this.parseMaxima(c.c0.maxima);
+      if (hasPv && c.c0?.maxima) { const fn = math.compile(c.c0.maxima, '_', pv); const v = fn?.(0); if (v !== undefined && isFinite(v)) c0 = v; }
       approxFn = rec.buildComplex(c0, terms, w0, nTerms);
       if (showHarmonics) {
         const limit = Math.min(nTerms, terms.length);
@@ -435,6 +489,7 @@ export class ResultsSummaryComponent {
         this.showFavoriteDialog.set(false);
         this.latestHistoryEntry.set(null);
         this.favoriteName = '';
+        this.customConstName.set(null);
 
         // Pre-fetch the history entry so the star button can resolve immediately on click
         if (this.userStore.isAuthenticated()) {

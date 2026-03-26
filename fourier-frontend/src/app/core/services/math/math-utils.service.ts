@@ -31,7 +31,8 @@ export class MathUtilsService {
       if (params) {
         for (const [name, value] of Object.entries(params)) {
           // Word-boundary replacement: won't touch 'a' inside 'abs', 'atan', etc.
-          expr = expr.replace(new RegExp(`\\b${name}\\b`, 'g'), String(value));
+          // Always wrap in parens so negative values don't create `--` decrement ops.
+          expr = expr.replace(new RegExp(`\\b${name}\\b`, 'g'), `(${String(value)})`);
         }
       }
       const js = this.maximaToJs(expr);

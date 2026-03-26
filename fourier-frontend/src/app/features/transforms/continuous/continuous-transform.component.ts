@@ -99,7 +99,7 @@ export class ContinuousTransformComponent {
   readonly showMag = signal(false);
 
   // ── Canvas style settings ────────────────────────────────────────────────
-  readonly xAxisFormat = signal<'integer' | 'pi' | 'e'>('integer');
+  readonly xAxisFormat = signal<'integer' | 'pi' | 'e' | 'custom'>('integer');
   readonly originalColor = signal('#c14030');
   readonly resultColor = signal('#2563eb');
   readonly imagColor = signal('#d97706');
@@ -115,6 +115,18 @@ export class ContinuousTransformComponent {
     const ft  = this.ftResult();
     const ift = this.iftResult();
     return (ft ?? ift)?.params ?? [];
+  });
+
+  /** Name of the param currently used for the custom axis unit (null = first param). */
+  readonly customConstName = signal<string | null>(null);
+
+  /** Axis constant used when xAxisFormat === 'custom'. */
+  readonly customConst = computed(() => {
+    const params = this.activeParams();
+    const pv     = this.paramValues();
+    const name   = this.customConstName() ?? params[0];
+    if (!name) return { symbol: 'a', value: 1 };
+    return { symbol: name, value: pv[name] ?? 1 };
   });
 
   // ── Share / fullscreen ────────────────────────────────────────────────────
@@ -150,7 +162,13 @@ export class ContinuousTransformComponent {
       }
     });
 
-    // ── 3. Sync result → URL ──────────────────────────────────────────────
+    // ── 3. Reset custom axis when result changes ──────────────────────────
+    effect(() => {
+      this.ftResult(); this.iftResult(); // track both
+      this.customConstName.set(null);
+    });
+
+    // ── 4. Sync result → URL ──────────────────────────────────────────────
     effect(() => {
       const ft = this.ftResult();
       const ift = this.iftResult();
@@ -239,8 +257,8 @@ export class ContinuousTransformComponent {
         if (showOrig) {
           for (const seg of segs) {
             const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
-            const from = this.parseLimit(seg.from);
-            const to = this.parseLimit(seg.to);
+            const from = this.parseLimit(seg.from, pv);
+            const to = this.parseLimit(seg.to, pv);
             if (!fn) continue;
             if (isFinite(from) && isFinite(to)) {
               // Bounded segment: sample exactly within [from, to]
@@ -494,13 +512,18 @@ export class ContinuousTransformComponent {
     };
   }
 
-  /** Convert a Maxima limit string (inf, minf, %pi, numbers) to a JS number. */
-  parseLimit(s: string): number {
+  /** Convert a Maxima limit string (inf, minf, %pi, numbers, param exprs) to a JS number. */
+  parseLimit(s: string, params?: ParamValues): number {
     if (!s?.trim()) return NaN;
     if (s === 'inf' || s === '+inf') return Infinity;
     if (s === 'minf' || s === '-inf') return -Infinity;
-    // Reuse the shared service so limit expressions benefit from the same
-    // constant/operator handling (e.g. %pi, %e, ^).
+    // When params are provided, try to resolve symbolic bounds (e.g. -T/2).
+    if (params && Object.keys(params).length > 0) {
+      const fn = this.mathUtils.compile(s, '_', params);
+      const v  = fn?.(0);
+      if (v !== undefined && isFinite(v)) return v;
+    }
+    // Fallback: constant expression (%pi, %e, numbers).
     const result = this.mathUtils.evaluate(s, 0, '_');
     return isFinite(result) ? result : NaN;
   }

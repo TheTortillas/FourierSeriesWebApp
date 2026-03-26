@@ -4,7 +4,7 @@
   <div #canvasWrapper
        class="relative h-64 sm:h-80 border border-border dark:border-dark-border
               rounded overflow-hidden bg-paper dark:bg-dark-bg shrink-0">
-    <app-function-plot [layers]="layers()" [initialUnit]="90" [xAxisFormat]="xAxisFormat()" />
+    <app-function-plot [layers]="layers()" [initialUnit]="90" [xAxisFormat]="xAxisFormat()" [customConst]="customConst()" />
 
     <!-- Canvas overlay buttons (top-left) -->
     <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
@@ -131,6 +131,14 @@
               : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'">
             1,2
           </button>
+          @for (p of activeParams(); track p) {
+            <button type="button" (click)="customConstName.set(p); xAxisFormat.set('custom')"
+              [class]="xAxisFormat() === 'custom' && customConst().symbol === p
+                ? 'px-2 py-0.5 bg-accent text-white font-mono'
+                : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors font-mono'">
+              {{ p }}
+            </button>
+          }
         </div>
       </div>
 

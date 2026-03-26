@@ -340,6 +340,7 @@
         <app-function-plot #plotRef
           [layers]="layers()"
           [xAxisFormat]="xAxisFormat()"
+          [customConst]="customConst()"
           class="w-full h-full block" />
 
         <!-- Overlay buttons (top-left) -->
@@ -450,6 +451,14 @@
                   : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
                 1,2
               </button>
+              @for (p of activeParams(); track p) {
+                <button type="button" (click)="customConstName.set(p); xAxisFormat.set('custom')"
+                  [class]="xAxisFormat() === 'custom' && customConst().symbol === p
+                    ? 'px-2 py-0.5 bg-accent text-white cursor-pointer font-mono'
+                    : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer font-mono'">
+                  {{ p }}
+                </button>
+              }
             </div>
           </div>
 
