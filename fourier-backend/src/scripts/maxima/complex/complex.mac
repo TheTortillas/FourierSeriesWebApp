@@ -54,3 +54,11 @@ print("__SERIES_COMPLEX_MAXIMA__")$ print(string(serie_compleja))$
 print("__SERIES_COMPLEX_TEX__")$    tex(serie_compleja)$
 print("__W0_MAXIMA__")$             print(string(w0))$
 print("__W0_TEX__")$                tex(w0)$
+
+/* Parámetros libres en los coeficientes */
+free_params: []$
+for sym in listofvars(Coeff_n + Coeff_0) do (
+    if sym # INTVAR and sym # n then
+        free_params: append(free_params, [sym])
+)$
+print("__PARAMS__")$ print(string(free_params))$

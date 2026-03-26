@@ -98,6 +98,12 @@
     </div>
   </div>
 
+  <!-- ── Free-parameter sliders ────────────────────────────────────────────── -->
+  <app-param-sliders
+    [params]="activeParams()"
+    (valuesChange)="paramValues.set($event)"
+  />
+
   <!-- ── Canvas settings panel ─────────────────────────────────────────────── -->
   @if (showCanvasSettings()) {
     <div class="border border-border dark:border-dark-border rounded p-3 bg-paper dark:bg-dark-surface

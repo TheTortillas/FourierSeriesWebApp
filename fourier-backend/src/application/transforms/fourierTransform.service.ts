@@ -95,12 +95,15 @@ kill(all)$
       this.extractBetween(raw, "__IMAG_TEX__", null),
     );
 
+    const params = this.extractParams(raw, "__PARAMS__");
+
     return {
       input,
       exists,
       F: exists ? { maxima: fMaxima, tex: fTex } : undefined,
       realPart: exists ? { maxima: realMaxima, tex: realTex } : undefined,
       imagPart: exists ? { maxima: imagMaxima, tex: imagTex } : undefined,
+      params,
       executionTimeMs: Date.now() - startTime,
     };
   }
@@ -186,6 +189,8 @@ kill(all)$
       this.extractBetween(raw, "__F_COMBINED_TEX__", null),
     );
 
+    const params = this.extractParams(raw, "__PARAMS__");
+
     return {
       input,
       exists: fPosMaxima !== "" || fNegMaxima !== "",
@@ -195,6 +200,7 @@ kill(all)$
         hasCombined && fCombinedMaxima
           ? { maxima: fCombinedMaxima, tex: fCombinedTex }
           : undefined,
+      params,
       executionTimeMs: Date.now() - startTime,
     };
   }
@@ -204,6 +210,13 @@ kill(all)$
       .map((s) => `[${s.expression}, ${s.from}, ${s.to}]`)
       .join(", ");
     return `matrix(${rows})`;
+  }
+
+  private extractParams(raw: string, marker: string): string[] {
+    const section = this.extractBetween(raw, marker, null);
+    const match = section.match(/\[([^\]]*)\]/);
+    if (!match || !match[1].trim()) return [];
+    return match[1].split(",").map((s) => s.trim()).filter(Boolean);
   }
 
   private extractBetween(

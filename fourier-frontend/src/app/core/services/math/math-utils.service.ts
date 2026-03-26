@@ -18,13 +18,23 @@ export type JsFunction = (x: number) => number;
 export class MathUtilsService {
   /**
    * Compiles a Maxima expression string to a JS function of `variable` (default `'x'`).
+   * If `params` is provided, those symbol→value substitutions are applied to the
+   * Maxima string BEFORE the conversion pipeline, allowing parametric expressions
+   * (e.g. `exp(-a*t)` with `{a: 2}`) to be evaluated numerically.
    * Returns null if the expression cannot be compiled.
    */
-  compile(maxima: string, variable = 'x'): JsFunction | null {
+  compile(maxima: string, variable = 'x', params?: Record<string, number>): JsFunction | null {
     if (!maxima.trim()) return null;
 
     try {
-      const js = this.maximaToJs(maxima);
+      let expr = maxima;
+      if (params) {
+        for (const [name, value] of Object.entries(params)) {
+          // Word-boundary replacement: won't touch 'a' inside 'abs', 'atan', etc.
+          expr = expr.replace(new RegExp(`\\b${name}\\b`, 'g'), String(value));
+        }
+      }
+      const js = this.maximaToJs(expr);
       // eslint-disable-next-line no-new-func
       const fn = new Function(variable, `"use strict"; ${this._helpers} return (${js});`) as JsFunction;
       // Smoke-test: evaluate at 0 to catch obvious syntax errors

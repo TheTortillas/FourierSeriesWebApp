@@ -38,6 +38,7 @@ export interface FourierResult {
   a0Float?: number;
   simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
+  params?: string[];
   executionTimeMs: number;
 }
 
@@ -50,6 +51,7 @@ export interface HalfRangeResult {
   a0Raw?: SymbolicExpression;
   a0Float?: number;
   validation?: ValidationResult;
+  params?: string[];
   executionTimeMs: number;
 }
 
@@ -63,6 +65,7 @@ export interface ComplexFourierResult {
   seriesComplex: SymbolicExpression;
   w0: SymbolicExpression;
   validation?: ValidationResult;
+  params?: string[];
   executionTimeMs: number;
 }
 
@@ -191,6 +194,7 @@ export interface FourierTransformResult {
   F?: SymbolicExpression;
   realPart?: SymbolicExpression;
   imagPart?: SymbolicExpression;
+  params?: string[];
   executionTimeMs: number;
 }
 
@@ -217,6 +221,7 @@ export interface InverseFourierTransformResult {
   fPositive?: SymbolicExpression;
   fNegative?: SymbolicExpression;
   fCombined?: SymbolicExpression;
+  params?: string[];
   executionTimeMs: number;
 }
 

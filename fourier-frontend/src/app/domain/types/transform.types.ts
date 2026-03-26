@@ -28,6 +28,7 @@ export interface FourierTransformResponse {
   F?: SymbolicExpression;
   realPart?: SymbolicExpression;
   imagPart?: SymbolicExpression;
+  params?: string[];
   executionTimeMs: number;
 }
 
@@ -40,6 +41,7 @@ export interface InverseFourierTransformResponse {
   fNegative?: SymbolicExpression;
   /** Combined/simplified form when both regions yield a clean expression */
   fCombined?: SymbolicExpression;
+  params?: string[];
   executionTimeMs: number;
 }
 

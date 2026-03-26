@@ -51,6 +51,7 @@ export interface TrigonometricResponse {
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
   validation?: ValidationResult;
+  params?: string[];
   executionTimeMs: number;
 }
 
@@ -77,6 +78,7 @@ export interface HalfRangeResponse {
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
   validation?: ValidationResult;
+  params?: string[];
   executionTimeMs: number;
 }
 
@@ -92,6 +94,7 @@ export interface ComplexResponse {
   seriesComplex: SymbolicExpression;
   w0: SymbolicExpression;
   validation?: ValidationResult;
+  params?: string[];
   executionTimeMs: number;
 }
 

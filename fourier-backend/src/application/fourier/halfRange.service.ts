@@ -112,6 +112,8 @@ kill(all)$
         .split("\n")[0] ?? "NaN";
     const a0Float = parseFloat(a0FloatRaw);
 
+    const params = this.extractParams(result.raw);
+
     const halfRangeResult: HalfRangeResult = {
       input,
       coefficients: {
@@ -125,6 +127,7 @@ kill(all)$
       w0: parsed["w0"] ?? { tex: "", maxima: "" },
       a0Raw: parsed["a0raw"],
       validation,
+      params,
       executionTimeMs: Date.now() - startTime,
     };
 
@@ -296,6 +299,13 @@ kill(all)$
         bnUsedLimit: bnUsedLimitStr.includes("true"),
       };
     });
+  }
+
+  private extractParams(raw: string): string[] {
+    const section = this.extractBetween(raw, "__PARAMS__", "__A0_FLOAT__");
+    const match = section.match(/\[([^\]]*)\]/);
+    if (!match || !match[1].trim()) return [];
+    return match[1].split(",").map((s) => s.trim()).filter(Boolean);
   }
 
   private extractBetween(

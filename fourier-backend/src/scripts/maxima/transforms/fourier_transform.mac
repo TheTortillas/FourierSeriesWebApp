@@ -14,15 +14,17 @@ load("LIB_PATH")$
 
 result : FT(FUNC_INPUT, INTVAR, TRANSVAR)$
 
-F      : result[1]$
-F_real : result[2]$
-F_imag : result[3]$
-exists : result[4]$
+F           : result[1]$
+F_real      : result[2]$
+F_imag      : result[3]$
+exists      : result[4]$
+free_params : result[5]$
 
-print("__EXISTS__")$ print(string(exists))$
-print("__F_MAXIMA__")$ print(string(F))$
-print("__F_TEX__")$ tex(F)$
-print("__REAL_MAXIMA__")$ print(string(F_real))$
-print("__REAL_TEX__")$ tex(F_real)$
-print("__IMAG_MAXIMA__")$ print(string(F_imag))$
-print("__IMAG_TEX__")$ tex(F_imag)$
+print("__EXISTS__")$       print(string(exists))$
+print("__F_MAXIMA__")$     print(string(F))$
+print("__F_TEX__")$        tex(F)$
+print("__REAL_MAXIMA__")$  print(string(F_real))$
+print("__REAL_TEX__")$     tex(F_real)$
+print("__IMAG_MAXIMA__")$  print(string(F_imag))$
+print("__IMAG_TEX__")$     tex(F_imag)$
+print("__PARAMS__")$       print(string(free_params))$

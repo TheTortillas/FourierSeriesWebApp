@@ -61,3 +61,11 @@ print("__SERIES_COSENO_MAXIMA__")$ print(string(serie_coseno))$
 print("__SERIES_COSENO_TEX__")$    tex(serie_coseno)$
 print("__SERIES_SENO_MAXIMA__")$   print(string(serie_seno))$
 print("__SERIES_SENO_TEX__")$      tex(serie_seno)$
+
+/* Parámetros libres en los coeficientes */
+free_params: []$
+for sym in listofvars(Coeff_An + Coeff_Bn + Coeff_A0) do (
+    if sym # INTVAR and sym # n then
+        free_params: append(free_params, [sym])
+)$
+print("__PARAMS__")$ print(string(free_params))$

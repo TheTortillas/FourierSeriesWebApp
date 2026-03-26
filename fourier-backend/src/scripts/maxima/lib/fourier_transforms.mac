@@ -39,6 +39,17 @@ declare(sgn,   real)$
 FT_is_minf(x) := is(x = minf) or is(x = -inf)$
 FT_is_inf(x)  := is(x = inf)  or is(x = +inf)$
 
+/* Devuelve los símbolos libres de expr que no están en reserved.
+   Se usan para identificar parámetros (a, b, T…) retornables al frontend. */
+FT_free_params(expr, reserved) := block(
+    [params: []],
+    for sym in listofvars(expr) do (
+        if not member(sym, reserved) then
+            params: append(params, [sym])
+    ),
+    params
+)$
+
 /* Extrae a de delta(t-a). Devuelve 0 si delta(t), false si no es delta */
 FT_delta_shift(expr, t_var) := block(
     [arg, res],
@@ -246,6 +257,15 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
     e: expand(f_expr),
     res: false,
 
+    /* lookup defensivo */
+    for sym in listofvars(f_expr) do (
+        if sym # t_var and sym # w_var
+           and not featurep(sym, real) then (
+            declare(sym, real),
+            assume(sym > 0)
+        )
+    ),
+
     /* ── delta(t-a) ── */
     dm: FT_match_delta(e, t_var),
     if is(dm # false) then (
@@ -326,7 +346,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 dconst: ratsimp(subst(t_var=0, denom)),
                 if freeof(t_var, sqterm) and freeof(t_var, dconst)
                    and is(sqterm > 0) and is(dconst > 0) then (
-                    a_cand: sqrt(dconst / sqterm),
+                    a_cand: radcan(sqrt(rat(dconst / sqterm))),
                     if freeof(t_var, a_cand) and is(a_cand > 0) then (
                         k: ratsimp(numer / sqterm),
                         res: [k * (%piexact/a_cand) * exp(-a_cand*abs(w_var)),
@@ -358,7 +378,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     dct: ratsimp(subst(t_var=0, eden)),
                     if freeof(t_var, sqt) and freeof(t_var, dct)
                        and is(sqt > 0) and is(dct > 0) then (
-                        ac: sqrt(dct / sqt),
+                        ac: radcan(sqrt(rat(dct / sqt))),
                         if freeof(t_var, ac) and is(ac > 0) then (
                             kk: ratsimp(1 / sqt),
                             res: [kk * (%piexact/(2*ac)) *
@@ -390,7 +410,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                         dc2: ratsimp(subst(t_var=0, denom2)),
                         if freeof(t_var, sq2) and freeof(t_var, dc2)
                            and is(sq2 > 0) and is(dc2 > 0) then (
-                            aa2: sqrt(dc2 / sq2),
+                            aa2: radcan(sqrt(rat(dc2 / sq2))),
                             if freeof(t_var, aa2) and is(aa2 > 0) then (
                                 kk: ratsimp(part(rest,1) / sq2),
                                 res: [kk * (%piexact/(2*aa2)) *
@@ -424,7 +444,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     dct2: ratsimp(subst(t_var=0, eden2)),
                     if freeof(t_var, sqt2) and freeof(t_var, dct2)
                        and is(sqt2 > 0) and is(dct2 > 0) then (
-                        ac2: sqrt(dct2 / sqt2),
+                        ac2: radcan(sqrt(rat(dct2 / sqt2))),
                         if freeof(t_var, ac2) and is(ac2 > 0) then (
                             kk2: ratsimp(1 / sqt2),
                             res: [kk2 * (%piexact/(2*ac2*%i)) *
@@ -456,7 +476,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                         dc3: ratsimp(subst(t_var=0, denom3)),
                         if freeof(t_var, sq3) and freeof(t_var, dc3)
                            and is(sq3 > 0) and is(dc3 > 0) then (
-                            aa3: sqrt(dc3 / sq3),
+                            aa3: radcan(sqrt(rat((dc3 / sq3)))),
                             if freeof(t_var, aa3) and is(aa3 > 0) then (
                                 kk2: ratsimp(part(rest3,1) / sq3),
                                 res: [kk2 * (%piexact/(2*aa3*%i)) *
@@ -493,6 +513,15 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
     e:  expand(F_expr),
     er: rat(F_expr),
     res: false,
+
+    /* lookup defensivo */
+    for sym in listofvars(F_expr) do (
+        if sym # w_var and sym # t_var
+           and not featurep(sym, real) then (
+            declare(sym, real),
+            assume(sym > 0)
+        )
+    ),
 
     /* ── 1 -> delta(t) ── */
     if is(res = false) then (
@@ -693,7 +722,8 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
 FT(FUNC_INPUT, t_var, w_var) := block(
     [n_orig, expanded, pieces, F_acum, F,
      F_real, F_imag, exists, had_error, pattern, done,
-     trozo, f_i, ai, bi, contrib],
+     trozo, f_i, ai, bi, contrib, free_params,
+     _ft_reserved],
 
     declare(w_var, real),
 
@@ -758,7 +788,10 @@ FT(FUNC_INPUT, t_var, w_var) := block(
         F_imag : if F_imag = [] then 'unknown else first(F_imag)
     ),
 
-    [F, F_real, F_imag, if done then true else exists]
+    _ft_reserved: [t_var, w_var, 'u, 'delta, 'sgn],
+    free_params: FT_free_params(F, _ft_reserved),
+
+    [F, F_real, F_imag, if done then true else exists, free_params]
 )$
 
 /* ════════════════════════════════════════════════════════════════════
@@ -841,7 +874,8 @@ IFT(FUNC_INPUT, w_var, t_var) := block(
    ════════════════════════════════════════════════════════════════════ */
 
 IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
-    [rp, rn, f_pos, f_neg, f_combined, fn_flip, dcheck],
+    [rp, rn, f_pos, f_neg, f_combined, fn_flip, dcheck,
+     free_params, _ift_reserved, _ift_ref],
 
     assume(t_var > 0),
     rp    : IFT(FUNC_INPUT, w_var, t_var),
@@ -862,5 +896,9 @@ IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
         else if ratsimp(f_pos) = 0 then f_neg
         else false,
 
-    [f_pos, f_neg, f_combined]
+    _ift_reserved: [t_var, w_var, 'u, 'delta, 'sgn],
+    _ift_ref: if f_combined # false then f_combined else f_pos + f_neg,
+    free_params: FT_free_params(_ift_ref, _ift_reserved),
+
+    [f_pos, f_neg, f_combined, free_params]
 )$

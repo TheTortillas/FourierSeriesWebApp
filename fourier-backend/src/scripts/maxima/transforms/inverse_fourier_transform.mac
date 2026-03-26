@@ -14,16 +14,18 @@ load("LIB_PATH")$
 
 result : IFT_bilateral(FUNC_INPUT, INTVAR, TRANSVAR)$
 
-f_pos      : result[1]$
-f_neg      : result[2]$
-f_combined : result[3]$
+f_pos       : result[1]$
+f_neg       : result[2]$
+f_combined  : result[3]$
+free_params : result[4]$
 
 has_combined : is(f_combined # false)$
 
-print("__F_POS_MAXIMA__")$ print(string(f_pos))$
-print("__F_POS_TEX__")$ tex(f_pos)$
-print("__F_NEG_MAXIMA__")$ print(string(f_neg))$
-print("__F_NEG_TEX__")$ tex(f_neg)$
-print("__HAS_COMBINED__")$ print(string(has_combined))$
+print("__F_POS_MAXIMA__")$      print(string(f_pos))$
+print("__F_POS_TEX__")$         tex(f_pos)$
+print("__F_NEG_MAXIMA__")$      print(string(f_neg))$
+print("__F_NEG_TEX__")$         tex(f_neg)$
+print("__HAS_COMBINED__")$      print(string(has_combined))$
 print("__F_COMBINED_MAXIMA__")$ print(string(f_combined))$
-print("__F_COMBINED_TEX__")$ tex(f_combined)$
+print("__F_COMBINED_TEX__")$    tex(f_combined)$
+print("__PARAMS__")$            print(string(free_params))$

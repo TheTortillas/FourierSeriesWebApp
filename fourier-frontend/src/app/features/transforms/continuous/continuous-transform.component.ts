@@ -22,6 +22,8 @@ import {
 import { ApiService } from '../../../core/services/api/api.service';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
+import { ParamSlidersComponent } from '../../../shared/components/param-sliders/param-sliders.component';
+import type { ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
 import {
   FourierTransformResponse,
@@ -68,6 +70,7 @@ const VAR_PAIRS: VarPair[] = [
     MathjaxDirective,
     FunctionPlotComponent,
     TransformSegmentComponent,
+    ParamSlidersComponent,
     FormsModule,
   ],
 })
@@ -104,6 +107,15 @@ export class ContinuousTransformComponent {
   readonly originalLineWidth = signal(2);
   readonly resultLineWidth = signal(2);
   readonly showCanvasSettings = signal(false);
+
+  // ── Free parameter sliders ────────────────────────────────────────────────
+  readonly paramValues = signal<ParamValues>({});
+
+  readonly activeParams = computed<string[]>(() => {
+    const ft  = this.ftResult();
+    const ift = this.iftResult();
+    return (ft ?? ift)?.params ?? [];
+  });
 
   // ── Share / fullscreen ────────────────────────────────────────────────────
   readonly showShareDialog = signal(false);
@@ -218,6 +230,7 @@ export class ContinuousTransformComponent {
     const resLW = this.resultLineWidth();
 
     const plotter = this.plotter;
+    const pv      = this.paramValues();
 
     const layer: PlotLayer = {
       curves: [],
@@ -225,7 +238,7 @@ export class ContinuousTransformComponent {
         // ── Original input function (piecewise) ─────────────────────────
         if (showOrig) {
           for (const seg of segs) {
-            const fn = this.mathUtils.compile(seg.expression, intVariable);
+            const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
             const from = this.parseLimit(seg.from);
             const to = this.parseLimit(seg.to);
             if (!fn) continue;
@@ -249,15 +262,15 @@ export class ContinuousTransformComponent {
         if (ft?.exists) {
           const reFn =
             showRe && ft.realPart?.maxima
-              ? this.mathUtils.compile(ft.realPart.maxima, transVariable)
+              ? this.mathUtils.compile(ft.realPart.maxima, transVariable, pv)
               : null;
           const imFn =
             showIm && ft.imagPart?.maxima
-              ? this.mathUtils.compile(ft.imagPart.maxima, transVariable)
+              ? this.mathUtils.compile(ft.imagPart.maxima, transVariable, pv)
               : null;
           const magFn =
             showM && ft.realPart?.maxima && ft.imagPart?.maxima
-              ? this.buildMagFn(ft.realPart.maxima, ft.imagPart.maxima, transVariable)
+              ? this.buildMagFn(ft.realPart.maxima, ft.imagPart.maxima, transVariable, pv)
               : null;
 
           if (reFn) plotter.plotFn(ctx, reFn, vp, { color: reColor, lineWidth: resLW });
@@ -271,12 +284,12 @@ export class ContinuousTransformComponent {
         // = 0, which causes exponential blow-up for causal signals.
         if (ift?.exists && showRe) {
           if (ift.fPositive?.maxima) {
-            const raw = this.mathUtils.compile(ift.fPositive.maxima, transVariable);
+            const raw = this.mathUtils.compile(ift.fPositive.maxima, transVariable, pv);
             const fn = raw ? (x: number) => (x >= 0 ? raw(x) : NaN) : null;
             if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW });
           }
           if (ift.fNegative?.maxima) {
-            const raw = this.mathUtils.compile(ift.fNegative.maxima, transVariable);
+            const raw = this.mathUtils.compile(ift.fNegative.maxima, transVariable, pv);
             const fn = raw ? (x: number) => (x <= 0 ? raw(x) : NaN) : null;
             if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW });
           }
@@ -333,6 +346,7 @@ export class ContinuousTransformComponent {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
+            console.log('[transforms] FT result ←', res);
             this.ftResult.set(res);
             this.loading.set(false);
             this.plotComponent()?.resetView();
@@ -348,6 +362,7 @@ export class ContinuousTransformComponent {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
+            console.log('[transforms] IFT result ←', res);
             this.iftResult.set(res);
             this.loading.set(false);
             this.plotComponent()?.resetView();
@@ -467,9 +482,10 @@ export class ContinuousTransformComponent {
     reExpr: string,
     imExpr: string,
     variable: string,
+    params?: ParamValues,
   ): ((x: number) => number) | null {
-    const reFn = this.mathUtils.compile(reExpr, variable);
-    const imFn = this.mathUtils.compile(imExpr, variable);
+    const reFn = this.mathUtils.compile(reExpr, variable, params);
+    const imFn = this.mathUtils.compile(imExpr, variable, params);
     if (!reFn || !imFn) return null;
     return (x: number) => {
       const re = reFn(x);

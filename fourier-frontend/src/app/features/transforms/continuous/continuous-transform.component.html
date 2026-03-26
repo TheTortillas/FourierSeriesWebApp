@@ -417,6 +417,12 @@
         </div>
       </div>
 
+      <!-- Free-parameter sliders (shown only when result has symbolic params) -->
+      <app-param-sliders
+        [params]="activeParams()"
+        (valuesChange)="paramValues.set($event)"
+      />
+
       <!-- Canvas settings panel -->
       @if (showCanvasSettings()) {
         <div class="border border-border dark:border-dark-border rounded-xl p-3

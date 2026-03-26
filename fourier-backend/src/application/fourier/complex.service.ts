@@ -108,6 +108,8 @@ kill(all)$
         .split("\n")[0] ?? "NaN";
     const c0Float = parseFloat(c0FloatRaw);
 
+    const params = this.extractParams(result.raw);
+
     const complexResult: ComplexFourierResult = {
       input,
       coefficients: {
@@ -118,6 +120,7 @@ kill(all)$
       seriesComplex: parsed["series_complex"] ?? { tex: "", maxima: "" },
       w0: parsed["w0"] ?? { tex: "", maxima: "" },
       validation,
+      params,
       executionTimeMs: Date.now() - startTime,
     };
 
@@ -333,6 +336,13 @@ kill(all)$
       .map((s) => `[${s.expression}, ${s.from}, ${s.to}]`)
       .join(", ");
     return `matrix(${rows})`;
+  }
+
+  private extractParams(raw: string): string[] {
+    const section = this.extractBetween(raw, "__PARAMS__", "__C0_FLOAT__");
+    const match = section.match(/\[([^\]]*)\]/);
+    if (!match || !match[1].trim()) return [];
+    return match[1].split(",").map((s) => s.trim()).filter(Boolean);
   }
 
   private extractBetween(

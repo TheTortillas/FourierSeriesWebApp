@@ -13,9 +13,12 @@ import {
   ComplexNumericTerm,
 } from '../../../../core/services/canvas/fourier-reconstruction.service';
 import { PlottingService } from '../../../../core/services/canvas/plotting.service';
+import { MathUtilsService } from '../../../../core/services/math/math-utils.service';
 import { MathjaxDirective } from '../../../../shared/directives/mathjax.directive';
 import { ApiService } from '../../../../core/services/api/api.service';
 import { UserStore } from '../../../../core/services/auth/user.store';
+import { ParamSlidersComponent } from '../../../../shared/components/param-sliders/param-sliders.component';
+import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
 import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
 
@@ -33,16 +36,21 @@ const HARMONIC_COLORS = [
 
 @Component({
   selector: 'app-results-summary',
-  imports: [FunctionPlotComponent, MathjaxDirective, FormsModule],
+  imports: [FunctionPlotComponent, MathjaxDirective, FormsModule, ParamSlidersComponent],
   templateUrl: './results-summary.component.html',
 })
 export class ResultsSummaryComponent {
   readonly store = inject(CalculatorStore);
   readonly reconstruction = inject(FourierReconstructionService);
   readonly plotter = inject(PlottingService);
+  private readonly math = inject(MathUtilsService);
   readonly api = inject(ApiService);
   readonly userStore = inject(UserStore);
   readonly destroyRef = inject(DestroyRef);
+
+  // ── Free-parameter sliders ────────────────────────────────────────────────
+  readonly paramValues  = signal<ParamValues>({});
+  readonly activeParams = computed<string[]>(() => this.store.result()?.params ?? []);
 
   // ── Canvas settings ──────────────────────────────────────────────────────
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('pi');
@@ -95,6 +103,7 @@ export class ResultsSummaryComponent {
     const nTerms = this.store.nTerms();
     const hrMode = this.halfRangeMode();
     const plotter = this.plotter;
+    const math = this.math;
     const rec = this.reconstruction;
     const showHarmonics = this.showHarmonics();
     const origColor = this.originalColor();
@@ -102,12 +111,26 @@ export class ResultsSummaryComponent {
     const origWidth = this.originalLineWidth();
     const approxWidth = this.approxLineWidth();
 
+    // If free params are set, re-compile the original segments with those values
+    // so the canvas reflects the chosen parameter configuration.
+    const pv     = this.paramValues();
+    const hasPv  = Object.keys(pv).length > 0;
+    const segs   = hasPv ? this.store.segments() : null;
+    const intVar = hasPv ? this.store.intVar()   : null;
+    const origFns = hasPv && segs && intVar
+      ? segs.map((s, i) => ({
+          fn:   math.compile(s.expression, intVar, pv),
+          from: previews[i]?.from ?? NaN,
+          to:   previews[i]?.to   ?? NaN,
+        }))
+      : previews;
+
     if (!result) {
       return [
         {
           curves: [],
           onDraw(ctx, vp) {
-            for (const { fn, from, to } of previews) {
+            for (const { fn, from, to } of origFns) {
               if (fn && isFinite(from) && isFinite(to)) {
                 plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
                   color: origColor,
@@ -187,7 +210,7 @@ export class ResultsSummaryComponent {
             });
           }
           // Original function (bounded to piece intervals)
-          for (const { fn, from, to } of previews) {
+          for (const { fn, from, to } of origFns) {
             if (fn && isFinite(from) && isFinite(to)) {
               plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
                 color: origColor,

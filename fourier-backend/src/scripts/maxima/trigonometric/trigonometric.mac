@@ -57,3 +57,11 @@ print("__W0_MAXIMA__")$ print(string(w0))$
 print("__W0_TEX__")$    tex(w0)$
 print("__SERIES_MAXIMA__")$ print(string(serie_general))$
 print("__SERIES_TEX__")$    tex(serie_general)$
+
+/* Parámetros libres en los coeficientes (excluye variable de integración e índice n) */
+free_params: []$
+for sym in listofvars(Coeff_An + Coeff_Bn + Coeff_A0) do (
+    if sym # INTVAR and sym # n then
+        free_params: append(free_params, [sym])
+)$
+print("__PARAMS__")$ print(string(free_params))$
