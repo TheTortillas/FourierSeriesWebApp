@@ -13,6 +13,40 @@ kill(t, x, n)$
 declare(n, integer)$
 kill(Si_expr, Ci_expr, Shi_expr, Chi_expr)$
 
+/* ── Notación TeX para funciones especiales ── */
+
+/* Exponential integrals — un argumento */
+texput(expintegral_e1,  "\\operatorname{E_1}")$
+texput(expintegral_ei,  "\\operatorname{Ei}")$
+texput(expintegral_li,  "\\operatorname{li}")$
+texput(expintegral_si,  "\\operatorname{Si}")$
+texput(expintegral_ci,  "\\operatorname{Ci}")$
+texput(expintegral_shi, "\\operatorname{Shi}")$
+texput(expintegral_chi, "\\operatorname{Chi}")$
+
+/* Exponential integral — dos argumentos: E_v(z) con subíndice real */
+texput(expintegral_e,
+    lambda([v,z], sconcat("\\operatorname{E}_{", tex1(v), "}\\!\\left(", tex1(z), "\\right)")))$
+
+/* Gamma incompleta superior: Γ(a,z) */
+texput(gamma_incomplete,
+    lambda([a,z], sconcat("\\Gamma\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+
+/* Gamma incompleta inferior: γ(a,z) */
+texput(gamma_incomplete_lower,
+    lambda([a,z], sconcat("\\gamma\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+
+/* Gamma incompleta regularizada: Q(a,z) */
+texput(gamma_incomplete_regularized,
+    lambda([a,z], sconcat("Q\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+
+/* Gamma incompleta generalizada: Γ(a,z1,z2) */
+texput(gamma_incomplete_generalized,
+    lambda([a,z1,z2], sconcat("\\Gamma\\!\\left(", tex1(a), ",", tex1(z1), ",", tex1(z2), "\\right)")))$
+
+/* log-gamma */
+texput(log_gamma, "\\ln\\!\\Gamma")$
+
 Si_expr(v)  := ''(-(%i*gamma_incomplete(0,%i*v) - %i*gamma_incomplete(0,-(%i*v)))/2)$
 Ci_expr(v)  := ''(-(gamma_incomplete(0,%i*v) + gamma_incomplete(0,-(%i*v)))/2)$
 Shi_expr(v) := ''((gamma_incomplete(0,v) - gamma_incomplete(0,-v))/2)$
