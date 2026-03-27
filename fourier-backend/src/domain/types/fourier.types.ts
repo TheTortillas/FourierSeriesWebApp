@@ -86,6 +86,7 @@ export type SingularityType =
 
 export interface Singularity {
   point: string;
+  pointTex?: string;
   type: SingularityType;
 }
 
@@ -170,16 +171,19 @@ export interface ComplexTerm {
 export interface TrigonometricTermsResult {
   terms: TrigonometricTerm[];
   executionTimeMs: number;
+  validation?: ValidationResult;
 }
 
 export interface HalfRangeTermsResult {
   terms: HalfRangeTerm[];
   executionTimeMs: number;
+  validation?: ValidationResult;
 }
 
 export interface ComplexTermsResult {
   terms: ComplexTerm[];
   executionTimeMs: number;
+  validation?: ValidationResult;
 }
 
 export interface FourierTransformInput {

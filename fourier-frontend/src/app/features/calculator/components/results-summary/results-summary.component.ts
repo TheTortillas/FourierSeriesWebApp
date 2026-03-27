@@ -1,4 +1,13 @@
-import { Component, computed, inject, signal, DestroyRef, effect, ElementRef, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal,
+  DestroyRef,
+  effect,
+  ElementRef,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, finalize } from 'rxjs';
@@ -49,7 +58,7 @@ export class ResultsSummaryComponent {
   readonly destroyRef = inject(DestroyRef);
 
   // ── Free-parameter sliders ────────────────────────────────────────────────
-  readonly paramValues  = signal<ParamValues>({});
+  readonly paramValues = signal<ParamValues>({});
   readonly activeParams = computed<string[]>(() => this.store.result()?.data.params ?? []);
 
   /** Name of the param currently used for the custom axis unit (null = first param). */
@@ -58,8 +67,8 @@ export class ResultsSummaryComponent {
   /** Axis constant used when xAxisFormat === 'custom'. */
   readonly customConst = computed(() => {
     const params = this.activeParams();
-    const pv     = this.paramValues();
-    const name   = this.customConstName() ?? params[0];
+    const pv = this.paramValues();
+    const name = this.customConstName() ?? params[0];
     if (!name) return { symbol: 'T', value: 1 };
     return { symbol: name, value: pv[name] ?? 1 };
   });
@@ -125,23 +134,24 @@ export class ResultsSummaryComponent {
 
     // If free params are set, re-compile the original segments with those values
     // so the canvas reflects the chosen parameter configuration.
-    const pv     = this.paramValues();
-    const hasPv  = Object.keys(pv).length > 0;
-    const segs   = hasPv ? this.store.segments() : null;
-    const intVar = hasPv ? this.store.intVar()   : null;
-    const origFns = hasPv && segs && intVar
-      ? segs.map((s, i) => {
-          const fromFn = math.compile(s.from, '_', pv);
-          const toFn   = math.compile(s.to,   '_', pv);
-          const fromV  = fromFn?.(0);
-          const toV    = toFn?.(0);
-          return {
-            fn:   math.compile(s.expression, intVar, pv),
-            from: (fromV !== undefined && isFinite(fromV)) ? fromV : (previews[i]?.from ?? NaN),
-            to:   (toV   !== undefined && isFinite(toV))   ? toV   : (previews[i]?.to   ?? NaN),
-          };
-        })
-      : previews;
+    const pv = this.paramValues();
+    const hasPv = Object.keys(pv).length > 0;
+    const segs = hasPv ? this.store.segments() : null;
+    const intVar = hasPv ? this.store.intVar() : null;
+    const origFns =
+      hasPv && segs && intVar
+        ? segs.map((s, i) => {
+            const fromFn = math.compile(s.from, '_', pv);
+            const toFn = math.compile(s.to, '_', pv);
+            const fromV = fromFn?.(0);
+            const toV = toFn?.(0);
+            return {
+              fn: math.compile(s.expression, intVar, pv),
+              from: fromV !== undefined && isFinite(fromV) ? fromV : (previews[i]?.from ?? NaN),
+              to: toV !== undefined && isFinite(toV) ? toV : (previews[i]?.to ?? NaN),
+            };
+          })
+        : previews;
 
     if (!result) {
       return [
@@ -162,9 +172,9 @@ export class ResultsSummaryComponent {
     }
 
     const w0Base = rec.parseW0(result.data.w0.maxima);
-    const w0fn   = hasPv ? math.compile(result.data.w0.maxima, '_', pv) : null;
-    const w0v    = w0fn?.(0);
-    const w0     = (w0v !== undefined && isFinite(w0v)) ? w0v : w0Base;
+    const w0fn = hasPv ? math.compile(result.data.w0.maxima, '_', pv) : null;
+    const w0v = w0fn?.(0);
+    const w0 = w0v !== undefined && isFinite(w0v) ? w0v : w0Base;
 
     let approxFn: ((x: number) => number) | null = null;
     let harmonicFns: Array<(x: number) => number> = [];
@@ -175,15 +185,21 @@ export class ResultsSummaryComponent {
       let a0 = c.a0Float ?? 0;
       let terms = rawTerms;
       if (hasPv) {
-        if (c.a0?.maxima) { const fn = math.compile(c.a0.maxima, '_', pv); const v = fn?.(0); if (v !== undefined && isFinite(v)) a0 = v; }
+        if (c.a0?.maxima) {
+          const fn = math.compile(c.a0.maxima, '_', pv);
+          const v = fn?.(0);
+          if (v !== undefined && isFinite(v)) a0 = v;
+        }
         const anFn = c.an?.maxima ? math.compile(c.an.maxima, 'n', pv) : null;
         const bnFn = c.bn?.maxima ? math.compile(c.bn.maxima, 'n', pv) : null;
         if (anFn || bnFn) {
-          terms = rawTerms.map(t => {
-            const anv = anFn?.(t.n); const bnv = bnFn?.(t.n);
-            return { ...t,
-              anFloat: (anv !== undefined && isFinite(anv)) ? anv : t.anFloat,
-              bnFloat: (bnv !== undefined && isFinite(bnv)) ? bnv : t.bnFloat,
+          terms = rawTerms.map((t) => {
+            const anv = anFn?.(t.n);
+            const bnv = bnFn?.(t.n);
+            return {
+              ...t,
+              anFloat: anv !== undefined && isFinite(anv) ? anv : t.anFloat,
+              bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : t.bnFloat,
             };
           });
         }
@@ -204,18 +220,24 @@ export class ResultsSummaryComponent {
         const anFn = c.an?.maxima ? math.compile(c.an.maxima, 'n', pv) : null;
         const bnFn = c.bn?.maxima ? math.compile(c.bn.maxima, 'n', pv) : null;
         if (anFn || bnFn) {
-          terms = rawTerms.map(t => {
-            const anv = anFn?.(t.n); const bnv = bnFn?.(t.n);
-            return { ...t,
-              anFloat: (anv !== undefined && isFinite(anv)) ? anv : t.anFloat,
-              bnFloat: (bnv !== undefined && isFinite(bnv)) ? bnv : t.bnFloat,
+          terms = rawTerms.map((t) => {
+            const anv = anFn?.(t.n);
+            const bnv = bnFn?.(t.n);
+            return {
+              ...t,
+              anFloat: anv !== undefined && isFinite(anv) ? anv : t.anFloat,
+              bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : t.bnFloat,
             };
           });
         }
       }
       if (hrMode === 'cosine') {
         let a0 = c.a0Float ?? 0;
-        if (hasPv && c.a0?.maxima) { const fn = math.compile(c.a0.maxima, '_', pv); const v = fn?.(0); if (v !== undefined && isFinite(v)) a0 = v; }
+        if (hasPv && c.a0?.maxima) {
+          const fn = math.compile(c.a0.maxima, '_', pv);
+          const v = fn?.(0);
+          if (v !== undefined && isFinite(v)) a0 = v;
+        }
         approxFn = rec.buildCosineOnly(a0, terms, w0, nTerms);
         if (showHarmonics) {
           const limit = Math.min(nTerms, terms.length);
@@ -238,7 +260,11 @@ export class ResultsSummaryComponent {
       const terms = result.terms.terms as ComplexNumericTerm[];
       const c = result.data.coefficients;
       let c0 = c.c0Float ?? this.parseMaxima(c.c0.maxima);
-      if (hasPv && c.c0?.maxima) { const fn = math.compile(c.c0.maxima, '_', pv); const v = fn?.(0); if (v !== undefined && isFinite(v)) c0 = v; }
+      if (hasPv && c.c0?.maxima) {
+        const fn = math.compile(c.c0.maxima, '_', pv);
+        const v = fn?.(0);
+        if (v !== undefined && isFinite(v)) c0 = v;
+      }
       approxFn = rec.buildComplex(c0, terms, w0, nTerms);
       if (showHarmonics) {
         const limit = Math.min(nTerms, terms.length);
@@ -430,8 +456,8 @@ export class ResultsSummaryComponent {
   /** Typed tabs array so the template gets literal types */
   readonly tabs: { id: 'coefficients' | 'terms' | 'validation'; label: string }[] = [
     { id: 'coefficients', label: 'Coeficientes' },
-    { id: 'terms',        label: 'Términos'      },
-    { id: 'validation',   label: 'Validación'    },
+    { id: 'terms', label: 'Términos' },
+    { id: 'validation', label: 'Validación' },
   ];
 
   /** Context for the terms tab — trig / half-range branch */
@@ -441,8 +467,8 @@ export class ResultsSummaryComponent {
     const c = r.data.coefficients;
     return {
       a0Float: c.a0Float,
-      a0Half:  c.a0Float !== undefined ? c.a0Float / 2 : undefined,
-      a0Tex:   c.a0?.tex ?? null,
+      a0Half: c.a0Float !== undefined ? c.a0Float / 2 : undefined,
+      a0Tex: c.a0?.tex ?? null,
     };
   });
 
@@ -452,17 +478,17 @@ export class ResultsSummaryComponent {
     if (r?.type !== 'complex') return null;
     const c = r.data.coefficients;
     return {
-      c0Float:    c.c0Float,
+      c0Float: c.c0Float,
       c0FloatAbs: c.c0Float !== undefined ? Math.abs(c.c0Float) : undefined,
-      c0Tex:      c.c0?.tex ?? null,
+      c0Tex: c.c0?.tex ?? null,
     };
   });
 
   readonly singularityLabels: Record<string, string | undefined> = {
-    removible:        'Removible',
-    salto:            'Salto',
-    asintotica:       'Asintótica',
-    esencial:         'Esencial',
+    removible: 'Removible',
+    salto: 'Salto',
+    asintotica: 'Asintótica',
+    esencial: 'Esencial',
     fuera_de_dominio: 'Fuera del dominio',
   };
 
@@ -482,7 +508,8 @@ export class ResultsSummaryComponent {
     effect(() => {
       const result = this.store.result();
       if (result) {
-        this.activeTab.set('coefficients');
+        const decision = result.data.validation?.decision;
+        this.activeTab.set(decision === 'reject' ? 'validation' : 'coefficients');
         this.simplifiedCoeffs.set(null);
         this.simplifyProfile.set('raw');
         this.halfRangeMode.set('cosine');
@@ -576,7 +603,8 @@ export class ResultsSummaryComponent {
   }
 
   private fetchLatestEntry(callback?: () => void): void {
-    this.api.getHistory({ limit: 1 })
+    this.api
+      .getHistory({ limit: 1 })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -590,10 +618,14 @@ export class ResultsSummaryComponent {
   private doToggle(entry: HistoryEntry): void {
     if (entry.isFavorite) {
       this.favoriteLoading.set(true);
-      this.api.toggleFavorite(entry.id)
+      this.api
+        .toggleFavorite(entry.id)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
-          next: (updated) => { this.latestHistoryEntry.set(updated); this.favoriteLoading.set(false); },
+          next: (updated) => {
+            this.latestHistoryEntry.set(updated);
+            this.favoriteLoading.set(false);
+          },
           error: () => this.favoriteLoading.set(false),
         });
     } else {
@@ -606,7 +638,8 @@ export class ResultsSummaryComponent {
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
-    this.api.toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+    this.api
+      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {

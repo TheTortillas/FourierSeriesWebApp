@@ -36,7 +36,8 @@ export class AuxiliaryService {
       }
 
       const parsed = this.parseSingularities(result.raw);
-      allSingularities.push(...parsed);
+      const enriched = await this.enrichSingularitiesWithTex(parsed);
+      allSingularities.push(...enriched);
     }
 
     return this.decide(allSingularities);
@@ -53,6 +54,36 @@ export class AuxiliaryService {
     } catch {
       return [];
     }
+  }
+
+  private async enrichSingularitiesWithTex(
+    singularities: Singularity[],
+  ): Promise<Singularity[]> {
+    if (singularities.length === 0) return singularities;
+
+    const uniquePoints = [...new Set(singularities.map((s) => s.point))];
+    const texByPoint = new Map<string, string | undefined>();
+
+    await Promise.all(
+      uniquePoints.map(async (point) => {
+        texByPoint.set(point, await this.pointToTex(point));
+      }),
+    );
+
+    return singularities.map((s) => ({
+      ...s,
+      pointTex: texByPoint.get(s.point),
+    }));
+  }
+
+  private async pointToTex(point: string): Promise<string | undefined> {
+    const result = await this.runner.run({
+      script: `display2d:false$\ntex(${point});`,
+    });
+    if (!result.success) return undefined;
+
+    const match = result.raw.match(/\$\$([\s\S]+?)\$\$/);
+    return match ? match[1].trim() : undefined;
   }
 
   private decide(singularities: Singularity[]): ValidationResult {

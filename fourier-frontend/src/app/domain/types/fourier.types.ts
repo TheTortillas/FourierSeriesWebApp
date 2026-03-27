@@ -26,6 +26,7 @@ export type ValidationDecision = 'proceed' | 'warn' | 'reject';
 
 export interface Singularity {
   point: string;
+  pointTex?: string;
   type: SingularityType;
 }
 
@@ -68,6 +69,7 @@ export interface TrigonometricTerm {
 export interface TrigonometricTermsResponse {
   terms: TrigonometricTerm[];
   executionTimeMs: number;
+  validation?: ValidationResult;
 }
 
 export interface HalfRangeResponse {
@@ -103,10 +105,10 @@ export interface ComplexTerm {
   cn: SymbolicExpression;
   cnNeg: SymbolicExpression;
   real: SymbolicExpression;
-  cosFloat: number;   // coefficient for cos(n·w0·x) in the real reconstruction
-  sinFloat: number;   // coefficient for sin(n·w0·x) in the real reconstruction
-  amplitude: number;  // |cₙ| for spectrum display
-  phase: number;      // ∠cₙ for spectrum display
+  cosFloat: number; // coefficient for cos(n·w0·x) in the real reconstruction
+  sinFloat: number; // coefficient for sin(n·w0·x) in the real reconstruction
+  amplitude: number; // |cₙ| for spectrum display
+  phase: number; // ∠cₙ for spectrum display
   cnUsedLimit?: boolean;
   cnNegUsedLimit?: boolean;
 }
@@ -114,15 +116,29 @@ export interface ComplexTerm {
 export interface ComplexTermsResponse {
   terms: ComplexTerm[];
   executionTimeMs: number;
+  validation?: ValidationResult;
 }
 
 // ─── Simplify (Fourier-domain aliases) ───────────────────────────────────────
 
-export type SimplificationProfile = 'raw' | 'integer' | 'trigonometric' | 'exponential' | 'complete';
+export type SimplificationProfile =
+  | 'raw'
+  | 'integer'
+  | 'trigonometric'
+  | 'exponential'
+  | 'complete';
 
 export type SimplificationFunction =
-  | 'fullratsimp' | 'ratsimp' | 'trigsimp' | 'trigreduce' | 'trigexpand'
-  | 'factor' | 'expand' | 'radcan' | 'rectform' | 'polarform';
+  | 'fullratsimp'
+  | 'ratsimp'
+  | 'trigsimp'
+  | 'trigreduce'
+  | 'trigexpand'
+  | 'factor'
+  | 'expand'
+  | 'radcan'
+  | 'rectform'
+  | 'polarform';
 
 export interface SimplifyInput {
   expression: string;
