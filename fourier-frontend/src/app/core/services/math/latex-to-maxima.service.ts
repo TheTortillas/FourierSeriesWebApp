@@ -53,6 +53,9 @@ export class LatexToMaximaService {
    */
   private preProcess(latex: string): string {
     let s = latex
+      // Normalize scalable delimiters that are not needed by tex2max.
+      .replace(/\\left/g, '')
+      .replace(/\\right/g, '')
       .replace(/\\operatorname\{sen\}/g, '\\sin')
       .replace(/\\operatorname\{tg\}/g, '\\tan')
       .replace(/\\operatorname\{senh\}/g, '\\sinh')
@@ -65,6 +68,9 @@ export class LatexToMaximaService {
       .replace(/\\operatorname\{arctan\}/g, '\\operatorname{atan}')
       .replace(/\\operatorname\{ln\}/g, '\\log')
       .replace(/\\ln\b/g, '\\log')
+      // Normalize any exp(...) variant so substituteExp can process it reliably.
+      .replace(/\\exp\(/g, '\\operatorname{exp}(')
+      .replace(/\\operatorname\{exp\}\(/g, '\\operatorname{exp}(')
       // Special functions used in Fourier transforms
       // delta: tex2max cannot handle \delta or \operatorname{delta} — it either
       // interprets the Greek letter command or splits the operatorname content
@@ -93,7 +99,7 @@ export class LatexToMaximaService {
       // tokens BEFORE tex2max so they pass as plain variable identifiers.
       // Handle -\infty before +\infty to avoid double-replacement.
       .replace(/-\s*\\infty/g, 'TMMINF')
-      .replace(/\\infty/g,     'TMINF');
+      .replace(/\\infty/g, 'TMINF');
 
     // tex2max crashes on \operatorname{exp} (not in its whitelist).
     // Convert \operatorname{exp}(arg) → e^{(arg)} with balanced-paren extraction
@@ -195,32 +201,52 @@ export class LatexToMaximaService {
    * but using `%e` is more explicit and canonical.
    */
   private postProcess(raw: string): string {
-    return (
-      raw
-        .replace(/\bpi\b/g, '%pi')
-        .replace(/(?<![a-zA-Z0-9_%])e(?![a-zA-Z0-9_%])/g, '%e')
-        // Maxima function name normalization
-        .replace(/\bexp\b/g, 'exp')
-        .replace(/\barcsin\b/g, 'asin')
-        .replace(/\barccos\b/g, 'acos')
-        .replace(/\barctan\b/g, 'atan')
-        .replace(/\barccot\b/g, 'acot')
-        .replace(/\barcsec\b/g, 'asec')
-        .replace(/\barccsc\b/g, 'acsc')
-        .replace(/\bln\b/g, 'log')
-        .replace(/\bsen\b/g, 'sin')
-        .replace(/\btg\b/g, 'tan')
-        .replace(/\bsenh\b/g, 'sinh')
-        .replace(/\bctg\b/g, 'cot')
-        // Restore tokens inserted by preProcess to bypass tex2max
-        .replace(/\bTMMINF\b/g,      'minf')
-        .replace(/\bTMINF\b/g,       'inf')
-        .replace(/\bTMDELTA\b/g,     'delta')
-        .replace(/\bTMGAMMA\b/g,     'gamma')
-        .replace(/\bTMFACTORIAL\b/g, 'factorial')
-        // tex2max adds a spurious * between a named token and the following (
-        // (e.g. gamma*(x) instead of gamma(x)). Clean up universally here.
-        .replace(/\b(gamma|factorial)\s*\*\s*\(/g, '$1(')
-    );
+    const normalized = raw
+      .replace(/\bpi\b/g, '%pi')
+      .replace(/(?<![a-zA-Z0-9_%])e(?![a-zA-Z0-9_%])/g, '%e')
+      // Maxima function name normalization
+      .replace(/\bexp\b/g, 'exp')
+      .replace(/\barcsin\b/g, 'asin')
+      .replace(/\barccos\b/g, 'acos')
+      .replace(/\barctan\b/g, 'atan')
+      .replace(/\barccot\b/g, 'acot')
+      .replace(/\barcsec\b/g, 'asec')
+      .replace(/\barccsc\b/g, 'acsc')
+      .replace(/\bln\b/g, 'log')
+      .replace(/\bsen\b/g, 'sin')
+      .replace(/\btg\b/g, 'tan')
+      .replace(/\bsenh\b/g, 'sinh')
+      .replace(/\bctg\b/g, 'cot')
+      // Restore tokens inserted by preProcess to bypass tex2max
+      .replace(/\bTMMINF\b/g, 'minf')
+      .replace(/\bTMINF\b/g, 'inf')
+      .replace(/\bTMDELTA\b/g, 'delta')
+      .replace(/\bTMGAMMA\b/g, 'gamma')
+      .replace(/\bTMFACTORIAL\b/g, 'factorial')
+      // tex2max adds a spurious * between a named token and the following (
+      // (e.g. gamma*(x) instead of gamma(x)). Clean up universally here.
+      .replace(/\b(gamma|factorial|exp)\s*\*\s*\(/g, '$1(');
+
+    return this.normalizePostfixFactorial(normalized);
+  }
+
+  /**
+   * Converts postfix factorial forms like x! or (x+1)! to Maxima function
+   * form factorial(x) that the backend understands consistently.
+   */
+  private normalizePostfixFactorial(expr: string): string {
+    let prev = '';
+    let cur = expr;
+
+    // Apply repeatedly so nested cases like ((x+1)!)! are fully normalized.
+    while (cur !== prev) {
+      prev = cur;
+      cur = cur.replace(/(\([^()]+\)|[a-zA-Z0-9_%]+)\s*!/g, (_m, token: string) => {
+        const inner = token.startsWith('(') && token.endsWith(')') ? token.slice(1, -1) : token;
+        return `factorial(${inner})`;
+      });
+    }
+
+    return cur;
   }
 }
