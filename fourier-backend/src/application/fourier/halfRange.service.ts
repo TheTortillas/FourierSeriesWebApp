@@ -141,6 +141,18 @@ kill(all)$
   ): Promise<HalfRangeTermsResult> {
     const startTime = Date.now();
     const intVar = input.intVar ?? "x";
+
+    const validation = await this.auxiliaryService.validateFunction(
+      input.segments,
+    );
+    if (validation.decision === "reject") {
+      return {
+        terms: [],
+        executionTimeMs: Date.now() - startTime,
+        validation,
+      };
+    }
+
     const script = await loadScript("halfRange", "halfRange_coeffs.mac");
     const funcInput = this.buildFuncInput(input.segments);
 
@@ -234,6 +246,7 @@ kill(all)$
     return {
       terms: this.parseTerms(result.raw),
       executionTimeMs: Date.now() - startTime,
+      validation,
     };
   }
 
@@ -305,7 +318,10 @@ kill(all)$
     const section = this.extractBetween(raw, "__PARAMS__", "__A0_FLOAT__");
     const match = section.match(/\[([^\]]*)\]/);
     if (!match || !match[1].trim()) return [];
-    return match[1].split(",").map((s) => s.trim()).filter(Boolean);
+    return match[1]
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
 
   private extractBetween(

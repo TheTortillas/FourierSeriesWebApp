@@ -67,8 +67,8 @@ function segmentError(s: SegmentDraft): string | null {
 
 @Injectable({ providedIn: 'root' })
 export class CalculatorStore {
-  private readonly api       = inject(ApiService);
-  private readonly math      = inject(MathUtilsService);
+  private readonly api = inject(ApiService);
+  private readonly math = inject(MathUtilsService);
   private readonly userStore = inject(UserStore);
 
   // ── Form state ─────────────────────────────────────────────────────────────
@@ -161,7 +161,7 @@ export class CalculatorStore {
     this.segments.update((segs) =>
       segs.map((s) => ({
         ...s,
-        expression:    s.expression.replace(re, next),
+        expression: s.expression.replace(re, next),
         expressionTex: s.expressionTex.replace(re, next),
       })),
     );
@@ -199,10 +199,21 @@ export class CalculatorStore {
     const terms$ = { input: req, nTerms: this.nTerms() };
 
     if (type === 'trigonometric') {
-      this.api.calculateTrigonometricTerms(terms$).subscribe({
-        next: (terms) => {
-          this.api.calculateTrigonometric(req).subscribe({
-            next: (data) => {
+      this.api.calculateTrigonometric(req).subscribe({
+        next: (data) => {
+          if (data.validation?.decision === 'reject') {
+            this.result.set({
+              type: 'trigonometric',
+              data,
+              terms: { terms: [], executionTimeMs: 0 },
+            });
+            this.loading.set(false);
+            this.userStore.refreshQuota();
+            return;
+          }
+
+          this.api.calculateTrigonometricTerms(terms$).subscribe({
+            next: (terms) => {
               this.result.set({ type: 'trigonometric', data, terms });
               this.loading.set(false);
               this.userStore.refreshQuota();
@@ -213,10 +224,21 @@ export class CalculatorStore {
         error: (e) => this.handleError(e),
       });
     } else if (type === 'complex') {
-      this.api.calculateComplexTerms(terms$).subscribe({
-        next: (terms) => {
-          this.api.calculateComplex(req).subscribe({
-            next: (data) => {
+      this.api.calculateComplex(req).subscribe({
+        next: (data) => {
+          if (data.validation?.decision === 'reject') {
+            this.result.set({
+              type: 'complex',
+              data,
+              terms: { terms: [], executionTimeMs: 0 },
+            });
+            this.loading.set(false);
+            this.userStore.refreshQuota();
+            return;
+          }
+
+          this.api.calculateComplexTerms(terms$).subscribe({
+            next: (terms) => {
               this.result.set({ type: 'complex', data, terms });
               this.loading.set(false);
               this.userStore.refreshQuota();
@@ -227,10 +249,21 @@ export class CalculatorStore {
         error: (e) => this.handleError(e),
       });
     } else {
-      this.api.calculateHalfRangeTerms(terms$).subscribe({
-        next: (terms) => {
-          this.api.calculateHalfRange(req).subscribe({
-            next: (data) => {
+      this.api.calculateHalfRange(req).subscribe({
+        next: (data) => {
+          if (data.validation?.decision === 'reject') {
+            this.result.set({
+              type: 'halfRange',
+              data,
+              terms: { terms: [], executionTimeMs: 0 },
+            });
+            this.loading.set(false);
+            this.userStore.refreshQuota();
+            return;
+          }
+
+          this.api.calculateHalfRangeTerms(terms$).subscribe({
+            next: (terms) => {
               this.result.set({ type: 'halfRange', data, terms });
               this.loading.set(false);
               this.userStore.refreshQuota();
@@ -252,9 +285,12 @@ export class CalculatorStore {
   encodeState(): string {
     const state = {
       seg: this.segments().map((s) => ({
-        e: s.expression, et: s.expressionTex,
-        f: s.from,       ft: s.fromTex,
-        t: s.to,         tt: s.toTex,
+        e: s.expression,
+        et: s.expressionTex,
+        f: s.from,
+        ft: s.fromTex,
+        t: s.to,
+        tt: s.toTex,
       })),
       type: this.seriesType(),
       n: this.nTerms(),
@@ -288,12 +324,12 @@ export class CalculatorStore {
       this.segments.set(
         s.seg.map((seg) => ({
           id: nextId(),
-          expression:    seg.e  ?? '',
+          expression: seg.e ?? '',
           expressionTex: seg.et ?? '',
-          from:          seg.f  ?? '',
-          fromTex:       seg.ft ?? '',
-          to:            seg.t  ?? '',
-          toTex:         seg.tt ?? '',
+          from: seg.f ?? '',
+          fromTex: seg.ft ?? '',
+          to: seg.t ?? '',
+          toTex: seg.tt ?? '',
         })),
       );
       this.seriesType.set(s.type);
@@ -312,7 +348,9 @@ export class CalculatorStore {
    * Uses Maxima expressions directly (no LaTeX available in history).
    */
   restoreFromInput(input: Record<string, unknown>): void {
-    const segments = input['segments'] as Array<{ expression: string; from: string; to: string }> | undefined;
+    const segments = input['segments'] as
+      | Array<{ expression: string; from: string; to: string }>
+      | undefined;
     if (!segments?.length) return;
 
     const validTypes: SeriesType[] = ['trigonometric', 'complex', 'halfRange'];
@@ -323,12 +361,12 @@ export class CalculatorStore {
     this.segments.set(
       segments.map((seg) => ({
         id: nextId(),
-        expression:    seg.expression ?? '',
+        expression: seg.expression ?? '',
         expressionTex: seg.expression ?? '',
-        from:          seg.from ?? '',
-        fromTex:       seg.from ?? '',
-        to:            seg.to ?? '',
-        toTex:         seg.to ?? '',
+        from: seg.from ?? '',
+        fromTex: seg.from ?? '',
+        to: seg.to ?? '',
+        toTex: seg.to ?? '',
       })),
     );
     if (type && validTypes.includes(type)) this.seriesType.set(type);
