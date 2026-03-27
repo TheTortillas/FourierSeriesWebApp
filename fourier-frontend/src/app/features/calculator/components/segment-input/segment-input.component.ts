@@ -72,11 +72,13 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
     ],
     // Misc
     [
-      { label: 'log',  typedText: 'log('  },
-      { label: 'ln',   typedText: 'ln('   },
-      { label: 'exp',  typedText: 'exp('  },
-      { label: '√·',  cmd:        '\\sqrt'     },
-      { label: '|·|', typedText:  'abs('       },
+      { label: 'log',    typedText: 'log('      },
+      { label: 'ln',     typedText: 'ln('       },
+      { label: 'exp',    typedText: 'exp('      },
+      { label: 'Γ(·)',   write:     '\\Gamma('   },
+      { label: 'n!',     typedText: 'factorial('},
+      { label: '√·',    cmd:        '\\sqrt'    },
+      { label: '|·|',   typedText:  'abs('      },
       { label: 'π',   typedText:  'pi'         },
       { label: 'eˣ',  typedText:  'e^'         },
       { label: 'xⁿ',  typedText:  '^'          },

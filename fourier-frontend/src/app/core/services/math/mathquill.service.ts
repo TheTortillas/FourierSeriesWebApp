@@ -70,6 +70,7 @@ export class MathquillService {
         'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
         'sinh cosh tanh asinh acosh atanh log ln exp abs ' +
         'sen tg senh ctg arcsin arccos arctan ' +
+        'gamma factorial ' +
         'delta',
       charsThatBreakOutOfSupSub: '+-*/=<>',
     };

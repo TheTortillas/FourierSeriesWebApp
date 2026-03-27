@@ -74,6 +74,12 @@ export class LatexToMaximaService {
       // then bare \delta (produced by direct LaTeX or history restore).
       .replace(/\\operatorname\{delta\}/g, 'TMDELTA')
       .replace(/\\delta\b/g, 'TMDELTA')
+      // Gamma and factorial: tex2max doesn't know these as function names.
+      // Replace with tokens before tex2max, restore in postProcess.
+      // Also handle \Gamma (LaTeX symbol) as an alias for gamma.
+      .replace(/\\operatorname\{gamma\}/g, 'TMGAMMA')
+      .replace(/\\operatorname\{factorial\}/g, 'TMFACTORIAL')
+      .replace(/\\Gamma\b/g, 'TMGAMMA')
       // Heaviside u(...) and sgn(...) pass through tex2max as raw letter sequences
       // (identifiers); the spurious * they may get is removed in convertForTransforms.
       // Imaginary unit: the keyboard button inserts \mathrm{i}.
@@ -153,7 +159,7 @@ export class LatexToMaximaService {
 
     // tex2max doesn't know u, sgn, delta, rect, sinc as function names, so it
     // may emit e.g. `u*(t)` instead of `u(t)`.  Remove the spurious multiplication.
-    maxima = maxima.replace(/\b(u|sgn|delta|imagunit|rect|sinc)\s*\*\s*\(/g, '$1(');
+    maxima = maxima.replace(/\b(u|sgn|delta|imagunit|rect|sinc|gamma|factorial)\s*\*\s*\(/g, '$1(');
 
     // ── Imaginary unit resolution ────────────────────────────────────────────
     // Priority order matters here.
@@ -207,9 +213,14 @@ export class LatexToMaximaService {
         .replace(/\bsenh\b/g, 'sinh')
         .replace(/\bctg\b/g, 'cot')
         // Restore tokens inserted by preProcess to bypass tex2max
-        .replace(/\bTMMINF\b/g,  'minf')
-        .replace(/\bTMINF\b/g,   'inf')
-        .replace(/\bTMDELTA\b/g, 'delta')
+        .replace(/\bTMMINF\b/g,      'minf')
+        .replace(/\bTMINF\b/g,       'inf')
+        .replace(/\bTMDELTA\b/g,     'delta')
+        .replace(/\bTMGAMMA\b/g,     'gamma')
+        .replace(/\bTMFACTORIAL\b/g, 'factorial')
+        // tex2max adds a spurious * between a named token and the following (
+        // (e.g. gamma*(x) instead of gamma(x)). Clean up universally here.
+        .replace(/\b(gamma|factorial)\s*\*\s*\(/g, '$1(')
     );
   }
 }
