@@ -20,9 +20,14 @@ export class SimplifyService {
   async simplify(input: SimplifyInput): Promise<SimplifyResult> {
     const functions = input.functions ?? DEFAULT_FUNCTIONS[input.profile] ?? [];
     const flags = input.displayFlags ?? {};
+    const erfRepresentation = flags.erfRepresentation ?? "erf";
 
     if (flags.exponentialize && flags.demoivre) {
       throw new Error("exponentialize and demoivre cannot both be true");
+    }
+
+    if (!["erf", "erfc", "erfi"].includes(erfRepresentation)) {
+      throw new Error("erfRepresentation must be one of: erf, erfc, erfi");
     }
 
     const script = await loadScript("auxiliary", "simplify.mac");
@@ -36,6 +41,7 @@ SIMP_FUNCTIONS: ${simpFunctionsList}$
 FLAG_EDISPFLAG: ${flags.edispflag ? "true" : "false"}$
 FLAG_EXPONENT:  ${flags.exponentialize ? "true" : "false"}$
 FLAG_DEMOIVRE:  ${flags.demoivre ? "true" : "false"}$
+FLAG_ERF_REPR:  "${erfRepresentation}"$
 ${script}
 kill(all)$
 `;

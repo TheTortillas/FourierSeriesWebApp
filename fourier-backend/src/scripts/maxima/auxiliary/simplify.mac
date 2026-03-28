@@ -48,6 +48,10 @@ texput(log_gamma, "\\ln\\!\\Gamma")$
 if FLAG_EDISPFLAG then %edispflag: true$
 if FLAG_EXPONENT  then exponentialize: true$
 if FLAG_DEMOIVRE  then demoivre: true$
+/* Representación de la función error */
+if FLAG_ERF_REPR = "erf"  then erf_representation: erf$
+if FLAG_ERF_REPR = "erfc" then erf_representation: erfc$
+if FLAG_ERF_REPR = "erfi" then erf_representation: erfi$
 
 /* Aplicar perfil */
 if PROFILE = "integer" or PROFILE = "trigonometric" or

@@ -39,6 +39,9 @@ export const simplifyRouter = Router();
  *                     type: boolean
  *                   demoivre:
  *                     type: boolean
+                  erfRepresentation:
+                    type: string
+                    enum: [erf, erfc, erfi]
  *     responses:
  *       200:
  *         description: Expresión simplificada
