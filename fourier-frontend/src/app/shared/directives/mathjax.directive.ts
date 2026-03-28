@@ -1,6 +1,4 @@
-import {
-  Directive, ElementRef, Input, OnChanges, inject
-} from '@angular/core';
+import { Directive, ElementRef, Input, OnChanges, inject } from '@angular/core';
 import { MathjaxService } from '../../core/services/math/mathjax.service';
 
 /**
@@ -22,9 +20,10 @@ export class MathjaxDirective implements OnChanges {
       return;
     }
     // Wrap in display-math delimiters if not already wrapped
-    const content = this.tex.startsWith('\\(') || this.tex.startsWith('\\[') || this.tex.startsWith('$')
-      ? this.tex
-      : `\\(${this.tex}\\)`;
+    const content =
+      this.tex.startsWith('\\(') || this.tex.startsWith('\\[') || this.tex.startsWith('$')
+        ? this.tex
+        : `\\(${this.tex}\\)`;
     this.el.nativeElement.innerHTML = content;
     this.mj.render(this.el.nativeElement);
   }

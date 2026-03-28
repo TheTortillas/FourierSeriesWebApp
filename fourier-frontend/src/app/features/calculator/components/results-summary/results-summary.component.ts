@@ -411,7 +411,17 @@ export class ResultsSummaryComponent {
 
       if (parts.length === 0) return a0IsZero ? '0' : (a0 ?? '0');
 
-      const body = `\\sum_{n=1}^{\\infty}\\left(${parts.join('+')}\\right)`;
+      const joinedTerms = parts.reduce((acc, term, index) => {
+        const current = term.trim();
+        if (index === 0) return current;
+
+        const isNegative =
+          current.startsWith('-') || current.startsWith('\\left(-') || current.startsWith('(-');
+
+        return isNegative ? `${acc}${current}` : `${acc}+${current}`;
+      }, '');
+
+      const body = `\\sum_{n=1}^{\\infty}\\left(${joinedTerms}\\right)`;
       if (!a0IsZero && a0) {
         const sep = body.startsWith('-') ? ' ' : ' + ';
         return `${a0}${sep}${body}`;
