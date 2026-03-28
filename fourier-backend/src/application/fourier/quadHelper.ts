@@ -10,6 +10,9 @@ export function buildQuadWithSingularities(
 ): string {
   const eps = "1e-8";
 
+  const safeQuad = (from: string, to: string, expression: string): string =>
+    `block([q: errcatch(first(quad_qags(${factor} * (${expression})${core}, ${intVar}, ${from}, ${to}))), qv: false, r: [], rv: false], if q # [] then qv: first(q), if qv # false and numberp(qv) and freeof(${intVar}, qv) then qv else (r: errcatch(romberg(${factor} * (${expression})${core}, ${intVar}, ${from}, ${to})), if r # [] then rv: first(r), if rv # false and numberp(rv) and freeof(${intVar}, rv) then rv else 0))`;
+
   const parsePoint = (p: string): number =>
     parseFloat(
       p
@@ -28,7 +31,7 @@ export function buildQuadWithSingularities(
         .filter((p) => !isNaN(p) && p > a && p < b);
 
       if (singInSegment.length === 0) {
-        return `first(quad_qags(${factor} * (${s.expression})${core}, ${intVar}, ${s.from}, ${s.to}))`;
+        return safeQuad(s.from, s.to, s.expression);
       }
 
       const sorted = [...singInSegment].sort((a, b) => a - b);
@@ -41,9 +44,7 @@ export function buildQuadWithSingularities(
 
       const parts: string[] = [];
       for (let i = 0; i < breakpoints.length - 1; i++) {
-        parts.push(
-          `first(quad_qags(${factor} * (${s.expression})${core}, ${intVar}, ${breakpoints[i]}, ${breakpoints[i + 1]}))`,
-        );
+        parts.push(safeQuad(breakpoints[i], breakpoints[i + 1], s.expression));
       }
       return parts.join(" + ");
     })
