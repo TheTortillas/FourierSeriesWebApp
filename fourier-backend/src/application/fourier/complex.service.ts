@@ -15,6 +15,10 @@ import {
   getFromCache,
   setInCache,
 } from "../../infrastructure/cache/fourierCache";
+import {
+  buildQuadWithSingularities,
+  getRemovableSingularities,
+} from "./quadHelper";
 
 const COMPLEX_MARKERS = [
   "__C0_MAXIMA__",
@@ -45,6 +49,7 @@ export class ComplexService {
     const validation = await this.auxiliaryService.validateFunction(
       input.segments,
     );
+    const removableSingularities = getRemovableSingularities(validation);
 
     if (validation.decision === "reject") {
       return {
@@ -63,12 +68,12 @@ export class ComplexService {
     const script = await loadScript("complex", "complex.mac");
     const funcInput = this.buildFuncInput(input.segments);
 
-    const quadIntegralC0 = input.segments
-      .map(
-        (s) =>
-          `first(quad_qags((1/T) * (${s.expression}), ${intVar}, ${s.from}, ${s.to}))`,
-      )
-      .join(" + ");
+    const quadIntegralC0 = buildQuadWithSingularities(
+      input.segments,
+      intVar,
+      removableSingularities,
+      "(1/T)",
+    );
 
     const fullScript = `
 FUNC_INPUT: ${funcInput};
@@ -106,7 +111,7 @@ kill(all)$
         .replace(/[\[\]]/g, "")
         .trim()
         .split("\n")[0] ?? "NaN";
-    const c0Float = parseFloat(c0FloatRaw);
+    const c0Float = this.parseNumeric(c0FloatRaw, NaN);
 
     const params = this.extractParams(result.raw);
 
@@ -138,6 +143,7 @@ kill(all)$
     const validation = await this.auxiliaryService.validateFunction(
       input.segments,
     );
+    const removableSingularities = getRemovableSingularities(validation);
     if (validation.decision === "reject") {
       return {
         terms: [],
@@ -149,19 +155,21 @@ kill(all)$
     const script = await loadScript("complex", "complex_coeffs.mac");
     const funcInput = this.buildFuncInput(input.segments);
 
-    const quadCos = input.segments
-      .map(
-        (s) =>
-          `first(quad_qags((2/T) * (${s.expression}) * cos(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
-      )
-      .join(" + ");
+    const quadCos = buildQuadWithSingularities(
+      input.segments,
+      intVar,
+      removableSingularities,
+      "(2/T)",
+      ` * cos(i * w0 * ${intVar})`,
+    );
 
-    const quadSin = input.segments
-      .map(
-        (s) =>
-          `first(quad_qags((2/T) * (${s.expression}) * sin(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
-      )
-      .join(" + ");
+    const quadSin = buildQuadWithSingularities(
+      input.segments,
+      intVar,
+      removableSingularities,
+      "(2/T)",
+      ` * sin(i * w0 * ${intVar})`,
+    );
 
     const termsScript = `
 FUNC_INPUT: ${funcInput};
@@ -200,15 +208,23 @@ block(
     )),
     cos_coeff: block(
       [expanded: expand(term_real),
-      r: errcatch(float(coeff(expand(term_real), cos(i * w0 * ${intVar}))))],
+      candidate: coeff(expanded, cos(i * w0 * ${intVar})),
+      r: if freeof('integrate, candidate)
+        then errcatch(float(candidate))
+        else []],
       if r = [] or not numberp(first(r))
-      then ${quadCos}
+      then block([qv: ${quadCos}],
+        if numberp(qv) and freeof(${intVar}, qv) then qv else 0)
       else first(r)),
     sin_coeff: block(
       [expanded: expand(term_real),
-      r: errcatch(float(coeff(expand(term_real), sin(i * w0 * ${intVar}))))],
+      candidate: coeff(expanded, sin(i * w0 * ${intVar})),
+      r: if freeof('integrate, candidate)
+        then errcatch(float(candidate))
+        else []],
       if r = [] or not numberp(first(r))
-      then ${quadSin}
+      then block([qv: ${quadSin}],
+        if numberp(qv) and freeof(${intVar}, qv) then qv else 0)
       else first(r)),
     amp: float(abs(cn_val)),
     ph: float(carg(cn_val)),
@@ -331,17 +347,36 @@ kill(all)$
           tex: cnNegTex,
         },
         real: { maxima: realMaxima.replace(/false/g, "").trim(), tex: realTex },
-        cosFloat: parseFloat(cosFloatStr.replace(/false/g, "").trim()) || 0,
-        sinFloat: parseFloat(sinFloatStr.replace(/false/g, "").trim()) || 0,
-        amplitude: parseFloat(amplitudeStr.replace(/false/g, "").trim()) || 0,
-        phase:
-          parseFloat(
-            phaseStr.replace(/false/g, "").trim().split("\n")[0] ?? "0",
-          ) || 0,
+        cosFloat: this.parseNumeric(cosFloatStr, 0),
+        sinFloat: this.parseNumeric(sinFloatStr, 0),
+        amplitude: this.parseNumeric(amplitudeStr, 0),
+        phase: this.parseNumeric(phaseStr, 0),
         cnUsedLimit: cnUsedLimitStr.includes("true"),
         cnNegUsedLimit: cnNegUsedLimitStr.includes("true"),
       };
     });
+  }
+
+  private parseNumeric(value: string, fallback = 0): number {
+    const cleaned = value.replace(/false/g, "").trim();
+    if (!cleaned) return fallback;
+
+    const plain = cleaned
+      .split("\n")[0]
+      .replace(/[\[\]()]/g, "")
+      .trim();
+
+    const token = plain.split(/[\s,]+/)[0]?.replace(/([0-9.])[bBdD]([+-]?\d+)/g, "$1e$2");
+    if (token) {
+      const direct = Number.parseFloat(token);
+      if (Number.isFinite(direct)) return direct;
+    }
+
+    const match = plain.match(/[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/);
+    if (!match) return fallback;
+
+    const parsed = Number.parseFloat(match[0]);
+    return Number.isFinite(parsed) ? parsed : fallback;
   }
 
   private buildFuncInput(segments: PiecewiseSegment[]): string {

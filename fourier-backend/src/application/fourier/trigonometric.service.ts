@@ -15,6 +15,10 @@ import {
   getFromCache,
   setInCache,
 } from "../../infrastructure/cache/fourierCache";
+import {
+  buildQuadWithSingularities,
+  getRemovableSingularities,
+} from "./quadHelper";
 
 const TRIG_MARKERS = [
   "__A0RAW_MAXIMA__",
@@ -52,6 +56,7 @@ export class TrigonometricService {
     const validation = await this.auxiliaryService.validateFunction(
       input.segments,
     );
+    const removableSingularities = getRemovableSingularities(validation);
 
     if (validation.decision === "reject") {
       return {
@@ -68,12 +73,12 @@ export class TrigonometricService {
     const script = await loadScript("trigonometric", "trigonometric.mac");
     const funcInput = this.buildFuncInput(input.segments);
 
-    const quadIntegralA0 = input.segments
-      .map(
-        (s) =>
-          `first(quad_qags((2/T) * (${s.expression}), ${intVar}, ${s.from}, ${s.to}))`,
-      )
-      .join(" + ");
+    const quadIntegralA0 = buildQuadWithSingularities(
+      input.segments,
+      intVar,
+      removableSingularities,
+      "(2/T)",
+    );
 
     const fullScript = `
 FUNC_INPUT: ${funcInput};
@@ -85,7 +90,9 @@ __A0_CLEAN__: if not freeof(gamma_incomplete, Coeff_A0_Raw)
     if cleaned = [] then Coeff_A0_Raw else first(cleaned))
   else Coeff_A0_Raw$
 __A0_FLOAT_VAL__: block(
-  [r: errcatch(float(realpart(rectform(__A0_CLEAN__))))],
+  [r: if freeof('integrate, __A0_CLEAN__)
+    then errcatch(float(realpart(rectform(__A0_CLEAN__))))
+    else []],
   if r = [] or not numberp(first(r))
   then block([q: errcatch(${quadIntegralA0})],
     if q = [] then "NaN" else first(q))
@@ -109,7 +116,7 @@ kill(all)$
         .replace(/false/g, "")
         .trim()
         .split("\n")[0] ?? "NaN";
-    const a0Float = parseFloat(a0FloatRaw);
+    const a0Float = this.parseNumeric(a0FloatRaw, NaN);
 
     const params = this.extractParams(result.raw);
 
@@ -151,6 +158,7 @@ kill(all)$
     const validation = await this.auxiliaryService.validateFunction(
       input.segments,
     );
+    const removableSingularities = getRemovableSingularities(validation);
     if (validation.decision === "reject") {
       return {
         terms: [],
@@ -165,19 +173,21 @@ kill(all)$
     );
     const funcInput = this.buildFuncInput(input.segments);
 
-    const quadIntegralAn = input.segments
-      .map(
-        (s) =>
-          `first(quad_qags((2/T) * (${s.expression}) * cos(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
-      )
-      .join(" + ");
+    const quadIntegralAn = buildQuadWithSingularities(
+      input.segments,
+      intVar,
+      removableSingularities,
+      "(2/T)",
+      ` * cos(i * w0 * ${intVar})`,
+    );
 
-    const quadIntegralBn = input.segments
-      .map(
-        (s) =>
-          `first(quad_qags((2/T) * (${s.expression}) * sin(i * w0 * ${intVar}), ${intVar}, ${s.from}, ${s.to}))`,
-      )
-      .join(" + ");
+    const quadIntegralBn = buildQuadWithSingularities(
+      input.segments,
+      intVar,
+      removableSingularities,
+      "(2/T)",
+      ` * sin(i * w0 * ${intVar})`,
+    );
 
     const termsScript = `
 FUNC_INPUT: ${funcInput};
@@ -215,13 +225,19 @@ block(
         else block([lim: errcatch(limit(Coeff_Bn, n, i))],
           bn_used_limit: true,
           if lim = [] then val else first(lim)))),
-    an_float: block([result: errcatch(float(an_i))],
+    an_float: block([result: if freeof('integrate, an_i)
+      then errcatch(float(an_i))
+      else []],
       if result = [] or not numberp(first(result))
-      then ${quadIntegralAn}
+      then block([qv: ${quadIntegralAn}],
+        if numberp(qv) and freeof(${intVar}, qv) then qv else 0)
       else first(result)),
-    bn_float: block([result: errcatch(float(bn_i))],
+    bn_float: block([result: if freeof('integrate, bn_i)
+      then errcatch(float(bn_i))
+      else []],
       if result = [] or not numberp(first(result))
-      then ${quadIntegralBn}
+      then block([qv: ${quadIntegralBn}],
+        if numberp(qv) and freeof(${intVar}, qv) then qv else 0)
       else first(result)),
     print("__TERM_START__"),
     print(i),
@@ -326,16 +342,35 @@ kill(all)$
         n,
         an: { maxima: anMaxima.replace(/false/g, "").trim(), tex: anTex },
         bn: { maxima: bnMaxima.replace(/false/g, "").trim(), tex: bnTex },
-        anFloat: parseFloat(anFloatStr.replace(/false/g, "").trim()) || 0,
-        bnFloat:
-          parseFloat(
-            bnFloatStr.replace(/false/g, "").trim().split("\n")[0] ?? "0",
-          ) || 0,
+        anFloat: this.parseNumeric(anFloatStr, 0),
+        bnFloat: this.parseNumeric(bnFloatStr, 0),
         anUsedLimit: anUsedLimitStr.includes("true"),
         bnUsedLimit: bnUsedLimitStr.includes("true"),
-        a0Float: isNaN(a0Float) ? 0 : a0Float,
+        a0Float: Number.isNaN(a0Float) ? 0 : a0Float,
       };
     });
+  }
+
+  private parseNumeric(value: string, fallback = 0): number {
+    const cleaned = value.replace(/false/g, "").trim();
+    if (!cleaned) return fallback;
+
+    const plain = cleaned
+      .split("\n")[0]
+      .replace(/[\[\]()]/g, "")
+      .trim();
+
+    const token = plain.split(/[\s,]+/)[0]?.replace(/([0-9.])[bBdD]([+-]?\d+)/g, "$1e$2");
+    if (token) {
+      const direct = Number.parseFloat(token);
+      if (Number.isFinite(direct)) return direct;
+    }
+
+    const match = plain.match(/[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/);
+    if (!match) return fallback;
+
+    const parsed = Number.parseFloat(match[0]);
+    return Number.isFinite(parsed) ? parsed : fallback;
   }
 
   private extractParams(raw: string): string[] {
