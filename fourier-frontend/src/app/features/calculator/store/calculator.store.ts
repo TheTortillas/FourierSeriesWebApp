@@ -70,6 +70,7 @@ export class CalculatorStore {
   private readonly api = inject(ApiService);
   private readonly math = inject(MathUtilsService);
   private readonly userStore = inject(UserStore);
+  private readonly allowedNTerms = [25, 50, 75, 100] as const;
 
   // ── Form state ─────────────────────────────────────────────────────────────
   readonly segments = signal<SegmentDraft[]>([defaultSegment()]);
@@ -88,6 +89,7 @@ export class CalculatorStore {
   readonly isValid = computed(() => this.segmentErrors().every((e) => e === null));
 
   readonly hasResult = computed(() => this.result() !== null);
+  readonly inputsLocked = computed(() => this.loading() || this.hasResult());
 
   /** LaTeX string for the live f(x) = … preview above the inputs */
   readonly previewLatex = computed(() => {
@@ -121,6 +123,7 @@ export class CalculatorStore {
   // ── Segment mutations ──────────────────────────────────────────────────────
 
   addSegment(): void {
+    if (this.inputsLocked()) return;
     this.segments.update((segs) => [
       ...segs,
       {
@@ -136,22 +139,31 @@ export class CalculatorStore {
   }
 
   removeSegment(id: string): void {
+    if (this.inputsLocked()) return;
     this.segments.update((segs) => (segs.length > 1 ? segs.filter((s) => s.id !== id) : segs));
   }
 
   updateSegment(id: string, patch: Partial<Omit<SegmentDraft, 'id'>>): void {
+    if (this.inputsLocked()) return;
     this.segments.update((segs) => segs.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   }
 
   setSeriesType(type: SeriesType): void {
+    if (this.inputsLocked()) return;
     this.seriesType.set(type);
   }
 
   setNTerms(n: number): void {
-    this.nTerms.set(Math.max(0, Math.min(100, n)));
+    if (this.inputsLocked()) return;
+    const parsed = Number(n);
+    const next = this.allowedNTerms.includes(parsed as (typeof this.allowedNTerms)[number])
+      ? parsed
+      : 25;
+    this.nTerms.set(next);
   }
 
   setIntVar(v: string): void {
+    if (this.inputsLocked()) return;
     const next = v || 'x';
     const prev = this.intVar();
     if (prev === next) return;
@@ -172,6 +184,13 @@ export class CalculatorStore {
     this.seriesType.set('trigonometric');
     this.nTerms.set(25);
     this.intVar.set('x');
+    this.result.set(null);
+    this.error.set(null);
+  }
+
+  /** Clears computed Fourier outputs but keeps the current piecewise function inputs. */
+  clearComputedResult(): void {
+    this.loading.set(false);
     this.result.set(null);
     this.error.set(null);
   }

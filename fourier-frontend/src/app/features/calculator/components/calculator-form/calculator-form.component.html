@@ -11,6 +11,11 @@
     </div>
   }
 
+  <div
+    class="flex flex-col gap-5"
+    [class.pointer-events-none]="store.inputsLocked()"
+    [class.opacity-70]="store.inputsLocked()"
+  >
   <!-- ── Tramos ─────────────────────────────────────────────────────────── -->
   <section class="space-y-2">
     <div class="flex items-center justify-between">
@@ -67,14 +72,16 @@
       <p class="text-xs text-muted font-mono">Coeficientes a calcular</p>
     </div>
     <select
-      [value]="store.nTerms()"
+      [value]="'' + store.nTerms()"
       (change)="store.setNTerms(+$any($event.target).value)"
+      [disabled]="store.inputsLocked()"
+      required
       class="w-full px-2 py-1.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface text-ink dark:text-dark-ink text-xs font-mono"
     >
-      <option [value]="25">25 términos</option>
-      <option [value]="50">50 términos</option>
-      <option [value]="75">75 términos</option>
-      <option [value]="100">100 términos</option>
+      <option value="25">25 términos</option>
+      <option value="50">50 términos</option>
+      <option value="75">75 términos</option>
+      <option value="100">100 términos</option>
     </select>
   </div>
 
@@ -92,7 +99,7 @@
   <!-- ── Calcular ───────────────────────────────────────────────────────── -->
   <button
     (click)="store.calculate()"
-    [disabled]="!store.isValid() || store.loading()"
+    [disabled]="!store.isValid() || store.loading() || store.hasResult()"
     type="button"
     class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
   >
@@ -107,11 +114,12 @@
       Calcular serie
     }
   </button>
+  </div>
 
   <!-- ── Reset ─────────────────────────────────────────────────────────── -->
   @if (store.hasResult()) {
     <button
-      (click)="store.resetForm()"
+      (click)="store.clearComputedResult()"
       type="button"
       class="w-full py-1.5 rounded border border-border dark:border-dark-border text-xs text-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors cursor-pointer font-mono"
     >

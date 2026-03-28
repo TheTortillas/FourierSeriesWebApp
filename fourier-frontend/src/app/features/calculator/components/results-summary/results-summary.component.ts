@@ -89,6 +89,7 @@ export class ResultsSummaryComponent {
   readonly approxLineWidth = signal(1.75);
   readonly showCanvasSettings = signal(true);
   readonly canvasNTerms = signal(10);
+  readonly hadResult = signal(false);
   readonly isFullscreen = signal(false);
   readonly showShareDialog = signal(false);
   readonly urlCopied = signal(false);
@@ -593,6 +594,19 @@ export class ResultsSummaryComponent {
       const current = this.canvasNTerms();
       if (current > max) {
         this.canvasNTerms.set(max);
+      }
+    });
+
+    effect(() => {
+      const hasResult = this.store.hasResult();
+      if (hasResult) {
+        this.hadResult.set(true);
+        return;
+      }
+      if (this.hadResult()) {
+        // User pressed Nuevo calculo: close settings panel and clear selected state.
+        this.showCanvasSettings.set(false);
+        this.hadResult.set(false);
       }
     });
 
