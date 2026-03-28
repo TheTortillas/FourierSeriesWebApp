@@ -1,37 +1,36 @@
 <div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg overflow-hidden">
-
   <app-nav />
 
   <!-- ── Hero ──────────────────────────────────────────────────────────────── -->
-  <section class="relative flex flex-col items-center justify-center text-center
-                  px-6 pt-20 pb-16 flex-1 min-h-[58vh]">
-
+  <section
+    class="relative flex flex-col items-center justify-center text-center px-6 pt-20 pb-16 flex-1 min-h-[58vh]"
+  >
     <!-- Animated canvas background -->
-    <canvas #heroCanvas
-      class="absolute inset-0 w-full h-full pointer-events-none select-none">
+    <canvas #heroCanvas class="absolute inset-0 w-full h-full pointer-events-none select-none">
     </canvas>
 
     <!-- Content -->
     <div class="relative z-10 flex flex-col items-center gap-4 max-w-2xl">
       <!-- Pill label -->
-      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full
-                   border border-border dark:border-dark-border
-                   text-[10px] font-mono uppercase tracking-widest
-                   text-muted dark:text-dark-muted bg-paper/80 dark:bg-dark-surface/80">
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border dark:border-dark-border text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted bg-paper/80 dark:bg-dark-surface/80"
+      >
         <span class="w-1.5 h-1.5 rounded-full bg-accent inline-block animate-pulse"></span>
         Herramienta educativa
       </span>
 
       <!-- Title -->
-      <h1 class="font-display text-5xl md:text-6xl text-ink dark:text-dark-ink leading-tight tracking-tight">
-        Fourier<br>
+      <h1
+        class="font-display text-5xl md:text-6xl text-ink dark:text-dark-ink leading-tight tracking-tight"
+      >
+        Fourier<br />
         <span class="text-accent">Web</span> Calculator
       </h1>
 
       <!-- Subtitle -->
       <p class="font-body text-base text-muted dark:text-dark-muted max-w-md leading-relaxed">
-        Calcula, visualiza y analiza Series y Transformadas de Fourier
-        con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.
+        Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas
+        exactas y reconstrucción gráfica en tiempo real.
       </p>
     </div>
   </section>
@@ -39,18 +38,14 @@
   <!-- ── Cards ─────────────────────────────────────────────────────────────── -->
   <section class="relative z-10 px-6 pb-16 max-w-3xl mx-auto w-full">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
       <!-- Series de Fourier -->
-      <a routerLink="/calculator"
-         class="group flex flex-col gap-5 p-6 rounded-xl
-                bg-paper2 dark:bg-dark-surface
-                border border-border dark:border-dark-border
-                hover:border-accent dark:hover:border-accent
-                hover:shadow-lg transition-all duration-200 cursor-pointer">
-
-        <div class="w-12 h-12 rounded-lg bg-accent/10 dark:bg-accent/15
-                    flex items-center justify-center shrink-0
-                    group-hover:bg-accent/20 transition-colors">
+      <a
+        routerLink="/calculator"
+        class="group flex flex-col gap-5 p-6 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer"
+      >
+        <div
+          class="w-12 h-12 rounded-lg bg-accent/10 dark:bg-accent/15 flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors"
+        >
           <span class="font-display text-2xl text-accent select-none leading-none">∑</span>
         </div>
 
@@ -59,57 +54,78 @@
             Series de Fourier
           </h2>
           <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-            Descomposición periódica de funciones a trozos en series
-            trigonométricas, complejas y de medio rango, con coeficientes simbólicos exactos.
+            Descomposición periódica de funciones a trozos en series trigonométricas, complejas y de
+            medio rango, con coeficientes simbólicos exactos.
           </p>
         </div>
 
-        <div class="flex items-center gap-1.5 text-sm font-mono text-accent
-                    group-hover:gap-2.5 transition-all">
+        <div
+          class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all"
+        >
           <span>Comenzar</span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
-            <path fill-rule="evenodd" d="M2 8a.75.75 0 0 1 .75-.75h8.69L8.22 4.03a.75.75 0 0 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06L3.56 7.25H2.75A.75.75 0 0 1 2 8Z" clip-rule="evenodd"/>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            class="w-3.5 h-3.5"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2 8a.75.75 0 0 1 .75-.75h8.69L8.22 4.03a.75.75 0 0 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06L3.56 7.25H2.75A.75.75 0 0 1 2 8Z"
+              clip-rule="evenodd"
+            />
           </svg>
         </div>
       </a>
 
-      <!-- Transformada de Fourier -->
-      <div class="group flex flex-col gap-5 p-6 rounded-xl
-                  bg-paper2 dark:bg-dark-surface
-                  border border-border dark:border-dark-border
-                  opacity-65 cursor-not-allowed select-none">
-
+      <!-- Transformadas de Fourier -->
+      <a
+        routerLink="/transforms/continuous"
+        class="group flex flex-col gap-5 p-6 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer"
+      >
         <div class="flex items-center justify-between">
-          <div class="w-12 h-12 rounded-lg bg-paper dark:bg-dark-bg
-                      flex items-center justify-center shrink-0">
-            <span class="font-display text-2xl text-muted dark:text-dark-muted select-none leading-none">ℱ</span>
+          <div
+            class="w-12 h-12 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent/10 dark:group-hover:bg-accent/15 transition-colors"
+          >
+            <span class="font-display text-2xl text-accent select-none leading-none">ℱ</span>
           </div>
-          <span class="text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded
-                       bg-paper dark:bg-dark-bg
-                       border border-border dark:border-dark-border
-                       text-muted dark:text-dark-muted">
-            Próximamente
+          <span
+            class="text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-muted dark:text-dark-muted"
+          >
+            Continua activa
           </span>
         </div>
 
         <div class="flex flex-col gap-2 flex-1">
-          <h2 class="font-display text-lg text-muted dark:text-dark-muted leading-tight">
-            Transformada de Fourier
+          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+            Transformadas de Fourier
           </h2>
-          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed opacity-70">
-            Análisis espectral de señales no periódicas mediante la transformada
-            continua de Fourier, con representación en dominio de frecuencias.
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            Análisis espectral de señales no periódicas mediante la transformada continua de
+            Fourier, con acceso preparado para la transformada discreta.
           </p>
         </div>
 
-        <div class="flex items-center gap-1.5 text-sm font-mono text-muted dark:text-dark-muted opacity-50">
-          <span>Disponible pronto</span>
+        <div
+          class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all"
+        >
+          <span>Explorar</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            class="w-3.5 h-3.5"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2 8a.75.75 0 0 1 .75-.75h8.69L8.22 4.03a.75.75 0 0 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06L3.56 7.25H2.75A.75.75 0 0 1 2 8Z"
+              clip-rule="evenodd"
+            />
+          </svg>
         </div>
-      </div>
-
+      </a>
     </div>
   </section>
 
   <app-footer />
-
 </div>

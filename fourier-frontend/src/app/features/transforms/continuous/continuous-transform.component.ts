@@ -10,7 +10,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -72,6 +72,8 @@ const VAR_PAIRS: VarPair[] = [
     TransformSegmentComponent,
     ParamSlidersComponent,
     FormsModule,
+    RouterLink,
+    RouterLinkActive,
   ],
 })
 export class ContinuousTransformComponent {

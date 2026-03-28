@@ -9,6 +9,31 @@
     </p>
   </div>
 
+  <div
+    class="inline-flex w-fit rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5"
+  >
+    <a
+      routerLink="/transforms/continuous"
+      routerLinkActive="bg-accent text-white shadow-sm"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors"
+    >
+      Continua
+    </a>
+    <a
+      routerLink="/transforms/dft"
+      routerLinkActive="bg-accent text-white shadow-sm"
+      class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors inline-flex items-center gap-1.5"
+    >
+      Discreta
+      <span
+        class="text-[10px] leading-none px-1.5 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted"
+      >
+        Próximamente
+      </span>
+    </a>
+  </div>
+
   <!-- ── Main layout: left = controls, right = canvas ────────────────────── -->
   <div class="w-full flex flex-col lg:flex-row gap-6 items-start">
     <!-- ── LEFT COLUMN: controls ──────────────────────────────────────────── -->
