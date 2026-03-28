@@ -353,6 +353,22 @@ export class ResultsSummaryComponent {
     };
   });
 
+  /** Display-only a0: prefer backend raw a0 (before /2) for trig and half-range cosine views. */
+  readonly a0DisplayTex = computed(() => {
+    const result = this.store.result();
+    if (!result) return null;
+
+    if (result.type === 'trigonometric') {
+      return result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
+    }
+
+    if (result.type === 'halfRange' && this.halfRangeMode() === 'cosine') {
+      return result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
+    }
+
+    return this.activeCoeffTex()?.a0 ?? null;
+  });
+
   readonly execTime = computed(() => {
     const r = this.store.result();
     return r ? r.data.executionTimeMs : null;

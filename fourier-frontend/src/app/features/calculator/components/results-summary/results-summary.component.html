@@ -513,13 +513,10 @@
                 ></span>
               </div>
             }
-            @if (activeCoeffTex()!.a0) {
+            @if (a0DisplayTex(); as a0Tex) {
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">a₀ =</span>
-                <span
-                  class="text-ink dark:text-dark-ink text-sm"
-                  [mathjax]="activeCoeffTex()!.a0"
-                ></span>
+                <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="a0Tex"></span>
               </div>
             }
             @if (activeCoeffTex()!.an) {
