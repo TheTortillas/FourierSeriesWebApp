@@ -92,6 +92,21 @@ kill(all)$
 
   private extractTex(raw: string): string {
     const match = raw.match(/\$\$([\s\S]+?)\$\$/);
-    return match ? match[1].trim() : "";
+    if (!match) return "";
+
+    return this.normalizeSpecialFunctionTex(match[1].trim());
+  }
+
+  private normalizeSpecialFunctionTex(tex: string): string {
+    // Maxima can emit italic identifiers like {\it erfi}; normalize for consistent MathJax rendering.
+    return tex
+      .replace(/\{\\it\s+erf(i|c)?\}/g, (_m, suffix: string | undefined) => {
+        const fn = `erf${suffix ?? ""}`;
+        return `\\operatorname{${fn}}`;
+      })
+      .replace(/\\mathit\{erf(i|c)?\}/g, (_m, suffix: string | undefined) => {
+        const fn = `erf${suffix ?? ""}`;
+        return `\\operatorname{${fn}}`;
+      });
   }
 }
