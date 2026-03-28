@@ -112,7 +112,7 @@ export class ContinuousTransformComponent {
   readonly paramValues = signal<ParamValues>({});
 
   readonly activeParams = computed<string[]>(() => {
-    const ft  = this.ftResult();
+    const ft = this.ftResult();
     const ift = this.iftResult();
     return (ft ?? ift)?.params ?? [];
   });
@@ -123,8 +123,8 @@ export class ContinuousTransformComponent {
   /** Axis constant used when xAxisFormat === 'custom'. */
   readonly customConst = computed(() => {
     const params = this.activeParams();
-    const pv     = this.paramValues();
-    const name   = this.customConstName() ?? params[0];
+    const pv = this.paramValues();
+    const name = this.customConstName() ?? params[0];
     if (!name) return { symbol: 'a', value: 1 };
     return { symbol: name, value: pv[name] ?? 1 };
   });
@@ -164,7 +164,8 @@ export class ContinuousTransformComponent {
 
     // ── 3. Reset custom axis when result changes ──────────────────────────
     effect(() => {
-      this.ftResult(); this.iftResult(); // track both
+      this.ftResult();
+      this.iftResult(); // track both
       this.customConstName.set(null);
     });
 
@@ -226,6 +227,11 @@ export class ContinuousTransformComponent {
     this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()),
   );
 
+  readonly hasComputedResult = computed(
+    () => this.ftResult() !== null || this.iftResult() !== null,
+  );
+  readonly inputsLocked = computed(() => this.loading() || this.hasComputedResult());
+
   // ── Canvas layers ─────────────────────────────────────────────────────────
 
   readonly layers = computed<PlotLayer[]>(() => {
@@ -248,7 +254,7 @@ export class ContinuousTransformComponent {
     const resLW = this.resultLineWidth();
 
     const plotter = this.plotter;
-    const pv      = this.paramValues();
+    const pv = this.paramValues();
 
     const layer: PlotLayer = {
       curves: [],
@@ -320,7 +326,17 @@ export class ContinuousTransformComponent {
 
   // ── Mode / var actions ────────────────────────────────────────────────────
 
+  startNewCalculation(): void {
+    this.ftResult.set(null);
+    this.iftResult.set(null);
+    this.errorMsg.set(null);
+    this.showCanvasSettings.set(false);
+    this.showShareDialog.set(false);
+    this.urlCopied.set(false);
+  }
+
   setMode(m: 'ft' | 'ift'): void {
+    if (this.inputsLocked()) return;
     this.mode.set(m);
     this.ftResult.set(null);
     this.iftResult.set(null);
@@ -330,21 +346,24 @@ export class ContinuousTransformComponent {
   // ── Segment actions ───────────────────────────────────────────────────────
 
   addSegment(): void {
+    if (this.inputsLocked()) return;
     this.segments.update((s) => [...s, emptySegment()]);
   }
 
   removeSegment(id: string): void {
+    if (this.inputsLocked()) return;
     this.segments.update((s) => s.filter((seg) => seg.id !== id));
   }
 
   updateSegment(id: string, changes: Partial<TransformSegmentDraft>): void {
+    if (this.inputsLocked()) return;
     this.segments.update((list) => list.map((s) => (s.id === id ? { ...s, ...changes } : s)));
   }
 
   // ── Calculate ─────────────────────────────────────────────────────────────
 
   calculate(): void {
-    if (!this.canCalculate()) return;
+    if (this.inputsLocked() || !this.canCalculate()) return;
 
     const segs = this.segments().map((s) => ({ expression: s.expression, from: s.from, to: s.to }));
     const intVar = this.intVar();
@@ -366,6 +385,7 @@ export class ContinuousTransformComponent {
           next: (res) => {
             console.log('[transforms] FT result ←', res);
             this.ftResult.set(res);
+            this.showCanvasSettings.set(true);
             this.loading.set(false);
             this.plotComponent()?.resetView();
           },
@@ -382,6 +402,7 @@ export class ContinuousTransformComponent {
           next: (res) => {
             console.log('[transforms] IFT result ←', res);
             this.iftResult.set(res);
+            this.showCanvasSettings.set(true);
             this.loading.set(false);
             this.plotComponent()?.resetView();
           },
@@ -520,7 +541,7 @@ export class ContinuousTransformComponent {
     // When params are provided, try to resolve symbolic bounds (e.g. -T/2).
     if (params && Object.keys(params).length > 0) {
       const fn = this.mathUtils.compile(s, '_', params);
-      const v  = fn?.(0);
+      const v = fn?.(0);
       if (v !== undefined && isFinite(v)) return v;
     }
     // Fallback: constant expression (%pi, %e, numbers).
