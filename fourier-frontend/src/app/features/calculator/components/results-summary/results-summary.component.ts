@@ -87,7 +87,8 @@ export class ResultsSummaryComponent {
   readonly approxColor = signal('#1a4a6b');
   readonly originalLineWidth = signal(2.5);
   readonly approxLineWidth = signal(1.75);
-  readonly showCanvasSettings = signal(false);
+  readonly showCanvasSettings = signal(true);
+  readonly canvasNTerms = signal(10);
   readonly isFullscreen = signal(false);
   readonly showShareDialog = signal(false);
   readonly urlCopied = signal(false);
@@ -126,6 +127,12 @@ export class ResultsSummaryComponent {
     return false;
   });
 
+  readonly maxCanvasTerms = computed(() => {
+    const result = this.store.result();
+    if (!result) return this.store.nTerms();
+    return result.terms?.terms?.length ?? this.store.nTerms();
+  });
+
   // ── Helper: parse a Maxima string to number ─────────────────────────────────
   private parseMaxima(s: string): number {
     try {
@@ -142,7 +149,7 @@ export class ResultsSummaryComponent {
   readonly layers = computed<PlotLayer[]>(() => {
     const result = this.store.result();
     const previews = this.store.previewFunctions();
-    const nTerms = this.store.nTerms();
+    const nTerms = Math.min(this.canvasNTerms(), this.maxCanvasTerms());
     const hrMode = this.halfRangeMode();
     const plotter = this.plotter;
     const math = this.math;
@@ -563,6 +570,9 @@ export class ResultsSummaryComponent {
         const decision = result.data.validation?.decision;
         this.activeTab.set(decision === 'reject' ? 'validation' : 'coefficients');
         this.termsTabInitialized.set(false);
+        this.canvasNTerms.set(
+          Math.max(0, Math.min(this.store.nTerms(), result.terms.terms.length)),
+        );
         this.simplifiedCoeffs.set(null);
         this.simplifyProfile.set('raw');
         this.halfRangeMode.set('cosine');
@@ -575,6 +585,14 @@ export class ResultsSummaryComponent {
         if (this.userStore.isAuthenticated()) {
           this.fetchLatestEntry();
         }
+      }
+    });
+
+    effect(() => {
+      const max = this.maxCanvasTerms();
+      const current = this.canvasNTerms();
+      if (current > max) {
+        this.canvasNTerms.set(max);
       }
     });
 

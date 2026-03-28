@@ -74,7 +74,7 @@ export class CalculatorStore {
   // ── Form state ─────────────────────────────────────────────────────────────
   readonly segments = signal<SegmentDraft[]>([defaultSegment()]);
   readonly seriesType = signal<SeriesType>('trigonometric');
-  readonly nTerms = signal<number>(10);
+  readonly nTerms = signal<number>(25);
   readonly intVar = signal<string>('x');
 
   // ── Result state ───────────────────────────────────────────────────────────
@@ -170,7 +170,7 @@ export class CalculatorStore {
   resetForm(): void {
     this.segments.set([defaultSegment()]);
     this.seriesType.set('trigonometric');
-    this.nTerms.set(10);
+    this.nTerms.set(25);
     this.intVar.set('x');
     this.result.set(null);
     this.error.set(null);
