@@ -592,8 +592,8 @@
       }
 
       <!-- ── Tab: Términos ──────────────────────────────────────────────── -->
-      @if (activeTab() === 'terms') {
-        <div class="overflow-auto">
+      @if (showTermsTab()) {
+        <div class="overflow-auto" [class.hidden]="activeTab() !== 'terms'">
           <!-- Trigonometric / Half-range terms -->
           @if (trigTerms(); as terms) {
             @let isSine = store.result()?.type === 'halfRange' && halfRangeMode() === 'sine';

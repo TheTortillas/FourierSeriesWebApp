@@ -397,6 +397,10 @@ export class ResultsSummaryComponent {
 
   // ── Tab state ─────────────────────────────────────────────────────────────
   readonly activeTab = signal<'coefficients' | 'terms' | 'spectrum' | 'validation'>('coefficients');
+  readonly termsTabInitialized = signal(false);
+  readonly showTermsTab = computed(
+    () => this.termsTabInitialized() || this.activeTab() === 'terms',
+  );
 
   /**
    * Series LaTeX composed from active coefficient values.
@@ -558,6 +562,7 @@ export class ResultsSummaryComponent {
       if (result) {
         const decision = result.data.validation?.decision;
         this.activeTab.set(decision === 'reject' ? 'validation' : 'coefficients');
+        this.termsTabInitialized.set(false);
         this.simplifiedCoeffs.set(null);
         this.simplifyProfile.set('raw');
         this.halfRangeMode.set('cosine');
@@ -584,6 +589,9 @@ export class ResultsSummaryComponent {
   // ── Tab & mode actions ────────────────────────────────────────────────────
 
   setTab(tab: 'coefficients' | 'terms' | 'spectrum' | 'validation'): void {
+    if (tab === 'terms' && !this.termsTabInitialized()) {
+      this.termsTabInitialized.set(true);
+    }
     this.activeTab.set(tab);
   }
 
