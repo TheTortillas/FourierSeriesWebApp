@@ -366,7 +366,9 @@ kill(all)$
       .replace(/[\[\]()]/g, "")
       .trim();
 
-    const token = plain.split(/[\s,]+/)[0]?.replace(/([0-9.])[bBdD]([+-]?\d+)/g, "$1e$2");
+    const token = plain
+      .split(/[\s,]+/)[0]
+      ?.replace(/([0-9.])[bBdD]([+-]?\d+)/g, "$1e$2");
     if (token) {
       const direct = Number.parseFloat(token);
       if (Number.isFinite(direct)) return direct;
