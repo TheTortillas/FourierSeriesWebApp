@@ -101,6 +101,9 @@ export class ResultsSummaryComponent {
 
   // exponential sub-flags (only relevant when profile === 'exponential')
   readonly expFlag = signal<'exponentialize' | 'demoivre'>('exponentialize');
+  readonly useEdispflag = signal(false);
+  readonly erfRepresentationOptions = ['erf', 'erfc', 'erfi'] as const;
+  readonly erfRepresentation = signal<'erf' | 'erfc' | 'erfi'>('erf');
 
   // half-range series mode (only relevant when result.type === 'halfRange')
   readonly halfRangeMode = signal<'cosine' | 'sine'>('cosine');
@@ -690,6 +693,20 @@ export class ResultsSummaryComponent {
     }
   }
 
+  setEdispflag(enabled: boolean): void {
+    this.useEdispflag.set(enabled);
+    if (this.simplifyProfile() !== 'raw') {
+      this.simplifyAll(this.simplifyProfile());
+    }
+  }
+
+  setErfRepresentation(repr: 'erf' | 'erfc' | 'erfi'): void {
+    this.erfRepresentation.set(repr);
+    if (this.simplifyProfile() !== 'raw') {
+      this.simplifyAll(this.simplifyProfile());
+    }
+  }
+
   simplifyAll(
     profile: SimplifyProfile,
     flag: 'exponentialize' | 'demoivre' = this.expFlag(),
@@ -699,12 +716,18 @@ export class ResultsSummaryComponent {
 
     this.simplifying.set(true);
 
-    const displayFlags =
+    const profileFlags =
       profile === 'exponential'
         ? flag === 'exponentialize'
           ? { exponentialize: true }
           : { demoivre: true }
         : undefined;
+
+    const displayFlags = {
+      ...(profileFlags ?? {}),
+      ...(this.useEdispflag() ? { edispflag: true } : {}),
+      erfRepresentation: this.erfRepresentation(),
+    };
 
     const calls: Record<string, ReturnType<typeof this.api.simplify>> = {};
 

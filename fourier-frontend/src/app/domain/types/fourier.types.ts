@@ -148,6 +148,7 @@ export interface SimplifyInput {
     edispflag?: boolean;
     exponentialize?: boolean;
     demoivre?: boolean;
+    erfRepresentation?: 'erf' | 'erfc' | 'erfi';
   };
 }
 

@@ -493,6 +493,38 @@
               </div>
             }
 
+            @if (simplifyProfile() !== 'raw') {
+              <label
+                class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+              >
+                <input
+                  type="checkbox"
+                  class="accent-accent"
+                  [checked]="useEdispflag()"
+                  (change)="setEdispflag($any($event.target).checked)"
+                />
+                edispflag
+              </label>
+
+              <div
+                class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+              >
+                @for (repr of erfRepresentationOptions; track repr) {
+                  <button
+                    type="button"
+                    (click)="setErfRepresentation(repr)"
+                    [class]="
+                      erfRepresentation() === repr
+                        ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                        : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                    "
+                  >
+                    {{ repr }}
+                  </button>
+                }
+              </div>
+            }
+
             @if (simplifying()) {
               <span
                 class="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0"
