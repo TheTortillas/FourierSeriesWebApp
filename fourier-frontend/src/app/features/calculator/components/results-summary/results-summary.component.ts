@@ -27,6 +27,7 @@ import { MathjaxDirective } from '../../../../shared/directives/mathjax.directiv
 import { ApiService } from '../../../../core/services/api/api.service';
 import { UserStore } from '../../../../core/services/auth/user.store';
 import { ParamSlidersComponent } from '../../../../shared/components/param-sliders/param-sliders.component';
+import { SpectrumChartComponent } from '../../../../shared/components/spectrum-chart/spectrum-chart.component';
 import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
 import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
@@ -45,7 +46,13 @@ const HARMONIC_COLORS = [
 
 @Component({
   selector: 'app-results-summary',
-  imports: [FunctionPlotComponent, MathjaxDirective, FormsModule, ParamSlidersComponent],
+  imports: [
+    FunctionPlotComponent,
+    MathjaxDirective,
+    FormsModule,
+    ParamSlidersComponent,
+    SpectrumChartComponent,
+  ],
   templateUrl: './results-summary.component.html',
 })
 export class ResultsSummaryComponent {
@@ -107,6 +114,17 @@ export class ResultsSummaryComponent {
 
   // half-range series mode (only relevant when result.type === 'halfRange')
   readonly halfRangeMode = signal<'cosine' | 'sine'>('cosine');
+
+  /** Computed: check if we have spectrum data (terms loaded) */
+  readonly hasSpectrumData = computed(() => {
+    const result = this.store.result();
+    if (!result) return false;
+    if (result.type === 'complex') return (result.terms as any)?.terms?.length > 0;
+    if (result.type === 'trigonometric' || result.type === 'halfRange') {
+      return (result.terms as any)?.terms?.length > 0;
+    }
+    return false;
+  });
 
   // ── Helper: parse a Maxima string to number ─────────────────────────────────
   private parseMaxima(s: string): number {
@@ -378,7 +396,7 @@ export class ResultsSummaryComponent {
   });
 
   // ── Tab state ─────────────────────────────────────────────────────────────
-  readonly activeTab = signal<'coefficients' | 'terms' | 'validation'>('coefficients');
+  readonly activeTab = signal<'coefficients' | 'terms' | 'spectrum' | 'validation'>('coefficients');
 
   /**
    * Series LaTeX composed from active coefficient values.
@@ -483,9 +501,10 @@ export class ResultsSummaryComponent {
   });
 
   /** Typed tabs array so the template gets literal types */
-  readonly tabs: { id: 'coefficients' | 'terms' | 'validation'; label: string }[] = [
+  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; label: string }[] = [
     { id: 'coefficients', label: 'Coeficientes' },
     { id: 'terms', label: 'Términos' },
+    { id: 'spectrum', label: 'Espectro' },
     { id: 'validation', label: 'Validación' },
   ];
 
@@ -564,7 +583,7 @@ export class ResultsSummaryComponent {
 
   // ── Tab & mode actions ────────────────────────────────────────────────────
 
-  setTab(tab: 'coefficients' | 'terms' | 'validation'): void {
+  setTab(tab: 'coefficients' | 'terms' | 'spectrum' | 'validation'): void {
     this.activeTab.set(tab);
   }
 

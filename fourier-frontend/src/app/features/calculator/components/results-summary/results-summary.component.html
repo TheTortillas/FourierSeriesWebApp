@@ -766,6 +766,41 @@
         </div>
       }
 
+      <!-- ── Tab: Espectro ───────────────────────────────────────────────── -->
+      @if (activeTab() === 'spectrum') {
+        <div class="p-4 overflow-y-auto">
+          @if (hasSpectrumData()) {
+            @let type = store.result()?.type;
+            @let trigCtx = termsTrigCtx();
+            @let complexCtx = termsComplexCtx();
+            <app-spectrum-chart
+              [seriesType]="
+                type === 'complex'
+                  ? 'complex'
+                  : type === 'halfRange'
+                    ? 'halfRange'
+                    : 'trigonometric'
+              "
+              [trigTerms]="type === 'trigonometric' || type === 'halfRange' ? trigTerms() : null"
+              [complexTerms]="type === 'complex' ? complexTerms() : null"
+              [trigZero]="
+                type === 'trigonometric' || (type === 'halfRange' && halfRangeMode() === 'cosine')
+                  ? (trigCtx?.a0Half ?? null)
+                  : null
+              "
+              [complexZero]="type === 'complex' ? (complexCtx?.c0Float ?? null) : null"
+              [halfRangeMode]="halfRangeMode()"
+            />
+          } @else {
+            <div
+              class="flex items-center justify-center h-48 text-muted dark:text-dark-muted text-sm"
+            >
+              Cargando espectro...
+            </div>
+          }
+        </div>
+      }
+
       <!-- ── Tab: Validación ────────────────────────────────────────────── -->
       @if (activeTab() === 'validation') {
         <div class="p-4 space-y-4 overflow-y-auto">
