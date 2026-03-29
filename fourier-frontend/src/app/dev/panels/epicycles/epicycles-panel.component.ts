@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../core/services/api/api.service';
 import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
+import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { CanvasViewport, Curve } from '../../../core/services/canvas/canvas.types';
 import { DftCoefficient, DftPoint, DftResponse } from '../../../domain/types/dft.types';
 import {
@@ -374,6 +375,7 @@ function lissajousPreset(samples: number): DftPoint[] {
 export class EpicyclesPanelComponent implements OnDestroy {
   private readonly api = inject(ApiService);
   private readonly coords = inject(CoordinateTransformService);
+  private readonly drawingUtils = inject(DrawingUtilsService);
 
   private timerId: ReturnType<typeof setInterval> | null = null;
 
@@ -509,6 +511,9 @@ export class EpicyclesPanelComponent implements OnDestroy {
 
   readonly plotLayers = computed<PlotLayer[]>(() => {
     void this.frameTick();
+    // Track epicycleStates so that selection changes (selectedCoeffK) trigger
+    // a canvas re-render even when the animation is paused.
+    void this.epicycleStates();
 
     const original = this.sourcePoints();
     const approximation = this.approximationCurve();
@@ -561,6 +566,9 @@ export class EpicyclesPanelComponent implements OnDestroy {
     const preset = this.presets.find((p) => p.id === id);
     if (!preset) return;
     this.rawPoints.set(this.formatPoints(preset.points));
+    // Show the preset shape immediately as a sampled-points preview,
+    // without requiring a DFT calculation.
+    this.sourcePoints.set(preset.points);
     this.result.set(null);
     this.error.set(null);
     this.trace.set([]);
@@ -759,10 +767,7 @@ export class EpicyclesPanelComponent implements OnDestroy {
     const toCssX = (x: number) => this.coords.mathToScreenX(x, vp) / vp.dpr;
     const toCssY = (y: number) => this.coords.mathToScreenY(y, vp) / vp.dpr;
 
-    const pxPerUnit = vp.unit * ((vp.scaleX + vp.scaleY) / 2);
-
-    ctx.save();
-
+    const pxPerUnit  = vp.unit * ((vp.scaleX + vp.scaleY) / 2);
     const hasSelection = states.some((s) => s.selected);
 
     for (const state of states) {
@@ -770,43 +775,36 @@ export class EpicyclesPanelComponent implements OnDestroy {
       const cy = toCssY(state.centerY);
       const ex = toCssX(state.endX);
       const ey = toCssY(state.endY);
-      const isDimmed = hasSelection && !state.selected;
+      const isDimmed    = hasSelection && !state.selected;
       const circleAlpha = state.selected ? 0.42 : isDimmed ? 0.12 : 0.28;
-      const vectorAlpha = state.selected ? 1 : isDimmed ? 0.22 : 0.88;
-      const lineWidth = state.selected ? 2.4 : 1.5;
-      const circleStroke = this.withAlpha(state.color, circleAlpha);
-      const vectorStroke = this.withAlpha(state.color, vectorAlpha);
+      const vectorAlpha = state.selected ? 1    : isDimmed ? 0.22 : 0.88;
+      const lineWidth   = state.selected ? 2.4  : 1.5;
 
-      ctx.beginPath();
-      ctx.strokeStyle = circleStroke;
-      ctx.lineWidth = 1;
-      ctx.arc(cx, cy, Math.max(1.5, state.radius * pxPerUnit), 0, TAU);
-      ctx.stroke();
+      // Epicycle ring
+      this.drawingUtils.drawCircle(
+        ctx, cx, cy,
+        Math.max(1.5, state.radius * pxPerUnit),
+        this.drawingUtils.withAlpha(state.color, circleAlpha), 1,
+      );
 
-      ctx.beginPath();
-      ctx.strokeStyle = vectorStroke;
-      ctx.lineWidth = lineWidth;
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(ex, ey);
-      ctx.stroke();
+      // Radial vector
+      this.drawingUtils.drawLine(
+        ctx, cx, cy, ex, ey,
+        this.drawingUtils.withAlpha(state.color, vectorAlpha), lineWidth,
+      );
 
+      // Arrowhead at the tip (resolves selection state into concrete sizes/alpha)
       this.drawArrowHead(ctx, cx, cy, ex, ey, state.color, state.selected, isDimmed);
     }
 
+    // Endpoint dot — marks where the last epicycle tip currently sits
     const end = states[states.length - 1];
-    if (!end) {
-      ctx.restore();
-      return;
-    }
-    const ex = toCssX(end.endX);
-    const ey = toCssY(end.endY);
+    if (!end) return;
 
-    ctx.beginPath();
-    ctx.fillStyle = hasSelection ? this.withAlpha('#f8fafc', 0.95) : '#f59e0b';
-    ctx.arc(ex, ey, 3.1, 0, TAU);
-    ctx.fill();
-
-    ctx.restore();
+    const ex       = toCssX(end.endX);
+    const ey       = toCssY(end.endY);
+    const endFill  = hasSelection ? this.drawingUtils.withAlpha('#f8fafc', 0.95) : '#f59e0b';
+    this.drawingUtils.drawCircle(ctx, ex, ey, 3.1, null, 1, endFill);
   }
 
   private drawSampledPoints(
@@ -814,22 +812,7 @@ export class EpicyclesPanelComponent implements OnDestroy {
     vp: CanvasViewport,
     points: DftPoint[],
   ): void {
-    if (points.length === 0) return;
-
-    const toCssX = (x: number) => this.coords.mathToScreenX(x, vp) / vp.dpr;
-    const toCssY = (y: number) => this.coords.mathToScreenY(y, vp) / vp.dpr;
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(248, 250, 252, 0.75)';
-    const radius = 1.8;
-
-    for (const p of points) {
-      ctx.beginPath();
-      ctx.arc(toCssX(p.x), toCssY(p.y), radius, 0, TAU);
-      ctx.fill();
-    }
-
-    ctx.restore();
+    this.drawingUtils.drawPoints(ctx, vp, points, 'rgba(248, 250, 252, 0.75)', 1.8);
   }
 
   private drawArrowHead(
@@ -842,40 +825,16 @@ export class EpicyclesPanelComponent implements OnDestroy {
     selected: boolean,
     dimmed: boolean,
   ): void {
-    const dx = toX - fromX;
-    const dy = toY - fromY;
-    const len = Math.hypot(dx, dy);
-    if (len < 2.5) return;
-
-    const angle = Math.atan2(dy, dx);
     const headLength = selected ? 8 : 6;
-    const spread = Math.PI / 7;
-    const alpha = selected ? 1 : dimmed ? 0.26 : 0.9;
-
-    const x1 = toX - headLength * Math.cos(angle - spread);
-    const y1 = toY - headLength * Math.sin(angle - spread);
-    const x2 = toX - headLength * Math.cos(angle + spread);
-    const y2 = toY - headLength * Math.sin(angle + spread);
-
-    ctx.beginPath();
-    ctx.fillStyle = this.withAlpha(color, alpha);
-    ctx.moveTo(toX, toY);
-    ctx.lineTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.closePath();
-    ctx.fill();
+    const alpha      = selected ? 1 : dimmed ? 0.26 : 0.9;
+    this.drawingUtils.drawArrowHead(ctx, fromX, fromY, toX, toY,
+      this.drawingUtils.withAlpha(color, alpha), headLength);
   }
 
   private harmonicColor(index: number, total: number): string {
     const t = total <= 1 ? 0 : index / (total - 1);
     const hue = (200 + t * 300) % 360;
     return `hsl(${hue.toFixed(1)} 90% 62%)`;
-  }
-
-  private withAlpha(color: string, alpha: number): string {
-    const clamped = Math.max(0, Math.min(1, alpha));
-    if (!color.startsWith('hsl(')) return color;
-    return color.replace(/^hsl\((.*)\)$/u, `hsl($1 / ${clamped.toFixed(3)})`);
   }
 
   private normalizePoints(points: DftPoint[]): {
