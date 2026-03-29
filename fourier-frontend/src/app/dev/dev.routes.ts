@@ -61,6 +61,30 @@ export const devRoutes: Routes = [
             (m) => m.DftSignalLabPanelComponent,
           ),
       },
+      {
+        path: 'dft-signal-lab-ab',
+        data: { labView: 'signal' },
+        loadComponent: () =>
+          import('./panels/dft-signal-lab/dft-signal-lab-panel.component').then(
+            (m) => m.DftSignalLabPanelComponent,
+          ),
+      },
+      {
+        path: 'dft-signal-lab-c',
+        data: { labView: 'filter' },
+        loadComponent: () =>
+          import('./panels/dft-signal-lab/dft-signal-lab-panel.component').then(
+            (m) => m.DftSignalLabPanelComponent,
+          ),
+      },
+      {
+        path: 'dft-signal-lab-image',
+        data: { labView: 'image' },
+        loadComponent: () =>
+          import('./panels/dft-signal-lab/dft-signal-lab-panel.component').then(
+            (m) => m.DftSignalLabPanelComponent,
+          ),
+      },
     ],
   },
 ];

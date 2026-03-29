@@ -26,5 +26,13 @@ export class DevSandboxComponent {
     { label: 'Canvas — Función + Fourier', route: 'canvas-plot', phase: 'F3', ready: true },
     { label: 'Canvas — Epiciclos (DFT)', route: 'epicycles', phase: 'F4', ready: true },
     { label: 'DFT — Signal Lab (1D)', route: 'dft-signal-lab', phase: 'F4', ready: true },
+    { label: 'DFT — Signal Lab A/B', route: 'dft-signal-lab-ab', phase: 'F4', ready: true },
+    { label: 'DFT — Signal Lab C (Filtros)', route: 'dft-signal-lab-c', phase: 'F4', ready: true },
+    {
+      label: 'DFT — Signal Lab Imagen 2D',
+      route: 'dft-signal-lab-image',
+      phase: 'F4',
+      ready: true,
+    },
   ];
 }
