@@ -252,11 +252,39 @@ function lissajousPreset(samples: number): DftPoint[] {
               <label class="flex items-center gap-2 cursor-pointer text-gray-300">
                 <input
                   type="checkbox"
+                  [ngModel]="showSampledPoints()"
+                  (ngModelChange)="showSampledPoints.set($event)"
+                />
+                Muestras
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+                <input
+                  type="checkbox"
                   [ngModel]="showEpicycles()"
                   (ngModelChange)="showEpicycles.set($event)"
                 />
                 Cadenas
               </label>
+            </div>
+
+            <div class="space-y-1 rounded border border-gray-700 p-2">
+              <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+                <input
+                  type="checkbox"
+                  [ngModel]="autoNormalizeInput()"
+                  (ngModelChange)="autoNormalizeInput.set($event)"
+                />
+                Auto-escalar coordenadas grandes
+              </label>
+              <p class="text-[11px] text-gray-500">
+                Recomendado para puntos de SVG en miles: centra y escala antes de calcular.
+              </p>
+              @if (normalizationInfo(); as norm) {
+                <p class="text-[11px] text-cyan-300">
+                  Centro aplicado: ({{ norm.centerX.toFixed(2) }}, {{ norm.centerY.toFixed(2) }}) ·
+                  escala: {{ norm.scale.toExponential(3) }}
+                </p>
+              }
             </div>
 
             <div class="space-y-2 pt-1">
@@ -345,8 +373,16 @@ export class EpicyclesPanelComponent implements OnDestroy {
   readonly showOriginal = signal(true);
   readonly showApproximation = signal(true);
   readonly showTrace = signal(true);
+  readonly showSampledPoints = signal(false);
   readonly showEpicycles = signal(true);
   readonly selectedCoeffK = signal<number | null>(null);
+  readonly autoNormalizeInput = signal(true);
+  readonly normalizationInfo = signal<{
+    applied: boolean;
+    centerX: number;
+    centerY: number;
+    scale: number;
+  } | null>(null);
 
   readonly trace = signal<DftPoint[]>([]);
 
@@ -522,12 +558,16 @@ export class EpicyclesPanelComponent implements OnDestroy {
       return;
     }
 
+    const prepared = this.autoNormalizeInput() ? this.normalizePoints(parsed) : null;
+    const effectivePoints = prepared?.points ?? parsed;
+    this.normalizationInfo.set(prepared?.info ?? null);
+
     this.loading.set(true);
     try {
       const res = await firstValueFrom(
-        this.api.calculateDFT({ points: parsed, mode: 'epicycles' }),
+        this.api.calculateDFT({ points: effectivePoints, mode: 'epicycles' }),
       );
-      this.sourcePoints.set(parsed);
+      this.sourcePoints.set(effectivePoints);
       this.result.set(res);
       this.topK.set(Math.min(22, Math.max(1, res.coefficients.length)));
       this.time.set(0);
@@ -679,6 +719,10 @@ export class EpicyclesPanelComponent implements OnDestroy {
   }
 
   private drawEpicycleOverlay(ctx: CanvasRenderingContext2D, vp: CanvasViewport): void {
+    if (this.showSampledPoints()) {
+      this.drawSampledPoints(ctx, vp, this.sourcePoints());
+    }
+
     if (!this.showEpicycles()) return;
 
     const states = this.epicycleStates();
@@ -737,6 +781,29 @@ export class EpicyclesPanelComponent implements OnDestroy {
     ctx.restore();
   }
 
+  private drawSampledPoints(
+    ctx: CanvasRenderingContext2D,
+    vp: CanvasViewport,
+    points: DftPoint[],
+  ): void {
+    if (points.length === 0) return;
+
+    const toCssX = (x: number) => this.coords.mathToScreenX(x, vp) / vp.dpr;
+    const toCssY = (y: number) => this.coords.mathToScreenY(y, vp) / vp.dpr;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(248, 250, 252, 0.75)';
+    const radius = 1.8;
+
+    for (const p of points) {
+      ctx.beginPath();
+      ctx.arc(toCssX(p.x), toCssY(p.y), radius, 0, TAU);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
   private drawArrowHead(
     ctx: CanvasRenderingContext2D,
     fromX: number,
@@ -781,6 +848,52 @@ export class EpicyclesPanelComponent implements OnDestroy {
     const clamped = Math.max(0, Math.min(1, alpha));
     if (!color.startsWith('hsl(')) return color;
     return color.replace(/^hsl\((.*)\)$/u, `hsl($1 / ${clamped.toFixed(3)})`);
+  }
+
+  private normalizePoints(points: DftPoint[]): {
+    points: DftPoint[];
+    info: { applied: boolean; centerX: number; centerY: number; scale: number };
+  } {
+    if (points.length === 0) {
+      return {
+        points,
+        info: { applied: false, centerX: 0, centerY: 0, scale: 1 },
+      };
+    }
+
+    let sumX = 0;
+    let sumY = 0;
+    for (const p of points) {
+      sumX += p.x;
+      sumY += p.y;
+    }
+
+    const centerX = sumX / points.length;
+    const centerY = sumY / points.length;
+
+    let maxRadius = 0;
+    for (const p of points) {
+      const dx = p.x - centerX;
+      const dy = p.y - centerY;
+      const r = Math.hypot(dx, dy);
+      if (r > maxRadius) maxRadius = r;
+    }
+
+    const scale = maxRadius > 0 ? 1 / maxRadius : 1;
+    const normalized = points.map((p) => ({
+      x: (p.x - centerX) * scale,
+      y: (p.y - centerY) * scale,
+    }));
+
+    return {
+      points: normalized,
+      info: {
+        applied: true,
+        centerX,
+        centerY,
+        scale,
+      },
+    };
   }
 
   private closedPath(points: DftPoint[]): DftPoint[] {
