@@ -16,26 +16,43 @@ signal: makelist(
   k, 1, N
 )$
 
-/* Calcular FFT */
-dft_result: fft(signal)$
-
-/* Calcular coeficientes normalizados */
-coeffs: makelist(
-  block([c: dft_result[k], phase_val, phase_pi],
-    phase_val: float(carg(c)),
-    phase_pi: string(rationalize(phase_val / float(%pi))),
-    [k-1,
-     float(realpart(c)),
-     float(imagpart(c)),
-     float(cabs(c)),
-     phase_val,
-     phase_pi]
-  ),
-  k, 1, N
+/* Coeficientes DFT manuales (normalizados) para N no-potencia de 2 */
+manual_coeffs(sig) := block([len : length(sig)],
+  makelist(
+    block([acc : 0.0 + 0.0*%i, kk : k - 1, nn, angle, out, re_val, im_val, amp_val, phase_val],
+      for nn : 1 thru len do (
+        angle : float(-2*%pi*kk*(nn-1)/len),
+        acc : acc + sig[nn] * (float(cos(angle)) + %i*float(sin(angle)))
+      ),
+      out : acc / len,
+      re_val : float(realpart(out)),
+      im_val : float(imagpart(out)),
+      amp_val : float(sqrt(re_val^2 + im_val^2)),
+      phase_val : if amp_val < 1.0e-12 then 0.0 else float(atan2(im_val, re_val)),
+      [kk, re_val, im_val, amp_val, phase_val]
+    ),
+    k, 1, len
+  )
 )$
 
-/* Reconstruir señal */
-reconstructed: inverse_fft(dft_result)$
+/* Inverse DFT compatible con manual_dft (sin dividir por N) */
+manual_idft(coeff) := block([len : length(coeff)],
+  makelist(
+    block([acc : 0.0 + 0.0*%i, kk, angle, out],
+      for kk : 1 thru len do (
+        angle : float(2*%pi*(kk-1)*(n-1)/len),
+        acc : acc + coeff[kk] * (float(cos(angle)) + %i*float(sin(angle)))
+      ),
+      out : acc,
+      float(realpart(out)) + %i*float(imagpart(out))
+    ),
+    n, 1, len
+  )
+)$
+
+coeffs : manual_coeffs(signal)$
+dft_result : makelist(coeffs[k][2] + %i*coeffs[k][3], k, 1, N)$
+reconstructed : manual_idft(dft_result)$
 
 /* Calcular RMS error */
 rms_error: float(sqrt(
