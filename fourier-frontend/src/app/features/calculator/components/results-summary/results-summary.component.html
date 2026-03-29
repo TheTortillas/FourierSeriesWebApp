@@ -289,16 +289,25 @@
         <div class="border-t border-border dark:border-dark-border"></div>
 
         <section class="flex flex-col gap-2">
-          <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-            Estilo de líneas
-          </h4>
+          <div class="flex items-center justify-between gap-2">
+            <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+              Estilo de líneas
+            </h4>
+            <button
+              type="button"
+              (click)="resetLineColorsToPreset()"
+              class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors"
+            >
+              Restablecer
+            </button>
+          </div>
           <div class="flex flex-wrap gap-3">
             <div class="flex items-center gap-2">
               <span class="text-muted dark:text-dark-muted">Original</span>
               <input
                 type="color"
                 [value]="originalColor()"
-                (input)="originalColor.set($any($event.target).value)"
+                (input)="onOriginalColorInput($any($event.target).value)"
                 class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
               />
               <input
@@ -317,7 +326,7 @@
               <input
                 type="color"
                 [value]="approxColor()"
-                (input)="approxColor.set($any($event.target).value)"
+                (input)="onApproxColorInput($any($event.target).value)"
                 class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
               />
               <input
@@ -368,9 +377,18 @@
             @if (showHarmonics()) {
               <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
                 <span class="inline-flex gap-px">
-                  <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                  <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400"></span>
-                  <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                  <span
+                    class="inline-block w-1.5 h-1.5 rounded-full"
+                    [style.backgroundColor]="harmonicColors()[0]"
+                  ></span>
+                  <span
+                    class="inline-block w-1.5 h-1.5 rounded-full"
+                    [style.backgroundColor]="harmonicColors()[1]"
+                  ></span>
+                  <span
+                    class="inline-block w-1.5 h-1.5 rounded-full"
+                    [style.backgroundColor]="harmonicColors()[2]"
+                  ></span>
                 </span>
                 Armónicos
               </span>

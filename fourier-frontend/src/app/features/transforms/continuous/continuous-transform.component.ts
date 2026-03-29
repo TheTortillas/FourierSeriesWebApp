@@ -22,6 +22,7 @@ import {
 import { ApiService } from '../../../core/services/api/api.service';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
+import { ThemeService } from '../../../core/services/theme/theme.service';
 import { ParamSlidersComponent } from '../../../shared/components/param-sliders/param-sliders.component';
 import type { ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
@@ -62,6 +63,49 @@ const VAR_PAIRS: VarPair[] = [
   { id: 'custom', time: '', freq: '', timeDisplay: '', freqDisplay: '' },
 ];
 
+interface TransformColorPreset {
+  original: string;
+  result: string;
+  imag: string;
+  mag: string;
+}
+
+function getTransformColorPreset(isDark: boolean, isNeutral: boolean): TransformColorPreset {
+  if (!isNeutral && !isDark) {
+    return {
+      original: '#c14030',
+      result: '#2563eb',
+      imag: '#d97706',
+      mag: '#16a34a',
+    };
+  }
+
+  if (!isNeutral && isDark) {
+    return {
+      original: '#e0ad74',
+      result: '#7db7e8',
+      imag: '#f6b26b',
+      mag: '#7dd3a0',
+    };
+  }
+
+  if (isNeutral && !isDark) {
+    return {
+      original: '#2563eb',
+      result: '#0f766e',
+      imag: '#c2410c',
+      mag: '#4f46e5',
+    };
+  }
+
+  return {
+    original: '#60a5fa',
+    result: '#2dd4bf',
+    imag: '#fb923c',
+    mag: '#a78bfa',
+  };
+}
+
 @Component({
   selector: 'app-continuous-transform',
   templateUrl: './continuous-transform.component.html',
@@ -80,6 +124,7 @@ export class ContinuousTransformComponent {
   readonly api = inject(ApiService);
   readonly plotter = inject(PlottingService);
   private readonly mathUtils = inject(MathUtilsService);
+  readonly theme = inject(ThemeService);
   readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -106,6 +151,10 @@ export class ContinuousTransformComponent {
   readonly resultColor = signal('#2563eb');
   readonly imagColor = signal('#d97706');
   readonly magColor = signal('#16a34a');
+  readonly customOriginalColor = signal(false);
+  readonly customResultColor = signal(false);
+  readonly customImagColor = signal(false);
+  readonly customMagColor = signal(false);
   readonly originalLineWidth = signal(2);
   readonly resultLineWidth = signal(2);
   readonly showCanvasSettings = signal(false);
@@ -144,6 +193,16 @@ export class ContinuousTransformComponent {
   private urlPopulated = false;
 
   constructor() {
+    effect(() => {
+      void this.theme.theme();
+      void this.theme.palette();
+      const preset = this.currentColorPreset();
+      if (!this.customOriginalColor()) this.originalColor.set(preset.original);
+      if (!this.customResultColor()) this.resultColor.set(preset.result);
+      if (!this.customImagColor()) this.imagColor.set(preset.imag);
+      if (!this.customMagColor()) this.magColor.set(preset.mag);
+    });
+
     // Track native fullscreen changes
     if (typeof document !== 'undefined') {
       const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
@@ -191,6 +250,10 @@ export class ContinuousTransformComponent {
       }
     });
   }
+
+  readonly currentColorPreset = computed(() =>
+    getTransformColorPreset(this.theme.isDark, this.theme.isNeutral),
+  );
 
   // ── Computed ──────────────────────────────────────────────────────────────
 
@@ -517,6 +580,38 @@ export class ContinuousTransformComponent {
 
   display(tex: string): string {
     return `\\[${tex}\\]`;
+  }
+
+  onOriginalColorInput(value: string): void {
+    this.customOriginalColor.set(true);
+    this.originalColor.set(value);
+  }
+
+  onResultColorInput(value: string): void {
+    this.customResultColor.set(true);
+    this.resultColor.set(value);
+  }
+
+  onImagColorInput(value: string): void {
+    this.customImagColor.set(true);
+    this.imagColor.set(value);
+  }
+
+  onMagColorInput(value: string): void {
+    this.customMagColor.set(true);
+    this.magColor.set(value);
+  }
+
+  resetLineColorsToPreset(): void {
+    const preset = this.currentColorPreset();
+    this.customOriginalColor.set(false);
+    this.customResultColor.set(false);
+    this.customImagColor.set(false);
+    this.customMagColor.set(false);
+    this.originalColor.set(preset.original);
+    this.resultColor.set(preset.result);
+    this.imagColor.set(preset.imag);
+    this.magColor.set(preset.mag);
   }
 
   private buildMagFn(

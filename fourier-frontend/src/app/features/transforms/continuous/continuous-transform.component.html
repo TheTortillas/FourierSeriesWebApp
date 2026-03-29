@@ -543,16 +543,25 @@
             <div class="border-t border-border dark:border-dark-border"></div>
 
             <section class="flex flex-col gap-2">
-              <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                Estilo de líneas
-              </h4>
+              <div class="flex items-center justify-between gap-2">
+                <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                  Estilo de líneas
+                </h4>
+                <button
+                  type="button"
+                  (click)="resetLineColorsToPreset()"
+                  class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors cursor-pointer"
+                >
+                  Restablecer
+                </button>
+              </div>
               <div class="flex flex-wrap gap-3">
                 <div class="flex items-center gap-2">
                   <span class="text-muted dark:text-dark-muted">Original</span>
                   <input
                     type="color"
                     [value]="originalColor()"
-                    (input)="originalColor.set($any($event.target).value)"
+                    (input)="onOriginalColorInput($any($event.target).value)"
                     class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
                   />
                   <input
@@ -571,7 +580,7 @@
                   <input
                     type="color"
                     [value]="resultColor()"
-                    (input)="resultColor.set($any($event.target).value)"
+                    (input)="onResultColorInput($any($event.target).value)"
                     class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
                   />
                   <input
@@ -591,7 +600,7 @@
                     <input
                       type="color"
                       [value]="imagColor()"
-                      (input)="imagColor.set($any($event.target).value)"
+                      (input)="onImagColorInput($any($event.target).value)"
                       class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
                     />
                   </div>
@@ -601,7 +610,7 @@
                     <input
                       type="color"
                       [value]="magColor()"
-                      (input)="magColor.set($any($event.target).value)"
+                      (input)="onMagColorInput($any($event.target).value)"
                       class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
                     />
                   </div>
