@@ -62,19 +62,35 @@ export interface CanvasTheme {
 }
 
 export const LIGHT_THEME: CanvasTheme = {
-  bg:        '#faf7f2',
-  axis:      '#1a1410',
+  bg: '#faf7f2',
+  axis: '#1a1410',
   gridMajor: '#c8bca8',
   gridMinor: '#e5dfd5',
-  label:     '#6b5e4e',
+  label: '#6b5e4e',
 };
 
 export const DARK_THEME: CanvasTheme = {
-  bg:        '#1a1410',
-  axis:      '#e8e0d0',
+  bg: '#1a1410',
+  axis: '#e8e0d0',
   gridMajor: '#3a3228',
   gridMinor: '#2a2420',
-  label:     '#8a7a6a',
+  label: '#8a7a6a',
+};
+
+export const NEUTRAL_LIGHT_THEME: CanvasTheme = {
+  bg: '#fafafa',
+  axis: '#1a1a1a',
+  gridMajor: '#d4d4d4',
+  gridMinor: '#ececec',
+  label: '#6b6b6b',
+};
+
+export const NEUTRAL_DARK_THEME: CanvasTheme = {
+  bg: '#1a1a1a',
+  axis: '#f5f5f5',
+  gridMajor: '#3a3a3a',
+  gridMinor: '#2a2a2a',
+  label: '#a0a0a0',
 };
 
 /** Fourier series types supported by the backend */
