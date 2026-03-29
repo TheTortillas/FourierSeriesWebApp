@@ -25,5 +25,6 @@ export class DevSandboxComponent {
     { label: 'Canvas — Smoke test', route: 'canvas', phase: 'F3', ready: true },
     { label: 'Canvas — Función + Fourier', route: 'canvas-plot', phase: 'F3', ready: true },
     { label: 'Canvas — Epiciclos (DFT)', route: 'epicycles', phase: 'F4', ready: true },
+    { label: 'DFT — Signal Lab (1D)', route: 'dft-signal-lab', phase: 'F4', ready: true },
   ];
 }

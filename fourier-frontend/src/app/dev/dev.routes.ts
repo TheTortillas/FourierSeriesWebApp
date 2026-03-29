@@ -54,6 +54,13 @@ export const devRoutes: Routes = [
             (m) => m.EpicyclesPanelComponent,
           ),
       },
+      {
+        path: 'dft-signal-lab',
+        loadComponent: () =>
+          import('./panels/dft-signal-lab/dft-signal-lab-panel.component').then(
+            (m) => m.DftSignalLabPanelComponent,
+          ),
+      },
     ],
   },
 ];
