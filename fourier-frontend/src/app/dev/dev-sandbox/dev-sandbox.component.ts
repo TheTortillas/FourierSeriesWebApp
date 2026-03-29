@@ -16,13 +16,14 @@ interface SandboxPanel {
 export class DevSandboxComponent {
   readonly panels: SandboxPanel[] = [
     // Fase 1 — API & Auth
-    { label: 'Auth — Register / Login / Me', route: 'auth',    phase: 'F1', ready: true },
-    { label: 'API — Fourier Series',         route: 'fourier', phase: 'F1', ready: true },
+    { label: 'Auth — Register / Login / Me', route: 'auth', phase: 'F1', ready: true },
+    { label: 'API — Fourier Series', route: 'fourier', phase: 'F1', ready: true },
     // Fase 2 — Math input
-    { label: 'LaTeX → Maxima',   route: 'latex-maxima', phase: 'F2', ready: true },
-    { label: 'MathQuill fields',  route: 'mathquill',   phase: 'F2', ready: true },
+    { label: 'LaTeX → Maxima', route: 'latex-maxima', phase: 'F2', ready: true },
+    { label: 'MathQuill fields', route: 'mathquill', phase: 'F2', ready: true },
     // Fase 3 — Canvas
-    { label: 'Canvas — Smoke test',      route: 'canvas',      phase: 'F3', ready: true },
+    { label: 'Canvas — Smoke test', route: 'canvas', phase: 'F3', ready: true },
     { label: 'Canvas — Función + Fourier', route: 'canvas-plot', phase: 'F3', ready: true },
+    { label: 'Canvas — Epiciclos (DFT)', route: 'epicycles', phase: 'F4', ready: true },
   ];
 }

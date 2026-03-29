@@ -10,9 +10,7 @@ export const devRoutes: Routes = [
       {
         path: 'auth',
         loadComponent: () =>
-          import('./panels/api-auth/api-auth-panel.component').then(
-            (m) => m.ApiAuthPanelComponent,
-          ),
+          import('./panels/api-auth/api-auth-panel.component').then((m) => m.ApiAuthPanelComponent),
       },
       {
         path: 'fourier',
@@ -40,15 +38,20 @@ export const devRoutes: Routes = [
       {
         path: 'canvas',
         loadComponent: () =>
-          import('./panels/canvas/canvas-panel.component').then(
-            (m) => m.CanvasPanelComponent,
-          ),
+          import('./panels/canvas/canvas-panel.component').then((m) => m.CanvasPanelComponent),
       },
       {
         path: 'canvas-plot',
         loadComponent: () =>
           import('./panels/canvas-plot/canvas-plot-panel.component').then(
             (m) => m.CanvasPlotPanelComponent,
+          ),
+      },
+      {
+        path: 'epicycles',
+        loadComponent: () =>
+          import('./panels/epicycles/epicycles-panel.component').then(
+            (m) => m.EpicyclesPanelComponent,
           ),
       },
     ],
