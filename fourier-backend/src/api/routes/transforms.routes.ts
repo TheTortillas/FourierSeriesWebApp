@@ -247,8 +247,8 @@ transformsRouter.post(
         return;
       }
 
-      if (input.points.length > 1024) {
-        res.status(400).json({ error: "Maximum 1024 points allowed" });
+      if (input.points.length > 20000) {
+        res.status(400).json({ error: "Maximum 20000 points allowed" });
         return;
       }
       const sanitizeCheck = sanitizeSegments(

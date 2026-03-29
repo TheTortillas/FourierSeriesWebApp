@@ -1,5 +1,4 @@
 import { MaximaRunner } from "../../infrastructure/maxima/maximaRunner";
-import { loadScript } from "../../infrastructure/maxima/scriptLoader";
 import type {
   DFTInput,
   DFTResult,
@@ -7,13 +6,16 @@ import type {
   DFTPoint,
 } from "../../domain/types/fourier.types";
 
-const MAX_POINTS = 1024;
+const TAU = Math.PI * 2;
+const MAX_POINTS = 20000;
+const TOP_COEFFS_LIMIT = 256;
 
 export class DFTService {
   constructor(private readonly runner: MaximaRunner) {}
 
   async compute(input: DFTInput): Promise<DFTResult> {
     const startTime = Date.now();
+    void this.runner;
 
     if (input.points.length > MAX_POINTS) {
       throw new Error(`Maximum ${MAX_POINTS} points allowed`);
@@ -23,104 +25,59 @@ export class DFTService {
       throw new Error("At least 2 points are required");
     }
 
-    const script = await loadScript("transforms", "dft.mac");
+    const N = input.points.length;
+    const signalRe = input.points.map((p) =>
+      input.mode === "epicycles" ? p.x : p.y,
+    );
+    const signalIm = input.points.map((p) =>
+      input.mode === "epicycles" ? p.y : 0,
+    );
 
-    const pointsX = input.points.map((p) => p.x).join(", ");
+    const baseCoefficients = this.computeCoefficients(signalRe, signalIm);
+    const reconstructedComplex = this.reconstruct(baseCoefficients);
 
-    const pointsRe = input.points
-      .map((p) => (input.mode === "epicycles" ? p.x : p.y))
-      .join(", ");
-
-    const pointsIm = input.points
-      .map((p) => (input.mode === "epicycles" ? p.y : 0))
-      .join(", ");
-
-    const fullScript = `
-POINTS_X: [${pointsX}];
-POINTS_RE: [${pointsRe}];
-POINTS_IM: [${pointsIm}];
-MODE: "${input.mode}";
-${script}
-kill(all)$
-`;
-
-    const result = await this.runner.run({
-      script: fullScript,
-      timeoutMs: 30000,
-    });
-
-    if (!result.success) {
-      throw new Error(`Maxima error: ${result.error}`);
-    }
-
-    return this.parseResult(result.raw, input, Date.now() - startTime);
-  }
-
-  private parseResult(
-    raw: string,
-    input: DFTInput,
-    executionTimeMs: number,
-  ): DFTResult {
-    const N =
-      parseInt(this.extractBetween(raw, "__N__", "__COEFFS__").trim()) ||
-      input.points.length;
-
-    const coeffsRaw = this.extractBetween(
-      raw,
-      "__COEFFS__",
-      "__RECONSTRUCTED__",
-    ).trim();
-    const reconstructedRaw = this.extractBetween(
-      raw,
-      "__RECONSTRUCTED__",
-      "__TOP_COEFFS__",
-    ).trim();
-    const topCoeffsRaw = this.extractBetween(
-      raw,
-      "__TOP_COEFFS__",
-      "__RMS_ERROR__",
-    ).trim();
-    const rmsRaw = this.extractBetween(raw, "__RMS_ERROR__", null)
-      .replace(/false/g, "")
-      .trim();
-
-    const rawPoints = this.parsePoints(reconstructedRaw);
-    const coefficients = this.parseCoefficients(coeffsRaw);
-    const topCoefficients = this.parseCoefficients(topCoeffsRaw);
-
-    const totalAmplitude = coefficients.reduce(
+    const totalAmplitude = baseCoefficients.reduce(
       (sum, c) => sum + c.amplitude,
       0,
     );
 
-    const enrichCoefficients = (coeffs: DFTCoefficient[]) =>
-      coeffs.map((c) => ({
-        ...c,
-        amplitudePercent:
-          totalAmplitude > 0
-            ? parseFloat(((c.amplitude / totalAmplitude) * 100).toFixed(4))
-            : 0,
-        freq: parseFloat((c.k / N).toFixed(6)),
-      }));
+    const coefficients: DFTCoefficient[] = baseCoefficients.map((c) => ({
+      ...c,
+      amplitudePercent:
+        totalAmplitude > 0
+          ? parseFloat(((c.amplitude / totalAmplitude) * 100).toFixed(4))
+          : 0,
+      freq: parseFloat((c.k / N).toFixed(6)),
+    }));
 
-    const reconstructed: DFTPoint[] = rawPoints.map((p, idx) => {
+    const topCoefficients = [...coefficients]
+      .sort((a, b) => b.amplitude - a.amplitude)
+      .slice(0, Math.min(TOP_COEFFS_LIMIT, coefficients.length));
+
+    const reconstructed: DFTPoint[] = reconstructedComplex.map((p, idx) => {
       if (input.mode === "signal") {
         return {
-          x: input.points[idx]?.x ?? 0,
+          x: input.points[idx]?.x ?? idx,
           y: p.x,
         };
       }
-      return { x: p.x, y: p.y };
+      return p;
     });
+
+    const rmsError = this.computeRmsError(
+      input.mode,
+      input.points,
+      reconstructedComplex,
+    );
 
     return {
       mode: input.mode,
       N,
-      coefficients: enrichCoefficients(coefficients),
-      topCoefficients: enrichCoefficients(topCoefficients),
+      coefficients,
+      topCoefficients,
       reconstructed,
-      rmsError: parseFloat(rmsRaw) || 0,
-      executionTimeMs,
+      rmsError,
+      executionTimeMs: Date.now() - startTime,
     };
   }
 
@@ -128,35 +85,58 @@ kill(all)$
     return Math.abs(val) < threshold ? 0 : val;
   }
 
-  private parseCoefficients(raw: string): DFTCoefficient[] {
-    const cleaned = raw.replace(/\\\n/g, "").replace(/\r/g, "").trim();
-    const blocks = cleaned.split("],[").map((b, i, arr) => {
-      if (i === 0) return b.replace(/^\[+/, "");
-      if (i === arr.length - 1) return b.replace(/\]+$/, "");
-      return b;
-    });
+  private computeCoefficients(
+    signalRe: number[],
+    signalIm: number[],
+  ): Array<Omit<DFTCoefficient, "amplitudePercent" | "freq">> {
+    const N = signalRe.length;
+    const coeffs: Array<Omit<DFTCoefficient, "amplitudePercent" | "freq">> =
+      new Array(N);
 
-    return blocks
-      .map((block) => {
-        const parts = block.split(",");
-        if (parts.length < 6) return null;
+    for (let k = 0; k < N; k++) {
+      const step = (-TAU * k) / N;
+      const cosStep = Math.cos(step);
+      const sinStep = Math.sin(step);
 
-        const k = parseInt(parts[0] ?? "0");
-        const re = this.cleanFloat(parseFloat(parts[1] ?? "0"));
-        const im = this.cleanFloat(parseFloat(parts[2] ?? "0"));
-        const amplitude = this.cleanFloat(parseFloat(parts[3] ?? "0"));
-        const phase = amplitude === 0 ? 0 : parseFloat(parts[4] ?? "0");
-        const rawPhaseInPi = (parts.slice(5).join(",") ?? "0")
-          .trim()
-          .replace(/^"+|"+$/g, "");
-        const phaseInPi = this.simplifyPhaseInPi(phase, rawPhaseInPi);
+      let cosAcc = 1;
+      let sinAcc = 0;
 
-        return { k, re, im, amplitude, phase, phaseInPi };
-      })
-      .filter((c): c is DFTCoefficient => c !== null);
+      let reSum = 0;
+      let imSum = 0;
+
+      for (let n = 0; n < N; n++) {
+        const xr = signalRe[n] ?? 0;
+        const xi = signalIm[n] ?? 0;
+
+        reSum += xr * cosAcc - xi * sinAcc;
+        imSum += xr * sinAcc + xi * cosAcc;
+
+        const nextCos = cosAcc * cosStep - sinAcc * sinStep;
+        const nextSin = sinAcc * cosStep + cosAcc * sinStep;
+        cosAcc = nextCos;
+        sinAcc = nextSin;
+      }
+
+      const re = this.cleanFloat(reSum / N);
+      const im = this.cleanFloat(imSum / N);
+      const amplitude = this.cleanFloat(Math.hypot(re, im));
+      const phase =
+        amplitude < 1e-12 ? 0 : this.cleanFloat(Math.atan2(im, re), 1e-12);
+
+      coeffs[k] = {
+        k,
+        re,
+        im,
+        amplitude,
+        phase,
+        phaseInPi: this.simplifyPhaseInPi(phase),
+      };
+    }
+
+    return coeffs;
   }
 
-  private simplifyPhaseInPi(phase: number, rationalized: string): string {
+  private simplifyPhaseInPi(phase: number): string {
     const PI = Math.PI;
     const tolerance = 1e-6;
 
@@ -188,40 +168,71 @@ kill(all)$
       }
     }
 
-    // Si no es una fracción común, devolver el valor racionalizado sin comillas
-    return rationalized;
+    const rounded = Number(phaseOverPi.toFixed(6));
+    return Number.isFinite(rounded) ? `${rounded}` : "0";
   }
 
-  private parsePoints(raw: string): DFTPoint[] {
-    // console.log("DFT RAW FULL:", JSON.stringify(raw));
-    // console.log("DFT RAW:", JSON.stringify(raw.slice(0, 800)));
+  private reconstruct(
+    coefficients: Array<Omit<DFTCoefficient, "amplitudePercent" | "freq">>,
+  ): DFTPoint[] {
+    const N = coefficients.length;
+    const points: DFTPoint[] = new Array(N);
 
-    const cleaned = raw.replace(/\\\n/g, "").replace(/\r/g, "").trim();
-    const matches = cleaned.matchAll(/\[(-?[\d.e+-]+),(-?[\d.e+-]+)\]/g);
-    const points: DFTPoint[] = [];
+    for (let n = 0; n < N; n++) {
+      const step = (TAU * n) / N;
+      const cosStep = Math.cos(step);
+      const sinStep = Math.sin(step);
 
-    for (const match of matches) {
-      points.push({
-        x: parseFloat(match[1] ?? "0"),
-        y: parseFloat(match[2] ?? "0"),
-      });
+      let cosAcc = 1;
+      let sinAcc = 0;
+
+      let reSum = 0;
+      let imSum = 0;
+
+      for (let k = 0; k < N; k++) {
+        const c = coefficients[k];
+        if (!c) continue;
+
+        reSum += c.re * cosAcc - c.im * sinAcc;
+        imSum += c.re * sinAcc + c.im * cosAcc;
+
+        const nextCos = cosAcc * cosStep - sinAcc * sinStep;
+        const nextSin = sinAcc * cosStep + cosAcc * sinStep;
+        cosAcc = nextCos;
+        sinAcc = nextSin;
+      }
+
+      points[n] = {
+        x: this.cleanFloat(reSum, 1e-9),
+        y: this.cleanFloat(imSum, 1e-9),
+      };
     }
 
     return points;
   }
 
-  private extractBetween(
-    text: string,
-    start: string,
-    end: string | null,
-  ): string {
-    const startIdx = text.indexOf(start);
-    if (startIdx === -1) return "";
-    const afterStart = startIdx + start.length;
-    if (end === null) return text.slice(afterStart);
-    const endIdx = text.indexOf(end, afterStart);
-    return endIdx === -1
-      ? text.slice(afterStart)
-      : text.slice(afterStart, endIdx);
+  private computeRmsError(
+    mode: DFTInput["mode"],
+    original: DFTPoint[],
+    reconstructed: DFTPoint[],
+  ): number {
+    const N = Math.min(original.length, reconstructed.length);
+    if (N === 0) return 0;
+
+    let sumSq = 0;
+
+    for (let i = 0; i < N; i++) {
+      if (mode === "signal") {
+        const dr = (original[i]?.y ?? 0) - (reconstructed[i]?.x ?? 0);
+        sumSq += dr * dr;
+        continue;
+      }
+
+      const dr = (original[i]?.x ?? 0) - (reconstructed[i]?.x ?? 0);
+      const di = (original[i]?.y ?? 0) - (reconstructed[i]?.y ?? 0);
+      sumSq += dr * dr + di * di;
+    }
+
+    return this.cleanFloat(Math.sqrt(sumSq / N), 1e-12);
   }
 }
