@@ -16,10 +16,17 @@ interface SignalPreset {
   generator: (n: number, t: number) => number;
 }
 
+type WindowType = 'rectangular' | 'hann' | 'hamming' | 'blackman';
+
 interface SpectrumBin {
   coeff: DftCoefficient;
   xBin: number;
-  kSigned: number;
+}
+
+interface LeakageStats {
+  dominantK: number;
+  dominantAmplitude: number;
+  leakageRatio: number;
 }
 
 const TAU = Math.PI * 2;
@@ -30,7 +37,7 @@ const TAU = Math.PI * 2;
   template: `
     <div class="flex flex-col h-full gap-4">
       <h2 class="text-yellow-400 font-bold text-lg border-b border-gray-700 pb-2 shrink-0">
-        DFT Lab - Señal 1D (Fase A)
+        DFT Lab - Señal 1D (Fase A/B)
       </h2>
 
       <div class="grid grid-cols-1 xl:grid-cols-[25rem_1fr] gap-4 min-h-0 flex-1">
@@ -89,7 +96,8 @@ const TAU = Math.PI * 2;
                 class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs text-gray-100 font-mono"
               ></textarea>
               <p class="text-[11px] text-gray-500">
-                Usa: sin, cos, tan, sqrt, abs, exp, log, pow, pi. Ej: sin(2*pi*7*t)+0.4*cos(2*pi*15*t+0.8)
+                Usa: sin, cos, tan, sqrt, abs, exp, log, pow, pi. Ej:
+                sin(2*pi*7*t)+0.4*cos(2*pi*15*t+0.8)
               </p>
             </div>
           }
@@ -161,10 +169,26 @@ const TAU = Math.PI * 2;
             <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
               <input
                 type="checkbox"
+                [ngModel]="showNegativeOriginalFunction()"
+                (ngModelChange)="showNegativeOriginalFunction.set($event)"
+              />
+              Mostrar f(-t) en eje x negativo
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
                 [ngModel]="showSampledSignal()"
                 (ngModelChange)="showSampledSignal.set($event)"
               />
               Señal muestreada
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="showWindowedSignal()"
+                (ngModelChange)="showWindowedSignal.set($event)"
+              />
+              Señal ventaneada
             </label>
             <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
               <input
@@ -210,6 +234,42 @@ const TAU = Math.PI * 2;
               />
               Mostrar bins en cero
             </label>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="compareWithRectangular()"
+                (ngModelChange)="compareWithRectangular.set($event)"
+              />
+              Comparar contra rectangular
+            </label>
+          </div>
+
+          <div class="space-y-2 rounded border border-gray-700 p-2">
+            <p class="text-gray-500 text-xs">Fase B - Leakage y Windowing</p>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="applyWindow()"
+                (ngModelChange)="applyWindow.set($event)"
+              />
+              Aplicar ventana al analizar DFT
+            </label>
+            <label class="space-y-1 text-xs block">
+              <span class="text-gray-400">Tipo de ventana</span>
+              <select
+                [ngModel]="windowType()"
+                (ngModelChange)="windowType.set($event)"
+                class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-100"
+              >
+                <option value="rectangular">Rectangular</option>
+                <option value="hann">Hann</option>
+                <option value="hamming">Hamming</option>
+                <option value="blackman">Blackman</option>
+              </select>
+            </label>
+            <p class="text-[11px] text-gray-500">
+              Usa el preset Leakage para notar cómo cambia el ensanchamiento espectral.
+            </p>
           </div>
 
           <div class="flex items-center gap-2 flex-wrap">
@@ -252,14 +312,21 @@ const TAU = Math.PI * 2;
               </div>
             </div>
 
-            <div class="space-y-1">
-              <p class="text-gray-500 text-xs">Dominantes (top-6 por amplitud)</p>
-              @for (c of dominantCoefficients(); track c.k) {
-                <div class="text-[11px] font-mono text-gray-300">
-                  k={{ signedK(c.k, res.N) }} · |Ck|={{ c.amplitude.toFixed(6) }} · fase={{ c.phaseInPi }}pi
-                </div>
-              }
-            </div>
+            @if (leakageCurrent(); as lc) {
+              <div class="space-y-1 rounded border border-gray-700 p-2">
+                <p class="text-gray-500 text-xs">Métricas leakage</p>
+                <p class="text-[11px] font-mono text-gray-300">
+                  Actual: k={{ lc.dominantK }} · pico={{ lc.dominantAmplitude.toFixed(6) }} ·
+                  leakage={{ (lc.leakageRatio * 100).toFixed(2) }}%
+                </p>
+                @if (leakageBaseline(); as lb) {
+                  <p class="text-[11px] font-mono text-cyan-300">
+                    Rectangular: {{ (lb.leakageRatio * 100).toFixed(2) }}% · mejora:
+                    {{ leakageImprovementPercent().toFixed(2) }}%
+                  </p>
+                }
+              </div>
+            }
           }
         </section>
 
@@ -296,25 +363,36 @@ export class DftSignalLabPanelComponent {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly result = signal<DftResponse | null>(null);
+  readonly baselineResult = signal<DftResponse | null>(null);
 
   readonly sourceMode = signal<'preset' | 'manual'>('preset');
   readonly presetId = signal('mix');
-  readonly manualExpression = signal('sin(2*pi*5*t) + 0.55*cos(2*pi*13*t + 0.8) + 0.35*sin(2*pi*29*t - 0.35)');
+  readonly manualExpression = signal(
+    'sin(2*pi*5*t) + 0.55*cos(2*pi*13*t + 0.8) + 0.35*sin(2*pi*29*t - 0.35)',
+  );
   readonly sampleCount = signal(256);
   readonly noiseLevel = signal(0.02);
   readonly topK = signal(16);
   readonly phaseThresholdPercent = signal(1.5);
 
   readonly showOriginalFunction = signal(true);
+  readonly showNegativeOriginalFunction = signal(false);
   readonly showSampledSignal = signal(true);
+  readonly showWindowedSignal = signal(false);
   readonly showReconstructedFull = signal(true);
   readonly showReconstructedTopK = signal(true);
   readonly showSampledPoints = signal(false);
+
   readonly shiftedSpectrum = signal(false);
   readonly showZeroBins = signal(true);
+  readonly compareWithRectangular = signal(true);
+
+  readonly applyWindow = signal(false);
+  readonly windowType = signal<WindowType>('hann');
 
   readonly originalFunctionCurve = signal<DftPoint[]>([]);
   readonly sampledSignal = signal<DftPoint[]>([]);
+  readonly analyzedSignal = signal<DftPoint[]>([]);
 
   readonly presets: SignalPreset[] = [
     {
@@ -333,14 +411,18 @@ export class DftSignalLabPanelComponent {
     {
       id: 'close',
       label: 'Frecuencias cercanas',
-      generator: (_n, t) =>
-        1.0 * Math.sin(TAU * 18 * t) + 0.95 * Math.sin(TAU * 20 * t + 0.35),
+      generator: (_n, t) => 1.0 * Math.sin(TAU * 18 * t) + 0.95 * Math.sin(TAU * 20 * t + 0.35),
     },
     {
       id: 'cos-phase',
       label: 'Coseno + fase',
       generator: (_n, t) =>
         0.9 * Math.cos(TAU * 11 * t + Math.PI / 3) + 0.4 * Math.cos(TAU * 3 * t - 0.6),
+    },
+    {
+      id: 'leakage',
+      label: 'Leakage (f fraccional)',
+      generator: (_n, t) => 1.0 * Math.sin(TAU * 10.5 * t) + 0.55 * Math.sin(TAU * 22.25 * t + 0.2),
     },
   ];
 
@@ -349,23 +431,8 @@ export class DftSignalLabPanelComponent {
     return Math.max(1, Math.floor(n / 2));
   });
 
-  readonly spectrumBins = computed(() => {
-    const res = this.result();
-    if (!res) return [] as SpectrumBin[];
-
-    const shifted = this.shiftedSpectrum();
-
-    const bins = res.coefficients.map((coeff) => {
-      const kSigned = this.signedK(coeff.k, res.N);
-      return {
-        coeff,
-        kSigned,
-        xBin: shifted ? kSigned : coeff.k,
-      } satisfies SpectrumBin;
-    });
-
-    return bins.sort((a, b) => a.xBin - b.xBin);
-  });
+  readonly spectrumBins = computed(() => this.buildSpectrumBins(this.result()));
+  readonly baselineSpectrumBins = computed(() => this.buildSpectrumBins(this.baselineResult()));
 
   readonly topKCoefficients = computed(() => {
     const res = this.result();
@@ -375,17 +442,15 @@ export class DftSignalLabPanelComponent {
     return [...res.coefficients].sort((a, b) => b.amplitude - a.amplitude).slice(0, count);
   });
 
-  readonly dominantCoefficients = computed(() => this.topKCoefficients().slice(0, 6));
-
   readonly reconstructedTopK = computed<DftPoint[]>(() => {
     const res = this.result();
-    const sampled = this.sampledSignal();
-    if (!res || sampled.length === 0) return [];
+    const analyzed = this.analyzedSignal();
+    if (!res || analyzed.length === 0) return [];
 
     const coeffs = this.topKCoefficients();
     const N = res.N;
 
-    return sampled.map((p, n) => {
+    return analyzed.map((p, n) => {
       let y = 0;
       for (const c of coeffs) {
         const angle = (TAU * c.k * n) / N;
@@ -396,7 +461,7 @@ export class DftSignalLabPanelComponent {
   });
 
   readonly rmsTopK = computed(() => {
-    const original = this.sampledSignal();
+    const original = this.analyzedSignal();
     const recon = this.reconstructedTopK();
     const n = Math.min(original.length, recon.length);
     if (n === 0) return 0;
@@ -409,9 +474,22 @@ export class DftSignalLabPanelComponent {
     return Math.sqrt(sum / n);
   });
 
+  readonly leakageCurrent = computed(() => this.computeLeakage(this.result()));
+  readonly leakageBaseline = computed(() => this.computeLeakage(this.baselineResult()));
+  readonly leakageImprovementPercent = computed(() => {
+    const baseline = this.leakageBaseline();
+    const current = this.leakageCurrent();
+    if (!baseline || !current || baseline.leakageRatio <= 0) return 0;
+    return ((baseline.leakageRatio - current.leakageRatio) / baseline.leakageRatio) * 100;
+  });
+
   readonly timeLayers = computed<PlotLayer[]>(() => {
     const originalFn = this.originalFunctionCurve();
+    const negativeOriginal = [...originalFn]
+      .map((p) => ({ x: -p.x, y: p.y }))
+      .sort((a, b) => a.x - b.x);
     const sampled = this.sampledSignal();
+    const analyzed = this.analyzedSignal();
     const fullRecon = this.result()?.reconstructed ?? [];
     const topRecon = this.reconstructedTopK();
 
@@ -420,8 +498,14 @@ export class DftSignalLabPanelComponent {
     if (this.showOriginalFunction() && originalFn.length > 1) {
       curves.push({ points: originalFn, color: '#94a3b8', lineWidth: 1.5 });
     }
+    if (this.showNegativeOriginalFunction() && negativeOriginal.length > 1) {
+      curves.push({ points: negativeOriginal, color: '#fca5a5', lineWidth: 1.2, dashed: true });
+    }
     if (this.showSampledSignal() && sampled.length > 1) {
       curves.push({ points: sampled, color: '#f8fafc', lineWidth: 1.2, dashed: true });
+    }
+    if (this.showWindowedSignal() && analyzed.length > 1) {
+      curves.push({ points: analyzed, color: '#22d3ee', lineWidth: 1.2, dashed: true });
     }
     if (this.showReconstructedFull() && fullRecon.length > 1) {
       curves.push({ points: fullRecon, color: '#22c55e', lineWidth: 1.4 });
@@ -443,6 +527,7 @@ export class DftSignalLabPanelComponent {
 
   readonly amplitudeLayers = computed<PlotLayer[]>(() => {
     const bins = this.spectrumBins();
+    const baselineBins = this.baselineSpectrumBins();
     const topSet = new Set(this.topKCoefficients().map((c) => c.k));
 
     return [
@@ -450,6 +535,14 @@ export class DftSignalLabPanelComponent {
         curves: [],
         onDraw: (ctx, vp) => {
           if (bins.length === 0) return;
+
+          if (this.compareWithRectangular() && baselineBins.length > 0) {
+            for (const b of baselineBins) {
+              const amp = b.coeff.amplitude;
+              if (amp === 0 && !this.showZeroBins()) continue;
+              this.drawStem(ctx, vp, b.xBin, amp, '#64748b', 1.1);
+            }
+          }
 
           const zeros: DftPoint[] = [];
           for (const b of bins) {
@@ -510,29 +603,83 @@ export class DftSignalLabPanelComponent {
     try {
       const generator = this.resolveGenerator();
       const sampled = this.generateSampledSignal(generator);
+      const analyzed = this.applyWindow()
+        ? this.applyWindowToSignal(sampled, this.windowType())
+        : sampled;
       const originalFn = this.generateContinuousFunction(generator);
 
       this.sampledSignal.set(sampled);
+      this.analyzedSignal.set(analyzed);
       this.originalFunctionCurve.set(originalFn);
 
-      const res = await firstValueFrom(this.api.calculateDFT({ mode: 'signal', points: sampled }));
-      this.result.set(res);
-      this.topK.set(Math.min(16, Math.max(1, Math.floor(res.N / 2))));
+      const shouldCompareRect =
+        this.compareWithRectangular() && this.applyWindow() && this.windowType() !== 'rectangular';
+
+      const [mainRes, baseRes] = await Promise.all([
+        firstValueFrom(this.api.calculateDFT({ mode: 'signal', points: analyzed })),
+        shouldCompareRect
+          ? firstValueFrom(this.api.calculateDFT({ mode: 'signal', points: sampled }))
+          : Promise.resolve(null),
+      ]);
+
+      this.result.set(mainRes);
+      this.baselineResult.set(baseRes);
+      this.topK.set(Math.min(16, Math.max(1, Math.floor(mainRes.N / 2))));
     } catch (err) {
       const anyErr = err as { error?: { error?: string }; message?: string };
       this.error.set(anyErr?.error?.error ?? anyErr?.message ?? 'No se pudo calcular la DFT.');
       this.result.set(null);
+      this.baselineResult.set(null);
     } finally {
       this.loading.set(false);
     }
   }
 
+  private buildSpectrumBins(res: DftResponse | null): SpectrumBin[] {
+    if (!res) return [];
+    const shifted = this.shiftedSpectrum();
+
+    return res.coefficients
+      .map((coeff) => ({
+        coeff,
+        xBin: shifted ? this.signedK(coeff.k, res.N) : coeff.k,
+      }))
+      .sort((a, b) => a.xBin - b.xBin);
+  }
+
+  private computeLeakage(res: DftResponse | null): LeakageStats | null {
+    if (!res || res.coefficients.length === 0) return null;
+
+    const bins = res.coefficients
+      .map((c) => ({ coeff: c, kSigned: this.signedK(c.k, res.N) }))
+      .filter((x) => x.kSigned >= 0 && x.kSigned <= Math.floor(res.N / 2));
+
+    if (bins.length === 0) return null;
+
+    const dominant = bins.reduce((best, cur) =>
+      cur.coeff.amplitude > best.coeff.amplitude ? cur : best,
+    );
+
+    const totalEnergy = bins.reduce((s, x) => s + x.coeff.amplitude * x.coeff.amplitude, 0);
+    if (totalEnergy <= 0) {
+      return { dominantK: dominant.kSigned, dominantAmplitude: 0, leakageRatio: 0 };
+    }
+
+    const mainLobeEnergy = bins
+      .filter((x) => Math.abs(x.kSigned - dominant.kSigned) <= 1)
+      .reduce((s, x) => s + x.coeff.amplitude * x.coeff.amplitude, 0);
+
+    return {
+      dominantK: dominant.kSigned,
+      dominantAmplitude: dominant.coeff.amplitude,
+      leakageRatio: Math.max(0, (totalEnergy - mainLobeEnergy) / totalEnergy),
+    };
+  }
+
   private resolveGenerator(): (n: number, t: number) => number {
     if (this.sourceMode() === 'preset') {
       const preset = this.presets.find((p) => p.id === this.presetId()) ?? this.presets[0];
-      if (!preset) {
-        throw new Error('No hay preset disponible.');
-      }
+      if (!preset) throw new Error('No hay preset disponible.');
       return preset.generator;
     }
 
@@ -565,10 +712,7 @@ export class DftSignalLabPanelComponent {
 
     for (let i = 0; i < dense; i++) {
       const t = i / (dense - 1);
-      points.push({
-        x: t * (n - 1),
-        y: generator(i, t),
-      });
+      points.push({ x: t * (n - 1), y: generator(i, t) });
     }
 
     return points;
@@ -578,7 +722,11 @@ export class DftSignalLabPanelComponent {
     const expression = rawExpression.trim().toLowerCase();
     if (!expression) return null;
 
-    if (/constructor|window|global|process|require|import|function|=>|;|\{|\}|\[|\]|=/.test(expression)) {
+    if (
+      /constructor|window|global|process|require|import|function|=>|;|\{|\}|\[|\]|=/.test(
+        expression,
+      )
+    ) {
       return null;
     }
 
@@ -651,6 +799,33 @@ export class DftSignalLabPanelComponent {
   private randomNoise(level: number): number {
     if (level <= 0) return 0;
     return (Math.random() * 2 - 1) * level;
+  }
+
+  private applyWindowToSignal(points: DftPoint[], type: WindowType): DftPoint[] {
+    const n = points.length;
+    if (n <= 1 || type === 'rectangular') return points;
+
+    return points.map((p, i) => {
+      const w = this.windowAt(type, i, n);
+      return { x: p.x, y: p.y * w };
+    });
+  }
+
+  private windowAt(type: WindowType, i: number, n: number): number {
+    const denom = Math.max(1, n - 1);
+    const x = (TAU * i) / denom;
+
+    switch (type) {
+      case 'hann':
+        return 0.5 - 0.5 * Math.cos(x);
+      case 'hamming':
+        return 0.54 - 0.46 * Math.cos(x);
+      case 'blackman':
+        return 0.42 - 0.5 * Math.cos(x) + 0.08 * Math.cos(2 * x);
+      case 'rectangular':
+      default:
+        return 1;
+    }
   }
 
   signedK(k: number, n: number): number {
