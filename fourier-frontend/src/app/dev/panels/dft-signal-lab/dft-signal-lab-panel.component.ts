@@ -20,8 +20,10 @@ interface SignalPreset {
 type WindowType = 'rectangular' | 'hann' | 'hamming' | 'blackman';
 type PhaseCFilterType = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 type ImagePresetId = 'dot' | 'bars' | 'checker';
+type ImageFilterType = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 type LabView = 'full' | 'signal' | 'filter' | 'image';
 type ImageSourceType = 'preset' | 'upload';
+type ImageSizeMode = 'manual' | 'power2';
 
 interface SpectrumBin {
   coeff: DftCoefficient;
@@ -46,6 +48,9 @@ interface ComplexValue {
 }
 
 const TAU = Math.PI * 2;
+const MAX_IMAGE_UPLOAD_DIMENSION = 2048;
+const MAX_IMAGE_PROCESS_SIZE = 1024;
+const MAX_IMAGE_DISPLAY_SIZE = 64;
 
 @Component({
   selector: 'app-dft-signal-lab-panel',
@@ -450,15 +455,35 @@ const TAU = Math.PI * 2;
               <div class="grid grid-cols-2 gap-3 text-xs">
                 <label class="space-y-1">
                   <span class="text-gray-400">Tamano N x N</span>
-                  <input
-                    type="number"
-                    min="8"
-                    max="20"
-                    step="1"
-                    [ngModel]="imageSize()"
-                    (ngModelChange)="imageSize.set(clampInt($event, 8, 20))"
+                  <select
+                    [ngModel]="imageSizeMode()"
+                    (ngModelChange)="onImageSizeModeChange($event)"
                     class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-100"
-                  />
+                  >
+                    <option value="manual">Manual (8-64)</option>
+                    <option value="power2">Potencias de 2 (&gt;64)</option>
+                  </select>
+                  @if (imageSizeMode() === 'manual') {
+                    <input
+                      type="number"
+                      min="8"
+                      max="64"
+                      step="1"
+                      [ngModel]="imageSize()"
+                      (ngModelChange)="imageSize.set(clampInt($event, 8, 64))"
+                      class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-100"
+                    />
+                  } @else {
+                    <select
+                      [ngModel]="imageSize()"
+                      (ngModelChange)="imageSize.set(clampToImagePowerOption($event))"
+                      class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-100"
+                    >
+                      @for (n of imageSizePowerOptions; track n) {
+                        <option [ngValue]="n">{{ n }}</option>
+                      }
+                    </select>
+                  }
                 </label>
                 <label class="space-y-1">
                   <span class="text-gray-400">Cargar imagen</span>
@@ -478,86 +503,186 @@ const TAU = Math.PI * 2;
               @if (imageError()) {
                 <p class="text-[11px] text-red-300">{{ imageError() }}</p>
               }
-              <label class="space-y-1 text-xs block">
-                <span class="text-gray-400"
-                  >Radio low-pass (frecuencia centrada): {{ imageLowPassRadius() }}</span
-                >
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  step="1"
-                  [ngModel]="imageLowPassRadius()"
-                  (ngModelChange)="imageLowPassRadius.set(clampInt($event, 0, 10))"
-                  class="w-full accent-emerald-500"
-                />
-              </label>
+              <p class="text-[11px] text-gray-400">
+                Puedes cargar imagenes hasta {{ maxImageUploadDimension }} px por lado; la DFT 2D se
+                calcula sobre N x N para mantener rendimiento.
+              </p>
+              <div class="space-y-1 text-xs rounded border border-gray-700 p-2">
+                <p class="text-gray-500">Ventaneo 2D</p>
+                <label class="inline-flex items-center gap-2 text-gray-300">
+                  <input
+                    type="checkbox"
+                    [ngModel]="applyImageWindow()"
+                    (ngModelChange)="applyImageWindow.set(!!$event)"
+                    class="accent-emerald-500"
+                  />
+                  Aplicar ventana
+                </label>
+                <label class="space-y-1 text-xs block">
+                  <span class="text-gray-400">Tipo de ventana</span>
+                  <select
+                    [disabled]="!applyImageWindow()"
+                    [ngModel]="imageWindowType()"
+                    (ngModelChange)="imageWindowType.set($event)"
+                    class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-100"
+                  >
+                    <option value="rectangular">Rectangular</option>
+                    <option value="hann">Hann</option>
+                    <option value="hamming">Hamming</option>
+                    <option value="blackman">Blackman</option>
+                  </select>
+                </label>
+              </div>
+              <div class="space-y-1 text-xs rounded border border-gray-700 p-2">
+                <p class="text-gray-500">Filtro en frecuencia 2D</p>
+                <label class="inline-flex items-center gap-2 text-gray-300">
+                  <input
+                    type="checkbox"
+                    [ngModel]="applyImageFilter()"
+                    (ngModelChange)="applyImageFilter.set(!!$event)"
+                    class="accent-emerald-500"
+                  />
+                  Aplicar filtro
+                </label>
+                <label class="space-y-1 text-xs block">
+                  <span class="text-gray-400">Tipo de filtro</span>
+                  <select
+                    [disabled]="!applyImageFilter()"
+                    [ngModel]="imageFilterType()"
+                    (ngModelChange)="imageFilterType.set($event)"
+                    class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-100"
+                  >
+                    <option value="lowpass">Pasa-bajas</option>
+                    <option value="highpass">Pasa-altas</option>
+                    <option value="bandpass">Pasa-banda</option>
+                    <option value="notch">Rechaza-banda</option>
+                  </select>
+                </label>
+                <span class="block text-gray-400">Formula: r = alpha * (N/2)</span>
+                <label class="space-y-1 text-xs block">
+                  <span class="text-gray-400">alpha1: {{ imageFilterLowPercent() }}%</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    [disabled]="!applyImageFilter()"
+                    [ngModel]="imageFilterLowPercent()"
+                    (ngModelChange)="imageFilterLowPercent.set(clampInt($event, 0, 100))"
+                    class="w-full accent-emerald-500"
+                  />
+                </label>
+                @if (imageFilterType() === 'bandpass' || imageFilterType() === 'notch') {
+                  <label class="space-y-1 text-xs block">
+                    <span class="text-gray-400">alpha2: {{ imageFilterHighPercent() }}%</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      [disabled]="!applyImageFilter()"
+                      [ngModel]="imageFilterHighPercent()"
+                      (ngModelChange)="imageFilterHighPercent.set(clampInt($event, 0, 100))"
+                      class="w-full accent-cyan-500"
+                    />
+                  </label>
+                }
+                <span class="block text-gray-400">
+                  Radio efectivo: {{ imageFilterRadius1()
+                  }}{{
+                    imageFilterType() === 'bandpass' || imageFilterType() === 'notch'
+                      ? ' .. ' + imageFilterRadius2()
+                      : ''
+                  }}
+                  / {{ imageNyquistRadius() }}
+                </span>
+              </div>
               <div class="flex flex-wrap gap-2">
                 <button
                   (click)="runImageDftDemo()"
+                  [disabled]="imageRunning()"
                   class="bg-emerald-600 hover:bg-emerald-500 text-gray-100 text-xs px-2.5 py-1 rounded cursor-pointer"
                 >
-                  Ejecutar DFT 2D
+                  {{ imageRunning() ? 'Calculando...' : 'Ejecutar DFT 2D' }}
                 </button>
                 <button
                   (click)="applyImageDemoPreset()"
+                  [disabled]="imageRunning()"
                   class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-xs px-2.5 py-1 rounded cursor-pointer"
                 >
                   Demo imagen
                 </button>
               </div>
-              @if (imageRmsError() > 0) {
-                <p class="text-[11px] font-mono text-gray-300">
-                  RMS imagen (original vs reconstruida low-pass):
-                  {{ imageRmsError().toExponential(3) }}
+              @if (imageExecutionTimeMs() > 0) {
+                <p class="text-[11px] font-mono text-cyan-300">
+                  Tiempo DFT 2D imagen: {{ imageExecutionTimeMs().toFixed(1) }} ms
                 </p>
               }
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <p class="text-[11px] text-gray-400 mb-1">Imagen original</p>
-                  <div
-                    class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
-                    [style.gridTemplateColumns]="imageGridTemplate()"
-                  >
-                    @for (v of imageOriginalFlat(); track $index) {
-                      <div class="aspect-square rounded-sm" [style.background]="grayCell(v)"></div>
-                    }
+              @if (imageRmsError() > 0) {
+                <p class="text-[11px] font-mono text-gray-300">
+                  RMS imagen (original vs reconstruida): {{ imageRmsError().toExponential(3) }}
+                </p>
+              }
+              @if (showSignalControls()) {
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <p class="text-[11px] text-gray-400 mb-1">Imagen original</p>
+                    <div
+                      class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
+                      [style.gridTemplateColumns]="imageGridTemplate()"
+                    >
+                      @for (v of imageOriginalFlat(); track $index) {
+                        <div
+                          class="aspect-square rounded-sm"
+                          [style.background]="grayCell(v)"
+                        ></div>
+                      }
+                    </div>
+                  </div>
+                  <div>
+                    <p class="text-[11px] text-gray-400 mb-1">Reconstruida salida</p>
+                    <div
+                      class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
+                      [style.gridTemplateColumns]="imageGridTemplate()"
+                    >
+                      @for (v of imageFilteredFlat(); track $index) {
+                        <div
+                          class="aspect-square rounded-sm"
+                          [style.background]="grayCell(v)"
+                        ></div>
+                      }
+                    </div>
+                  </div>
+                  <div>
+                    <p class="text-[11px] text-gray-400 mb-1">|DFT| original (log)</p>
+                    <div
+                      class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
+                      [style.gridTemplateColumns]="imageGridTemplate()"
+                    >
+                      @for (v of imageSpectrumFlat(); track $index) {
+                        <div
+                          class="aspect-square rounded-sm"
+                          [style.background]="heatCell(v)"
+                        ></div>
+                      }
+                    </div>
+                  </div>
+                  <div>
+                    <p class="text-[11px] text-gray-400 mb-1">|DFT| salida (log)</p>
+                    <div
+                      class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
+                      [style.gridTemplateColumns]="imageGridTemplate()"
+                    >
+                      @for (v of imageFilteredSpectrumFlat(); track $index) {
+                        <div
+                          class="aspect-square rounded-sm"
+                          [style.background]="heatCell(v)"
+                        ></div>
+                      }
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <p class="text-[11px] text-gray-400 mb-1">Reconstruida low-pass</p>
-                  <div
-                    class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
-                    [style.gridTemplateColumns]="imageGridTemplate()"
-                  >
-                    @for (v of imageFilteredFlat(); track $index) {
-                      <div class="aspect-square rounded-sm" [style.background]="grayCell(v)"></div>
-                    }
-                  </div>
-                </div>
-                <div>
-                  <p class="text-[11px] text-gray-400 mb-1">|DFT| original (log)</p>
-                  <div
-                    class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
-                    [style.gridTemplateColumns]="imageGridTemplate()"
-                  >
-                    @for (v of imageSpectrumFlat(); track $index) {
-                      <div class="aspect-square rounded-sm" [style.background]="heatCell(v)"></div>
-                    }
-                  </div>
-                </div>
-                <div>
-                  <p class="text-[11px] text-gray-400 mb-1">|DFT| filtrada (log)</p>
-                  <div
-                    class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
-                    [style.gridTemplateColumns]="imageGridTemplate()"
-                  >
-                    @for (v of imageFilteredSpectrumFlat(); track $index) {
-                      <div class="aspect-square rounded-sm" [style.background]="heatCell(v)"></div>
-                    }
-                  </div>
-                </div>
-              </div>
+              }
             </div>
           }
 
@@ -668,6 +793,55 @@ const TAU = Math.PI * 2;
             </div>
           </section>
         }
+
+        @if (showImageControls() && !showSignalControls()) {
+          <section class="grid grid-cols-1 md:grid-cols-2 gap-3 min-h-0 overflow-auto pr-1">
+            <div>
+              <p class="text-[11px] text-gray-400 mb-1">Imagen original</p>
+              <div
+                class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
+                [style.gridTemplateColumns]="imageGridTemplate()"
+              >
+                @for (v of imageOriginalFlat(); track $index) {
+                  <div class="aspect-square rounded-sm" [style.background]="grayCell(v)"></div>
+                }
+              </div>
+            </div>
+            <div>
+              <p class="text-[11px] text-gray-400 mb-1">Reconstruida salida</p>
+              <div
+                class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
+                [style.gridTemplateColumns]="imageGridTemplate()"
+              >
+                @for (v of imageFilteredFlat(); track $index) {
+                  <div class="aspect-square rounded-sm" [style.background]="grayCell(v)"></div>
+                }
+              </div>
+            </div>
+            <div>
+              <p class="text-[11px] text-gray-400 mb-1">|DFT| original (log)</p>
+              <div
+                class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
+                [style.gridTemplateColumns]="imageGridTemplate()"
+              >
+                @for (v of imageSpectrumFlat(); track $index) {
+                  <div class="aspect-square rounded-sm" [style.background]="heatCell(v)"></div>
+                }
+              </div>
+            </div>
+            <div>
+              <p class="text-[11px] text-gray-400 mb-1">|DFT| salida (log)</p>
+              <div
+                class="grid gap-px bg-gray-900 border border-gray-700 p-1 rounded"
+                [style.gridTemplateColumns]="imageGridTemplate()"
+              >
+                @for (v of imageFilteredSpectrumFlat(); track $index) {
+                  <div class="aspect-square rounded-sm" [style.background]="heatCell(v)"></div>
+                }
+              </div>
+            </div>
+          </section>
+        }
       </div>
     </div>
   `,
@@ -754,8 +928,24 @@ export class DftSignalLabPanelComponent {
 
   readonly imagePreset = signal<ImagePresetId>('dot');
   readonly imageSourceType = signal<ImageSourceType>('preset');
+  readonly maxImageUploadDimension = MAX_IMAGE_UPLOAD_DIMENSION;
+  readonly maxImageProcessSize = MAX_IMAGE_PROCESS_SIZE;
+  readonly imageSizeMode = signal<ImageSizeMode>('manual');
+  readonly imageSizePowerOptions = [128, 256, 512, 1024];
   readonly imageSize = signal(12);
-  readonly imageLowPassRadius = signal(2);
+  readonly applyImageWindow = signal(false);
+  readonly imageWindowType = signal<WindowType>('hann');
+  readonly applyImageFilter = signal(true);
+  readonly imageFilterType = signal<ImageFilterType>('lowpass');
+  readonly imageFilterLowPercent = signal(33);
+  readonly imageFilterHighPercent = signal(66);
+  readonly imageNyquistRadius = computed(() => Math.max(1, Math.floor(this.imageSize() / 2)));
+  readonly imageFilterRadius1 = computed(() =>
+    Math.round((this.imageFilterLowPercent() / 100) * this.imageNyquistRadius()),
+  );
+  readonly imageFilterRadius2 = computed(() =>
+    Math.round((this.imageFilterHighPercent() / 100) * this.imageNyquistRadius()),
+  );
   readonly uploadedImage = signal<number[][] | null>(null);
   readonly uploadedImageLoaded = signal(false);
   readonly imageError = signal<string | null>(null);
@@ -764,6 +954,8 @@ export class DftSignalLabPanelComponent {
   readonly imageSpectrum = signal<number[][]>([]);
   readonly imageFilteredSpectrum = signal<number[][]>([]);
   readonly imageRmsError = signal(0);
+  readonly imageExecutionTimeMs = signal(0);
+  readonly imageRunning = signal(false);
 
   readonly originalFunctionCurve = signal<DftPoint[]>([]);
   readonly negativeOriginalFunctionCurve = signal<DftPoint[]>([]);
@@ -815,12 +1007,21 @@ export class DftSignalLabPanelComponent {
     if (!coeffs || !res) return [] as SpectrumBin[];
     return this.buildSpectrumBinsFromCoefficients(coeffs, res.N);
   });
-  readonly imageGridTemplate = computed(() => `repeat(${this.imageSize()}, minmax(0, 1fr))`);
-  readonly imageOriginalFlat = computed(() => this.flattenMatrix(this.imageOriginal()));
-  readonly imageFilteredFlat = computed(() => this.flattenMatrix(this.imageFiltered()));
-  readonly imageSpectrumFlat = computed(() => this.flattenMatrix(this.imageSpectrum()));
+  readonly imageDisplaySize = computed(() => Math.min(this.imageSize(), MAX_IMAGE_DISPLAY_SIZE));
+  readonly imageGridTemplate = computed(() => `repeat(${this.imageDisplaySize()}, minmax(0, 1fr))`);
+  readonly imageOriginalFlat = computed(() =>
+    this.flattenMatrix(this.resizeImageMatrix(this.imageOriginal(), this.imageDisplaySize())),
+  );
+  readonly imageFilteredFlat = computed(() =>
+    this.flattenMatrix(this.resizeImageMatrix(this.imageFiltered(), this.imageDisplaySize())),
+  );
+  readonly imageSpectrumFlat = computed(() =>
+    this.flattenMatrix(this.resizeImageMatrix(this.imageSpectrum(), this.imageDisplaySize())),
+  );
   readonly imageFilteredSpectrumFlat = computed(() =>
-    this.flattenMatrix(this.imageFilteredSpectrum()),
+    this.flattenMatrix(
+      this.resizeImageMatrix(this.imageFilteredSpectrum(), this.imageDisplaySize()),
+    ),
   );
 
   readonly topKCoefficients = computed(() => {
@@ -1082,33 +1283,64 @@ export class DftSignalLabPanelComponent {
   applyImageDemoPreset(): void {
     this.imagePreset.set('bars');
     this.imageSourceType.set('preset');
+    this.imageSizeMode.set('manual');
     this.imageSize.set(12);
-    this.imageLowPassRadius.set(2);
+    this.applyImageWindow.set(false);
+    this.imageWindowType.set('hann');
+    this.applyImageFilter.set(true);
+    this.imageFilterType.set('lowpass');
+    this.imageFilterLowPercent.set(33);
+    this.imageFilterHighPercent.set(66);
     this.imageError.set(null);
     this.runImageDftDemo();
   }
 
-  runImageDftDemo(): void {
-    const n = this.imageSize();
-    const original =
-      this.imageSourceType() === 'upload' && this.uploadedImageLoaded() && this.uploadedImage()
-        ? this.resizeImageMatrix(this.uploadedImage() ?? [], n)
-        : this.generateImagePreset(this.imagePreset(), n);
-    const spectrum = this.dft2d(original);
-    const filteredSpectrum = this.applyLowPass2d(spectrum, this.imageLowPassRadius());
-    const reconstructed = this.idft2d(filteredSpectrum).map((row) =>
-      row.map((v) => this.clampNum(v, 0, 1)),
-    );
+  onImageSizeModeChange(mode: ImageSizeMode): void {
+    this.imageSizeMode.set(mode);
+    if (mode === 'manual') {
+      this.imageSize.set(this.clampInt(this.imageSize(), 8, 64));
+      return;
+    }
 
-    const spectrumLog = this.magnitudeLogNormalized(spectrum);
-    const filteredSpectrumLog = this.magnitudeLogNormalized(filteredSpectrum);
-    const rms = this.matrixRms(original, reconstructed);
+    this.imageSize.set(this.clampToImagePowerOption(this.imageSize()));
+  }
 
-    this.imageOriginal.set(original);
-    this.imageFiltered.set(reconstructed);
-    this.imageSpectrum.set(spectrumLog);
-    this.imageFilteredSpectrum.set(filteredSpectrumLog);
-    this.imageRmsError.set(rms);
+  async runImageDftDemo(): Promise<void> {
+    this.imageRunning.set(true);
+    await this.nextPaint();
+
+    const startedAt = performance.now();
+    try {
+      const n = this.imageSize();
+      const original =
+        this.imageSourceType() === 'upload' && this.uploadedImageLoaded() && this.uploadedImage()
+          ? this.resizeImageMatrix(this.uploadedImage() ?? [], n)
+          : this.generateImagePreset(this.imagePreset(), n);
+      const analyzedInput = this.applyImageWindow()
+        ? this.applyWindow2d(original, this.imageWindowType())
+        : original;
+      const spectrum = this.isPowerOfTwo(n) ? this.fft2d(analyzedInput) : this.dft2d(analyzedInput);
+      const filteredSpectrum = this.applyImageFilter()
+        ? this.applyImageFrequencyFilter2d(spectrum)
+        : spectrum;
+      const reconstructed = (
+        this.isPowerOfTwo(n) ? this.ifft2d(filteredSpectrum) : this.idft2d(filteredSpectrum)
+      ).map((row) => row.map((v) => this.clampNum(v, 0, 1)));
+
+      const spectrumLog = this.magnitudeLogNormalized(spectrum);
+      const filteredSpectrumLog = this.magnitudeLogNormalized(filteredSpectrum);
+      const rmsReference = this.applyImageWindow() ? analyzedInput : original;
+      const rms = this.matrixRms(rmsReference, reconstructed);
+
+      this.imageOriginal.set(original);
+      this.imageFiltered.set(reconstructed);
+      this.imageSpectrum.set(spectrumLog);
+      this.imageFilteredSpectrum.set(filteredSpectrumLog);
+      this.imageRmsError.set(rms);
+      this.imageExecutionTimeMs.set(performance.now() - startedAt);
+    } finally {
+      this.imageRunning.set(false);
+    }
   }
 
   async onImageFileSelected(event: Event): Promise<void> {
@@ -1313,6 +1545,112 @@ export class DftSignalLabPanelComponent {
     return img;
   }
 
+  private isPowerOfTwo(n: number): boolean {
+    return n > 1 && (n & (n - 1)) === 0;
+  }
+
+  private fft1d(values: ComplexValue[]): ComplexValue[] {
+    const n = values.length;
+    const output = values.map((v) => ({ re: v.re, im: v.im }));
+
+    let j = 0;
+    for (let i = 1; i < n; i++) {
+      let bit = n >> 1;
+      while (j & bit) {
+        j ^= bit;
+        bit >>= 1;
+      }
+      j ^= bit;
+      if (i < j) {
+        const tmp = output[i];
+        output[i] = output[j] as ComplexValue;
+        output[j] = tmp as ComplexValue;
+      }
+    }
+
+    for (let len = 2; len <= n; len <<= 1) {
+      const half = len >> 1;
+      const theta = -TAU / len;
+      const wlenRe = Math.cos(theta);
+      const wlenIm = Math.sin(theta);
+
+      for (let i = 0; i < n; i += len) {
+        let wRe = 1;
+        let wIm = 0;
+
+        for (let k = 0; k < half; k++) {
+          const u = output[i + k] as ComplexValue;
+          const v0 = output[i + k + half] as ComplexValue;
+          const vRe = v0.re * wRe - v0.im * wIm;
+          const vIm = v0.re * wIm + v0.im * wRe;
+
+          output[i + k] = { re: u.re + vRe, im: u.im + vIm };
+          output[i + k + half] = { re: u.re - vRe, im: u.im - vIm };
+
+          const nextWRe = wRe * wlenRe - wIm * wlenIm;
+          const nextWIm = wRe * wlenIm + wIm * wlenRe;
+          wRe = nextWRe;
+          wIm = nextWIm;
+        }
+      }
+    }
+
+    return output;
+  }
+
+  private ifft1d(values: ComplexValue[]): ComplexValue[] {
+    const n = values.length;
+    const conjugated = values.map((v) => ({ re: v.re, im: -v.im }));
+    const transformed = this.fft1d(conjugated);
+    return transformed.map((v) => ({ re: v.re / n, im: -v.im / n }));
+  }
+
+  private fft2d(input: number[][]): ComplexValue[][] {
+    const n = input.length;
+    const rows: ComplexValue[][] = Array.from({ length: n }, (_, y) =>
+      this.fft1d(Array.from({ length: n }, (_, x) => ({ re: input[y]?.[x] ?? 0, im: 0 }))),
+    );
+
+    const out: ComplexValue[][] = Array.from({ length: n }, () =>
+      Array.from({ length: n }, () => ({ re: 0, im: 0 })),
+    );
+
+    for (let x = 0; x < n; x++) {
+      const col = Array.from({ length: n }, (_, y) => rows[y]?.[x] ?? { re: 0, im: 0 });
+      const colFft = this.fft1d(col);
+      for (let y = 0; y < n; y++) {
+        out[y][x] = colFft[y] as ComplexValue;
+      }
+    }
+
+    return out;
+  }
+
+  private ifft2d(input: ComplexValue[][]): number[][] {
+    const n = input.length;
+    const colsDone: ComplexValue[][] = Array.from({ length: n }, () =>
+      Array.from({ length: n }, () => ({ re: 0, im: 0 })),
+    );
+
+    for (let x = 0; x < n; x++) {
+      const col = Array.from({ length: n }, (_, y) => input[y]?.[x] ?? { re: 0, im: 0 });
+      const colIfft = this.ifft1d(col);
+      for (let y = 0; y < n; y++) {
+        colsDone[y][x] = colIfft[y] as ComplexValue;
+      }
+    }
+
+    const out: number[][] = Array.from({ length: n }, () => Array.from({ length: n }, () => 0));
+    for (let y = 0; y < n; y++) {
+      const row = this.ifft1d(colsDone[y] ?? []);
+      for (let x = 0; x < n; x++) {
+        out[y][x] = row[x]?.re ?? 0;
+      }
+    }
+
+    return out;
+  }
+
   private dft2d(input: number[][]): ComplexValue[][] {
     const n = input.length;
     const out: ComplexValue[][] = Array.from({ length: n }, () =>
@@ -1359,8 +1697,12 @@ export class DftSignalLabPanelComponent {
     return out;
   }
 
-  private applyLowPass2d(spectrum: ComplexValue[][], radius: number): ComplexValue[][] {
+  private applyImageFrequencyFilter2d(spectrum: ComplexValue[][]): ComplexValue[][] {
     const n = spectrum.length;
+    const r1 = this.imageFilterRadius1();
+    const r2 = this.imageFilterRadius2();
+    const low = Math.min(r1, r2);
+    const high = Math.max(r1, r2);
     const out: ComplexValue[][] = Array.from({ length: n }, () =>
       Array.from({ length: n }, () => ({ re: 0, im: 0 })),
     );
@@ -1370,9 +1712,39 @@ export class DftSignalLabPanelComponent {
         const us = this.signedK(u, n);
         const vs = this.signedK(v, n);
         const r = Math.sqrt(us * us + vs * vs);
-        if (r <= radius) {
+        let keep = true;
+        switch (this.imageFilterType()) {
+          case 'lowpass':
+            keep = r <= low;
+            break;
+          case 'highpass':
+            keep = r >= low;
+            break;
+          case 'bandpass':
+            keep = r >= low && r <= high;
+            break;
+          case 'notch':
+            keep = !(r >= low && r <= high);
+            break;
+        }
+        if (keep) {
           out[u][v] = spectrum[u]?.[v] ?? { re: 0, im: 0 };
         }
+      }
+    }
+
+    return out;
+  }
+
+  private applyWindow2d(input: number[][], type: WindowType): number[][] {
+    const n = input.length;
+    const out: number[][] = Array.from({ length: n }, () => Array.from({ length: n }, () => 0));
+
+    for (let y = 0; y < n; y++) {
+      const wy = this.windowAt(type, y, n);
+      for (let x = 0; x < n; x++) {
+        const wx = this.windowAt(type, x, n);
+        out[y][x] = (input[y]?.[x] ?? 0) * wx * wy;
       }
     }
 
@@ -1460,22 +1832,27 @@ export class DftSignalLabPanelComponent {
         img.onload = () => {
           const w = Math.max(1, img.width);
           const h = Math.max(1, img.height);
+          const scale = Math.min(1, this.maxImageUploadDimension / Math.max(w, h));
+          const targetW = Math.max(1, Math.round(w * scale));
+          const targetH = Math.max(1, Math.round(h * scale));
           const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
+          canvas.width = targetW;
+          canvas.height = targetH;
           const ctx = canvas.getContext('2d');
           if (!ctx) {
             reject(new Error('no-2d-context'));
             return;
           }
 
-          ctx.drawImage(img, 0, 0, w, h);
-          const data = ctx.getImageData(0, 0, w, h).data;
-          const matrix = Array.from({ length: h }, () => Array.from({ length: w }, () => 0));
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+          const data = ctx.getImageData(0, 0, targetW, targetH).data;
+          const matrix = Array.from({ length: targetH }, () =>
+            Array.from({ length: targetW }, () => 0),
+          );
 
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              const idx = (y * w + x) * 4;
+          for (let y = 0; y < targetH; y++) {
+            for (let x = 0; x < targetW; x++) {
+              const idx = (y * targetW + x) * 4;
               const r = data[idx] ?? 0;
               const g = data[idx + 1] ?? 0;
               const b = data[idx + 2] ?? 0;
@@ -1716,6 +2093,17 @@ export class DftSignalLabPanelComponent {
     const n = Number(value);
     if (!Number.isFinite(n)) return min;
     return Math.max(min, Math.min(max, n));
+  }
+
+  clampToImagePowerOption(value: unknown): number {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return this.imageSizePowerOptions[0] as number;
+    const found = this.imageSizePowerOptions.find((v) => v === Math.round(n));
+    return found ?? (this.imageSizePowerOptions[0] as number);
+  }
+
+  private nextPaint(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
   }
 
   private drawStem(
