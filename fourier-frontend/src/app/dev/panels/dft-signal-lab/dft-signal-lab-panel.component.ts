@@ -5,6 +5,20 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../core/services/api/api.service';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { Curve } from '../../../core/services/canvas/canvas.types';
+import {
+  DftSignalService,
+  WindowType,
+  PhaseCFilterType,
+  SpectrumBin,
+  LeakageStats,
+  PhaseCStats,
+} from '../../../core/services/dft/dft-signal.service';
+import {
+  ImageDftService,
+  ComplexValue,
+  ImageFilterType,
+  ImagePresetId,
+} from '../../../core/services/dft/image-dft.service';
 import { DftCoefficient, DftPoint, DftResponse } from '../../../domain/types/dft.types';
 import {
   FunctionPlotComponent,
@@ -17,35 +31,9 @@ interface SignalPreset {
   generator: (n: number, t: number) => number;
 }
 
-type WindowType = 'rectangular' | 'hann' | 'hamming' | 'blackman';
-type PhaseCFilterType = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
-type ImagePresetId = 'dot' | 'bars' | 'checker';
-type ImageFilterType = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 type LabView = 'full' | 'signal' | 'filter' | 'image';
 type ImageSourceType = 'preset' | 'upload';
 type ImageSizeMode = 'manual' | 'power2';
-
-interface SpectrumBin {
-  coeff: DftCoefficient;
-  xBin: number;
-}
-
-interface LeakageStats {
-  dominantK: number;
-  dominantAmplitude: number;
-  leakageRatio: number;
-}
-
-interface PhaseCStats {
-  keptBins: number;
-  keptEnergyRatio: number;
-  rmsError: number;
-}
-
-interface ComplexValue {
-  re: number;
-  im: number;
-}
 
 const TAU = Math.PI * 2;
 const MAX_IMAGE_UPLOAD_DIMENSION = 2048;
@@ -849,6 +837,8 @@ const MAX_IMAGE_DISPLAY_SIZE = 64;
 export class DftSignalLabPanelComponent {
   private readonly api = inject(ApiService);
   private readonly drawingUtils = inject(DrawingUtilsService);
+  private readonly dftSignal = inject(DftSignalService);
+  private readonly imageDft = inject(ImageDftService);
   private readonly route = inject(ActivatedRoute);
   private leakageHighlightTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -999,28 +989,40 @@ export class DftSignalLabPanelComponent {
     return Math.max(1, Math.floor(n / 2));
   });
 
-  readonly spectrumBins = computed(() => this.buildSpectrumBins(this.result()));
-  readonly baselineSpectrumBins = computed(() => this.buildSpectrumBins(this.baselineResult()));
+  readonly spectrumBins = computed(() => {
+    const res = this.result();
+    return res ? this.dftSignal.buildSpectrumBins(res, this.shiftedSpectrum()) : [];
+  });
+  readonly baselineSpectrumBins = computed(() => {
+    const res = this.baselineResult();
+    return res ? this.dftSignal.buildSpectrumBins(res, this.shiftedSpectrum()) : [];
+  });
   readonly phaseCSpectrumBins = computed(() => {
     const coeffs = this.phaseCFilteredCoefficients();
     const res = this.result();
     if (!coeffs || !res) return [] as SpectrumBin[];
-    return this.buildSpectrumBinsFromCoefficients(coeffs, res.N);
+    return this.dftSignal.buildSpectrumBinsFromCoefficients(coeffs, res.N, this.shiftedSpectrum());
   });
   readonly imageDisplaySize = computed(() => Math.min(this.imageSize(), MAX_IMAGE_DISPLAY_SIZE));
   readonly imageGridTemplate = computed(() => `repeat(${this.imageDisplaySize()}, minmax(0, 1fr))`);
   readonly imageOriginalFlat = computed(() =>
-    this.flattenMatrix(this.resizeImageMatrix(this.imageOriginal(), this.imageDisplaySize())),
+    this.imageDft.flattenMatrix(
+      this.imageDft.resizeImageMatrix(this.imageOriginal(), this.imageDisplaySize()),
+    ),
   );
   readonly imageFilteredFlat = computed(() =>
-    this.flattenMatrix(this.resizeImageMatrix(this.imageFiltered(), this.imageDisplaySize())),
+    this.imageDft.flattenMatrix(
+      this.imageDft.resizeImageMatrix(this.imageFiltered(), this.imageDisplaySize()),
+    ),
   );
   readonly imageSpectrumFlat = computed(() =>
-    this.flattenMatrix(this.resizeImageMatrix(this.imageSpectrum(), this.imageDisplaySize())),
+    this.imageDft.flattenMatrix(
+      this.imageDft.resizeImageMatrix(this.imageSpectrum(), this.imageDisplaySize()),
+    ),
   );
   readonly imageFilteredSpectrumFlat = computed(() =>
-    this.flattenMatrix(
-      this.resizeImageMatrix(this.imageFilteredSpectrum(), this.imageDisplaySize()),
+    this.imageDft.flattenMatrix(
+      this.imageDft.resizeImageMatrix(this.imageFilteredSpectrum(), this.imageDisplaySize()),
     ),
   );
 
@@ -1064,8 +1066,14 @@ export class DftSignalLabPanelComponent {
     return Math.sqrt(sum / n);
   });
 
-  readonly leakageCurrent = computed(() => this.computeLeakage(this.result()));
-  readonly leakageBaseline = computed(() => this.computeLeakage(this.baselineResult()));
+  readonly leakageCurrent = computed(() => {
+    const res = this.result();
+    return res ? this.dftSignal.computeLeakage(res) : null;
+  });
+  readonly leakageBaseline = computed(() => {
+    const res = this.baselineResult();
+    return res ? this.dftSignal.computeLeakage(res) : null;
+  });
   readonly leakageImprovementPercent = computed(() => {
     const baseline = this.leakageBaseline();
     const current = this.leakageCurrent();
@@ -1203,12 +1211,13 @@ export class DftSignalLabPanelComponent {
 
     try {
       const generator = this.resolveGenerator();
-      const sampled = this.generateSampledSignal(generator);
+      const n = this.sampleCount();
+      const sampled = this.dftSignal.generateSampledSignal(generator, n, this.noiseLevel());
       const analyzed = this.applyWindow()
-        ? this.applyWindowToSignal(sampled, this.windowType())
+        ? this.dftSignal.applyWindowToSignal(sampled, this.windowType())
         : sampled;
-      const originalFn = this.generateContinuousFunction(generator);
-      const negativeOriginalFn = this.generateNegativeContinuousFunction(generator);
+      const originalFn = this.dftSignal.generateContinuousFunction(generator, n);
+      const negativeOriginalFn = this.dftSignal.generateNegativeContinuousFunction(generator, n);
 
       this.sampledSignal.set(sampled);
       this.analyzedSignal.set(analyzed);
@@ -1314,23 +1323,31 @@ export class DftSignalLabPanelComponent {
       const n = this.imageSize();
       const original =
         this.imageSourceType() === 'upload' && this.uploadedImageLoaded() && this.uploadedImage()
-          ? this.resizeImageMatrix(this.uploadedImage() ?? [], n)
-          : this.generateImagePreset(this.imagePreset(), n);
+          ? this.imageDft.resizeImageMatrix(this.uploadedImage() ?? [], n)
+          : this.imageDft.generatePreset(this.imagePreset(), n);
       const analyzedInput = this.applyImageWindow()
-        ? this.applyWindow2d(original, this.imageWindowType())
+        ? this.imageDft.applyWindow(original, this.imageWindowType())
         : original;
-      const spectrum = this.isPowerOfTwo(n) ? this.fft2d(analyzedInput) : this.dft2d(analyzedInput);
+      const spectrum = this.imageDft.isPowerOfTwo(n)
+        ? this.imageDft.fft2d(analyzedInput)
+        : this.imageDft.dft2d(analyzedInput);
       const filteredSpectrum = this.applyImageFilter()
-        ? this.applyImageFrequencyFilter2d(spectrum)
+        ? this.imageDft.applyFrequencyFilter(spectrum, {
+            filterType: this.imageFilterType(),
+            r1: this.imageFilterRadius1(),
+            r2: this.imageFilterRadius2(),
+          })
         : spectrum;
       const reconstructed = (
-        this.isPowerOfTwo(n) ? this.ifft2d(filteredSpectrum) : this.idft2d(filteredSpectrum)
+        this.imageDft.isPowerOfTwo(n)
+          ? this.imageDft.ifft2d(filteredSpectrum)
+          : this.imageDft.idft2d(filteredSpectrum)
       ).map((row) => row.map((v) => this.clampNum(v, 0, 1)));
 
-      const spectrumLog = this.magnitudeLogNormalized(spectrum);
-      const filteredSpectrumLog = this.magnitudeLogNormalized(filteredSpectrum);
+      const spectrumLog = this.imageDft.magnitudeLogNormalized(spectrum);
+      const filteredSpectrumLog = this.imageDft.magnitudeLogNormalized(filteredSpectrum);
       const rmsReference = this.applyImageWindow() ? analyzedInput : original;
-      const rms = this.matrixRms(rmsReference, reconstructed);
+      const rms = this.imageDft.matrixRms(rmsReference, reconstructed);
 
       this.imageOriginal.set(original);
       this.imageFiltered.set(reconstructed);
@@ -1351,7 +1368,7 @@ export class DftSignalLabPanelComponent {
     this.imageError.set(null);
 
     try {
-      const matrix = await this.readImageAsGrayscaleMatrix(file);
+      const matrix = await this.imageDft.readAsGrayscaleMatrix(file, this.maxImageUploadDimension);
       this.uploadedImage.set(matrix);
       this.uploadedImageLoaded.set(true);
       this.imageSourceType.set('upload');
@@ -1397,32 +1414,10 @@ export class DftSignalLabPanelComponent {
     await this.calculate();
   }
 
-  private buildSpectrumBins(res: DftResponse | null): SpectrumBin[] {
-    if (!res) return [];
-    const shifted = this.shiftedSpectrum();
-
-    return res.coefficients
-      .map((coeff) => ({
-        coeff,
-        xBin: shifted ? this.signedK(coeff.k, res.N) : coeff.k,
-      }))
-      .sort((a, b) => a.xBin - b.xBin);
-  }
-
-  private buildSpectrumBinsFromCoefficients(coeffs: DftCoefficient[], n: number): SpectrumBin[] {
-    const shifted = this.shiftedSpectrum();
-
-    return coeffs
-      .map((coeff) => ({
-        coeff,
-        xBin: shifted ? this.signedK(coeff.k, n) : coeff.k,
-      }))
-      .sort((a, b) => a.xBin - b.xBin);
-  }
-
   private applyPhaseCFilterToCurrentResult(): void {
     const res = this.result();
     const analyzed = this.analyzedSignal();
+
     if (!res || analyzed.length === 0) {
       this.phaseCFilteredCoefficients.set(null);
       this.phaseCFilteredReconstruction.set([]);
@@ -1430,79 +1425,23 @@ export class DftSignalLabPanelComponent {
       return;
     }
 
-    const filteredCoeffs = res.coefficients.map((c) => {
-      const keep = this.shouldKeepCoefficient(c.k, res.N);
-      if (keep) return c;
-
-      return {
-        ...c,
-        re: 0,
-        im: 0,
-        amplitude: 0,
-        amplitudePercent: 0,
-        phase: 0,
-        phaseInPi: '0',
-      };
+    const result = this.dftSignal.applyPhaseCFilter(res, analyzed, {
+      filterType: this.phaseCFilterType(),
+      k1: this.phaseCK1(),
+      k2: this.phaseCK2(),
+      preserveDC: this.phaseCPreserveDC(),
     });
 
-    const reconstruction = analyzed.map((p, n) => {
-      let y = 0;
-      for (const c of filteredCoeffs) {
-        const angle = (TAU * c.k * n) / res.N;
-        y += c.re * Math.cos(angle) - c.im * Math.sin(angle);
-      }
-      return { x: p.x, y };
-    });
-
-    let originalEnergy = 0;
-    let keptEnergy = 0;
-    let keptBins = 0;
-    for (let i = 0; i < res.coefficients.length; i++) {
-      const e0 = res.coefficients[i]?.amplitude ?? 0;
-      const e1 = filteredCoeffs[i]?.amplitude ?? 0;
-      originalEnergy += e0 * e0;
-      keptEnergy += e1 * e1;
-      if (e1 > 0) keptBins++;
+    if (!result) {
+      this.phaseCFilteredCoefficients.set(null);
+      this.phaseCFilteredReconstruction.set([]);
+      this.phaseCStats.set(null);
+      return;
     }
 
-    let rmsSum = 0;
-    const n = Math.min(analyzed.length, reconstruction.length);
-    for (let i = 0; i < n; i++) {
-      const d = (analyzed[i]?.y ?? 0) - (reconstruction[i]?.y ?? 0);
-      rmsSum += d * d;
-    }
-    const rmsError = n > 0 ? Math.sqrt(rmsSum / n) : 0;
-
-    this.phaseCFilteredCoefficients.set(filteredCoeffs);
-    this.phaseCFilteredReconstruction.set(reconstruction);
-    this.phaseCStats.set({
-      keptBins,
-      keptEnergyRatio: originalEnergy > 0 ? keptEnergy / originalEnergy : 0,
-      rmsError,
-    });
-  }
-
-  private shouldKeepCoefficient(k: number, n: number): boolean {
-    const kAbs = Math.abs(this.signedK(k, n));
-    if (this.phaseCPreserveDC() && kAbs === 0) return true;
-
-    const k1 = this.clampInt(this.phaseCK1(), 0, Math.floor(n / 2));
-    const k2 = this.clampInt(this.phaseCK2(), 0, Math.floor(n / 2));
-    const low = Math.min(k1, k2);
-    const high = Math.max(k1, k2);
-
-    switch (this.phaseCFilterType()) {
-      case 'lowpass':
-        return kAbs <= low;
-      case 'highpass':
-        return kAbs >= low;
-      case 'bandpass':
-        return kAbs >= low && kAbs <= high;
-      case 'notch':
-        return !(kAbs >= low && kAbs <= high);
-      default:
-        return true;
-    }
+    this.phaseCFilteredCoefficients.set(result.filteredCoefficients);
+    this.phaseCFilteredReconstruction.set(result.reconstruction);
+    this.phaseCStats.set(result.stats);
   }
 
   private activateLeakageHighlight(): void {
@@ -1516,37 +1455,6 @@ export class DftSignalLabPanelComponent {
       this.leakageHighlightActive.set(false);
       this.leakageHighlightTimer = null;
     }, 2800);
-  }
-
-  private generateImagePreset(preset: ImagePresetId, n: number): number[][] {
-    const img = Array.from({ length: n }, () => Array.from({ length: n }, () => 0));
-    const center = Math.floor(n / 2);
-
-    if (preset === 'dot') {
-      img[center][center] = 1;
-      return img;
-    }
-
-    if (preset === 'bars') {
-      for (let y = 0; y < n; y++) {
-        for (let x = 0; x < n; x++) {
-          img[y][x] = x % 4 < 2 ? 0.95 : 0.1;
-        }
-      }
-      return img;
-    }
-
-    for (let y = 0; y < n; y++) {
-      for (let x = 0; x < n; x++) {
-        img[y][x] = (x + y) % 2 === 0 ? 0.95 : 0.05;
-      }
-    }
-
-    return img;
-  }
-
-  private isPowerOfTwo(n: number): boolean {
-    return n > 1 && (n & (n - 1)) === 0;
   }
 
   private fft1d(values: ComplexValue[]): ComplexValue[] {
@@ -1798,7 +1706,7 @@ export class DftSignalLabPanelComponent {
 
   private resizeImageMatrix(input: number[][], n: number): number[][] {
     if (input.length === 0 || input[0]?.length === 0) {
-      return this.generateImagePreset('dot', n);
+      return this.imageDft.generatePreset('dot', n);
     }
 
     const srcH = input.length;
@@ -1919,7 +1827,7 @@ export class DftSignalLabPanelComponent {
       return preset.generator;
     }
 
-    const manual = this.buildManualGenerator(this.manualExpression());
+    const manual = this.dftSignal.buildManualGenerator(this.manualExpression());
     if (!manual) {
       throw new Error('Expresión manual inválida. Revisa sintaxis y funciones permitidas.');
     }
@@ -2080,7 +1988,7 @@ export class DftSignalLabPanelComponent {
   }
 
   signedK(k: number, n: number): number {
-    return k > n / 2 ? k - n : k;
+    return this.dftSignal.signedK(k, n);
   }
 
   clampInt(value: unknown, min: number, max: number): number {
@@ -2105,5 +2013,4 @@ export class DftSignalLabPanelComponent {
   private nextPaint(): Promise<void> {
     return new Promise((resolve) => requestAnimationFrame(() => resolve()));
   }
-
 }
