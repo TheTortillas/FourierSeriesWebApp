@@ -17,6 +17,8 @@ interface EpicyclePreset {
 }
 
 interface EpicycleState {
+  color: string;
+  selected: boolean;
   centerX: number;
   centerY: number;
   endX: number;
@@ -281,10 +283,13 @@ function lissajousPreset(samples: number): DftPoint[] {
                   <tbody>
                     @for (c of visibleCoefficients(); track $index; let i = $index) {
                       <tr
+                        (click)="toggleSelectedCoefficient(c.k)"
                         [class]="
-                          i < topK()
-                            ? 'bg-yellow-500/10 border-t border-yellow-500/30'
-                            : 'border-t border-gray-800'
+                          selectedCoeffK() === c.k
+                            ? 'bg-cyan-500/15 border-t border-cyan-500/40 cursor-pointer'
+                            : i < topK()
+                              ? 'bg-yellow-500/10 border-t border-yellow-500/30 cursor-pointer'
+                              : 'border-t border-gray-800 hover:bg-gray-800/40 cursor-pointer'
                         "
                       >
                         <td class="px-2 py-1 text-gray-100">{{ c.kSigned }}</td>
@@ -341,6 +346,7 @@ export class EpicyclesPanelComponent implements OnDestroy {
   readonly showApproximation = signal(true);
   readonly showTrace = signal(true);
   readonly showEpicycles = signal(true);
+  readonly selectedCoeffK = signal<number | null>(null);
 
   readonly trace = signal<DftPoint[]>([]);
 
@@ -501,6 +507,7 @@ export class EpicyclesPanelComponent implements OnDestroy {
     this.error.set(null);
     this.trace.set([]);
     this.time.set(0);
+    this.selectedCoeffK.set(null);
   }
 
   async calculate(): Promise<void> {
@@ -525,6 +532,7 @@ export class EpicyclesPanelComponent implements OnDestroy {
       this.topK.set(Math.min(22, Math.max(1, res.coefficients.length)));
       this.time.set(0);
       this.trace.set([]);
+      this.selectedCoeffK.set(null);
     } catch (err) {
       const anyErr = err as { error?: { error?: string }; message?: string };
       this.error.set(anyErr?.error?.error ?? anyErr?.message ?? 'No se pudo calcular la DFT.');
@@ -581,6 +589,10 @@ export class EpicyclesPanelComponent implements OnDestroy {
     this.trace.set([]);
   }
 
+  toggleSelectedCoefficient(k: number): void {
+    this.selectedCoeffK.update((current) => (current === k ? null : k));
+  }
+
   private parsePoints(raw: string): DftPoint[] {
     const lines = raw
       .split(/\r?\n/)
@@ -633,10 +645,14 @@ export class EpicyclesPanelComponent implements OnDestroy {
 
   private computeEpicycleStates(coeffs: RenderCoeff[], time: number): EpicycleState[] {
     const states: EpicycleState[] = [];
+    const selectedK = this.selectedCoeffK();
+    const total = Math.max(1, coeffs.length);
     let cx = 0;
     let cy = 0;
 
-    for (const c of coeffs) {
+    for (let i = 0; i < coeffs.length; i++) {
+      const c = coeffs[i];
+      if (!c) continue;
       const angle = c.kSigned * time;
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
@@ -646,6 +662,8 @@ export class EpicyclesPanelComponent implements OnDestroy {
       const ey = cy + vy;
 
       states.push({
+        color: this.harmonicColor(i, total),
+        selected: selectedK === null ? false : selectedK === c.k,
         centerX: cx,
         centerY: cy,
         endX: ex,
@@ -673,36 +691,96 @@ export class EpicyclesPanelComponent implements OnDestroy {
 
     ctx.save();
 
+    const hasSelection = states.some((s) => s.selected);
+
     for (const state of states) {
       const cx = toCssX(state.centerX);
       const cy = toCssY(state.centerY);
       const ex = toCssX(state.endX);
       const ey = toCssY(state.endY);
+      const isDimmed = hasSelection && !state.selected;
+      const circleAlpha = state.selected ? 0.42 : isDimmed ? 0.12 : 0.28;
+      const vectorAlpha = state.selected ? 1 : isDimmed ? 0.22 : 0.88;
+      const lineWidth = state.selected ? 2.4 : 1.5;
+      const circleStroke = this.withAlpha(state.color, circleAlpha);
+      const vectorStroke = this.withAlpha(state.color, vectorAlpha);
 
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
+      ctx.strokeStyle = circleStroke;
       ctx.lineWidth = 1;
       ctx.arc(cx, cy, Math.max(1.5, state.radius * pxPerUnit), 0, TAU);
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.9)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = vectorStroke;
+      ctx.lineWidth = lineWidth;
       ctx.moveTo(cx, cy);
       ctx.lineTo(ex, ey);
       ctx.stroke();
+
+      this.drawArrowHead(ctx, cx, cy, ex, ey, state.color, state.selected, isDimmed);
     }
 
     const end = states[states.length - 1];
+    if (!end) {
+      ctx.restore();
+      return;
+    }
     const ex = toCssX(end.endX);
     const ey = toCssY(end.endY);
 
     ctx.beginPath();
-    ctx.fillStyle = '#f59e0b';
+    ctx.fillStyle = hasSelection ? this.withAlpha('#f8fafc', 0.95) : '#f59e0b';
     ctx.arc(ex, ey, 3.1, 0, TAU);
     ctx.fill();
 
     ctx.restore();
+  }
+
+  private drawArrowHead(
+    ctx: CanvasRenderingContext2D,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    color: string,
+    selected: boolean,
+    dimmed: boolean,
+  ): void {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const len = Math.hypot(dx, dy);
+    if (len < 2.5) return;
+
+    const angle = Math.atan2(dy, dx);
+    const headLength = selected ? 8 : 6;
+    const spread = Math.PI / 7;
+    const alpha = selected ? 1 : dimmed ? 0.26 : 0.9;
+
+    const x1 = toX - headLength * Math.cos(angle - spread);
+    const y1 = toY - headLength * Math.sin(angle - spread);
+    const x2 = toX - headLength * Math.cos(angle + spread);
+    const y2 = toY - headLength * Math.sin(angle + spread);
+
+    ctx.beginPath();
+    ctx.fillStyle = this.withAlpha(color, alpha);
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  private harmonicColor(index: number, total: number): string {
+    const t = total <= 1 ? 0 : index / (total - 1);
+    const hue = (200 + t * 300) % 360;
+    return `hsl(${hue.toFixed(1)} 90% 62%)`;
+  }
+
+  private withAlpha(color: string, alpha: number): string {
+    const clamped = Math.max(0, Math.min(1, alpha));
+    if (!color.startsWith('hsl(')) return color;
+    return color.replace(/^hsl\((.*)\)$/u, `hsl($1 / ${clamped.toFixed(3)})`);
   }
 
   private closedPath(points: DftPoint[]): DftPoint[] {
