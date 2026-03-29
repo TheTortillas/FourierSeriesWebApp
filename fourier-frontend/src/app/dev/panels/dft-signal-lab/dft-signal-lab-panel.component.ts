@@ -3,8 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../core/services/api/api.service';
-import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
-import { CanvasViewport, Curve } from '../../../core/services/canvas/canvas.types';
+import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
+import { Curve } from '../../../core/services/canvas/canvas.types';
 import { DftCoefficient, DftPoint, DftResponse } from '../../../domain/types/dft.types';
 import {
   FunctionPlotComponent,
@@ -848,7 +848,7 @@ const MAX_IMAGE_DISPLAY_SIZE = 64;
 })
 export class DftSignalLabPanelComponent {
   private readonly api = inject(ApiService);
-  private readonly coords = inject(CoordinateTransformService);
+  private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly route = inject(ActivatedRoute);
   private leakageHighlightTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -1111,7 +1111,7 @@ export class DftSignalLabPanelComponent {
         curves,
         onDraw: (ctx, vp) => {
           if (!this.showSampledPoints() || !this.showSampledSignal()) return;
-          this.drawPoints(ctx, vp, sampled, '#f8fafc', 1.6);
+          this.drawingUtils.drawPoints(ctx, vp, sampled, '#f8fafc', 1.6);
         },
       },
     ];
@@ -1133,7 +1133,7 @@ export class DftSignalLabPanelComponent {
             for (const b of baselineBins) {
               const amp = b.coeff.amplitude;
               if (amp === 0 && !this.showZeroBins()) continue;
-              this.drawStem(ctx, vp, b.xBin, amp, '#64748b', 1.1);
+              this.drawingUtils.drawStem(ctx, vp, b.xBin, amp, '#64748b', 1.1);
             }
           }
 
@@ -1141,7 +1141,7 @@ export class DftSignalLabPanelComponent {
             for (const b of phaseCBins) {
               const amp = b.coeff.amplitude;
               if (amp === 0 && !this.showZeroBins()) continue;
-              this.drawStem(ctx, vp, b.xBin, amp, '#e879f9', 1.3);
+              this.drawingUtils.drawStem(ctx, vp, b.xBin, amp, '#e879f9', 1.3);
             }
           }
 
@@ -1151,14 +1151,14 @@ export class DftSignalLabPanelComponent {
             const highlight = topSet.has(b.coeff.k);
             if (amp === 0 && !this.showZeroBins()) continue;
 
-            this.drawStem(ctx, vp, b.xBin, amp, highlight ? '#f59e0b' : '#60a5fa', 2);
+            this.drawingUtils.drawStem(ctx, vp, b.xBin, amp, highlight ? '#f59e0b' : '#60a5fa', 2);
             if (Math.abs(amp) < 1e-12) {
               zeros.push({ x: b.xBin, y: 0 });
             }
           }
 
           if (this.showZeroBins()) {
-            this.drawPoints(ctx, vp, zeros, '#93c5fd', 1.8);
+            this.drawingUtils.drawPoints(ctx, vp, zeros, '#93c5fd', 1.8);
           }
         },
       },
@@ -1185,11 +1185,11 @@ export class DftSignalLabPanelComponent {
             const reliable = amp >= threshold;
             const phaseInPi = reliable ? b.coeff.phase / Math.PI : 0;
             const color = reliable ? '#22d3ee' : '#64748b';
-            this.drawStem(ctx, vp, b.xBin, phaseInPi, color, 1.8);
+            this.drawingUtils.drawStem(ctx, vp, b.xBin, phaseInPi, color, 1.8);
             phasePoints.push({ x: b.xBin, y: phaseInPi });
           }
 
-          this.drawPoints(ctx, vp, phasePoints, '#22d3ee', 2.2);
+          this.drawingUtils.drawPoints(ctx, vp, phasePoints, '#22d3ee', 2.2);
         },
       },
     ];
@@ -2106,48 +2106,4 @@ export class DftSignalLabPanelComponent {
     return new Promise((resolve) => requestAnimationFrame(() => resolve()));
   }
 
-  private drawStem(
-    ctx: CanvasRenderingContext2D,
-    vp: CanvasViewport,
-    x: number,
-    y: number,
-    color: string,
-    lineWidth: number,
-  ): void {
-    const x0 = this.coords.mathToScreenX(x, vp) / vp.dpr;
-    const y0 = this.coords.mathToScreenY(0, vp) / vp.dpr;
-    const y1 = this.coords.mathToScreenY(y, vp) / vp.dpr;
-
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x0, y1);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  private drawPoints(
-    ctx: CanvasRenderingContext2D,
-    vp: CanvasViewport,
-    points: DftPoint[],
-    color: string,
-    radius: number,
-  ): void {
-    if (points.length === 0) return;
-
-    ctx.save();
-    ctx.fillStyle = color;
-
-    for (const p of points) {
-      const sx = this.coords.mathToScreenX(p.x, vp) / vp.dpr;
-      const sy = this.coords.mathToScreenY(p.y, vp) / vp.dpr;
-      ctx.beginPath();
-      ctx.arc(sx, sy, radius, 0, TAU);
-      ctx.fill();
-    }
-
-    ctx.restore();
-  }
 }
