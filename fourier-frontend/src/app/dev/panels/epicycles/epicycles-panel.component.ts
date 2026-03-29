@@ -290,7 +290,8 @@ function lissajousPreset(samples: number): DftPoint[] {
               @if (normalizationInfo(); as norm) {
                 <p class="text-[11px] text-cyan-300">
                   @if (norm.centered) {
-                    Centro aplicado: ({{ norm.centerX.toFixed(2) }}, {{ norm.centerY.toFixed(2) }}) ·
+                    Centro aplicado: ({{ norm.centerX.toFixed(2) }}, {{ norm.centerY.toFixed(2) }})
+                    ·
                   } @else {
                     Sin centrado ·
                   }

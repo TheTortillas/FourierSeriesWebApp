@@ -16,6 +16,12 @@ interface SignalPreset {
   generator: (n: number, t: number) => number;
 }
 
+interface SpectrumBin {
+  coeff: DftCoefficient;
+  xBin: number;
+  kSigned: number;
+}
+
 const TAU = Math.PI * 2;
 
 @Component({
@@ -27,25 +33,66 @@ const TAU = Math.PI * 2;
         DFT Lab - Señal 1D (Fase A)
       </h2>
 
-      <div class="grid grid-cols-1 xl:grid-cols-[24rem_1fr] gap-4 min-h-0 flex-1">
+      <div class="grid grid-cols-1 xl:grid-cols-[25rem_1fr] gap-4 min-h-0 flex-1">
         <section class="border border-gray-700 rounded p-4 space-y-4 overflow-auto">
           <div class="space-y-2">
-            <p class="text-gray-500 text-xs">Preset de señal</p>
+            <p class="text-gray-500 text-xs">Fuente de señal</p>
             <div class="flex flex-wrap gap-2">
-              @for (preset of presets; track preset.id) {
-                <button
-                  (click)="presetId.set(preset.id)"
-                  [class]="
-                    presetId() === preset.id
-                      ? 'bg-yellow-500 text-gray-900 text-xs px-2.5 py-1 rounded font-semibold cursor-pointer'
-                      : 'bg-gray-700 hover:bg-gray-600 text-gray-100 text-xs px-2.5 py-1 rounded cursor-pointer'
-                  "
-                >
-                  {{ preset.label }}
-                </button>
-              }
+              <button
+                (click)="sourceMode.set('preset')"
+                [class]="
+                  sourceMode() === 'preset'
+                    ? 'bg-yellow-500 text-gray-900 text-xs px-2.5 py-1 rounded font-semibold cursor-pointer'
+                    : 'bg-gray-700 hover:bg-gray-600 text-gray-100 text-xs px-2.5 py-1 rounded cursor-pointer'
+                "
+              >
+                Presets
+              </button>
+              <button
+                (click)="sourceMode.set('manual')"
+                [class]="
+                  sourceMode() === 'manual'
+                    ? 'bg-yellow-500 text-gray-900 text-xs px-2.5 py-1 rounded font-semibold cursor-pointer'
+                    : 'bg-gray-700 hover:bg-gray-600 text-gray-100 text-xs px-2.5 py-1 rounded cursor-pointer'
+                "
+              >
+                Función manual
+              </button>
             </div>
           </div>
+
+          @if (sourceMode() === 'preset') {
+            <div class="space-y-2">
+              <p class="text-gray-500 text-xs">Preset de señal</p>
+              <div class="flex flex-wrap gap-2">
+                @for (preset of presets; track preset.id) {
+                  <button
+                    (click)="presetId.set(preset.id)"
+                    [class]="
+                      presetId() === preset.id
+                        ? 'bg-cyan-500 text-gray-900 text-xs px-2.5 py-1 rounded font-semibold cursor-pointer'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-100 text-xs px-2.5 py-1 rounded cursor-pointer'
+                    "
+                  >
+                    {{ preset.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="space-y-2">
+              <p class="text-gray-500 text-xs">f(t) con t en [0, 1)</p>
+              <textarea
+                [ngModel]="manualExpression()"
+                (ngModelChange)="manualExpression.set($event)"
+                rows="4"
+                class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs text-gray-100 font-mono"
+              ></textarea>
+              <p class="text-[11px] text-gray-500">
+                Usa: sin, cos, tan, sqrt, abs, exp, log, pow, pi. Ej: sin(2*pi*7*t)+0.4*cos(2*pi*15*t+0.8)
+              </p>
+            </div>
+          }
 
           <div class="grid grid-cols-2 gap-3 text-xs">
             <label class="space-y-1">
@@ -101,14 +148,69 @@ const TAU = Math.PI * 2;
             />
           </div>
 
-          <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
-            <input
-              type="checkbox"
-              [ngModel]="showSampledPoints()"
-              (ngModelChange)="showSampledPoints.set($event)"
-            />
-            Ver muestras discretas en señal temporal
-          </label>
+          <div class="space-y-2 rounded border border-gray-700 p-2">
+            <p class="text-gray-500 text-xs">Capas visibles (señal temporal)</p>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="showOriginalFunction()"
+                (ngModelChange)="showOriginalFunction.set($event)"
+              />
+              Función original (continua)
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="showSampledSignal()"
+                (ngModelChange)="showSampledSignal.set($event)"
+              />
+              Señal muestreada
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="showReconstructedFull()"
+                (ngModelChange)="showReconstructedFull.set($event)"
+              />
+              Reconstrucción full
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="showReconstructedTopK()"
+                (ngModelChange)="showReconstructedTopK.set($event)"
+              />
+              Reconstrucción top-K
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="showSampledPoints()"
+                (ngModelChange)="showSampledPoints.set($event)"
+              />
+              Marcar puntos discretos
+            </label>
+          </div>
+
+          <div class="space-y-2 rounded border border-gray-700 p-2">
+            <p class="text-gray-500 text-xs">Espectro</p>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="shiftedSpectrum()"
+                (ngModelChange)="shiftedSpectrum.set($event)"
+              />
+              Centrar frecuencias (tipo fftshift)
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+              <input
+                type="checkbox"
+                [ngModel]="showZeroBins()"
+                (ngModelChange)="showZeroBins.set($event)"
+              />
+              Mostrar bins en cero
+            </label>
+          </div>
 
           <div class="flex items-center gap-2 flex-wrap">
             <button
@@ -164,7 +266,7 @@ const TAU = Math.PI * 2;
         <section class="grid grid-rows-3 gap-3 min-h-0">
           <div class="border border-gray-700 rounded overflow-hidden bg-gray-950 min-h-0">
             <div class="text-[11px] px-2 py-1 border-b border-gray-800 text-gray-400">
-              Señal temporal (original / reconstrucción full / reconstrucción top-K)
+              Señal temporal
             </div>
             <app-function-plot [layers]="timeLayers()" [initialUnit]="38"></app-function-plot>
           </div>
@@ -195,14 +297,24 @@ export class DftSignalLabPanelComponent {
   readonly error = signal<string | null>(null);
   readonly result = signal<DftResponse | null>(null);
 
+  readonly sourceMode = signal<'preset' | 'manual'>('preset');
   readonly presetId = signal('mix');
+  readonly manualExpression = signal('sin(2*pi*5*t) + 0.55*cos(2*pi*13*t + 0.8) + 0.35*sin(2*pi*29*t - 0.35)');
   readonly sampleCount = signal(256);
   readonly noiseLevel = signal(0.02);
   readonly topK = signal(16);
   readonly phaseThresholdPercent = signal(1.5);
-  readonly showSampledPoints = signal(false);
 
-  readonly originalSignal = signal<DftPoint[]>([]);
+  readonly showOriginalFunction = signal(true);
+  readonly showSampledSignal = signal(true);
+  readonly showReconstructedFull = signal(true);
+  readonly showReconstructedTopK = signal(true);
+  readonly showSampledPoints = signal(false);
+  readonly shiftedSpectrum = signal(false);
+  readonly showZeroBins = signal(true);
+
+  readonly originalFunctionCurve = signal<DftPoint[]>([]);
+  readonly sampledSignal = signal<DftPoint[]>([]);
 
   readonly presets: SignalPreset[] = [
     {
@@ -237,16 +349,22 @@ export class DftSignalLabPanelComponent {
     return Math.max(1, Math.floor(n / 2));
   });
 
-  readonly positiveCoefficients = computed(() => {
+  readonly spectrumBins = computed(() => {
     const res = this.result();
-    if (!res) return [] as DftCoefficient[];
+    if (!res) return [] as SpectrumBin[];
 
-    return [...res.coefficients]
-      .filter((c) => {
-        const ks = this.signedK(c.k, res.N);
-        return ks >= 0 && ks <= Math.floor(res.N / 2);
-      })
-      .sort((a, b) => this.signedK(a.k, res.N) - this.signedK(b.k, res.N));
+    const shifted = this.shiftedSpectrum();
+
+    const bins = res.coefficients.map((coeff) => {
+      const kSigned = this.signedK(coeff.k, res.N);
+      return {
+        coeff,
+        kSigned,
+        xBin: shifted ? kSigned : coeff.k,
+      } satisfies SpectrumBin;
+    });
+
+    return bins.sort((a, b) => a.xBin - b.xBin);
   });
 
   readonly topKCoefficients = computed(() => {
@@ -261,13 +379,13 @@ export class DftSignalLabPanelComponent {
 
   readonly reconstructedTopK = computed<DftPoint[]>(() => {
     const res = this.result();
-    const original = this.originalSignal();
-    if (!res || original.length === 0) return [];
+    const sampled = this.sampledSignal();
+    if (!res || sampled.length === 0) return [];
 
     const coeffs = this.topKCoefficients();
     const N = res.N;
 
-    return original.map((p, n) => {
+    return sampled.map((p, n) => {
       let y = 0;
       for (const c of coeffs) {
         const angle = (TAU * c.k * n) / N;
@@ -278,7 +396,7 @@ export class DftSignalLabPanelComponent {
   });
 
   readonly rmsTopK = computed(() => {
-    const original = this.originalSignal();
+    const original = this.sampledSignal();
     const recon = this.reconstructedTopK();
     const n = Math.min(original.length, recon.length);
     if (n === 0) return 0;
@@ -292,19 +410,23 @@ export class DftSignalLabPanelComponent {
   });
 
   readonly timeLayers = computed<PlotLayer[]>(() => {
-    const original = this.originalSignal();
+    const originalFn = this.originalFunctionCurve();
+    const sampled = this.sampledSignal();
     const fullRecon = this.result()?.reconstructed ?? [];
     const topRecon = this.reconstructedTopK();
 
     const curves: Curve[] = [];
 
-    if (original.length > 1) {
-      curves.push({ points: original, color: '#94a3b8', lineWidth: 1.6 });
+    if (this.showOriginalFunction() && originalFn.length > 1) {
+      curves.push({ points: originalFn, color: '#94a3b8', lineWidth: 1.5 });
     }
-    if (fullRecon.length > 1) {
-      curves.push({ points: fullRecon, color: '#22c55e', lineWidth: 1.4, dashed: true });
+    if (this.showSampledSignal() && sampled.length > 1) {
+      curves.push({ points: sampled, color: '#f8fafc', lineWidth: 1.2, dashed: true });
     }
-    if (topRecon.length > 1) {
+    if (this.showReconstructedFull() && fullRecon.length > 1) {
+      curves.push({ points: fullRecon, color: '#22c55e', lineWidth: 1.4 });
+    }
+    if (this.showReconstructedTopK() && topRecon.length > 1) {
       curves.push({ points: topRecon, color: '#f59e0b', lineWidth: 1.8 });
     }
 
@@ -312,28 +434,37 @@ export class DftSignalLabPanelComponent {
       {
         curves,
         onDraw: (ctx, vp) => {
-          if (!this.showSampledPoints()) return;
-          this.drawPoints(ctx, vp, original, '#f8fafc', 1.6);
+          if (!this.showSampledPoints() || !this.showSampledSignal()) return;
+          this.drawPoints(ctx, vp, sampled, '#f8fafc', 1.6);
         },
       },
     ];
   });
 
   readonly amplitudeLayers = computed<PlotLayer[]>(() => {
-    const res = this.result();
-    const coeffs = this.positiveCoefficients();
+    const bins = this.spectrumBins();
+    const topSet = new Set(this.topKCoefficients().map((c) => c.k));
 
     return [
       {
         curves: [],
         onDraw: (ctx, vp) => {
-          if (!res || coeffs.length === 0) return;
+          if (bins.length === 0) return;
 
-          const topSet = new Set(this.topKCoefficients().map((c) => c.k));
-          for (const c of coeffs) {
-            const k = this.signedK(c.k, res.N);
-            const highlight = topSet.has(c.k);
-            this.drawStem(ctx, vp, k, c.amplitude, highlight ? '#f59e0b' : '#60a5fa', 2.1);
+          const zeros: DftPoint[] = [];
+          for (const b of bins) {
+            const amp = b.coeff.amplitude;
+            const highlight = topSet.has(b.coeff.k);
+            if (amp === 0 && !this.showZeroBins()) continue;
+
+            this.drawStem(ctx, vp, b.xBin, amp, highlight ? '#f59e0b' : '#60a5fa', 2);
+            if (Math.abs(amp) < 1e-12) {
+              zeros.push({ x: b.xBin, y: 0 });
+            }
+          }
+
+          if (this.showZeroBins()) {
+            this.drawPoints(ctx, vp, zeros, '#93c5fd', 1.8);
           }
         },
       },
@@ -341,25 +472,30 @@ export class DftSignalLabPanelComponent {
   });
 
   readonly phaseLayers = computed<PlotLayer[]>(() => {
-    const res = this.result();
-    const coeffs = this.positiveCoefficients();
+    const bins = this.spectrumBins();
 
     return [
       {
         curves: [],
         onDraw: (ctx, vp) => {
-          if (!res || coeffs.length === 0) return;
+          if (bins.length === 0) return;
 
-          const maxAmp = coeffs.reduce((m, c) => Math.max(m, c.amplitude), 0);
+          const maxAmp = bins.reduce((m, b) => Math.max(m, b.coeff.amplitude), 0);
           const threshold = (this.phaseThresholdPercent() / 100) * maxAmp;
+          const phasePoints: DftPoint[] = [];
 
-          for (const c of coeffs) {
-            if (c.amplitude < threshold) continue;
-            const k = this.signedK(c.k, res.N);
-            const phaseInPi = c.phase / Math.PI;
-            this.drawStem(ctx, vp, k, phaseInPi, '#22d3ee', 1.8);
-            this.drawPoints(ctx, vp, [{ x: k, y: phaseInPi }], '#22d3ee', 2.4);
+          for (const b of bins) {
+            const amp = b.coeff.amplitude;
+            if (amp === 0 && !this.showZeroBins()) continue;
+
+            const reliable = amp >= threshold;
+            const phaseInPi = reliable ? b.coeff.phase / Math.PI : 0;
+            const color = reliable ? '#22d3ee' : '#64748b';
+            this.drawStem(ctx, vp, b.xBin, phaseInPi, color, 1.8);
+            phasePoints.push({ x: b.xBin, y: phaseInPi });
           }
+
+          this.drawPoints(ctx, vp, phasePoints, '#22d3ee', 2.2);
         },
       },
     ];
@@ -372,10 +508,14 @@ export class DftSignalLabPanelComponent {
     this.error.set(null);
 
     try {
-      const points = this.generateSignal();
-      this.originalSignal.set(points);
+      const generator = this.resolveGenerator();
+      const sampled = this.generateSampledSignal(generator);
+      const originalFn = this.generateContinuousFunction(generator);
 
-      const res = await firstValueFrom(this.api.calculateDFT({ mode: 'signal', points }));
+      this.sampledSignal.set(sampled);
+      this.originalFunctionCurve.set(originalFn);
+
+      const res = await firstValueFrom(this.api.calculateDFT({ mode: 'signal', points: sampled }));
       this.result.set(res);
       this.topK.set(Math.min(16, Math.max(1, Math.floor(res.N / 2))));
     } catch (err) {
@@ -387,20 +527,125 @@ export class DftSignalLabPanelComponent {
     }
   }
 
-  private generateSignal(): DftPoint[] {
-    const n = this.sampleCount();
-    const preset = this.presets.find((p) => p.id === this.presetId()) ?? this.presets[0];
-    const noise = this.noiseLevel();
+  private resolveGenerator(): (n: number, t: number) => number {
+    if (this.sourceMode() === 'preset') {
+      const preset = this.presets.find((p) => p.id === this.presetId()) ?? this.presets[0];
+      if (!preset) {
+        throw new Error('No hay preset disponible.');
+      }
+      return preset.generator;
+    }
 
+    const manual = this.buildManualGenerator(this.manualExpression());
+    if (!manual) {
+      throw new Error('Expresión manual inválida. Revisa sintaxis y funciones permitidas.');
+    }
+    return manual;
+  }
+
+  private generateSampledSignal(generator: (n: number, t: number) => number): DftPoint[] {
+    const n = this.sampleCount();
+    const noise = this.noiseLevel();
     const points: DftPoint[] = [];
+
     for (let i = 0; i < n; i++) {
       const t = i / n;
-      const base = preset.generator(i, t);
+      const base = generator(i, t);
       const noisy = base + this.randomNoise(noise);
       points.push({ x: i, y: noisy });
     }
 
     return points;
+  }
+
+  private generateContinuousFunction(generator: (n: number, t: number) => number): DftPoint[] {
+    const n = this.sampleCount();
+    const dense = Math.max(512, Math.min(2400, n * 3));
+    const points: DftPoint[] = [];
+
+    for (let i = 0; i < dense; i++) {
+      const t = i / (dense - 1);
+      points.push({
+        x: t * (n - 1),
+        y: generator(i, t),
+      });
+    }
+
+    return points;
+  }
+
+  private buildManualGenerator(rawExpression: string): ((n: number, t: number) => number) | null {
+    const expression = rawExpression.trim().toLowerCase();
+    if (!expression) return null;
+
+    if (/constructor|window|global|process|require|import|function|=>|;|\{|\}|\[|\]|=/.test(expression)) {
+      return null;
+    }
+
+    if (/[^0-9a-z_+\-*/^().,\s]/.test(expression)) {
+      return null;
+    }
+
+    const jsExpr = expression.replace(/\^/g, '**');
+
+    try {
+      const fn = new Function(
+        't',
+        'pi',
+        'sin',
+        'cos',
+        'tan',
+        'sqrt',
+        'abs',
+        'exp',
+        'log',
+        'pow',
+        `return (${jsExpr});`,
+      ) as (
+        t: number,
+        pi: number,
+        sin: typeof Math.sin,
+        cos: typeof Math.cos,
+        tan: typeof Math.tan,
+        sqrt: typeof Math.sqrt,
+        abs: typeof Math.abs,
+        exp: typeof Math.exp,
+        log: typeof Math.log,
+        pow: typeof Math.pow,
+      ) => number;
+
+      const probe = fn(
+        0.123,
+        Math.PI,
+        Math.sin,
+        Math.cos,
+        Math.tan,
+        Math.sqrt,
+        Math.abs,
+        Math.exp,
+        Math.log,
+        Math.pow,
+      );
+      if (!Number.isFinite(probe)) return null;
+
+      return (_n: number, t: number) => {
+        const y = fn(
+          t,
+          Math.PI,
+          Math.sin,
+          Math.cos,
+          Math.tan,
+          Math.sqrt,
+          Math.abs,
+          Math.exp,
+          Math.log,
+          Math.pow,
+        );
+        return Number.isFinite(y) ? y : 0;
+      };
+    } catch {
+      return null;
+    }
   }
 
   private randomNoise(level: number): number {
