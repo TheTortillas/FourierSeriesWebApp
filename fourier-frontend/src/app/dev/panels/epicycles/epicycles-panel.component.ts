@@ -276,15 +276,34 @@ function lissajousPreset(samples: number): DftPoint[] {
                 />
                 Auto-escalar coordenadas grandes
               </label>
+              <label class="flex items-center gap-2 cursor-pointer text-gray-300 text-xs">
+                <input
+                  type="checkbox"
+                  [ngModel]="centerBeforeScale()"
+                  (ngModelChange)="centerBeforeScale.set($event)"
+                />
+                Centrar antes de escalar
+              </label>
               <p class="text-[11px] text-gray-500">
                 Recomendado para puntos de SVG en miles: centra y escala antes de calcular.
               </p>
               @if (normalizationInfo(); as norm) {
                 <p class="text-[11px] text-cyan-300">
-                  Centro aplicado: ({{ norm.centerX.toFixed(2) }}, {{ norm.centerY.toFixed(2) }}) ·
+                  @if (norm.centered) {
+                    Centro aplicado: ({{ norm.centerX.toFixed(2) }}, {{ norm.centerY.toFixed(2) }}) ·
+                  } @else {
+                    Sin centrado ·
+                  }
                   escala: {{ norm.scale.toExponential(3) }}
                 </p>
               }
+              <button
+                (click)="revertNormalization()"
+                [disabled]="loading()"
+                class="mt-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-gray-100 text-xs px-2.5 py-1 rounded transition-colors cursor-pointer"
+              >
+                Revertir normalización
+              </button>
             </div>
 
             <div class="space-y-2 pt-1">
@@ -377,8 +396,10 @@ export class EpicyclesPanelComponent implements OnDestroy {
   readonly showEpicycles = signal(true);
   readonly selectedCoeffK = signal<number | null>(null);
   readonly autoNormalizeInput = signal(true);
+  readonly centerBeforeScale = signal(true);
   readonly normalizationInfo = signal<{
     applied: boolean;
+    centered: boolean;
     centerX: number;
     centerY: number;
     scale: number;
@@ -633,6 +654,12 @@ export class EpicyclesPanelComponent implements OnDestroy {
     this.selectedCoeffK.update((current) => (current === k ? null : k));
   }
 
+  async revertNormalization(): Promise<void> {
+    this.autoNormalizeInput.set(false);
+    this.normalizationInfo.set(null);
+    await this.calculate();
+  }
+
   private parsePoints(raw: string): DftPoint[] {
     const lines = raw
       .split(/\r?\n/)
@@ -852,12 +879,20 @@ export class EpicyclesPanelComponent implements OnDestroy {
 
   private normalizePoints(points: DftPoint[]): {
     points: DftPoint[];
-    info: { applied: boolean; centerX: number; centerY: number; scale: number };
+    info: {
+      applied: boolean;
+      centered: boolean;
+      centerX: number;
+      centerY: number;
+      scale: number;
+    };
   } {
+    const centered = this.centerBeforeScale();
+
     if (points.length === 0) {
       return {
         points,
-        info: { applied: false, centerX: 0, centerY: 0, scale: 1 },
+        info: { applied: false, centered, centerX: 0, centerY: 0, scale: 1 },
       };
     }
 
@@ -868,8 +903,8 @@ export class EpicyclesPanelComponent implements OnDestroy {
       sumY += p.y;
     }
 
-    const centerX = sumX / points.length;
-    const centerY = sumY / points.length;
+    const centerX = centered ? sumX / points.length : 0;
+    const centerY = centered ? sumY / points.length : 0;
 
     let maxRadius = 0;
     for (const p of points) {
@@ -889,6 +924,7 @@ export class EpicyclesPanelComponent implements OnDestroy {
       points: normalized,
       info: {
         applied: true,
+        centered,
         centerX,
         centerY,
         scale,
