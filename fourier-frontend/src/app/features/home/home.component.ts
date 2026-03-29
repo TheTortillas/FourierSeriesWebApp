@@ -38,22 +38,28 @@ export class HomeComponent implements OnDestroy {
       maxN: 13,
       eval: (x, n) => {
         let y = 0;
-        for (let k = 0; k < n; k++) { const m = 2 * k + 1; y += Math.sin(m * x) / m; }
+        for (let k = 0; k < n; k++) {
+          const m = 2 * k + 1;
+          y += Math.sin(m * x) / m;
+        }
         return (4 / Math.PI) * y;
       },
-      harmonic: (x, k) => { const m = 2 * k + 1; return (4 / Math.PI) * Math.sin(m * x) / m; },
+      harmonic: (x, k) => {
+        const m = 2 * k + 1;
+        return ((4 / Math.PI) * Math.sin(m * x)) / m;
+      },
     },
     {
       name: 'sierra',
       maxN: 16,
       eval: (x, n) => {
         let y = 0;
-        for (let k = 1; k <= n; k++) y += (k % 2 !== 0 ? 1 : -1) * Math.sin(k * x) / k;
+        for (let k = 1; k <= n; k++) y += ((k % 2 !== 0 ? 1 : -1) * Math.sin(k * x)) / k;
         return (2 / Math.PI) * y;
       },
       harmonic: (x, k) => {
         const n = k + 1;
-        return (2 / Math.PI) * (n % 2 !== 0 ? 1 : -1) * Math.sin(n * x) / n;
+        return ((2 / Math.PI) * (n % 2 !== 0 ? 1 : -1) * Math.sin(n * x)) / n;
       },
     },
     {
@@ -61,12 +67,15 @@ export class HomeComponent implements OnDestroy {
       maxN: 10,
       eval: (x, n) => {
         let y = 0;
-        for (let k = 0; k < n; k++) { const m = 2 * k + 1; y += (k % 2 === 0 ? 1 : -1) * Math.sin(m * x) / (m * m); }
+        for (let k = 0; k < n; k++) {
+          const m = 2 * k + 1;
+          y += ((k % 2 === 0 ? 1 : -1) * Math.sin(m * x)) / (m * m);
+        }
         return (8 / (Math.PI * Math.PI)) * y;
       },
       harmonic: (x, k) => {
         const m = 2 * k + 1;
-        return (8 / (Math.PI * Math.PI)) * (k % 2 === 0 ? 1 : -1) * Math.sin(m * x) / (m * m);
+        return ((8 / (Math.PI * Math.PI)) * (k % 2 === 0 ? 1 : -1) * Math.sin(m * x)) / (m * m);
       },
     },
   ];
@@ -116,9 +125,7 @@ export class HomeComponent implements OnDestroy {
 
     // Build phase: 0–8s → N grows 1→maxN; hold 8–11s
     const buildTime = 8000;
-    const N = t < buildTime
-      ? Math.max(1, Math.round((t / buildTime) * maxN))
-      : maxN;
+    const N = t < buildTime ? Math.max(1, Math.round((t / buildTime) * maxN)) : maxN;
 
     // HiDPI setup
     const dpr = window.devicePixelRatio || 1;
@@ -133,12 +140,25 @@ export class HomeComponent implements OnDestroy {
     ctx.clearRect(0, 0, W, H);
 
     const isDark = this.theme.isDark;
-    const ampColor  = isDark ? [200, 140,  70] : [139,  37,   0];
-    const harmColor = isDark ? [180, 130,  80] : [120,  40,   0];
+    const isNeutral = this.theme.isNeutral;
+    const ampColor = isNeutral
+      ? isDark
+        ? [96, 165, 250]
+        : [59, 130, 246]
+      : isDark
+        ? [200, 140, 70]
+        : [139, 37, 0];
+    const harmColor = isNeutral
+      ? isDark
+        ? [120, 160, 220]
+        : [80, 125, 210]
+      : isDark
+        ? [180, 130, 80]
+        : [120, 40, 0];
 
     const amplitude = H * 0.28;
-    const centerY   = H * 0.5;
-    const xRange    = 3 * Math.PI;
+    const centerY = H * 0.5;
+    const xRange = 3 * Math.PI;
 
     // Individual harmonics — slightly visible
     for (let k = 0; k < N; k++) {
@@ -156,7 +176,7 @@ export class HomeComponent implements OnDestroy {
 
     // Partial sum — main curve
     ctx.beginPath();
-    ctx.strokeStyle = `rgba(${ampColor[0]},${ampColor[1]},${ampColor[2]},${isDark ? 0.55 : 0.30})`;
+    ctx.strokeStyle = `rgba(${ampColor[0]},${ampColor[1]},${ampColor[2]},${isDark ? 0.55 : 0.3})`;
     ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
     for (let px = 0; px <= W; px++) {

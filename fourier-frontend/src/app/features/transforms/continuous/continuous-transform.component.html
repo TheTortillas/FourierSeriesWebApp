@@ -421,13 +421,16 @@
                   (click)="showOriginal.set(!showOriginal())"
                   [class]="
                     showOriginal()
-                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-[#c14030] bg-[#c14030]/10 text-[#c14030]'
+                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
                       : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
                   "
+                  [style.borderColor]="showOriginal() ? originalColor() : null"
+                  [style.color]="showOriginal() ? originalColor() : null"
+                  [style.backgroundColor]="showOriginal() ? originalColor() + '1A' : null"
                 >
                   <span
                     class="w-2 h-2 rounded-full shrink-0"
-                    [style.background]="showOriginal() ? '#c14030' : 'currentColor'"
+                    [style.background]="showOriginal() ? originalColor() : 'currentColor'"
                   ></span>
                   {{ inputFnLabel() }}
                 </button>
@@ -437,11 +440,17 @@
                   (click)="showReal.set(!showReal())"
                   [class]="
                     showReal()
-                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
                       : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
                   "
+                  [style.borderColor]="showReal() ? resultColor() : null"
+                  [style.color]="showReal() ? resultColor() : null"
+                  [style.backgroundColor]="showReal() ? resultColor() + '1A' : null"
                 >
-                  <span class="w-2 h-2 rounded-full shrink-0 bg-blue-500"></span>
+                  <span
+                    class="w-2 h-2 rounded-full shrink-0"
+                    [style.backgroundColor]="resultColor()"
+                  ></span>
                   @if (mode() === 'ft') {
                     Re&#x7B;F&#x7D;
                   } @else {
@@ -455,11 +464,17 @@
                     (click)="showImag.set(!showImag())"
                     [class]="
                       showImag()
-                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
                         : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
                     "
+                    [style.borderColor]="showImag() ? imagColor() : null"
+                    [style.color]="showImag() ? imagColor() : null"
+                    [style.backgroundColor]="showImag() ? imagColor() + '1A' : null"
                   >
-                    <span class="w-2 h-2 rounded-full shrink-0 bg-amber-500"></span>
+                    <span
+                      class="w-2 h-2 rounded-full shrink-0"
+                      [style.backgroundColor]="imagColor()"
+                    ></span>
                     Im&#x7B;F&#x7D;
                   </button>
 
@@ -468,11 +483,17 @@
                     (click)="showMag.set(!showMag())"
                     [class]="
                       showMag()
-                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-green-500 bg-green-500/10 text-green-600 dark:text-green-400'
+                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
                         : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
                     "
+                    [style.borderColor]="showMag() ? magColor() : null"
+                    [style.color]="showMag() ? magColor() : null"
+                    [style.backgroundColor]="showMag() ? magColor() + '1A' : null"
                   >
-                    <span class="w-2 h-2 rounded-full shrink-0 bg-green-500"></span>
+                    <span
+                      class="w-2 h-2 rounded-full shrink-0"
+                      [style.backgroundColor]="magColor()"
+                    ></span>
                     |F|
                   </button>
                 }
@@ -543,16 +564,25 @@
             <div class="border-t border-border dark:border-dark-border"></div>
 
             <section class="flex flex-col gap-2">
-              <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                Estilo de líneas
-              </h4>
+              <div class="flex items-center justify-between gap-2">
+                <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                  Estilo de líneas
+                </h4>
+                <button
+                  type="button"
+                  (click)="resetLineColorsToPreset()"
+                  class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors cursor-pointer"
+                >
+                  Restablecer
+                </button>
+              </div>
               <div class="flex flex-wrap gap-3">
                 <div class="flex items-center gap-2">
                   <span class="text-muted dark:text-dark-muted">Original</span>
                   <input
                     type="color"
                     [value]="originalColor()"
-                    (input)="originalColor.set($any($event.target).value)"
+                    (input)="onOriginalColorInput($any($event.target).value)"
                     class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
                   />
                   <input
@@ -571,7 +601,7 @@
                   <input
                     type="color"
                     [value]="resultColor()"
-                    (input)="resultColor.set($any($event.target).value)"
+                    (input)="onResultColorInput($any($event.target).value)"
                     class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
                   />
                   <input
@@ -591,7 +621,7 @@
                     <input
                       type="color"
                       [value]="imagColor()"
-                      (input)="imagColor.set($any($event.target).value)"
+                      (input)="onImagColorInput($any($event.target).value)"
                       class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
                     />
                   </div>
@@ -601,7 +631,7 @@
                     <input
                       type="color"
                       [value]="magColor()"
-                      (input)="magColor.set($any($event.target).value)"
+                      (input)="onMagColorInput($any($event.target).value)"
                       class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
                     />
                   </div>

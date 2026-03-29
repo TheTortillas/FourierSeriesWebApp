@@ -52,10 +52,41 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Neutral palette (light mode) */
+  :root[data-palette='neutral'] {
+    --color-ink: #1a1a1a;
+    --color-paper: #f5f5f5;
+    --color-paper2: #ffffff;
+    --color-border: #e5e5e5;
+    --color-accent: #3b82f6;
+    --color-accent2: #2563eb;
+    --color-accent3: #0f766e;
+    --color-gold: #3b82f6;
+    --color-muted: #6b6b6b;
+
+    --color-dark-bg: #1a1a1a;
+    --color-dark-surface: #2a2a2a;
+    --color-dark-surface2: #242424;
+    --color-dark-border: #3a3a3a;
+    --color-dark-text: #f5f5f5;
+    --color-dark-ink: #f5f5f5;
+    --color-dark-muted: #a0a0a0;
+    --color-dark-accent: #60a5fa;
+    --color-dark-accent2: #3b82f6;
+    --color-dark-gold: #60a5fa;
+  }
+
   html.dark {
     color-scheme: dark;
     background-color: var(--color-dark-bg);
     color: var(--color-dark-text);
+  }
+
+  /* Neutral palette (dark mode): brighter accent for contrast */
+  html.dark[data-palette='neutral'] {
+    --color-accent: #60a5fa;
+    --color-accent2: #3b82f6;
+    --color-muted: #a0a0a0;
   }
 
   /* Tipografía base */

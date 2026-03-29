@@ -26,6 +26,7 @@ import { MathUtilsService } from '../../../../core/services/math/math-utils.serv
 import { MathjaxDirective } from '../../../../shared/directives/mathjax.directive';
 import { ApiService } from '../../../../core/services/api/api.service';
 import { UserStore } from '../../../../core/services/auth/user.store';
+import { ThemeService } from '../../../../core/services/theme/theme.service';
 import { ParamSlidersComponent } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SpectrumChartComponent } from '../../../../shared/components/spectrum-chart/spectrum-chart.component';
 import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
@@ -33,16 +34,79 @@ import { SimplifyProfile, HistoryEntry } from '../../../../domain';
 import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
 
 /** Cycling hue palette for individual harmonics */
-const HARMONIC_COLORS = [
-  'hsla(217, 70%, 55%, 0.55)',
-  'hsla(145, 60%, 45%, 0.55)',
-  'hsla(38,  80%, 50%, 0.55)',
-  'hsla(270, 60%, 60%, 0.55)',
-  'hsla(0,   70%, 55%, 0.55)',
-  'hsla(185, 65%, 45%, 0.55)',
-  'hsla(320, 60%, 55%, 0.55)',
-  'hsla(60,  70%, 45%, 0.55)',
-];
+interface SeriesColorPreset {
+  original: string;
+  approx: string;
+  harmonics: string[];
+}
+
+function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorPreset {
+  if (!isNeutral && !isDark) {
+    return {
+      original: '#8b2500',
+      approx: '#1a4a6b',
+      harmonics: [
+        'hsla(217, 70%, 55%, 0.55)',
+        'hsla(145, 60%, 45%, 0.55)',
+        'hsla(38, 80%, 50%, 0.55)',
+        'hsla(270, 60%, 60%, 0.55)',
+        'hsla(0, 70%, 55%, 0.55)',
+        'hsla(185, 65%, 45%, 0.55)',
+        'hsla(320, 60%, 55%, 0.55)',
+        'hsla(60, 70%, 45%, 0.55)',
+      ],
+    };
+  }
+
+  if (!isNeutral && isDark) {
+    return {
+      original: '#e0ad74',
+      approx: '#79b6de',
+      harmonics: [
+        'hsla(210, 85%, 72%, 0.62)',
+        'hsla(145, 65%, 58%, 0.62)',
+        'hsla(36, 90%, 62%, 0.62)',
+        'hsla(280, 70%, 72%, 0.62)',
+        'hsla(0, 80%, 68%, 0.62)',
+        'hsla(185, 75%, 62%, 0.62)',
+        'hsla(325, 70%, 70%, 0.62)',
+        'hsla(60, 80%, 62%, 0.62)',
+      ],
+    };
+  }
+
+  if (isNeutral && !isDark) {
+    return {
+      original: '#2563eb',
+      approx: '#0f766e',
+      harmonics: [
+        'hsla(217, 78%, 52%, 0.5)',
+        'hsla(162, 70%, 35%, 0.5)',
+        'hsla(280, 60%, 55%, 0.5)',
+        'hsla(29, 92%, 48%, 0.5)',
+        'hsla(348, 78%, 50%, 0.5)',
+        'hsla(198, 80%, 42%, 0.5)',
+        'hsla(83, 62%, 42%, 0.5)',
+        'hsla(44, 90%, 45%, 0.5)',
+      ],
+    };
+  }
+
+  return {
+    original: '#60a5fa',
+    approx: '#2dd4bf',
+    harmonics: [
+      'hsla(213, 90%, 72%, 0.62)',
+      'hsla(168, 80%, 60%, 0.62)',
+      'hsla(280, 80%, 72%, 0.62)',
+      'hsla(32, 95%, 65%, 0.62)',
+      'hsla(350, 90%, 72%, 0.62)',
+      'hsla(190, 88%, 66%, 0.62)',
+      'hsla(96, 75%, 62%, 0.62)',
+      'hsla(48, 95%, 66%, 0.62)',
+    ],
+  };
+}
 
 @Component({
   selector: 'app-results-summary',
@@ -62,6 +126,7 @@ export class ResultsSummaryComponent {
   private readonly math = inject(MathUtilsService);
   readonly api = inject(ApiService);
   readonly userStore = inject(UserStore);
+  readonly theme = inject(ThemeService);
   readonly destroyRef = inject(DestroyRef);
 
   // ── Free-parameter sliders ────────────────────────────────────────────────
@@ -85,6 +150,8 @@ export class ResultsSummaryComponent {
   readonly showHarmonics = signal(false);
   readonly originalColor = signal('#8b2500');
   readonly approxColor = signal('#1a4a6b');
+  readonly customOriginalColor = signal(false);
+  readonly customApproxColor = signal(false);
   readonly originalLineWidth = signal(2.5);
   readonly approxLineWidth = signal(1.75);
   readonly showCanvasSettings = signal(true);
@@ -158,6 +225,7 @@ export class ResultsSummaryComponent {
     const showHarmonics = this.showHarmonics();
     const origColor = this.originalColor();
     const approxColorVal = this.approxColor();
+    const harmonicColors = this.harmonicColors();
     const origWidth = this.originalLineWidth();
     const approxWidth = this.approxLineWidth();
 
@@ -314,7 +382,7 @@ export class ResultsSummaryComponent {
           // Harmonics (drawn first, behind everything)
           for (let i = 0; i < localHarmonics.length; i++) {
             plotter.plotFn(ctx, localHarmonics[i], vp, {
-              color: HARMONIC_COLORS[i % HARMONIC_COLORS.length],
+              color: harmonicColors[i % harmonicColors.length],
               lineWidth: 1,
             });
           }
@@ -564,6 +632,14 @@ export class ResultsSummaryComponent {
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   constructor() {
+    effect(() => {
+      void this.theme.theme();
+      void this.theme.palette();
+      const preset = this.currentColorPreset();
+      if (!this.customOriginalColor()) this.originalColor.set(preset.original);
+      if (!this.customApproxColor()) this.approxColor.set(preset.approx);
+    });
+
     // Reset all local state whenever a new result arrives; also fetch latest history entry for favorite
     effect(() => {
       const result = this.store.result();
@@ -618,6 +694,12 @@ export class ResultsSummaryComponent {
     }
   }
 
+  readonly currentColorPreset = computed(() =>
+    getSeriesColorPreset(this.theme.isDark, this.theme.isNeutral),
+  );
+
+  readonly harmonicColors = computed(() => this.currentColorPreset().harmonics);
+
   // ── Tab & mode actions ────────────────────────────────────────────────────
 
   setTab(tab: 'coefficients' | 'terms' | 'spectrum' | 'validation'): void {
@@ -643,6 +725,24 @@ export class ResultsSummaryComponent {
     } else {
       void el.requestFullscreen();
     }
+  }
+
+  onOriginalColorInput(value: string): void {
+    this.customOriginalColor.set(true);
+    this.originalColor.set(value);
+  }
+
+  onApproxColorInput(value: string): void {
+    this.customApproxColor.set(true);
+    this.approxColor.set(value);
+  }
+
+  resetLineColorsToPreset(): void {
+    const preset = this.currentColorPreset();
+    this.customOriginalColor.set(false);
+    this.customApproxColor.set(false);
+    this.originalColor.set(preset.original);
+    this.approxColor.set(preset.approx);
   }
 
   downloadCanvas(): void {

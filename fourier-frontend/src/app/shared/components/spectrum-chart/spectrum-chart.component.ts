@@ -13,6 +13,7 @@ import { FunctionPlotComponent, PlotLayer } from '../function-plot/function-plot
 import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport } from '../../../core/services/canvas/canvas.types';
 import { TrigonometricTerm, ComplexTerm } from '../../../domain/types/fourier.types';
+import { ThemeService } from '../../../core/services/theme/theme.service';
 
 type SpectrumMode =
   | 'trigAmp'
@@ -45,10 +46,23 @@ interface StemPoint {
               (click)="spectrumMode.set(option.value)"
               [class]="
                 spectrumMode() === option.value
-                  ? 'px-3 py-1 rounded bg-accent text-white text-xs font-medium'
-                  : 'px-3 py-1 rounded bg-white/50 dark:bg-gray-700 text-ink dark:text-dark-ink text-xs hover:bg-white dark:hover:bg-gray-600 transition'
+                  ? 'px-3 py-1 rounded border text-xs font-medium transition flex items-center gap-1.5'
+                  : 'px-3 py-1 rounded border border-border dark:border-dark-border bg-white/50 dark:bg-gray-700 text-ink dark:text-dark-ink text-xs hover:bg-white dark:hover:bg-gray-600 transition flex items-center gap-1.5'
+              "
+              [style.borderColor]="
+                spectrumMode() === option.value ? optionColor(option.value) : null
+              "
+              [style.color]="spectrumMode() === option.value ? optionColor(option.value) : null"
+              [style.backgroundColor]="
+                spectrumMode() === option.value
+                  ? colorWithAlpha(optionColor(option.value), 0.14)
+                  : null
               "
             >
+              <span
+                class="inline-block w-2 h-2 rounded-full"
+                [style.backgroundColor]="optionColor(option.value)"
+              ></span>
               {{ option.label }}
             </button>
           }
@@ -169,6 +183,7 @@ interface StemPoint {
 })
 export class SpectrumChartComponent {
   private readonly coordTransform = inject(CoordinateTransformService);
+  private readonly theme = inject(ThemeService);
   private readonly destroyRef = inject(DestroyRef);
   readonly plotRef = viewChild(FunctionPlotComponent);
   readonly chartWrapper = viewChild<ElementRef<HTMLDivElement>>('chartWrapper');
@@ -266,6 +281,8 @@ export class SpectrumChartComponent {
 
     effect(() => {
       const mode = this.spectrumMode();
+      void this.theme.theme();
+      void this.theme.palette();
       if (this.useAutoColor()) {
         this.stemColor.set(this.defaultColorForMode(mode));
       }
@@ -305,25 +322,58 @@ export class SpectrumChartComponent {
     this.stemColor.set(this.defaultColorForMode(this.spectrumMode()));
   }
 
+  optionColor(mode: SpectrumMode): string {
+    return mode === this.spectrumMode() ? this.stemColor() : this.defaultColorForMode(mode);
+  }
+
+  colorWithAlpha(hex: string, alpha: number): string {
+    const normalized = hex.trim();
+    const short = /^#([0-9a-fA-F]{3})$/;
+    const full = /^#([0-9a-fA-F]{6})$/;
+
+    if (short.test(normalized)) {
+      const m = normalized.match(short);
+      if (!m) return `rgba(0,0,0,${alpha})`;
+      const r = parseInt(m[1][0] + m[1][0], 16);
+      const g = parseInt(m[1][1] + m[1][1], 16);
+      const b = parseInt(m[1][2] + m[1][2], 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    if (full.test(normalized)) {
+      const m = normalized.match(full);
+      if (!m) return `rgba(0,0,0,${alpha})`;
+      const r = parseInt(m[1].slice(0, 2), 16);
+      const g = parseInt(m[1].slice(2, 4), 16);
+      const b = parseInt(m[1].slice(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    return `rgba(0,0,0,${alpha})`;
+  }
+
   private defaultColorForMode(mode: SpectrumMode): string {
+    const isDark = this.theme.isDark;
+    const isNeutral = this.theme.isNeutral;
+
     switch (mode) {
       case 'trigAn':
       case 'trigAnAbs':
-        return '#2563eb';
+        return isDark ? '#7db7e8' : '#2563eb';
       case 'trigBn':
       case 'trigBnAbs':
-        return '#dc2626';
+        return !isNeutral ? (isDark ? '#e0ad74' : '#c14030') : isDark ? '#fb923c' : '#c2410c';
       case 'trigAmp':
-        return '#7c3aed';
+        return isDark ? '#c4b5fd' : '#7c3aed';
       case 'complexRe':
-        return '#2563eb';
+        return isDark ? '#7db7e8' : '#2563eb';
       case 'complexIm':
-        return '#059669';
+        return isDark ? '#7dd3a0' : '#059669';
       case 'complexPhase':
-        return '#f59e0b';
+        return isDark ? '#f6b26b' : '#d97706';
       case 'complexAbs':
       default:
-        return '#7c3aed';
+        return isDark ? '#c4b5fd' : '#7c3aed';
     }
   }
 
