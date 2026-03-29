@@ -12,6 +12,7 @@ import {
 import { FunctionPlotComponent, PlotLayer } from '../function-plot/function-plot.component';
 import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport } from '../../../core/services/canvas/canvas.types';
+import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { TrigonometricTerm, ComplexTerm } from '../../../domain/types/fourier.types';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 
@@ -183,6 +184,7 @@ interface StemPoint {
 })
 export class SpectrumChartComponent {
   private readonly coordTransform = inject(CoordinateTransformService);
+  private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly theme = inject(ThemeService);
   private readonly destroyRef = inject(DestroyRef);
   readonly plotRef = viewChild(FunctionPlotComponent);
@@ -561,27 +563,8 @@ export class SpectrumChartComponent {
     if (points.length === 0) return;
 
     const markerRadius = Math.max(2.5, width + 1.2);
-    const yZero = this.coordTransform.mathToScreenY(0, vp);
-
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = width;
-
     for (const point of points) {
-      const x = this.coordTransform.mathToScreenX(point.x, vp);
-      const y = this.coordTransform.mathToScreenY(point.y, vp);
-
-      ctx.beginPath();
-      ctx.moveTo(x, yZero);
-      ctx.lineTo(x, y);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(x, y, markerRadius, 0, Math.PI * 2);
-      ctx.fill();
+      this.drawingUtils.drawStem(ctx, vp, point.x, point.y, color, width, markerRadius);
     }
-
-    ctx.restore();
   }
 }
