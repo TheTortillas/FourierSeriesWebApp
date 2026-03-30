@@ -21,6 +21,7 @@ import {
 } from '../../../shared/components/function-plot/function-plot.component';
 import { ApiService } from '../../../core/services/api/api.service';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
+import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { ParamSlidersComponent } from '../../../shared/components/param-sliders/param-sliders.component';
@@ -123,6 +124,7 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
 export class ContinuousTransformComponent {
   readonly api = inject(ApiService);
   readonly plotter = inject(PlottingService);
+  private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly mathUtils = inject(MathUtilsService);
   readonly theme = inject(ThemeService);
   readonly destroyRef = inject(DestroyRef);
@@ -344,6 +346,12 @@ export class ContinuousTransformComponent {
               const gated = (x: number) => (x >= from && x <= to ? fn(x) : NaN);
               plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW });
             }
+            // Draw any Dirac delta terms in this segment's expression
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(seg.expression, intVariable, pv)) {
+              if (pos >= from && pos <= to) {
+                this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origColor, origLW);
+              }
+            }
           }
         }
 
@@ -365,6 +373,21 @@ export class ContinuousTransformComponent {
           if (reFn) plotter.plotFn(ctx, reFn, vp, { color: reColor, lineWidth: resLW });
           if (imFn) plotter.plotFn(ctx, imFn, vp, { color: imColor, lineWidth: resLW });
           if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW });
+
+          // ── Dirac delta impulses ───────────────────────────────────────
+          // compile() already replaces delta(…) with 0, so plotFn produces
+          // a flat zero for those terms. We parse delta positions/weights
+          // separately and render them as vertical arrows.
+          if (showRe && ft.realPart?.maxima) {
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(ft.realPart.maxima, transVariable, pv)) {
+              this.drawingUtils.drawImpulse(ctx, vp, pos, weight, reColor, resLW);
+            }
+          }
+          if (showIm && ft.imagPart?.maxima) {
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(ft.imagPart.maxima, transVariable, pv)) {
+              this.drawingUtils.drawImpulse(ctx, vp, pos, weight, imColor, resLW);
+            }
+          }
         }
 
         // ── IFT result layers ─────────────────────────────────────────────

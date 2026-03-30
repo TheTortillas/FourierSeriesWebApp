@@ -78,8 +78,8 @@ export class LatexToMaximaService {
       // strategy as \infty → TMINF) and restore in postProcess.
       // Handle \operatorname{delta} first (produced by MathQuill autoOperatorNames),
       // then bare \delta (produced by direct LaTeX or history restore).
-      .replace(/\\operatorname\{delta\}/g, 'TMDELTA')
-      .replace(/\\delta\b/g, 'TMDELTA')
+      .replace(/\\operatorname\{delta\}/g, ' TMDELTA')
+      .replace(/\\delta\b/g, ' TMDELTA')
       // Gamma and factorial: tex2max doesn't know these as function names.
       // Replace with tokens before tex2max, restore in postProcess.
       // Also handle \Gamma (LaTeX symbol) as an alias for gamma.

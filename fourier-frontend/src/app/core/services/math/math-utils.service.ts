@@ -154,36 +154,127 @@ export class MathUtilsService {
     return s;
   }
 
+  // ── Nested-parenthesis helpers ─────────────────────────────────────────────
+
+  /**
+   * Locates every `funcName(…)` call in `expr`, correctly tracking nested
+   * parentheses so that arguments like `w+(2.4)` are captured in full.
+   *
+   * Returns one entry per call: the character span [start, end) of the entire
+   * `funcName(arg)` token, and the `arg` string without the outer parens.
+   */
+  private _findFunctionCalls(
+    expr: string,
+    funcName: string,
+  ): { start: number; end: number; arg: string }[] {
+    const re = new RegExp(`\\b${funcName}\\s*\\(`, 'g');
+    const results: { start: number; end: number; arg: string }[] = [];
+    let m: RegExpExecArray | null;
+
+    re.lastIndex = 0;
+    while ((m = re.exec(expr)) !== null) {
+      const argStart = m.index + m[0].length;
+      let depth = 1;
+      let j = argStart;
+      while (j < expr.length && depth > 0) {
+        if (expr[j] === '(') depth++;
+        else if (expr[j] === ')') depth--;
+        if (depth > 0) j++;
+      }
+      results.push({ start: m.index, end: j + 1, arg: expr.slice(argStart, j) });
+    }
+    return results;
+  }
+
   /**
    * Replaces every call `funcName(arg)` in `expr` with `make(arg)`, correctly
    * handling nested parentheses inside `arg`.  A plain regex like `[^)]*` would
    * stop at the first `)` inside `arg`, which breaks expressions like
    * `u(w+(2.4))` produced when slider parameters are substituted.
    */
-  private _replaceNestedFn(expr: string, funcName: string, make: (arg: string) => string): string {
-    const re = new RegExp(`\\b${funcName}\\s*\\(`, 'g');
+  private _replaceNestedFn(
+    expr: string,
+    funcName: string,
+    make: (arg: string) => string,
+  ): string {
+    const occurrences = this._findFunctionCalls(expr, funcName);
+    if (occurrences.length === 0) return expr;
     let result = '';
     let cursor = 0;
-    let m: RegExpExecArray | null;
-
-    re.lastIndex = 0;
-    while ((m = re.exec(expr)) !== null) {
-      result += expr.slice(cursor, m.index);          // text before the call
-      const argStart = m.index + m[0].length;         // position right after '('
-      let depth = 1;
-      let j = argStart;
-      while (j < expr.length && depth > 0) {
-        if (expr[j] === '(') depth++;
-        else if (expr[j] === ')') depth--;
-        if (depth > 0) j++;                           // advance only while inside
-      }
-      // j now sits on the matching ')' (or end-of-string if malformed)
-      result += make(expr.slice(argStart, j));
-      cursor = j + 1;                                 // skip past ')'
-      re.lastIndex = cursor;
+    for (const { start, end, arg } of occurrences) {
+      result += expr.slice(cursor, start);
+      result += make(arg);
+      cursor = end;
     }
-    result += expr.slice(cursor);
-    return result;
+    return result + expr.slice(cursor);
+  }
+
+  /**
+   * Parses a Maxima expression and returns the position and weight of every
+   * Dirac delta term it contains.
+   *
+   * Algorithm per delta occurrence:
+   *   1. **Position** — solve `arg(variable) = 0` via `pos = −arg(0)`.
+   *      Works for the linear arguments produced by the backend: `w−a`, `w+a`, `w`.
+   *   2. **Weight**  — replace *this* delta with `1`, all others with `0`,
+   *      compile the resulting expression, and evaluate it.
+   *      For typical Fourier outputs (e.g. `%pi*(delta(w−a)+delta(w+a))`),
+   *      the modified expression is constant so the evaluation point is arbitrary;
+   *      `0` is used first and `pos` is tried as a fallback.
+   *
+   * @param maxima    Maxima expression string (may contain `%pi`, `%e`, `^`, …).
+   * @param variable  Integration / transform variable (default `'x'`).
+   * @param params    Optional parameter values substituted before parsing
+   *                  (same substitution as `compile`).
+   */
+  parseDeltaTerms(
+    maxima: string,
+    variable = 'x',
+    params?: Record<string, number>,
+  ): { pos: number; weight: number }[] {
+    // Apply the same param substitution as compile()
+    let expr = maxima;
+    if (params) {
+      for (const [name, value] of Object.entries(params)) {
+        expr = expr.replace(new RegExp(`\\b${name}\\b`, 'g'), `(${String(value)})`);
+      }
+    }
+
+    const occs = this._findFunctionCalls(expr, 'delta');
+    if (occs.length === 0) return [];
+
+    const results: { pos: number; weight: number }[] = [];
+
+    for (let i = 0; i < occs.length; i++) {
+      // ── 1. Position ───────────────────────────────────────────────────────
+      const argFn = this.compile(occs[i].arg, variable);
+      const argAt0 = argFn?.(0);
+      if (argAt0 === undefined || !isFinite(argAt0)) continue;
+      const pos = -argAt0;
+
+      // ── 2. Weight ─────────────────────────────────────────────────────────
+      // Build modified expression: this delta → 1, all others → 0
+      let modified = '';
+      let cursor = 0;
+      for (let j = 0; j < occs.length; j++) {
+        modified += expr.slice(cursor, occs[j].start);
+        modified += j === i ? '1' : '0';
+        cursor = occs[j].end;
+      }
+      modified += expr.slice(cursor);
+
+      const weightFn = this.compile(modified, variable);
+      if (!weightFn) continue;
+
+      // Evaluate at 0 (constant for typical FT outputs); fallback to pos
+      let weight = weightFn(0);
+      if (!isFinite(weight)) weight = weightFn(pos);
+      if (!isFinite(weight)) continue;
+
+      results.push({ pos, weight });
+    }
+
+    return results;
   }
 
   // ── Reciprocal / inverse-reciprocal helpers (inlined at eval time) ──────────
