@@ -187,9 +187,9 @@ export class ContinuousTransformComponent {
   readonly urlCopied = signal(false);
   readonly isFullscreen = signal(false);
 
-  readonly canvasWrapper   = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
-  readonly plotComponent   = viewChild(FunctionPlotComponent);
-  readonly paramSliders    = viewChild(ParamSlidersComponent);
+  readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
+  readonly plotComponent = viewChild(FunctionPlotComponent);
+  readonly paramSliders = viewChild(ParamSlidersComponent);
 
   readonly varPairs = VAR_PAIRS;
 
@@ -327,8 +327,8 @@ export class ContinuousTransformComponent {
     const layer: PlotLayer = {
       curves: [],
       onDraw: (ctx, vp) => {
-        // ── Original input function (piecewise) ─────────────────────────
-        if (showOrig) {
+        // ── Original input function (piecewise) for FT mode ─────────────
+        if (this.mode() === 'ft' && showOrig) {
           for (const seg of segs) {
             const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
             const from = this.parseLimit(seg.from, pv);
@@ -348,7 +348,11 @@ export class ContinuousTransformComponent {
               plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW });
             }
             // Draw any Dirac delta terms in this segment's expression
-            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(seg.expression, intVariable, pv)) {
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+              seg.expression,
+              intVariable,
+              pv,
+            )) {
               if (pos >= from && pos <= to) {
                 this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origColor, origLW);
               }
@@ -380,31 +384,70 @@ export class ContinuousTransformComponent {
           // a flat zero for those terms. We parse delta positions/weights
           // separately and render them as vertical arrows.
           if (showRe && ft.realPart?.maxima) {
-            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(ft.realPart.maxima, transVariable, pv)) {
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+              ft.realPart.maxima,
+              transVariable,
+              pv,
+            )) {
               this.drawingUtils.drawImpulse(ctx, vp, pos, weight, reColor, resLW);
             }
           }
           if (showIm && ft.imagPart?.maxima) {
-            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(ft.imagPart.maxima, transVariable, pv)) {
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+              ft.imagPart.maxima,
+              transVariable,
+              pv,
+            )) {
               this.drawingUtils.drawImpulse(ctx, vp, pos, weight, imColor, resLW);
             }
           }
         }
 
-        // ── IFT result layers ─────────────────────────────────────────────
-        // Plot fPositive/fNegative with half-range gating instead of
-        // fCombined over all t — fCombined may equal fPositive when fNegative
-        // = 0, which causes exponential blow-up for causal signals.
-        if (ift?.exists && showRe) {
-          if (ift.fPositive?.maxima) {
-            const raw = this.mathUtils.compile(ift.fPositive.maxima, transVariable, pv);
-            const fn = raw ? (x: number) => (x >= 0 ? raw(x) : NaN) : null;
-            if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW });
+        // ── IFT layers ────────────────────────────────────────────────────
+        if (ift?.exists) {
+          // Result f(t): keep as independent layer/toggle (showOrig).
+          if (showOrig) {
+            if (ift.fPositive?.maxima) {
+              const raw = this.mathUtils.compile(ift.fPositive.maxima, transVariable, pv);
+              const fn = raw ? (x: number) => (x >= 0 ? raw(x) : NaN) : null;
+              if (fn) plotter.plotFn(ctx, fn, vp, { color: origColor, lineWidth: origLW });
+            }
+            if (ift.fNegative?.maxima) {
+              const raw = this.mathUtils.compile(ift.fNegative.maxima, transVariable, pv);
+              const fn = raw ? (x: number) => (x <= 0 ? raw(x) : NaN) : null;
+              if (fn) plotter.plotFn(ctx, fn, vp, { color: origColor, lineWidth: origLW });
+            }
           }
-          if (ift.fNegative?.maxima) {
-            const raw = this.mathUtils.compile(ift.fNegative.maxima, transVariable, pv);
-            const fn = raw ? (x: number) => (x <= 0 ? raw(x) : NaN) : null;
+
+          // Input F(ω) split into Re/Im/|F| for inverse mode controls.
+          if (showRe && ift.inputRealPart?.maxima) {
+            const fn = this.mathUtils.compile(ift.inputRealPart.maxima, intVariable, pv);
             if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW });
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+              ift.inputRealPart.maxima,
+              intVariable,
+              pv,
+            )) {
+              this.drawingUtils.drawImpulse(ctx, vp, pos, weight, reColor, resLW);
+            }
+          }
+          if (showIm && ift.inputImagPart?.maxima) {
+            const fn = this.mathUtils.compile(ift.inputImagPart.maxima, intVariable, pv);
+            if (fn) plotter.plotFn(ctx, fn, vp, { color: imColor, lineWidth: resLW });
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+              ift.inputImagPart.maxima,
+              intVariable,
+              pv,
+            )) {
+              this.drawingUtils.drawImpulse(ctx, vp, pos, weight, imColor, resLW);
+            }
+          }
+
+          if (showM) {
+            const realExpr = ift.inputRealPart?.maxima ?? '0';
+            const imagExpr = ift.inputImagPart?.maxima ?? '0';
+            const magFn = this.buildMagFn(realExpr, imagExpr, intVariable, pv);
+            if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW });
           }
         }
       },

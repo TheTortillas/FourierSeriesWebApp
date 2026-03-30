@@ -181,6 +181,10 @@ FT_expand_abs(trozo, t_var) := block(
             f_i: ratsimp(subst(u(t_var) = 1, f_i))
         else if float(bi) <= 0 then
             f_i: subst(u(t_var) = 0, f_i)
+        else if FT_is_minf(ai) and FT_is_inf(bi) then (
+            f_i: ratsimp(subst(u(t_var) = 1, f_i)),
+            ai: 0
+        )
     ),
 
     if freeof('abs, f_i)
@@ -1238,8 +1242,8 @@ IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
 
     f_combined: if dcheck = 0
         then ratsimp(subst(t_var = abs(t_var), f_pos))
-        else if ratsimp(f_neg) = 0 then f_pos
-        else if ratsimp(f_pos) = 0 then f_neg
+        else if ratsimp(f_neg) = 0 then f_pos * u(t_var)
+        else if ratsimp(f_pos) = 0 then f_neg * u(t_var)
         else false,
 
     _ift_reserved: [t_var, w_var, 'u, 'delta, 'sgn],

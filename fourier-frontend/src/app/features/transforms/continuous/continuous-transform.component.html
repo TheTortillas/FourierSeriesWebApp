@@ -432,7 +432,11 @@
                     class="w-2 h-2 rounded-full shrink-0"
                     [style.background]="showOriginal() ? originalColor() : 'currentColor'"
                   ></span>
-                  {{ inputFnLabel() }}
+                  @if (mode() === 'ft') {
+                    {{ inputFnLabel() }}
+                  } @else {
+                    f({{ resultVarDisplay() }})
+                  }
                 </button>
 
                 <button
@@ -452,51 +456,57 @@
                     [style.backgroundColor]="resultColor()"
                   ></span>
                   @if (mode() === 'ft') {
-                    Re&#x7B;F&#x7D;
+                    Re F({{ transVar() }})
                   } @else {
-                    f({{ resultVarDisplay() }})
+                    Re F({{ intVar() }})
                   }
                 </button>
 
-                @if (mode() === 'ft') {
-                  <button
-                    type="button"
-                    (click)="showImag.set(!showImag())"
-                    [class]="
-                      showImag()
-                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
-                        : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
-                    "
-                    [style.borderColor]="showImag() ? imagColor() : null"
-                    [style.color]="showImag() ? imagColor() : null"
-                    [style.backgroundColor]="showImag() ? imagColor() + '1A' : null"
-                  >
-                    <span
-                      class="w-2 h-2 rounded-full shrink-0"
-                      [style.backgroundColor]="imagColor()"
-                    ></span>
-                    Im&#x7B;F&#x7D;
-                  </button>
+                <button
+                  type="button"
+                  (click)="showImag.set(!showImag())"
+                  [class]="
+                    showImag()
+                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
+                      : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
+                  "
+                  [style.borderColor]="showImag() ? imagColor() : null"
+                  [style.color]="showImag() ? imagColor() : null"
+                  [style.backgroundColor]="showImag() ? imagColor() + '1A' : null"
+                >
+                  <span
+                    class="w-2 h-2 rounded-full shrink-0"
+                    [style.backgroundColor]="imagColor()"
+                  ></span>
+                  @if (mode() === 'ft') {
+                    Im F({{ transVar() }})
+                  } @else {
+                    Im F({{ intVar() }})
+                  }
+                </button>
 
-                  <button
-                    type="button"
-                    (click)="showMag.set(!showMag())"
-                    [class]="
-                      showMag()
-                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
-                        : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
-                    "
-                    [style.borderColor]="showMag() ? magColor() : null"
-                    [style.color]="showMag() ? magColor() : null"
-                    [style.backgroundColor]="showMag() ? magColor() + '1A' : null"
-                  >
-                    <span
-                      class="w-2 h-2 rounded-full shrink-0"
-                      [style.backgroundColor]="magColor()"
-                    ></span>
-                    |F|
-                  </button>
-                }
+                <button
+                  type="button"
+                  (click)="showMag.set(!showMag())"
+                  [class]="
+                    showMag()
+                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
+                      : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
+                  "
+                  [style.borderColor]="showMag() ? magColor() : null"
+                  [style.color]="showMag() ? magColor() : null"
+                  [style.backgroundColor]="showMag() ? magColor() + '1A' : null"
+                >
+                  <span
+                    class="w-2 h-2 rounded-full shrink-0"
+                    [style.backgroundColor]="magColor()"
+                  ></span>
+                  @if (mode() === 'ft') {
+                    |F({{ transVar() }})|
+                  } @else {
+                    |F({{ intVar() }})|
+                  }
+                </button>
               </div>
             </section>
 
@@ -578,7 +588,11 @@
               </div>
               <div class="flex flex-wrap gap-3">
                 <div class="flex items-center gap-2">
-                  <span class="text-muted dark:text-dark-muted">Original</span>
+                  @if (mode() === 'ft') {
+                    <span class="text-muted dark:text-dark-muted">Original</span>
+                  } @else {
+                    <span class="text-muted dark:text-dark-muted">f({{ resultVarDisplay() }})</span>
+                  }
                   <input
                     type="color"
                     [value]="originalColor()"
@@ -597,7 +611,11 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <span class="text-muted dark:text-dark-muted">Resultado</span>
+                  @if (mode() === 'ft') {
+                    <span class="text-muted dark:text-dark-muted">Re F({{ transVar() }})</span>
+                  } @else {
+                    <span class="text-muted dark:text-dark-muted">Re F({{ intVar() }})</span>
+                  }
                   <input
                     type="color"
                     [value]="resultColor()"
@@ -615,27 +633,33 @@
                   />
                 </div>
 
-                @if (mode() === 'ft') {
-                  <div class="flex items-center gap-2">
-                    <span class="text-muted dark:text-dark-muted">Im&#x7B;F&#x7D;</span>
-                    <input
-                      type="color"
-                      [value]="imagColor()"
-                      (input)="onImagColorInput($any($event.target).value)"
-                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                    />
-                  </div>
+                <div class="flex items-center gap-2">
+                  @if (mode() === 'ft') {
+                    <span class="text-muted dark:text-dark-muted">Im F({{ transVar() }})</span>
+                  } @else {
+                    <span class="text-muted dark:text-dark-muted">Im F({{ intVar() }})</span>
+                  }
+                  <input
+                    type="color"
+                    [value]="imagColor()"
+                    (input)="onImagColorInput($any($event.target).value)"
+                    class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                  />
+                </div>
 
-                  <div class="flex items-center gap-2">
-                    <span class="text-muted dark:text-dark-muted">|F|</span>
-                    <input
-                      type="color"
-                      [value]="magColor()"
-                      (input)="onMagColorInput($any($event.target).value)"
-                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                    />
-                  </div>
-                }
+                <div class="flex items-center gap-2">
+                  @if (mode() === 'ft') {
+                    <span class="text-muted dark:text-dark-muted">|F({{ transVar() }})|</span>
+                  } @else {
+                    <span class="text-muted dark:text-dark-muted">|F({{ intVar() }})|</span>
+                  }
+                  <input
+                    type="color"
+                    [value]="magColor()"
+                    (input)="onMagColorInput($any($event.target).value)"
+                    class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                  />
+                </div>
               </div>
             </section>
 
@@ -665,7 +689,11 @@
                     class="inline-block w-4 h-0.5 rounded"
                     [style.backgroundColor]="originalColor()"
                   ></span>
-                  {{ inputFnLabel() }}
+                  @if (mode() === 'ft') {
+                    {{ inputFnLabel() }}
+                  } @else {
+                    f({{ resultVarDisplay() }})
+                  }
                 </span>
                 <div class="flex items-center gap-2">
                   <span
@@ -673,27 +701,33 @@
                     [style.backgroundColor]="resultColor()"
                   ></span>
                   @if (mode() === 'ft') {
-                    <span class="text-muted dark:text-dark-muted">Re&#x7B;F&#x7D;</span>
+                    <span class="text-muted dark:text-dark-muted">Re F({{ transVar() }})</span>
                   } @else {
-                    <span class="text-muted dark:text-dark-muted">f({{ resultVarDisplay() }})</span>
+                    <span class="text-muted dark:text-dark-muted">Re F({{ intVar() }})</span>
                   }
                 </div>
-                @if (mode() === 'ft') {
-                  <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
-                    <span
-                      class="inline-block w-4 h-0.5 rounded"
-                      [style.backgroundColor]="imagColor()"
-                    ></span>
-                    Im&#x7B;F&#x7D;
-                  </span>
-                  <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
-                    <span
-                      class="inline-block w-4 h-0.5 rounded"
-                      [style.backgroundColor]="magColor()"
-                    ></span>
-                    |F|
-                  </span>
-                }
+                <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
+                  <span
+                    class="inline-block w-4 h-0.5 rounded"
+                    [style.backgroundColor]="imagColor()"
+                  ></span>
+                  @if (mode() === 'ft') {
+                    Im F({{ transVar() }})
+                  } @else {
+                    Im F({{ intVar() }})
+                  }
+                </span>
+                <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
+                  <span
+                    class="inline-block w-4 h-0.5 rounded"
+                    [style.backgroundColor]="magColor()"
+                  ></span>
+                  @if (mode() === 'ft') {
+                    |F({{ transVar() }})|
+                  } @else {
+                    |F({{ intVar() }})|
+                  }
+                </span>
               </div>
             </section>
 
@@ -948,6 +982,51 @@
                 }
               }
             </div>
+
+            @if (res.inputRealPart?.tex || res.inputImagPart?.tex) {
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                @if (res.inputRealPart?.tex) {
+                  <div
+                    class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                  >
+                    <span
+                      class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                      [style.color]="resultColor()"
+                    >
+                      <span
+                        class="w-2 h-2 rounded-full inline-block shrink-0"
+                        [style.backgroundColor]="resultColor()"
+                      ></span>
+                      Re F({{ intVar() }})
+                    </span>
+                    <span
+                      [mathjax]="display(res.inputRealPart!.tex)"
+                      class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                    ></span>
+                  </div>
+                }
+                @if (res.inputImagPart?.tex) {
+                  <div
+                    class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                  >
+                    <span
+                      class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                      [style.color]="imagColor()"
+                    >
+                      <span
+                        class="w-2 h-2 rounded-full inline-block shrink-0"
+                        [style.backgroundColor]="imagColor()"
+                      ></span>
+                      Im F({{ intVar() }})
+                    </span>
+                    <span
+                      [mathjax]="display(res.inputImagPart!.tex)"
+                      class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                    ></span>
+                  </div>
+                }
+              </div>
+            }
           }
         </div>
       }

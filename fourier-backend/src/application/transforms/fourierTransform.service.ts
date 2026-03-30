@@ -190,7 +190,28 @@ kill(all)$
       .replace(/false/g, "")
       .trim();
     const fCombinedTex = this.extractTex(
-      this.extractBetween(raw, "__F_COMBINED_TEX__", null),
+      this.extractBetween(raw, "__F_COMBINED_TEX__", "__INPUT_REAL_MAXIMA__"),
+    );
+
+    const inputRealMaxima = this.extractBetween(
+      raw,
+      "__INPUT_REAL_MAXIMA__",
+      "__INPUT_REAL_TEX__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
+    const inputRealTex = this.extractTex(
+      this.extractBetween(raw, "__INPUT_REAL_TEX__", "__INPUT_IMAG_MAXIMA__"),
+    );
+    const inputImagMaxima = this.extractBetween(
+      raw,
+      "__INPUT_IMAG_MAXIMA__",
+      "__INPUT_IMAG_TEX__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
+    const inputImagTex = this.extractTex(
+      this.extractBetween(raw, "__INPUT_IMAG_TEX__", "__PARAMS__"),
     );
 
     const params = this.extractParams(raw, "__PARAMS__");
@@ -204,6 +225,12 @@ kill(all)$
         hasCombined && fCombinedMaxima
           ? { maxima: fCombinedMaxima, tex: fCombinedTex }
           : undefined,
+      inputRealPart: inputRealMaxima
+        ? { maxima: inputRealMaxima, tex: inputRealTex }
+        : undefined,
+      inputImagPart: inputImagMaxima
+        ? { maxima: inputImagMaxima, tex: inputImagTex }
+        : undefined,
       params,
       executionTimeMs: Date.now() - startTime,
     };

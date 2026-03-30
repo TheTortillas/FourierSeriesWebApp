@@ -41,6 +41,10 @@ export interface InverseFourierTransformResponse {
   fNegative?: SymbolicExpression;
   /** Combined/simplified form when both regions yield a clean expression */
   fCombined?: SymbolicExpression;
+  /** Real part of the input F(ω) (for canvas plotting) */
+  inputRealPart?: SymbolicExpression;
+  /** Imaginary part of the input F(ω) (for canvas plotting) */
+  inputImagPart?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }
