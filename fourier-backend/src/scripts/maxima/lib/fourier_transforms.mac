@@ -525,6 +525,58 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── sin(w0*t)*u(t) -> w0/(w0^2-w^2) + pi/(2i)*[delta(w-w0)-delta(w+w0)] ── */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "*") then block(
+            [u_part, sin_part, coef_k, sin_arg, w0],
+            u_part: false,
+            sin_part: false,
+            coef_k: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'u) and part(s,1) = t_var
+                then u_part: s
+                else if not atom(s) and is(op(s) = 'sin)
+                then sin_part: s
+                else coef_k: coef_k * s
+            ),
+            if is(u_part # false) and is(sin_part # false) then (
+                sin_arg: part(sin_part, 1),
+                w0: ratsimp(sin_arg / t_var),
+                if freeof(t_var, w0) and is(w0 > 0) then
+                    res: [coef_k * (w0/(w0^2 - w_var^2)
+                        + %piexact/(2*%i) * (delta(w_var-w0) - delta(w_var+w0))),
+                        concat("sin(w0t)*u(t) -> w0/(w0^2-w^2)+pi/2i*[delta(w-w0)-delta(w+w0)], w0=",
+                                string(w0))]
+            )
+        )
+    ),
+
+    /* ── cos(w0*t)*u(t) -> i*w/(w0^2-w^2) + pi/2*[delta(w-w0)+delta(w+w0)] ── */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "*") then block(
+            [u_part, cos_part, coef_k, cos_arg, w0],
+            u_part: false,
+            cos_part: false,
+            coef_k: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'u) and part(s,1) = t_var
+                then u_part: s
+                else if not atom(s) and is(op(s) = 'cos)
+                then cos_part: s
+                else coef_k: coef_k * s
+            ),
+            if is(u_part # false) and is(cos_part # false) then (
+                cos_arg: part(cos_part, 1),
+                w0: ratsimp(cos_arg / t_var),
+                if freeof(t_var, w0) and is(w0 > 0) then
+                    res: [coef_k * (%i*w_var/(w0^2 - w_var^2)
+                        + %piexact/2 * (delta(w_var-w0) + delta(w_var+w0))),
+                        concat("cos(w0t)*u(t) -> i*w/(w0^2-w^2)+pi/2*[delta(w-w0)+delta(w+w0)], w0=",
+                                string(w0))]
+            )
+        )
+    ),
+
     /* ── k/(a^2+t^2) -> (k*pi/a)*e^{-a|w|}  (a > 0) ──
        Usa rat() y coeff() para evitar flotantes.
        ratnump() antes de radcan evita que sqrt(1/1) = 1.0        */
@@ -922,6 +974,24 @@ FT(FUNC_INPUT, t_var, w_var) := block(
             tr: FUNC_INPUT[1],
             if FT_is_minf(tr[2]) and FT_is_inf(tr[3]) then (
                 pattern: FT_pattern_lookup(tr[1], t_var, w_var),
+                if is(pattern # false) then (
+                    F      : pattern[1],
+                    F_real : if freeof(%i, F) then F else ratsimp(realpart(F)),
+                    F_imag : if freeof(%i, F) then 0 else ratsimp(imagpart(F)),
+                    done   : true
+                )
+            )
+        )
+    ),
+
+    /* ── intento de patron para tramo [0, inf) ──
+   Multiplica por u(t_var) para reutilizar los detectores
+   que esperan u(t) explicito en intervalo completo.      */
+    if n_orig = 1 and not done then (
+        block([tr],
+            tr: FUNC_INPUT[1],
+            if ratsimp(tr[2]) = 0 and FT_is_inf(tr[3]) then (
+                pattern: FT_pattern_lookup(tr[1] * u(t_var), t_var, w_var),
                 if is(pattern # false) then (
                     F      : pattern[1],
                     F_real : if freeof(%i, F) then F else ratsimp(realpart(F)),
