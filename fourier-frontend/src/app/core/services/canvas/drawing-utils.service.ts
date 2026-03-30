@@ -198,6 +198,42 @@ export class DrawingUtilsService {
     ctx.restore();
   }
 
+  // ── Impulse (Dirac delta) ─────────────────────────────────────────────────
+
+  /**
+   * Renders a Dirac delta as a vertical arrow from the x-axis to (mathX, mathY).
+   *
+   * • Positive `mathY`  → arrow points upward   (above the axis).
+   * • Negative `mathY`  → arrow points downward  (below the axis).
+   *
+   * All coordinates are in math space; DPR scaling is handled internally via
+   * the same convention as `drawStem` (mathToScreen / vp.dpr).
+   *
+   */
+  drawImpulse(
+    ctx: CanvasRenderingContext2D,
+    vp: CanvasViewport,
+    mathX: number,
+    mathY: number,
+    color: string,
+    lineWidth = 2,
+  ): void {
+    const cssX  = this.coords.mathToScreenX(mathX, vp) / vp.dpr;
+    const cssY0 = this.coords.mathToScreenY(0,     vp) / vp.dpr;
+    const cssY1 = this.coords.mathToScreenY(mathY, vp) / vp.dpr;
+
+    if (Math.abs(cssY1 - cssY0) < 2) return; // too small to draw meaningfully
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = lineWidth;
+    ctx.beginPath();
+    ctx.moveTo(cssX, cssY0);
+    ctx.lineTo(cssX, cssY1);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // ── Color utilities ───────────────────────────────────────────────────────
 
   /**
