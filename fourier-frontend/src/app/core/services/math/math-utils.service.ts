@@ -132,13 +132,17 @@ export class MathUtilsService {
       .replace(/\bmax\b/g, 'Math.max')
       .replace(/\bmin\b/g, 'Math.min')
       .replace(/\bsign\b/g, 'Math.sign')
-      // Special functions for Fourier / transform contexts
-      .replace(/\bdelta\b\s*\([^)]*\)/g, '0')             // Dirac delta → 0 (not plottable as a function)
       .replace(/\bsgn\b\s*\(/g, 'Math.sign(')             // signum
-      .replace(/\bu\b\s*\(([^)]*)\)/g, '($1 >= 0 ? 1 : 0)') // unit step
       // Combinatorial / special functions
       .replace(/\bgamma\b/g, '_gamma')
       .replace(/\bfactorial\b/g, '_factorial');
+
+    // Special functions that may contain nested parentheses in their arguments
+    // (e.g. u(w+(2.4)) after param substitution).  A simple [^)]* regex would
+    // stop at the first ')' inside the argument, producing broken JS.
+    // _replaceNestedFn walks the string counting balanced parens instead.
+    s = this._replaceNestedFn(s, 'delta', (_arg) => '0');
+    s = this._replaceNestedFn(s, 'u', (arg) => `(${arg} >= 0 ? 1 : 0)`);
 
     // Fix JS SyntaxError: unary minus directly before ** is ambiguous.
     // e.g. (-x**2) → (-(x**2))
@@ -148,6 +152,38 @@ export class MathUtilsService {
     }
 
     return s;
+  }
+
+  /**
+   * Replaces every call `funcName(arg)` in `expr` with `make(arg)`, correctly
+   * handling nested parentheses inside `arg`.  A plain regex like `[^)]*` would
+   * stop at the first `)` inside `arg`, which breaks expressions like
+   * `u(w+(2.4))` produced when slider parameters are substituted.
+   */
+  private _replaceNestedFn(expr: string, funcName: string, make: (arg: string) => string): string {
+    const re = new RegExp(`\\b${funcName}\\s*\\(`, 'g');
+    let result = '';
+    let cursor = 0;
+    let m: RegExpExecArray | null;
+
+    re.lastIndex = 0;
+    while ((m = re.exec(expr)) !== null) {
+      result += expr.slice(cursor, m.index);          // text before the call
+      const argStart = m.index + m[0].length;         // position right after '('
+      let depth = 1;
+      let j = argStart;
+      while (j < expr.length && depth > 0) {
+        if (expr[j] === '(') depth++;
+        else if (expr[j] === ')') depth--;
+        if (depth > 0) j++;                           // advance only while inside
+      }
+      // j now sits on the matching ')' (or end-of-string if malformed)
+      result += make(expr.slice(argStart, j));
+      cursor = j + 1;                                 // skip past ')'
+      re.lastIndex = cursor;
+    }
+    result += expr.slice(cursor);
+    return result;
   }
 
   // ── Reciprocal / inverse-reciprocal helpers (inlined at eval time) ──────────

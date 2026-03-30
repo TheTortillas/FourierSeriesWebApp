@@ -388,6 +388,44 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k*sin(at)/(pi*t) -> k*(u(w+a)-u(w-a))  (a > 0) ── */
+    if is(res = false) then block(
+        [num_s, den_s, sin_arg, aa, kk],
+        /* detecta forma k*sin(at)/(pi*t) — op="/" con numerador que contiene sin */
+        if not atom(e) and is(op(e) = "/") then (
+            num_s: expand(part(e, 1)),
+            den_s: expand(part(e, 2)),
+            /* denominador debe ser pi*t o t*pi */
+            if ratsimp(den_s - %pi*t_var) = 0 then (
+                /* numerador: k*sin(at) o sin(at) */
+                if not atom(num_s) and is(op(num_s) = 'sin) then (
+                    sin_arg: part(num_s, 1),
+                    aa: ratsimp(sin_arg / t_var),
+                    if freeof(t_var, aa) and is(aa > 0) then
+                        res: [u(w_var + aa) - u(w_var - aa),
+                            concat("sin(at)/(pi*t) -> u(w+a)-u(w-a), a=", string(aa))]
+                ) else if not atom(num_s) and is(op(num_s) = "*") then block(
+                    [sin_part, kk2],
+                    sin_part: false,
+                    kk2: 1,
+                    for s in args(num_s) do (
+                        if not atom(s) and is(op(s) = 'sin)
+                        then sin_part: s
+                        else kk2: kk2 * s
+                    ),
+                    if is(sin_part # false) then (
+                        sin_arg: part(sin_part, 1),
+                        aa: ratsimp(sin_arg / t_var),
+                        if freeof(t_var, aa) and is(aa > 0) then
+                            res: [kk2 * (u(w_var + aa) - u(w_var - aa)),
+                                concat("k*sin(at)/(pi*t) -> k*(u(w+a)-u(w-a)), a=",
+                                        string(aa))]
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── k*exp(-at)*u(t) -> k/(iw+a)  (a > 0) ──
        Detecta producto con factor u(t_var) y factor exp con t_var.
        Solo activa si NO hay factor trigonometrico (sin/cos) — esos
