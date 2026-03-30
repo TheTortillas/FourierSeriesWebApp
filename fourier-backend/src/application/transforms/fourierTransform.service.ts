@@ -8,7 +8,7 @@ import type {
   InverseFourierTransformResult,
   PiecewiseSegment,
 } from "../../domain/types/fourier.types";
-import path from "path/win32";
+import path from "path";
 
 const TRANSFORM_MARKERS = [
   "__EXISTS__",
@@ -31,12 +31,14 @@ export class FourierTransformService {
     const intVar = input.intVar ?? "t";
     const transVar = input.transVar ?? "w";
 
-    const libPath = path
-      .join(process.cwd(), "src/scripts/maxima/lib/fourier_transforms.mac")
-      .replace(/\\/g, "/");
-    const cleanPath = path
-      .join(process.cwd(), "src/scripts/maxima/auxiliary/clean_integral.mac")
-      .replace(/\\/g, "/");
+    const libPath = path.join(
+      process.cwd(),
+      "src/scripts/maxima/lib/fourier_transforms.mac",
+    );
+    const cleanPath = path.join(
+      process.cwd(),
+      "src/scripts/maxima/auxiliary/clean_integral.mac",
+    );
 
     const script = (await loadScript("transforms", "fourier_transform.mac"))
       .replace("CLEAN_INTEGRAL_PATH", cleanPath)
@@ -115,12 +117,14 @@ kill(all)$
     const intVar = input.intVar ?? "w";
     const transVar = input.transVar ?? "t";
 
-    const libPath = path
-      .join(process.cwd(), "src/scripts/maxima/lib/fourier_transforms.mac")
-      .replace(/\\/g, "/");
-    const cleanPath = path
-      .join(process.cwd(), "src/scripts/maxima/auxiliary/clean_integral.mac")
-      .replace(/\\/g, "/");
+    const libPath = path.join(
+      process.cwd(),
+      "src/scripts/maxima/lib/fourier_transforms.mac",
+    );
+    const cleanPath = path.join(
+      process.cwd(),
+      "src/scripts/maxima/auxiliary/clean_integral.mac",
+    );
 
     const scriptRaw = await loadScript(
       "transforms",
@@ -216,7 +220,10 @@ kill(all)$
     const section = this.extractBetween(raw, marker, null);
     const match = section.match(/\[([^\]]*)\]/);
     if (!match || !match[1].trim()) return [];
-    return match[1].split(",").map((s) => s.trim()).filter(Boolean);
+    return match[1]
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
 
   private extractBetween(
