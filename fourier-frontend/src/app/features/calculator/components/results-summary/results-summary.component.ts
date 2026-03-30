@@ -133,6 +133,17 @@ export class ResultsSummaryComponent {
   readonly paramValues = signal<ParamValues>({});
   readonly activeParams = computed<string[]>(() => this.store.result()?.data.params ?? []);
 
+  /** Parameters used for numeric evaluation on canvas (default = 1 for missing sliders). */
+  readonly evaluationParams = computed<ParamValues>(() => {
+    const names = this.activeParams();
+    const pv = this.paramValues();
+    const merged: ParamValues = { ...pv };
+    for (const name of names) {
+      if (!Number.isFinite(merged[name])) merged[name] = 1;
+    }
+    return merged;
+  });
+
   /** Name of the param currently used for the custom axis unit (null = first param). */
   readonly customConstName = signal<string | null>(null);
 
@@ -169,7 +180,7 @@ export class ResultsSummaryComponent {
 
   // ── Canvas wrapper ref (for Fullscreen API) ───────────────────────────────
   readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
-  readonly paramSliders  = viewChild(ParamSlidersComponent);
+  readonly paramSliders = viewChild(ParamSlidersComponent);
 
   // ── Simplify state ──────────────────────────────────────────────────────────
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
@@ -214,6 +225,16 @@ export class ResultsSummaryComponent {
     }
   }
 
+  /** Best-effort scalar evaluation for symbolic coefficients (a0/c0) under current params. */
+  private evalScalar(maxima?: string, fallback?: number): number | undefined {
+    if (maxima?.trim()) {
+      const fn = this.math.compile(maxima, '_', this.evaluationParams());
+      const v = fn?.(0);
+      if (v !== undefined && isFinite(v)) return v;
+    }
+    return fallback !== undefined && isFinite(fallback) ? fallback : undefined;
+  }
+
   /** Canvas layers: original function + harmonics + Fourier approximation */
   readonly layers = computed<PlotLayer[]>(() => {
     const result = this.store.result();
@@ -232,7 +253,7 @@ export class ResultsSummaryComponent {
 
     // If free params are set, re-compile the original segments with those values
     // so the canvas reflects the chosen parameter configuration.
-    const pv = this.paramValues();
+    const pv = this.evaluationParams();
     const hasPv = Object.keys(pv).length > 0;
     const segs = hasPv ? this.store.segments() : null;
     const intVar = hasPv ? this.store.intVar() : null;
@@ -280,14 +301,11 @@ export class ResultsSummaryComponent {
     if (result.type === 'trigonometric') {
       const rawTerms = result.terms.terms as TrigNumericTerm[];
       const c = result.data.coefficients;
-      let a0 = c.a0Float ?? 0;
+      const a0Raw =
+        this.evalScalar(result.data.a0Raw?.maxima, c.a0Float) ??
+        (this.evalScalar(c.a0?.maxima, undefined) ?? 0) * 2;
       let terms = rawTerms;
       if (hasPv) {
-        if (c.a0?.maxima) {
-          const fn = math.compile(c.a0.maxima, '_', pv);
-          const v = fn?.(0);
-          if (v !== undefined && isFinite(v)) a0 = v;
-        }
         const anFn = c.an?.maxima ? math.compile(c.an.maxima, 'n', pv) : null;
         const bnFn = c.bn?.maxima ? math.compile(c.bn.maxima, 'n', pv) : null;
         if (anFn || bnFn) {
@@ -302,7 +320,7 @@ export class ResultsSummaryComponent {
           });
         }
       }
-      approxFn = rec.buildTrigonometric(a0, terms, w0, nTerms);
+      approxFn = rec.buildTrigonometric(a0Raw, terms, w0, nTerms);
       if (showHarmonics) {
         const limit = Math.min(nTerms, terms.length);
         harmonicFns = terms.slice(0, limit).map((t) => {
@@ -330,13 +348,10 @@ export class ResultsSummaryComponent {
         }
       }
       if (hrMode === 'cosine') {
-        let a0 = c.a0Float ?? 0;
-        if (hasPv && c.a0?.maxima) {
-          const fn = math.compile(c.a0.maxima, '_', pv);
-          const v = fn?.(0);
-          if (v !== undefined && isFinite(v)) a0 = v;
-        }
-        approxFn = rec.buildCosineOnly(a0, terms, w0, nTerms);
+        const a0Raw =
+          this.evalScalar(result.data.a0Raw?.maxima, c.a0Float) ??
+          (this.evalScalar(c.a0?.maxima, undefined) ?? 0) * 2;
+        approxFn = rec.buildCosineOnly(a0Raw, terms, w0, nTerms);
         if (showHarmonics) {
           const limit = Math.min(nTerms, terms.length);
           harmonicFns = terms.slice(0, limit).map((t) => {
@@ -357,12 +372,7 @@ export class ResultsSummaryComponent {
     } else if (result.type === 'complex') {
       const terms = result.terms.terms as ComplexNumericTerm[];
       const c = result.data.coefficients;
-      let c0 = c.c0Float ?? this.parseMaxima(c.c0.maxima);
-      if (hasPv && c.c0?.maxima) {
-        const fn = math.compile(c.c0.maxima, '_', pv);
-        const v = fn?.(0);
-        if (v !== undefined && isFinite(v)) c0 = v;
-      }
+      const c0 = this.evalScalar(c.c0?.maxima, c.c0Float ?? this.parseMaxima(c.c0.maxima)) ?? 0;
       approxFn = rec.buildComplex(c0, terms, w0, nTerms);
       if (showHarmonics) {
         const limit = Math.min(nTerms, terms.length);
@@ -499,8 +509,8 @@ export class ResultsSummaryComponent {
 
     if (r.type === 'trigonometric') {
       const { a0, an, bn } = coeffs;
-      const a0Float = r.data.coefficients.a0Float;
-      const a0IsZero = a0Float === undefined || Math.abs(a0Float) < 1e-12;
+      const a0IsZero =
+        (r.data.a0Raw?.maxima ?? r.data.coefficients.a0?.maxima ?? '').trim() === '0';
       const anIsZero = !an || an === '0';
       const bnIsZero = !bn || bn === '0';
 
@@ -532,8 +542,8 @@ export class ResultsSummaryComponent {
       const hrMode = this.halfRangeMode();
       const { a0, an, bn } = coeffs;
       if (hrMode === 'cosine') {
-        const a0Float = r.data.coefficients.a0Float;
-        const a0IsZero = a0Float === undefined || Math.abs(a0Float) < 1e-12;
+        const a0IsZero =
+          (r.data.a0Raw?.maxima ?? r.data.coefficients.a0?.maxima ?? '').trim() === '0';
         const anIsZero = !an || an === '0';
 
         if (anIsZero) return a0IsZero ? '0' : (a0 ?? '0');
@@ -594,9 +604,12 @@ export class ResultsSummaryComponent {
     const r = this.store.result();
     if (r?.type !== 'trigonometric' && r?.type !== 'halfRange') return null;
     const c = r.data.coefficients;
+    const a0RawResolved =
+      this.evalScalar(r.data.a0Raw?.maxima, c.a0Float) ??
+      (this.evalScalar(c.a0?.maxima, undefined) ?? 0) * 2;
     return {
-      a0Float: c.a0Float,
-      a0Half: c.a0Float !== undefined ? c.a0Float / 2 : undefined,
+      a0Float: a0RawResolved,
+      a0Half: a0RawResolved !== undefined ? a0RawResolved / 2 : undefined,
       a0Tex: c.a0?.tex ?? null,
     };
   });
@@ -606,9 +619,10 @@ export class ResultsSummaryComponent {
     const r = this.store.result();
     if (r?.type !== 'complex') return null;
     const c = r.data.coefficients;
+    const c0Resolved = this.evalScalar(c.c0?.maxima, c.c0Float);
     return {
-      c0Float: c.c0Float,
-      c0FloatAbs: c.c0Float !== undefined ? Math.abs(c.c0Float) : undefined,
+      c0Float: c0Resolved,
+      c0FloatAbs: c0Resolved !== undefined ? Math.abs(c0Resolved) : undefined,
       c0Tex: c.c0?.tex ?? null,
     };
   });
