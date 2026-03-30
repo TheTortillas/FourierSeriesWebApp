@@ -21,6 +21,21 @@ free_params : result[4]$
 
 has_combined : is(f_combined # false)$
 
+/* ── Real / imaginary parts of the input F(w) for plotting ── */
+block([_n, _e],
+    _n : length(FUNC_INPUT),
+    if _n = 1 then (
+        _e : FUNC_INPUT[1][1],
+        F_in_real : errcatch(ratsimp(if freeof(%i, _e) then _e else realpart(_e))),
+        F_in_real : if F_in_real = [] then false else first(F_in_real),
+        F_in_imag : errcatch(ratsimp(if freeof(%i, _e) then 0  else imagpart(_e))),
+        F_in_imag : if F_in_imag = [] then false else first(F_in_imag)
+    ) else (
+        F_in_real : false,
+        F_in_imag : false
+    )
+)$
+
 print("__F_POS_MAXIMA__")$      print(string(f_pos))$
 print("__F_POS_TEX__")$         tex(f_pos)$
 print("__F_NEG_MAXIMA__")$      print(string(f_neg))$
@@ -28,4 +43,8 @@ print("__F_NEG_TEX__")$         tex(f_neg)$
 print("__HAS_COMBINED__")$      print(string(has_combined))$
 print("__F_COMBINED_MAXIMA__")$ print(string(f_combined))$
 print("__F_COMBINED_TEX__")$    tex(f_combined)$
+print("__INPUT_REAL_MAXIMA__")$ print(string(F_in_real))$
+print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else print("")$
+print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$
+print("__INPUT_IMAG_TEX__")$    if F_in_imag # false then tex(F_in_imag) else print("")$
 print("__PARAMS__")$            print(string(free_params))$
