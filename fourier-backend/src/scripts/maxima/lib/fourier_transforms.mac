@@ -379,6 +379,37 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k*u(t-t0) -> k*(pi*delta(w) + 1/(iw))*exp(-i*w*t0)  (t0 real) ── */
+    if is(res = false) then block(
+        [u_part, coef_k, u_arg, t0],
+        u_part: false,
+        coef_k: 1,
+        /* detecta u(t-t0) directo */
+        if not atom(e) and is(op(e) = 'u) then (
+            u_arg: part(e, 1),
+            t0: ratsimp(t_var - u_arg),
+            if freeof(t_var, t0) and not equal(t0, 0) then
+                res: [%piexact*delta(w_var) + exp(-%i*w_var*t0)/(%i*w_var),
+                    concat("u(t-t0) -> (pi*delta(w)+1/(iw))*exp(-i*w*t0), t0=", string(t0))]
+        ),
+        /* detecta k*u(t-t0) */
+        if is(res = false) and not atom(e) and is(op(e) = "*") then (
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'u)
+                then u_part: s
+                else coef_k: coef_k * s
+            ),
+            if is(u_part # false) then (
+                u_arg: part(u_part, 1),
+                t0: ratsimp(t_var - u_arg),
+                if freeof(t_var, t0) and not equal(t0, 0) then
+                    res: [coef_k * (%piexact*delta(w_var) + exp(-%i*w_var*t0)/(%i*w_var)),
+                        concat("k*u(t-t0) -> k*(pi*delta(w)+1/(iw))*exp(-i*w*t0), t0=",
+                                string(t0))]
+            )
+        )
+    ),
+
     /* ── sgn(t) ── */
     if is(res = false) then (
         sm: FT_match_sgn(e, t_var),
@@ -988,10 +1019,11 @@ FT(FUNC_INPUT, t_var, w_var) := block(
    Multiplica por u(t_var) para reutilizar los detectores
    que esperan u(t) explicito en intervalo completo.      */
     if n_orig = 1 and not done then (
-        block([tr],
+        block([tr, t0_val],
             tr: FUNC_INPUT[1],
-            if ratsimp(tr[2]) = 0 and FT_is_inf(tr[3]) then (
-                pattern: FT_pattern_lookup(tr[1] * u(t_var), t_var, w_var),
+            if FT_is_inf(tr[3]) and not FT_is_minf(tr[2]) then (
+                t0_val: tr[2],
+                pattern: FT_pattern_lookup(tr[1] * u(t_var - t0_val), t_var, w_var),
                 if is(pattern # false) then (
                     F      : pattern[1],
                     F_real : if freeof(%i, F) then F else ratsimp(realpart(F)),
