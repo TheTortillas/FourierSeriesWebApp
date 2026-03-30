@@ -93,7 +93,7 @@ interface ParamRange { min: number; max: number; }
 export class ParamSlidersComponent {
   readonly params       = input<string[]>([]);
   readonly defaultValue = input<number>(1);
-  readonly min          = input<number>(0.1);
+  readonly min          = input<number>(-5);
   readonly max          = input<number>(5);
   readonly step         = input<number>(0.1);
 
@@ -160,5 +160,11 @@ export class ParamSlidersComponent {
       const cur = r[name] ?? { min: this.min(), max: this.max() };
       return { ...r, [name]: { ...cur, max: val } };
     });
+  }
+
+  /** Clears all slider values and ranges back to defaults. Call on "nuevo cálculo". */
+  reset(): void {
+    this.values.set({});
+    this.ranges.set({});
   }
 }

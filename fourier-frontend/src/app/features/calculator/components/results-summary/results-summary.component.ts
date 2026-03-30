@@ -169,6 +169,7 @@ export class ResultsSummaryComponent {
 
   // ── Canvas wrapper ref (for Fullscreen API) ───────────────────────────────
   readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
+  readonly paramSliders  = viewChild(ParamSlidersComponent);
 
   // ── Simplify state ──────────────────────────────────────────────────────────
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
@@ -683,6 +684,8 @@ export class ResultsSummaryComponent {
         // User pressed Nuevo calculo: close settings panel and clear selected state.
         this.showCanvasSettings.set(false);
         this.hadResult.set(false);
+        this.paramValues.set({});
+        this.paramSliders()?.reset();
       }
     });
 

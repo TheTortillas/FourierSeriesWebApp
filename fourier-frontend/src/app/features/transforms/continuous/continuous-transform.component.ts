@@ -187,8 +187,9 @@ export class ContinuousTransformComponent {
   readonly urlCopied = signal(false);
   readonly isFullscreen = signal(false);
 
-  readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
-  readonly plotComponent = viewChild(FunctionPlotComponent);
+  readonly canvasWrapper   = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
+  readonly plotComponent   = viewChild(FunctionPlotComponent);
+  readonly paramSliders    = viewChild(ParamSlidersComponent);
 
   readonly varPairs = VAR_PAIRS;
 
@@ -421,6 +422,8 @@ export class ContinuousTransformComponent {
     this.showCanvasSettings.set(false);
     this.showShareDialog.set(false);
     this.urlCopied.set(false);
+    this.paramValues.set({});
+    this.paramSliders()?.reset();
   }
 
   setMode(m: 'ft' | 'ift'): void {
