@@ -159,6 +159,9 @@ export class ResultsSummaryComponent {
   // ── Canvas settings ──────────────────────────────────────────────────────
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer' | 'custom'>('pi');
   readonly showHarmonics = signal(false);
+  readonly controlHarmonics = signal(false);
+  readonly enabledHarmonics = signal<Set<number>>(new Set<number>());
+  readonly selectedHarmonicN = signal<number | null>(null);
   readonly originalColor = signal('#8b2500');
   readonly approxColor = signal('#1a4a6b');
   readonly customOriginalColor = signal(false);
@@ -213,6 +216,21 @@ export class ResultsSummaryComponent {
     return result.terms?.terms?.length ?? this.store.nTerms();
   });
 
+  readonly visibleHarmonicNumbers = computed<number[]>(() => {
+    const result = this.store.result();
+    if (!result) return [];
+    const nLimit = this.canvasNTerms();
+    return result.terms.terms.map((t) => t.n).filter((n) => n <= nLimit);
+  });
+
+  readonly allVisibleHarmonicsChecked = computed(() => {
+    if (!this.controlHarmonics()) return true;
+    const visible = this.visibleHarmonicNumbers();
+    if (visible.length === 0) return true;
+    const enabled = this.enabledHarmonics();
+    return visible.every((n) => enabled.has(n));
+  });
+
   // ── Helper: parse a Maxima string to number ─────────────────────────────────
   private parseMaxima(s: string): number {
     try {
@@ -245,11 +263,14 @@ export class ResultsSummaryComponent {
     const math = this.math;
     const rec = this.reconstruction;
     const showHarmonics = this.showHarmonics();
+    const controlHarmonics = this.controlHarmonics();
+    const enabledHarmonics = this.enabledHarmonics();
     const origColor = this.originalColor();
     const approxColorVal = this.approxColor();
     const harmonicColors = this.harmonicColors();
     const origWidth = this.originalLineWidth();
     const approxWidth = this.approxLineWidth();
+    const isHarmonicEnabled = (n: number) => !controlHarmonics || enabledHarmonics.has(n);
 
     // If free params are set, re-compile the original segments with those values
     // so the canvas reflects the chosen parameter configuration.
@@ -296,7 +317,7 @@ export class ResultsSummaryComponent {
     const w0 = w0v !== undefined && isFinite(w0v) ? w0v : w0Base;
 
     let approxFn: ((x: number) => number) | null = null;
-    let harmonicFns: Array<(x: number) => number> = [];
+    let harmonicFns: Array<{ n: number; fn: (x: number) => number }> = [];
 
     if (result.type === 'trigonometric') {
       const rawTerms = result.terms.terms as TrigNumericTerm[];
@@ -320,12 +341,15 @@ export class ResultsSummaryComponent {
           });
         }
       }
-      approxFn = rec.buildTrigonometric(a0Raw, terms, w0, nTerms);
+      const activeTerms = terms.filter((t) => t.n <= nTerms && isHarmonicEnabled(t.n));
+      approxFn = rec.buildTrigonometric(a0Raw, activeTerms, w0, activeTerms.length);
       if (showHarmonics) {
-        const limit = Math.min(nTerms, terms.length);
-        harmonicFns = terms.slice(0, limit).map((t) => {
+        harmonicFns = activeTerms.map((t) => {
           const { n, anFloat, bnFloat } = t;
-          return (x: number) => anFloat * Math.cos(n * w0 * x) + bnFloat * Math.sin(n * w0 * x);
+          return {
+            n,
+            fn: (x: number) => anFloat * Math.cos(n * w0 * x) + bnFloat * Math.sin(n * w0 * x),
+          };
         });
       }
     } else if (result.type === 'halfRange') {
@@ -347,25 +371,24 @@ export class ResultsSummaryComponent {
           });
         }
       }
+      const activeTerms = terms.filter((t) => t.n <= nTerms && isHarmonicEnabled(t.n));
       if (hrMode === 'cosine') {
         const a0Raw =
           this.evalScalar(result.data.a0Raw?.maxima, c.a0Float) ??
           (this.evalScalar(c.a0?.maxima, undefined) ?? 0) * 2;
-        approxFn = rec.buildCosineOnly(a0Raw, terms, w0, nTerms);
+        approxFn = rec.buildCosineOnly(a0Raw, activeTerms, w0, activeTerms.length);
         if (showHarmonics) {
-          const limit = Math.min(nTerms, terms.length);
-          harmonicFns = terms.slice(0, limit).map((t) => {
+          harmonicFns = activeTerms.map((t) => {
             const { n, anFloat } = t;
-            return (x: number) => anFloat * Math.cos(n * w0 * x);
+            return { n, fn: (x: number) => anFloat * Math.cos(n * w0 * x) };
           });
         }
       } else {
-        approxFn = rec.buildSineOnly(terms, w0, nTerms);
+        approxFn = rec.buildSineOnly(activeTerms, w0, activeTerms.length);
         if (showHarmonics) {
-          const limit = Math.min(nTerms, terms.length);
-          harmonicFns = terms.slice(0, limit).map((t) => {
+          harmonicFns = activeTerms.map((t) => {
             const { n, bnFloat } = t;
-            return (x: number) => bnFloat * Math.sin(n * w0 * x);
+            return { n, fn: (x: number) => bnFloat * Math.sin(n * w0 * x) };
           });
         }
       }
@@ -373,18 +396,22 @@ export class ResultsSummaryComponent {
       const terms = result.terms.terms as ComplexNumericTerm[];
       const c = result.data.coefficients;
       const c0 = this.evalScalar(c.c0?.maxima, c.c0Float ?? this.parseMaxima(c.c0.maxima)) ?? 0;
-      approxFn = rec.buildComplex(c0, terms, w0, nTerms);
+      const activeTerms = terms.filter((t) => t.n <= nTerms && isHarmonicEnabled(t.n));
+      approxFn = rec.buildComplex(c0, activeTerms, w0, activeTerms.length);
       if (showHarmonics) {
-        const limit = Math.min(nTerms, terms.length);
-        harmonicFns = terms.slice(0, limit).map((t) => {
+        harmonicFns = activeTerms.map((t) => {
           const { n, cosFloat, sinFloat } = t;
-          return (x: number) => cosFloat * Math.cos(n * w0 * x) + sinFloat * Math.sin(n * w0 * x);
+          return {
+            n,
+            fn: (x: number) => cosFloat * Math.cos(n * w0 * x) + sinFloat * Math.sin(n * w0 * x),
+          };
         });
       }
     }
 
     const localApprox = approxFn;
     const localHarmonics = harmonicFns;
+    const selectedN = this.selectedHarmonicN();
 
     return [
       {
@@ -392,9 +419,14 @@ export class ResultsSummaryComponent {
         onDraw(ctx, vp) {
           // Harmonics (drawn first, behind everything)
           for (let i = 0; i < localHarmonics.length; i++) {
-            plotter.plotFn(ctx, localHarmonics[i], vp, {
-              color: harmonicColors[i % harmonicColors.length],
-              lineWidth: 1,
+            const harmonic = localHarmonics[i];
+            const isSelected = selectedN === harmonic.n;
+            const isDimmed = selectedN !== null && !isSelected;
+            plotter.plotFn(ctx, harmonic.fn, vp, {
+              color: isDimmed
+                ? 'rgba(100, 116, 139, 0.22)'
+                : harmonicColors[(harmonic.n - 1) % harmonicColors.length],
+              lineWidth: isSelected ? 2.2 : 1,
             });
           }
           // Original function (bounded to piece intervals)
@@ -668,6 +700,9 @@ export class ResultsSummaryComponent {
         this.simplifiedCoeffs.set(null);
         this.simplifyProfile.set('raw');
         this.halfRangeMode.set('cosine');
+        this.controlHarmonics.set(false);
+        this.enabledHarmonics.set(new Set(result.terms.terms.map((t) => t.n)));
+        this.selectedHarmonicN.set(null);
         this.showFavoriteDialog.set(false);
         this.latestHistoryEntry.set(null);
         this.favoriteName = '';
@@ -730,6 +765,91 @@ export class ResultsSummaryComponent {
     this.halfRangeMode.set(mode);
     this.simplifiedCoeffs.set(null);
     this.simplifyProfile.set('raw');
+  }
+
+  setHarmonicControl(enabled: boolean): void {
+    this.controlHarmonics.set(enabled);
+    if (enabled) {
+      const enabled = this.enabledHarmonics();
+      if (enabled.size === 0) {
+        this.enabledHarmonics.set(new Set(this.visibleHarmonicNumbers()));
+      }
+    } else {
+      this.selectedHarmonicN.set(null);
+    }
+  }
+
+  toggleHarmonicControl(): void {
+    this.setHarmonicControl(!this.controlHarmonics());
+  }
+
+  isHarmonicEnabled(n: number): boolean {
+    return !this.controlHarmonics() || this.enabledHarmonics().has(n);
+  }
+
+  isHarmonicSelected(n: number): boolean {
+    return this.selectedHarmonicN() === n;
+  }
+
+  harmonicColorForN(n: number): string {
+    const palette = this.harmonicColors();
+    return palette[(n - 1) % palette.length] ?? 'rgba(59, 130, 246, 0.4)';
+  }
+
+  rowHarmonicBackground(n: number): string {
+    if (!this.controlHarmonics()) return '';
+    if (!this.isHarmonicEnabled(n)) return '';
+    if (this.isHarmonicSelected(n)) return this.withAlpha(this.harmonicColorForN(n), 0.28);
+    return this.withAlpha(this.harmonicColorForN(n), 0.1);
+  }
+
+  focusHarmonic(n: number): void {
+    this.showHarmonics.set(true);
+    if (this.controlHarmonics() && !this.enabledHarmonics().has(n)) {
+      const next = new Set(this.enabledHarmonics());
+      next.add(n);
+      this.enabledHarmonics.set(next);
+    }
+    this.selectedHarmonicN.set(this.selectedHarmonicN() === n ? null : n);
+  }
+
+  clearHarmonicSelection(): void {
+    this.selectedHarmonicN.set(null);
+  }
+
+  setHarmonicEnabled(n: number, checked: boolean): void {
+    const next = new Set(this.enabledHarmonics());
+    if (checked) next.add(n);
+    else next.delete(n);
+    this.enabledHarmonics.set(next);
+    if (!checked && this.selectedHarmonicN() === n) {
+      this.selectedHarmonicN.set(null);
+    }
+  }
+
+  toggleAllVisibleHarmonics(checked: boolean): void {
+    const next = new Set(this.enabledHarmonics());
+    for (const n of this.visibleHarmonicNumbers()) {
+      if (checked) next.add(n);
+      else next.delete(n);
+    }
+    this.enabledHarmonics.set(next);
+    if (!checked) {
+      const selected = this.selectedHarmonicN();
+      if (selected !== null && !next.has(selected)) {
+        this.selectedHarmonicN.set(null);
+      }
+    }
+  }
+
+  private withAlpha(color: string, alpha: number): string {
+    if (color.startsWith('hsla(')) {
+      return color.replace(/hsla\(([^,]+),([^,]+),([^,]+),[^)]+\)/, `hsla($1,$2,$3,${alpha})`);
+    }
+    if (color.startsWith('hsl(')) {
+      return color.replace(/hsl\(([^,]+),([^,]+),([^)]+)\)/, `hsla($1,$2,$3,${alpha})`);
+    }
+    return color;
   }
 
   // ── Canvas actions ────────────────────────────────────────────────────────

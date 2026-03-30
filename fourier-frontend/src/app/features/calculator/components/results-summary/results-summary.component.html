@@ -224,7 +224,36 @@
                 {{ showHarmonics() ? 'On' : 'Off' }}
               </button>
             </div>
+
+            <div class="flex items-center gap-2">
+              <label
+                class="flex items-center gap-2 px-2 py-1 rounded border border-border dark:border-dark-border cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="controlHarmonics()"
+                  (change)="setHarmonicControl(!!$any($event.target).checked)"
+                  class="accent-accent"
+                />
+                <span class="text-muted dark:text-dark-muted">Editar armónicos desde tabla</span>
+              </label>
+            </div>
           </div>
+          @if (controlHarmonics()) {
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="text-[10px] text-muted dark:text-dark-muted">
+                Marca o desmarca filas en términos para sumar o restar armónicos. Click en una fila
+                para iluminar su curva.
+              </p>
+              <button
+                type="button"
+                (click)="clearHarmonicSelection()"
+                class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors"
+              >
+                Limpiar selección
+              </button>
+            </div>
+          }
         </section>
 
         <div class="border-t border-border dark:border-dark-border"></div>
@@ -689,6 +718,17 @@
                 <tr
                   class="text-muted dark:text-dark-muted border-b border-border dark:border-dark-border"
                 >
+                  @if (controlHarmonics()) {
+                    <th class="px-2 py-2 text-center font-medium w-8">
+                      <input
+                        type="checkbox"
+                        [checked]="allVisibleHarmonicsChecked()"
+                        (change)="toggleAllVisibleHarmonics(!!$any($event.target).checked)"
+                        title="Seleccionar todos los armónicos visibles"
+                        class="accent-accent"
+                      />
+                    </th>
+                  }
                   <th class="px-3 py-2 text-left font-medium w-8">n</th>
                   @if (!isSine) {
                     <th class="px-3 py-2 text-left font-medium max-w-48">aₙ (expresión)</th>
@@ -712,6 +752,9 @@
                   <tr
                     class="hover:bg-paper2 dark:hover:bg-dark-surface2 bg-paper2/40 dark:bg-dark-surface2/40"
                   >
+                    @if (controlHarmonics()) {
+                      <td class="px-2 py-2 text-center text-muted dark:text-dark-muted">—</td>
+                    }
                     <td class="px-3 py-2 text-muted dark:text-dark-muted">0</td>
                     <td class="px-3 py-2 max-w-48 truncate" [mathjax]="trigCtx?.a0Tex ?? ''"></td>
                     <td class="px-3 py-2 text-right tabular-nums">
@@ -730,7 +773,26 @@
 
                 <!-- n ≥ 1 rows -->
                 @for (term of terms; track term.n) {
-                  <tr class="hover:bg-paper2 dark:hover:bg-dark-surface2">
+                  <tr
+                    class="hover:bg-paper2 dark:hover:bg-dark-surface2 cursor-pointer transition-colors"
+                    [class.opacity-45]="controlHarmonics() && !isHarmonicEnabled(term.n)"
+                    [class.ring-1]="isHarmonicSelected(term.n)"
+                    [class.ring-accent]="isHarmonicSelected(term.n)"
+                    [style.backgroundColor]="rowHarmonicBackground(term.n)"
+                    (click)="focusHarmonic(term.n)"
+                  >
+                    @if (controlHarmonics()) {
+                      <td class="px-2 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          [checked]="isHarmonicEnabled(term.n)"
+                          (change)="setHarmonicEnabled(term.n, !!$any($event.target).checked)"
+                          (click)="$event.stopPropagation()"
+                          class="accent-accent"
+                          title="Incluir armónico n={{ term.n }}"
+                        />
+                      </td>
+                    }
                     <td class="px-3 py-2 text-muted dark:text-dark-muted">{{ term.n }}</td>
                     @if (!isSine) {
                       <td class="px-3 py-2 max-w-48">
@@ -789,6 +851,17 @@
                 <tr
                   class="text-muted dark:text-dark-muted border-b border-border dark:border-dark-border"
                 >
+                  @if (controlHarmonics()) {
+                    <th class="px-2 py-2 text-center font-medium w-8">
+                      <input
+                        type="checkbox"
+                        [checked]="allVisibleHarmonicsChecked()"
+                        (change)="toggleAllVisibleHarmonics(!!$any($event.target).checked)"
+                        title="Seleccionar todos los armónicos visibles"
+                        class="accent-accent"
+                      />
+                    </th>
+                  }
                   <th class="px-3 py-2 text-left font-medium w-8">n</th>
                   <th class="px-3 py-2 text-left font-medium">cₙ (expresión)</th>
                   <th class="px-3 py-2 text-left font-medium">c₋ₙ (expresión)</th>
@@ -804,6 +877,9 @@
                   <tr
                     class="hover:bg-paper2 dark:hover:bg-dark-surface2 bg-paper2/40 dark:bg-dark-surface2/40"
                   >
+                    @if (controlHarmonics()) {
+                      <td class="px-2 py-2 text-center text-muted dark:text-dark-muted">—</td>
+                    }
                     <td class="px-3 py-2 text-muted dark:text-dark-muted">0</td>
                     <td class="px-3 py-2" [mathjax]="complexCtx?.c0Tex ?? ''"></td>
                     <td class="px-3 py-2 text-muted dark:text-dark-muted">—</td>
@@ -816,7 +892,26 @@
 
                 <!-- n ≥ 1 rows -->
                 @for (term of terms; track term.n) {
-                  <tr class="hover:bg-paper2 dark:hover:bg-dark-surface2">
+                  <tr
+                    class="hover:bg-paper2 dark:hover:bg-dark-surface2 cursor-pointer transition-colors"
+                    [class.opacity-45]="controlHarmonics() && !isHarmonicEnabled(term.n)"
+                    [class.ring-1]="isHarmonicSelected(term.n)"
+                    [class.ring-accent]="isHarmonicSelected(term.n)"
+                    [style.backgroundColor]="rowHarmonicBackground(term.n)"
+                    (click)="focusHarmonic(term.n)"
+                  >
+                    @if (controlHarmonics()) {
+                      <td class="px-2 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          [checked]="isHarmonicEnabled(term.n)"
+                          (change)="setHarmonicEnabled(term.n, !!$any($event.target).checked)"
+                          (click)="$event.stopPropagation()"
+                          class="accent-accent"
+                          title="Incluir armónico n={{ term.n }}"
+                        />
+                      </td>
+                    }
                     <td class="px-3 py-2 text-muted dark:text-dark-muted">{{ term.n }}</td>
                     <td class="px-3 py-2">
                       <span class="inline-flex items-start gap-1">
