@@ -23,6 +23,7 @@ export class DashboardComponent implements OnInit {
   private readonly api = inject(ApiService);
 
   readonly loading     = signal(true);
+  readonly loadError   = signal(false);
   readonly stats       = signal<Stats | null>(null);
   readonly recentAudit = signal<AuditEntry[]>([]);
   readonly recentCalcs = signal<HistoryEntry[]>([]);
@@ -46,7 +47,7 @@ export class DashboardComponent implements OnInit {
         this.recentCalcs.set(history.entries);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => { this.loadError.set(true); this.loading.set(false); },
     });
   }
 }
