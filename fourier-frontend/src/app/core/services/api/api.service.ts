@@ -231,10 +231,15 @@ export class ApiService {
 
   getAdminHistory(query?: AdminHistoryQuery): Observable<HistoryListResponse> {
     let params = new HttpParams();
-    if (query?.limit !== undefined) params = params.set('limit', query.limit);
-    if (query?.offset !== undefined) params = params.set('offset', query.offset);
-    if (query?.userId) params = params.set('userId', query.userId);
-    if (query?.type) params = params.set('type', query.type);
+    if (query?.limit          !== undefined) params = params.set('limit',          query.limit);
+    if (query?.offset         !== undefined) params = params.set('offset',         query.offset);
+    if (query?.userId)                       params = params.set('userId',         query.userId);
+    if (query?.type)                         params = params.set('type',           query.type);
+    if (query?.dateFrom)                     params = params.set('dateFrom',       query.dateFrom);
+    if (query?.dateTo)                       params = params.set('dateTo',         query.dateTo);
+    if (query?.favoritesOnly)                params = params.set('favoritesOnly',  query.favoritesOnly);
+    if (query?.anonymousOnly)                params = params.set('anonymousOnly',  query.anonymousOnly);
+    if (query?.minExecutionMs !== undefined) params = params.set('minExecutionMs', query.minExecutionMs);
     return this.http.get<HistoryListResponse>(`${this.base}/admin/history`, { params });
   }
 

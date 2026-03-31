@@ -48,6 +48,11 @@ export interface AdminHistoryQuery {
   offset?: number;
   userId?: string;
   type?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  favoritesOnly?: boolean;
+  anonymousOnly?: boolean;
+  minExecutionMs?: number;
 }
 
 export interface SystemTableSizes {

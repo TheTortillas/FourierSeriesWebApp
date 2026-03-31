@@ -23,21 +23,36 @@ export class AdminHistoryComponent implements OnInit {
   readonly offset   = signal(0);
   readonly pageSize = PAGE_SIZE;
 
-  filterType   = '';
-  filterUserId = '';
+  // Filters
+  filterType         = '';
+  filterUserId       = '';
+  filterDateFrom     = '';
+  filterDateTo       = '';
+  filterFavorites    = false;
+  filterAnonymous    = false;
+  filterMinExecMs    = '';
 
   readonly CALC_TYPES  = CALC_TYPES;
   readonly typeLabel   = (t: string) => CALC_TYPE_LABEL[t] ?? t;
   readonly totalPages  = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
+  readonly hasFilters  = computed(() =>
+    !!(this.filterType || this.filterUserId || this.filterDateFrom ||
+       this.filterDateTo || this.filterFavorites || this.filterAnonymous || this.filterMinExecMs)
+  );
 
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading.set(true);
     const query: AdminHistoryQuery = { limit: this.pageSize, offset: this.offset() };
-    if (this.filterType)   query.type   = this.filterType;
-    if (this.filterUserId) query.userId = this.filterUserId.trim();
+    if (this.filterType)      query.type          = this.filterType;
+    if (this.filterUserId)    query.userId        = this.filterUserId.trim();
+    if (this.filterDateFrom)  query.dateFrom      = this.filterDateFrom;
+    if (this.filterDateTo)    query.dateTo        = this.filterDateTo;
+    if (this.filterFavorites) query.favoritesOnly = true;
+    if (this.filterAnonymous) query.anonymousOnly = true;
+    if (this.filterMinExecMs) query.minExecutionMs = parseInt(this.filterMinExecMs);
 
     this.api.getAdminHistory(query).subscribe({
       next: (res) => { this.entries.set(res.entries); this.total.set(res.total); this.loading.set(false); },
@@ -46,7 +61,18 @@ export class AdminHistoryComponent implements OnInit {
   }
 
   applyFilters(): void { this.offset.set(0); this.load(); }
-  clearFilters(): void { this.filterType = ''; this.filterUserId = ''; this.applyFilters(); }
+
+  clearFilters(): void {
+    this.filterType      = '';
+    this.filterUserId    = '';
+    this.filterDateFrom  = '';
+    this.filterDateTo    = '';
+    this.filterFavorites = false;
+    this.filterAnonymous = false;
+    this.filterMinExecMs = '';
+    this.applyFilters();
+  }
+
   prevPage(): void { this.offset.set(Math.max(0, this.offset() - this.pageSize)); this.load(); }
   nextPage(): void { this.offset.set(this.offset() + this.pageSize); this.load(); }
 
