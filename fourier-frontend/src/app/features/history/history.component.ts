@@ -27,11 +27,13 @@ export class HistoryComponent implements OnInit {
   private readonly api    = inject(ApiService);
   private readonly router = inject(Router);
 
-  readonly loading  = signal(false);
-  readonly entries  = signal<HistoryEntry[]>([]);
-  readonly total    = signal(0);
-  readonly offset   = signal(0);
-  readonly pageSize = PAGE_SIZE;
+  readonly loading      = signal(false);
+  readonly entries      = signal<HistoryEntry[]>([]);
+  readonly total        = signal(0);
+  readonly offset       = signal(0);
+  readonly pageSize     = PAGE_SIZE;
+  readonly isLimited    = signal(false);
+  readonly historyLimit = signal<{ max: number; favorites: number } | null>(null);
 
   // Filters
   showFavoritesOnly = false;
@@ -60,6 +62,8 @@ export class HistoryComponent implements OnInit {
       next: (res) => {
         this.entries.set(res.entries);
         this.total.set(res.total);
+        this.isLimited.set(res.isLimited ?? false);
+        this.historyLimit.set(res.historyLimit ?? null);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -109,12 +113,17 @@ export class HistoryComponent implements OnInit {
   // ── Reopen in calculator ─────────────────────────────────────────────────
 
   reopenInCalculator(entry: HistoryEntry): void {
-    // Only segment-based types can be restored
     const inp = entry.input;
     if (!inp?.['segments']) return;
-    // Navigate to calculator — store will restore from URL state if needed,
-    // but here we pass the raw input directly via router state
-    this.router.navigate(['/calculator'], { state: { restoreInput: inp } });
+
+    const transformTypes = ['fourier_transform', 'inverse_fourier_transform'];
+    if (transformTypes.includes(entry.type)) {
+      this.router.navigate(['/transforms'], {
+        state: { restoreInput: { ...inp, type: entry.type } },
+      });
+    } else {
+      this.router.navigate(['/calculator'], { state: { restoreInput: inp } });
+    }
   }
 
   // ── Expand input ─────────────────────────────────────────────────────────

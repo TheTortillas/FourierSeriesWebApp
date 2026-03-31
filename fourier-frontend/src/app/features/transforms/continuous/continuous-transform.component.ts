@@ -216,10 +216,17 @@ export class ContinuousTransformComponent {
       this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
     }
 
-    // ── 1. Restore state from URL ─────────────────────────────────────────
+    // ── 1. Restore state from router navigation state or URL ──────────────
+    const navState = this.router.getCurrentNavigation()?.extras.state as
+      { restoreInput?: Record<string, unknown> } | undefined;
     const encoded = this.route.snapshot.queryParamMap.get('s');
     let needsCalculate = false;
-    if (encoded) needsCalculate = this.restoreState(encoded);
+    if (navState?.restoreInput) {
+      this.restoreFromInput(navState.restoreInput);
+      needsCalculate = true;
+    } else if (encoded) {
+      needsCalculate = this.restoreState(encoded);
+    }
 
     // ── 2. Auto-calculate after browser render ────────────────────────────
     afterNextRender(() => {
@@ -459,6 +466,44 @@ export class ContinuousTransformComponent {
     return [layer];
   });
 
+  restoreFromInput(input: Record<string, unknown>): void {
+    const rawSegs = input['segments'] as Array<{
+      expression: string; expressionTex?: string;
+      from: string; fromTex?: string;
+      to: string; toTex?: string;
+    }> | undefined;
+    if (!rawSegs?.length) return;
+
+    const type = input['type'] as string | undefined;
+    if (type === 'inverse_fourier_transform') this.mode.set('ift');
+    else this.mode.set('ft');
+
+    const intVar = input['intVar'] as string | undefined;
+    const transVar = input['transVar'] as string | undefined;
+    if (intVar && transVar) {
+      const match = VAR_PAIRS.find((p) => p.time === intVar && p.freq === transVar);
+      if (match) {
+        this.varPairId.set(match.id);
+      } else {
+        this.varPairId.set('custom');
+        this.customTime.set(intVar);
+        this.customFreq.set(transVar);
+      }
+    }
+
+    this.segments.set(
+      rawSegs.map((seg) => ({
+        id: mkId(),
+        expression: seg.expression ?? '',
+        expressionTex: seg.expressionTex ?? seg.expression ?? '',
+        from: seg.from ?? '',
+        fromTex: seg.fromTex ?? seg.from ?? '',
+        to: seg.to ?? '',
+        toTex: seg.toTex ?? seg.to ?? '',
+      })),
+    );
+  }
+
   // ── Mode / var actions ────────────────────────────────────────────────────
 
   startNewCalculation(): void {
@@ -502,7 +547,14 @@ export class ContinuousTransformComponent {
   calculate(): void {
     if (this.inputsLocked() || !this.canCalculate()) return;
 
-    const segs = this.segments().map((s) => ({ expression: s.expression, from: s.from, to: s.to }));
+    const segs = this.segments().map((s) => ({
+      expression: s.expression,
+      expressionTex: s.expressionTex,
+      from: s.from,
+      fromTex: s.fromTex,
+      to: s.to,
+      toTex: s.toTex,
+    }));
     const intVar = this.intVar();
     const transVar = this.transVar();
 

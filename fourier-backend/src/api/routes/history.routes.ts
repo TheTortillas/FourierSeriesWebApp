@@ -33,14 +33,29 @@ historyRouter.get(
   "/",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const limit = parseInt(req.query["limit"] as string) || 20;
-      const offset = parseInt(req.query["offset"] as string) || 0;
+      const user = req.user!;
       const favoritesOnly = req.query["favorites"] === "true";
-      const [total, entries] = await Promise.all([
-        historyRepository.countByUser(req.user!.id, favoritesOnly),
-        historyRepository.findByUser(req.user!.id, limit, offset, favoritesOnly),
+
+      const FREE_CAP = favoritesOnly ? 2 : 5;
+      const isLimited = user.tier === "free";
+
+      const limit  = isLimited ? FREE_CAP : (parseInt(req.query["limit"] as string) || 20);
+      const offset = isLimited ? 0 : (parseInt(req.query["offset"] as string) || 0);
+
+      const [realTotal, entries] = await Promise.all([
+        historyRepository.countByUser(user.id, favoritesOnly),
+        historyRepository.findByUser(user.id, limit, offset, favoritesOnly),
       ]);
-      res.json({ entries, total, limit, offset });
+
+      const total = isLimited ? Math.min(realTotal, FREE_CAP) : realTotal;
+
+      res.json({
+        entries,
+        total,
+        limit,
+        offset,
+        ...(isLimited ? { isLimited: true, historyLimit: { max: 5, favorites: 2 } } : {}),
+      });
     } catch (err) {
       next(err);
     }

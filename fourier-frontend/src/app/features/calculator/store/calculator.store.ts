@@ -204,8 +204,11 @@ export class CalculatorStore {
     const req = {
       segments: this.segments().map((s) => ({
         expression: s.expression,
+        expressionTex: s.expressionTex,
         from: s.from,
+        fromTex: s.fromTex,
         to: s.to,
+        toTex: s.toTex,
       })),
       seriesType: type,
       intVar: this.intVar(),
@@ -368,7 +371,7 @@ export class CalculatorStore {
    */
   restoreFromInput(input: Record<string, unknown>): void {
     const segments = input['segments'] as
-      | Array<{ expression: string; from: string; to: string }>
+      | Array<{ expression: string; expressionTex?: string; from: string; fromTex?: string; to: string; toTex?: string }>
       | undefined;
     if (!segments?.length) return;
 
@@ -381,11 +384,11 @@ export class CalculatorStore {
       segments.map((seg) => ({
         id: nextId(),
         expression: seg.expression ?? '',
-        expressionTex: seg.expression ?? '',
+        expressionTex: seg.expressionTex ?? seg.expression ?? '',
         from: seg.from ?? '',
-        fromTex: seg.from ?? '',
+        fromTex: seg.fromTex ?? seg.from ?? '',
         to: seg.to ?? '',
-        toTex: seg.to ?? '',
+        toTex: seg.toTex ?? seg.to ?? '',
       })),
     );
     if (type && validTypes.includes(type)) this.seriesType.set(type);
