@@ -14,6 +14,8 @@ export interface HistoryListResponse {
   total: number;
   limit: number;
   offset: number;
+  isLimited?: boolean;
+  historyLimit?: { max: number; favorites: number };
 }
 
 export interface HistoryQuery {
