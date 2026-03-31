@@ -178,21 +178,88 @@
 
               </tr>
 
-              <!-- Expanded input JSON -->
+              <!-- Expanded input -->
               @if (isExpanded(entry.id)) {
                 <tr class="bg-paper dark:bg-dark-bg">
-                  <td colspan="7" class="px-4 py-3">
-                    <div class="flex items-start gap-2">
-                      <span class="text-[10px] font-mono text-muted dark:text-dark-muted mt-0.5 shrink-0">input:</span>
-                      <pre class="text-[10px] font-mono text-ink dark:text-dark-ink
-                                  bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                                  rounded p-2 overflow-x-auto flex-1 whitespace-pre-wrap break-all">{{ inputJson(entry) }}</pre>
-                    </div>
+                  <td colspan="7" class="px-4 py-3 flex flex-col gap-2">
+
+                    <!-- ── Vista estructurada para DFT con puntos ─────────── -->
+                    @if (hasDftPoints(entry) && !isRawJson(entry.id)) {
+                      @let dft = dftMeta(entry);
+                      <div class="flex flex-col gap-2">
+
+                        <!-- Header -->
+                        <div class="flex items-center gap-3">
+                          <span class="text-[10px] font-mono text-muted dark:text-dark-muted">input:</span>
+                          <span class="text-[10px] font-mono text-ink dark:text-dark-ink">
+                            <span class="font-semibold">{{ dft.count }}</span> puntos
+                            @if (dft.mode) { · <span class="text-accent2">mode: {{ dft.mode }}</span> }
+                          </span>
+                          <button type="button"
+                                  (click)="toggleRawJson(entry.id, $event)"
+                                  class="ml-auto text-[10px] font-mono text-muted dark:text-dark-muted
+                                         hover:text-accent transition-colors cursor-pointer">
+                            Ver JSON
+                          </button>
+                        </div>
+
+                        <!-- Mini tabla de puntos -->
+                        <div class="border border-border dark:border-dark-border rounded-lg overflow-hidden">
+                          <table class="w-auto text-[10px] font-mono">
+                            <thead>
+                              <tr class="bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted">
+                                <th class="px-3 py-1.5 text-right font-medium w-8">#</th>
+                                <th class="px-3 py-1.5 text-right font-medium">x</th>
+                                <th class="px-3 py-1.5 text-right font-medium">y</th>
+                              </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border dark:divide-dark-border">
+                              @for (pt of dft.preview; track $index) {
+                                <tr>
+                                  <td class="px-3 py-1 text-right text-muted/50 dark:text-dark-muted/50">{{ $index }}</td>
+                                  <td class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums">{{ pt.x }}</td>
+                                  <td class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums">{{ pt.y }}</td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                          @if (dft.remaining > 0) {
+                            <p class="px-3 py-1.5 text-[10px] font-mono text-muted dark:text-dark-muted
+                                       border-t border-border dark:border-dark-border">
+                              … y {{ dft.remaining }} puntos más
+                            </p>
+                          }
+                        </div>
+
+                      </div>
+
+                    <!-- ── JSON para el resto de tipos (o Ver JSON activo) ── -->
+                    } @else {
+                      <div class="flex items-start gap-2">
+                        <span class="text-[10px] font-mono text-muted dark:text-dark-muted mt-0.5 shrink-0">input:</span>
+                        <div class="flex-1 min-w-0">
+                          <pre class="text-[10px] font-mono text-ink dark:text-dark-ink
+                                      bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                                      rounded p-2 overflow-x-auto max-h-64 overflow-y-auto
+                                      whitespace-pre-wrap break-all">{{ inputJson(entry) }}</pre>
+                          @if (hasDftPoints(entry) && isRawJson(entry.id)) {
+                            <button type="button"
+                                    (click)="toggleRawJson(entry.id, $event)"
+                                    class="mt-1.5 text-[10px] font-mono text-muted dark:text-dark-muted
+                                           hover:text-accent transition-colors cursor-pointer">
+                              ← Vista resumida
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
+
                     @if (entry.isFavorite && entry.favoriteName) {
-                      <p class="text-[10px] font-mono text-amber-600 dark:text-amber-400 mt-1.5">
+                      <p class="text-[10px] font-mono text-amber-600 dark:text-amber-400">
                         ★ Guardado como: "{{ entry.favoriteName }}"
                       </p>
                     }
+
                   </td>
                 </tr>
               }

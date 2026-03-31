@@ -81,18 +81,54 @@ export class AdminHistoryComponent implements OnInit {
     this.applyFilters();
   }
 
-  readonly expandedIds = signal<Set<string>>(new Set());
+  readonly expandedIds  = signal<Set<string>>(new Set());
+  readonly rawJsonIds   = signal<Set<string>>(new Set());
 
   toggleExpand(id: string): void {
     this.expandedIds.update((s) => {
+      const next = new Set(s);
+      if (next.has(id)) {
+        next.delete(id);
+        // Resetear vista JSON al colapsar
+        this.rawJsonIds.update((r) => { const rn = new Set(r); rn.delete(id); return rn; });
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  toggleRawJson(id: string, event: Event): void {
+    event.stopPropagation();
+    this.rawJsonIds.update((s) => {
       const next = new Set(s);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   }
 
-  isExpanded(id: string): boolean {
-    return this.expandedIds().has(id);
+  isExpanded(id: string): boolean { return this.expandedIds().has(id); }
+  isRawJson(id: string):  boolean { return this.rawJsonIds().has(id); }
+
+  hasDftPoints(entry: HistoryEntry): boolean {
+    const pts = entry.input?.['points'];
+    return Array.isArray(pts) && (pts as unknown[]).length > 0;
+  }
+
+  dftMeta(entry: HistoryEntry): {
+    mode: string | undefined;
+    count: number;
+    preview: Array<{ x: number; y: number }>;
+    remaining: number;
+  } {
+    const points = entry.input['points'] as Array<{ x: number; y: number }>;
+    const preview = points.slice(0, 6);
+    return {
+      mode:      entry.input['mode'] as string | undefined,
+      count:     points.length,
+      preview,
+      remaining: points.length - preview.length,
+    };
   }
 
   inputPreview(entry: HistoryEntry): string {
