@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../../../core/services/api/api.service';
-import { AdminUser } from '../../../domain';
+import { AdminUser, AdminUsersQuery } from '../../../domain';
 import { AdminDatePipe } from '../../../shared/pipes/admin-date.pipe';
 
 const PAGE_SIZE = 20;
@@ -21,10 +21,10 @@ export class UsersComponent implements OnInit {
   readonly offset    = signal(0);
   readonly pageSize  = PAGE_SIZE;
 
-  // Filters
-  filterRole   = '';
-  filterTier   = '';
-  filterActive = '';
+  // Filters — tipos estrictos para evitar casts al construir la query
+  filterRole:   'user' | 'admin' | ''            = '';
+  filterTier:   'free' | 'premium' | ''          = '';
+  filterActive: 'true' | 'false' | ''            = '';
 
   // Optimistic action feedback
   readonly actionMsg = signal<{ id: string; msg: string } | null>(null);
@@ -36,12 +36,12 @@ export class UsersComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    const query: Record<string, unknown> = { limit: this.pageSize, offset: this.offset() };
-    if (this.filterRole)        query['role']     = this.filterRole;
-    if (this.filterTier)        query['tier']     = this.filterTier;
-    if (this.filterActive !== '') query['isActive'] = this.filterActive === 'true';
+    const query: AdminUsersQuery = { limit: this.pageSize, offset: this.offset() };
+    if (this.filterRole)          query.role     = this.filterRole;
+    if (this.filterTier)          query.tier     = this.filterTier;
+    if (this.filterActive !== '') query.isActive = this.filterActive === 'true';
 
-    this.api.getAdminUsers(query as never).subscribe({
+    this.api.getAdminUsers(query).subscribe({
       next: (res) => { this.users.set(res.entries); this.total.set(res.total); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

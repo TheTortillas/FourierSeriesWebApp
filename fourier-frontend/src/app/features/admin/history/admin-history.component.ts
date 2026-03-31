@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../../../core/services/api/api.service';
-import { HistoryEntry, CALC_TYPE_LABEL } from '../../../domain';
+import { HistoryEntry, CALC_TYPE_LABEL, AdminHistoryQuery } from '../../../domain';
 import { AdminDatePipe } from '../../../shared/pipes/admin-date.pipe';
 
 const PAGE_SIZE = 20;
@@ -35,11 +35,11 @@ export class AdminHistoryComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    const query: Record<string, unknown> = { limit: this.pageSize, offset: this.offset() };
-    if (this.filterType)   query['type']   = this.filterType;
-    if (this.filterUserId) query['userId'] = this.filterUserId.trim();
+    const query: AdminHistoryQuery = { limit: this.pageSize, offset: this.offset() };
+    if (this.filterType)   query.type   = this.filterType;
+    if (this.filterUserId) query.userId = this.filterUserId.trim();
 
-    this.api.getAdminHistory(query as never).subscribe({
+    this.api.getAdminHistory(query).subscribe({
       next: (res) => { this.entries.set(res.entries); this.total.set(res.total); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
