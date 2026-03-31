@@ -636,6 +636,67 @@ export class ResultsSummaryComponent {
     return null;
   });
 
+  /** Terms re-evaluated with current slider params for spectrum consistency. */
+  readonly spectrumTrigTerms = computed<TrigonometricTerm[] | null>(() => {
+    const r = this.store.result();
+    if (r?.type !== 'trigonometric' && r?.type !== 'halfRange') return null;
+
+    const rawTerms = r.terms.terms as TrigonometricTerm[];
+    const coeffs = r.data.coefficients;
+    const pv = this.evaluationParams();
+
+    const anFn = coeffs.an?.maxima ? this.math.compile(coeffs.an.maxima, 'n', pv) : null;
+    const bnFn = coeffs.bn?.maxima ? this.math.compile(coeffs.bn.maxima, 'n', pv) : null;
+    if (!anFn && !bnFn) return rawTerms;
+
+    return rawTerms.map((t) => {
+      const anv = anFn?.(t.n);
+      const bnv = bnFn?.(t.n);
+      return {
+        ...t,
+        anFloat: anv !== undefined && isFinite(anv) ? anv : t.anFloat,
+        bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : t.bnFloat,
+      };
+    });
+  });
+
+  /** Complex spectrum terms adapted to slider params via the real-term representation. */
+  readonly spectrumComplexTerms = computed<ComplexTerm[] | null>(() => {
+    const r = this.store.result();
+    if (r?.type !== 'complex') return null;
+
+    const rawTerms = r.terms.terms as ComplexTerm[];
+    if (!rawTerms.length) return rawTerms;
+
+    const pv = this.evaluationParams();
+    const intVar = r.data.input.intVar ?? 'x';
+    const w0 = this.resolveW0Value();
+    if (!isFinite(w0) || Math.abs(w0) < 1e-12) return rawTerms;
+
+    return rawTerms.map((t) => {
+      const k = t.n * w0;
+      if (!isFinite(k) || Math.abs(k) < 1e-12) return t;
+
+      const realFn = this.math.compile(t.real.maxima, intVar, pv);
+      if (!realFn) return t;
+
+      const a = realFn(0);
+      const b = realFn(Math.PI / (2 * k));
+      if (!isFinite(a) || !isFinite(b)) return t;
+
+      const amplitude = Math.sqrt(a * a + b * b) / 2;
+      const phase = Math.atan2(-b, a);
+
+      return {
+        ...t,
+        cosFloat: a,
+        sinFloat: b,
+        amplitude: isFinite(amplitude) ? amplitude : t.amplitude,
+        phase: isFinite(phase) ? phase : t.phase,
+      };
+    });
+  });
+
   /** Typed tabs array so the template gets literal types */
   readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; label: string }[] = [
     { id: 'coefficients', label: 'Coeficientes' },
@@ -872,6 +933,16 @@ export class ResultsSummaryComponent {
       return color.replace(/hsl\(([^,]+),([^,]+),([^)]+)\)/, `hsla($1,$2,$3,${alpha})`);
     }
     return color;
+  }
+
+  private resolveW0Value(): number {
+    const r = this.store.result();
+    if (!r) return Math.PI;
+    const pv = this.evaluationParams();
+    const parsed = this.reconstruction.parseW0(r.data.w0.maxima);
+    const fn = this.math.compile(r.data.w0.maxima, '_', pv);
+    const value = fn?.(0);
+    return value !== undefined && isFinite(value) ? value : parsed;
   }
 
   // ── Canvas actions ────────────────────────────────────────────────────────

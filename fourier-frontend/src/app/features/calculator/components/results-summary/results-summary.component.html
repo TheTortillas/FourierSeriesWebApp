@@ -980,8 +980,10 @@
                     ? 'halfRange'
                     : 'trigonometric'
               "
-              [trigTerms]="type === 'trigonometric' || type === 'halfRange' ? trigTerms() : null"
-              [complexTerms]="type === 'complex' ? complexTerms() : null"
+              [trigTerms]="
+                type === 'trigonometric' || type === 'halfRange' ? spectrumTrigTerms() : null
+              "
+              [complexTerms]="type === 'complex' ? spectrumComplexTerms() : null"
               [trigZero]="
                 type === 'trigonometric' || (type === 'halfRange' && halfRangeMode() === 'cosine')
                   ? (trigCtx?.a0Half ?? null)
