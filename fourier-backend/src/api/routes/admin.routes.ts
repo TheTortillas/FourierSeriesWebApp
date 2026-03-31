@@ -7,7 +7,7 @@ import {
 } from "../../infrastructure/container";
 import { authenticate, requireAdmin } from "../middlewares/authenticate";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
-import type { AuditAction } from "../../domain/interfaces/repositories/IAuditRepository";
+import type { AuditAction, AuditFilters } from "../../domain/interfaces/repositories/IAuditRepository";
 
 export const adminRouter = Router();
 
@@ -341,6 +341,21 @@ adminRouter.patch(
  *       - in: query
  *         name: offset
  *         schema: { type: integer, default: 0 }
+ *       - in: query
+ *         name: action
+ *         schema: { type: string }
+ *       - in: query
+ *         name: userId
+ *         schema: { type: string }
+ *       - in: query
+ *         name: dateFrom
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: dateTo
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: anonymousOnly
+ *         schema: { type: boolean }
  *     responses:
  *       200:
  *         description: Entradas del audit log
@@ -349,11 +364,19 @@ adminRouter.get(
   "/audit",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const limit = parseInt(req.query["limit"] as string) || 50;
+      const limit  = parseInt(req.query["limit"]  as string) || 50;
       const offset = parseInt(req.query["offset"] as string) || 0;
+
+      const filters: AuditFilters = {};
+      if (req.query["action"])        filters.action        = req.query["action"] as AuditAction;
+      if (req.query["userId"])        filters.userId        = req.query["userId"] as string;
+      if (req.query["dateFrom"])      filters.dateFrom      = new Date(req.query["dateFrom"] as string);
+      if (req.query["dateTo"])        filters.dateTo        = new Date(req.query["dateTo"] as string);
+      if (req.query["anonymousOnly"] === "true") filters.anonymousOnly = true;
+
       const [entries, total] = await Promise.all([
-        auditRepository.findAll(limit, offset),
-        auditRepository.countAll(),
+        auditRepository.findAll(limit, offset, filters),
+        auditRepository.countAll(filters),
       ]);
       res.json({ entries, total, limit, offset });
     } catch (err) {
