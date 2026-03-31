@@ -346,4 +346,28 @@ export class UserRepository implements IUserRepository {
       [id],
     );
   }
+
+  async getAdminStats(): Promise<{ total: number; premium: number; free: number; inactive: number }> {
+    const result = await db.query<{
+      total: string;
+      premium: string;
+      free: string;
+      inactive: string;
+    }>(`
+      SELECT
+        COUNT(*)                                          AS total,
+        COUNT(*) FILTER (WHERE tier     = 'premium')     AS premium,
+        COUNT(*) FILTER (WHERE tier     = 'free')        AS free,
+        COUNT(*) FILTER (WHERE is_active = FALSE)        AS inactive
+      FROM users
+      WHERE deleted_at IS NULL
+    `);
+    const row = result.rows[0]!;
+    return {
+      total:    parseInt(row.total),
+      premium:  parseInt(row.premium),
+      free:     parseInt(row.free),
+      inactive: parseInt(row.inactive),
+    };
+  }
 }

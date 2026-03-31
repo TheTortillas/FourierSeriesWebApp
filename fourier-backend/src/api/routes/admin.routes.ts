@@ -61,6 +61,39 @@ adminRouter.get(
 
 /**
  * @openapi
+ * /api/admin/stats:
+ *   get:
+ *     summary: Contadores de usuarios en una sola query
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Total, premium, free e inactivos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:    { type: integer }
+ *                 premium:  { type: integer }
+ *                 free:     { type: integer }
+ *                 inactive: { type: integer }
+ */
+adminRouter.get(
+  "/stats",
+  async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const stats = await userRepository.getAdminStats();
+      res.json(stats);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
  * /api/admin/users:
  *   get:
  *     summary: Listar todos los usuarios
