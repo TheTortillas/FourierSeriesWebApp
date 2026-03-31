@@ -44,3 +44,24 @@ export interface AdminHistoryQuery {
   userId?: string;
   type?: string;
 }
+
+export interface SystemTableSizes {
+  calculation_history: string;
+  audit_log: string;
+  user_refresh_tokens: string;
+}
+
+export interface SystemDiskStats {
+  total: string;
+  used: string;
+  free: string;
+  usedPercent: number;
+}
+
+export interface SystemStats {
+  database: {
+    totalSize: string;
+    tables: SystemTableSizes;
+  };
+  disk: SystemDiskStats;
+}

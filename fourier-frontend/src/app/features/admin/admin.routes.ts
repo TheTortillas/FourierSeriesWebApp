@@ -27,6 +27,11 @@ export const adminRoutes: Routes = [
         loadComponent: () =>
           import('./history/admin-history.component').then((m) => m.AdminHistoryComponent),
       },
+      {
+        path: 'system',
+        loadComponent: () =>
+          import('./system/system-stats.component').then((m) => m.SystemStatsComponent),
+      },
     ],
   },
 ];

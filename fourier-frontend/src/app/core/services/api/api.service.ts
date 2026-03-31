@@ -40,6 +40,7 @@ import {
   AuditEntry,
   AuditQuery,
   AdminHistoryQuery,
+  SystemStats,
   // Common
   PaginatedResponse,
 } from '../../../domain';
@@ -236,5 +237,9 @@ export class ApiService {
     return this.http.delete<{ message: string }>(`${this.base}/admin/audit/clear`, {
       body: { action, olderThanDays },
     });
+  }
+
+  getSystemStats(): Observable<SystemStats> {
+    return this.http.get<SystemStats>(`${this.base}/admin/system/stats`);
   }
 }
