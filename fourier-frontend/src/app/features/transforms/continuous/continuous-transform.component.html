@@ -746,78 +746,21 @@
       <!-- Share dialog -->
       @if (showShareDialog()) {
         <div
-          class="border border-border dark:border-dark-border rounded-xl p-4 bg-paper dark:bg-dark-surface flex flex-col gap-3"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          (click)="showShareDialog.set(false)"
+          (keydown.escape)="showShareDialog.set(false)"
         >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4 text-accent"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
-              <h3 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-                Compartir transformada
-              </h3>
-            </div>
-            <button
-              type="button"
-              (click)="showShareDialog.set(false)"
-              class="w-7 h-7 flex items-center justify-center rounded text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 hover:text-ink dark:hover:text-dark-ink transition-colors text-lg leading-none cursor-pointer"
-            >
-              ×
-            </button>
-          </div>
-
-          <p class="text-xs text-muted dark:text-dark-muted font-body">
-            Comparte este enlace para abrir la calculadora con la misma función y resultado.
-          </p>
-
-          <div class="flex gap-2">
-            <input
-              type="text"
-              readonly
-              [value]="shareHref"
-              (click)="$any($event.target).select()"
-              class="flex-1 min-w-0 px-2.5 py-2 text-[11px] font-mono bg-paper2 dark:bg-dark-bg border border-border dark:border-dark-border rounded text-ink dark:text-dark-ink outline-none focus:border-accent cursor-text select-all"
-            />
-            <button
-              type="button"
-              (click)="copyShareUrl()"
-              [class]="
-                urlCopied()
-                  ? 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 transition-colors flex items-center gap-1.5 cursor-pointer'
-                  : 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-accent text-white hover:bg-accent/90 transition-colors flex items-center gap-1.5 cursor-pointer'
-              "
-            >
-              @if (urlCopied()) {
+          <div
+            class="bg-paper dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl shadow-2xl w-full max-w-sm p-5"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  class="w-3 h-3"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                Copiada
-              } @else {
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="w-3 h-3"
+                  class="w-4 h-4 text-accent"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -825,19 +768,87 @@
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 >
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                 </svg>
-                Copiar
-              }
-            </button>
-          </div>
+                <h3 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                  Compartir transformada
+                </h3>
+              </div>
+              <button
+                type="button"
+                (click)="showShareDialog.set(false)"
+                class="w-7 h-7 flex items-center justify-center rounded text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 hover:text-ink dark:hover:text-dark-ink transition-colors text-lg leading-none cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
 
-          @if (urlCopied()) {
-            <p class="text-[11px] font-mono text-green-600 dark:text-green-400 text-center">
-              URL copiada al portapapeles
+            <p class="text-xs text-muted dark:text-dark-muted font-body mb-3">
+              Comparte este enlace para abrir la calculadora con la misma función y resultado.
             </p>
-          }
+
+            <div class="flex gap-2">
+              <input
+                type="text"
+                readonly
+                [value]="shareHref"
+                (click)="$any($event.target).select()"
+                class="flex-1 min-w-0 px-2.5 py-2 text-[11px] font-mono bg-paper2 dark:bg-dark-bg border border-border dark:border-dark-border rounded text-ink dark:text-dark-ink outline-none focus:border-accent cursor-text select-all"
+              />
+              <button
+                type="button"
+                (click)="copyShareUrl()"
+                [class]="
+                  urlCopied()
+                    ? 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 transition-colors flex items-center gap-1.5 cursor-pointer'
+                    : 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-accent text-white hover:bg-accent/90 transition-colors flex items-center gap-1.5 cursor-pointer'
+                "
+              >
+                @if (urlCopied()) {
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-3 h-3"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Copiada
+                } @else {
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-3 h-3"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  Copiar
+                }
+              </button>
+            </div>
+
+            @if (urlCopied()) {
+              <p
+                class="mt-2.5 text-[11px] font-mono text-green-600 dark:text-green-400 text-center"
+              >
+                URL copiada al portapapeles
+              </p>
+            }
+          </div>
         </div>
       }
 
