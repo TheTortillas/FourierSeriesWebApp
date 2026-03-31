@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../../../core/services/api/api.service';
+import { formatApiError } from '../../../shared/utils/api-error.utils';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { UserStore } from '../../../core/services/auth/user.store';
 import {
@@ -395,11 +395,7 @@ export class CalculatorStore {
 
   private handleError(e: unknown): void {
     this.loading.set(false);
-    if (e instanceof HttpErrorResponse) {
-      this.error.set(e.error?.error ?? e.message);
-    } else {
-      this.error.set('Error desconocido');
-    }
+    this.error.set(formatApiError(e, 'Error desconocido'));
   }
 
   /**

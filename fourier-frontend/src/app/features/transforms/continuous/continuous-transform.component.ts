@@ -20,6 +20,8 @@ import {
   PlotLayer,
 } from '../../../shared/components/function-plot/function-plot.component';
 import { ApiService } from '../../../core/services/api/api.service';
+import { UserStore } from '../../../core/services/auth/user.store';
+import { formatApiError } from '../../../shared/utils/api-error.utils';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
@@ -123,6 +125,7 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
 })
 export class ContinuousTransformComponent {
   readonly api = inject(ApiService);
+  private readonly userStore = inject(UserStore);
   readonly plotter = inject(PlottingService);
   private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly mathUtils = inject(MathUtilsService);
@@ -522,9 +525,10 @@ export class ContinuousTransformComponent {
             this.showCanvasSettings.set(true);
             this.loading.set(false);
             this.plotComponent()?.resetView();
+            this.userStore.refreshQuota();
           },
           error: (e) => {
-            this.errorMsg.set(e?.error?.error ?? 'Error al calcular la transformada');
+            this.errorMsg.set(formatApiError(e, 'Error al calcular la transformada'));
             this.loading.set(false);
           },
         });
@@ -539,9 +543,10 @@ export class ContinuousTransformComponent {
             this.showCanvasSettings.set(true);
             this.loading.set(false);
             this.plotComponent()?.resetView();
+            this.userStore.refreshQuota();
           },
           error: (e) => {
-            this.errorMsg.set(e?.error?.error ?? 'Error al calcular la transformada inversa');
+            this.errorMsg.set(formatApiError(e, 'Error al calcular la transformada inversa'));
             this.loading.set(false);
           },
         });

@@ -21,10 +21,12 @@ import { config } from "./config/env";
 export function createApp(): Application {
   const app = express();
 
-  app.use(cors({
-    origin: config.cors.allowedOrigins,
-    credentials: true,
-  }));
+  app.use(
+    cors({
+      origin: config.cors.allowedOrigins,
+      credentials: true,
+    }),
+  );
   app.use(cookieParser());
   app.use(express.json());
 
@@ -39,7 +41,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    // computeLimiter,
+    computeLimiter,
     fourierRouter,
   );
   app.use(
@@ -47,7 +49,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    // computeLimiter,
+    computeLimiter,
     simplifyRouter,
   );
   app.use(
@@ -55,7 +57,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    // computeLimiter,
+    computeLimiter,
     transformsRouter,
   );
   app.use(
