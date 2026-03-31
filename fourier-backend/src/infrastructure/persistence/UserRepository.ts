@@ -221,8 +221,13 @@ export class UserRepository implements IUserRepository {
       `INSERT INTO user_calculation_counters (user_id, week_start, count)
      VALUES ($1, $2, 1)
      ON CONFLICT (user_id) DO UPDATE
-       SET count = user_calculation_counters.count + 1,
-           updated_at = NOW()`,
+       SET week_start  = $2,
+           count       = CASE
+             WHEN user_calculation_counters.week_start < $2
+             THEN 1
+             ELSE user_calculation_counters.count + 1
+           END,
+           updated_at  = NOW()`,
       [userId, weekStart.toISOString().split("T")[0]],
     );
   }
@@ -261,8 +266,13 @@ export class UserRepository implements IUserRepository {
       `INSERT INTO anonymous_calculation_counters (ip_address, week_start, count)
      VALUES ($1, $2, 1)
      ON CONFLICT (ip_address) DO UPDATE
-       SET count = anonymous_calculation_counters.count + 1,
-           updated_at = NOW()`,
+       SET week_start  = $2,
+           count       = CASE
+             WHEN anonymous_calculation_counters.week_start < $2
+             THEN 1
+             ELSE anonymous_calculation_counters.count + 1
+           END,
+           updated_at  = NOW()`,
       [ip, weekStart.toISOString().split("T")[0]],
     );
   }
