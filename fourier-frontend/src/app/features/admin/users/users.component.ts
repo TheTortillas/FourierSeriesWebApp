@@ -27,9 +27,10 @@ export class UsersComponent implements OnInit {
   filterActive: 'true' | 'false' | ''            = '';
 
   // Optimistic action feedback
-  readonly loadError = signal(false);
-  readonly actionMsg = signal<{ id: string; msg: string } | null>(null);
-  readonly actionErr = signal<string | null>(null);
+  readonly loadError      = signal(false);
+  readonly actionMsg      = signal<{ id: string; msg: string } | null>(null);
+  readonly actionErr      = signal<string | null>(null);
+  readonly pendingDeactivate = signal<string | null>(null);
 
   readonly totalPages  = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
@@ -67,14 +68,34 @@ export class UsersComponent implements OnInit {
   }
 
   toggleActive(user: AdminUser): void {
-    const action$ = user.isActive ? this.api.deactivateUser(user.id) : this.api.activateUser(user.id);
-    action$.subscribe({
+    // Activar no requiere confirmación — es acción reversible y no destructiva
+    if (!user.isActive) {
+      this.api.activateUser(user.id).subscribe({
+        next: () => {
+          this.users.update((list) => list.map((u) => u.id === user.id ? { ...u, isActive: true } : u));
+          this.flash(user.id, 'Activado');
+        },
+        error: () => this.flashErr('No se pudo activar el usuario'),
+      });
+      return;
+    }
+
+    // Desactivar: requiere doble clic para confirmar
+    if (this.pendingDeactivate() !== user.id) {
+      this.pendingDeactivate.set(user.id);
+      setTimeout(() => {
+        if (this.pendingDeactivate() === user.id) this.pendingDeactivate.set(null);
+      }, 3000);
+      return;
+    }
+
+    this.pendingDeactivate.set(null);
+    this.api.deactivateUser(user.id).subscribe({
       next: () => {
-        this.users.update((list) =>
-          list.map((u) => u.id === user.id ? { ...u, isActive: !u.isActive } : u));
-        this.flash(user.id, user.isActive ? 'Desactivado' : 'Activado');
+        this.users.update((list) => list.map((u) => u.id === user.id ? { ...u, isActive: false } : u));
+        this.flash(user.id, 'Desactivado');
       },
-      error: () => this.flashErr('No se pudo cambiar el estado'),
+      error: () => this.flashErr('No se pudo desactivar el usuario'),
     });
   }
 

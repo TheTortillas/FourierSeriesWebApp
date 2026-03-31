@@ -58,6 +58,7 @@ export class AuditComponent implements OnInit {
 
   clearOldEntries(): void {
     if (!this.clearAction || this.clearDays < 1) return;
+    if (!confirm(`¿Eliminar entradas de "${this.clearAction}" con más de ${this.clearDays} días? Esta acción no se puede deshacer.`)) return;
     this.clearLoading.set(true);
     this.api.clearAuditLog(this.clearAction, this.clearDays).subscribe({
       next: (res: { message: string }) => {
