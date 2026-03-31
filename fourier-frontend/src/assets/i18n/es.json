@@ -1,60 +1,273 @@
 {
-  "app": {
-    "title": "Fourier Calculator",
-    "tagline": "Calcula series e integrales de Fourier de forma simbólica"
+  "common": {
+    "loading": "Cargando…",
+    "calculating": "Calculando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "required": "Requerido",
+    "fieldRequired": "Campo requerido",
+    "invalidEmail": "Email inválido",
+    "passwordMin8": "Mínimo 8 caracteres",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "sending": "Enviando...",
+    "explore": "Explorar"
   },
+
   "nav": {
-    "home": "Inicio",
-    "calculator": "Calculadora",
-    "history": "Historial",
-    "about": "Acerca de",
-    "login": "Iniciar sesión",
+    "series": "Series",
+    "transforms": "Transformadas",
+    "login": "Ingresar",
     "register": "Registrarse",
-    "logout": "Cerrar sesión",
-    "profile": "Perfil"
+    "logout": "Salir",
+    "quotaTitle": "Cálculos restantes esta semana",
+    "changeToCoffee": "Cambiar a paleta coffee",
+    "changeToNeutral": "Cambiar a paleta neutral",
+    "toggleTheme": "Cambiar tema",
+    "paletteNeutral": "Neutral",
+    "paletteCoffee": "Coffee"
   },
-  "calculator": {
-    "title": "Calculadora de Fourier",
-    "addPiece": "Agregar tramo",
-    "removePiece": "Eliminar tramo",
-    "calculate": "Calcular",
-    "calculating": "Calculando...",
-    "intVar": "Variable de integración",
-    "seriesType": "Tipo de serie",
-    "types": {
-      "trigonometric": "Trigonométrica",
-      "complex": "Compleja",
-      "halfRange": "Medio rango",
-      "dft": "DFT"
+
+  "home": {
+    "subtitle": "Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
+    "series": {
+      "title": "Series de Fourier",
+      "description": "Descomposición periódica de funciones a trozos en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos exactos."
+    },
+    "transforms": {
+      "title": "Transformadas de Fourier",
+      "description": "Análisis espectral de señales no periódicas mediante la transformada continua de Fourier, con acceso preparado para la transformada discreta.",
+      "badge": "Continua activa"
     }
   },
+
+  "calculator": {
+    "piecewiseFunction": "Función a trozos",
+    "addSegment": "+ añadir tramo",
+    "variable": "Variable",
+    "coefficientsToCalc": "Coeficientes a calcular",
+    "terms25": "25 términos",
+    "terms50": "50 términos",
+    "terms75": "75 términos",
+    "terms100": "100 términos",
+    "calculate": "Calcular serie",
+    "newCalculation": "Nuevo cálculo",
+    "segment": {
+      "from": "desde",
+      "to": "hasta",
+      "removeTitle": "Eliminar tramo",
+      "keyboardTitle": "Teclado matemático",
+      "activeField": "Activo: campo {{ field }}"
+    },
+    "types": {
+      "trigonometric": "Trigonométrica",
+      "halfRange": "Medio rango",
+      "complex": "Compleja",
+      "fourierTransform": "Transformada",
+      "inverseFourierTransform": "T. Inversa",
+      "dftSignal": "DFT señal",
+      "dftEpicycles": "DFT epiciclos"
+    }
+  },
+
   "results": {
-    "coefficients": "Coeficientes",
-    "series": "Serie",
+    "fullscreen": "Pantalla completa",
+    "exitFullscreen": "Salir de pantalla completa",
+    "canvasSettings": "Ajustes del lienzo",
+    "downloadImage": "Descargar imagen",
+    "tabs": {
+      "graph": "Gráfica",
+      "coefficients": "Coeficientes",
+      "series": "Serie",
+      "terms": "Términos"
+    },
+    "tableHeaders": {
+      "n": "n",
+      "an": "aₙ",
+      "bn": "bₙ",
+      "cn": "cₙ",
+      "value": "Valor"
+    },
     "period": "Período",
-    "frequency": "Frecuencia fundamental",
-    "terms": "Términos",
     "executionTime": "Tiempo de cálculo",
-    "ms": "ms"
+    "ms": "ms",
+    "validation": {
+      "rejected": "Función rechazada",
+      "passed": "Función válida"
+    }
   },
+
+  "transforms": {
+    "title": "Transformada de Fourier",
+    "subtitle": "Calcula la transformada continua o inversa de una función definida por tramos.",
+    "continuous": "Continua",
+    "discrete": "Discreta",
+    "comingSoon": "Próximamente",
+    "direct": "Directa",
+    "inverse": "Inversa",
+    "variables": "Variables",
+    "varTime": "Var. temporal",
+    "varFreq": "Var. frecuencia",
+    "varTimeMode": "Var. {{ mode }}",
+    "maximaNames": "Usa nombres Maxima:",
+    "addSegment": "Agregar tramo",
+    "calculate": "Calcular",
+    "newCalculation": "Nuevo cálculo",
+    "dft": {
+      "title": "Transformada Discreta de Fourier"
+    }
+  },
+
+  "history": {
+    "title": "Mis cálculos",
+    "total": "{{ count }} registros en total",
+    "favoritesOnly": "Solo favoritos",
+    "loading": "Cargando…",
+    "emptyFavorites": "No tienes cálculos favoritos",
+    "emptyAll": "Aún no has hecho cálculos",
+    "freeTierBanner": "Tu plan <span class=\"text-accent font-medium\">free</span> incluye acceso a tus últimos <span class=\"text-ink dark:text-dark-ink\">{{ max }} cálculos</span> y <span class=\"text-ink dark:text-dark-ink\">{{ favorites }} favoritos</span>.",
+    "columns": {
+      "date": "Fecha",
+      "type": "Tipo",
+      "input": "Entrada",
+      "ms": "ms",
+      "actions": "Acciones"
+    },
+    "favorite": {
+      "add": "Guardar como favorito",
+      "remove": "Quitar de favoritos",
+      "nameLabel": "Nombre del favorito:",
+      "namePlaceholder": "ej. Serie de cos(x)"
+    },
+    "actions": {
+      "open": "↗ abrir",
+      "openTitle": "Abrir en calculadora",
+      "delete": "eliminar",
+      "deleteTitle": "Eliminar"
+    },
+    "pagination": {
+      "page": "Página {{ current }} de {{ total }}",
+      "prev": "← Anterior",
+      "next": "Siguiente →"
+    },
+    "types": {
+      "trigonometric": "Trigonométrica",
+      "halfRange": "Medio rango",
+      "complex": "Compleja",
+      "fourierTransform": "Transformada",
+      "inverseFourierTransform": "T. Inversa",
+      "dftSignal": "DFT señal",
+      "dftEpicycles": "DFT epiciclos"
+    }
+  },
+
   "auth": {
-    "email": "Correo electrónico",
-    "password": "Contraseña",
-    "firstName": "Nombre",
-    "lastName": "Apellido",
-    "login": "Iniciar sesión",
-    "register": "Crear cuenta",
-    "forgotPassword": "¿Olvidaste tu contraseña?",
-    "continueWithGoogle": "Continuar con Google",
-    "verifyEmail": "Verificar correo",
-    "resendVerification": "Reenviar verificación"
+    "login": {
+      "title": "Iniciar sesión",
+      "noAccount": "¿No tienes cuenta?",
+      "register": "Regístrate",
+      "orContinueEmail": "o continúa con email",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "tu@correo.com",
+      "password": "Contraseña",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "submit": "Ingresar",
+      "submitting": "Ingresando..."
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "login": "Inicia sesión",
+      "orRegisterEmail": "o regístrate con email",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Juan",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Pérez",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "tu@correo.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "confirmPassword": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Repite la contraseña",
+      "submit": "Crear cuenta",
+      "submitting": "Creando cuenta...",
+      "successTitle": "¡Cuenta creada!",
+      "successMessage": "Te enviamos un correo de verificación. Revisa tu bandeja de entrada y confirma tu email para comenzar.",
+      "goToLogin": "Ir a iniciar sesión"
+    },
+    "forgotPassword": {
+      "title": "Recuperar contraseña",
+      "subtitle": "Te enviaremos un enlace para restablecerla.",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "tu@correo.com",
+      "submit": "Enviar enlace",
+      "submitting": "Enviando...",
+      "backToLogin": "← Volver al inicio de sesión",
+      "sentTitle": "Revisa tu correo",
+      "sentMessage": "Si {{ email }} está registrado, recibirás un enlace en los próximos minutos.",
+      "backToLoginLink": "Volver al inicio de sesión"
+    },
+    "resetPassword": {
+      "title": "Nueva contraseña",
+      "subtitle": "Elige una contraseña de al menos 8 caracteres.",
+      "newPassword": "Nueva contraseña",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "confirmPassword": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Repite la contraseña",
+      "submit": "Guardar contraseña",
+      "submitting": "Guardando...",
+      "successTitle": "Contraseña actualizada",
+      "successMessage": "Ya puedes iniciar sesión con tu nueva contraseña.",
+      "goToLogin": "Ir a iniciar sesión"
+    },
+    "verifyEmail": {
+      "loading": "Verificando tu correo…",
+      "successTitle": "¡Email verificado!",
+      "successMessage": "Tu cuenta está activa. Ya puedes iniciar sesión y calcular series de Fourier.",
+      "login": "Iniciar sesión",
+      "errorTitle": "Enlace inválido",
+      "backToLogin": "Volver al inicio de sesión"
+    },
+    "verifyBanner": {
+      "message": "Verifica tu correo {{ email }} para poder realizar cálculos.",
+      "sent": "✓ Correo enviado",
+      "resend": "Reenviar correo",
+      "resending": "Enviando..."
+    }
   },
+
+  "profile": {
+    "title": "Mi perfil",
+    "role": "Rol",
+    "email": "Email",
+    "emailVerified": "✓ verificado",
+    "emailNotVerified": "✗ sin verificar",
+    "resendVerification": "Reenviar",
+    "resendSent": "Enviado ✓",
+    "resendSending": "Enviando…",
+    "calculationsThisWeek": "Cálculos esta semana",
+    "quotaUnlimited": "{{ used }} usados · ilimitados",
+    "quotaLimited": "{{ used }} / {{ limit }} · {{ remaining }} restantes",
+    "myCalculations": "Mis cálculos",
+    "changePassword": "Cambiar contraseña",
+    "passwordUpdated": "✓ Contraseña actualizada correctamente.",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "savePassword": "Cambiar contraseña",
+    "savingPassword": "Guardando…"
+  },
+
   "errors": {
     "generic": "Ocurrió un error. Intenta de nuevo.",
     "network": "Error de conexión. Verifica tu red.",
     "unauthorized": "Sesión expirada. Inicia sesión nuevamente.",
-    "validation": "Por favor corrige los errores en el formulario."
+    "validation": "Por favor corrige los errores en el formulario.",
+    "weeklyLimitReached": "Límite semanal alcanzado. Tu cuota se renueva el {{ date }}.",
+    "tooManyRequests": "Demasiadas solicitudes. Intenta de nuevo en un momento.",
+    "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos."
   },
+
   "dev": {
     "title": "Dev Sandbox",
     "description": "Entorno de desarrollo para probar endpoints y componentes.",
