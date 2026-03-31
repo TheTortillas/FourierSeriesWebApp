@@ -11,11 +11,7 @@ import { cacheRouter } from "./api/routes/cache.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
 import { generalLimiter, computeLimiter } from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
-import {
-  authenticate,
-  optionalAuth,
-  requireAdmin,
-} from "./api/middlewares/authenticate";
+import { optionalAuth } from "./api/middlewares/authenticate";
 import { requireVerified } from "./api/middlewares/requireVerified";
 import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 import { historyRouter } from "./api/routes/history.routes";
