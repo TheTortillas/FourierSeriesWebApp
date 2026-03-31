@@ -219,8 +219,13 @@ export class ApiService {
 
   getAuditLog(query?: AuditQuery): Observable<PaginatedResponse<AuditEntry>> {
     let params = new HttpParams();
-    if (query?.limit !== undefined) params = params.set('limit', query.limit);
-    if (query?.offset !== undefined) params = params.set('offset', query.offset);
+    if (query?.limit         !== undefined) params = params.set('limit',         query.limit);
+    if (query?.offset        !== undefined) params = params.set('offset',        query.offset);
+    if (query?.action)                      params = params.set('action',        query.action);
+    if (query?.userId)                      params = params.set('userId',        query.userId);
+    if (query?.dateFrom)                    params = params.set('dateFrom',      query.dateFrom);
+    if (query?.dateTo)                      params = params.set('dateTo',        query.dateTo);
+    if (query?.anonymousOnly)               params = params.set('anonymousOnly', query.anonymousOnly);
     return this.http.get<PaginatedResponse<AuditEntry>>(`${this.base}/admin/audit`, { params });
   }
 

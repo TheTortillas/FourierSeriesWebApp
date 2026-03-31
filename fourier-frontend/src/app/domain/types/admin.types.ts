@@ -36,6 +36,11 @@ export interface AuditEntry {
 export interface AuditQuery {
   limit?: number;
   offset?: number;
+  action?: string;
+  userId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  anonymousOnly?: boolean;
 }
 
 export interface AdminHistoryQuery {

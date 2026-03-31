@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../../../core/services/api/api.service';
-import { AuditEntry } from '../../../domain';
+import { AuditEntry, AuditQuery } from '../../../domain';
 import { AdminDatePipe } from '../../../shared/pipes/admin-date.pipe';
 import { auditBadgeClass } from '../../../shared/utils/audit.utils';
 
@@ -22,6 +22,13 @@ export class AuditComponent implements OnInit {
   readonly offset   = signal(0);
   readonly pageSize = PAGE_SIZE;
 
+  // Filters
+  filterAction      = '';
+  filterUserId      = '';
+  filterDateFrom    = '';
+  filterDateTo      = '';
+  filterAnonymous   = false;
+
   // Clear old entries panel
   clearAction   = '';
   clearDays     = 30;
@@ -30,6 +37,9 @@ export class AuditComponent implements OnInit {
 
   readonly totalPages  = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
+  readonly hasFilters  = computed(() =>
+    !!(this.filterAction || this.filterUserId || this.filterDateFrom || this.filterDateTo || this.filterAnonymous)
+  );
 
   readonly badgeClass = auditBadgeClass;
 
@@ -47,10 +57,28 @@ export class AuditComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    this.api.getAuditLog({ limit: this.pageSize, offset: this.offset() }).subscribe({
+    const query: AuditQuery = { limit: this.pageSize, offset: this.offset() };
+    if (this.filterAction)    query.action        = this.filterAction;
+    if (this.filterUserId)    query.userId        = this.filterUserId.trim();
+    if (this.filterDateFrom)  query.dateFrom      = this.filterDateFrom;
+    if (this.filterDateTo)    query.dateTo        = this.filterDateTo;
+    if (this.filterAnonymous) query.anonymousOnly = true;
+
+    this.api.getAuditLog(query).subscribe({
       next: (res) => { this.entries.set(res.entries); this.total.set(res.total ?? 0); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
+  }
+
+  applyFilters(): void { this.offset.set(0); this.load(); }
+
+  clearFilters(): void {
+    this.filterAction    = '';
+    this.filterUserId    = '';
+    this.filterDateFrom  = '';
+    this.filterDateTo    = '';
+    this.filterAnonymous = false;
+    this.applyFilters();
   }
 
   prevPage(): void { this.offset.set(Math.max(0, this.offset() - this.pageSize)); this.load(); }
