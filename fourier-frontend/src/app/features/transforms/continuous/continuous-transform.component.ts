@@ -218,7 +218,8 @@ export class ContinuousTransformComponent {
 
     // ── 1. Restore state from router navigation state or URL ──────────────
     const navState = this.router.getCurrentNavigation()?.extras.state as
-      { restoreInput?: Record<string, unknown> } | undefined;
+      | { restoreInput?: Record<string, unknown> }
+      | undefined;
     const encoded = this.route.snapshot.queryParamMap.get('s');
     let needsCalculate = false;
     if (navState?.restoreInput) {
@@ -467,11 +468,16 @@ export class ContinuousTransformComponent {
   });
 
   restoreFromInput(input: Record<string, unknown>): void {
-    const rawSegs = input['segments'] as Array<{
-      expression: string; expressionTex?: string;
-      from: string; fromTex?: string;
-      to: string; toTex?: string;
-    }> | undefined;
+    const rawSegs = input['segments'] as
+      | Array<{
+          expression: string;
+          expressionTex?: string;
+          from: string;
+          fromTex?: string;
+          to: string;
+          toTex?: string;
+        }>
+      | undefined;
     if (!rawSegs?.length) return;
 
     const type = input['type'] as string | undefined;

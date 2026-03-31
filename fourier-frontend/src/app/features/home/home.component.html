@@ -40,7 +40,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
       <!-- Series de Fourier -->
       <a
-        routerLink="/calculator"
+        [routerLink]="'/' + lang() + '/calculator'"
         class="group flex flex-col gap-5 p-6 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer"
       >
         <div
@@ -84,7 +84,7 @@
 
       <!-- Transformadas de Fourier -->
       <a
-        routerLink="/transforms/continuous"
+        [routerLink]="'/' + lang() + '/transforms/continuous'"
         class="group flex flex-col gap-5 p-6 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer"
       >
         <div class="flex items-center justify-between">

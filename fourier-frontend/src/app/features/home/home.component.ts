@@ -7,6 +7,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslocoService } from '@jsverse/transloco';
 import { ThemeService } from '../../core/services/theme/theme.service';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
@@ -25,6 +27,11 @@ interface Waveform {
 })
 export class HomeComponent implements OnDestroy {
   readonly theme = inject(ThemeService);
+
+  private readonly transloco = inject(TranslocoService);
+  readonly lang = toSignal(this.transloco.langChanges$, {
+    initialValue: this.transloco.getActiveLang(),
+  });
 
   private readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('heroCanvas');
   private animId = 0;

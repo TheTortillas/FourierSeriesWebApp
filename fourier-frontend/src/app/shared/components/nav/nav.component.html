@@ -3,7 +3,7 @@
 >
   <!-- Logo -->
   <a
-    routerLink="/home"
+    [routerLink]="'/' + lang() + '/home'"
     class="flex items-center gap-2 text-ink dark:text-dark-ink hover:text-accent dark:hover:text-accent transition-colors group"
   >
     <svg
@@ -30,14 +30,14 @@
 
     <!-- Grupo 1: Navegación -->
     <a
-      routerLink="/calculator"
+      [routerLink]="'/' + lang() + '/calculator'"
       routerLinkActive="text-accent"
       class="hidden sm:flex px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
     >
       Series
     </a>
     <a
-      routerLink="/transforms"
+      [routerLink]="'/' + lang() + '/transforms'"
       routerLinkActive="text-accent"
       class="hidden sm:flex px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
     >
@@ -75,7 +75,7 @@
 
     @if (userStore.isAuthenticated()) {
       <a
-        routerLink="/profile"
+        [routerLink]="'/' + lang() + '/profile'"
         class="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
       >
         <svg
@@ -118,13 +118,13 @@
       </button>
     } @else {
       <a
-        routerLink="/auth/login"
+        [routerLink]="'/' + lang() + '/auth/login'"
         class="flex items-center px-2 py-1.5 rounded text-muted dark:text-dark-muted text-xs font-mono hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
       >
         Ingresar
       </a>
       <a
-        routerLink="/auth/register"
+        [routerLink]="'/' + lang() + '/auth/register'"
         class="flex items-center px-2.5 py-1.5 rounded bg-accent text-white text-xs font-mono hover:bg-accent/90 transition-colors"
       >
         Registrarse
@@ -133,7 +133,7 @@
 
     <div class="w-px h-4 bg-border dark:bg-dark-border mx-1.5 shrink-0"></div>
 
-    <!-- Grupo 3: Controles de apariencia (+ idioma futuro) -->
+    <!-- Grupo 3: Controles de apariencia (+ switcher de idioma futuro) -->
     <button
       (click)="theme.togglePalette()"
       type="button"

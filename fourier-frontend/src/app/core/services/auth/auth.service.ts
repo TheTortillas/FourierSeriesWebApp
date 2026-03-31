@@ -1,6 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
 
 import { ApiService } from '../api/api.service';
 import { UserStore } from './user.store';
@@ -13,9 +14,10 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly api   = inject(ApiService);
-  private readonly store = inject(UserStore);
-  private readonly router = inject(Router);
+  private readonly api      = inject(ApiService);
+  private readonly store    = inject(UserStore);
+  private readonly router   = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   /** Access token lives only in memory — lost on page refresh, recovered via cookie. */
   private readonly _accessToken = signal<string | null>(null);
@@ -61,7 +63,8 @@ export class AuthService {
     // Fire-and-forget: el servidor revoca la familia de tokens via cookie.
     this.api.logout().subscribe({ error: () => {} });
     this.clearTokens();
-    this.router.navigate(['/home']);
+    const lang = this.transloco.getActiveLang();
+    this.router.navigate([`/${lang}/home`]);
   }
 
   /** Recarga los datos del usuario desde la DB y actualiza el store. */
