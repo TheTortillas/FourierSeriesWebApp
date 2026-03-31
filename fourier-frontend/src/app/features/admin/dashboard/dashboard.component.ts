@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../../../core/services/api/api.service';
-import { AuditEntry, HistoryEntry, CALC_TYPE_LABEL } from '../../../domain';
+import { AuditEntry, HistoryEntry, CALC_TYPE_LABEL, SystemStats } from '../../../domain';
 import { AdminDatePipe } from '../../../shared/pipes/admin-date.pipe';
 import { auditBadgeClass } from '../../../shared/utils/audit.utils';
 
@@ -25,6 +25,7 @@ export class DashboardComponent implements OnInit {
   readonly loading     = signal(true);
   readonly loadError   = signal(false);
   readonly stats       = signal<Stats | null>(null);
+  readonly systemStats = signal<SystemStats | null>(null);
   readonly recentAudit = signal<AuditEntry[]>([]);
   readonly recentCalcs = signal<HistoryEntry[]>([]);
 
@@ -33,16 +34,14 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     forkJoin({
-      total:    this.api.getAdminUsers({ limit: 1 }),
-      premium:  this.api.getAdminUsers({ limit: 1, tier: 'premium' }),
-      inactive: this.api.getAdminUsers({ limit: 1, isActive: false }),
-      audit:    this.api.getAuditLog({ limit: 6 }),
-      history:  this.api.getAdminHistory({ limit: 6 }),
+      stats:   this.api.getAdminStats(),
+      system:  this.api.getSystemStats(),
+      audit:   this.api.getAuditLog({ limit: 6 }),
+      history: this.api.getAdminHistory({ limit: 6 }),
     }).subscribe({
-      next: ({ total, premium, inactive, audit, history }) => {
-        const t = total.total;
-        const p = premium.total;
-        this.stats.set({ total: t, premium: p, free: t - p, inactive: inactive.total });
+      next: ({ stats, system, audit, history }) => {
+        this.stats.set(stats);
+        this.systemStats.set(system);
         this.recentAudit.set(audit.entries);
         this.recentCalcs.set(history.entries);
         this.loading.set(false);

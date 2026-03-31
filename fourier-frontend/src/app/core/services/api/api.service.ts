@@ -239,6 +239,10 @@ export class ApiService {
     });
   }
 
+  getAdminStats(): Observable<{ total: number; premium: number; free: number; inactive: number }> {
+    return this.http.get<{ total: number; premium: number; free: number; inactive: number }>(`${this.base}/admin/stats`);
+  }
+
   getSystemStats(): Observable<SystemStats> {
     return this.http.get<SystemStats>(`${this.base}/admin/system/stats`);
   }

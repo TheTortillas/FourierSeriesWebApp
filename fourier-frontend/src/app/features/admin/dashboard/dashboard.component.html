@@ -65,6 +65,45 @@
       </div>
     }
 
+    <!-- ── Sistema ───────────────────────────────────────────────────── -->
+    @if (systemStats(); as sys) {
+      <a routerLink="../system"
+         class="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors
+                bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
+                hover:border-accent/40 group">
+
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+             class="w-5 h-5 text-accent3 shrink-0">
+          <path d="M2 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3H2V4ZM2 9h16v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9Zm10 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0Zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+        </svg>
+
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5">
+            Disco del servidor
+          </p>
+          <div class="h-1.5 w-full rounded-full bg-border dark:bg-dark-border overflow-hidden">
+            <div class="h-full rounded-full transition-all"
+                 [class]="sys.disk.usedPercent >= 90 ? 'bg-red-500' : sys.disk.usedPercent >= 70 ? 'bg-amber-500' : 'bg-accent3'"
+                 [style.width.%]="sys.disk.usedPercent">
+            </div>
+          </div>
+          <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-1">
+            {{ sys.disk.used }} usados de {{ sys.disk.total }} · {{ sys.disk.usedPercent }}%
+          </p>
+        </div>
+
+        <div class="text-right shrink-0">
+          <p class="text-[11px] font-mono text-muted dark:text-dark-muted">DB</p>
+          <p class="font-mono text-sm text-ink dark:text-dark-ink">{{ sys.database.totalSize }}</p>
+        </div>
+
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+             class="w-3.5 h-3.5 text-muted dark:text-dark-muted group-hover:text-accent transition-colors shrink-0">
+          <path fill-rule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/>
+        </svg>
+      </a>
+    }
+
     <!-- ── Recent activity + Recent calcs ─────────────────────────────── -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
