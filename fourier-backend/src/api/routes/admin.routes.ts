@@ -471,6 +471,21 @@ adminRouter.delete(
  *         schema:
  *           type: string
  *           enum: [trigonometric, half_range, complex, fourier_transform, inverse_fourier_transform, dft_signal, dft_epicycles]
+ *       - in: query
+ *         name: dateFrom
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: dateTo
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: favoritesOnly
+ *         schema: { type: boolean }
+ *       - in: query
+ *         name: anonymousOnly
+ *         schema: { type: boolean }
+ *       - in: query
+ *         name: minExecutionMs
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Historial global
@@ -479,13 +494,21 @@ adminRouter.get(
   "/history",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const limit = parseInt(req.query["limit"] as string) || 20;
+      const limit  = parseInt(req.query["limit"]  as string) || 20;
       const offset = parseInt(req.query["offset"] as string) || 0;
-      const filters = {
-        userId: req.query["userId"] as string | undefined,
-        type: req.query["type"] as string | undefined,
-        anonymousOnly: req.query["anonymousOnly"] === "true",
-      };
+
+      const filters: {
+        userId?: string; type?: string;
+        anonymousOnly?: boolean; favoritesOnly?: boolean;
+        dateFrom?: Date; dateTo?: Date; minExecutionMs?: number;
+      } = {};
+      if (req.query["userId"])        filters.userId        = req.query["userId"] as string;
+      if (req.query["type"])          filters.type          = req.query["type"] as string;
+      if (req.query["anonymousOnly"] === "true")  filters.anonymousOnly  = true;
+      if (req.query["favoritesOnly"] === "true")  filters.favoritesOnly  = true;
+      if (req.query["dateFrom"])      filters.dateFrom      = new Date(req.query["dateFrom"] as string);
+      if (req.query["dateTo"])        filters.dateTo        = new Date(req.query["dateTo"] as string);
+      if (req.query["minExecutionMs"]) filters.minExecutionMs = parseInt(req.query["minExecutionMs"] as string);
 
       const [entries, total] = await Promise.all([
         historyRepository.findAll(limit, offset, filters),

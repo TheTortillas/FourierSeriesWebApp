@@ -5,6 +5,30 @@ import type {
   CalculationType,
 } from "../../domain/interfaces/repositories/IHistoryRepository";
 
+function buildHistoryConditions(filters?: {
+  userId?: string;
+  type?: string;
+  anonymousOnly?: boolean;
+  favoritesOnly?: boolean;
+  dateFrom?: Date;
+  dateTo?: Date;
+  minExecutionMs?: number;
+}): { conditions: string[]; params: unknown[] } {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  let p = 1;
+
+  if (filters?.userId)        { conditions.push(`user_id = $${p++}`);                              params.push(filters.userId); }
+  if (filters?.type)          { conditions.push(`type = $${p++}`);                                 params.push(filters.type); }
+  if (filters?.anonymousOnly) { conditions.push(`user_id IS NULL`); }
+  if (filters?.favoritesOnly) { conditions.push(`is_favorite = TRUE`); }
+  if (filters?.dateFrom)      { conditions.push(`created_at >= $${p++}`);                          params.push(filters.dateFrom); }
+  if (filters?.dateTo)        { conditions.push(`created_at < $${p++}::date + '1 day'::interval`); params.push(filters.dateTo); }
+  if (filters?.minExecutionMs !== undefined) { conditions.push(`execution_ms >= $${p++}`);         params.push(filters.minExecutionMs); }
+
+  return { conditions, params };
+}
+
 export class HistoryRepository implements IHistoryRepository {
   async create(input: {
     userId?: string;
@@ -133,43 +157,36 @@ export class HistoryRepository implements IHistoryRepository {
   async findAll(
     limit: number,
     offset: number,
-    filters?: { userId?: string; type?: string; anonymousOnly?: boolean },
+    filters?: {
+      userId?: string;
+      type?: string;
+      anonymousOnly?: boolean;
+      favoritesOnly?: boolean;
+      dateFrom?: Date;
+      dateTo?: Date;
+      minExecutionMs?: number;
+    },
   ): Promise<HistoryRecord[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
-    let paramIdx = 1;
-
-    if (filters?.userId) {
-      conditions.push(`user_id = $${paramIdx++}`);
-      params.push(filters.userId);
-    }
-    if (filters?.type) {
-      conditions.push(`type = $${paramIdx++}`);
-      params.push(filters.type);
-    }
-    if (filters?.anonymousOnly) {
-      conditions.push(`user_id IS NULL`);
-    }
-
-    const where =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const { conditions, params } = buildHistoryConditions(filters);
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    let p = params.length + 1;
     params.push(limit, offset);
 
     const result = await db.query(
       `SELECT
-       id,
-       user_id as "userId",
-       ip_address as "ipAddress",
-       type,
-       input,
-       is_favorite as "isFavorite",
-       favorite_name as "favoriteName",
-       execution_ms as "executionMs",
-       created_at as "createdAt"
-     FROM calculation_history
-     ${where}
-     ORDER BY created_at DESC
-     LIMIT $${paramIdx++} OFFSET $${paramIdx}`,
+         id,
+         user_id       AS "userId",
+         ip_address    AS "ipAddress",
+         type,
+         input,
+         is_favorite   AS "isFavorite",
+         favorite_name AS "favoriteName",
+         execution_ms  AS "executionMs",
+         created_at    AS "createdAt"
+       FROM calculation_history
+       ${where}
+       ORDER BY created_at DESC
+       LIMIT $${p++} OFFSET $${p}`,
       params,
     );
     return result.rows;
@@ -179,28 +196,16 @@ export class HistoryRepository implements IHistoryRepository {
     userId?: string;
     type?: string;
     anonymousOnly?: boolean;
+    favoritesOnly?: boolean;
+    dateFrom?: Date;
+    dateTo?: Date;
+    minExecutionMs?: number;
   }): Promise<number> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
-    let paramIdx = 1;
-
-    if (filters?.userId) {
-      conditions.push(`user_id = $${paramIdx++}`);
-      params.push(filters.userId);
-    }
-    if (filters?.type) {
-      conditions.push(`type = $${paramIdx++}`);
-      params.push(filters.type);
-    }
-    if (filters?.anonymousOnly) {
-      conditions.push(`user_id IS NULL`);
-    }
-
-    const where =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const { conditions, params } = buildHistoryConditions(filters);
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const result = await db.query(
-      `SELECT COUNT(*) as count FROM calculation_history ${where}`,
+      `SELECT COUNT(*) AS count FROM calculation_history ${where}`,
       params,
     );
     return parseInt(result.rows[0]?.count ?? "0");

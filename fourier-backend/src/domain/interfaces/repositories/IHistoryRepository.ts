@@ -48,11 +48,19 @@ export interface IHistoryRepository {
       userId?: string;
       type?: CalculationType;
       anonymousOnly?: boolean;
+      favoritesOnly?: boolean;
+      dateFrom?: Date;
+      dateTo?: Date;
+      minExecutionMs?: number;
     },
   ): Promise<HistoryRecord[]>;
   countAll(filters?: {
     userId?: string;
     type?: CalculationType;
     anonymousOnly?: boolean;
+    favoritesOnly?: boolean;
+    dateFrom?: Date;
+    dateTo?: Date;
+    minExecutionMs?: number;
   }): Promise<number>;
 }
