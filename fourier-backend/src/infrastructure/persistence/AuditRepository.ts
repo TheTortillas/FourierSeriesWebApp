@@ -3,6 +3,7 @@ import type {
   IAuditRepository,
   AuditLogInput,
   AuditAction,
+  AuditFilters,
 } from "../../domain/interfaces/repositories/IAuditRepository";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,18 +48,40 @@ export class AuditRepository implements IAuditRepository {
     return result.rows.map(mapRow);
   }
 
-  async findAll(limit = 100, offset = 0): Promise<AuditLogInput[]> {
+  async findAll(limit = 100, offset = 0, filters?: AuditFilters): Promise<AuditLogInput[]> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let p = 1;
+
+    if (filters?.action)        { conditions.push(`action = $${p++}`);                          params.push(filters.action); }
+    if (filters?.userId)        { conditions.push(`user_id = $${p++}`);                         params.push(filters.userId); }
+    if (filters?.anonymousOnly) { conditions.push(`user_id IS NULL`); }
+    if (filters?.dateFrom)      { conditions.push(`created_at >= $${p++}`);                     params.push(filters.dateFrom); }
+    if (filters?.dateTo)        { conditions.push(`created_at < $${p++}::date + '1 day'::interval`); params.push(filters.dateTo); }
+
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    params.push(limit, offset);
+
     const result = await db.query(
-      `SELECT * FROM audit_log
-       ORDER BY created_at DESC
-       LIMIT $1 OFFSET $2`,
-      [limit, offset],
+      `SELECT * FROM audit_log ${where} ORDER BY created_at DESC LIMIT $${p++} OFFSET $${p}`,
+      params,
     );
     return result.rows.map(mapRow);
   }
 
-  async countAll(): Promise<number> {
-    const result = await db.query(`SELECT COUNT(*) FROM audit_log`);
+  async countAll(filters?: AuditFilters): Promise<number> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let p = 1;
+
+    if (filters?.action)        { conditions.push(`action = $${p++}`);                          params.push(filters.action); }
+    if (filters?.userId)        { conditions.push(`user_id = $${p++}`);                         params.push(filters.userId); }
+    if (filters?.anonymousOnly) { conditions.push(`user_id IS NULL`); }
+    if (filters?.dateFrom)      { conditions.push(`created_at >= $${p++}`);                     params.push(filters.dateFrom); }
+    if (filters?.dateTo)        { conditions.push(`created_at < $${p++}::date + '1 day'::interval`); params.push(filters.dateTo); }
+
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const result = await db.query(`SELECT COUNT(*) FROM audit_log ${where}`, params);
     return parseInt(result.rows[0].count, 10);
   }
 

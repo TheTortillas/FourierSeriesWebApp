@@ -11,11 +11,7 @@ import { cacheRouter } from "./api/routes/cache.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
 import { generalLimiter, computeLimiter } from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
-import {
-  authenticate,
-  optionalAuth,
-  requireAdmin,
-} from "./api/middlewares/authenticate";
+import { optionalAuth } from "./api/middlewares/authenticate";
 import { requireVerified } from "./api/middlewares/requireVerified";
 import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 import { historyRouter } from "./api/routes/history.routes";
@@ -25,10 +21,12 @@ import { config } from "./config/env";
 export function createApp(): Application {
   const app = express();
 
-  app.use(cors({
-    origin: config.cors.allowedOrigins,
-    credentials: true,
-  }));
+  app.use(
+    cors({
+      origin: config.cors.allowedOrigins,
+      credentials: true,
+    }),
+  );
   app.use(cookieParser());
   app.use(express.json());
 
@@ -43,7 +41,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    // computeLimiter,
+    computeLimiter,
     fourierRouter,
   );
   app.use(
@@ -51,7 +49,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    // computeLimiter,
+    computeLimiter,
     simplifyRouter,
   );
   app.use(
@@ -59,7 +57,7 @@ export function createApp(): Application {
     optionalAuth,
     requireVerified,
     requireTierLimit,
-    // computeLimiter,
+    computeLimiter,
     transformsRouter,
   );
   app.use(

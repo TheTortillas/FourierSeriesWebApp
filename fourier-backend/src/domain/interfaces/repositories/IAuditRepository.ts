@@ -27,10 +27,18 @@ export interface AuditLogInput {
   createdAt?: Date;
 }
 
+export interface AuditFilters {
+  action?: AuditAction;
+  userId?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+  anonymousOnly?: boolean;
+}
+
 export interface IAuditRepository {
   log(input: AuditLogInput): Promise<void>;
   findByUser(userId: string, limit?: number): Promise<AuditLogInput[]>;
-  findAll(limit?: number, offset?: number): Promise<AuditLogInput[]>;
-  countAll(): Promise<number>;
+  findAll(limit?: number, offset?: number, filters?: AuditFilters): Promise<AuditLogInput[]>;
+  countAll(filters?: AuditFilters): Promise<number>;
   clearByAction(action: AuditAction, olderThanDays: number): Promise<number>;
 }

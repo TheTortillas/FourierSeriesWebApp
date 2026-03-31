@@ -3,6 +3,13 @@ import type { AuthenticatedRequest } from "./authenticate";
 import { userRepository } from "../../infrastructure/container";
 import { config } from "../../config/env";
 
+function nextWeekStart(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay() + 7);
+  return d;
+}
+
 export async function requireTierLimit(
   req: AuthenticatedRequest,
   res: Response,
@@ -19,6 +26,8 @@ export async function requireTierLimit(
         message: `Anonymous users can make ${limit} calculations per week. Create a free account for more.`,
         limit,
         current: count,
+        resetsAt: nextWeekStart().toISOString(),
+        retryAfterSeconds: Math.ceil((nextWeekStart().getTime() - Date.now()) / 1000),
         registerAvailable: true,
       });
       return;
@@ -45,6 +54,8 @@ export async function requireTierLimit(
       message: `Your ${tier} plan allows ${limit} calculations per week`,
       limit,
       current: count,
+      resetsAt: nextWeekStart().toISOString(),
+      retryAfterSeconds: Math.ceil((nextWeekStart().getTime() - Date.now()) / 1000),
       upgradeAvailable: tier === "free",
     });
     return;

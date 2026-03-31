@@ -2,30 +2,17 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../../../core/services/api/api.service';
-import { HistoryEntry } from '../../../domain';
+import { HistoryEntry, CALC_TYPE_LABEL, AdminHistoryQuery } from '../../../domain';
+import { AdminDatePipe } from '../../../shared/pipes/admin-date.pipe';
 
 const PAGE_SIZE = 20;
 
-const CALC_TYPES = [
-  'trigonometric', 'half_range', 'complex',
-  'fourier_transform', 'inverse_fourier_transform',
-  'dft_signal', 'dft_epicycles',
-];
-
-const TYPE_LABEL: Record<string, string> = {
-  trigonometric:             'Trigonométrica',
-  half_range:                'Medio rango',
-  complex:                   'Compleja',
-  fourier_transform:         'Transformada',
-  inverse_fourier_transform: 'T. Inversa',
-  dft_signal:                'DFT señal',
-  dft_epicycles:             'DFT epiciclos',
-};
+const CALC_TYPES = Object.keys(CALC_TYPE_LABEL);
 
 @Component({
   selector: 'app-admin-history',
   templateUrl: './admin-history.component.html',
-  imports: [FormsModule],
+  imports: [FormsModule, AdminDatePipe],
 })
 export class AdminHistoryComponent implements OnInit {
   private readonly api = inject(ApiService);
@@ -36,30 +23,56 @@ export class AdminHistoryComponent implements OnInit {
   readonly offset   = signal(0);
   readonly pageSize = PAGE_SIZE;
 
-  filterType   = '';
-  filterUserId = '';
+  // Filters
+  filterType         = '';
+  filterUserId       = '';
+  filterDateFrom     = '';
+  filterDateTo       = '';
+  filterFavorites    = false;
+  filterAnonymous    = false;
+  filterMinExecMs    = '';
 
   readonly CALC_TYPES  = CALC_TYPES;
-  readonly typeLabel   = (t: string) => TYPE_LABEL[t] ?? t;
+  readonly typeLabel   = (t: string) => CALC_TYPE_LABEL[t] ?? t;
   readonly totalPages  = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
+  readonly hasFilters  = computed(() =>
+    !!(this.filterType || this.filterUserId || this.filterDateFrom ||
+       this.filterDateTo || this.filterFavorites || this.filterAnonymous || this.filterMinExecMs)
+  );
 
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading.set(true);
-    const query: Record<string, unknown> = { limit: this.pageSize, offset: this.offset() };
-    if (this.filterType)   query['type']   = this.filterType;
-    if (this.filterUserId) query['userId'] = this.filterUserId.trim();
+    const query: AdminHistoryQuery = { limit: this.pageSize, offset: this.offset() };
+    if (this.filterType)      query.type          = this.filterType;
+    if (this.filterUserId)    query.userId        = this.filterUserId.trim();
+    if (this.filterDateFrom)  query.dateFrom      = this.filterDateFrom;
+    if (this.filterDateTo)    query.dateTo        = this.filterDateTo;
+    if (this.filterFavorites) query.favoritesOnly = true;
+    if (this.filterAnonymous) query.anonymousOnly = true;
+    if (this.filterMinExecMs) query.minExecutionMs = parseInt(this.filterMinExecMs);
 
-    this.api.getAdminHistory(query as never).subscribe({
+    this.api.getAdminHistory(query).subscribe({
       next: (res) => { this.entries.set(res.entries); this.total.set(res.total); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
   }
 
   applyFilters(): void { this.offset.set(0); this.load(); }
-  clearFilters(): void { this.filterType = ''; this.filterUserId = ''; this.applyFilters(); }
+
+  clearFilters(): void {
+    this.filterType      = '';
+    this.filterUserId    = '';
+    this.filterDateFrom  = '';
+    this.filterDateTo    = '';
+    this.filterFavorites = false;
+    this.filterAnonymous = false;
+    this.filterMinExecMs = '';
+    this.applyFilters();
+  }
+
   prevPage(): void { this.offset.set(Math.max(0, this.offset() - this.pageSize)); this.load(); }
   nextPage(): void { this.offset.set(this.offset() + this.pageSize); this.load(); }
 
@@ -68,49 +81,74 @@ export class AdminHistoryComponent implements OnInit {
     this.applyFilters();
   }
 
-  /** Expaned row IDs for showing full input JSON */
-  readonly expandedIds = signal<Set<string>>(new Set());
+  readonly expandedIds  = signal<Set<string>>(new Set());
+  readonly rawJsonIds   = signal<Set<string>>(new Set());
 
   toggleExpand(id: string): void {
     this.expandedIds.update((s) => {
+      const next = new Set(s);
+      if (next.has(id)) {
+        next.delete(id);
+        // Resetear vista JSON al colapsar
+        this.rawJsonIds.update((r) => { const rn = new Set(r); rn.delete(id); return rn; });
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  toggleRawJson(id: string, event: Event): void {
+    event.stopPropagation();
+    this.rawJsonIds.update((s) => {
       const next = new Set(s);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   }
 
-  isExpanded(id: string): boolean {
-    return this.expandedIds().has(id);
+  isExpanded(id: string): boolean { return this.expandedIds().has(id); }
+  isRawJson(id: string):  boolean { return this.rawJsonIds().has(id); }
+
+  hasDftPoints(entry: HistoryEntry): boolean {
+    const pts = entry.input?.['points'];
+    return Array.isArray(pts) && (pts as unknown[]).length > 0;
   }
 
-  /**
-   * Returns a short human-readable preview of what was calculated.
-   * - Segment-based (fourier series): shows first segment expression + period info
-   * - Transform: shows the expression
-   * - DFT: shows number of points
-   */
+  dftMeta(entry: HistoryEntry): {
+    mode: string | undefined;
+    count: number;
+    preview: Array<{ x: number; y: number }>;
+    remaining: number;
+  } {
+    const points = entry.input['points'] as Array<{ x: number; y: number }>;
+    const preview = points.slice(0, 6);
+    return {
+      mode:      entry.input['mode'] as string | undefined,
+      count:     points.length,
+      preview,
+      remaining: points.length - preview.length,
+    };
+  }
+
   inputPreview(entry: HistoryEntry): string {
     const inp = entry.input;
     if (!inp) return '—';
 
-    // Segment-based series: { segments: [{expression, from, to}], harmonics?, variable? }
     const segments = inp['segments'] as Array<{ expression?: string; from?: string; to?: string }> | undefined;
     if (segments?.length) {
       const first = segments[0];
       const expr  = first.expression ?? '?';
       const range = (first.from !== undefined && first.to !== undefined)
-        ? ` [${first.from}, ${first.to}]`
-        : '';
+        ? ` [${first.from}, ${first.to}]` : '';
       const more  = segments.length > 1 ? ` +${segments.length - 1} tramo${segments.length > 2 ? 's' : ''}` : '';
       const n     = inp['harmonics'] !== undefined ? `, n=${inp['harmonics']}` : '';
       return `${expr}${range}${more}${n}`;
     }
 
-    // Transform: { expression: string }
     const expr = inp['expression'] as string | undefined;
     if (expr) return expr;
 
-    // DFT: { points: [...] }
     const points = inp['points'] as unknown[] | undefined;
     if (points) return `${points.length} puntos`;
 
@@ -119,12 +157,6 @@ export class AdminHistoryComponent implements OnInit {
 
   inputJson(entry: HistoryEntry): string {
     return JSON.stringify(entry.input, null, 2);
-  }
-
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleString('es', {
-      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-    });
   }
 
   typeBadgeClass(type: string): string {

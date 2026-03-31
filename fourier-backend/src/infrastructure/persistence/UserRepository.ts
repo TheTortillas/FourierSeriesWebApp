@@ -221,8 +221,13 @@ export class UserRepository implements IUserRepository {
       `INSERT INTO user_calculation_counters (user_id, week_start, count)
      VALUES ($1, $2, 1)
      ON CONFLICT (user_id) DO UPDATE
-       SET count = user_calculation_counters.count + 1,
-           updated_at = NOW()`,
+       SET week_start  = $2,
+           count       = CASE
+             WHEN user_calculation_counters.week_start < $2
+             THEN 1
+             ELSE user_calculation_counters.count + 1
+           END,
+           updated_at  = NOW()`,
       [userId, weekStart.toISOString().split("T")[0]],
     );
   }
@@ -261,8 +266,13 @@ export class UserRepository implements IUserRepository {
       `INSERT INTO anonymous_calculation_counters (ip_address, week_start, count)
      VALUES ($1, $2, 1)
      ON CONFLICT (ip_address) DO UPDATE
-       SET count = anonymous_calculation_counters.count + 1,
-           updated_at = NOW()`,
+       SET week_start  = $2,
+           count       = CASE
+             WHEN anonymous_calculation_counters.week_start < $2
+             THEN 1
+             ELSE anonymous_calculation_counters.count + 1
+           END,
+           updated_at  = NOW()`,
       [ip, weekStart.toISOString().split("T")[0]],
     );
   }
@@ -345,5 +355,29 @@ export class UserRepository implements IUserRepository {
       `UPDATE users SET is_active = TRUE, deleted_at = NULL WHERE id = $1`,
       [id],
     );
+  }
+
+  async getAdminStats(): Promise<{ total: number; premium: number; free: number; inactive: number }> {
+    const result = await db.query<{
+      total: string;
+      premium: string;
+      free: string;
+      inactive: string;
+    }>(`
+      SELECT
+        COUNT(*)                                          AS total,
+        COUNT(*) FILTER (WHERE tier     = 'premium')     AS premium,
+        COUNT(*) FILTER (WHERE tier     = 'free')        AS free,
+        COUNT(*) FILTER (WHERE is_active = FALSE)        AS inactive
+      FROM users
+      WHERE deleted_at IS NULL
+    `);
+    const row = result.rows[0]!;
+    return {
+      total:    parseInt(row.total),
+      premium:  parseInt(row.premium),
+      free:     parseInt(row.free),
+      inactive: parseInt(row.inactive),
+    };
   }
 }

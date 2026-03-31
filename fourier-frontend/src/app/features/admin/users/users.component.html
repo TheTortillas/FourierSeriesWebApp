@@ -10,6 +10,30 @@
     </div>
   </div>
 
+  <!-- Error de carga -->
+  @if (loadError()) {
+    <div class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono
+                bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400
+                border border-red-200 dark:border-red-800">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 shrink-0">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+      </svg>
+      No se pudieron cargar los usuarios.
+    </div>
+  }
+
+  <!-- Error de acción -->
+  @if (actionErr()) {
+    <div class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono
+                bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400
+                border border-red-200 dark:border-red-800">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+      </svg>
+      {{ actionErr() }}
+    </div>
+  }
+
   <!-- Filters -->
   <div class="flex flex-wrap gap-2 items-end">
     <div class="flex flex-col gap-1">
@@ -96,7 +120,11 @@
                     </span>
                     <button type="button" (click)="copyId(user.id)" title="Copiar ID"
                             class="text-muted dark:text-dark-muted text-left hover:text-accent transition-colors cursor-pointer">
-                      {{ user.id.slice(0, 12) }}…
+                      @if (copiedId() === user.id) {
+                        <span class="text-green-600 dark:text-green-400">✓ copiado</span>
+                      } @else {
+                        {{ user.id.slice(0, 12) }}…
+                      }
                     </button>
                   </div>
                 </td>
@@ -144,7 +172,7 @@
 
                 <!-- Created at -->
                 <td class="px-4 py-3 text-muted dark:text-dark-muted">
-                  {{ formatDate(user.createdAt) }}
+                  {{ user.createdAt | adminDate:'date' }}
                 </td>
 
                 <!-- Actions -->
@@ -165,13 +193,21 @@
                       </button>
 
                       <!-- Toggle active -->
-                      <button type="button" (click)="toggleActive(user)"
-                              [title]="user.isActive ? 'Desactivar usuario' : 'Activar usuario'"
-                              [class]="user.isActive
-                                ? 'px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-red-400 hover:text-red-500'
-                                : 'px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-green-400 hover:text-green-600'">
-                        {{ user.isActive ? 'desactivar' : 'activar' }}
-                      </button>
+                      @if (user.isActive && pendingDeactivate() === user.id) {
+                        <button type="button" (click)="toggleActive(user)"
+                                class="px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors
+                                       border-red-400 text-red-500 bg-red-50 dark:bg-red-950/30">
+                          ¿confirmar?
+                        </button>
+                      } @else {
+                        <button type="button" (click)="toggleActive(user)"
+                                [title]="user.isActive ? 'Desactivar usuario (doble clic)' : 'Activar usuario'"
+                                [class]="user.isActive
+                                  ? 'px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-red-400 hover:text-red-500'
+                                  : 'px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-green-400 hover:text-green-600'">
+                          {{ user.isActive ? 'desactivar' : 'activar' }}
+                        </button>
+                      }
                     }
                   </div>
                 </td>

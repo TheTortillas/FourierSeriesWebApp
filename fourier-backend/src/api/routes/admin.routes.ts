@@ -3,14 +3,94 @@ import {
   userRepository,
   historyRepository,
   auditRepository,
+  systemRepository,
 } from "../../infrastructure/container";
 import { authenticate, requireAdmin } from "../middlewares/authenticate";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
-import type { AuditAction } from "../../domain/interfaces/repositories/IAuditRepository";
+import type { AuditAction, AuditFilters } from "../../domain/interfaces/repositories/IAuditRepository";
 
 export const adminRouter = Router();
 
 adminRouter.use(authenticate, requireAdmin);
+
+/**
+ * @openapi
+ * /api/admin/system/stats:
+ *   get:
+ *     summary: Obtener estadísticas de almacenamiento del sistema
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tamaño de la DB, tablas principales y disco
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 database:
+ *                   type: object
+ *                   properties:
+ *                     totalSize: { type: string, example: "8192 kB" }
+ *                     tables:
+ *                       type: object
+ *                       properties:
+ *                         calculation_history: { type: string, example: "40 kB" }
+ *                         audit_log:           { type: string, example: "16 kB" }
+ *                         user_refresh_tokens: { type: string, example: "8192 bytes" }
+ *                 disk:
+ *                   type: object
+ *                   properties:
+ *                     total:       { type: string, example: "931.51 GB" }
+ *                     used:        { type: string, example: "120.34 GB" }
+ *                     free:        { type: string, example: "811.17 GB" }
+ *                     usedPercent: { type: integer, example: 13 }
+ */
+adminRouter.get(
+  "/system/stats",
+  async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const stats = await systemRepository.getStats();
+      res.json(stats);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/admin/stats:
+ *   get:
+ *     summary: Contadores de usuarios en una sola query
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Total, premium, free e inactivos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:    { type: integer }
+ *                 premium:  { type: integer }
+ *                 free:     { type: integer }
+ *                 inactive: { type: integer }
+ */
+adminRouter.get(
+  "/stats",
+  async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const stats = await userRepository.getAdminStats();
+      res.json(stats);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 /**
  * @openapi
@@ -261,6 +341,21 @@ adminRouter.patch(
  *       - in: query
  *         name: offset
  *         schema: { type: integer, default: 0 }
+ *       - in: query
+ *         name: action
+ *         schema: { type: string }
+ *       - in: query
+ *         name: userId
+ *         schema: { type: string }
+ *       - in: query
+ *         name: dateFrom
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: dateTo
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: anonymousOnly
+ *         schema: { type: boolean }
  *     responses:
  *       200:
  *         description: Entradas del audit log
@@ -269,11 +364,19 @@ adminRouter.get(
   "/audit",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const limit = parseInt(req.query["limit"] as string) || 50;
+      const limit  = parseInt(req.query["limit"]  as string) || 50;
       const offset = parseInt(req.query["offset"] as string) || 0;
+
+      const filters: AuditFilters = {};
+      if (req.query["action"])        filters.action        = req.query["action"] as AuditAction;
+      if (req.query["userId"])        filters.userId        = req.query["userId"] as string;
+      if (req.query["dateFrom"])      filters.dateFrom      = new Date(req.query["dateFrom"] as string);
+      if (req.query["dateTo"])        filters.dateTo        = new Date(req.query["dateTo"] as string);
+      if (req.query["anonymousOnly"] === "true") filters.anonymousOnly = true;
+
       const [entries, total] = await Promise.all([
-        auditRepository.findAll(limit, offset),
-        auditRepository.countAll(),
+        auditRepository.findAll(limit, offset, filters),
+        auditRepository.countAll(filters),
       ]);
       res.json({ entries, total, limit, offset });
     } catch (err) {
@@ -368,6 +471,21 @@ adminRouter.delete(
  *         schema:
  *           type: string
  *           enum: [trigonometric, half_range, complex, fourier_transform, inverse_fourier_transform, dft_signal, dft_epicycles]
+ *       - in: query
+ *         name: dateFrom
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: dateTo
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: favoritesOnly
+ *         schema: { type: boolean }
+ *       - in: query
+ *         name: anonymousOnly
+ *         schema: { type: boolean }
+ *       - in: query
+ *         name: minExecutionMs
+ *         schema: { type: integer }
  *     responses:
  *       200:
  *         description: Historial global
@@ -376,13 +494,21 @@ adminRouter.get(
   "/history",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const limit = parseInt(req.query["limit"] as string) || 20;
+      const limit  = parseInt(req.query["limit"]  as string) || 20;
       const offset = parseInt(req.query["offset"] as string) || 0;
-      const filters = {
-        userId: req.query["userId"] as string | undefined,
-        type: req.query["type"] as string | undefined,
-        anonymousOnly: req.query["anonymousOnly"] === "true",
-      };
+
+      const filters: {
+        userId?: string; type?: string;
+        anonymousOnly?: boolean; favoritesOnly?: boolean;
+        dateFrom?: Date; dateTo?: Date; minExecutionMs?: number;
+      } = {};
+      if (req.query["userId"])        filters.userId        = req.query["userId"] as string;
+      if (req.query["type"])          filters.type          = req.query["type"] as string;
+      if (req.query["anonymousOnly"] === "true")  filters.anonymousOnly  = true;
+      if (req.query["favoritesOnly"] === "true")  filters.favoritesOnly  = true;
+      if (req.query["dateFrom"])      filters.dateFrom      = new Date(req.query["dateFrom"] as string);
+      if (req.query["dateTo"])        filters.dateTo        = new Date(req.query["dateTo"] as string);
+      if (req.query["minExecutionMs"]) filters.minExecutionMs = parseInt(req.query["minExecutionMs"] as string);
 
       const [entries, total] = await Promise.all([
         historyRepository.findAll(limit, offset, filters),

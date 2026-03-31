@@ -3,6 +3,10 @@ import {
   getCacheStats,
   clearCache,
 } from "../../infrastructure/cache/fourierCache";
+import {
+  authenticate,
+  requireAdmin,
+} from "../middlewares/authenticate";
 
 export const cacheRouter = Router();
 
@@ -30,7 +34,7 @@ cacheRouter.get("/stats", (_req: Request, res: Response) => {
  *       200:
  *         description: Caché limpiado
  */
-cacheRouter.post("/clear", (_req: Request, res: Response) => {
+cacheRouter.post("/clear", authenticate, requireAdmin, (_req: Request, res: Response) => {
   clearCache();
   res.json({ message: "Cache cleared" });
 });

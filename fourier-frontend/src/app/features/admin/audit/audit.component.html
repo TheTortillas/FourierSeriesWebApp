@@ -8,6 +8,71 @@
     </p>
   </div>
 
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-2 items-end">
+
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Acción</label>
+      <select [(ngModel)]="filterAction" (change)="applyFilters()"
+              class="px-2 py-1.5 rounded-lg text-xs font-mono min-w-45
+                     bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
+                     text-ink dark:text-dark-ink focus:outline-none focus:border-accent">
+        <option value="">Todas</option>
+        @for (a of AUDIT_ACTIONS; track a) {
+          <option [value]="a">{{ a }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Usuario ID</label>
+      <input type="text" [(ngModel)]="filterUserId" placeholder="uuid…"
+             (keydown.enter)="applyFilters()"
+             class="px-2 py-1.5 rounded-lg text-xs font-mono w-44
+                    bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
+                    text-ink dark:text-dark-ink placeholder:text-muted/50
+                    focus:outline-none focus:border-accent"/>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Desde</label>
+      <input type="date" [(ngModel)]="filterDateFrom" (change)="applyFilters()"
+             class="px-2 py-1.5 rounded-lg text-xs font-mono
+                    bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
+                    text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Hasta</label>
+      <input type="date" [(ngModel)]="filterDateTo" (change)="applyFilters()"
+             [min]="filterDateFrom"
+             class="px-2 py-1.5 rounded-lg text-xs font-mono
+                    bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
+                    text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+    </div>
+
+    <label class="flex items-center gap-1.5 cursor-pointer text-xs font-mono
+                  text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink
+                  transition-colors pb-0.5">
+      <input type="checkbox" [(ngModel)]="filterAnonymous" (change)="applyFilters()"
+             class="accent-accent"/>
+      Solo anónimos
+    </label>
+
+    @if (hasFilters()) {
+      <button type="button" (click)="clearFilters()"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer transition-colors
+                     text-muted dark:text-dark-muted border border-border dark:border-dark-border
+                     hover:border-accent hover:text-accent pb-1.5">
+        Limpiar filtros
+      </button>
+    }
+
+    <span class="ml-auto text-xs font-mono text-muted dark:text-dark-muted pb-1">
+      {{ total() }} registros
+    </span>
+  </div>
+
   <!-- Clear panel -->
   <details class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl">
     <summary class="px-4 py-3 cursor-pointer text-xs font-mono text-muted dark:text-dark-muted
@@ -82,7 +147,7 @@
               <tr class="hover:bg-paper dark:hover:bg-dark-bg transition-colors">
 
                 <td class="px-4 py-2.5 text-muted dark:text-dark-muted whitespace-nowrap">
-                  {{ formatDate(entry.createdAt) }}
+                  {{ entry.createdAt | adminDate:'seconds' }}
                 </td>
 
                 <td class="px-4 py-2.5 whitespace-nowrap">
@@ -111,10 +176,11 @@
                 </td>
 
                 <td class="px-4 py-2.5 max-w-[200px]">
-                  @if (metaString(entry.metadata)) {
+                  @let meta = metaString(entry.metadata);
+                  @if (meta) {
                     <span class="text-muted/70 dark:text-dark-muted/70 truncate block"
-                          [title]="metaString(entry.metadata)">
-                      {{ metaString(entry.metadata) }}
+                          [title]="meta">
+                      {{ meta }}
                     </span>
                   } @else {
                     <span class="text-muted/40">—</span>
@@ -134,10 +200,11 @@
       </div>
 
       <!-- Pagination -->
+      @if (total() > pageSize) {
       <div class="px-4 py-3 border-t border-border dark:border-dark-border
                   flex items-center justify-between">
         <span class="text-xs font-mono text-muted dark:text-dark-muted">
-          Página {{ currentPage() }} de {{ totalPages() || 1 }}
+          Página {{ currentPage() }} de {{ totalPages() }}
         </span>
         <div class="flex gap-1.5">
           <button type="button" (click)="prevPage()" [disabled]="offset() === 0"
@@ -156,6 +223,7 @@
           </button>
         </div>
       </div>
+      }
     }
   </div>
 
