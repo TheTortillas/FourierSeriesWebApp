@@ -111,10 +111,11 @@
                 </td>
 
                 <td class="px-4 py-2.5 max-w-[200px]">
-                  @if (metaString(entry.metadata)) {
+                  @let meta = metaString(entry.metadata);
+                  @if (meta) {
                     <span class="text-muted/70 dark:text-dark-muted/70 truncate block"
-                          [title]="metaString(entry.metadata)">
-                      {{ metaString(entry.metadata) }}
+                          [title]="meta">
+                      {{ meta }}
                     </span>
                   } @else {
                     <span class="text-muted/40">—</span>
@@ -134,10 +135,11 @@
       </div>
 
       <!-- Pagination -->
+      @if (total() > pageSize) {
       <div class="px-4 py-3 border-t border-border dark:border-dark-border
                   flex items-center justify-between">
         <span class="text-xs font-mono text-muted dark:text-dark-muted">
-          Página {{ currentPage() }} de {{ totalPages() || 1 }}
+          Página {{ currentPage() }} de {{ totalPages() }}
         </span>
         <div class="flex gap-1.5">
           <button type="button" (click)="prevPage()" [disabled]="offset() === 0"
@@ -156,6 +158,7 @@
           </button>
         </div>
       </div>
+      }
     }
   </div>
 

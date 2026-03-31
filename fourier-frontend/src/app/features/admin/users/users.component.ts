@@ -88,5 +88,12 @@ export class UsersComponent implements OnInit {
     setTimeout(() => this.actionErr.set(null), 3000);
   }
 
-  copyId(id: string): void { navigator.clipboard.writeText(id); }
+  readonly copiedId = signal<string | null>(null);
+
+  copyId(id: string): void {
+    navigator.clipboard.writeText(id).then(() => {
+      this.copiedId.set(id);
+      setTimeout(() => this.copiedId.set(null), 1500);
+    });
+  }
 }

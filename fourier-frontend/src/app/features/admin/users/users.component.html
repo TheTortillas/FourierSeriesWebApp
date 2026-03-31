@@ -120,7 +120,11 @@
                     </span>
                     <button type="button" (click)="copyId(user.id)" title="Copiar ID"
                             class="text-muted dark:text-dark-muted text-left hover:text-accent transition-colors cursor-pointer">
-                      {{ user.id.slice(0, 12) }}…
+                      @if (copiedId() === user.id) {
+                        <span class="text-green-600 dark:text-green-400">✓ copiado</span>
+                      } @else {
+                        {{ user.id.slice(0, 12) }}…
+                      }
                     </button>
                   </div>
                 </td>
