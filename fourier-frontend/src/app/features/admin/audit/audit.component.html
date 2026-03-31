@@ -82,7 +82,7 @@
               <tr class="hover:bg-paper dark:hover:bg-dark-bg transition-colors">
 
                 <td class="px-4 py-2.5 text-muted dark:text-dark-muted whitespace-nowrap">
-                  {{ formatDate(entry.createdAt) }}
+                  {{ entry.createdAt | adminDate:'seconds' }}
                 </td>
 
                 <td class="px-4 py-2.5 whitespace-nowrap">

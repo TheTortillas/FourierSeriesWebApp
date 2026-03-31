@@ -65,3 +65,13 @@ export interface SystemStats {
   };
   disk: SystemDiskStats;
 }
+
+export const CALC_TYPE_LABEL: Record<string, string> = {
+  trigonometric:             'Trigonométrica',
+  half_range:                'Medio rango',
+  complex:                   'Compleja',
+  fourier_transform:         'Transformada',
+  inverse_fourier_transform: 'T. Inversa',
+  dft_signal:                'DFT señal',
+  dft_epicycles:             'DFT epiciclos',
+};

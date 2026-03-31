@@ -2,30 +2,17 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '../../../core/services/api/api.service';
-import { HistoryEntry } from '../../../domain';
+import { HistoryEntry, CALC_TYPE_LABEL } from '../../../domain';
+import { AdminDatePipe } from '../../../shared/pipes/admin-date.pipe';
 
 const PAGE_SIZE = 20;
 
-const CALC_TYPES = [
-  'trigonometric', 'half_range', 'complex',
-  'fourier_transform', 'inverse_fourier_transform',
-  'dft_signal', 'dft_epicycles',
-];
-
-const TYPE_LABEL: Record<string, string> = {
-  trigonometric:             'Trigonométrica',
-  half_range:                'Medio rango',
-  complex:                   'Compleja',
-  fourier_transform:         'Transformada',
-  inverse_fourier_transform: 'T. Inversa',
-  dft_signal:                'DFT señal',
-  dft_epicycles:             'DFT epiciclos',
-};
+const CALC_TYPES = Object.keys(CALC_TYPE_LABEL);
 
 @Component({
   selector: 'app-admin-history',
   templateUrl: './admin-history.component.html',
-  imports: [FormsModule],
+  imports: [FormsModule, AdminDatePipe],
 })
 export class AdminHistoryComponent implements OnInit {
   private readonly api = inject(ApiService);
@@ -40,7 +27,7 @@ export class AdminHistoryComponent implements OnInit {
   filterUserId = '';
 
   readonly CALC_TYPES  = CALC_TYPES;
-  readonly typeLabel   = (t: string) => TYPE_LABEL[t] ?? t;
+  readonly typeLabel   = (t: string) => CALC_TYPE_LABEL[t] ?? t;
   readonly totalPages  = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
 
@@ -68,7 +55,6 @@ export class AdminHistoryComponent implements OnInit {
     this.applyFilters();
   }
 
-  /** Expaned row IDs for showing full input JSON */
   readonly expandedIds = signal<Set<string>>(new Set());
 
   toggleExpand(id: string): void {
@@ -83,34 +69,24 @@ export class AdminHistoryComponent implements OnInit {
     return this.expandedIds().has(id);
   }
 
-  /**
-   * Returns a short human-readable preview of what was calculated.
-   * - Segment-based (fourier series): shows first segment expression + period info
-   * - Transform: shows the expression
-   * - DFT: shows number of points
-   */
   inputPreview(entry: HistoryEntry): string {
     const inp = entry.input;
     if (!inp) return '—';
 
-    // Segment-based series: { segments: [{expression, from, to}], harmonics?, variable? }
     const segments = inp['segments'] as Array<{ expression?: string; from?: string; to?: string }> | undefined;
     if (segments?.length) {
       const first = segments[0];
       const expr  = first.expression ?? '?';
       const range = (first.from !== undefined && first.to !== undefined)
-        ? ` [${first.from}, ${first.to}]`
-        : '';
+        ? ` [${first.from}, ${first.to}]` : '';
       const more  = segments.length > 1 ? ` +${segments.length - 1} tramo${segments.length > 2 ? 's' : ''}` : '';
       const n     = inp['harmonics'] !== undefined ? `, n=${inp['harmonics']}` : '';
       return `${expr}${range}${more}${n}`;
     }
 
-    // Transform: { expression: string }
     const expr = inp['expression'] as string | undefined;
     if (expr) return expr;
 
-    // DFT: { points: [...] }
     const points = inp['points'] as unknown[] | undefined;
     if (points) return `${points.length} puntos`;
 
@@ -119,12 +95,6 @@ export class AdminHistoryComponent implements OnInit {
 
   inputJson(entry: HistoryEntry): string {
     return JSON.stringify(entry.input, null, 2);
-  }
-
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleString('es', {
-      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-    });
   }
 
   typeBadgeClass(type: string): string {
