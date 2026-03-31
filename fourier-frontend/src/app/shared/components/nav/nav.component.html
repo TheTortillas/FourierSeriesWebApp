@@ -27,7 +27,8 @@
 
   <!-- Actions -->
   <div class="flex items-center gap-0.5">
-    <!-- Nav links -->
+
+    <!-- Grupo 1: Navegación -->
     <a
       routerLink="/calculator"
       routerLinkActive="text-accent"
@@ -43,7 +44,9 @@
       Transformadas
     </a>
 
-    <!-- Remaining calculations badge -->
+    <div class="w-px h-4 bg-border dark:bg-dark-border mx-1.5 shrink-0"></div>
+
+    <!-- Grupo 2: Cuota + cuenta -->
     @if (userStore.quota()?.remaining !== null && userStore.quota()?.remaining !== undefined) {
       <span
         title="Cálculos restantes esta semana"
@@ -71,7 +74,6 @@
     }
 
     @if (userStore.isAuthenticated()) {
-      <!-- Authenticated: display name + logout -->
       <a
         routerLink="/profile"
         class="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
@@ -115,7 +117,6 @@
         <span class="hidden sm:inline">Salir</span>
       </button>
     } @else {
-      <!-- Guest: login + register -->
       <a
         routerLink="/auth/login"
         class="flex items-center px-2 py-1.5 rounded text-muted dark:text-dark-muted text-xs font-mono hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
@@ -130,22 +131,23 @@
       </a>
     }
 
-    <!-- Theme toggle -->
+    <div class="w-px h-4 bg-border dark:bg-dark-border mx-1.5 shrink-0"></div>
+
+    <!-- Grupo 3: Controles de apariencia (+ idioma futuro) -->
     <button
       (click)="theme.togglePalette()"
       type="button"
       [title]="theme.isNeutral ? 'Cambiar a paleta coffee' : 'Cambiar a paleta neutral'"
-      class="px-2 py-1.5 rounded-md text-[10px] font-mono uppercase tracking-wider border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
+      class="px-2 py-1.5 rounded text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
     >
       {{ theme.isNeutral ? 'Neutral' : 'Coffee' }}
     </button>
 
-    <!-- Theme mode toggle -->
     <button
       (click)="theme.toggle()"
       type="button"
       title="Cambiar tema"
-      class="p-2 rounded-full text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
+      class="p-2 rounded text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
     >
       @if (theme.isDark) {
         <svg
@@ -178,5 +180,6 @@
         </svg>
       }
     </button>
+
   </div>
 </nav>
