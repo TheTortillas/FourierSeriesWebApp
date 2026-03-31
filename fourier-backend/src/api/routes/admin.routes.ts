@@ -3,6 +3,7 @@ import {
   userRepository,
   historyRepository,
   auditRepository,
+  systemRepository,
 } from "../../infrastructure/container";
 import { authenticate, requireAdmin } from "../middlewares/authenticate";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
@@ -11,6 +12,52 @@ import type { AuditAction } from "../../domain/interfaces/repositories/IAuditRep
 export const adminRouter = Router();
 
 adminRouter.use(authenticate, requireAdmin);
+
+/**
+ * @openapi
+ * /api/admin/system/stats:
+ *   get:
+ *     summary: Obtener estadísticas de almacenamiento del sistema
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tamaño de la DB, tablas principales y disco
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 database:
+ *                   type: object
+ *                   properties:
+ *                     totalSize: { type: string, example: "8192 kB" }
+ *                     tables:
+ *                       type: object
+ *                       properties:
+ *                         calculation_history: { type: string, example: "40 kB" }
+ *                         audit_log:           { type: string, example: "16 kB" }
+ *                         user_refresh_tokens: { type: string, example: "8192 bytes" }
+ *                 disk:
+ *                   type: object
+ *                   properties:
+ *                     total:       { type: string, example: "931.51 GB" }
+ *                     used:        { type: string, example: "120.34 GB" }
+ *                     free:        { type: string, example: "811.17 GB" }
+ *                     usedPercent: { type: integer, example: 13 }
+ */
+adminRouter.get(
+  "/system/stats",
+  async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const stats = await systemRepository.getStats();
+      res.json(stats);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 /**
  * @openapi
