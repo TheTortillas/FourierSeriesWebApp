@@ -159,6 +159,7 @@ export class ResultsSummaryComponent {
   // ── Canvas settings ──────────────────────────────────────────────────────
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer' | 'custom'>('pi');
   readonly showHarmonics = signal(false);
+  readonly showDcHarmonic = signal(true);
   readonly controlHarmonics = signal(false);
   readonly enabledHarmonics = signal<Set<number>>(new Set<number>());
   readonly selectedHarmonicN = signal<number | null>(null);
@@ -318,6 +319,7 @@ export class ResultsSummaryComponent {
 
     let approxFn: ((x: number) => number) | null = null;
     let harmonicFns: Array<{ n: number; fn: (x: number) => number }> = [];
+    let dcHarmonicValue: number | null = null;
 
     if (result.type === 'trigonometric') {
       const rawTerms = result.terms.terms as TrigNumericTerm[];
@@ -325,6 +327,7 @@ export class ResultsSummaryComponent {
       const a0Raw =
         this.evalScalar(result.data.a0Raw?.maxima, c.a0Float) ??
         (this.evalScalar(c.a0?.maxima, undefined) ?? 0) * 2;
+      dcHarmonicValue = a0Raw / 2;
       let terms = rawTerms;
       if (hasPv) {
         const anFn = c.an?.maxima ? math.compile(c.an.maxima, 'n', pv) : null;
@@ -376,6 +379,7 @@ export class ResultsSummaryComponent {
         const a0Raw =
           this.evalScalar(result.data.a0Raw?.maxima, c.a0Float) ??
           (this.evalScalar(c.a0?.maxima, undefined) ?? 0) * 2;
+        dcHarmonicValue = a0Raw / 2;
         approxFn = rec.buildCosineOnly(a0Raw, activeTerms, w0, activeTerms.length);
         if (showHarmonics) {
           harmonicFns = activeTerms.map((t) => {
@@ -396,6 +400,7 @@ export class ResultsSummaryComponent {
       const terms = result.terms.terms as ComplexNumericTerm[];
       const c = result.data.coefficients;
       const c0 = this.evalScalar(c.c0?.maxima, c.c0Float ?? this.parseMaxima(c.c0.maxima)) ?? 0;
+      dcHarmonicValue = c0;
       const activeTerms = terms.filter((t) => t.n <= nTerms && isHarmonicEnabled(t.n));
       approxFn = rec.buildComplex(c0, activeTerms, w0, activeTerms.length);
       if (showHarmonics) {
@@ -412,12 +417,20 @@ export class ResultsSummaryComponent {
     const localApprox = approxFn;
     const localHarmonics = harmonicFns;
     const selectedN = this.selectedHarmonicN();
+    const showDc = this.showDcHarmonic() && showHarmonics;
+    const dcValue = dcHarmonicValue;
 
     return [
       {
         curves: [],
         onDraw(ctx, vp) {
           // Harmonics (drawn first, behind everything)
+          if (showDc && dcValue !== null && isFinite(dcValue) && Math.abs(dcValue) > 1e-10) {
+            plotter.plotFn(ctx, () => dcValue, vp, {
+              color: 'rgba(148, 163, 184, 0.78)',
+              lineWidth: 1.3,
+            });
+          }
           for (let i = 0; i < localHarmonics.length; i++) {
             const harmonic = localHarmonics[i];
             const isSelected = selectedN === harmonic.n;
@@ -797,10 +810,19 @@ export class ResultsSummaryComponent {
   }
 
   rowHarmonicBackground(n: number): string {
-    if (!this.controlHarmonics()) return '';
-    if (!this.isHarmonicEnabled(n)) return '';
-    if (this.isHarmonicSelected(n)) return this.withAlpha(this.harmonicColorForN(n), 0.28);
-    return this.withAlpha(this.harmonicColorForN(n), 0.1);
+    const inRange = n <= this.canvasNTerms();
+    const enabled = this.isHarmonicEnabled(n);
+    const selected = this.isHarmonicSelected(n);
+
+    if (selected) return this.withAlpha(this.harmonicColorForN(n), 0.28);
+    if (this.controlHarmonics() && !enabled) return '';
+    if (inRange)
+      return this.withAlpha(this.harmonicColorForN(n), this.controlHarmonics() ? 0.12 : 0.08);
+    return '';
+  }
+
+  isHarmonicInCanvasRange(n: number): boolean {
+    return n <= this.canvasNTerms();
   }
 
   focusHarmonic(n: number): void {

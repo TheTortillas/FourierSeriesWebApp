@@ -225,6 +225,18 @@
               </button>
             </div>
 
+            @if (showHarmonics()) {
+              <label class="flex items-center gap-1.5 text-muted dark:text-dark-muted select-none">
+                <input
+                  type="checkbox"
+                  [checked]="showDcHarmonic()"
+                  (change)="showDcHarmonic.set(!!$any($event.target).checked)"
+                  class="accent-accent"
+                />
+                <span>Mostrar DC (a₀/2 o c₀)</span>
+              </label>
+            }
+
             <div class="flex items-center gap-2">
               <label
                 class="flex items-center gap-2 px-2 py-1 rounded border border-border dark:border-dark-border cursor-pointer select-none"
@@ -776,8 +788,10 @@
                   <tr
                     class="hover:bg-paper2 dark:hover:bg-dark-surface2 cursor-pointer transition-colors"
                     [class.opacity-45]="controlHarmonics() && !isHarmonicEnabled(term.n)"
+                    [class.opacity-60]="!controlHarmonics() && !isHarmonicInCanvasRange(term.n)"
                     [class.ring-1]="isHarmonicSelected(term.n)"
                     [class.ring-accent]="isHarmonicSelected(term.n)"
+                    [class.font-semibold]="isHarmonicInCanvasRange(term.n)"
                     [style.backgroundColor]="rowHarmonicBackground(term.n)"
                     (click)="focusHarmonic(term.n)"
                   >
@@ -895,8 +909,10 @@
                   <tr
                     class="hover:bg-paper2 dark:hover:bg-dark-surface2 cursor-pointer transition-colors"
                     [class.opacity-45]="controlHarmonics() && !isHarmonicEnabled(term.n)"
+                    [class.opacity-60]="!controlHarmonics() && !isHarmonicInCanvasRange(term.n)"
                     [class.ring-1]="isHarmonicSelected(term.n)"
                     [class.ring-accent]="isHarmonicSelected(term.n)"
+                    [class.font-semibold]="isHarmonicInCanvasRange(term.n)"
                     [style.backgroundColor]="rowHarmonicBackground(term.n)"
                     (click)="focusHarmonic(term.n)"
                   >
