@@ -1,5 +1,4 @@
 <div class="p-6 flex flex-col gap-5">
-
   <!-- Header -->
   <div class="flex items-center justify-between flex-wrap gap-3">
     <div>
@@ -12,11 +11,20 @@
 
   <!-- Error de carga -->
   @if (loadError()) {
-    <div class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono
-                bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400
-                border border-red-200 dark:border-red-800">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 shrink-0">
-        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+    <div
+      class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="w-4 h-4 shrink-0"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+          clip-rule="evenodd"
+        />
       </svg>
       No se pudieron cargar los usuarios.
     </div>
@@ -24,11 +32,20 @@
 
   <!-- Error de acción -->
   @if (actionErr()) {
-    <div class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono
-                bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400
-                border border-red-200 dark:border-red-800">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 shrink-0">
-        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+    <div
+      class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="w-3.5 h-3.5 shrink-0"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+          clip-rule="evenodd"
+        />
       </svg>
       {{ actionErr() }}
     </div>
@@ -38,10 +55,11 @@
   <div class="flex flex-wrap gap-2 items-end">
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Rol</label>
-      <select [(ngModel)]="filterRole" (change)="applyFilters()"
-              class="px-2 py-1.5 rounded-lg text-xs font-mono
-                     bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                     text-ink dark:text-dark-ink focus:outline-none focus:border-accent">
+      <select
+        [(ngModel)]="filterRole"
+        (change)="applyFilters()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      >
         <option value="">Todos</option>
         <option value="user">user</option>
         <option value="admin">admin</option>
@@ -50,10 +68,11 @@
 
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Tier</label>
-      <select [(ngModel)]="filterTier" (change)="applyFilters()"
-              class="px-2 py-1.5 rounded-lg text-xs font-mono
-                     bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                     text-ink dark:text-dark-ink focus:outline-none focus:border-accent">
+      <select
+        [(ngModel)]="filterTier"
+        (change)="applyFilters()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      >
         <option value="">Todos</option>
         <option value="free">free</option>
         <option value="premium">premium</option>
@@ -62,10 +81,11 @@
 
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Estado</label>
-      <select [(ngModel)]="filterActive" (change)="applyFilters()"
-              class="px-2 py-1.5 rounded-lg text-xs font-mono
-                     bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                     text-ink dark:text-dark-ink focus:outline-none focus:border-accent">
+      <select
+        [(ngModel)]="filterActive"
+        (change)="applyFilters()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      >
         <option value="">Todos</option>
         <option value="true">Activos</option>
         <option value="false">Inactivos</option>
@@ -73,23 +93,43 @@
     </div>
 
     @if (filterRole || filterTier || filterActive !== '') {
-      <button type="button" (click)="clearFilters()"
-              class="px-2.5 py-1.5 rounded-lg text-xs font-mono
-                     text-muted dark:text-dark-muted border border-border dark:border-dark-border
-                     hover:border-accent hover:text-accent transition-colors cursor-pointer">
+      <button
+        type="button"
+        (click)="clearFilters()"
+        class="px-2.5 py-1.5 rounded-lg text-xs font-mono text-muted dark:text-dark-muted border border-border dark:border-dark-border hover:border-accent hover:text-accent transition-colors cursor-pointer"
+      >
         Limpiar filtros
       </button>
     }
   </div>
 
   <!-- Table -->
-  <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-              rounded-xl overflow-hidden">
+  <div
+    class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+  >
     @if (loading()) {
-      <div class="flex items-center justify-center gap-2 py-10 text-muted dark:text-dark-muted text-sm font-mono">
-        <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
+      <div
+        class="flex items-center justify-center gap-2 py-10 text-muted dark:text-dark-muted text-sm font-mono"
+      >
+        <svg
+          class="w-4 h-4 animate-spin"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          />
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
+          />
         </svg>
         Cargando…
       </div>
@@ -97,8 +137,9 @@
       <div class="overflow-x-auto">
         <table class="w-full text-xs font-mono">
           <thead>
-            <tr class="border-b border-border dark:border-dark-border
-                       bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted text-left">
+            <tr
+              class="border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted text-left"
+            >
               <th class="px-4 py-2.5 font-medium">Usuario</th>
               <th class="px-4 py-2.5 font-medium">Rol</th>
               <th class="px-4 py-2.5 font-medium">Tier</th>
@@ -110,16 +151,22 @@
           </thead>
           <tbody class="divide-y divide-border dark:divide-dark-border">
             @for (user of users(); track user.id) {
-              <tr class="hover:bg-paper dark:hover:bg-dark-bg transition-colors"
-                  [class.opacity-50]="!user.isActive">
+              <tr
+                class="hover:bg-paper dark:hover:bg-dark-bg transition-colors"
+                [class.opacity-50]="!user.isActive"
+              >
                 <!-- User info -->
                 <td class="px-4 py-3">
                   <div class="flex flex-col gap-0.5">
                     <span class="text-ink dark:text-dark-ink font-medium">
                       {{ user.firstName }} {{ user.lastName }}
                     </span>
-                    <button type="button" (click)="copyId(user.id)" title="Copiar ID"
-                            class="text-muted dark:text-dark-muted text-left hover:text-accent transition-colors cursor-pointer">
+                    <button
+                      type="button"
+                      (click)="copyId(user.id)"
+                      title="Copiar ID"
+                      class="text-muted dark:text-dark-muted text-left hover:text-accent transition-colors cursor-pointer"
+                    >
                       @if (copiedId() === user.id) {
                         <span class="text-green-600 dark:text-green-400">✓ copiado</span>
                       } @else {
@@ -131,18 +178,26 @@
 
                 <!-- Role -->
                 <td class="px-4 py-3">
-                  <span [class]="user.role === 'admin'
-                    ? 'px-1.5 py-0.5 rounded border bg-accent/10 text-accent border-accent/30'
-                    : 'px-1.5 py-0.5 rounded border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'">
+                  <span
+                    [class]="
+                      user.role === 'admin'
+                        ? 'px-1.5 py-0.5 rounded border bg-accent/10 text-accent border-accent/30'
+                        : 'px-1.5 py-0.5 rounded border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'
+                    "
+                  >
                     {{ user.role }}
                   </span>
                 </td>
 
                 <!-- Tier -->
                 <td class="px-4 py-3">
-                  <span [class]="user.tier === 'premium'
-                    ? 'px-1.5 py-0.5 rounded border bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
-                    : 'px-1.5 py-0.5 rounded border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'">
+                  <span
+                    [class]="
+                      user.tier === 'premium'
+                        ? 'px-1.5 py-0.5 rounded border bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
+                        : 'px-1.5 py-0.5 rounded border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'
+                    "
+                  >
                     {{ user.tier }}
                   </span>
                 </td>
@@ -150,12 +205,19 @@
                 <!-- Email verified -->
                 <td class="px-4 py-3">
                   <div class="flex flex-col gap-0.5">
-                    <span class="text-ink dark:text-dark-ink truncate max-w-[160px]" [title]="user.email">
+                    <span
+                      class="text-ink dark:text-dark-ink truncate max-w-40"
+                      [title]="user.email"
+                    >
                       {{ user.email }}
                     </span>
-                    <span [class]="user.emailVerified
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-amber-600 dark:text-amber-400'">
+                    <span
+                      [class]="
+                        user.emailVerified
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-amber-600 dark:text-amber-400'
+                      "
+                    >
                       {{ user.emailVerified ? '✓ verificado' : '✗ sin verificar' }}
                     </span>
                   </div>
@@ -163,16 +225,20 @@
 
                 <!-- Active status -->
                 <td class="px-4 py-3">
-                  <span [class]="user.isActive
-                    ? 'px-1.5 py-0.5 rounded border bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800'
-                    : 'px-1.5 py-0.5 rounded border bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'">
+                  <span
+                    [class]="
+                      user.isActive
+                        ? 'px-1.5 py-0.5 rounded border bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800'
+                        : 'px-1.5 py-0.5 rounded border bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
+                    "
+                  >
                     {{ user.isActive ? 'activo' : 'inactivo' }}
                   </span>
                 </td>
 
                 <!-- Created at -->
                 <td class="px-4 py-3 text-muted dark:text-dark-muted">
-                  {{ user.createdAt | adminDate:'date' }}
+                  {{ user.createdAt | adminDate: 'date' }}
                 </td>
 
                 <!-- Actions -->
@@ -184,34 +250,43 @@
                       </span>
                     } @else {
                       <!-- Change tier -->
-                      <button type="button" (click)="changeTier(user)"
-                              [title]="user.tier === 'premium' ? 'Cambiar a free' : 'Cambiar a premium'"
-                              class="px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors
-                                     border-border dark:border-dark-border text-muted dark:text-dark-muted
-                                     hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400">
+                      <button
+                        type="button"
+                        (click)="changeTier(user)"
+                        [title]="user.tier === 'premium' ? 'Cambiar a free' : 'Cambiar a premium'"
+                        class="px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400"
+                      >
                         {{ user.tier === 'premium' ? '→ free' : '→ premium' }}
                       </button>
 
                       <!-- Toggle active -->
                       @if (user.isActive && pendingDeactivate() === user.id) {
-                        <button type="button" (click)="toggleActive(user)"
-                                class="px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors
-                                       border-red-400 text-red-500 bg-red-50 dark:bg-red-950/30">
+                        <button
+                          type="button"
+                          (click)="toggleActive(user)"
+                          class="px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-red-400 text-red-500 bg-red-50 dark:bg-red-950/30"
+                        >
                           ¿confirmar?
                         </button>
                       } @else {
-                        <button type="button" (click)="toggleActive(user)"
-                                [title]="user.isActive ? 'Desactivar usuario (doble clic)' : 'Activar usuario'"
-                                [class]="user.isActive
-                                  ? 'px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-red-400 hover:text-red-500'
-                                  : 'px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-green-400 hover:text-green-600'">
+                        <button
+                          type="button"
+                          (click)="toggleActive(user)"
+                          [title]="
+                            user.isActive ? 'Desactivar usuario (doble clic)' : 'Activar usuario'
+                          "
+                          [class]="
+                            user.isActive
+                              ? 'px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-red-400 hover:text-red-500'
+                              : 'px-2 py-1 rounded border text-[11px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-green-400 hover:text-green-600'
+                          "
+                        >
                           {{ user.isActive ? 'desactivar' : 'activar' }}
                         </button>
                       }
                     }
                   </div>
                 </td>
-
               </tr>
             } @empty {
               <tr>
@@ -226,24 +301,27 @@
 
       <!-- Pagination -->
       @if (total() > pageSize) {
-        <div class="px-4 py-3 border-t border-border dark:border-dark-border
-                    flex items-center justify-between">
+        <div
+          class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between"
+        >
           <span class="text-xs font-mono text-muted dark:text-dark-muted">
             Página {{ currentPage() }} de {{ totalPages() }} · {{ total() }} usuarios
           </span>
           <div class="flex gap-1.5">
-            <button type="button" (click)="prevPage()" [disabled]="offset() === 0"
-                    class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer transition-colors
-                           border-border dark:border-dark-border text-muted dark:text-dark-muted
-                           hover:border-accent hover:text-accent
-                           disabled:opacity-30 disabled:cursor-not-allowed">
+            <button
+              type="button"
+              (click)="prevPage()"
+              [disabled]="offset() === 0"
+              class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed"
+            >
               ← Anterior
             </button>
-            <button type="button" (click)="nextPage()" [disabled]="offset() + pageSize >= total()"
-                    class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer transition-colors
-                           border-border dark:border-dark-border text-muted dark:text-dark-muted
-                           hover:border-accent hover:text-accent
-                           disabled:opacity-30 disabled:cursor-not-allowed">
+            <button
+              type="button"
+              (click)="nextPage()"
+              [disabled]="offset() + pageSize >= total()"
+              class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed"
+            >
               Siguiente →
             </button>
           </div>
@@ -251,5 +329,4 @@
       }
     }
   </div>
-
 </div>
