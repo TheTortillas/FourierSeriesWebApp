@@ -4,13 +4,14 @@ import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { langGuard } from './core/guards/lang.guard';
 import { LangLayoutComponent } from './features/lang-layout/lang-layout.component';
+import { getSavedLang } from './core/config/languages';
 
 export const routes: Routes = [
-  // Raíz → idioma por defecto
+  // Raíz → redirige al idioma guardado en localStorage (o al idioma por defecto)
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'es/home',
+    redirectTo: () => `${getSavedLang()}/home`,
   },
 
   // Rutas prefijadas con el idioma: /:lang/...

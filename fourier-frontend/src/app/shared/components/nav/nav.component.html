@@ -134,6 +134,53 @@
     <div class="w-px h-4 bg-border dark:bg-dark-border mx-1.5 shrink-0"></div>
 
     <!-- Grupo 3: Controles de apariencia -->
+
+    <!-- Language dropdown -->
+    <div class="relative" (focusout)="onLangMenuFocusOut($event)">
+      <button
+        type="button"
+        (click)="langMenuOpen.set(!langMenuOpen())"
+        class="flex items-center gap-0.5 px-2 py-1.5 rounded text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
+      >
+        {{ lang() }}
+        <!-- Chevron -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-2.5 h-2.5 transition-transform"
+          [class.rotate-180]="langMenuOpen()"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      @if (langMenuOpen()) {
+        <div
+          class="absolute right-0 top-full mt-1 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-30"
+        >
+          @for (l of languages; track l.code) {
+            <button
+              type="button"
+              (click)="switchToLang(l.code)"
+              [class]="
+                l.code === lang()
+                  ? 'flex items-center gap-2.5 w-full px-3 py-1.5 text-[11px] font-mono text-accent bg-accent/5 cursor-pointer'
+                  : 'flex items-center gap-2.5 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
+              "
+            >
+              <span class="w-6 uppercase tracking-wider shrink-0">{{ l.code }}</span>
+              <span class="normal-case">{{ l.label }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
     <button
       (click)="theme.togglePalette()"
       type="button"

@@ -1,9 +1,10 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
+import { SUPPORTED_LANG_CODES } from './core/config/languages';
 
-const langParams = async () => [{ lang: 'es' }, { lang: 'en' }];
+const langParams = async () => SUPPORTED_LANG_CODES.map((lang) => ({ lang }));
 
 export const serverRoutes: ServerRoute[] = [
-  // ── Client-only (requieren estado de auth o son muy interactivas) ──────────
+  // ── Client-only (require auth state or are highly interactive) ───────────────
   { path: ':lang/auth/**',    renderMode: RenderMode.Client },
   { path: ':lang/history',    renderMode: RenderMode.Client },
   { path: ':lang/profile',    renderMode: RenderMode.Client },
@@ -12,7 +13,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: ':lang/results/**', renderMode: RenderMode.Client },
   { path: ':lang/calculator', renderMode: RenderMode.Client },
 
-  // ── Prerenderizadas (una versión ES + EN) ─────────────────────────────────
+  // ── Prerendered (one version per supported language) ─────────────────────────
   {
     path: ':lang/home',
     renderMode: RenderMode.Prerender,
@@ -34,6 +35,6 @@ export const serverRoutes: ServerRoute[] = [
     getPrerenderParams: langParams,
   },
 
-  // ── Resto (raíz redirect, catch-all) ─────────────────────────────────────
+  // ── Fallback ──────────────────────────────────────────────────────────────────
   { path: '**', renderMode: RenderMode.Prerender },
 ];

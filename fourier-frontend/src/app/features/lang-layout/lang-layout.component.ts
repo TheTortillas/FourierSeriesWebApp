@@ -2,13 +2,12 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@jsverse/transloco';
-
-const SUPPORTED_LANGS = ['es', 'en'] as const;
-type SupportedLang = (typeof SUPPORTED_LANGS)[number];
+import { SUPPORTED_LANG_CODES, saveLang } from '../../core/config/languages';
 
 /**
- * Shell transparente para todas las rutas con prefijo de idioma `/:lang/`.
- * Lee el parámetro `:lang` de la URL y establece el idioma activo en Transloco.
+ * Transparent shell for all routes with the `/:lang/` prefix.
+ * Reads the `:lang` URL param, sets it as the active Transloco language,
+ * and persists the choice to localStorage for future visits.
  */
 @Component({
   selector: 'app-lang-layout',
@@ -22,8 +21,9 @@ export class LangLayoutComponent {
 
     route.params.pipe(takeUntilDestroyed()).subscribe((params) => {
       const lang = params['lang'] as string;
-      if ((SUPPORTED_LANGS as readonly string[]).includes(lang)) {
-        transloco.setActiveLang(lang as SupportedLang);
+      if (SUPPORTED_LANG_CODES.includes(lang)) {
+        transloco.setActiveLang(lang);
+        saveLang(lang);
       }
     });
   }

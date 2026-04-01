@@ -4,23 +4,25 @@ import { DOCUMENT } from '@angular/common';
 import { filter } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
-
-const SUPPORTED_LANGS = ['es', 'en'] as const;
+import { LANGUAGES, DEFAULT_LANG, SUPPORTED_LANG_CODES } from '../../config/languages';
 
 /**
- * Inyecta etiquetas `<link rel="alternate" hreflang>` en el `<head>` del
- * documento en cada cambio de ruta, habilitando el señalado de idioma para
- * los motores de búsqueda (Google Search Console, etc.).
+ * Injects `<link rel="alternate" hreflang>` tags into the document `<head>`
+ * on every route change, enabling language signalling for search engines.
  *
- * Debe inicializarse UNA vez en el componente raíz via `setup()`.
+ * Must be initialised once in the root component via `setup()`.
  */
 @Injectable({ providedIn: 'root' })
 export class HreflangService {
   private readonly doc    = inject(DOCUMENT);
   private readonly router = inject(Router);
 
+  /** Matches the leading /:lang segment dynamically from the central config. */
+  private readonly langSegmentRe = new RegExp(
+    `^\\/(${SUPPORTED_LANG_CODES.join('|')})(?=\\/|$)`,
+  );
+
   setup(): void {
-    // Emite la primera vez con la URL actual en SSR
     this.updateTags(this.router.url);
 
     this.router.events
@@ -29,28 +31,26 @@ export class HreflangService {
   }
 
   private updateTags(url: string): void {
-    // Elimina etiquetas previas para evitar duplicados
     this.doc.querySelectorAll('link[hreflang]').forEach((el) => el.remove());
 
-    // Limpia query-string y fragmentos
     const path = url.split('?')[0].split('#')[0];
     const base = environment.baseUrl;
 
-    for (const lang of SUPPORTED_LANGS) {
-      const altPath = path.replace(/^\/(es|en)(?=\/|$)/, `/${lang}`);
+    for (const { code, label: _ } of LANGUAGES) {
+      const altPath = path.replace(this.langSegmentRe, `/${code}`);
       const link = this.doc.createElement('link');
       link.rel = 'alternate';
-      link.setAttribute('hreflang', lang);
+      link.setAttribute('hreflang', code);
       link.setAttribute('href', base + altPath);
       this.doc.head.appendChild(link);
     }
 
-    // x-default apunta siempre a la versión en español
-    const esPath = path.replace(/^\/(es|en)(?=\/|$)/, '/es');
+    // x-default points to the default language version
+    const defaultPath = path.replace(this.langSegmentRe, `/${DEFAULT_LANG}`);
     const xDefault = this.doc.createElement('link');
     xDefault.rel = 'alternate';
     xDefault.setAttribute('hreflang', 'x-default');
-    xDefault.setAttribute('href', base + esPath);
+    xDefault.setAttribute('href', base + defaultPath);
     this.doc.head.appendChild(xDefault);
   }
 }

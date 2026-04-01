@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { UserStore } from '../../../core/services/auth/user.store';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { LANGUAGES, SUPPORTED_LANG_CODES, saveLang } from '../../../core/config/languages';
 
 @Component({
   selector: 'app-nav',
@@ -17,9 +18,36 @@ export class NavComponent {
   readonly auth      = inject(AuthService);
 
   private readonly transloco = inject(TranslocoService);
+  private readonly router    = inject(Router);
 
-  /** Idioma activo como signal reactivo. */
+  /** Active language as a reactive signal. */
   readonly lang = toSignal(this.transloco.langChanges$, {
     initialValue: this.transloco.getActiveLang(),
   });
+
+  /** All available languages — drives the dropdown list. */
+  readonly languages = LANGUAGES;
+
+  /** Controls the language dropdown visibility. */
+  readonly langMenuOpen = signal(false);
+
+  /** Regex to match the leading /:lang segment in the current URL. */
+  private readonly langSegmentRe = new RegExp(
+    `^\\/(${SUPPORTED_LANG_CODES.join('|')})(\\\/|$)`,
+  );
+
+  switchToLang(code: string): void {
+    this.langMenuOpen.set(false);
+    if (code === this.lang()) return;
+    saveLang(code);
+    const url = this.router.url.replace(this.langSegmentRe, `/${code}$2`);
+    void this.router.navigateByUrl(url);
+  }
+
+  onLangMenuFocusOut(e: FocusEvent): void {
+    const wrapper = e.currentTarget as HTMLElement;
+    if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
+      this.langMenuOpen.set(false);
+    }
+  }
 }
