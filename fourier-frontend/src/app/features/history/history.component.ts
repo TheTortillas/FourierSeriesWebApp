@@ -2,7 +2,6 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
-
 import { ApiService } from '../../core/services/api/api.service';
 import { HistoryEntry } from '../../domain';
 import { NavComponent } from '../../shared/components/nav/nav.component';
@@ -25,8 +24,8 @@ const TYPE_KEY: Record<string, string> = {
   imports: [NavComponent, FormsModule, TranslocoPipe],
 })
 export class HistoryComponent implements OnInit {
-  private readonly api      = inject(ApiService);
-  private readonly router   = inject(Router);
+  private readonly api       = inject(ApiService);
+  private readonly router    = inject(Router);
   private readonly transloco = inject(TranslocoService);
 
   readonly loading      = signal(false);
@@ -118,13 +117,14 @@ export class HistoryComponent implements OnInit {
     const inp = entry.input;
     if (!inp?.['segments']) return;
 
+    const lang = this.transloco.getActiveLang();
     const transformTypes = ['fourier_transform', 'inverse_fourier_transform'];
     if (transformTypes.includes(entry.type)) {
-      this.router.navigate(['/transforms'], {
+      this.router.navigate(['/' + lang + '/transforms/continuous'], {
         state: { restoreInput: { ...inp, type: entry.type } },
       });
     } else {
-      this.router.navigate(['/calculator'], { state: { restoreInput: inp } });
+      this.router.navigate(['/' + lang + '/calculator'], { state: { restoreInput: inp } });
     }
   }
 
