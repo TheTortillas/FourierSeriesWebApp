@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../../core/services/api/api.service';
 import { formatApiError } from '../../../shared/utils/api-error.utils';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
@@ -67,9 +68,10 @@ function segmentError(s: SegmentDraft): string | null {
 
 @Injectable({ providedIn: 'root' })
 export class CalculatorStore {
-  private readonly api = inject(ApiService);
-  private readonly math = inject(MathUtilsService);
+  private readonly api       = inject(ApiService);
+  private readonly math      = inject(MathUtilsService);
   private readonly userStore = inject(UserStore);
+  private readonly transloco = inject(TranslocoService);
   private readonly allowedNTerms = [25, 50, 75, 100] as const;
 
   // ── Form state ─────────────────────────────────────────────────────────────
@@ -398,7 +400,12 @@ export class CalculatorStore {
 
   private handleError(e: unknown): void {
     this.loading.set(false);
-    this.error.set(formatApiError(e, 'Error desconocido'));
+    this.error.set(formatApiError(
+      e,
+      this.transloco.translate('errors.generic'),
+      (key, params) => this.transloco.translate(key, params ?? {}),
+      this.transloco.getActiveLang(),
+    ));
   }
 
   /**

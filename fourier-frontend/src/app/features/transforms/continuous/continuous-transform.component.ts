@@ -1,5 +1,4 @@
 import {
-  afterNextRender,
   Component,
   computed,
   effect,
@@ -10,9 +9,10 @@ import {
   ElementRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { filter, take } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -127,7 +127,8 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
 })
 export class ContinuousTransformComponent {
   readonly api = inject(ApiService);
-  private readonly userStore = inject(UserStore);
+  private readonly userStore  = inject(UserStore);
+  private readonly transloco  = inject(TranslocoService);
   readonly plotter = inject(PlottingService);
   private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly mathUtils = inject(MathUtilsService);
@@ -231,13 +232,17 @@ export class ContinuousTransformComponent {
       needsCalculate = this.restoreState(encoded);
     }
 
-    // ── 2. Auto-calculate after browser render ────────────────────────────
-    afterNextRender(() => {
-      if (needsCalculate) {
-        needsCalculate = false;
-        this.calculate();
-      }
-    });
+    // ── 2. Auto-calculate once auth is initialized ────────────────────────
+    // Wait for initFromStorage() to complete so the Bearer token is in memory
+    // before the API call goes out. Using afterNextRender caused a race condition
+    // where the calculate request was sent unauthenticated → false 429.
+    if (needsCalculate) {
+      toObservable(this.userStore.initialized)
+        .pipe(filter(Boolean), take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.calculate();
+        });
+    }
 
     // ── 3. Reset custom axis when result changes ──────────────────────────
     effect(() => {
@@ -588,7 +593,12 @@ export class ContinuousTransformComponent {
             this.userStore.refreshQuota();
           },
           error: (e) => {
-            this.errorMsg.set(formatApiError(e, 'Error al calcular la transformada'));
+            this.errorMsg.set(formatApiError(
+              e,
+              this.transloco.translate('errors.generic'),
+              (key, params) => this.transloco.translate(key, params ?? {}),
+              this.transloco.getActiveLang(),
+            ));
             this.loading.set(false);
           },
         });
@@ -606,7 +616,12 @@ export class ContinuousTransformComponent {
             this.userStore.refreshQuota();
           },
           error: (e) => {
-            this.errorMsg.set(formatApiError(e, 'Error al calcular la transformada inversa'));
+            this.errorMsg.set(formatApiError(
+              e,
+              this.transloco.translate('errors.generic'),
+              (key, params) => this.transloco.translate(key, params ?? {}),
+              this.transloco.getActiveLang(),
+            ));
             this.loading.set(false);
           },
         });

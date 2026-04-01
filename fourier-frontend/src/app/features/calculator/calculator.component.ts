@@ -1,10 +1,13 @@
-import { afterNextRender, Component, effect, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, take } from 'rxjs';
 import { CalculatorStore } from './store/calculator.store';
 import { CalculatorFormComponent } from './components/calculator-form/calculator-form.component';
 import { ResultsSummaryComponent } from './components/results-summary/results-summary.component';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
+import { UserStore } from '../../core/services/auth/user.store';
 
 @Component({
   selector: 'app-calculator',
@@ -12,9 +15,10 @@ import { NavComponent } from '../../shared/components/nav/nav.component';
   templateUrl: './calculator.component.html',
 })
 export class CalculatorComponent {
-  private readonly store = inject(CalculatorStore);
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
+  private readonly store     = inject(CalculatorStore);
+  private readonly router    = inject(Router);
+  private readonly route     = inject(ActivatedRoute);
+  private readonly userStore = inject(UserStore);
 
   /** Set to true when URL state was restored and needs a first calculation */
   private needsCalculate = false;
@@ -41,13 +45,19 @@ export class CalculatorComponent {
       this.store.resetForm();
     }
 
-    // ── 2. Auto-calculate once the browser has fully rendered ─────────────
-    afterNextRender(() => {
-      if (this.needsCalculate) {
-        this.needsCalculate = false;
-        this.store.calculate();
-      }
-    });
+    // ── 2. Auto-calculate once auth is initialized ────────────────────────
+    // Wait for initFromStorage() to complete so the Bearer token is in memory
+    // before the API call goes out. Using afterNextRender here caused a race
+    // condition: the calculate request was sent before the refresh token
+    // exchange completed, making it look like an anonymous (quota-exhausted) request.
+    if (this.needsCalculate) {
+      toObservable(this.userStore.initialized)
+        .pipe(filter(Boolean), take(1))
+        .subscribe(() => {
+          this.needsCalculate = false;
+          this.store.calculate();
+        });
+    }
 
     // ── 3. Sync result → URL ──────────────────────────────────────────────
     effect(() => {
