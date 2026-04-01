@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, Validati
 
 import { ApiService } from '../../core/services/api/api.service';
 import { UserStore } from '../../core/services/auth/user.store';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
@@ -15,7 +16,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
-  imports: [ReactiveFormsModule, NavComponent, RouterLink],
+  imports: [ReactiveFormsModule, NavComponent, RouterLink, TranslocoPipe],
 })
 export class ProfileComponent {
   readonly store = inject(UserStore);

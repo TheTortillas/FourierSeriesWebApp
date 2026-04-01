@@ -7,6 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../core/services/api/api.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -20,7 +21,7 @@ function passwordsMatch(ctrl: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-reset-password',
   templateUrl: './reset-password.component.html',
-  imports: [ReactiveFormsModule, RouterLink, NavComponent],
+  imports: [ReactiveFormsModule, RouterLink, NavComponent, TranslocoPipe],
 })
 export class ResetPasswordComponent implements OnInit {
   private readonly api    = inject(ApiService);

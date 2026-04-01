@@ -2,6 +2,8 @@
   "common": {
     "loading": "Loading…",
     "calculating": "Calculating…",
+    "warning": "Warning",
+    "rejected": "Rejected",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -11,7 +13,10 @@
     "passwordMin8": "Minimum 8 characters",
     "passwordMismatch": "Passwords do not match",
     "sending": "Sending...",
-    "explore": "Explore"
+    "explore": "Explore",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copiedMessage": "Copied to clipboard"
   },
 
   "nav": {
@@ -42,9 +47,12 @@
   },
 
   "calculator": {
+    "title": "Fourier Series",
+    "subtitle": "Enter the piecewise-defined function and select the series type.",
     "piecewiseFunction": "Piecewise function",
     "addSegment": "+ add piece",
     "variable": "Variable",
+    "seriesType": "Series type",
     "coefficientsToCalc": "Coefficients to compute",
     "terms25": "25 terms",
     "terms50": "50 terms",
@@ -61,13 +69,82 @@
     },
     "types": {
       "trigonometric": "Trigonometric",
+      "trigonometricDesc": "aₙ cos(nω₀x) + bₙ sin(nω₀x)",
       "halfRange": "Half-range",
+      "halfRangeDesc": "Sines or cosines series",
       "complex": "Complex",
+      "complexDesc": "cₙ e^{inω₀x}",
       "fourierTransform": "Transform",
       "inverseFourierTransform": "Inv. Transform",
       "dftSignal": "DFT signal",
       "dftEpicycles": "DFT epicycles"
+    },
+    "label": "Set up the function and press"
+  },
+
+  "settingsCanvas": {
+    "layersToShow": "Layers to show",
+    "nTerms": "Number of terms",
+    "armonics": "Harmonics",
+    "showDC": "Show DC term (a₀/2 or c₀)",
+    "editArmonicsTable": "Edit harmonics from the table",
+    "editLabel": "Check or uncheck rows in terms to add or subtract harmonics. Click on a row to highlight its curve.",
+    "axisAndUnits": "Axis and units",
+    "axisX": "X axis",
+    "lineStyle": "Line style",
+    "reset": "Reset",
+    "freeParams": "Free parameters",
+    "original": "Original",
+    "aprox": "Approximation",
+    "linesLabel": "Line legend",
+    "originalFunction": "Original function",
+    "fourierAprox": "Fourier approximation",
+    "on": "On",
+    "off": "Off",
+    "profileRaw": "Raw",
+    "profileInteger": "Integer",
+    "profileTrig": "Trig.",
+    "profileExp": "Exp.",
+    "profileComplete": "Complete",
+    "tabCoefficients": "Coefficients",
+    "tabTerms": "Terms",
+    "tabSpectrum": "Spectrum",
+    "tabValidation": "Validation"
+  },
+
+  "resultPanel": {
+    "sine": "Sine",
+    "cosine": "Cosine",
+    "fourierSeries": "Fourier Series",
+    "indeterminateCoeffLabel": " * indeterminate coefficient (0/0); evaluated by limit",
+    "indeterminateCoeffTooltip": "This coefficient is indeterminate in the form 0/0. The value shown is obtained by evaluating the limit of the coefficient as n approaches the current value.",
+    "anExpression": "aₙ (expression)",
+    "anValue": "aₙ (value)",
+    "bnExpression": "bₙ (expression)",
+    "bnValue": "bₙ (value)",
+    "cnExpression": "cₙ (expression)",
+    "cMnExpression": "c₋ₙ (expression)",
+    "noSingularities": "No singularities detected in the function. All coefficients are determinate.",
+    "noSingularitiesInDomain": "No singularities detected in the integration domain.",
+    "singularitiesDetected": "Singularities detected",
+    "point": "Point",
+    "type": "Type",
+    "noInfoAvailable": "No validation information available.",
+    "selectAllHarmonics": "Select all visible harmonics",
+    "includeHarmonic": "Include harmonic n={{ n }}",
+    "computedByLimit": "Computed by limit (0/0 form)",
+    "singularity": {
+      "removible": "Removable",
+      "salto": "Jump",
+      "asintotica": "Asymptotic",
+      "esencial": "Essential",
+      "fuera_de_dominio": "Out of domain"
     }
+  },
+
+  "share": {
+    "title": "Share link",
+    "description": "Share this link to open the calculator with the same function and result."
   },
 
   "results": {
@@ -75,6 +152,9 @@
     "exitFullscreen": "Exit fullscreen",
     "canvasSettings": "Canvas settings",
     "downloadImage": "Download image",
+    "shareUrl": "Share URL",
+    "addFav": "Add to favorites",
+    "removeFav": "Remove from favorites",
     "tabs": {
       "graph": "Graph",
       "coefficients": "Coefficients",
@@ -113,8 +193,35 @@
     "addSegment": "Add piece",
     "calculate": "Calculate",
     "newCalculation": "New calculation",
+    "shareLink": "Share link",
+    "shareTitle": "Share transform",
+    "shareDescription": "Share this link to open the calculator with the same function and result.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "urlCopied": "URL copied to clipboard",
+    "layersToShow": "Layers to show",
+    "axisAndUnits": "Axis and units",
+    "axisX": "X axis",
+    "lineStyle": "Line style",
+    "reset": "Reset",
+    "original": "Original",
+    "freeParams": "Free parameters",
+    "lineLegend": "Line legend",
+    "dragToPan": "Drag to pan · Scroll to zoom",
+    "xAxisRepresents": " · X axis represents {{ var }}",
+    "result": "Result",
+    "ftNotExists": "The transform does not exist for this function (divergent integral).",
+    "iftNotExists": "The inverse transform does not exist for this function.",
+    "fullTransform": "Full transform",
+    "realPart": "Real part",
+    "imagPart": "Imaginary part",
     "dft": {
-      "title": "Discrete Fourier Transform"
+      "title": "Discrete Fourier Transform",
+      "selectType": "Select the type of transform you want to use.",
+      "badge": "In development",
+      "heading": "DFT — Discrete Transform",
+      "description": "Enter a discrete signal and get its spectral coefficients with amplitude, phase and normalized frequency.",
+      "goToContinuous": "Go to continuous transform"
     }
   },
 
@@ -125,7 +232,10 @@
     "loading": "Loading…",
     "emptyFavorites": "You have no favorite calculations",
     "emptyAll": "You have not made any calculations yet",
-    "freeTierBanner": "Your <span class=\"text-accent font-medium\">free</span> plan includes access to your last <span class=\"text-ink dark:text-dark-ink\">{{ max }} calculations</span> and <span class=\"text-ink dark:text-dark-ink\">{{ favorites }} favorites</span>.",
+    "freeTierBanner": "Your free plan includes access to your last {{ max }} calculations and {{ favorites }} favorites.",
+    "segment": "segment",
+    "segments": "segments",
+    "points": "points",
     "columns": {
       "date": "Date",
       "type": "Type",

@@ -5,21 +5,9 @@
   <section
     class="relative flex flex-col items-center justify-center text-center px-6 pt-20 pb-16 flex-1 min-h-[58vh]"
   >
-    <!-- Animated canvas background -->
-    <canvas #heroCanvas class="absolute inset-0 w-full h-full pointer-events-none select-none">
-    </canvas>
+    <canvas #heroCanvas class="absolute inset-0 w-full h-full pointer-events-none select-none"></canvas>
 
-    <!-- Content -->
     <div class="relative z-10 flex flex-col items-center gap-4 max-w-2xl">
-      <!-- Pill label -->
-      <!-- <span
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border dark:border-dark-border text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted bg-paper/80 dark:bg-dark-surface/80"
-      >
-        <span class="w-1.5 h-1.5 rounded-full bg-accent inline-block animate-pulse"></span>
-        Herramienta educativa
-      </span> -->
-
-      <!-- Title -->
       <h1
         class="font-display text-5xl md:text-6xl text-ink dark:text-dark-ink leading-tight tracking-tight"
       >
@@ -27,10 +15,8 @@
         <span class="text-accent">Web</span> Calculator
       </h1>
 
-      <!-- Subtitle -->
       <p class="font-body text-base text-muted dark:text-dark-muted max-w-md leading-relaxed">
-        Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas
-        exactas y reconstrucción gráfica en tiempo real.
+        {{ 'home.subtitle' | transloco }}
       </p>
     </div>
   </section>
@@ -38,6 +24,7 @@
   <!-- ── Cards ─────────────────────────────────────────────────────────────── -->
   <section class="relative z-10 px-6 pb-16 max-w-3xl mx-auto w-full">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
       <!-- Series de Fourier -->
       <a
         [routerLink]="'/' + lang() + '/calculator'"
@@ -46,36 +33,23 @@
         <div
           class="w-12 h-12 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors"
         >
-          <span
-            class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors"
-            >Σ</span
-          >
+          <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">Σ</span>
         </div>
 
         <div class="flex flex-col gap-2 flex-1">
           <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
-            Series de Fourier
+            {{ 'home.series.title' | transloco }}
           </h2>
           <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-            Descomposición periódica de funciones a trozos en series trigonométricas, complejas y de
-            medio rango, con coeficientes simbólicos exactos.
+            {{ 'home.series.description' | transloco }}
           </p>
         </div>
 
-        <div
-          class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all"
-        >
-          <span>Explorar</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.25"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="w-4 h-4"
-          >
+        <div class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all">
+          <span>{{ 'common.explore' | transloco }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"
+               class="w-4 h-4">
             <line x1="5" y1="12" x2="19" y2="12" />
             <polyline points="12 5 19 12 12 19" />
           </svg>
@@ -91,47 +65,35 @@
           <div
             class="w-12 h-12 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors"
           >
-            <span
-              class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors"
-              >ℱ</span
-            >
+            <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">ℱ</span>
           </div>
           <span
             class="text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-muted dark:text-dark-muted"
           >
-            Continua activa
+            {{ 'home.transforms.badge' | transloco }}
           </span>
         </div>
 
         <div class="flex flex-col gap-2 flex-1">
           <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
-            Transformadas de Fourier
+            {{ 'home.transforms.title' | transloco }}
           </h2>
           <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-            Análisis espectral de señales no periódicas mediante la transformada continua de
-            Fourier, con acceso preparado para la transformada discreta.
+            {{ 'home.transforms.description' | transloco }}
           </p>
         </div>
 
-        <div
-          class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all"
-        >
-          <span>Explorar</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.25"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="w-4 h-4"
-          >
+        <div class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all">
+          <span>{{ 'common.explore' | transloco }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"
+               class="w-4 h-4">
             <line x1="5" y1="12" x2="19" y2="12" />
             <polyline points="12 5 19 12 12 19" />
           </svg>
         </div>
       </a>
+
     </div>
   </section>
 

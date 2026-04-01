@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../core/services/api/api.service';
 import { HistoryEntry } from '../../domain';
@@ -8,24 +9,25 @@ import { NavComponent } from '../../shared/components/nav/nav.component';
 
 const PAGE_SIZE = 15;
 
-const TYPE_LABEL: Record<string, string> = {
-  trigonometric:             'Trigonométrica',
-  half_range:                'Medio rango',
-  complex:                   'Compleja',
-  fourier_transform:         'Transformada',
-  inverse_fourier_transform: 'T. Inversa',
-  dft_signal:                'DFT señal',
-  dft_epicycles:             'DFT epiciclos',
+const TYPE_KEY: Record<string, string> = {
+  trigonometric:             'history.types.trigonometric',
+  half_range:                'history.types.halfRange',
+  complex:                   'history.types.complex',
+  fourier_transform:         'history.types.fourierTransform',
+  inverse_fourier_transform: 'history.types.inverseFourierTransform',
+  dft_signal:                'history.types.dftSignal',
+  dft_epicycles:             'history.types.dftEpicycles',
 };
 
 @Component({
   selector: 'app-history',
   templateUrl: './history.component.html',
-  imports: [NavComponent, FormsModule],
+  imports: [NavComponent, FormsModule, TranslocoPipe],
 })
 export class HistoryComponent implements OnInit {
-  private readonly api    = inject(ApiService);
-  private readonly router = inject(Router);
+  private readonly api      = inject(ApiService);
+  private readonly router   = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   readonly loading      = signal(false);
   readonly entries      = signal<HistoryEntry[]>([]);
@@ -48,7 +50,7 @@ export class HistoryComponent implements OnInit {
   readonly totalPages  = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
 
-  readonly typeLabel = (t: string) => TYPE_LABEL[t] ?? t;
+  readonly typeKey = (t: string) => TYPE_KEY[t] ?? t;
 
   ngOnInit(): void { this.load(); }
 
@@ -152,14 +154,15 @@ export class HistoryComponent implements OnInit {
     if (segments?.length) {
       const first = segments[0];
       const range = first.from !== undefined ? ` [${first.from}, ${first.to}]` : '';
-      const more  = segments.length > 1 ? ` +${segments.length - 1} tramo${segments.length > 2 ? 's' : ''}` : '';
+      const count = segments.length - 1;
+      const more  = count > 0 ? ` +${count} ${this.transloco.translate(count === 1 ? 'history.segment' : 'history.segments')}` : '';
       const n     = inp['harmonics'] !== undefined ? `, n=${inp['harmonics']}` : '';
       return `${first.expression ?? '?'}${range}${more}${n}`;
     }
     const expr = inp['expression'] as string | undefined;
     if (expr) return expr;
     const points = inp['points'] as unknown[] | undefined;
-    if (points) return `${points.length} puntos`;
+    if (points) return `${points.length} ${this.transloco.translate('history.points')}`;
     return JSON.stringify(inp).slice(0, 80);
   }
 
@@ -172,7 +175,7 @@ export class HistoryComponent implements OnInit {
   }
 
   formatDate(iso: string): string {
-    return new Date(iso).toLocaleString('es', {
+    return new Date(iso).toLocaleString(this.transloco.getActiveLang(), {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });

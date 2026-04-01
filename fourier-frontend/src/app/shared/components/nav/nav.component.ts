@@ -1,14 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslocoService } from '@jsverse/transloco';
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { UserStore } from '../../../core/services/auth/user.store';
 import { AuthService } from '../../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-nav',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, TranslocoPipe],
   templateUrl: './nav.component.html',
 })
 export class NavComponent {

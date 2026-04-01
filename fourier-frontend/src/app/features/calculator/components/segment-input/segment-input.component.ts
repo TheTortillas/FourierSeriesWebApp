@@ -8,6 +8,7 @@ import {
   inject,
   input,
 } from '@angular/core';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SegmentDraft, CalculatorStore } from '../../store/calculator.store';
 import { MathquillService, MathField } from '../../../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../../../core/services/math/latex-to-maxima.service';
@@ -23,6 +24,7 @@ export interface KeyBtn {
 @Component({
   selector: 'app-segment-input',
   templateUrl: './segment-input.component.html',
+  imports: [TranslocoPipe],
 })
 export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mqExpr') mqExprRef!: ElementRef<HTMLElement>;
@@ -32,6 +34,13 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   readonly store = inject(CalculatorStore);
   readonly mqs = inject(MathquillService);
   readonly tex2max = inject(LatexToMaximaService);
+  private readonly transloco = inject(TranslocoService);
+
+  get activeFieldName(): string {
+    if (this.focusedFieldIdx === 0) return `f(${this.store.intVar()})`;
+    if (this.focusedFieldIdx === 1) return this.transloco.translate('calculator.segment.from');
+    return this.transloco.translate('calculator.segment.to');
+  }
 
   readonly segment = input.required<SegmentDraft>();
   readonly index = input.required<number>();

@@ -8,6 +8,7 @@ import {
   ElementRef,
   viewChild,
 } from '@angular/core';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, finalize } from 'rxjs';
@@ -116,11 +117,13 @@ function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorP
     FormsModule,
     ParamSlidersComponent,
     SpectrumChartComponent,
+    TranslocoPipe,
   ],
   templateUrl: './results-summary.component.html',
 })
 export class ResultsSummaryComponent {
   readonly store = inject(CalculatorStore);
+  private readonly transloco = inject(TranslocoService);
   readonly reconstruction = inject(FourierReconstructionService);
   readonly plotter = inject(PlottingService);
   private readonly math = inject(MathUtilsService);
@@ -698,11 +701,11 @@ export class ResultsSummaryComponent {
   });
 
   /** Typed tabs array so the template gets literal types */
-  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; label: string }[] = [
-    { id: 'coefficients', label: 'Coeficientes' },
-    { id: 'terms', label: 'Términos' },
-    { id: 'spectrum', label: 'Espectro' },
-    { id: 'validation', label: 'Validación' },
+  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; labelKey: string }[] = [
+    { id: 'coefficients', labelKey: 'settingsCanvas.tabCoefficients' },
+    { id: 'terms',        labelKey: 'settingsCanvas.tabTerms' },
+    { id: 'spectrum',     labelKey: 'settingsCanvas.tabSpectrum' },
+    { id: 'validation',   labelKey: 'settingsCanvas.tabValidation' },
   ];
 
   /** Context for the terms tab — trig / half-range branch */
@@ -733,21 +736,26 @@ export class ResultsSummaryComponent {
     };
   });
 
-  readonly singularityLabels: Record<string, string | undefined> = {
-    removible: 'Removible',
-    salto: 'Salto',
-    asintotica: 'Asintótica',
-    esencial: 'Esencial',
-    fuera_de_dominio: 'Fuera del dominio',
+  private readonly singularityKeyMap: Record<string, string> = {
+    removible:       'resultPanel.singularity.removible',
+    salto:           'resultPanel.singularity.salto',
+    asintotica:      'resultPanel.singularity.asintotica',
+    esencial:        'resultPanel.singularity.esencial',
+    fuera_de_dominio:'resultPanel.singularity.fuera_de_dominio',
   };
 
+  singularityLabel(type: string): string {
+    const key = this.singularityKeyMap[type];
+    return key ? this.transloco.translate(key) : type;
+  }
+
   // ── Profile selector options ────────────────────────────────────────────────
-  readonly profileOptions: { value: SimplifyProfile; label: string }[] = [
-    { value: 'raw', label: 'Sin simp.' },
-    { value: 'integer', label: 'Entero' },
-    { value: 'trigonometric', label: 'Trig.' },
-    { value: 'exponential', label: 'Exp.' },
-    { value: 'complete', label: 'Completo' },
+  readonly profileOptions: { value: SimplifyProfile; labelKey: string }[] = [
+    { value: 'raw',          labelKey: 'settingsCanvas.profileRaw' },
+    { value: 'integer',      labelKey: 'settingsCanvas.profileInteger' },
+    { value: 'trigonometric',labelKey: 'settingsCanvas.profileTrig' },
+    { value: 'exponential',  labelKey: 'settingsCanvas.profileExp' },
+    { value: 'complete',     labelKey: 'settingsCanvas.profileComplete' },
   ];
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
@@ -894,10 +902,6 @@ export class ResultsSummaryComponent {
       this.enabledHarmonics.set(next);
     }
     this.selectedHarmonicN.set(this.selectedHarmonicN() === n ? null : n);
-  }
-
-  clearHarmonicSelection(): void {
-    this.selectedHarmonicN.set(null);
   }
 
   setHarmonicEnabled(n: number, checked: boolean): void {

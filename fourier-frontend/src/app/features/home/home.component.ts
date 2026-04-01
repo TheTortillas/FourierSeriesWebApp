@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslocoService } from '@jsverse/transloco';
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { ThemeService } from '../../core/services/theme/theme.service';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
@@ -22,7 +22,7 @@ interface Waveform {
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, NavComponent, FooterComponent],
+  imports: [RouterLink, NavComponent, FooterComponent, TranslocoPipe],
   templateUrl: './home.component.html',
 })
 export class HomeComponent implements OnDestroy {

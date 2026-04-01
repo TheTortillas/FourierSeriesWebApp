@@ -3,17 +3,18 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CalculatorStore } from './store/calculator.store';
 import { CalculatorFormComponent } from './components/calculator-form/calculator-form.component';
 import { ResultsSummaryComponent } from './components/results-summary/results-summary.component';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 
 @Component({
   selector: 'app-calculator',
-  imports: [NavComponent, CalculatorFormComponent, ResultsSummaryComponent],
+  imports: [NavComponent, CalculatorFormComponent, ResultsSummaryComponent, TranslocoPipe],
   templateUrl: './calculator.component.html',
 })
 export class CalculatorComponent {
-  private readonly store  = inject(CalculatorStore);
+  private readonly store = inject(CalculatorStore);
   private readonly router = inject(Router);
-  private readonly route  = inject(ActivatedRoute);
+  private readonly route = inject(ActivatedRoute);
 
   /** Set to true when URL state was restored and needs a first calculation */
   private needsCalculate = false;
@@ -26,7 +27,8 @@ export class CalculatorComponent {
     // afterNextRender would be too late for MathQuill initialization, which
     // reads the store in ngAfterViewInit of each SegmentInputComponent.
     const navState = this.router.getCurrentNavigation()?.extras.state as
-      { restoreInput?: Record<string, unknown> } | undefined;
+      | { restoreInput?: Record<string, unknown> }
+      | undefined;
 
     const encoded = this.route.snapshot.queryParamMap.get('s');
 

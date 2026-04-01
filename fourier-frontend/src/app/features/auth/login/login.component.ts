@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -9,12 +10,13 @@ import { GoogleSignInComponent } from '../../../shared/components/google-sign-in
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  imports: [ReactiveFormsModule, RouterLink, NavComponent, GoogleSignInComponent],
+  imports: [ReactiveFormsModule, RouterLink, NavComponent, GoogleSignInComponent, TranslocoPipe],
 })
 export class LoginComponent {
-  private readonly fb     = inject(FormBuilder);
-  private readonly auth   = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly fb       = inject(FormBuilder);
+  private readonly auth     = inject(AuthService);
+  private readonly router   = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   readonly form = this.fb.nonNullable.group({
     email:    ['', [Validators.required, Validators.email]],
@@ -32,7 +34,7 @@ export class LoginComponent {
     this.apiError.set(null);
     this.loading.set(true);
     this.auth.loginWithGoogle({ idToken }).subscribe({
-      next: () => this.router.navigate(['/home']),
+      next: () => this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']),
       error: (err) => {
         this.apiError.set(err?.error?.error ?? 'Error al iniciar sesión con Google');
         this.loading.set(false);
@@ -47,7 +49,7 @@ export class LoginComponent {
     this.loading.set(true);
 
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => this.router.navigate(['/home']),
+      next: () => this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']),
       error: (err) => {
         this.apiError.set(err?.error?.error ?? 'Error al iniciar sesión');
         this.loading.set(false);

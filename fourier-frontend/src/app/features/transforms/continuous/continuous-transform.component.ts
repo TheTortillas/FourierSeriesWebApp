@@ -10,6 +10,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -121,6 +122,7 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     FormsModule,
     RouterLink,
     RouterLinkActive,
+    TranslocoPipe,
   ],
 })
 export class ContinuousTransformComponent {

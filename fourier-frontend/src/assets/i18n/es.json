@@ -2,6 +2,8 @@
   "common": {
     "loading": "Cargando…",
     "calculating": "Calculando…",
+    "warning": "Advertencia",
+    "rejected": "Rechazado",
     "save": "Guardar",
     "cancel": "Cancelar",
     "delete": "Eliminar",
@@ -11,7 +13,10 @@
     "passwordMin8": "Mínimo 8 caracteres",
     "passwordMismatch": "Las contraseñas no coinciden",
     "sending": "Enviando...",
-    "explore": "Explorar"
+    "explore": "Explorar",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "copiedMessage": "Copiado al portapapeles"
   },
 
   "nav": {
@@ -42,9 +47,12 @@
   },
 
   "calculator": {
+    "title": "Serie de Fourier",
+    "subtitle": "Ingresa la función a trozos y selecciona el tipo de serie.",
     "piecewiseFunction": "Función a trozos",
     "addSegment": "+ añadir tramo",
     "variable": "Variable",
+    "seriesType": "Tipo de serie",
     "coefficientsToCalc": "Coeficientes a calcular",
     "terms25": "25 términos",
     "terms50": "50 términos",
@@ -61,13 +69,17 @@
     },
     "types": {
       "trigonometric": "Trigonométrica",
+      "trigonometricDesc": "aₙ cos(nω₀x) + bₙ sin(nω₀x)",
       "halfRange": "Medio rango",
+      "halfRangeDesc": "Series de senos o cosenos",
       "complex": "Compleja",
+      "complexDesc": "cₙ e^{inω₀x}",
       "fourierTransform": "Transformada",
       "inverseFourierTransform": "T. Inversa",
       "dftSignal": "DFT señal",
       "dftEpicycles": "DFT epiciclos"
-    }
+    },
+    "label":"Configura la función y presiona"
   },
 
   "results": {
@@ -75,6 +87,9 @@
     "exitFullscreen": "Salir de pantalla completa",
     "canvasSettings": "Ajustes del lienzo",
     "downloadImage": "Descargar imagen",
+    "shareUrl": "Compartir enlace",
+    "addFav": "Guardar como favorito",
+    "removeFav": "Quitar de favoritos",
     "tabs": {
       "graph": "Gráfica",
       "coefficients": "Coeficientes",
@@ -97,6 +112,71 @@
     }
   },
 
+  "settingsCanvas": {
+    "layersToShow": "Capas a mostrar",
+    "nTerms": "Número de términos",
+    "armonics": "Armónicos",
+    "showDC": "Mostrar término DC (a₀/2 o c₀)",
+    "editArmonicsTable": "Editar armónicos desde la tabla",
+    "editLabel": "Marca o desmarca filas en términos para sumar o restar armónicos. Click en una fila para iluminar su curva.",
+    "axisAndUnits": "Eje y unidades",
+    "axisX": "Eje X",
+    "lineStyle": "Estilo de líneas",
+    "reset": "Restablecer",
+    "freeParams": "Parámetros libres",
+    "original": "Original",
+    "aprox": "Aprox",
+    "linesLabel": "Leyenda de líneas",
+    "originalFunction": "Función original",
+    "fourierAprox": "Aproximación en Serie de Fourier",
+    "on": "On",
+    "off": "Off",
+    "profileRaw": "Sin simp.",
+    "profileInteger": "Entero",
+    "profileTrig": "Trig.",
+    "profileExp": "Exp.",
+    "profileComplete": "Completo",
+    "tabCoefficients": "Coeficientes",
+    "tabTerms": "Términos",
+    "tabSpectrum": "Espectro",
+    "tabValidation": "Validación"
+  },
+
+  "resultPanel": {
+    "sine": "Seno",
+    "cosine": "Coseno",
+    "fourierSeries": "Serie de Fourier",
+    "indeterminateCoeffLabel": " * coeficiente indeterminado (0/0); evaluado por límite",
+    "indeterminateCoeffTooltip": "Este coeficiente es indeterminado (0/0) al evaluar la fórmula general, pero el límite existe y es finito. Se ha evaluado el límite para obtener su valor correcto.",
+    "anExpression": "aₙ (expresión)",
+    "anValue": "aₙ (valor)",
+    "bnExpression": "bₙ (expresión)",
+    "bnValue": "bₙ (valor)",
+    "cnExpression": "cₙ (expresión)",
+    "cMnExpression": "c₋ₙ (expresión)",
+    "noSingularities": "No se encontraron singularidades en los coeficientes calculados.",
+    "noSingularitiesInDomain": "No se detectaron singularidades en el dominio de integración.",
+    "singularitiesDetected": "Singularidades detectadas",
+    "point": "Punto",
+    "type": "Tipo",
+    "noInfoAvailable": "No hay información de validación disponible.",
+    "selectAllHarmonics": "Seleccionar todos los armónicos visibles",
+    "includeHarmonic": "Incluir armónico n={{ n }}",
+    "computedByLimit": "Calculado por límite (forma 0/0)",
+    "singularity": {
+      "removible": "Removible",
+      "salto": "Salto",
+      "asintotica": "Asintótica",
+      "esencial": "Esencial",
+      "fuera_de_dominio": "Fuera del dominio"
+    }
+  },
+
+  "share": {
+    "title": "Compartir enlace",
+    "description": "Comparte este enlace para abrir la calculadora con la misma función y resultado."
+  },
+
   "transforms": {
     "title": "Transformada de Fourier",
     "subtitle": "Calcula la transformada continua o inversa de una función definida por tramos.",
@@ -113,8 +193,35 @@
     "addSegment": "Agregar tramo",
     "calculate": "Calcular",
     "newCalculation": "Nuevo cálculo",
+    "shareLink": "Compartir enlace",
+    "shareTitle": "Compartir transformada",
+    "shareDescription": "Comparte este enlace para abrir la calculadora con la misma función y resultado.",
+    "copy": "Copiar",
+    "copied": "Copiada",
+    "urlCopied": "URL copiada al portapapeles",
+    "layersToShow": "Capas a mostrar",
+    "axisAndUnits": "Eje y unidades",
+    "axisX": "Eje X",
+    "lineStyle": "Estilo de líneas",
+    "reset": "Restablecer",
+    "original": "Original",
+    "freeParams": "Parámetros libres",
+    "lineLegend": "Leyenda de líneas",
+    "dragToPan": "Arrastra para hacer pan · Scroll para zoom",
+    "xAxisRepresents": " · El eje X representa {{ var }}",
+    "result": "Resultado",
+    "ftNotExists": "La transformada no existe para esta función (integral divergente).",
+    "iftNotExists": "La transformada inversa no existe para esta función.",
+    "fullTransform": "Transformada completa",
+    "realPart": "Parte real",
+    "imagPart": "Parte imaginaria",
     "dft": {
-      "title": "Transformada Discreta de Fourier"
+      "title": "Transformada Discreta de Fourier",
+      "selectType": "Selecciona el tipo de transformada que deseas utilizar.",
+      "badge": "En desarrollo",
+      "heading": "DFT — Transformada Discreta",
+      "description": "Ingresa una señal discreta y obtén sus coeficientes espectrales con amplitud, fase y frecuencia normalizada.",
+      "goToContinuous": "Ir a transformada continua"
     }
   },
 
@@ -125,7 +232,10 @@
     "loading": "Cargando…",
     "emptyFavorites": "No tienes cálculos favoritos",
     "emptyAll": "Aún no has hecho cálculos",
-    "freeTierBanner": "Tu plan <span class=\"text-accent font-medium\">free</span> incluye acceso a tus últimos <span class=\"text-ink dark:text-dark-ink\">{{ max }} cálculos</span> y <span class=\"text-ink dark:text-dark-ink\">{{ favorites }} favoritos</span>.",
+    "freeTierBanner": "Tu plan free incluye acceso a tus últimos {{ max }} cálculos y {{ favorites }} favoritos.",
+    "segment": "tramo",
+    "segments": "tramos",
+    "points": "puntos",
     "columns": {
       "date": "Fecha",
       "type": "Tipo",

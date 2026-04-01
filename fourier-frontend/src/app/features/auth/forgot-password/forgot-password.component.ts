@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../core/services/api/api.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -8,7 +9,7 @@ import { NavComponent } from '../../../shared/components/nav/nav.component';
 @Component({
   selector: 'app-forgot-password',
   templateUrl: './forgot-password.component.html',
-  imports: [ReactiveFormsModule, RouterLink, NavComponent],
+  imports: [ReactiveFormsModule, RouterLink, NavComponent, TranslocoPipe],
 })
 export class ForgotPasswordComponent {
   private readonly api = inject(ApiService);

@@ -20,7 +20,7 @@
     <section class="space-y-2">
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-          Función a trozos
+          {{ 'calculator.piecewiseFunction' | transloco }}
         </h2>
       </div>
 
@@ -41,13 +41,13 @@
         type="button"
         class="flex items-center gap-1.5 text-xs text-accent dark:text-accent hover:underline cursor-pointer font-mono transition-opacity"
       >
-        + añadir tramo
+        {{ 'calculator.addSegment' | transloco }}
       </button>
     </section>
 
     <!-- ── Variable de integración ───────────────────────────────────────── -->
     <div class="flex items-center gap-2">
-      <p class="text-xs text-muted font-mono shrink-0">Variable</p>
+      <p class="text-xs text-muted font-mono shrink-0">{{ 'calculator.variable' | transloco }}</p>
       <div class="flex gap-1">
         @for (v of ['x', 't', 'u', 's']; track v) {
           <button
@@ -71,7 +71,9 @@
     <!-- ── Número de coeficientes a calcular (backend) ────────────────────── -->
     <div class="space-y-1.5">
       <div class="flex items-center justify-between">
-        <p class="text-xs text-muted font-mono">Coeficientes a calcular</p>
+        <p class="text-xs text-muted font-mono">
+          {{ 'calculator.coefficientsToCalc' | transloco }}
+        </p>
       </div>
       <select
         [value]="'' + store.nTerms()"
@@ -80,10 +82,10 @@
         required
         class="w-full px-2 py-1.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface text-ink dark:text-dark-ink text-xs font-mono"
       >
-        <option value="25">25 términos</option>
-        <option value="50">50 términos</option>
-        <option value="75">75 términos</option>
-        <option value="100">100 términos</option>
+        <option value="25">{{ 'calculator.terms25' | transloco }}</option>
+        <option value="50">{{ 'calculator.terms50' | transloco }}</option>
+        <option value="75">{{ 'calculator.terms75' | transloco }}</option>
+        <option value="100">{{ 'calculator.terms100' | transloco }}</option>
       </select>
     </div>
 
@@ -110,10 +112,10 @@
           <span
             class="inline-block w-3.5 h-3.5 border-2 border-paper/40 border-t-paper rounded-full animate-spin"
           ></span>
-          Calculando…
+          {{ 'common.loading' | transloco }}
         </span>
       } @else {
-        Calcular serie
+        {{ 'calculator.calculate' | transloco }}
       }
     </button>
   </div>
@@ -125,7 +127,7 @@
       type="button"
       class="w-full py-1.5 rounded border border-border dark:border-dark-border text-xs text-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors cursor-pointer font-mono"
     >
-      Nuevo cálculo
+      {{ 'calculator.newCalculation' | transloco }}
     </button>
   }
 </div>

@@ -2,7 +2,7 @@
 
 <main class="max-w-xl mx-auto px-4 py-10 flex flex-col gap-6">
 
-  <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Mi perfil</h1>
+  <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'profile.title' | transloco }}</h1>
 
   @if (store.user(); as user) {
 
@@ -11,7 +11,6 @@
                     rounded-xl p-5 flex flex-col gap-4">
 
       <div class="flex items-center gap-4">
-        <!-- Avatar initials -->
         <div class="w-12 h-12 rounded-full bg-accent/10 dark:bg-accent/15 border border-accent/20
                     flex items-center justify-center shrink-0">
           <span class="font-display text-lg text-accent">
@@ -28,7 +27,6 @@
           </p>
         </div>
 
-        <!-- Tier badge -->
         <span [class]="user.tier === 'premium'
           ? 'px-2 py-0.5 rounded-full text-xs font-mono border bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
           : 'px-2 py-0.5 rounded-full text-xs font-mono border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'">
@@ -39,27 +37,27 @@
       <div class="grid grid-cols-2 gap-3 text-xs font-mono
                   border-t border-border dark:border-dark-border pt-4">
         <div class="flex flex-col gap-0.5">
-          <span class="text-muted dark:text-dark-muted">Rol</span>
+          <span class="text-muted dark:text-dark-muted">{{ 'profile.role' | transloco }}</span>
           <span [class]="user.role === 'admin' ? 'text-accent font-medium' : 'text-ink dark:text-dark-ink'">
             {{ user.role }}
           </span>
         </div>
 
         <div class="flex flex-col gap-0.5">
-          <span class="text-muted dark:text-dark-muted">Email</span>
+          <span class="text-muted dark:text-dark-muted">{{ 'profile.email' | transloco }}</span>
           @if (user.emailVerified) {
-            <span class="text-green-600 dark:text-green-400">✓ verificado</span>
+            <span class="text-green-600 dark:text-green-400">{{ 'profile.emailVerified' | transloco }}</span>
           } @else {
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-amber-600 dark:text-amber-400">✗ sin verificar</span>
+              <span class="text-amber-600 dark:text-amber-400">{{ 'profile.emailNotVerified' | transloco }}</span>
               @if (!resendSent()) {
                 <button type="button" (click)="onResendVerification()"
                         [disabled]="resendLoading()"
                         class="text-accent hover:underline cursor-pointer disabled:opacity-50">
-                  {{ resendLoading() ? 'Enviando…' : 'Reenviar' }}
+                  {{ resendLoading() ? ('profile.resendSending' | transloco) : ('profile.resendVerification' | transloco) }}
                 </button>
               } @else {
-                <span class="text-green-600 dark:text-green-400">Enviado ✓</span>
+                <span class="text-green-600 dark:text-green-400">{{ 'profile.resendSent' | transloco }}</span>
               }
             </div>
           }
@@ -67,12 +65,12 @@
 
         @if (store.quota(); as quota) {
           <div class="flex flex-col gap-0.5 col-span-2">
-            <span class="text-muted dark:text-dark-muted">Cálculos esta semana</span>
+            <span class="text-muted dark:text-dark-muted">{{ 'profile.calculationsThisWeek' | transloco }}</span>
             <span class="text-ink dark:text-dark-ink">
               @if (quota.remaining === null) {
-                {{ quota.used }} usados · ilimitados
+                {{ 'profile.quotaUnlimited' | transloco: { used: quota.used } }}
               } @else {
-                {{ quota.used }} / {{ quota.limit }} · {{ quota.remaining }} restantes
+                {{ 'profile.quotaLimited' | transloco: { used: quota.used, limit: quota.limit, remaining: quota.remaining } }}
               }
             </span>
           </div>
@@ -91,7 +89,7 @@
              class="w-4 h-4 shrink-0">
           <path d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/>
         </svg>
-        Mis cálculos
+        {{ 'profile.myCalculations' | transloco }}
       </a>
     </div>
 
@@ -99,56 +97,45 @@
     <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
                     rounded-xl p-5 flex flex-col gap-4">
 
-      <h2 class="font-display text-base text-ink dark:text-dark-ink">Cambiar contraseña</h2>
+      <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'profile.changePassword' | transloco }}</h2>
 
       @if (pwSuccess()) {
         <p class="text-sm font-mono text-green-600 dark:text-green-400">
-          ✓ Contraseña actualizada correctamente.
+          {{ 'profile.passwordUpdated' | transloco }}
         </p>
       } @else {
-        <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()"
-              class="flex flex-col gap-3">
+        <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="flex flex-col gap-3">
 
           <div class="flex flex-col gap-1">
             <label class="text-xs font-mono text-muted dark:text-dark-muted">
-              Contraseña actual
+              {{ 'profile.currentPassword' | transloco }}
             </label>
             <input type="password" formControlName="currentPassword" autocomplete="current-password"
-                   class="w-full px-3 py-2 rounded-lg text-sm font-mono
-                          bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                          text-ink dark:text-dark-ink
-                          focus:outline-none focus:border-accent dark:focus:border-accent
-                          disabled:opacity-50"/>
+                   class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent dark:focus:border-accent disabled:opacity-50"/>
             @if (currentPassword.invalid && currentPassword.touched) {
-              <span class="text-xs text-red-500 font-mono">Requerido</span>
+              <span class="text-xs text-red-500 font-mono">{{ 'common.required' | transloco }}</span>
             }
           </div>
 
           <div class="flex flex-col gap-1">
             <label class="text-xs font-mono text-muted dark:text-dark-muted">
-              Nueva contraseña
+              {{ 'profile.newPassword' | transloco }}
             </label>
             <input type="password" formControlName="newPassword" autocomplete="new-password"
-                   class="w-full px-3 py-2 rounded-lg text-sm font-mono
-                          bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                          text-ink dark:text-dark-ink
-                          focus:outline-none focus:border-accent dark:focus:border-accent"/>
+                   class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent dark:focus:border-accent"/>
             @if (newPassword.invalid && newPassword.touched) {
-              <span class="text-xs text-red-500 font-mono">Mínimo 8 caracteres</span>
+              <span class="text-xs text-red-500 font-mono">{{ 'common.passwordMin8' | transloco }}</span>
             }
           </div>
 
           <div class="flex flex-col gap-1">
             <label class="text-xs font-mono text-muted dark:text-dark-muted">
-              Confirmar nueva contraseña
+              {{ 'profile.confirmNewPassword' | transloco }}
             </label>
             <input type="password" formControlName="confirmPassword" autocomplete="new-password"
-                   class="w-full px-3 py-2 rounded-lg text-sm font-mono
-                          bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                          text-ink dark:text-dark-ink
-                          focus:outline-none focus:border-accent dark:focus:border-accent"/>
+                   class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent dark:focus:border-accent"/>
             @if (passwordForm.hasError('mismatch') && confirmPassword.touched) {
-              <span class="text-xs text-red-500 font-mono">Las contraseñas no coinciden</span>
+              <span class="text-xs text-red-500 font-mono">{{ 'common.passwordMismatch' | transloco }}</span>
             }
           </div>
 
@@ -157,11 +144,8 @@
           }
 
           <button type="submit" [disabled]="passwordForm.invalid || pwLoading()"
-                  class="mt-1 px-4 py-2 rounded-lg text-sm font-mono
-                         bg-accent text-white border border-accent
-                         hover:bg-accent/90 transition-colors
-                         disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-            {{ pwLoading() ? 'Guardando…' : 'Cambiar contraseña' }}
+                  class="mt-1 px-4 py-2 rounded-lg text-sm font-mono bg-accent text-white border border-accent hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+            {{ pwLoading() ? ('profile.savingPassword' | transloco) : ('profile.savePassword' | transloco) }}
           </button>
 
         </form>

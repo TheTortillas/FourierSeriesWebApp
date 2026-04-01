@@ -7,6 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
@@ -22,12 +23,13 @@ function passwordsMatch(ctrl: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
-  imports: [ReactiveFormsModule, RouterLink, NavComponent, GoogleSignInComponent],
+  imports: [ReactiveFormsModule, RouterLink, NavComponent, GoogleSignInComponent, TranslocoPipe],
 })
 export class RegisterComponent {
-  private readonly fb     = inject(FormBuilder);
-  private readonly auth   = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly fb        = inject(FormBuilder);
+  private readonly auth      = inject(AuthService);
+  private readonly router    = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   readonly form = this.fb.nonNullable.group(
     {
@@ -56,7 +58,7 @@ export class RegisterComponent {
     this.apiError.set(null);
     this.loading.set(true);
     this.auth.loginWithGoogle({ idToken }).subscribe({
-      next: () => this.router.navigate(['/home']),
+      next: () => this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']),
       error: (err) => {
         this.apiError.set(err?.error?.error ?? 'Error al continuar con Google');
         this.loading.set(false);

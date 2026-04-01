@@ -9,6 +9,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { MathquillService, MathField } from '../../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 
@@ -33,6 +34,7 @@ interface KeyBtn {
 @Component({
   selector: 'app-transform-segment',
   templateUrl: './transform-segment.component.html',
+  imports: [TranslocoPipe],
 })
 export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mqExpr') mqExprRef!: ElementRef<HTMLElement>;
@@ -41,6 +43,13 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
 
   readonly mqs = inject(MathquillService);
   readonly tex2max = inject(LatexToMaximaService);
+  private readonly transloco = inject(TranslocoService);
+
+  get activeFieldName(): string {
+    if (this.focusedFieldIdx === 0) return `f(${this.intVar()})`;
+    if (this.focusedFieldIdx === 1) return this.transloco.translate('calculator.segment.from');
+    return this.transloco.translate('calculator.segment.to');
+  }
 
   readonly segment = input.required<TransformSegmentDraft>();
   readonly index = input.required<number>();
