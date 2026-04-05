@@ -383,6 +383,25 @@
     "tooManyRequestsMinutes": "Too many requests. Please try again in {{ minutes }} minutes."
   },
 
+  "seo": {
+    "home": {
+      "title": "Fourier Series and Transform Calculator",
+      "description": "Symbolic Fourier series and transform calculator. Exact coefficients, real-time graphs and support for piecewise functions."
+    },
+    "calculator": {
+      "title": "Fourier Series Calculator",
+      "description": "Calculate trigonometric, complex and half-range Fourier series with exact symbolic coefficients and interactive graphical reconstruction."
+    },
+    "transforms": {
+      "title": "Continuous Fourier Transform Calculator",
+      "description": "Calculate the continuous Fourier transform and its inverse symbolically. Visualize the amplitude and phase spectrum in real time."
+    },
+    "dft": {
+      "title": "DFT — Discrete Fourier Transform Calculator",
+      "description": "Calculate the DFT with amplitude and phase spectrum visualization and signal reconstruction via epicycles."
+    }
+  },
+
   "dev": {
     "title": "Dev Sandbox",
     "description": "Development environment for testing endpoints and components.",

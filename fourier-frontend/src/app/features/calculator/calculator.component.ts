@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, OnInit, effect, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, take } from 'rxjs';
@@ -8,17 +8,23 @@ import { ResultsSummaryComponent } from './components/results-summary/results-su
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { UserStore } from '../../core/services/auth/user.store';
+import { SeoService } from '../../core/services/seo/seo.service';
 
 @Component({
   selector: 'app-calculator',
   imports: [NavComponent, CalculatorFormComponent, ResultsSummaryComponent, TranslocoPipe],
   templateUrl: './calculator.component.html',
 })
-export class CalculatorComponent {
+export class CalculatorComponent implements OnInit {
   private readonly store     = inject(CalculatorStore);
   private readonly router    = inject(Router);
   private readonly route     = inject(ActivatedRoute);
   private readonly userStore = inject(UserStore);
+  private readonly seo       = inject(SeoService);
+
+  ngOnInit(): void {
+    this.seo.setPage('seo.calculator.title', 'seo.calculator.description');
+  }
 
   /** Set to true when URL state was restored and needs a first calculation */
   private needsCalculate = false;

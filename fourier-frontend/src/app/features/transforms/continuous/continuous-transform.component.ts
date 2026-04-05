@@ -1,5 +1,6 @@
 import {
   Component,
+  OnInit,
   computed,
   effect,
   inject,
@@ -27,6 +28,7 @@ import { PlottingService } from '../../../core/services/canvas/plotting.service'
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { ThemeService } from '../../../core/services/theme/theme.service';
+import { SeoService } from '../../../core/services/seo/seo.service';
 import { ParamSlidersComponent } from '../../../shared/components/param-sliders/param-sliders.component';
 import type { ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
@@ -125,10 +127,15 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     TranslocoPipe,
   ],
 })
-export class ContinuousTransformComponent {
+export class ContinuousTransformComponent implements OnInit {
   readonly api = inject(ApiService);
   private readonly userStore  = inject(UserStore);
   private readonly transloco  = inject(TranslocoService);
+  private readonly seo        = inject(SeoService);
+
+  ngOnInit(): void {
+    this.seo.setPage('seo.transforms.title', 'seo.transforms.description');
+  }
   readonly plotter = inject(PlottingService);
   private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly mathUtils = inject(MathUtilsService);
