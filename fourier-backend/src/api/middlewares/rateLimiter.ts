@@ -37,3 +37,18 @@ export const computeLimiter = rateLimit({
     });
   },
 });
+
+export const parseLimiter = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  max: config.rateLimit.maxParse,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    const seconds = retryAfterSeconds(res);
+    res.status(429).json({
+      error: "Too many parse requests, please try again later.",
+      retryAfterSeconds: seconds,
+      retryAfterMinutes: Math.ceil(seconds / 60),
+    });
+  },
+});

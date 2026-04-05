@@ -9,12 +9,13 @@ import { simplifyRouter } from "./api/routes/simplify.routes";
 import { transformsRouter } from "./api/routes/transforms.routes";
 import { cacheRouter } from "./api/routes/cache.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
-import { generalLimiter, computeLimiter } from "./api/middlewares/rateLimiter";
+import { generalLimiter, computeLimiter, parseLimiter } from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
 import { optionalAuth } from "./api/middlewares/authenticate";
 import { requireVerified } from "./api/middlewares/requireVerified";
 import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 import { historyRouter } from "./api/routes/history.routes";
+import { parseRouter } from "./api/routes/parse.routes";
 import { adminRouter } from "./api/routes/admin.routes";
 import { config } from "./config/env";
 
@@ -67,6 +68,8 @@ export function createApp(): Application {
     requireVerified,
     requireTierLimit,
   );
+
+  app.use("/api/parse", parseLimiter, parseRouter);
 
   app.use("/api/auth", authRouter);
 

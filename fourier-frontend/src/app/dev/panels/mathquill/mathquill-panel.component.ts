@@ -7,6 +7,8 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { MathquillService, MathField } from '../../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
@@ -25,6 +27,8 @@ export class MathquillPanelComponent implements AfterViewInit, OnDestroy {
   readonly mqContainer = viewChild<ElementRef<HTMLSpanElement>>('mqContainer');
 
   private field: MathField | null = null;
+  private readonly latexSubject = new Subject<string>();
+  private readonly _sub = new Subscription();
 
   latex  = signal('');
   maxima = signal('');
@@ -37,13 +41,29 @@ export class MathquillPanelComponent implements AfterViewInit, OnDestroy {
     const el = this.mqContainer()?.nativeElement;
     if (!el) return;
 
+    this._sub.add(
+      this.latexSubject.pipe(
+        debounceTime(350),
+        switchMap((tex) => this.l2m.convert(tex)),
+      ).subscribe((res) => {
+        if (res.ok) {
+          this.maxima.set(res.maxima);
+          this.error.set(null);
+        } else {
+          this.maxima.set('');
+          this.error.set(res.error ?? null);
+        }
+        this.evalResult.set(null);
+      }),
+    );
+
     this.field = await this.mqs.createField(el, {
       ...this.mqs.defaultConfig(),
       handlers: {
         edit: (mf) => {
           const tex = mf.latex();
           this.latex.set(tex);
-          this.updateConversion(tex);
+          this.latexSubject.next(tex);
         },
       },
     });
@@ -58,30 +78,20 @@ export class MathquillPanelComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this._sub.unsubscribe();
+    this.latexSubject.complete();
     this.field = null;
   }
 
   setLatex(tex: string): void {
     this.field?.latex(tex);
     this.latex.set(tex);
-    this.updateConversion(tex);
+    this.latexSubject.next(tex);
   }
 
   evaluate(): void {
     const res = this.math.evaluate(this.maxima(), this.evalX);
     this.evalResult.set(isNaN(res) ? 'NaN (no evaluable en JS)' : String(res));
-  }
-
-  private updateConversion(tex: string): void {
-    const res = this.l2m.convert(tex);
-    if (res.ok) {
-      this.maxima.set(res.maxima);
-      this.error.set(null);
-    } else {
-      this.maxima.set('');
-      this.error.set(res.error ?? null);
-    }
-    this.evalResult.set(null);
   }
 
   readonly presets = [

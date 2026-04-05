@@ -9,6 +9,8 @@ import {
   input,
   output,
 } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { MathquillService, MathField } from '../../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
@@ -65,6 +67,13 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   conversionErrors: [string | null, string | null, string | null] = [null, null, null];
   fields: [MathField | null, MathField | null, MathField | null] = [null, null, null];
   private _syncing = false;
+
+  private readonly fieldSubjects: [Subject<string>, Subject<string>, Subject<string>] = [
+    new Subject<string>(),
+    new Subject<string>(),
+    new Subject<string>(),
+  ];
+  private readonly _subs = new Subscription();
 
   readonly keyGroups: KeyBtn[][] = [
     // Special functions for transforms
@@ -171,26 +180,43 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
               });
               return;
             }
-            const res = this.tex2max.convertForTransforms(latexRaw);
-            if (res.ok) {
-              this.conversionErrors[i] = null;
-              this.updated.emit({
-                id: this.segment().id,
-                changes: { [maximaKey]: res.maxima, [texKey]: latexRaw },
-              });
-            } else {
-              this.conversionErrors[i] = res.error ?? null;
-              this.updated.emit({ id: this.segment().id, changes: { [texKey]: latexRaw } });
-            }
+            // Update LaTeX immediately so the MathJax preview refreshes without delay
+            this.updated.emit({ id: this.segment().id, changes: { [texKey]: latexRaw } });
+            // Debounced: send to backend for Maxima conversion
+            this.fieldSubjects[i].next(latexRaw);
           },
         },
       });
       this.fields[i] = field;
-      if (initialLatex && field) field.latex(initialLatex);
+
+      // Set initial LaTeX without triggering the edit handler
+      if (initialLatex && field) {
+        this._syncing = true;
+        field.latex(initialLatex);
+        this._syncing = false;
+      }
+
+      // Subscribe: debounce → parse API → emit Maxima update
+      this._subs.add(
+        this.fieldSubjects[i].pipe(
+          debounceTime(350),
+          switchMap((latexRaw) => this.tex2max.convertForTransforms(latexRaw)),
+        ).subscribe((result) => {
+          if (result.ok) {
+            this.conversionErrors[i] = null;
+            this.updated.emit({ id: this.segment().id, changes: { [maximaKey]: result.maxima } });
+          } else {
+            this.conversionErrors[i] = result.error ?? null;
+            this.updated.emit({ id: this.segment().id, changes: { [maximaKey]: '' } });
+          }
+        }),
+      );
     }
   }
 
   ngOnDestroy(): void {
+    this._subs.unsubscribe();
+    for (const s of this.fieldSubjects) s.complete();
     for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {
       if (ref?.nativeElement) ref.nativeElement.innerHTML = '';
     }
