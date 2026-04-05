@@ -8,6 +8,8 @@ import {
   inject,
   input,
 } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SegmentDraft, CalculatorStore } from '../../store/calculator.store';
 import { MathquillService, MathField } from '../../../../core/services/math/mathquill.service';
@@ -54,6 +56,15 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
 
   // Guard against latex() setter triggering the edit handler
   private _syncingFromStore = false;
+
+  // One Subject per field — each emits the raw LaTeX string when the user types.
+  // debounceTime + switchMap in ngAfterViewInit convert it to a Maxima string via API.
+  private readonly fieldSubjects: [Subject<string>, Subject<string>, Subject<string>] = [
+    new Subject<string>(),
+    new Subject<string>(),
+    new Subject<string>(),
+  ];
+  private readonly _subs = new Subscription();
 
   // ── Math keyboard button groups ────────────────────────────────────────────
 
@@ -149,26 +160,43 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
               this.store.updateSegment(this.segment().id, { [maximaKey]: '', [texKey]: '' });
               return;
             }
-            const result = this.tex2max.convert(latexRaw);
-            if (result.ok) {
-              this.conversionErrors[i] = null;
-              this.store.updateSegment(this.segment().id, {
-                [maximaKey]: result.maxima,
-                [texKey]: latexRaw,
-              });
-            } else {
-              this.conversionErrors[i] = result.error ?? null;
-              this.store.updateSegment(this.segment().id, { [texKey]: latexRaw });
-            }
+            // Update LaTeX immediately so the MathJax preview refreshes without delay
+            this.store.updateSegment(this.segment().id, { [texKey]: latexRaw });
+            // Debounced: send to backend for Maxima conversion
+            this.fieldSubjects[i].next(latexRaw);
           },
         },
       });
       this.fields[i] = field;
-      if (initialLatex && field) field.latex(initialLatex);
+
+      // Set initial LaTeX without triggering the edit handler
+      if (initialLatex && field) {
+        this._syncingFromStore = true;
+        field.latex(initialLatex);
+        this._syncingFromStore = false;
+      }
+
+      // Subscribe: debounce → parse API → update Maxima in store
+      this._subs.add(
+        this.fieldSubjects[i].pipe(
+          debounceTime(350),
+          switchMap((latexRaw) => this.tex2max.convert(latexRaw)),
+        ).subscribe((result) => {
+          if (result.ok) {
+            this.conversionErrors[i] = null;
+            this.store.updateSegment(this.segment().id, { [maximaKey]: result.maxima });
+          } else {
+            this.conversionErrors[i] = result.error ?? null;
+            this.store.updateSegment(this.segment().id, { [maximaKey]: '' });
+          }
+        }),
+      );
     }
   }
 
   ngOnDestroy(): void {
+    this._subs.unsubscribe();
+    for (const s of this.fieldSubjects) s.complete();
     for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {
       if (ref?.nativeElement) ref.nativeElement.innerHTML = '';
     }

@@ -30,13 +30,14 @@ export class LatexMaximaPanelComponent {
 
   convert(): void {
     if (!this.latex.trim()) return;
-    const res = this.converter.convert(this.latex);
-    let evaluated: string | undefined;
-    if (res.ok) {
-      const val = this.mathUtils.evaluate(res.maxima, this.evalX);
-      evaluated = isNaN(val) ? 'NaN (no evaluable en JS)' : String(val);
-    }
-    this.result.set({ ...res, latex: this.latex, evaluated });
+    this.converter.convert(this.latex).subscribe((res) => {
+      let evaluated: string | undefined;
+      if (res.ok) {
+        const val = this.mathUtils.evaluate(res.maxima, this.evalX);
+        evaluated = isNaN(val) ? 'NaN (no evaluable en JS)' : String(val);
+      }
+      this.result.set({ ...res, latex: this.latex, evaluated });
+    });
   }
 
   // ── Batch examples ───────────────────────────────────────────────────────
@@ -53,16 +54,20 @@ export class LatexMaximaPanelComponent {
   batchResults = signal<ConversionRow[]>([]);
 
   runBatch(): void {
-    const rows: ConversionRow[] = this.examples.map(({ latex }) => {
-      const res = this.converter.convert(latex);
-      let evaluated: string | undefined;
-      if (res.ok) {
-        const val = this.mathUtils.evaluate(res.maxima, 1);
-        evaluated = isNaN(val) ? 'NaN' : String(val);
-      }
-      return { ...res, latex, evaluated };
+    const results: ConversionRow[] = [];
+    let pending = this.examples.length;
+    this.examples.forEach(({ latex }, idx) => {
+      this.converter.convert(latex).subscribe((res) => {
+        let evaluated: string | undefined;
+        if (res.ok) {
+          const val = this.mathUtils.evaluate(res.maxima, 1);
+          evaluated = isNaN(val) ? 'NaN' : String(val);
+        }
+        results[idx] = { ...res, latex, evaluated };
+        pending--;
+        if (pending === 0) this.batchResults.set([...results]);
+      });
     });
-    this.batchResults.set(rows);
   }
 
   // ── Validator tester ─────────────────────────────────────────────────────
