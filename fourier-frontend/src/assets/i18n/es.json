@@ -383,6 +383,25 @@
     "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos."
   },
 
+  "seo": {
+    "home": {
+      "title": "Calculadora de Series y Transformadas de Fourier",
+      "description": "Calculadora simbólica de series y transformadas de Fourier. Coeficientes exactos, gráficas en tiempo real y soporte para funciones a trozos."
+    },
+    "calculator": {
+      "title": "Calculadora de Series de Fourier",
+      "description": "Calcula series de Fourier trigonométricas, complejas y de medio rango con coeficientes simbólicos exactos y reconstrucción gráfica interactiva."
+    },
+    "transforms": {
+      "title": "Calculadora de Transformada de Fourier Continua",
+      "description": "Calcula la transformada de Fourier continua y su inversa de forma simbólica. Visualiza el espectro de amplitud y fase en tiempo real."
+    },
+    "dft": {
+      "title": "Calculadora de DFT — Transformada Discreta de Fourier",
+      "description": "Calcula la DFT con visualización de espectro de amplitud, fase y reconstrucción de señales mediante epiciclos."
+    }
+  },
+
   "dev": {
     "title": "Dev Sandbox",
     "description": "Entorno de desarrollo para probar endpoints y componentes.",
