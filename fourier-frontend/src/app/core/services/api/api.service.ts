@@ -161,6 +161,15 @@ export class ApiService {
     return this.http.post<DftResponse>(`${this.base}/transforms/dft`, body);
   }
 
+  // ─── Parse ───────────────────────────────────────────────────────────────
+
+  parseLaTeX(latex: string, mode: 'series' | 'transform' = 'series'): Observable<{ maxima: string; ok: boolean; error?: string }> {
+    return this.http.post<{ maxima: string; ok: boolean; error?: string }>(
+      `${this.base}/parse/latex`,
+      { latex, mode },
+    );
+  }
+
   // ─── Simplify ────────────────────────────────────────────────────────────
 
   simplify(body: SimplifyRequest): Observable<SimplifyResponse> {
