@@ -41,14 +41,18 @@ let _nextId = 0;
 const mkId = () => `ts-${++_nextId}`;
 
 function emptySegment(): TransformSegmentDraft {
+  return { id: mkId(), expression: '', expressionTex: '', from: '', fromTex: '', to: '', toTex: '' };
+}
+
+function defaultSegment(): TransformSegmentDraft {
   return {
     id: mkId(),
-    expression: '',
-    expressionTex: '',
-    from: '',
-    fromTex: '',
-    to: '',
-    toTex: '',
+    expression: 'sin(%pi*t)/(%pi*t)',
+    expressionTex: '\\frac{\\sin\\left(\\pi t\\right)}{\\pi t}',
+    from: 'minf',
+    fromTex: '-\\infty',
+    to: 'inf',
+    toTex: '\\infty',
   };
 }
 
@@ -148,7 +152,7 @@ export class ContinuousTransformComponent implements OnInit {
   readonly varPairId = signal<string>('t-w');
   readonly customTime = signal('t');
   readonly customFreq = signal('w');
-  readonly segments = signal<TransformSegmentDraft[]>([emptySegment()]);
+  readonly segments = signal<TransformSegmentDraft[]>([defaultSegment()]);
   readonly loading = signal(false);
   readonly errorMsg = signal<string | null>(null);
   readonly ftResult = signal<FourierTransformResponse | null>(null);

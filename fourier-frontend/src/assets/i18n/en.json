@@ -20,7 +20,8 @@
   },
 
   "nav": {
-    "series": "Series",
+    "fourierAnalysis": "Fourier Analysis",
+    "series": "Fourier Series",
     "transforms": "Transforms",
     "login": "Log in",
     "register": "Sign up",

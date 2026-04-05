@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
+import { filter, map, startWith } from 'rxjs';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { UserStore } from '../../../core/services/auth/user.store';
 import { AuthService } from '../../../core/services/auth/auth.service';
@@ -31,10 +32,28 @@ export class NavComponent {
   /** Controls the language dropdown visibility. */
   readonly langMenuOpen = signal(false);
 
+  /** Controls the Fourier analysis dropdown visibility. */
+  readonly fourierMenuOpen = signal(false);
+
   /** Regex to match the leading /:lang segment in the current URL. */
   private readonly langSegmentRe = new RegExp(
     `^\\/(${SUPPORTED_LANG_CODES.join('|')})(\\\/|$)`,
   );
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(() => this.router.url),
+      startWith(this.router.url),
+    ),
+    { requireSync: true },
+  );
+
+  /** True when the active route belongs to the Fourier analysis section. */
+  readonly isAnalysisActive = computed(() => {
+    const url = this.currentUrl();
+    return url.includes('/calculator') || url.includes('/transforms');
+  });
 
   switchToLang(code: string): void {
     this.langMenuOpen.set(false);
@@ -48,6 +67,13 @@ export class NavComponent {
     const wrapper = e.currentTarget as HTMLElement;
     if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
       this.langMenuOpen.set(false);
+    }
+  }
+
+  onFourierMenuFocusOut(e: FocusEvent): void {
+    const wrapper = e.currentTarget as HTMLElement;
+    if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
+      this.fourierMenuOpen.set(false);
     }
   }
 }

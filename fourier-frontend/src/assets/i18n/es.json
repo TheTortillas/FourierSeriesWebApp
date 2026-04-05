@@ -20,7 +20,8 @@
   },
 
   "nav": {
-    "series": "Series",
+    "fourierAnalysis": "Análisis de Fourier",
+    "series": "Series de Fourier",
     "transforms": "Transformadas",
     "login": "Ingresar",
     "register": "Registrarse",
