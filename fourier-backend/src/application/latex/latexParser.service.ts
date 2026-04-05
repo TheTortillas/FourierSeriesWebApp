@@ -99,7 +99,7 @@ export class LatexParserService {
         result += latex.slice(i);
         break;
       }
-      result += latex.slice(i, idx) + "e^{(";
+      result += latex.slice(i, idx) + " e^{(";
       i = idx + marker.length;
       let depth = 1;
       while (i < latex.length && depth > 0) {
