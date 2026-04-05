@@ -197,6 +197,7 @@
     "varTimeMode": "{{ mode }} variable",
     "maximaNames": "Use Maxima names:",
     "addSegment": "Add piece",
+    "complexInputNotice": "Imaginary values detected — real-time preview is not available. No worries, the computed result will still be shown.",
     "calculate": "Calculate",
     "newCalculation": "New calculation",
     "shareLink": "Share link",

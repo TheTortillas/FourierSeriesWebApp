@@ -197,6 +197,7 @@
     "varTimeMode": "Var. {{ mode }}",
     "maximaNames": "Usa nombres Maxima:",
     "addSegment": "Agregar tramo",
+    "complexInputNotice": "Valores imaginarios detectados — la vista previa en tiempo real no está disponible. No hay problema, el resultado del cálculo sí se mostrará.",
     "calculate": "Calcular",
     "newCalculation": "Nuevo cálculo",
     "shareLink": "Compartir enlace",

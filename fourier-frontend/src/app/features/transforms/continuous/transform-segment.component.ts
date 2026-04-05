@@ -81,7 +81,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
       { label: 'δ(·)', typedText: 'delta(' },
       { label: 'u(·)', typedText: 'u(' },
       { label: 'sgn', typedText: 'sgn(' },
-      { label: 'i', write: '\\mathrm{i}' },
+      { label: 'i', typedText: 'i' },
       { label: '∞', write: '\\infty' },
       { label: '-∞', write: '-\\infty' },
     ],

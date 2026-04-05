@@ -44,11 +44,25 @@ function emptySegment(): TransformSegmentDraft {
   return { id: mkId(), expression: '', expressionTex: '', from: '', fromTex: '', to: '', toTex: '' };
 }
 
-function defaultSegment(): TransformSegmentDraft {
+/** Default FT example: sinc function sin(πt)/(πt) */
+function defaultSegmentFt(): TransformSegmentDraft {
   return {
     id: mkId(),
     expression: 'sin(%pi*t)/(%pi*t)',
     expressionTex: '\\frac{\\sin\\left(\\pi t\\right)}{\\pi t}',
+    from: 'minf',
+    fromTex: '-\\infty',
+    to: 'inf',
+    toTex: '\\infty',
+  };
+}
+
+/** Default IFT example: 1/(a + iw) — one-sided exponential spectrum */
+function defaultSegmentIft(): TransformSegmentDraft {
+  return {
+    id: mkId(),
+    expression: '1/(a+%i*w)',
+    expressionTex: '\\frac{1}{a+iw}',
     from: 'minf',
     fromTex: '-\\infty',
     to: 'inf',
@@ -152,7 +166,7 @@ export class ContinuousTransformComponent implements OnInit {
   readonly varPairId = signal<string>('t-w');
   readonly customTime = signal('t');
   readonly customFreq = signal('w');
-  readonly segments = signal<TransformSegmentDraft[]>([defaultSegment()]);
+  readonly segments = signal<TransformSegmentDraft[]>([defaultSegmentFt()]);
   readonly loading = signal(false);
   readonly errorMsg = signal<string | null>(null);
   readonly ftResult = signal<FourierTransformResponse | null>(null);
@@ -324,6 +338,11 @@ export class ContinuousTransformComponent implements OnInit {
     this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()),
   );
 
+  /** True when any input segment contains the imaginary unit (%i). */
+  readonly hasComplexInputs = computed(() =>
+    this.segments().some((s) => s.expression.includes('%i')),
+  );
+
   readonly hasComputedResult = computed(
     () => this.ftResult() !== null || this.iftResult() !== null,
   );
@@ -356,34 +375,35 @@ export class ContinuousTransformComponent implements OnInit {
     const layer: PlotLayer = {
       curves: [],
       onDraw: (ctx, vp) => {
-        // ── Original input function (piecewise) for FT mode ─────────────
-        if (this.mode() === 'ft' && showOrig) {
+        // ── Input function preview (FT and IFT modes) ────────────────────
+        // In FT mode intVariable = time var (t); in IFT mode = freq var (w).
+        // compile() returns null for complex-valued expressions, so those
+        // segments are silently skipped — the template shows a notice instead.
+        if (showOrig) {
           for (const seg of segs) {
             const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
             const from = this.parseLimit(seg.from, pv);
             const to = this.parseLimit(seg.to, pv);
             if (!fn) continue;
             if (isFinite(from) && isFinite(to)) {
-              // Bounded segment: sample exactly within [from, to]
               plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
                 color: origColor,
                 lineWidth: origLW,
               });
             } else {
-              // Infinite/semi-infinite domain: gate function and use
-              // viewport-based sampling so the canvas always shows something.
-              // x >= -Infinity and x <= Infinity are always true in JS.
               const gated = (x: number) => (x >= from && x <= to ? fn(x) : NaN);
               plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW });
             }
-            // Draw any Dirac delta terms in this segment's expression
-            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
-              seg.expression,
-              intVariable,
-              pv,
-            )) {
-              if (pos >= from && pos <= to) {
-                this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origColor, origLW);
+            // Draw Dirac delta terms (FT mode only — IFT inputs are rarely delta)
+            if (this.mode() === 'ft') {
+              for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+                seg.expression,
+                intVariable,
+                pv,
+              )) {
+                if (pos >= from && pos <= to) {
+                  this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origColor, origLW);
+                }
               }
             }
           }
@@ -544,6 +564,7 @@ export class ContinuousTransformComponent implements OnInit {
   setMode(m: 'ft' | 'ift'): void {
     if (this.inputsLocked()) return;
     this.mode.set(m);
+    this.segments.set([m === 'ft' ? defaultSegmentFt() : defaultSegmentIft()]);
     this.ftResult.set(null);
     this.iftResult.set(null);
     this.errorMsg.set(null);
