@@ -30,7 +30,9 @@
     "changeToNeutral": "Cambiar a paleta neutral",
     "toggleTheme": "Cambiar tema",
     "paletteNeutral": "Neutral",
-    "paletteCoffee": "Coffee"
+    "paletteCoffee": "Coffee",
+    "tagline": "Por Sebastián Morales Palacios",
+    "footerText": "Herramienta de análisis matemático"
   },
 
   "home": {
@@ -65,7 +67,10 @@
       "to": "hasta",
       "removeTitle": "Eliminar tramo",
       "keyboardTitle": "Teclado matemático",
-      "activeField": "Activo: campo {{ field }}"
+      "activeField": "Activo: campo {{ field }}",
+    "expressionRequired": "Expresión requerida",
+    "fromRequired": "Límite inferior requerido",
+    "toRequired": "Límite superior requerido"
     },
     "types": {
       "trigonometric": "Trigonométrica",

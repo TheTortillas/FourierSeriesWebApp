@@ -57,12 +57,6 @@ function defaultSegment(): SegmentDraft {
   };
 }
 
-function segmentError(s: SegmentDraft): string | null {
-  if (!s.expression.trim()) return 'Expresión requerida';
-  if (!s.from.trim()) return 'Límite inferior requerido';
-  if (!s.to.trim()) return 'Límite superior requerido';
-  return null;
-}
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
@@ -86,7 +80,14 @@ export class CalculatorStore {
   readonly result = signal<CalculatorResult | null>(null);
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  readonly segmentErrors = computed(() => this.segments().map(segmentError));
+  readonly segmentErrors = computed(() =>
+    this.segments().map((s): string | null => {
+      if (!s.expression.trim()) return this.transloco.translate('calculator.segment.expressionRequired');
+      if (!s.from.trim())       return this.transloco.translate('calculator.segment.fromRequired');
+      if (!s.to.trim())         return this.transloco.translate('calculator.segment.toRequired');
+      return null;
+    }),
+  );
 
   readonly isValid = computed(() => this.segmentErrors().every((e) => e === null));
 
