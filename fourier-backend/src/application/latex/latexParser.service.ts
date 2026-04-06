@@ -76,6 +76,7 @@ export class LatexParserService {
       .replace(/\\ln\b/g, "\\log")
       .replace(/\\exp\(/g, "\\operatorname{exp}(")
       .replace(/\\operatorname\{exp\}\(/g, "\\operatorname{exp}(")
+      .replace(/\\operatorname\{sgn\}/g, "sgn")
       .replace(/\\operatorname\{delta\}/g, " TMDELTA")
       .replace(/\\delta\b/g, " TMDELTA")
       .replace(/\\operatorname\{gamma\}/g, "TMGAMMA")

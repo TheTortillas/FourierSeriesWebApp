@@ -80,7 +80,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
     [
       { label: 'δ(·)', typedText: 'delta(' },
       { label: 'u(·)', typedText: 'u(' },
-      { label: 'sgn', typedText: 'sgn(' },
+      { label: 'sgn' },
       { label: 'i', typedText: 'i' },
       { label: '∞', write: '\\infty' },
       { label: '-∞', write: '-\\infty' },
@@ -259,6 +259,11 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
     }
     if (btn.label === 'exp') {
       field.write('\\operatorname{exp}\\left(\\right)');
+      field.keystroke('Left');
+      return;
+    }
+    if (btn.label === 'sgn') {
+      field.write('\\operatorname{sgn}\\left(\\right)');
       field.keystroke('Left');
       return;
     }

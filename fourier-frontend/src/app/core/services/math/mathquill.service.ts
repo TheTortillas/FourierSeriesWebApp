@@ -71,7 +71,7 @@ export class MathquillService {
         'sinh cosh tanh asinh acosh atanh log ln exp abs ' +
         'sen tg senh ctg arcsin arccos arctan ' +
         'gamma factorial ' +
-        'delta',
+        'delta sgn',
       charsThatBreakOutOfSupSub: '+-*/=<>',
     };
   }
