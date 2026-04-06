@@ -523,7 +523,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                and is(trig_part = false) then (
                 exp_arg: part(exp_part, 2),
                 aa: ratsimp(exp_arg / (-t_var)),
-                if freeof(t_var, aa) and is(aa > 0) then
+                if freeof(t_var, coef_k) and freeof(t_var, aa) and is(aa > 0) then
                     res: [coef_k / (%i*w_var + aa),
                           concat("k*exp(-at)*u(t) -> k/(iw+a), a=", string(aa))]
             )
@@ -554,7 +554,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 aa: ratsimp(exp_arg / (-t_var)),
                 cos_arg: part(cos_part, 1),
                 bb: ratsimp(cos_arg / t_var),
-                if freeof(t_var, aa) and freeof(t_var, bb)
+                if freeof(t_var, coef_k) and freeof(t_var, aa) and freeof(t_var, bb)
                    and is(aa > 0) and is(bb > 0) then
                     res: [coef_k * (%i*w_var + aa) / ((%i*w_var + aa)^2 + bb^2),
                           concat("k*exp(-at)*cos(bt)*u(t) -> k*(iw+a)/((iw+a)^2+b^2), a=",
@@ -587,7 +587,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 aa: ratsimp(exp_arg / (-t_var)),
                 sin_arg: part(sin_part, 1),
                 bb: ratsimp(sin_arg / t_var),
-                if freeof(t_var, aa) and freeof(t_var, bb)
+                if freeof(t_var, coef_k) and freeof(t_var, aa) and freeof(t_var, bb)
                    and is(aa > 0) and is(bb > 0) then
                     res: [coef_k * bb / ((%i*w_var + aa)^2 + bb^2),
                           concat("k*exp(-at)*sin(bt)*u(t) -> k*b/((iw+a)^2+b^2), a=",
