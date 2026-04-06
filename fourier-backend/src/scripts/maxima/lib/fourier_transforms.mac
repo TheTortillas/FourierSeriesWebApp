@@ -838,15 +838,16 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         if is(dm # false) then (
             k: dm[1],  a: dm[2],
             if a = 0
-            then res: [k/(2*%pi),                 "delta(w) -> 1/(2pi)"]
-            else res: [k*exp(%i*a*t_var)/(2*%pi), concat("delta(w-a) -> e^{iat}/(2pi), a=", string(a))]
+            then res: [k/(2*%pi), "delta(w) -> 1/(2pi)"]
+            else res: [k*exp(%i*a*t_var)/(2*%pi),
+                    concat("delta(w-a) -> e^{iat}/(2pi), a=", string(a))]
         )
     ),
 
     /* ── suma de k*delta(w-a) -> suma de k*e^{iat}/(2pi) ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "+") then block(
-            [terms, dm_i, k_i, a_i, result_sum, all_delta],
+            [terms, dm_i, k_i, a_i, result_sum, all_delta, raw, simplified, et],
             terms: args(e),
             all_delta: true,
             result_sum: 0,
@@ -859,9 +860,14 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                     result_sum: result_sum + k_i * exp(%i * a_i * t_var) / (2*%pi)
                 )
             ),
-            if all_delta then
-                res: [ratsimp(result_sum),
-                    "sum of k*delta(w-a) -> sum of k*e^{iat}/(2pi)"]
+            if all_delta then (
+                raw: ratsimp(result_sum),
+                et: errcatch(trigreduce(trigsimp(rectform(raw)))),
+                simplified: if et # [] then ratsimp(first(et)) else raw,
+                et: errcatch(factor(simplified)),
+                simplified: if et # [] then first(et) else simplified,
+                res: [simplified, "sum of k*delta(w-a) -> sum of k*e^{iat}/(2pi)"]
+            )
         )
     ),
 
