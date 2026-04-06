@@ -1070,15 +1070,20 @@ FT(FUNC_INPUT, t_var, w_var) := block(
         )
     ),
 
-    /* ── intento de patron para tramo [0, inf) ──
-   Multiplica por u(t_var) para reutilizar los detectores
-   que esperan u(t) explicito en intervalo completo.      */
+    /* ── intento de patron para tramo [c, inf) ──
+    Multiplica por u(t_var-c) para reutilizar los detectores
+    que esperan u(t) explicito en intervalo completo.
+    Si la expresion ya contiene u(t_var), no agrega otro.  */
     if n_orig = 1 and not done then (
-        block([tr, t0_val],
+        block([tr, t0_val, f_aug],
             tr: FUNC_INPUT[1],
             if FT_is_inf(tr[3]) and not FT_is_minf(tr[2]) then (
                 t0_val: tr[2],
-                pattern: FT_pattern_lookup(tr[1] * u(t_var - t0_val), t_var, w_var),
+                f_aug: if freeof('u, tr[1]) then
+                        tr[1] * u(t_var - t0_val)
+                    else
+                        tr[1],
+                pattern: FT_pattern_lookup(f_aug, t_var, w_var),
                 if is(pattern # false) then (
                     F      : pattern[1],
                     F_real : if freeof(%i, F) then F else ratsimp(realpart(F)),
