@@ -96,7 +96,7 @@ FT_delta_shift(expr, t_var) := block(
 
 /* Detecta k*delta(t-a). Devuelve [k, a] o false */
 FT_match_delta(expr, t_var) := block(
-    [e, sh, delta_part, coef, sh2, res],
+    [e, sh, delta_part, coef, sh2, res, num_e, den_e],
     e: expand(expr),
     res: false,
     if not atom(e) then (
@@ -114,6 +114,32 @@ FT_match_delta(expr, t_var) := block(
             if is(delta_part # false) then (
                 sh2: FT_delta_shift(delta_part, t_var),
                 if is(sh2 # false) then res: [coef, sh2]
+            )
+        )
+        else if is(op(e) = "/") or is(op(e) = "-") then (
+            num_e: expand(num(e)),
+            den_e: expand(denom(e)),
+            if not atom(num_e) and is(op(num_e) = "-") then (
+                num_e: expand(part(num_e, 1)),
+                den_e: -den_e
+            ),
+            if freeof('delta, den_e) and not freeof('delta, num_e) then (
+                sh: FT_delta_shift(num_e, t_var),
+                if is(sh # false)
+                then res: [1/den_e, sh]
+                else if not atom(num_e) and is(op(num_e) = "*") then (
+                    delta_part: false,
+                    coef: 1,
+                    for s in args(num_e) do (
+                        if not atom(s) and is(op(s) = 'delta)
+                        then delta_part: s
+                        else coef: coef * s
+                    ),
+                    if is(delta_part # false) then (
+                        sh2: FT_delta_shift(delta_part, t_var),
+                        if is(sh2 # false) then res: [coef/den_e, sh2]
+                    )
+                )
             )
         )
     ),
@@ -352,25 +378,35 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
-    /* ── cos(w0t) ── */
+    /* ── cos(w0t + theta) — incluye cos(w0t) cuando theta=0 ── */
     if is(res = false) then (
-        if not atom(e) and is(op(e) = 'cos) then (
+        if not atom(e) and is(op(e) = 'cos) then block(
+            [arg, w0, theta],
             arg: part(e, 1),
-            w0: ratsimp(arg / t_var),
-            if freeof(t_var, w0) then
-                res: [%piexact*(delta(w_var-w0) + delta(w_var+w0)),
-                      concat("cos(w0t) -> pi[delta(w-w0)+delta(w+w0)], w0=", string(w0))]
+            w0: ratsimp(diff(arg, t_var)),
+            theta: ratsimp(subst(t_var=0, arg)),
+            if freeof(t_var, w0) and freeof(t_var, theta)
+            and not equal(w0, 0) then
+                res: [%piexact * (exp(%i*theta)*delta(w_var-w0)
+                                + exp(-%i*theta)*delta(w_var+w0)),
+                    concat("cos(w0t+theta) -> pi[e^{itheta}*delta(w-w0)+e^{-itheta}*delta(w+w0)], w0=",
+                            string(w0), ", theta=", string(theta))]
         )
     ),
 
-    /* ── sin(w0t) ── */
+    /* ── sin(w0t + theta) — incluye sin(w0t) cuando theta=0 ── */
     if is(res = false) then (
-        if not atom(e) and is(op(e) = 'sin) then (
+        if not atom(e) and is(op(e) = 'sin) then block(
+            [arg, w0, theta],
             arg: part(e, 1),
-            w0: ratsimp(arg / t_var),
-            if freeof(t_var, w0) then
-                res: [%i*%piexact*(delta(w_var+w0) - delta(w_var-w0)),
-                      concat("sin(w0t) -> i*pi[delta(w+w0)-delta(w-w0)], w0=", string(w0))]
+            w0: ratsimp(diff(arg, t_var)),
+            theta: ratsimp(subst(t_var=0, arg)),
+            if freeof(t_var, w0) and freeof(t_var, theta)
+            and not equal(w0, 0) then
+                res: [-%i*%piexact * (exp(%i*theta)*delta(w_var-w0)
+                                    - exp(-%i*theta)*delta(w_var+w0)),
+                    concat("sin(w0t+theta) -> -i*pi[e^{itheta}*delta(w-w0)-e^{-itheta}*delta(w+w0)], w0=",
+                            string(w0), ", theta=", string(theta))]
         )
     ),
 
@@ -807,6 +843,28 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── suma de k*delta(w-a) -> suma de k*e^{iat}/(2pi) ── */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "+") then block(
+            [terms, dm_i, k_i, a_i, result_sum, all_delta],
+            terms: args(e),
+            all_delta: true,
+            result_sum: 0,
+            for term in terms do (
+                dm_i: FT_match_delta(term, w_var),
+                if is(dm_i = false) then all_delta: false
+                else (
+                    k_i: dm_i[1],
+                    a_i: dm_i[2],
+                    result_sum: result_sum + k_i * exp(%i * a_i * t_var) / (2*%pi)
+                )
+            ),
+            if all_delta then
+                res: [ratsimp(result_sum),
+                    "sum of k*delta(w-a) -> sum of k*e^{iat}/(2pi)"]
+        )
+    ),
+
     /* ── 2pi*delta(w-a) -> e^{iat} ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "*") then (
@@ -1070,15 +1128,20 @@ FT(FUNC_INPUT, t_var, w_var) := block(
         )
     ),
 
-    /* ── intento de patron para tramo [0, inf) ──
-   Multiplica por u(t_var) para reutilizar los detectores
-   que esperan u(t) explicito en intervalo completo.      */
+    /* ── intento de patron para tramo [c, inf) ──
+    Multiplica por u(t_var-c) para reutilizar los detectores
+    que esperan u(t) explicito en intervalo completo.
+    Si la expresion ya contiene u(t_var), no agrega otro.  */
     if n_orig = 1 and not done then (
-        block([tr, t0_val],
+        block([tr, t0_val, f_aug],
             tr: FUNC_INPUT[1],
             if FT_is_inf(tr[3]) and not FT_is_minf(tr[2]) then (
                 t0_val: tr[2],
-                pattern: FT_pattern_lookup(tr[1] * u(t_var - t0_val), t_var, w_var),
+                f_aug: if freeof('u, tr[1]) then
+                        tr[1] * u(t_var - t0_val)
+                    else
+                        tr[1],
+                pattern: FT_pattern_lookup(f_aug, t_var, w_var),
                 if is(pattern # false) then (
                     F      : pattern[1],
                     F_real : if freeof(%i, F) then F else ratsimp(realpart(F)),
