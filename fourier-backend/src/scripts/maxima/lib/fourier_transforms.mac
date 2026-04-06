@@ -48,6 +48,8 @@ declare(delta, real)$
 declare(u,     real)$
 declare(sgn,   real)$
 
+texput(sgn, "\\operatorname{sgn}")$
+
 /* ════════════════════════════════════════════════════════════════════
    BLOQUE 2 — Auxiliares de reconocimiento
    ════════════════════════════════════════════════════════════════════ */
