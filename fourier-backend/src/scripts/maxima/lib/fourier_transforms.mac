@@ -156,21 +156,56 @@ FT_match_delta(expr, t_var) := block(
 /* Detecta k*u(t) con k constante en t_var. Devuelve [k] o false.
    NOTA: freeof(t_var, coef) evita capturar exp(-at)*u(t) como k*u(t) */
 FT_match_u(expr, t_var) := block(
-    [e, u_part, coef, res],
+    [e, u_part, coef, res, u_arg, u_coef],
     e: expand(expr),
     res: false,
     if not atom(e) then (
-        if is(op(e) = 'u) and part(e,1) = t_var
-        then res: [1]
+        if is(op(e) = 'u) then (
+            u_arg: part(e, 1),
+            u_coef: ratsimp(u_arg / t_var),
+            if freeof(t_var, u_coef) and is(u_coef > 0)
+            then res: [1]
+        )
         else if is(op(e) = "*") then (
             u_part: false,
             coef: 1,
             for s in args(e) do (
-                if not atom(s) and is(op(s) = 'u) and part(s,1) = t_var
-                then u_part: s
+                if not atom(s) and is(op(s) = 'u) then (
+                    u_arg: part(s, 1),
+                    u_coef: ratsimp(u_arg / t_var),
+                    if freeof(t_var, u_coef) and is(u_coef > 0)
+                    then u_part: s
+                    else coef: coef * s
+                )
                 else coef: coef * s
             ),
             if is(u_part # false) and freeof(t_var, coef) then res: [coef]
+        )
+        else if is(op(e) = "/") then (
+            if not atom(part(e,1)) and is(op(part(e,1)) = 'u) then (
+                u_arg: part(part(e,1), 1),
+                u_coef: ratsimp(u_arg / t_var),
+                if freeof(t_var, u_coef) and is(u_coef > 0)
+                then res: [1/part(e,2)]
+            )
+            else if not atom(part(e,1)) and is(op(part(e,1)) = "*") then block(
+                [num_e],
+                num_e: part(e,1),
+                u_part: false,
+                coef: 1,
+                for s in args(num_e) do (
+                    if not atom(s) and is(op(s) = 'u) then (
+                        u_arg: part(s, 1),
+                        u_coef: ratsimp(u_arg / t_var),
+                        if freeof(t_var, u_coef) and is(u_coef > 0)
+                        then u_part: s
+                        else coef: coef * s
+                    )
+                    else coef: coef * s
+                ),
+                if is(u_part # false) and freeof(t_var, coef)
+                then res: [coef/part(e,2)]
+            )
         )
     ),
     res
