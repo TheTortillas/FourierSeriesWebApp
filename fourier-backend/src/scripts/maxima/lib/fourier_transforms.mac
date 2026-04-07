@@ -83,14 +83,19 @@ FT_declare_params(expr, reserved) := block(
 
 /* Extrae a de delta(t-a). Devuelve 0 si delta(t), false si no es delta */
 FT_delta_shift(expr, t_var) := block(
-    [arg, res],
+    [arg, res, coef_t, shift],
     res: false,
     if not atom(expr) then (
         if is(op(expr) = 'delta) then (
             arg: part(expr, 1),
-            if arg = t_var
-            then res: 0
-            else res: ratsimp(t_var - arg)
+            /* extrae coeficiente de t_var y termino independiente */
+            coef_t: ratsimp(diff(arg, t_var)),
+            shift: ratsimp(subst(t_var=0, arg)),
+            if freeof(t_var, coef_t) and freeof(t_var, shift)
+               and not equal(coef_t, 0) then
+                /* delta(a*t - b) = delta(t - b/a)/|a|
+                   devuelve [shift/coef_t, |coef_t|] */
+                res: [-shift/coef_t, abs(coef_t)]
         )
     ),
     res
@@ -104,7 +109,7 @@ FT_match_delta(expr, t_var) := block(
     if not atom(e) then (
         sh: FT_delta_shift(e, t_var),
         if is(sh # false)
-        then res: [1, sh]
+        then res: [1/sh[2], sh[1]]  /* [k=1/|a|, shift=b/a] */
         else if is(op(e) = "*") then (
             delta_part: false,
             coef: 1,
@@ -115,7 +120,7 @@ FT_match_delta(expr, t_var) := block(
             ),
             if is(delta_part # false) then (
                 sh2: FT_delta_shift(delta_part, t_var),
-                if is(sh2 # false) then res: [coef, sh2]
+                if is(sh2 # false) then res: [coef/sh2[2], sh2[1]]
             )
         )
         else if is(op(e) = "/") or is(op(e) = "-") then (
@@ -128,7 +133,7 @@ FT_match_delta(expr, t_var) := block(
             if freeof('delta, den_e) and not freeof('delta, num_e) then (
                 sh: FT_delta_shift(num_e, t_var),
                 if is(sh # false)
-                then res: [1/den_e, sh]
+                then res: [1/(den_e*sh[2]), sh[1]]
                 else if not atom(num_e) and is(op(num_e) = "*") then (
                     delta_part: false,
                     coef: 1,
@@ -139,7 +144,7 @@ FT_match_delta(expr, t_var) := block(
                     ),
                     if is(delta_part # false) then (
                         sh2: FT_delta_shift(delta_part, t_var),
-                        if is(sh2 # false) then res: [coef/den_e, sh2]
+                        if is(sh2 # false) then res: [coef/(den_e*sh2[2]), sh2[1]]
                     )
                 )
             )
