@@ -83,14 +83,19 @@ FT_declare_params(expr, reserved) := block(
 
 /* Extrae a de delta(t-a). Devuelve 0 si delta(t), false si no es delta */
 FT_delta_shift(expr, t_var) := block(
-    [arg, res],
+    [arg, res, coef_t, shift],
     res: false,
     if not atom(expr) then (
         if is(op(expr) = 'delta) then (
             arg: part(expr, 1),
-            if arg = t_var
-            then res: 0
-            else res: ratsimp(t_var - arg)
+            /* extrae coeficiente de t_var y termino independiente */
+            coef_t: ratsimp(diff(arg, t_var)),
+            shift: ratsimp(subst(t_var=0, arg)),
+            if freeof(t_var, coef_t) and freeof(t_var, shift)
+               and not equal(coef_t, 0) then
+                /* delta(a*t - b) = delta(t - b/a)/|a|
+                   devuelve [shift/coef_t, |coef_t|] */
+                res: [-shift/coef_t, abs(coef_t)]
         )
     ),
     res
@@ -104,7 +109,7 @@ FT_match_delta(expr, t_var) := block(
     if not atom(e) then (
         sh: FT_delta_shift(e, t_var),
         if is(sh # false)
-        then res: [1, sh]
+        then res: [1/sh[2], sh[1]]  /* [k=1/|a|, shift=b/a] */
         else if is(op(e) = "*") then (
             delta_part: false,
             coef: 1,
@@ -115,7 +120,7 @@ FT_match_delta(expr, t_var) := block(
             ),
             if is(delta_part # false) then (
                 sh2: FT_delta_shift(delta_part, t_var),
-                if is(sh2 # false) then res: [coef, sh2]
+                if is(sh2 # false) then res: [coef/sh2[2], sh2[1]]
             )
         )
         else if is(op(e) = "/") or is(op(e) = "-") then (
@@ -128,7 +133,7 @@ FT_match_delta(expr, t_var) := block(
             if freeof('delta, den_e) and not freeof('delta, num_e) then (
                 sh: FT_delta_shift(num_e, t_var),
                 if is(sh # false)
-                then res: [1/den_e, sh]
+                then res: [1/(den_e*sh[2]), sh[1]]
                 else if not atom(num_e) and is(op(num_e) = "*") then (
                     delta_part: false,
                     coef: 1,
@@ -139,7 +144,7 @@ FT_match_delta(expr, t_var) := block(
                     ),
                     if is(delta_part # false) then (
                         sh2: FT_delta_shift(delta_part, t_var),
-                        if is(sh2 # false) then res: [coef/den_e, sh2]
+                        if is(sh2 # false) then res: [coef/(den_e*sh2[2]), sh2[1]]
                     )
                 )
             )
@@ -151,21 +156,56 @@ FT_match_delta(expr, t_var) := block(
 /* Detecta k*u(t) con k constante en t_var. Devuelve [k] o false.
    NOTA: freeof(t_var, coef) evita capturar exp(-at)*u(t) como k*u(t) */
 FT_match_u(expr, t_var) := block(
-    [e, u_part, coef, res],
+    [e, u_part, coef, res, u_arg, u_coef],
     e: expand(expr),
     res: false,
     if not atom(e) then (
-        if is(op(e) = 'u) and part(e,1) = t_var
-        then res: [1]
+        if is(op(e) = 'u) then (
+            u_arg: part(e, 1),
+            u_coef: ratsimp(u_arg / t_var),
+            if freeof(t_var, u_coef) and is(u_coef > 0)
+            then res: [1]
+        )
         else if is(op(e) = "*") then (
             u_part: false,
             coef: 1,
             for s in args(e) do (
-                if not atom(s) and is(op(s) = 'u) and part(s,1) = t_var
-                then u_part: s
+                if not atom(s) and is(op(s) = 'u) then (
+                    u_arg: part(s, 1),
+                    u_coef: ratsimp(u_arg / t_var),
+                    if freeof(t_var, u_coef) and is(u_coef > 0)
+                    then u_part: s
+                    else coef: coef * s
+                )
                 else coef: coef * s
             ),
             if is(u_part # false) and freeof(t_var, coef) then res: [coef]
+        )
+        else if is(op(e) = "/") then (
+            if not atom(part(e,1)) and is(op(part(e,1)) = 'u) then (
+                u_arg: part(part(e,1), 1),
+                u_coef: ratsimp(u_arg / t_var),
+                if freeof(t_var, u_coef) and is(u_coef > 0)
+                then res: [1/part(e,2)]
+            )
+            else if not atom(part(e,1)) and is(op(part(e,1)) = "*") then block(
+                [num_e],
+                num_e: part(e,1),
+                u_part: false,
+                coef: 1,
+                for s in args(num_e) do (
+                    if not atom(s) and is(op(s) = 'u) then (
+                        u_arg: part(s, 1),
+                        u_coef: ratsimp(u_arg / t_var),
+                        if freeof(t_var, u_coef) and is(u_coef > 0)
+                        then u_part: s
+                        else coef: coef * s
+                    )
+                    else coef: coef * s
+                ),
+                if is(u_part # false) and freeof(t_var, coef)
+                then res: [coef/part(e,2)]
+            )
         )
     ),
     res
@@ -173,21 +213,56 @@ FT_match_u(expr, t_var) := block(
 
 /* Detecta k*sgn(t). Devuelve [k] o false */
 FT_match_sgn(expr, t_var) := block(
-    [e, sgn_part, coef, res],
+    [e, sgn_part, coef, res, sgn_arg, sgn_coef],
     e: expand(expr),
     res: false,
     if not atom(e) then (
-        if is(op(e) = 'sgn) and part(e,1) = t_var
-        then res: [1]
+        if is(op(e) = 'sgn) then (
+            /* detecta sgn(k*t) con k constante en t_var */
+            sgn_arg: part(e, 1),
+            sgn_coef: ratsimp(sgn_arg / t_var),
+            if freeof(t_var, sgn_coef) and sgn_coef # 0 then
+                res: [1]
+        )
         else if is(op(e) = "*") then (
             sgn_part: false,
             coef: 1,
             for s in args(e) do (
-                if not atom(s) and is(op(s) = 'sgn) and part(s,1) = t_var
-                then sgn_part: s
+                if not atom(s) and is(op(s) = 'sgn) then (
+                    sgn_arg: part(s, 1),
+                    sgn_coef: ratsimp(sgn_arg / t_var),
+                    if freeof(t_var, sgn_coef) and sgn_coef # 0
+                    then sgn_part: s
+                    else coef: coef * s
+                )
                 else coef: coef * s
             ),
             if is(sgn_part # false) then res: [coef]
+        )
+        else if is(op(e) = "/") then (
+            if not atom(part(e,1)) and is(op(part(e,1)) = 'sgn) then (
+                sgn_arg: part(part(e,1), 1),
+                sgn_coef: ratsimp(sgn_arg / t_var),
+                if freeof(t_var, sgn_coef) and sgn_coef # 0 then
+                    res: [1/part(e,2)]
+            )
+            else if not atom(part(e,1)) and is(op(part(e,1)) = "*") then block(
+                [num_e],
+                num_e: part(e,1),
+                sgn_part: false,
+                coef: 1,
+                for s in args(num_e) do (
+                    if not atom(s) and is(op(s) = 'sgn) then (
+                        sgn_arg: part(s, 1),
+                        sgn_coef: ratsimp(sgn_arg / t_var),
+                        if freeof(t_var, sgn_coef) and sgn_coef # 0
+                        then sgn_part: s
+                        else coef: coef * s
+                    )
+                    else coef: coef * s
+                ),
+                if is(sgn_part # false) then res: [coef/part(e,2)]
+            )
         )
     ),
     res
@@ -463,35 +538,37 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
 
     /* ── k*sin(at)/(pi*t) -> k*(u(w+a)-u(w-a))  (a > 0) ── */
     if is(res = false) then block(
-        [num_s, den_s, sin_arg, aa, kk],
-        /* detecta forma k*sin(at)/(pi*t) — op="/" con numerador que contiene sin */
+        [num_s, den_s, sin_part, kk2, sin_arg, aa, den_coef],
+
         if not atom(e) and is(op(e) = "/") then (
             num_s: expand(part(e, 1)),
             den_s: expand(part(e, 2)),
-            /* denominador debe ser pi*t o t*pi */
-            if ratsimp(den_s - %pi*t_var) = 0 then (
-                /* numerador: k*sin(at) o sin(at) */
+            /* denominador debe ser k*pi*t — extraer coeficiente */
+            den_coef: ratsimp(den_s / (%pi * t_var)),
+            if freeof(t_var, den_coef) and is(den_coef > 0) then (
+                /* numerador: sin(at) o k*sin(at) */
                 if not atom(num_s) and is(op(num_s) = 'sin) then (
                     sin_arg: part(num_s, 1),
                     aa: ratsimp(sin_arg / t_var),
                     if freeof(t_var, aa) and is(aa > 0) then
-                        res: [u(w_var + aa) - u(w_var - aa),
-                            concat("sin(at)/(pi*t) -> u(w+a)-u(w-a), a=", string(aa))]
+                        res: [(1/den_coef) * (u(w_var + aa) - u(w_var - aa)),
+                            concat("sin(at)/(k*pi*t) -> (1/k)*(u(w+a)-u(w-a)), a=",
+                                    string(aa), ", k=", string(den_coef))]
                 ) else if not atom(num_s) and is(op(num_s) = "*") then block(
-                    [sin_part, kk2],
-                    sin_part: false,
-                    kk2: 1,
+                    [sin_part2, kk3],
+                    sin_part2: false,
+                    kk3: 1,
                     for s in args(num_s) do (
                         if not atom(s) and is(op(s) = 'sin)
-                        then sin_part: s
-                        else kk2: kk2 * s
+                        then sin_part2: s
+                        else kk3: kk3 * s
                     ),
-                    if is(sin_part # false) then (
-                        sin_arg: part(sin_part, 1),
+                    if is(sin_part2 # false) then (
+                        sin_arg: part(sin_part2, 1),
                         aa: ratsimp(sin_arg / t_var),
                         if freeof(t_var, aa) and is(aa > 0) then
-                            res: [kk2 * (u(w_var + aa) - u(w_var - aa)),
-                                concat("k*sin(at)/(pi*t) -> k*(u(w+a)-u(w-a)), a=",
+                            res: [(kk3/den_coef) * (u(w_var + aa) - u(w_var - aa)),
+                                concat("k*sin(at)/(n*pi*t) -> (k/n)*(u(w+a)-u(w-a)), a=",
                                         string(aa))]
                     )
                 )
@@ -525,7 +602,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                and is(trig_part = false) then (
                 exp_arg: part(exp_part, 2),
                 aa: ratsimp(exp_arg / (-t_var)),
-                if freeof(t_var, aa) and is(aa > 0) then
+                if freeof(t_var, coef_k) and freeof(t_var, aa) and is(aa > 0) then
                     res: [coef_k / (%i*w_var + aa),
                           concat("k*exp(-at)*u(t) -> k/(iw+a), a=", string(aa))]
             )
@@ -556,7 +633,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 aa: ratsimp(exp_arg / (-t_var)),
                 cos_arg: part(cos_part, 1),
                 bb: ratsimp(cos_arg / t_var),
-                if freeof(t_var, aa) and freeof(t_var, bb)
+                if freeof(t_var, coef_k) and freeof(t_var, aa) and freeof(t_var, bb)
                    and is(aa > 0) and is(bb > 0) then
                     res: [coef_k * (%i*w_var + aa) / ((%i*w_var + aa)^2 + bb^2),
                           concat("k*exp(-at)*cos(bt)*u(t) -> k*(iw+a)/((iw+a)^2+b^2), a=",
@@ -589,7 +666,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 aa: ratsimp(exp_arg / (-t_var)),
                 sin_arg: part(sin_part, 1),
                 bb: ratsimp(sin_arg / t_var),
-                if freeof(t_var, aa) and freeof(t_var, bb)
+                if freeof(t_var, coef_k) and freeof(t_var, aa) and freeof(t_var, bb)
                    and is(aa > 0) and is(bb > 0) then
                     res: [coef_k * bb / ((%i*w_var + aa)^2 + bb^2),
                           concat("k*exp(-at)*sin(bt)*u(t) -> k*b/((iw+a)^2+b^2), a=",
@@ -897,10 +974,16 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
-    /* ── 1/(iw) -> sgn(t)/2 ── */
-    if is(res = false) then (
-        if ratsimp(e - 1/(%i*w_var)) = 0 then
-            res: [sgn(t_var)/2, "1/(iw) -> sgn(t)/2"]
+    /* ── k/(iw) -> k*sgn(t)/2 ── */
+    if is(res = false) then block(
+        [coef_sgn],
+        coef_sgn: errcatch(ratsimp(e * %i * w_var)),
+        if coef_sgn # [] then (
+            coef_sgn: first(coef_sgn),
+            if freeof(w_var, coef_sgn) and coef_sgn # 0 then
+                res: [coef_sgn * sgn(t_var) / 2,
+                    concat("k/(iw) -> k*sgn(t)/2, k=", string(coef_sgn))]
+        )
     ),
 
     /* ── exp(-i*w*t0) -> delta(t-t0)  y  exp(+i*w*t0) -> delta(t+t0) ──
@@ -965,6 +1048,72 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             ),
             if has_delta and has_iw then
                 res: [u(t_var), "pi*delta(w)+1/(iw) -> u(t)"]
+        )
+    ),
+
+   /* ── IFT de sin(w0t)*u(t) y cos(w0t)*u(t) ──
+   sin: k/(w0^2-w^2) + c*(delta(w-w0)-delta(w+w0)) con k=w0, c=-i*pi/2
+   cos: i*w/(w0^2-w^2) + c*(delta(w-w0)+delta(w+w0)) con c=pi/2       */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "+") then block(
+            [terms, delta_terms, rat_terms,
+            rat, denom_r, c2r, c0r, w0_r,
+            dm1, dm2, k1, a1, k2, a2, w0_d,
+            num_r, c1n, c0n, k_rat],
+            terms: args(e),
+            delta_terms: [],
+            rat_terms: [],
+            for term in terms do (
+                if not freeof('delta, term)
+                then delta_terms: append(delta_terms, [term])
+                else rat_terms: append(rat_terms, [term])
+            ),
+            if length(delta_terms) = 2 and length(rat_terms) = 1 then (
+                rat: rat_terms[1],
+                if not atom(rat) and is(op(rat) = "/") then (
+                    denom_r: rat(expand(part(rat, 2))),
+                    c2r: ratsimp(coeff(denom_r, w_var, 2)),
+                    c0r: ratsimp(subst(w_var=0, denom_r)),
+                    if is(c2r < 0) and is(c0r > 0) then (
+                        w0_r: sqrt(ratsimp(c0r / (-c2r))),
+                        dm1: FT_match_delta(delta_terms[1], w_var),
+                        dm2: FT_match_delta(delta_terms[2], w_var),
+                        if is(dm1 # false) and is(dm2 # false) then (
+                            k1: dm1[1],  a1: dm1[2],
+                            k2: dm2[1],  a2: dm2[2],
+                            if ratsimp(a1 + a2) = 0 then (
+                                w0_d: abs(a1),
+                                if ratsimp(w0_d - w0_r) = 0 then (
+                                    num_r: rat(expand(part(rat, 1))),
+                                    c1n: ratsimp(diff(num_r, w_var)),
+                                    c0n: ratsimp(subst(w_var=0, num_r)),
+
+                                    /* ── patron sin: numerador constante k=w0 ── */
+                                    if freeof(w_var, num_r) then (
+                                        k_rat: ratsimp(num_r / (-c2r)),
+                                        if ratsimp(k_rat - w0_r) = 0
+                                        and ratsimp(k1 + k2) = 0 then
+                                            res: [sin(w0_r*t_var)*u(t_var),
+                                                concat("sin(w0t)*u(t) round-trip, w0=",
+                                                        string(w0_r))]
+                                    ),
+
+                                    /* ── patron cos: numerador i*w ── */
+                                    if is(res = false) then (
+                                        if ratsimp(c1n - %i) = 0
+                                        and ratsimp(c0n) = 0
+                                        and ratsimp(k1 - k2) = 0
+                                        and ratsimp(k1 - %pi/2) = 0 then
+                                            res: [cos(w0_r*t_var)*u(t_var),
+                                                concat("cos(w0t)*u(t) round-trip, w0=",
+                                                        string(w0_r))]
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
         )
     ),
 
