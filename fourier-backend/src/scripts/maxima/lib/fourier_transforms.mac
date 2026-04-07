@@ -538,35 +538,37 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
 
     /* ── k*sin(at)/(pi*t) -> k*(u(w+a)-u(w-a))  (a > 0) ── */
     if is(res = false) then block(
-        [num_s, den_s, sin_arg, aa, kk],
-        /* detecta forma k*sin(at)/(pi*t) — op="/" con numerador que contiene sin */
+        [num_s, den_s, sin_part, kk2, sin_arg, aa, den_coef],
+
         if not atom(e) and is(op(e) = "/") then (
             num_s: expand(part(e, 1)),
             den_s: expand(part(e, 2)),
-            /* denominador debe ser pi*t o t*pi */
-            if ratsimp(den_s - %pi*t_var) = 0 then (
-                /* numerador: k*sin(at) o sin(at) */
+            /* denominador debe ser k*pi*t — extraer coeficiente */
+            den_coef: ratsimp(den_s / (%pi * t_var)),
+            if freeof(t_var, den_coef) and is(den_coef > 0) then (
+                /* numerador: sin(at) o k*sin(at) */
                 if not atom(num_s) and is(op(num_s) = 'sin) then (
                     sin_arg: part(num_s, 1),
                     aa: ratsimp(sin_arg / t_var),
                     if freeof(t_var, aa) and is(aa > 0) then
-                        res: [u(w_var + aa) - u(w_var - aa),
-                            concat("sin(at)/(pi*t) -> u(w+a)-u(w-a), a=", string(aa))]
+                        res: [(1/den_coef) * (u(w_var + aa) - u(w_var - aa)),
+                            concat("sin(at)/(k*pi*t) -> (1/k)*(u(w+a)-u(w-a)), a=",
+                                    string(aa), ", k=", string(den_coef))]
                 ) else if not atom(num_s) and is(op(num_s) = "*") then block(
-                    [sin_part, kk2],
-                    sin_part: false,
-                    kk2: 1,
+                    [sin_part2, kk3],
+                    sin_part2: false,
+                    kk3: 1,
                     for s in args(num_s) do (
                         if not atom(s) and is(op(s) = 'sin)
-                        then sin_part: s
-                        else kk2: kk2 * s
+                        then sin_part2: s
+                        else kk3: kk3 * s
                     ),
-                    if is(sin_part # false) then (
-                        sin_arg: part(sin_part, 1),
+                    if is(sin_part2 # false) then (
+                        sin_arg: part(sin_part2, 1),
                         aa: ratsimp(sin_arg / t_var),
                         if freeof(t_var, aa) and is(aa > 0) then
-                            res: [kk2 * (u(w_var + aa) - u(w_var - aa)),
-                                concat("k*sin(at)/(pi*t) -> k*(u(w+a)-u(w-a)), a=",
+                            res: [(kk3/den_coef) * (u(w_var + aa) - u(w_var - aa)),
+                                concat("k*sin(at)/(n*pi*t) -> (k/n)*(u(w+a)-u(w-a)), a=",
                                         string(aa))]
                     )
                 )
