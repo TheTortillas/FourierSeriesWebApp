@@ -173,35 +173,52 @@ FT_match_u(expr, t_var) := block(
 
 /* Detecta k*sgn(t). Devuelve [k] o false */
 FT_match_sgn(expr, t_var) := block(
-    [e, sgn_part, coef, res],
+    [e, sgn_part, coef, res, sgn_arg, sgn_coef],
     e: expand(expr),
     res: false,
     if not atom(e) then (
-        if is(op(e) = 'sgn) and part(e,1) = t_var
-        then res: [1]
+        if is(op(e) = 'sgn) then (
+            /* detecta sgn(k*t) con k constante en t_var */
+            sgn_arg: part(e, 1),
+            sgn_coef: ratsimp(sgn_arg / t_var),
+            if freeof(t_var, sgn_coef) and sgn_coef # 0 then
+                res: [1]
+        )
         else if is(op(e) = "*") then (
             sgn_part: false,
             coef: 1,
             for s in args(e) do (
-                if not atom(s) and is(op(s) = 'sgn) and part(s,1) = t_var
-                then sgn_part: s
+                if not atom(s) and is(op(s) = 'sgn) then (
+                    sgn_arg: part(s, 1),
+                    sgn_coef: ratsimp(sgn_arg / t_var),
+                    if freeof(t_var, sgn_coef) and sgn_coef # 0
+                    then sgn_part: s
+                    else coef: coef * s
+                )
                 else coef: coef * s
             ),
             if is(sgn_part # false) then res: [coef]
         )
-        /* caso op="/" con sgn en numerador: k*sgn(t)/n */
         else if is(op(e) = "/") then (
-            if not atom(part(e,1)) and is(op(part(e,1)) = 'sgn)
-               and part(part(e,1),1) = t_var then
-                res: [1/part(e,2)]
+            if not atom(part(e,1)) and is(op(part(e,1)) = 'sgn) then (
+                sgn_arg: part(part(e,1), 1),
+                sgn_coef: ratsimp(sgn_arg / t_var),
+                if freeof(t_var, sgn_coef) and sgn_coef # 0 then
+                    res: [1/part(e,2)]
+            )
             else if not atom(part(e,1)) and is(op(part(e,1)) = "*") then block(
                 [num_e],
                 num_e: part(e,1),
                 sgn_part: false,
                 coef: 1,
                 for s in args(num_e) do (
-                    if not atom(s) and is(op(s) = 'sgn) and part(s,1) = t_var
-                    then sgn_part: s
+                    if not atom(s) and is(op(s) = 'sgn) then (
+                        sgn_arg: part(s, 1),
+                        sgn_coef: ratsimp(sgn_arg / t_var),
+                        if freeof(t_var, sgn_coef) and sgn_coef # 0
+                        then sgn_part: s
+                        else coef: coef * s
+                    )
                     else coef: coef * s
                 ),
                 if is(sgn_part # false) then res: [coef/part(e,2)]
