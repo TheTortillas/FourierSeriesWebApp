@@ -35,34 +35,55 @@ router.post("/latex", (req: Request, res: Response) => {
   res.json(result);
 });
 
+function validatePairs(raw: unknown, fieldName: string): Array<{ a: string; b: string }> {
+  if (!Array.isArray(raw) || raw.length > 10) {
+    throw new Error(`${fieldName} must be an array (max 10)`);
+  }
+  return (raw as unknown[]).map((p) => {
+    if (typeof p !== "object" || p === null) throw new Error("invalid pair");
+    const { a, b } = p as { a: unknown; b: unknown };
+    if (typeof a !== "string" || typeof b !== "string") throw new Error("invalid pair");
+    if (a.length > 300 || b.length > 300) throw new Error("expression too long");
+    return { a: a.trim(), b: b.trim() };
+  });
+}
+
 /**
  * POST /api/parse/compare
  *
- * Symbolically compares pairs of Maxima expressions via ratsimp(a - b) = 0.
- * Used for real-time interval continuity validation in the UI.
+ * Symbolically validates interval pairs via Maxima. Accepts two optional arrays
+ * in a single request to minimise round-trips:
+ *   - pairs      → ratsimp(a-b)=0   → continuity check between adjacent segments
+ *   - orderPairs → is(a < b)        → from < to check per segment
  *
- * Body: { pairs: Array<{ a: string, b: string }> }
- * Response: { results: Array<'equal' | 'different' | 'unknown'> }
+ * Body: { pairs?: Array<{a,b}>, orderPairs?: Array<{a,b}> }
+ * Response: { results?: [...'equal'|'different'|'unknown'], orderResults?: [...'valid'|'invalid'|'unknown'] }
  */
 router.post("/compare", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { pairs } = req.body as { pairs?: unknown };
+    const body = req.body as { pairs?: unknown; orderPairs?: unknown };
+    const hasPairs = Array.isArray(body.pairs) && (body.pairs as unknown[]).length > 0;
+    const hasOrderPairs = Array.isArray(body.orderPairs) && (body.orderPairs as unknown[]).length > 0;
 
-    if (!Array.isArray(pairs) || pairs.length === 0 || pairs.length > 10) {
-      res.status(400).json({ ok: false, error: "pairs must be a non-empty array (max 10)" });
+    if (!hasPairs && !hasOrderPairs) {
+      res.status(400).json({ ok: false, error: "At least one of 'pairs' or 'orderPairs' must be provided" });
       return;
     }
 
-    const validated = (pairs as unknown[]).map((p) => {
-      if (typeof p !== "object" || p === null) throw new Error("invalid pair");
-      const { a, b } = p as { a: unknown; b: unknown };
-      if (typeof a !== "string" || typeof b !== "string") throw new Error("invalid pair");
-      if (a.length > 300 || b.length > 300) throw new Error("expression too long");
-      return { a: a.trim(), b: b.trim() };
-    });
+    const [validatedPairs, validatedOrderPairs] = [
+      hasPairs ? validatePairs(body.pairs, "pairs") : [],
+      hasOrderPairs ? validatePairs(body.orderPairs, "orderPairs") : [],
+    ];
 
-    const results = await auxiliaryService.compareExpressions(validated);
-    res.json({ results });
+    const [results, orderResults] = await Promise.all([
+      hasPairs ? auxiliaryService.compareExpressions(validatedPairs) : Promise.resolve([]),
+      hasOrderPairs ? auxiliaryService.checkOrders(validatedOrderPairs) : Promise.resolve([]),
+    ]);
+
+    res.json({
+      ...(hasPairs && { results }),
+      ...(hasOrderPairs && { orderResults }),
+    });
   } catch (err) {
     next(err);
   }
