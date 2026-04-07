@@ -242,6 +242,10 @@ block(
     print(string(term_real)),
     print("__REAL_TEX__"),
     tex(term_real),
+    print("__CN_RE_MAXIMA__"),
+    print(string(ratsimp(realpart(cn_val)))),
+    print("__CN_IM_MAXIMA__"),
+    print(string(ratsimp(imagpart(cn_val)))),
     print("__COS_FLOAT__"),
     print(string(cos_coeff)),
     print("__SIN_FLOAT__"),
@@ -304,6 +308,10 @@ kill(all)$
       const realTex = this.extractTex(
         this.extractBetween(block, "__REAL_TEX__", "__COS_FLOAT__"),
       );
+      const cnReMaxima = this.extractBetween(block, "__CN_RE_MAXIMA__", "__CN_IM_MAXIMA__")
+        .replace(/false/g, "").trim();
+      const cnImMaxima = this.extractBetween(block, "__CN_IM_MAXIMA__", "__COS_FLOAT__")
+        .replace(/false/g, "").trim();
       const cosFloatStr = this.extractBetween(
         block,
         "__COS_FLOAT__",
@@ -347,6 +355,8 @@ kill(all)$
           tex: cnNegTex,
         },
         real: { maxima: realMaxima.replace(/false/g, "").trim(), tex: realTex },
+        cnRe: cnReMaxima,
+        cnIm: cnImMaxima,
         cosFloat: this.parseNumeric(cosFloatStr, 0),
         sinFloat: this.parseNumeric(sinFloatStr, 0),
         amplitude: this.parseNumeric(amplitudeStr, 0),

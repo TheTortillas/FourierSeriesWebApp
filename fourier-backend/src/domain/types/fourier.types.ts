@@ -161,6 +161,8 @@ export interface ComplexTerm {
   cn: SymbolicExpression;
   cnNeg: SymbolicExpression;
   real: SymbolicExpression;
+  cnRe: string; // Re(cn) as symbolic Maxima expression, free of %i
+  cnIm: string; // Im(cn) as symbolic Maxima expression, free of %i
   cosFloat: number;
   sinFloat: number;
   amplitude: number;

@@ -105,6 +105,8 @@ export interface ComplexTerm {
   cn: SymbolicExpression;
   cnNeg: SymbolicExpression;
   real: SymbolicExpression;
+  cnRe?: string; // Re(cn) as symbolic Maxima expression, free of %i
+  cnIm?: string; // Im(cn) as symbolic Maxima expression, free of %i
   cosFloat: number; // coefficient for cos(n·w0·x) in the real reconstruction
   sinFloat: number; // coefficient for sin(n·w0·x) in the real reconstruction
   amplitude: number; // |cₙ| for spectrum display
