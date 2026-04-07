@@ -60,6 +60,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   readonly error = input<string | null>(null);
   readonly continuityError = input<string | null>(null);
   readonly prevContinuityError = input<string | null>(null);
+  readonly orderError = input<boolean>(false);
 
   readonly updated = output<{ id: string; changes: Partial<TransformSegmentDraft> }>();
   readonly removed = output<string>();

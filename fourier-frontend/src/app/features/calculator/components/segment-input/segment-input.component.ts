@@ -51,6 +51,8 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   readonly continuityError = input<string | null>(null);
   /** Truthy when the previous segment has a gap with this one — highlights the `from` field. */
   readonly prevContinuityError = input<string | null>(null);
+  /** Truthy when from >= to (definitively invalid, symbolic intervals are 'unknown' and ignored). */
+  readonly orderError = input<boolean>(false);
 
   showKeyboard = false;
   focusedFieldIdx: 0 | 1 | 2 = 0;

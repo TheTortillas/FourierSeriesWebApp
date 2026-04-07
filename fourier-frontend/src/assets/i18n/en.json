@@ -70,7 +70,8 @@
       "fromRequired": "Lower bound required",
       "toRequired": "Upper bound required",
       "continuityGap": "End does not match the start of the next segment",
-      "continuityWarning": "Segment boundaries are not continuous — check the intervals"
+      "continuityWarning": "Segment boundaries are not continuous — check the intervals",
+      "orderError": "Inverted interval — the start must be less than the end"
     },
     "types": {
       "trigonometric": "Trigonometric",

@@ -170,13 +170,17 @@ export class ApiService {
     );
   }
 
-  compareIntervals(
-    pairs: Array<{ a: string; b: string }>,
-  ): Observable<{ results: Array<'equal' | 'different' | 'unknown'> }> {
-    return this.http.post<{ results: Array<'equal' | 'different' | 'unknown'> }>(
-      `${this.base}/parse/compare`,
-      { pairs },
-    );
+  compareIntervals(body: {
+    pairs?: Array<{ a: string; b: string }>;
+    orderPairs?: Array<{ a: string; b: string }>;
+  }): Observable<{
+    results?: Array<'equal' | 'different' | 'unknown'>;
+    orderResults?: Array<'valid' | 'invalid' | 'unknown'>;
+  }> {
+    return this.http.post<{
+      results?: Array<'equal' | 'different' | 'unknown'>;
+      orderResults?: Array<'valid' | 'invalid' | 'unknown'>;
+    }>(`${this.base}/parse/compare`, body);
   }
 
   // ─── Simplify ────────────────────────────────────────────────────────────

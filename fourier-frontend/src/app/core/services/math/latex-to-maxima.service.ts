@@ -40,15 +40,31 @@ export class LatexToMaximaService {
     );
   }
 
-  /** Symbolically compare multiple boundary pairs via the backend.
-   *  Pairs must be in Maxima syntax (the stored `.from`/`.to` values). */
-  compareIntervals(
-    pairs: Array<{ a: string; b: string }>,
-  ): Observable<Array<'equal' | 'different' | 'unknown'>> {
-    if (pairs.length === 0) return of([]);
-    return this.api.compareIntervals(pairs).pipe(
-      map((r) => r.results),
-      catchError(() => of(pairs.map(() => 'unknown' as const))),
+  /** Validates segment boundaries via a single backend call.
+   *  - `pairs`      → continuity: ratsimp(a-b)=0 between adjacent segments
+   *  - `orderPairs` → order: is(from < to) per segment (unknown = symbolic, ignored)
+   *  All expressions must be in Maxima syntax. */
+  validateBoundaries(body: {
+    pairs?: Array<{ a: string; b: string }>;
+    orderPairs?: Array<{ a: string; b: string }>;
+  }): Observable<{
+    results: Array<'equal' | 'different' | 'unknown'>;
+    orderResults: Array<'valid' | 'invalid' | 'unknown'>;
+  }> {
+    const hasPairs = (body.pairs?.length ?? 0) > 0;
+    const hasOrder = (body.orderPairs?.length ?? 0) > 0;
+    if (!hasPairs && !hasOrder) {
+      return of({ results: [], orderResults: [] });
+    }
+    return this.api.compareIntervals(body).pipe(
+      map((r) => ({
+        results: r.results ?? [],
+        orderResults: r.orderResults ?? [],
+      })),
+      catchError(() => of({
+        results: (body.pairs ?? []).map(() => 'unknown' as const),
+        orderResults: (body.orderPairs ?? []).map(() => 'unknown' as const),
+      })),
     );
   }
 }

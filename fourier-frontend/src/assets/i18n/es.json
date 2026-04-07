@@ -70,7 +70,8 @@
       "fromRequired": "Límite inferior requerido",
       "toRequired": "Límite superior requerido",
       "continuityGap": "El final no coincide con el inicio del siguiente tramo",
-      "continuityWarning": "Los límites de los tramos no son continuos — revisa los intervalos"
+      "continuityWarning": "Los límites de los tramos no son continuos — revisa los intervalos",
+      "orderError": "El intervalo está invertido — el inicio debe ser menor que el final"
     },
     "types": {
       "trigonometric": "Trigonométrica",

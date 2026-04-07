@@ -49,7 +49,7 @@
     <!-- From -->
     <div class="w-24 shrink-0" (focusin)="focusedFieldIdx = 1">
       <label class="block text-[10px] text-muted font-mono mb-0.5">{{ 'calculator.segment.from' | transloco }}</label>
-      <div [class]="wrapClass(false, !!prevContinuityError())" (click)="focusField(1)">
+      <div [class]="wrapClass(orderError(), !!prevContinuityError())" (click)="focusField(1)">
         <div #mqFrom></div>
       </div>
       @if (conversionErrors[1]) {
@@ -60,7 +60,7 @@
     <!-- To -->
     <div class="w-24 shrink-0" (focusin)="focusedFieldIdx = 2">
       <label class="block text-[10px] text-muted font-mono mb-0.5">{{ 'calculator.segment.to' | transloco }}</label>
-      <div [class]="wrapClass(false, !!continuityError())" (click)="focusField(2)">
+      <div [class]="wrapClass(orderError(), !!continuityError())" (click)="focusField(2)">
         <div #mqTo></div>
       </div>
       @if (conversionErrors[2]) {
