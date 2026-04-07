@@ -1051,6 +1051,72 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+   /* ── IFT de sin(w0t)*u(t) y cos(w0t)*u(t) ──
+   sin: k/(w0^2-w^2) + c*(delta(w-w0)-delta(w+w0)) con k=w0, c=-i*pi/2
+   cos: i*w/(w0^2-w^2) + c*(delta(w-w0)+delta(w+w0)) con c=pi/2       */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "+") then block(
+            [terms, delta_terms, rat_terms,
+            rat, denom_r, c2r, c0r, w0_r,
+            dm1, dm2, k1, a1, k2, a2, w0_d,
+            num_r, c1n, c0n, k_rat],
+            terms: args(e),
+            delta_terms: [],
+            rat_terms: [],
+            for term in terms do (
+                if not freeof('delta, term)
+                then delta_terms: append(delta_terms, [term])
+                else rat_terms: append(rat_terms, [term])
+            ),
+            if length(delta_terms) = 2 and length(rat_terms) = 1 then (
+                rat: rat_terms[1],
+                if not atom(rat) and is(op(rat) = "/") then (
+                    denom_r: rat(expand(part(rat, 2))),
+                    c2r: ratsimp(coeff(denom_r, w_var, 2)),
+                    c0r: ratsimp(subst(w_var=0, denom_r)),
+                    if is(c2r < 0) and is(c0r > 0) then (
+                        w0_r: sqrt(ratsimp(c0r / (-c2r))),
+                        dm1: FT_match_delta(delta_terms[1], w_var),
+                        dm2: FT_match_delta(delta_terms[2], w_var),
+                        if is(dm1 # false) and is(dm2 # false) then (
+                            k1: dm1[1],  a1: dm1[2],
+                            k2: dm2[1],  a2: dm2[2],
+                            if ratsimp(a1 + a2) = 0 then (
+                                w0_d: abs(a1),
+                                if ratsimp(w0_d - w0_r) = 0 then (
+                                    num_r: rat(expand(part(rat, 1))),
+                                    c1n: ratsimp(diff(num_r, w_var)),
+                                    c0n: ratsimp(subst(w_var=0, num_r)),
+
+                                    /* ── patron sin: numerador constante k=w0 ── */
+                                    if freeof(w_var, num_r) then (
+                                        k_rat: ratsimp(num_r / (-c2r)),
+                                        if ratsimp(k_rat - w0_r) = 0
+                                        and ratsimp(k1 + k2) = 0 then
+                                            res: [sin(w0_r*t_var)*u(t_var),
+                                                concat("sin(w0t)*u(t) round-trip, w0=",
+                                                        string(w0_r))]
+                                    ),
+
+                                    /* ── patron cos: numerador i*w ── */
+                                    if is(res = false) then (
+                                        if ratsimp(c1n - %i) = 0
+                                        and ratsimp(c0n) = 0
+                                        and ratsimp(k1 - k2) = 0
+                                        and ratsimp(k1 - %pi/2) = 0 then
+                                            res: [cos(w0_r*t_var)*u(t_var),
+                                                concat("cos(w0t)*u(t) round-trip, w0=",
+                                                        string(w0_r))]
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── k/(iw+a) -> k*e^{-at}*u(t)  (a > 0) ── */
     if is(res = false) then (
         if not atom(er) and is(op(er) = "/") then block(
