@@ -18,7 +18,6 @@
     "copied": "Copied",
     "copiedMessage": "Copied to clipboard"
   },
-
   "nav": {
     "fourierAnalysis": "Fourier Analysis",
     "series": "Fourier Series",
@@ -35,7 +34,6 @@
     "tagline": "By Sebastián Morales Palacios",
     "footerText": "Mathematical analysis tool"
   },
-
   "home": {
     "subtitle": "Calculate, visualize and analyze Fourier Series and Transforms with exact symbolic expressions and real-time graphical reconstruction.",
     "series": {
@@ -48,7 +46,6 @@
       "badge": "Continuous active"
     }
   },
-
   "calculator": {
     "title": "Fourier Series",
     "subtitle": "Enter the piecewise-defined function and select the series type.",
@@ -69,9 +66,11 @@
       "removeTitle": "Remove piece",
       "keyboardTitle": "Math keyboard",
       "activeField": "Active: field {{ field }}",
-    "expressionRequired": "Expression required",
-    "fromRequired": "Lower bound required",
-    "toRequired": "Upper bound required"
+      "expressionRequired": "Expression required",
+      "fromRequired": "Lower bound required",
+      "toRequired": "Upper bound required",
+      "continuityGap": "End does not match the start of the next segment",
+      "continuityWarning": "Segment boundaries are not continuous — check the intervals"
     },
     "types": {
       "trigonometric": "Trigonometric",
@@ -87,7 +86,6 @@
     },
     "label": "Set up the function and press"
   },
-
   "settingsCanvas": {
     "layersToShow": "Layers to show",
     "nTerms": "Number of terms",
@@ -117,7 +115,6 @@
     "tabSpectrum": "Spectrum",
     "tabValidation": "Validation"
   },
-
   "resultPanel": {
     "sine": "Sine",
     "cosine": "Cosine",
@@ -147,12 +144,10 @@
       "fuera_de_dominio": "Out of domain"
     }
   },
-
   "share": {
     "title": "Share link",
     "description": "Share this link to open the calculator with the same function and result."
   },
-
   "results": {
     "fullscreen": "Fullscreen",
     "exitFullscreen": "Exit fullscreen",
@@ -182,7 +177,6 @@
       "passed": "Function valid"
     }
   },
-
   "transforms": {
     "title": "Fourier Transform",
     "subtitle": "Compute the continuous or inverse transform of a piecewise-defined function.",
@@ -231,7 +225,6 @@
       "goToContinuous": "Go to continuous transform"
     }
   },
-
   "history": {
     "title": "My calculations",
     "total": "{{ count }} records total",
@@ -277,7 +270,6 @@
       "dftEpicycles": "DFT epicycles"
     }
   },
-
   "auth": {
     "login": {
       "title": "Log in",
@@ -352,7 +344,6 @@
       "resending": "Sending..."
     }
   },
-
   "profile": {
     "title": "My profile",
     "role": "Role",
@@ -374,7 +365,6 @@
     "savePassword": "Change password",
     "savingPassword": "Saving…"
   },
-
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "network": "Connection error. Check your network.",
@@ -384,7 +374,6 @@
     "tooManyRequests": "Too many requests. Please try again in a moment.",
     "tooManyRequestsMinutes": "Too many requests. Please try again in {{ minutes }} minutes."
   },
-
   "seo": {
     "home": {
       "title": "Fourier Series and Transform Calculator",
@@ -403,7 +392,6 @@
       "description": "Calculate the DFT with amplitude and phase spectrum visualization and signal reconstruction via epicycles."
     }
   },
-
   "dev": {
     "title": "Dev Sandbox",
     "description": "Development environment for testing endpoints and components.",

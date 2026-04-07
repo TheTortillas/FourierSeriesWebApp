@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { filter, take } from 'rxjs';
+import { catchError, debounceTime, filter, map, of, switchMap, take, tap } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -32,6 +32,7 @@ import { SeoService } from '../../../core/services/seo/seo.service';
 import { ParamSlidersComponent } from '../../../shared/components/param-sliders/param-sliders.component';
 import type { ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
+import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
@@ -150,6 +151,7 @@ export class ContinuousTransformComponent implements OnInit {
   private readonly userStore  = inject(UserStore);
   private readonly transloco  = inject(TranslocoService);
   private readonly seo        = inject(SeoService);
+  private readonly intervalValidator = inject(LatexToMaximaService);
 
   ngOnInit(): void {
     this.seo.setPage('seo.transforms.title', 'seo.transforms.description');
@@ -167,6 +169,8 @@ export class ContinuousTransformComponent implements OnInit {
   readonly customTime = signal('t');
   readonly customFreq = signal('w');
   readonly segments = signal<TransformSegmentDraft[]>([defaultSegmentFt()]);
+  readonly continuityErrors = signal<(string | null)[]>([null]);
+  readonly continuityValidating = signal(false);
   readonly loading = signal(false);
   readonly errorMsg = signal<string | null>(null);
   readonly ftResult = signal<FourierTransformResponse | null>(null);
@@ -235,6 +239,45 @@ export class ContinuousTransformComponent implements OnInit {
       if (!this.customResultColor()) this.resultColor.set(preset.result);
       if (!this.customImagColor()) this.imagColor.set(preset.imag);
       if (!this.customMagColor()) this.magColor.set(preset.mag);
+    });
+
+    // ── Interval continuity validation ────────────────────────────────────
+    toObservable(this.segments).pipe(
+      tap((segs) => { if (segs.length > 1) this.continuityValidating.set(true); }),
+      debounceTime(600),
+      switchMap((segs) => {
+        if (segs.length <= 1) return of(segs.map(() => null as string | null));
+
+        const pairIndices: number[] = [];
+        const pairs: Array<{ a: string; b: string }> = [];
+        for (let i = 0; i < segs.length - 1; i++) {
+          const toVal = segs[i].to;
+          const fromVal = segs[i + 1].from;
+          if (toVal && fromVal) {
+            pairIndices.push(i);
+            pairs.push({ a: toVal, b: fromVal });
+          }
+        }
+
+        if (pairs.length === 0) return of(segs.map(() => null as string | null));
+
+        return this.intervalValidator.compareIntervals(pairs).pipe(
+          map((results) => {
+            const errors: (string | null)[] = segs.map(() => null);
+            results.forEach((result, ri) => {
+              if (result === 'different') {
+                errors[pairIndices[ri]] = 'calculator.segment.continuityGap';
+              }
+            });
+            return errors;
+          }),
+          catchError(() => of(segs.map(() => null as string | null))),
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((errors) => {
+      this.continuityErrors.set(errors);
+      this.continuityValidating.set(false);
     });
 
     // Track native fullscreen changes
@@ -335,7 +378,9 @@ export class ContinuousTransformComponent implements OnInit {
   });
 
   readonly canCalculate = computed(() =>
-    this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()),
+    this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()) &&
+    !this.continuityValidating() &&
+    this.continuityErrors().every((e) => e === null),
   );
 
   /** True when any input segment contains the imaginary unit (%i). */

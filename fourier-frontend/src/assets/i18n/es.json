@@ -18,7 +18,6 @@
     "copied": "Copiado",
     "copiedMessage": "Copiado al portapapeles"
   },
-
   "nav": {
     "fourierAnalysis": "Análisis de Fourier",
     "series": "Series de Fourier",
@@ -35,7 +34,6 @@
     "tagline": "Por Sebastián Morales Palacios",
     "footerText": "Herramienta de análisis matemático"
   },
-
   "home": {
     "subtitle": "Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
     "series": {
@@ -48,7 +46,6 @@
       "badge": "Continua activa"
     }
   },
-
   "calculator": {
     "title": "Serie de Fourier",
     "subtitle": "Ingresa la función a trozos y selecciona el tipo de serie.",
@@ -69,9 +66,11 @@
       "removeTitle": "Eliminar tramo",
       "keyboardTitle": "Teclado matemático",
       "activeField": "Activo: campo {{ field }}",
-    "expressionRequired": "Expresión requerida",
-    "fromRequired": "Límite inferior requerido",
-    "toRequired": "Límite superior requerido"
+      "expressionRequired": "Expresión requerida",
+      "fromRequired": "Límite inferior requerido",
+      "toRequired": "Límite superior requerido",
+      "continuityGap": "El final no coincide con el inicio del siguiente tramo",
+      "continuityWarning": "Los límites de los tramos no son continuos — revisa los intervalos"
     },
     "types": {
       "trigonometric": "Trigonométrica",
@@ -85,9 +84,8 @@
       "dftSignal": "DFT señal",
       "dftEpicycles": "DFT epiciclos"
     },
-    "label":"Configura la función y presiona"
+    "label": "Configura la función y presiona"
   },
-
   "results": {
     "fullscreen": "Pantalla completa",
     "exitFullscreen": "Salir de pantalla completa",
@@ -117,7 +115,6 @@
       "passed": "Función válida"
     }
   },
-
   "settingsCanvas": {
     "layersToShow": "Capas a mostrar",
     "nTerms": "Número de términos",
@@ -147,7 +144,6 @@
     "tabSpectrum": "Espectro",
     "tabValidation": "Validación"
   },
-
   "resultPanel": {
     "sine": "Seno",
     "cosine": "Coseno",
@@ -177,12 +173,10 @@
       "fuera_de_dominio": "Fuera del dominio"
     }
   },
-
   "share": {
     "title": "Compartir enlace",
     "description": "Comparte este enlace para abrir la calculadora con la misma función y resultado."
   },
-
   "transforms": {
     "title": "Transformada de Fourier",
     "subtitle": "Calcula la transformada continua o inversa de una función definida por tramos.",
@@ -231,7 +225,6 @@
       "goToContinuous": "Ir a transformada continua"
     }
   },
-
   "history": {
     "title": "Mis cálculos",
     "total": "{{ count }} registros en total",
@@ -277,7 +270,6 @@
       "dftEpicycles": "DFT epiciclos"
     }
   },
-
   "auth": {
     "login": {
       "title": "Iniciar sesión",
@@ -352,7 +344,6 @@
       "resending": "Enviando..."
     }
   },
-
   "profile": {
     "title": "Mi perfil",
     "role": "Rol",
@@ -374,7 +365,6 @@
     "savePassword": "Cambiar contraseña",
     "savingPassword": "Guardando…"
   },
-
   "errors": {
     "generic": "Ocurrió un error. Intenta de nuevo.",
     "network": "Error de conexión. Verifica tu red.",
@@ -384,7 +374,6 @@
     "tooManyRequests": "Demasiadas solicitudes. Intenta de nuevo en un momento.",
     "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos."
   },
-
   "seo": {
     "home": {
       "title": "Calculadora de Series y Transformadas de Fourier",
@@ -403,7 +392,6 @@
       "description": "Calcula la DFT con visualización de espectro de amplitud, fase y reconstrucción de señales mediante epiciclos."
     }
   },
-
   "dev": {
     "title": "Dev Sandbox",
     "description": "Entorno de desarrollo para probar endpoints y componentes.",

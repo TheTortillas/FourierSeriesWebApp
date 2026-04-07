@@ -186,9 +186,20 @@
               [index]="i"
               [isOnly]="segments().length === 1"
               [intVar]="intVar()"
+              [continuityError]="continuityErrors()[i] ?? null"
+              [prevContinuityError]="i > 0 ? (continuityErrors()[i - 1] ?? null) : null"
               (updated)="updateSegment($event.id, $event.changes)"
               (removed)="removeSegment($event)"
             />
+          }
+
+          @if (continuityErrors().some(e => e !== null)) {
+            <div class="flex items-start gap-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+              <span class="text-amber-500 shrink-0 text-sm leading-none mt-0.5">⚠</span>
+              <p class="text-xs text-amber-700 dark:text-amber-400 font-mono">
+                {{ 'calculator.segment.continuityWarning' | transloco }}
+              </p>
+            </div>
           }
 
           <button

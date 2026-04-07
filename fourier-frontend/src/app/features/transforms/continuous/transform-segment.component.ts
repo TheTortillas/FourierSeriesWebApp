@@ -58,6 +58,8 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   readonly isOnly = input<boolean>(false);
   readonly intVar = input<string>('t');
   readonly error = input<string | null>(null);
+  readonly continuityError = input<string | null>(null);
+  readonly prevContinuityError = input<string | null>(null);
 
   readonly updated = output<{ id: string; changes: Partial<TransformSegmentDraft> }>();
   readonly removed = output<string>();
@@ -275,12 +277,12 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
 
   readonly hasExpressionError = () => !!this.error() && !this.segment().expression.trim();
 
-  wrapClass(hasError: boolean): string {
+  wrapClass(hasError: boolean, hasWarning = false): string {
     const base =
-      'w-full px-2 py-1 min-h-[2rem] text-sm rounded border cursor-text ' +
+      'w-full px-2 py-1.5 min-h-[2.25rem] text-sm rounded border cursor-text ' +
       'bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors';
-    return hasError
-      ? `${base} border-red-400 focus-within:ring-red-400`
-      : `${base} border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent`;
+    if (hasError) return `${base} border-red-400 focus-within:ring-red-400`;
+    if (hasWarning) return `${base} border-amber-400 focus-within:ring-amber-400`;
+    return `${base} border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent`;
   }
 }

@@ -31,9 +31,20 @@
             [index]="i"
             [isOnly]="store.segments().length === 1"
             [error]="store.segmentErrors()[i]"
+            [continuityError]="continuityErrors()[i] ?? null"
+            [prevContinuityError]="i > 0 ? (continuityErrors()[i - 1] ?? null) : null"
           />
         }
       </div>
+
+      @if (hasContinuityError()) {
+        <div class="flex items-start gap-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+          <span class="text-amber-500 shrink-0 text-sm leading-none mt-0.5">⚠</span>
+          <p class="text-xs text-amber-700 dark:text-amber-400 font-mono">
+            {{ 'calculator.segment.continuityWarning' | transloco }}
+          </p>
+        </div>
+      }
 
       <!-- Add segment -->
       <button
@@ -103,7 +114,7 @@
     <!-- ── Calcular ───────────────────────────────────────────────────────── -->
     <button
       (click)="store.calculate()"
-      [disabled]="!store.isValid() || store.loading() || store.hasResult()"
+      [disabled]="!store.isValid() || continuityValidating() || hasContinuityError() || store.loading() || store.hasResult()"
       type="button"
       class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
     >

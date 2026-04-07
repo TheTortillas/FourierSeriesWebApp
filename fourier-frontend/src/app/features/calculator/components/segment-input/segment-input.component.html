@@ -52,7 +52,7 @@
       <label class="block text-[10px] text-muted font-mono mb-0.5">{{
         'calculator.segment.from' | transloco
       }}</label>
-      <div [class]="wrapClass(false)" (click)="focusField(1)">
+      <div [class]="wrapClass(false, !!prevContinuityError())" (click)="focusField(1)">
         <div #mqFrom></div>
       </div>
     </div>
@@ -62,7 +62,7 @@
       <label class="block text-[10px] text-muted font-mono mb-0.5">{{
         'calculator.segment.to' | transloco
       }}</label>
-      <div [class]="wrapClass(false)" (click)="focusField(2)">
+      <div [class]="wrapClass(false, !!continuityError())" (click)="focusField(2)">
         <div #mqTo></div>
       </div>
     </div>
