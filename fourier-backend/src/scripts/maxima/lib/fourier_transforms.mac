@@ -189,6 +189,24 @@ FT_match_sgn(expr, t_var) := block(
             ),
             if is(sgn_part # false) then res: [coef]
         )
+        /* caso op="/" con sgn en numerador: k*sgn(t)/n */
+        else if is(op(e) = "/") then (
+            if not atom(part(e,1)) and is(op(part(e,1)) = 'sgn)
+               and part(part(e,1),1) = t_var then
+                res: [1/part(e,2)]
+            else if not atom(part(e,1)) and is(op(part(e,1)) = "*") then block(
+                [num_e],
+                num_e: part(e,1),
+                sgn_part: false,
+                coef: 1,
+                for s in args(num_e) do (
+                    if not atom(s) and is(op(s) = 'sgn) and part(s,1) = t_var
+                    then sgn_part: s
+                    else coef: coef * s
+                ),
+                if is(sgn_part # false) then res: [coef/part(e,2)]
+            )
+        )
     ),
     res
 )$
@@ -897,10 +915,16 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
-    /* ── 1/(iw) -> sgn(t)/2 ── */
-    if is(res = false) then (
-        if ratsimp(e - 1/(%i*w_var)) = 0 then
-            res: [sgn(t_var)/2, "1/(iw) -> sgn(t)/2"]
+    /* ── k/(iw) -> k*sgn(t)/2 ── */
+    if is(res = false) then block(
+        [coef_sgn],
+        coef_sgn: errcatch(ratsimp(e * %i * w_var)),
+        if coef_sgn # [] then (
+            coef_sgn: first(coef_sgn),
+            if freeof(w_var, coef_sgn) and coef_sgn # 0 then
+                res: [coef_sgn * sgn(t_var) / 2,
+                    concat("k/(iw) -> k*sgn(t)/2, k=", string(coef_sgn))]
+        )
     ),
 
     /* ── exp(-i*w*t0) -> delta(t-t0)  y  exp(+i*w*t0) -> delta(t+t0) ──
