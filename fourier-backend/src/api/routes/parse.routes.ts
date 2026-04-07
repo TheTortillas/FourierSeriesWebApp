@@ -1,5 +1,6 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { LatexParserService } from "../../application/latex/latexParser.service";
+import { auxiliaryService } from "../../infrastructure/container";
 
 const router = Router();
 const parserService = new LatexParserService();
@@ -32,6 +33,39 @@ router.post("/latex", (req: Request, res: Response) => {
       : parserService.parse(latex);
 
   res.json(result);
+});
+
+/**
+ * POST /api/parse/compare
+ *
+ * Symbolically compares pairs of Maxima expressions via ratsimp(a - b) = 0.
+ * Used for real-time interval continuity validation in the UI.
+ *
+ * Body: { pairs: Array<{ a: string, b: string }> }
+ * Response: { results: Array<'equal' | 'different' | 'unknown'> }
+ */
+router.post("/compare", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { pairs } = req.body as { pairs?: unknown };
+
+    if (!Array.isArray(pairs) || pairs.length === 0 || pairs.length > 10) {
+      res.status(400).json({ ok: false, error: "pairs must be a non-empty array (max 10)" });
+      return;
+    }
+
+    const validated = (pairs as unknown[]).map((p) => {
+      if (typeof p !== "object" || p === null) throw new Error("invalid pair");
+      const { a, b } = p as { a: unknown; b: unknown };
+      if (typeof a !== "string" || typeof b !== "string") throw new Error("invalid pair");
+      if (a.length > 300 || b.length > 300) throw new Error("expression too long");
+      return { a: a.trim(), b: b.trim() };
+    });
+
+    const results = await auxiliaryService.compareExpressions(validated);
+    res.json({ results });
+  } catch (err) {
+    next(err);
+  }
 });
 
 export { router as parseRouter };
