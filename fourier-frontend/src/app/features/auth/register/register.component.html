@@ -8,13 +8,12 @@
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="font-display text-3xl text-ink dark:text-dark-ink mb-1">
-          Crear cuenta
+          {{ 'auth.register.title' | transloco }}
         </h1>
         <p class="font-body text-sm text-muted dark:text-dark-muted">
-          ¿Ya tienes cuenta?
-          <a routerLink="/auth/login"
-             class="text-accent hover:underline font-medium">
-            Inicia sesión
+          {{ 'auth.register.hasAccount' | transloco }}
+          <a routerLink="../login" class="text-accent hover:underline font-medium">
+            {{ 'auth.register.login' | transloco }}
           </a>
         </p>
       </div>
@@ -24,23 +23,20 @@
         <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
                     rounded-xl p-8 text-center flex flex-col items-center gap-4">
           <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                 class="w-6 h-6 text-accent">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6 text-accent">
               <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/>
             </svg>
           </div>
           <div>
             <h2 class="font-display text-lg text-ink dark:text-dark-ink mb-1">
-              ¡Cuenta creada!
+              {{ 'auth.register.successTitle' | transloco }}
             </h2>
             <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-              Te enviamos un correo de verificación.
-              Revisa tu bandeja de entrada y confirma tu email para comenzar.
+              {{ 'auth.register.successMessage' | transloco }}
             </p>
           </div>
-          <a routerLink="/auth/login"
-             class="text-sm font-mono text-accent hover:underline">
-            Ir a iniciar sesión
+          <a routerLink="../login" class="text-sm font-mono text-accent hover:underline">
+            {{ 'auth.register.goToLogin' | transloco }}
           </a>
         </div>
 
@@ -50,25 +46,19 @@
         <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
                     rounded-xl p-6 flex flex-col gap-5">
 
-          <!-- Google Sign-In -->
-          <app-google-sign-in
-            text="signup_with"
-            (credential)="onGoogleCredential($event)" />
+          <app-google-sign-in text="signup_with" (credential)="onGoogleCredential($event)" />
 
-          <!-- Divider -->
           <div class="flex items-center gap-3">
             <div class="flex-1 h-px bg-border dark:bg-dark-border"></div>
-            <span class="text-[11px] font-mono text-muted dark:text-dark-muted">o regístrate con email</span>
+            <span class="text-[11px] font-mono text-muted dark:text-dark-muted">{{ 'auth.register.orRegisterEmail' | transloco }}</span>
             <div class="flex-1 h-px bg-border dark:bg-dark-border"></div>
           </div>
 
-          <!-- API error -->
           @if (apiError()) {
             <div class="flex items-start gap-2 px-3 py-2.5 rounded-lg
                         bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800
                         text-red-700 dark:text-red-400 text-sm font-body">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                   class="w-4 h-4 shrink-0 mt-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 shrink-0 mt-0.5">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd"/>
               </svg>
               {{ apiError() }}
@@ -80,100 +70,51 @@
             <!-- Name row -->
             <div class="grid grid-cols-2 gap-3">
               <div class="flex flex-col gap-1">
-                <label class="text-xs font-mono text-muted dark:text-dark-muted">Nombre</label>
-                <input
-                  type="text"
-                  formControlName="firstName"
-                  autocomplete="given-name"
-                  placeholder="Juan"
-                  class="w-full px-3 py-2 rounded-lg text-sm font-mono
-                         bg-paper dark:bg-dark-bg
-                         border border-border dark:border-dark-border
-                         text-ink dark:text-dark-ink
-                         placeholder:text-muted/50 dark:placeholder:text-dark-muted/50
-                         focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                         transition-colors"
-                  [class.border-red-400]="firstName.invalid && firstName.touched"
-                />
+                <label class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'auth.register.firstName' | transloco }}</label>
+                <input type="text" formControlName="firstName" autocomplete="given-name"
+                  [placeholder]="'auth.register.firstNamePlaceholder' | transloco"
+                  class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
+                  [class.border-red-400]="firstName.invalid && firstName.touched"/>
                 @if (firstName.touched && firstName.errors?.['required']) {
-                  <p class="text-[11px] text-red-500 font-mono">Requerido</p>
+                  <p class="text-[11px] text-red-500 font-mono">{{ 'common.required' | transloco }}</p>
                 }
               </div>
               <div class="flex flex-col gap-1">
-                <label class="text-xs font-mono text-muted dark:text-dark-muted">Apellido</label>
-                <input
-                  type="text"
-                  formControlName="lastName"
-                  autocomplete="family-name"
-                  placeholder="Pérez"
-                  class="w-full px-3 py-2 rounded-lg text-sm font-mono
-                         bg-paper dark:bg-dark-bg
-                         border border-border dark:border-dark-border
-                         text-ink dark:text-dark-ink
-                         placeholder:text-muted/50 dark:placeholder:text-dark-muted/50
-                         focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                         transition-colors"
-                  [class.border-red-400]="lastName.invalid && lastName.touched"
-                />
+                <label class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'auth.register.lastName' | transloco }}</label>
+                <input type="text" formControlName="lastName" autocomplete="family-name"
+                  [placeholder]="'auth.register.lastNamePlaceholder' | transloco"
+                  class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
+                  [class.border-red-400]="lastName.invalid && lastName.touched"/>
                 @if (lastName.touched && lastName.errors?.['required']) {
-                  <p class="text-[11px] text-red-500 font-mono">Requerido</p>
+                  <p class="text-[11px] text-red-500 font-mono">{{ 'common.required' | transloco }}</p>
                 }
               </div>
             </div>
 
             <!-- Email -->
             <div class="flex flex-col gap-1">
-              <label class="text-xs font-mono text-muted dark:text-dark-muted">
-                Correo electrónico
-              </label>
-              <input
-                type="email"
-                formControlName="email"
-                autocomplete="email"
-                placeholder="tu@correo.com"
-                class="w-full px-3 py-2 rounded-lg text-sm font-mono
-                       bg-paper dark:bg-dark-bg
-                       border border-border dark:border-dark-border
-                       text-ink dark:text-dark-ink
-                       placeholder:text-muted/50 dark:placeholder:text-dark-muted/50
-                       focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                       transition-colors"
-                [class.border-red-400]="email.invalid && email.touched"
-              />
+              <label class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'auth.register.email' | transloco }}</label>
+              <input type="email" formControlName="email" autocomplete="email"
+                [placeholder]="'auth.register.emailPlaceholder' | transloco"
+                class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
+                [class.border-red-400]="email.invalid && email.touched"/>
               @if (email.touched && email.errors?.['required']) {
-                <p class="text-[11px] text-red-500 font-mono">Campo requerido</p>
+                <p class="text-[11px] text-red-500 font-mono">{{ 'common.fieldRequired' | transloco }}</p>
               } @else if (email.touched && email.errors?.['email']) {
-                <p class="text-[11px] text-red-500 font-mono">Email inválido</p>
+                <p class="text-[11px] text-red-500 font-mono">{{ 'common.invalidEmail' | transloco }}</p>
               }
             </div>
 
             <!-- Password -->
             <div class="flex flex-col gap-1">
-              <label class="text-xs font-mono text-muted dark:text-dark-muted">
-                Contraseña
-              </label>
+              <label class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'auth.register.password' | transloco }}</label>
               <div class="relative">
-                <input
-                  [type]="showPass() ? 'text' : 'password'"
-                  formControlName="password"
-                  autocomplete="new-password"
-                  placeholder="Mínimo 8 caracteres"
-                  class="w-full px-3 py-2 pr-10 rounded-lg text-sm font-mono
-                         bg-paper dark:bg-dark-bg
-                         border border-border dark:border-dark-border
-                         text-ink dark:text-dark-ink
-                         placeholder:text-muted/50 dark:placeholder:text-dark-muted/50
-                         focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                         transition-colors"
-                  [class.border-red-400]="password.invalid && password.touched"
-                />
-                <button
-                  type="button"
-                  (click)="showPass.set(!showPass())"
-                  tabindex="-1"
-                  class="absolute right-2.5 top-1/2 -translate-y-1/2
-                         text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink
-                         transition-colors cursor-pointer">
+                <input [type]="showPass() ? 'text' : 'password'" formControlName="password" autocomplete="new-password"
+                  [placeholder]="'auth.register.passwordPlaceholder' | transloco"
+                  class="w-full px-3 py-2 pr-10 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
+                  [class.border-red-400]="password.invalid && password.touched"/>
+                <button type="button" (click)="showPass.set(!showPass())" tabindex="-1"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted dark:text-dark-muted hover:text-ink transition-colors cursor-pointer">
                   @if (showPass()) {
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
                       <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
@@ -188,52 +129,34 @@
                 </button>
               </div>
               @if (password.touched && password.errors?.['required']) {
-                <p class="text-[11px] text-red-500 font-mono">Campo requerido</p>
+                <p class="text-[11px] text-red-500 font-mono">{{ 'common.fieldRequired' | transloco }}</p>
               } @else if (password.touched && password.errors?.['minlength']) {
-                <p class="text-[11px] text-red-500 font-mono">Mínimo 8 caracteres</p>
+                <p class="text-[11px] text-red-500 font-mono">{{ 'common.passwordMin8' | transloco }}</p>
               }
             </div>
 
             <!-- Confirm password -->
             <div class="flex flex-col gap-1">
-              <label class="text-xs font-mono text-muted dark:text-dark-muted">
-                Confirmar contraseña
-              </label>
-              <input
-                [type]="showPass() ? 'text' : 'password'"
-                formControlName="confirmPassword"
-                autocomplete="new-password"
-                placeholder="Repite la contraseña"
-                class="w-full px-3 py-2 rounded-lg text-sm font-mono
-                       bg-paper dark:bg-dark-bg
-                       border border-border dark:border-dark-border
-                       text-ink dark:text-dark-ink
-                       placeholder:text-muted/50 dark:placeholder:text-dark-muted/50
-                       focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                       transition-colors"
-                [class.border-red-400]="mismatch"
-              />
+              <label class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'auth.register.confirmPassword' | transloco }}</label>
+              <input [type]="showPass() ? 'text' : 'password'" formControlName="confirmPassword" autocomplete="new-password"
+                [placeholder]="'auth.register.confirmPasswordPlaceholder' | transloco"
+                class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink placeholder:text-muted/50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
+                [class.border-red-400]="mismatch"/>
               @if (mismatch) {
-                <p class="text-[11px] text-red-500 font-mono">Las contraseñas no coinciden</p>
+                <p class="text-[11px] text-red-500 font-mono">{{ 'common.passwordMismatch' | transloco }}</p>
               }
             </div>
 
             <!-- Submit -->
-            <button
-              type="submit"
-              [disabled]="loading()"
-              class="w-full py-2.5 rounded-lg font-mono text-sm font-medium
-                     bg-accent text-white
-                     hover:bg-accent/90 active:bg-accent/80
-                     disabled:opacity-50 disabled:cursor-not-allowed
-                     transition-colors cursor-pointer flex items-center justify-center gap-2">
+            <button type="submit" [disabled]="loading()"
+              class="w-full py-2.5 rounded-lg font-mono text-sm font-medium bg-accent text-white hover:bg-accent/90 active:bg-accent/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center justify-center gap-2">
               @if (loading()) {
                 <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
               }
-              {{ loading() ? 'Creando cuenta...' : 'Crear cuenta' }}
+              {{ loading() ? ('auth.register.submitting' | transloco) : ('auth.register.submit' | transloco) }}
             </button>
 
           </form>

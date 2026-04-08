@@ -2,9 +2,9 @@
 
 <main class="w-full px-4 lg:px-6 py-8 flex flex-col gap-6">
   <div class="flex flex-col gap-1">
-    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Transformada de Fourier</h1>
+    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'transforms.title' | transloco }}</h1>
     <p class="text-sm font-mono text-muted dark:text-dark-muted">
-      Selecciona el tipo de transformada que deseas utilizar.
+      {{ 'transforms.dft.selectType' | transloco }}
     </p>
   </div>
 
@@ -12,23 +12,23 @@
     class="inline-flex w-fit rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5"
   >
     <a
-      routerLink="/transforms/continuous"
+      routerLink="../continuous"
       routerLinkActive="bg-accent text-white shadow-sm"
       class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors"
     >
-      Continua
+      {{ 'transforms.continuous' | transloco }}
     </a>
     <a
-      routerLink="/transforms/dft"
+      routerLink="../dft"
       routerLinkActive="bg-accent text-white shadow-sm"
       [routerLinkActiveOptions]="{ exact: true }"
       class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors inline-flex items-center gap-1.5"
     >
-      Discreta
+      {{ 'transforms.discrete' | transloco }}
       <span
         class="text-[10px] leading-none px-1.5 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted"
       >
-        Próximamente
+        {{ 'transforms.comingSoon' | transloco }}
       </span>
     </a>
   </div>
@@ -53,23 +53,22 @@
       class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
     >
       <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-      <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider"
-        >En desarrollo</span
-      >
+      <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+        {{ 'transforms.dft.badge' | transloco }}
+      </span>
     </div>
 
-    <h2 class="font-display text-xl text-ink dark:text-dark-ink">DFT — Transformada Discreta</h2>
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">{{ 'transforms.dft.heading' | transloco }}</h2>
 
     <p class="text-sm font-mono text-muted dark:text-dark-muted max-w-2xl">
-      Ingresa una señal discreta y obtén sus coeficientes espectrales con amplitud, fase y
-      frecuencia normalizada.
+      {{ 'transforms.dft.description' | transloco }}
     </p>
 
     <a
-      routerLink="/transforms/continuous"
+      routerLink="../continuous"
       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors"
     >
-      Ir a transformada continua
+      {{ 'transforms.dft.goToContinuous' | transloco }}
     </a>
   </div>
 </main>

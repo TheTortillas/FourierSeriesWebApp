@@ -4,9 +4,9 @@
   <!-- Header -->
   <div class="flex items-center justify-between flex-wrap gap-3">
     <div>
-      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Mis cálculos</h1>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'history.title' | transloco }}</h1>
       <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">
-        {{ total() }} registros en total
+        {{ 'history.total' | transloco: { count: total() } }}
       </p>
     </div>
 
@@ -18,7 +18,7 @@
         (change)="toggleFilter()"
         class="w-3.5 h-3.5 accent-accent cursor-pointer"
       />
-      <span class="text-xs font-mono text-muted dark:text-dark-muted"> Solo favoritos </span>
+      <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'history.favoritesOnly' | transloco }}</span>
     </label>
   </div>
 
@@ -40,13 +40,7 @@
         />
       </svg>
       <p class="text-xs font-mono text-muted dark:text-dark-muted leading-relaxed">
-        Tu plan <span class="text-accent font-medium">free</span> incluye acceso a tus últimos
-        <span class="text-ink dark:text-dark-ink">{{ historyLimit()?.max ?? 5 }} cálculos</span>
-        y
-        <span class="text-ink dark:text-dark-ink"
-          >{{ historyLimit()?.favorites ?? 2 }} favoritos</span
-        >.
-        <!-- Actualiza a <span class="text-accent font-medium">Premium</span> para historial ilimitado. -->
+        {{ 'history.freeTierBanner' | transloco: { max: historyLimit()?.max ?? 5, favorites: historyLimit()?.favorites ?? 2 } }}
       </p>
     </div>
   }
@@ -79,7 +73,7 @@
             d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
           />
         </svg>
-        Cargando…
+        {{ 'history.loading' | transloco }}
       </div>
     } @else if (entries().length === 0) {
       <div
@@ -100,7 +94,7 @@
           />
         </svg>
         <p class="text-sm font-mono">
-          {{ showFavoritesOnly ? 'No tienes cálculos favoritos' : 'Aún no has hecho cálculos' }}
+          {{ showFavoritesOnly ? ('history.emptyFavorites' | transloco) : ('history.emptyAll' | transloco) }}
         </p>
       </div>
     } @else {
@@ -111,12 +105,12 @@
               class="border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted text-left"
             >
               <th class="w-6 px-3 py-2.5"></th>
-              <th class="px-4 py-2.5 font-medium">Fecha</th>
-              <th class="px-4 py-2.5 font-medium">Tipo</th>
-              <th class="px-4 py-2.5 font-medium">Entrada</th>
-              <th class="px-4 py-2.5 font-medium">ms</th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.date' | transloco }}</th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.type' | transloco }}</th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.input' | transloco }}</th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.ms' | transloco }}</th>
               <th class="px-4 py-2.5 font-medium text-center">★</th>
-              <th class="px-4 py-2.5 font-medium">Acciones</th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.actions' | transloco }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border dark:divide-dark-border">
@@ -153,11 +147,11 @@
                       'px-1.5 py-0.5 rounded border text-[10px] ' + typeBadgeClass(entry.type)
                     "
                   >
-                    {{ typeLabel(entry.type) }}
+                    {{ typeKey(entry.type) | transloco }}
                   </span>
                 </td>
 
-                <td class="px-4 py-3 max-w-[240px]">
+                <td class="px-4 py-3 max-w-60">
                   @if (entry.isFavorite && entry.favoriteName) {
                     <span
                       class="text-amber-600 dark:text-amber-400 font-medium truncate block"
@@ -194,7 +188,7 @@
                     <button
                       type="button"
                       (click)="toggleFavorite(entry, $event)"
-                      [title]="entry.isFavorite ? 'Quitar de favoritos' : 'Guardar como favorito'"
+                      [title]="entry.isFavorite ? ('history.favorite.remove' | transloco) : ('history.favorite.add' | transloco)"
                       class="cursor-pointer transition-colors"
                       [class]="
                         entry.isFavorite
@@ -214,19 +208,19 @@
                       <button
                         type="button"
                         (click)="reopenInCalculator(entry); $event.stopPropagation()"
-                        title="Abrir en calculadora"
+                        [title]="'history.actions.openTitle' | transloco"
                         class="px-1.5 py-0.5 rounded border text-[10px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent"
                       >
-                        ↗ abrir
+                        {{ 'history.actions.open' | transloco }}
                       </button>
                     }
                     <button
                       type="button"
                       (click)="deleteEntry(entry.id, $event)"
-                      title="Eliminar"
+                      [title]="'history.actions.deleteTitle' | transloco"
                       class="px-1.5 py-0.5 rounded border text-[10px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-red-400 hover:text-red-500"
                     >
-                      eliminar
+                      {{ 'history.actions.delete' | transloco }}
                     </button>
                   </div>
                 </td>
@@ -238,12 +232,12 @@
                   <td colspan="7" class="px-4 py-2.5">
                     <div class="flex items-center gap-2 flex-wrap">
                       <span class="text-[11px] font-mono text-amber-700 dark:text-amber-400">
-                        Nombre del favorito:
+                        {{ 'history.favorite.nameLabel' | transloco }}
                       </span>
                       <input
                         type="text"
                         [(ngModel)]="renameValue"
-                        placeholder="ej. Serie de cos(x)"
+                        [placeholder]="'history.favorite.namePlaceholder' | transloco"
                         (keydown.enter)="confirmFavorite(entry)"
                         (keydown.escape)="cancelRename()"
                         class="flex-1 min-w-0 px-2 py-1 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-amber-300 dark:border-amber-700 text-ink dark:text-dark-ink focus:outline-none focus:border-amber-500"
@@ -254,14 +248,14 @@
                         (click)="confirmFavorite(entry)"
                         class="px-2 py-1 rounded text-[11px] font-mono cursor-pointer bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                       >
-                        Guardar
+                        {{ 'common.save' | transloco }}
                       </button>
                       <button
                         type="button"
                         (click)="cancelRename()"
                         class="px-2 py-1 rounded text-[11px] font-mono cursor-pointer border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink transition-colors"
                       >
-                        Cancelar
+                        {{ 'common.cancel' | transloco }}
                       </button>
                     </div>
                   </td>
@@ -290,7 +284,7 @@
           class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between"
         >
           <span class="text-xs font-mono text-muted dark:text-dark-muted">
-            Página {{ currentPage() }} de {{ totalPages() }}
+            {{ 'history.pagination.page' | transloco: { current: currentPage(), total: totalPages() } }}
           </span>
           <div class="flex gap-1.5">
             <button
@@ -299,7 +293,7 @@
               [disabled]="offset() === 0"
               class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              ← Anterior
+              {{ 'history.pagination.prev' | transloco }}
             </button>
             <button
               type="button"
@@ -307,7 +301,7 @@
               [disabled]="offset() + pageSize >= total()"
               class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              Siguiente →
+              {{ 'history.pagination.next' | transloco }}
             </button>
           </div>
         </div>

@@ -17,7 +17,7 @@
       <button
         type="button"
         (click)="toggleFullscreen()"
-        title="{{ isFullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa' }}"
+        [title]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
         class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
       >
         @if (isFullscreen()) {
@@ -62,7 +62,7 @@
         <button
           type="button"
           (click)="showCanvasSettings.set(!showCanvasSettings())"
-          title="Ajustes del lienzo"
+          [title]="'results.canvasSettings' | transloco"
           [class]="
             showCanvasSettings()
               ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent dark:text-accent transition-colors flex items-center justify-center'
@@ -97,7 +97,7 @@
       <button
         type="button"
         (click)="downloadCanvas()"
-        title="Descargar imagen"
+        [title]="'results.downloadImage' | transloco"
         class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
       >
         <svg
@@ -121,7 +121,7 @@
         <button
           type="button"
           (click)="openShareDialog()"
-          title="Compartir enlace"
+          [title]="'results.shareUrl' | transloco"
           class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
         >
           <svg
@@ -148,7 +148,9 @@
             type="button"
             (click)="openFavoriteDialog()"
             [title]="
-              latestHistoryEntry()?.isFavorite ? 'Quitar de favoritos' : 'Guardar como favorito'
+              latestHistoryEntry()?.isFavorite
+                ? ('results.removeFav' | transloco)
+                : ('results.addFav' | transloco)
             "
             [class]="
               latestHistoryEntry()?.isFavorite
@@ -191,11 +193,13 @@
       >
         <section class="flex flex-col gap-2">
           <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-            Capas a mostrar
+            {{ 'settingsCanvas.layersToShow' | transloco }}
           </h4>
           <div class="flex flex-wrap gap-3 items-center">
             <div class="flex items-center gap-2 min-w-52 flex-1">
-              <span class="text-muted dark:text-dark-muted">N grafico</span>
+              <span class="text-muted dark:text-dark-muted"
+                >{{ 'settingsCanvas.nTerms' | transloco }}
+              </span>
               <input
                 type="range"
                 min="0"
@@ -211,7 +215,9 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <span class="text-muted dark:text-dark-muted">Armónicos</span>
+              <span class="text-muted dark:text-dark-muted">{{
+                'settingsCanvas.armonics' | transloco
+              }}</span>
               <button
                 type="button"
                 (click)="showHarmonics.set(!showHarmonics())"
@@ -221,7 +227,11 @@
                     : 'px-2 py-0.5 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
                 "
               >
-                {{ showHarmonics() ? 'On' : 'Off' }}
+                {{
+                  showHarmonics()
+                    ? ('settingsCanvas.on' | transloco)
+                    : ('settingsCanvas.off' | transloco)
+                }}
               </button>
             </div>
 
@@ -233,7 +243,7 @@
                   (change)="showDcHarmonic.set(!!$any($event.target).checked)"
                   class="accent-accent"
                 />
-                <span>Mostrar DC (a₀/2 o c₀)</span>
+                <span> {{ 'settingsCanvas.showDC' | transloco }}</span>
               </label>
             }
 
@@ -247,23 +257,17 @@
                   (change)="setHarmonicControl(!!$any($event.target).checked)"
                   class="accent-accent"
                 />
-                <span class="text-muted dark:text-dark-muted">Editar armónicos desde tabla</span>
+                <span class="text-muted dark:text-dark-muted">
+                  {{ 'settingsCanvas.editArmonicsTable' | transloco }}</span
+                >
               </label>
             </div>
           </div>
           @if (controlHarmonics()) {
             <div class="flex flex-wrap items-center gap-2">
               <p class="text-[10px] text-muted dark:text-dark-muted">
-                Marca o desmarca filas en términos para sumar o restar armónicos. Click en una fila
-                para iluminar su curva.
+                {{ 'settingsCanvas.editLabel' | transloco }}
               </p>
-              <button
-                type="button"
-                (click)="clearHarmonicSelection()"
-                class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors"
-              >
-                Limpiar selección
-              </button>
             </div>
           }
         </section>
@@ -272,10 +276,12 @@
 
         <section class="flex flex-col gap-2">
           <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-            Eje y unidades
+            {{ 'settingsCanvas.axisAndUnits' | transloco }}
           </h4>
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-muted dark:text-dark-muted">Eje X</span>
+            <span class="text-muted dark:text-dark-muted">
+              {{ 'settingsCanvas.axisX' | transloco }}
+            </span>
             <div class="flex rounded border border-border dark:border-dark-border overflow-hidden">
               <button
                 type="button"
@@ -332,19 +338,21 @@
         <section class="flex flex-col gap-2">
           <div class="flex items-center justify-between gap-2">
             <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-              Estilo de líneas
+              {{ 'settingsCanvas.lineStyle' | transloco }}
             </h4>
             <button
               type="button"
               (click)="resetLineColorsToPreset()"
               class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors"
             >
-              Restablecer
+              {{ 'settingsCanvas.reset' | transloco }}
             </button>
           </div>
           <div class="flex flex-wrap gap-3">
             <div class="flex items-center gap-2">
-              <span class="text-muted dark:text-dark-muted">Original</span>
+              <span class="text-muted dark:text-dark-muted">{{
+                'settingsCanvas.original' | transloco
+              }}</span>
               <input
                 type="color"
                 [value]="originalColor()"
@@ -363,7 +371,9 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <span class="text-muted dark:text-dark-muted">Aprox.</span>
+              <span class="text-muted dark:text-dark-muted">{{
+                'settingsCanvas.aprox' | transloco
+              }}</span>
               <input
                 type="color"
                 [value]="approxColor()"
@@ -388,7 +398,7 @@
 
           <section class="flex flex-col gap-2">
             <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-              Parámetros libres
+              {{ 'settingsCanvas.freeParams' | transloco }}
             </h4>
             <app-param-sliders [params]="activeParams()" (valuesChange)="paramValues.set($event)" />
           </section>
@@ -398,7 +408,7 @@
 
         <section class="flex flex-col gap-2">
           <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-            Leyenda de líneas
+            {{ 'settingsCanvas.linesLabel' | transloco }}
           </h4>
           <div class="flex gap-4 text-xs flex-wrap shrink-0">
             <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
@@ -406,14 +416,14 @@
                 class="inline-block w-4 h-0.5 rounded"
                 [style.backgroundColor]="originalColor()"
               ></span>
-              Función original
+              {{ 'settingsCanvas.originalFunction' | transloco }}
             </span>
             <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
               <span
                 class="inline-block w-4 h-0.5 rounded"
                 [style.backgroundColor]="approxColor()"
               ></span>
-              Aproximación (N={{ canvasNTerms() }})
+              {{ 'settingsCanvas.fourierAprox' | transloco }} (N={{ canvasNTerms() }})
             </span>
             @if (showHarmonics()) {
               <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
@@ -431,7 +441,7 @@
                     [style.backgroundColor]="harmonicColors()[2]"
                   ></span>
                 </span>
-                Armónicos
+                {{ 'settingsCanvas.armonics' | transloco }}
               </span>
             }
           </div>
@@ -445,11 +455,13 @@
     <div
       class="border border-amber-300 dark:border-amber-700 rounded p-3 bg-amber-50/60 dark:bg-amber-950/20 shrink-0 flex items-center gap-2 flex-wrap text-xs font-mono"
     >
-      <span class="text-amber-700 dark:text-amber-400 shrink-0">Nombre del favorito:</span>
+      <span class="text-amber-700 dark:text-amber-400 shrink-0">{{
+        'history.favorite.nameLabel' | transloco
+      }}</span>
       <input
         type="text"
         [(ngModel)]="favoriteName"
-        placeholder="ej. Serie de cos(x)"
+        [placeholder]="'history.favorite.namePlaceholder' | transloco"
         (keydown.enter)="confirmFavorite()"
         (keydown.escape)="cancelFavoriteDialog()"
         autofocus
@@ -460,14 +472,14 @@
         (click)="confirmFavorite()"
         class="px-2.5 py-1 rounded bg-amber-500 text-white hover:bg-amber-600 transition-colors cursor-pointer shrink-0"
       >
-        Guardar
+        {{ 'common.save' | transloco }}
       </button>
       <button
         type="button"
         (click)="cancelFavoriteDialog()"
         class="px-2.5 py-1 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink transition-colors cursor-pointer shrink-0"
       >
-        Cancelar
+        {{ 'common.cancel' | transloco }}
       </button>
     </div>
   }
@@ -493,7 +505,7 @@
                   : 'px-2 py-0.5 rounded text-[10px] font-mono text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
               "
             >
-              Cos
+              {{ 'resultPanel.cosine' | transloco }}
             </button>
             <button
               type="button"
@@ -504,7 +516,7 @@
                   : 'px-2 py-0.5 rounded text-[10px] font-mono text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
               "
             >
-              Sen
+              {{ 'resultPanel.sine' | transloco }}
             </button>
           </div>
         }
@@ -521,7 +533,7 @@
                 : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'
             "
           >
-            {{ tab.label }}
+            {{ tab.labelKey | transloco }}
             @if (tab.id === 'validation' && hasValidationWarning()) {
               <span
                 class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-amber-500 align-middle"
@@ -546,7 +558,7 @@
           @if (composedSeriesTex()) {
             <div class="px-4 pt-4 pb-2">
               <p class="text-[10px] font-mono text-muted dark:text-dark-muted mb-1.5">
-                Serie de Fourier
+                {{ 'resultPanel.fourierSeries' | transloco }}
               </p>
               <div
                 class="overflow-x-auto text-ink dark:text-dark-ink"
@@ -572,7 +584,7 @@
                       : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
                   "
                 >
-                  {{ opt.label }}
+                  {{ opt.labelKey | transloco }}
                 </button>
               }
             </div>
@@ -721,7 +733,7 @@
               <p
                 class="px-3 py-2 text-[10px] text-amber-500 font-mono border-b border-border dark:border-dark-border"
               >
-                * coeficiente indeterminado (0/0); evaluado por límite
+                {{ 'resultPanel.indeterminateCoeffLabel' | transloco }}
               </p>
             }
 
@@ -736,23 +748,29 @@
                         type="checkbox"
                         [checked]="allVisibleHarmonicsChecked()"
                         (change)="toggleAllVisibleHarmonics(!!$any($event.target).checked)"
-                        title="Seleccionar todos los armónicos visibles"
+                        [title]="'resultPanel.selectAllHarmonics' | transloco"
                         class="accent-accent"
                       />
                     </th>
                   }
                   <th class="px-3 py-2 text-left font-medium w-8">n</th>
                   @if (!isSine) {
-                    <th class="px-3 py-2 text-left font-medium max-w-48">aₙ (expresión)</th>
-                    <th class="px-3 py-2 text-right font-medium w-28">aₙ (valor)</th>
+                    <th class="px-3 py-2 text-left font-medium max-w-48">
+                      {{ 'resultPanel.anExpression' | transloco }}
+                    </th>
+                    <th class="px-3 py-2 text-right font-medium w-28">
+                      {{ 'resultPanel.anValue' | transloco }}
+                    </th>
                   }
                   @if (isSine || isTrig) {
                     <th
                       class="px-3 py-2 text-left font-medium max-w-48 border-l border-border dark:border-dark-border"
                     >
-                      bₙ (expresión)
+                      {{ 'resultPanel.bnExpression' | transloco }}
                     </th>
-                    <th class="px-3 py-2 text-right font-medium w-28">bₙ (valor)</th>
+                    <th class="px-3 py-2 text-right font-medium w-28">
+                      {{ 'resultPanel.bnValue' | transloco }}
+                    </th>
                   }
                 </tr>
               </thead>
@@ -803,7 +821,7 @@
                           (change)="setHarmonicEnabled(term.n, !!$any($event.target).checked)"
                           (click)="$event.stopPropagation()"
                           class="accent-accent"
-                          title="Incluir armónico n={{ term.n }}"
+                          [title]="'resultPanel.includeHarmonic' | transloco: { n: term.n }"
                         />
                       </td>
                     }
@@ -815,7 +833,7 @@
                           @if (term.anUsedLimit) {
                             <span
                               class="inline-flex items-center justify-center text-[10px] leading-none px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0"
-                              title="Calculado por límite (forma 0/0)"
+                              [title]="'resultPanel.indeterminateCoeffTooltip' | transloco"
                               >*</span
                             >
                           }
@@ -832,7 +850,7 @@
                           @if (term.bnUsedLimit) {
                             <span
                               class="inline-flex items-center justify-center text-[10px] leading-none px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0"
-                              title="Calculado por límite (forma 0/0)"
+                              [title]="'resultPanel.indeterminateCoeffTooltip' | transloco"
                               >*</span
                             >
                           }
@@ -856,7 +874,7 @@
               <p
                 class="px-3 py-2 text-[10px] text-amber-500 font-mono border-b border-border dark:border-dark-border"
               >
-                * coeficiente indeterminado (0/0); evaluado por límite
+                {{ 'resultPanel.indeterminateCoeffLabel' | transloco }}
               </p>
             }
 
@@ -871,14 +889,18 @@
                         type="checkbox"
                         [checked]="allVisibleHarmonicsChecked()"
                         (change)="toggleAllVisibleHarmonics(!!$any($event.target).checked)"
-                        title="Seleccionar todos los armónicos visibles"
+                        [title]="'resultPanel.selectAllHarmonics' | transloco"
                         class="accent-accent"
                       />
                     </th>
                   }
                   <th class="px-3 py-2 text-left font-medium w-8">n</th>
-                  <th class="px-3 py-2 text-left font-medium">cₙ (expresión)</th>
-                  <th class="px-3 py-2 text-left font-medium">c₋ₙ (expresión)</th>
+                  <th class="px-3 py-2 text-left font-medium">
+                    {{ 'resultPanel.cnExpression' | transloco }}
+                  </th>
+                  <th class="px-3 py-2 text-left font-medium">
+                    {{ 'resultPanel.cMnExpression' | transloco }}
+                  </th>
                   <th class="px-3 py-2 text-right font-medium w-24">|cₙ|</th>
                   <th class="px-3 py-2 text-right font-medium w-24">∠cₙ (rad)</th>
                 </tr>
@@ -924,7 +946,7 @@
                           (change)="setHarmonicEnabled(term.n, !!$any($event.target).checked)"
                           (click)="$event.stopPropagation()"
                           class="accent-accent"
-                          title="Incluir armónico n={{ term.n }}"
+                          [title]="'resultPanel.includeHarmonic' | transloco: { n: term.n }"
                         />
                       </td>
                     }
@@ -935,7 +957,7 @@
                         @if (term.cnUsedLimit) {
                           <span
                             class="inline-flex items-center justify-center text-[10px] leading-none px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0"
-                            title="Calculado por límite (forma 0/0)"
+                            [title]="'resultPanel.computedByLimit' | transloco"
                             >*</span
                           >
                         }
@@ -947,7 +969,7 @@
                         @if (term.cnNegUsedLimit) {
                           <span
                             class="inline-flex items-center justify-center text-[10px] leading-none px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0"
-                            title="Calculado por límite (forma 0/0)"
+                            [title]="'resultPanel.computedByLimit' | transloco"
                             >*</span
                           >
                         }
@@ -996,7 +1018,7 @@
             <div
               class="flex items-center justify-center h-48 text-muted dark:text-dark-muted text-sm"
             >
-              Cargando espectro...
+              {{ 'common.loading' | transloco }}
             </div>
           }
         </div>
@@ -1013,21 +1035,21 @@
                   class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[11px] font-mono"
                 >
                   <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                  Sin singularidades
+                  {{ 'resultPanel.noSingularities' | transloco }}
                 </span>
               } @else if (v.decision === 'warn') {
                 <span
                   class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[11px] font-mono"
                 >
                   <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                  Advertencia
+                  {{ 'common.warning' | transloco }}
                 </span>
               } @else {
                 <span
                   class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[11px] font-mono"
                 >
                   <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                  Rechazado
+                  {{ 'common.rejected' | transloco }}
                 </span>
               }
               @if (v.message) {
@@ -1041,15 +1063,19 @@
             @if (v.singularities.length > 0) {
               <div class="overflow-x-auto">
                 <p class="text-[10px] font-mono text-muted dark:text-dark-muted mb-2">
-                  Singularidades detectadas
+                  {{ 'resultPanel.singularitiesDetected' | transloco }}
                 </p>
                 <table class="w-full text-xs font-mono min-w-max">
                   <thead>
                     <tr
                       class="text-muted dark:text-dark-muted text-left border-b border-border dark:border-dark-border"
                     >
-                      <th class="pb-1.5 pr-8 font-medium whitespace-nowrap">Punto</th>
-                      <th class="pb-1.5 font-medium whitespace-nowrap">Tipo</th>
+                      <th class="pb-1.5 pr-8 font-medium whitespace-nowrap">
+                        {{ 'resultPanel.point' | transloco }}
+                      </th>
+                      <th class="pb-1.5 font-medium whitespace-nowrap">
+                        {{ 'resultPanel.type' | transloco }}
+                      </th>
                     </tr>
                   </thead>
                   <tbody
@@ -1065,7 +1091,7 @@
                           <span
                             class="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
                           >
-                            {{ singularityLabels[s.type] ?? s.type }}
+                            {{ singularityLabel(s.type) }}
                           </span>
                         </td>
                       </tr>
@@ -1075,12 +1101,12 @@
               </div>
             } @else {
               <p class="text-sm font-body text-muted dark:text-dark-muted">
-                No se detectaron singularidades en el dominio de integración.
+                {{ 'resultPanel.noSingularitiesInDomain' | transloco }}
               </p>
             }
           } @else {
             <p class="text-sm font-body text-muted dark:text-dark-muted">
-              No hay información de validación disponible.
+              {{ 'resultPanel.noInfoAvailable' | transloco }}
             </p>
           }
         </div>
@@ -1091,8 +1117,9 @@
   <!-- Empty state -->
   @if (!store.hasResult() && !store.loading()) {
     <div class="text-center py-6 text-muted dark:text-dark-muted text-sm font-body">
-      Configura la función y presiona
-      <strong class="text-ink dark:text-dark-ink">Calcular serie</strong>.
+      {{ 'calculator.label' | transloco }}
+      <strong class="text-ink dark:text-dark-ink">{{ 'calculator.calculate' | transloco }}</strong
+      >.
     </div>
   }
 </div>
@@ -1130,7 +1157,7 @@
             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
           </svg>
           <h3 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-            Compartir serie
+            {{ 'share.title' | transloco }}
           </h3>
         </div>
         <button
@@ -1144,7 +1171,7 @@
 
       <!-- Description -->
       <p class="text-xs text-muted dark:text-dark-muted font-body mb-3">
-        Comparte este enlace para abrir la calculadora con la misma función y resultado.
+        {{ 'share.description' | transloco }}
       </p>
 
       <!-- URL row -->
@@ -1178,7 +1205,7 @@
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            Copiada
+            {{ 'common.copied' | transloco }}
           } @else {
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1193,7 +1220,7 @@
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
             </svg>
-            Copiar
+            {{ 'common.copy' | transloco }}
           }
         </button>
       </div>
@@ -1201,7 +1228,7 @@
       <!-- Confirmation toast -->
       @if (urlCopied()) {
         <p class="mt-2.5 text-[11px] font-mono text-green-600 dark:text-green-400 text-center">
-          URL copiada al portapapeles
+          {{ 'common.copiedMessage' | transloco }}
         </p>
       }
     </div>

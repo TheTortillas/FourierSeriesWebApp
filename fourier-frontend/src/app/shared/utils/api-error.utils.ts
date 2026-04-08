@@ -4,8 +4,16 @@ import { HttpErrorResponse } from '@angular/common/http';
  * Formats an API error into a user-friendly string.
  * Handles 429 responses enriched with retryAfterSeconds / resetsAt
  * from the backend rate limiters.
+ *
+ * Pass `translate` + `lang` to get i18n-aware messages; otherwise the
+ * function falls back to hardcoded Spanish strings.
  */
-export function formatApiError(e: unknown, fallback: string): string {
+export function formatApiError(
+  e: unknown,
+  fallback: string,
+  translate?: (key: string, params?: Record<string, unknown>) => string,
+  lang?: string,
+): string {
   if (!(e instanceof HttpErrorResponse)) return fallback;
 
   const body = e.error as Record<string, unknown> | null;
@@ -18,23 +26,27 @@ export function formatApiError(e: unknown, fallback: string): string {
     // Weekly quota limit — show reset date
     if (resetsAt) {
       const date = new Date(resetsAt);
-      const formatted = date.toLocaleDateString('es-ES', {
+      const formatted = date.toLocaleDateString(lang ?? 'es-ES', {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
         hour: '2-digit',
         minute: '2-digit',
       });
-      const upgradeAvailable = body['upgradeAvailable'] as boolean | undefined;
-      const suffix = upgradeAvailable
-        ? ' Considera mejorar tu plan para más cálculos.'
-        : '';
-      return `Límite semanal alcanzado. Tu cuota se renueva el ${formatted}.${suffix}`;
+      if (translate) {
+        return translate('errors.weeklyLimitReached', { date: formatted });
+      }
+      return `Límite semanal alcanzado. Tu cuota se renueva el ${formatted}.`;
     }
 
     // IP rate limit — show remaining minutes
     if (retryAfterSeconds !== undefined) {
       const minutes = Math.ceil(retryAfterSeconds / 60);
+      if (translate) {
+        return minutes <= 1
+          ? translate('errors.tooManyRequests')
+          : translate('errors.tooManyRequestsMinutes', { minutes });
+      }
       return minutes <= 1
         ? 'Demasiadas solicitudes. Intenta de nuevo en un momento.'
         : `Demasiadas solicitudes. Intenta de nuevo en ${minutes} minutos.`;

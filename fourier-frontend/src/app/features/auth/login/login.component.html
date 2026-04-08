@@ -8,13 +8,13 @@
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="font-display text-3xl text-ink dark:text-dark-ink mb-1">
-          Iniciar sesión
+          {{ 'auth.login.title' | transloco }}
         </h1>
         <p class="font-body text-sm text-muted dark:text-dark-muted">
-          ¿No tienes cuenta?
-          <a routerLink="/auth/register"
+          {{ 'auth.login.noAccount' | transloco }}
+          <a routerLink="../register"
              class="text-accent hover:underline font-medium">
-            Regístrate
+            {{ 'auth.login.register' | transloco }}
           </a>
         </p>
       </div>
@@ -42,7 +42,7 @@
         <!-- Divider -->
         <div class="flex items-center gap-3">
           <div class="flex-1 h-px bg-border dark:bg-dark-border"></div>
-          <span class="text-[11px] font-mono text-muted dark:text-dark-muted">o continúa con email</span>
+          <span class="text-[11px] font-mono text-muted dark:text-dark-muted">{{ 'auth.login.orContinueEmail' | transloco }}</span>
           <div class="flex-1 h-px bg-border dark:bg-dark-border"></div>
         </div>
 
@@ -51,13 +51,13 @@
           <!-- Email -->
           <div class="flex flex-col gap-1">
             <label class="text-xs font-mono text-muted dark:text-dark-muted">
-              Correo electrónico
+              {{ 'auth.login.email' | transloco }}
             </label>
             <input
               type="email"
               formControlName="email"
               autocomplete="email"
-              placeholder="tu@correo.com"
+              [placeholder]="'auth.login.emailPlaceholder' | transloco"
               class="w-full px-3 py-2 rounded-lg text-sm font-mono
                      bg-paper dark:bg-dark-bg
                      border border-border dark:border-dark-border
@@ -66,12 +66,11 @@
                      focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
                      transition-colors"
               [class.border-red-400]="email.invalid && email.touched"
-              [class.focus:ring-red-400]="email.invalid && email.touched"
             />
             @if (email.touched && email.errors?.['required']) {
-              <p class="text-[11px] text-red-500 font-mono">Campo requerido</p>
+              <p class="text-[11px] text-red-500 font-mono">{{ 'common.fieldRequired' | transloco }}</p>
             } @else if (email.touched && email.errors?.['email']) {
-              <p class="text-[11px] text-red-500 font-mono">Email inválido</p>
+              <p class="text-[11px] text-red-500 font-mono">{{ 'common.invalidEmail' | transloco }}</p>
             }
           </div>
 
@@ -79,12 +78,12 @@
           <div class="flex flex-col gap-1">
             <div class="flex items-center justify-between">
               <label class="text-xs font-mono text-muted dark:text-dark-muted">
-                Contraseña
+                {{ 'auth.login.password' | transloco }}
               </label>
-              <a routerLink="/auth/forgot-password"
+              <a routerLink="../forgot-password"
                  class="text-[11px] font-mono text-muted dark:text-dark-muted
                         hover:text-accent dark:hover:text-accent transition-colors">
-                ¿Olvidaste tu contraseña?
+                {{ 'auth.login.forgotPassword' | transloco }}
               </a>
             </div>
             <div class="relative">
@@ -102,10 +101,7 @@
                        transition-colors"
                 [class.border-red-400]="password.invalid && password.touched"
               />
-              <button
-                type="button"
-                (click)="showPass.set(!showPass())"
-                tabindex="-1"
+              <button type="button" (click)="showPass.set(!showPass())" tabindex="-1"
                 class="absolute right-2.5 top-1/2 -translate-y-1/2
                        text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink
                        transition-colors cursor-pointer">
@@ -123,7 +119,7 @@
               </button>
             </div>
             @if (password.touched && password.errors?.['required']) {
-              <p class="text-[11px] text-red-500 font-mono">Campo requerido</p>
+              <p class="text-[11px] text-red-500 font-mono">{{ 'common.fieldRequired' | transloco }}</p>
             }
           </div>
 
@@ -142,7 +138,7 @@
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
             }
-            {{ loading() ? 'Ingresando...' : 'Ingresar' }}
+            {{ loading() ? ('auth.login.submitting' | transloco) : ('auth.login.submit' | transloco) }}
           </button>
 
         </form>

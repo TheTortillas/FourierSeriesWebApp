@@ -3,9 +3,9 @@
 <main class="w-full px-4 lg:px-6 py-8 flex flex-col gap-6">
   <!-- ── Page header ──────────────────────────────────────────────────────── -->
   <div class="flex flex-col gap-1">
-    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Transformada de Fourier</h1>
+    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'transforms.title' | transloco }}</h1>
     <p class="text-sm font-mono text-muted dark:text-dark-muted">
-      Calcula la transformada continua o inversa de una función definida por tramos.
+      {{ 'transforms.subtitle' | transloco }}
     </p>
   </div>
 
@@ -13,23 +13,23 @@
     class="inline-flex w-fit rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5"
   >
     <a
-      routerLink="/transforms/continuous"
+      routerLink="../continuous"
       routerLinkActive="bg-accent text-white shadow-sm"
       [routerLinkActiveOptions]="{ exact: true }"
       class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors"
     >
-      Continua
+      {{ 'transforms.continuous' | transloco }}
     </a>
     <a
-      routerLink="/transforms/dft"
+      routerLink="../dft"
       routerLinkActive="bg-accent text-white shadow-sm"
       class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors inline-flex items-center gap-1.5"
     >
-      Discreta
+      {{ 'transforms.discrete' | transloco }}
       <span
         class="text-[10px] leading-none px-1.5 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted"
       >
-        Próximamente
+        {{ 'transforms.comingSoon' | transloco }}
       </span>
     </a>
   </div>
@@ -56,7 +56,7 @@
                 : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
             "
           >
-            Directa
+            {{ 'transforms.direct' | transloco }}
           </button>
           <button
             type="button"
@@ -67,7 +67,7 @@
                 : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
             "
           >
-            Inversa
+            {{ 'transforms.inverse' | transloco }}
           </button>
         </div>
 
@@ -76,7 +76,7 @@
           class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-3"
         >
           <h2 class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-            Variables
+            {{ 'transforms.variables' | transloco }}
           </h2>
 
           <div class="flex flex-wrap gap-2">
@@ -116,7 +116,7 @@
             <div class="flex items-center gap-3 pt-1 flex-wrap">
               <div class="flex flex-col gap-1">
                 <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                  Var. {{ mode() === 'ft' ? 'temporal' : 'frecuencia' }}
+                  {{ mode() === 'ft' ? ('transforms.varTime' | transloco) : ('transforms.varFreq' | transloco) }}
                 </label>
                 <input
                   type="text"
@@ -129,7 +129,7 @@
               <span class="text-muted font-mono mt-4">→</span>
               <div class="flex flex-col gap-1">
                 <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                  Var. {{ mode() === 'ft' ? 'frecuencia' : 'temporal' }}
+                  {{ mode() === 'ft' ? ('transforms.varFreq' | transloco) : ('transforms.varTime' | transloco) }}
                 </label>
                 <input
                   type="text"
@@ -140,7 +140,7 @@
                 />
               </div>
               <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-4">
-                Usa nombres Maxima: <code class="text-accent">nu</code>,
+                {{ 'transforms.maximaNames' | transloco }} <code class="text-accent">nu</code>,
                 <code class="text-accent">xi</code>, <code class="text-accent">omega</code>…
               </p>
             </div>
@@ -186,9 +186,29 @@
               [index]="i"
               [isOnly]="segments().length === 1"
               [intVar]="intVar()"
+              [continuityError]="continuityErrors()[i] ?? null"
+              [prevContinuityError]="i > 0 ? (continuityErrors()[i - 1] ?? null) : null"
+              [orderError]="orderErrors()[i] || false"
               (updated)="updateSegment($event.id, $event.changes)"
               (removed)="removeSegment($event)"
             />
+          }
+
+          @if (orderErrors().some(e => e)) {
+            <div class="flex items-start gap-2 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 px-3 py-2">
+              <span class="text-red-500 shrink-0 text-sm leading-none mt-0.5">✕</span>
+              <p class="text-xs text-red-700 dark:text-red-400 font-mono">
+                {{ 'calculator.segment.orderError' | transloco }}
+              </p>
+            </div>
+          }
+          @if (continuityErrors().some(e => e !== null)) {
+            <div class="flex items-start gap-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+              <span class="text-amber-500 shrink-0 text-sm leading-none mt-0.5">⚠</span>
+              <p class="text-xs text-amber-700 dark:text-amber-400 font-mono">
+                {{ 'calculator.segment.continuityWarning' | transloco }}
+              </p>
+            </div>
           }
 
           <button
@@ -197,7 +217,7 @@
             class="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono border border-dashed border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer"
           >
             <span class="text-base leading-none">+</span>
-            Agregar tramo
+            {{ 'transforms.addSegment' | transloco }}
           </button>
         </section>
 
@@ -230,13 +250,38 @@
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              Calculando…
+              {{ 'common.calculating' | transloco }}
             </span>
           } @else {
-            Calcular
+            {{ 'transforms.calculate' | transloco }}
           }
         </button>
       </div>
+
+      <!-- Complex inputs notice -->
+      @if (hasComplexInputs() && !hasComputedResult()) {
+        <div
+          class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 flex items-start gap-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-4 h-4 shrink-0 mt-0.5 text-amber-500 dark:text-amber-400"
+          >
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <p class="text-xs font-mono text-amber-700 dark:text-amber-300">
+            {{ 'transforms.complexInputNotice' | transloco }}
+          </p>
+        </div>
+      }
 
       <!-- Error -->
       @if (errorMsg()) {
@@ -253,7 +298,7 @@
           (click)="startNewCalculation()"
           class="w-full py-1.5 rounded border border-border dark:border-dark-border text-xs text-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors cursor-pointer font-mono"
         >
-          Nuevo cálculo
+          {{ 'transforms.newCalculation' | transloco }}
         </button>
       }
     </div>
@@ -281,7 +326,7 @@
           <button
             type="button"
             (click)="toggleFullscreen()"
-            [title]="isFullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'"
+            [title]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
             class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
           >
             @if (isFullscreen()) {
@@ -324,7 +369,7 @@
             <button
               type="button"
               (click)="showCanvasSettings.set(!showCanvasSettings())"
-              title="Ajustes del lienzo"
+              [title]="'results.canvasSettings' | transloco"
               [class]="
                 showCanvasSettings()
                   ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent dark:text-accent transition-colors flex items-center justify-center'
@@ -361,7 +406,7 @@
           <button
             type="button"
             (click)="downloadCanvas()"
-            title="Descargar imagen"
+            [title]="'results.downloadImage' | transloco"
             class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
           >
             <svg
@@ -385,7 +430,7 @@
             <button
               type="button"
               (click)="openShareDialog()"
-              title="Compartir enlace"
+              [title]="'transforms.shareLink' | transloco"
               class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
             >
               <svg
@@ -413,7 +458,7 @@
           >
             <section class="flex flex-col gap-2">
               <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                Capas a mostrar
+                {{ 'transforms.layersToShow' | transloco }}
               </h4>
               <div class="flex flex-wrap gap-2 items-center">
                 <button
@@ -514,10 +559,10 @@
 
             <section class="flex flex-col gap-2">
               <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                Eje y unidades
+                {{ 'transforms.axisAndUnits' | transloco }}
               </h4>
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-muted dark:text-dark-muted">Eje X</span>
+                <span class="text-muted dark:text-dark-muted">{{ 'transforms.axisX' | transloco }}</span>
                 <div
                   class="flex rounded border border-border dark:border-dark-border overflow-hidden"
                 >
@@ -576,20 +621,20 @@
             <section class="flex flex-col gap-2">
               <div class="flex items-center justify-between gap-2">
                 <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                  Estilo de líneas
+                  {{ 'transforms.lineStyle' | transloco }}
                 </h4>
                 <button
                   type="button"
                   (click)="resetLineColorsToPreset()"
                   class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors cursor-pointer"
                 >
-                  Restablecer
+                  {{ 'transforms.reset' | transloco }}
                 </button>
               </div>
               <div class="flex flex-wrap gap-3">
                 <div class="flex items-center gap-2">
                   @if (mode() === 'ft') {
-                    <span class="text-muted dark:text-dark-muted">Original</span>
+                    <span class="text-muted dark:text-dark-muted">{{ 'transforms.original' | transloco }}</span>
                   } @else {
                     <span class="text-muted dark:text-dark-muted">f({{ resultVarDisplay() }})</span>
                   }
@@ -668,7 +713,7 @@
             @if (activeParams().length) {
               <section class="flex flex-col gap-2">
                 <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                  Parámetros libres
+                  {{ 'transforms.freeParams' | transloco }}
                 </h4>
                 <app-param-sliders
                   [params]="activeParams()"
@@ -681,7 +726,7 @@
 
             <section class="flex flex-col gap-2">
               <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                Leyenda de líneas
+                {{ 'transforms.lineLegend' | transloco }}
               </h4>
               <div class="flex flex-wrap gap-4 text-xs">
                 <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
@@ -732,11 +777,11 @@
             </section>
 
             <p class="text-[10px] text-muted dark:text-dark-muted">
-              Arrastra para hacer pan · Scroll para zoom
+              {{ 'transforms.dragToPan' | transloco }}
               @if (mode() === 'ft') {
-                · El eje X representa {{ activePair().freqDisplay || activePair().freq }}
+                {{ 'transforms.xAxisRepresents' | transloco: { var: activePair().freqDisplay || activePair().freq } }}
               } @else {
-                · El eje X representa {{ activePair().timeDisplay || activePair().time }}
+                {{ 'transforms.xAxisRepresents' | transloco: { var: activePair().timeDisplay || activePair().time } }}
               }
             </p>
           </div>
@@ -775,7 +820,7 @@
                   <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                 </svg>
                 <h3 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-                  Compartir transformada
+                  {{ 'transforms.shareTitle' | transloco }}
                 </h3>
               </div>
               <button
@@ -788,7 +833,7 @@
             </div>
 
             <p class="text-xs text-muted dark:text-dark-muted font-body mb-3">
-              Comparte este enlace para abrir la calculadora con la misma función y resultado.
+              {{ 'transforms.shareDescription' | transloco }}
             </p>
 
             <div class="flex gap-2">
@@ -821,7 +866,7 @@
                   >
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  Copiada
+                  {{ 'transforms.copied' | transloco }}
                 } @else {
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -836,7 +881,7 @@
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                   </svg>
-                  Copiar
+                  {{ 'transforms.copy' | transloco }}
                 }
               </button>
             </div>
@@ -845,7 +890,7 @@
               <p
                 class="mt-2.5 text-[11px] font-mono text-green-600 dark:text-green-400 text-center"
               >
-                URL copiada al portapapeles
+                {{ 'transforms.urlCopied' | transloco }}
               </p>
             }
           </div>
@@ -856,7 +901,7 @@
       @if (ftResult(); as res) {
         <div class="flex flex-col gap-3 pt-1">
           <div class="flex items-center gap-2">
-            <h2 class="font-display text-base text-ink dark:text-dark-ink">Resultado</h2>
+            <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'transforms.result' | transloco }}</h2>
             <span class="text-xs font-mono text-muted dark:text-dark-muted">
               {{ res.executionTimeMs }} ms
             </span>
@@ -867,7 +912,7 @@
               class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3"
             >
               <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
-                La transformada no existe para esta función (integral divergente).
+                {{ 'transforms.ftNotExists' | transloco }}
               </p>
             </div>
           } @else {
@@ -878,7 +923,7 @@
                 <span
                   class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider"
                 >
-                  Transformada completa
+                  {{ 'transforms.fullTransform' | transloco }}
                 </span>
                 <div class="flex items-baseline gap-2 flex-wrap">
                   <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">
@@ -901,7 +946,7 @@
                     class="text-[10px] font-mono text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5"
                   >
                     <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-                    Parte real
+                    {{ 'transforms.realPart' | transloco }}
                   </span>
                   <span
                     [mathjax]="display(res.realPart!.tex)"
@@ -917,7 +962,7 @@
                     class="text-[10px] font-mono text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5"
                   >
                     <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
-                    Parte imaginaria
+                    {{ 'transforms.imagPart' | transloco }}
                   </span>
                   <span
                     [mathjax]="display(res.imagPart!.tex)"
@@ -934,7 +979,7 @@
       @if (iftResult(); as res) {
         <div class="flex flex-col gap-3 pt-1">
           <div class="flex items-center gap-2">
-            <h2 class="font-display text-base text-ink dark:text-dark-ink">Resultado</h2>
+            <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'transforms.result' | transloco }}</h2>
             <span class="text-xs font-mono text-muted dark:text-dark-muted">
               {{ res.executionTimeMs }} ms
             </span>
@@ -945,7 +990,7 @@
               class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3"
             >
               <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
-                La transformada inversa no existe para esta función.
+                {{ 'transforms.iftNotExists' | transloco }}
               </p>
             </div>
           } @else {

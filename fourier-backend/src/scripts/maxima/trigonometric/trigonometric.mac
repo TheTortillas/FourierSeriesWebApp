@@ -15,15 +15,24 @@ fin: FUNC_INPUT[pieces][3];
 PERIOD: ratsimp(fin - inicio);
 T: PERIOD;
 /*
-    Robusto ante nombres de parámetro arbitrarios (T, L, a, ...):
-    asumimos positivos los símbolos que aparecen en el período para
-    evitar prompts interactivos de signo durante simplificación.
+    Robusto ante nombres de parámetro arbitrarios (T, L, a, h, ...):
+    declaramos como real y positivo todo símbolo libre que aparezca
+    en el período O en los límites de los tramos, para evitar prompts
+    interactivos de signo durante la integración.
 */
-for sym in listofvars(PERIOD) do (
+block([_all_limit_vars: listofvars(PERIOD)],
+    for _i: 1 thru length(FUNC_INPUT) do (
+        _all_limit_vars: append(_all_limit_vars,
+            listofvars(FUNC_INPUT[_i][1]),
+            listofvars(FUNC_INPUT[_i][2]),
+            listofvars(FUNC_INPUT[_i][3]))
+    ),
+    for sym in _all_limit_vars do (
         if not numberp(sym) and sym # INTVAR and sym # n then (
-                if not featurep(sym, real) then declare(sym, real),
-                errcatch(assume(sym > 0))
+            if not featurep(sym, real) then declare(sym, real),
+            errcatch(assume(sym > 0))
         )
+    )
 );
 w0: 2 * %pi / PERIOD;
     

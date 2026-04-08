@@ -161,6 +161,28 @@ export class ApiService {
     return this.http.post<DftResponse>(`${this.base}/transforms/dft`, body);
   }
 
+  // ─── Parse ───────────────────────────────────────────────────────────────
+
+  parseLaTeX(latex: string, mode: 'series' | 'transform' = 'series'): Observable<{ maxima: string; ok: boolean; error?: string }> {
+    return this.http.post<{ maxima: string; ok: boolean; error?: string }>(
+      `${this.base}/parse/latex`,
+      { latex, mode },
+    );
+  }
+
+  compareIntervals(body: {
+    pairs?: Array<{ a: string; b: string }>;
+    orderPairs?: Array<{ a: string; b: string }>;
+  }): Observable<{
+    results?: Array<'equal' | 'different' | 'unknown'>;
+    orderResults?: Array<'valid' | 'invalid' | 'unknown'>;
+  }> {
+    return this.http.post<{
+      results?: Array<'equal' | 'different' | 'unknown'>;
+      orderResults?: Array<'valid' | 'invalid' | 'unknown'>;
+    }>(`${this.base}/parse/compare`, body);
+  }
+
   // ─── Simplify ────────────────────────────────────────────────────────────
 
   simplify(body: SimplifyRequest): Observable<SimplifyResponse> {

@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../core/services/api/api.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
@@ -10,13 +11,14 @@ type State = 'loading' | 'success' | 'error';
 @Component({
   selector: 'app-verify-email',
   templateUrl: './verify-email.component.html',
-  imports: [RouterLink, NavComponent],
+  imports: [RouterLink, NavComponent, TranslocoPipe],
 })
 export class VerifyEmailComponent implements OnInit {
-  private readonly api    = inject(ApiService);
-  private readonly auth   = inject(AuthService);
-  private readonly route  = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+  private readonly api       = inject(ApiService);
+  private readonly auth      = inject(AuthService);
+  private readonly route     = inject(ActivatedRoute);
+  private readonly router    = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   readonly state    = signal<State>('loading');
   readonly errorMsg = signal<string | null>(null);
@@ -24,7 +26,7 @@ export class VerifyEmailComponent implements OnInit {
   ngOnInit(): void {
     const token = this.route.snapshot.queryParamMap.get('token');
     if (!token) {
-      this.router.navigate(['/home']);
+      this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']);
       return;
     }
 

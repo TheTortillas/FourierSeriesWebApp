@@ -1,10 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { UserStore } from '../../../core/services/auth/user.store';
 import { ApiService } from '../../../core/services/api/api.service';
 
 @Component({
   selector: 'app-verify-email-banner',
   templateUrl: './verify-email-banner.component.html',
+  imports: [TranslocoPipe],
 })
 export class VerifyEmailBannerComponent {
   readonly store = inject(UserStore);

@@ -2,6 +2,7 @@ import { Component, inject, afterNextRender } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ThemeService } from './core/services/theme/theme.service';
 import { AuthService } from './core/services/auth/auth.service';
+import { HreflangService } from './core/services/seo/hreflang.service';
 import { VerifyEmailBannerComponent } from './shared/components/verify-email-banner/verify-email-banner.component';
 
 @Component({
@@ -13,10 +14,13 @@ import { VerifyEmailBannerComponent } from './shared/components/verify-email-ban
   `,
 })
 export class App {
-  private readonly theme = inject(ThemeService);
-  private readonly auth  = inject(AuthService);
+  private readonly theme    = inject(ThemeService);
+  private readonly auth     = inject(AuthService);
+  private readonly hreflang = inject(HreflangService);
 
   constructor() {
+    this.hreflang.setup();
+
     afterNextRender(() => {
       this.theme.applyToDocument();
       // Intenta recuperar sesión via cookie httpOnly al iniciar la app

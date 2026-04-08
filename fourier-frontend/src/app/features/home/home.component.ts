@@ -4,10 +4,14 @@ import {
   ElementRef,
   inject,
   OnDestroy,
+  OnInit,
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { ThemeService } from '../../core/services/theme/theme.service';
+import { SeoService } from '../../core/services/seo/seo.service';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 
@@ -20,11 +24,21 @@ interface Waveform {
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, NavComponent, FooterComponent],
+  imports: [RouterLink, NavComponent, FooterComponent, TranslocoPipe],
   templateUrl: './home.component.html',
 })
-export class HomeComponent implements OnDestroy {
+export class HomeComponent implements OnInit, OnDestroy {
   readonly theme = inject(ThemeService);
+  private readonly seo = inject(SeoService);
+
+  ngOnInit(): void {
+    this.seo.setPage('seo.home.title', 'seo.home.description');
+  }
+
+  private readonly transloco = inject(TranslocoService);
+  readonly lang = toSignal(this.transloco.langChanges$, {
+    initialValue: this.transloco.getActiveLang(),
+  });
 
   private readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('heroCanvas');
   private animId = 0;

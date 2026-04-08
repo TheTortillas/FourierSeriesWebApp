@@ -1,6 +1,6 @@
 import {
-  afterNextRender,
   Component,
+  OnInit,
   computed,
   effect,
   inject,
@@ -10,8 +10,10 @@ import {
   ElementRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { debounceTime, filter, of, switchMap, take, tap } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -26,9 +28,11 @@ import { PlottingService } from '../../../core/services/canvas/plotting.service'
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { ThemeService } from '../../../core/services/theme/theme.service';
+import { SeoService } from '../../../core/services/seo/seo.service';
 import { ParamSlidersComponent } from '../../../shared/components/param-sliders/param-sliders.component';
 import type { ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
+import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
@@ -38,14 +42,32 @@ let _nextId = 0;
 const mkId = () => `ts-${++_nextId}`;
 
 function emptySegment(): TransformSegmentDraft {
+  return { id: mkId(), expression: '', expressionTex: '', from: '', fromTex: '', to: '', toTex: '' };
+}
+
+/** Default FT example: sinc function sin(πt)/(πt) */
+function defaultSegmentFt(): TransformSegmentDraft {
   return {
     id: mkId(),
-    expression: '',
-    expressionTex: '',
-    from: '',
-    fromTex: '',
-    to: '',
-    toTex: '',
+    expression: 'sin(%pi*t)/(%pi*t)',
+    expressionTex: '\\frac{\\sin\\left(\\pi t\\right)}{\\pi t}',
+    from: 'minf',
+    fromTex: '-\\infty',
+    to: 'inf',
+    toTex: '\\infty',
+  };
+}
+
+/** Default IFT example: 1/(a + iw) — one-sided exponential spectrum */
+function defaultSegmentIft(): TransformSegmentDraft {
+  return {
+    id: mkId(),
+    expression: '1/(a+%i*w)',
+    expressionTex: '\\frac{1}{a+iw}',
+    from: 'minf',
+    fromTex: '-\\infty',
+    to: 'inf',
+    toTex: '\\infty',
   };
 }
 
@@ -121,11 +143,19 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     FormsModule,
     RouterLink,
     RouterLinkActive,
+    TranslocoPipe,
   ],
 })
-export class ContinuousTransformComponent {
+export class ContinuousTransformComponent implements OnInit {
   readonly api = inject(ApiService);
-  private readonly userStore = inject(UserStore);
+  private readonly userStore  = inject(UserStore);
+  private readonly transloco  = inject(TranslocoService);
+  private readonly seo        = inject(SeoService);
+  private readonly intervalValidator = inject(LatexToMaximaService);
+
+  ngOnInit(): void {
+    this.seo.setPage('seo.transforms.title', 'seo.transforms.description');
+  }
   readonly plotter = inject(PlottingService);
   private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly mathUtils = inject(MathUtilsService);
@@ -138,7 +168,10 @@ export class ContinuousTransformComponent {
   readonly varPairId = signal<string>('t-w');
   readonly customTime = signal('t');
   readonly customFreq = signal('w');
-  readonly segments = signal<TransformSegmentDraft[]>([emptySegment()]);
+  readonly segments = signal<TransformSegmentDraft[]>([defaultSegmentFt()]);
+  readonly continuityErrors = signal<(string | null)[]>([null]);
+  readonly orderErrors = signal<boolean[]>([false]);
+  readonly continuityValidating = signal(false);
   readonly loading = signal(false);
   readonly errorMsg = signal<string | null>(null);
   readonly ftResult = signal<FourierTransformResponse | null>(null);
@@ -209,6 +242,56 @@ export class ContinuousTransformComponent {
       if (!this.customMagColor()) this.magColor.set(preset.mag);
     });
 
+    // ── Interval validation (continuity + order) ─────────────────────────
+    toObservable(this.segments).pipe(
+      tap((segs) => {
+        if (segs.some((s) => s.from && s.to) || segs.length > 1) this.continuityValidating.set(true);
+      }),
+      debounceTime(600),
+      switchMap((segs) => {
+        const pairIndices: number[] = [];
+        const pairs: Array<{ a: string; b: string }> = [];
+        for (let i = 0; i < segs.length - 1; i++) {
+          if (segs[i].to && segs[i + 1].from) {
+            pairIndices.push(i);
+            pairs.push({ a: segs[i].to, b: segs[i + 1].from });
+          }
+        }
+
+        const orderIndices: number[] = [];
+        const orderPairs: Array<{ a: string; b: string }> = [];
+        for (let i = 0; i < segs.length; i++) {
+          if (segs[i].from && segs[i].to) {
+            orderIndices.push(i);
+            orderPairs.push({ a: segs[i].from, b: segs[i].to });
+          }
+        }
+
+        if (pairs.length === 0 && orderPairs.length === 0) {
+          return of({ continuity: segs.map(() => null as string | null), order: segs.map(() => false) });
+        }
+
+        return this.intervalValidator.validateBoundaries({ pairs, orderPairs }).pipe(
+          switchMap((res) => {
+            const continuity: (string | null)[] = segs.map(() => null);
+            res.results.forEach((r, ri) => {
+              if (r === 'different') continuity[pairIndices[ri]] = 'calculator.segment.continuityGap';
+            });
+            const order: boolean[] = segs.map(() => false);
+            res.orderResults.forEach((r, ri) => {
+              if (r === 'invalid') order[orderIndices[ri]] = true;
+            });
+            return of({ continuity, order });
+          }),
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(({ continuity, order }) => {
+      this.continuityErrors.set(continuity);
+      this.orderErrors.set(order);
+      this.continuityValidating.set(false);
+    });
+
     // Track native fullscreen changes
     if (typeof document !== 'undefined') {
       const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
@@ -218,7 +301,8 @@ export class ContinuousTransformComponent {
 
     // ── 1. Restore state from router navigation state or URL ──────────────
     const navState = this.router.getCurrentNavigation()?.extras.state as
-      { restoreInput?: Record<string, unknown> } | undefined;
+      | { restoreInput?: Record<string, unknown> }
+      | undefined;
     const encoded = this.route.snapshot.queryParamMap.get('s');
     let needsCalculate = false;
     if (navState?.restoreInput) {
@@ -228,13 +312,17 @@ export class ContinuousTransformComponent {
       needsCalculate = this.restoreState(encoded);
     }
 
-    // ── 2. Auto-calculate after browser render ────────────────────────────
-    afterNextRender(() => {
-      if (needsCalculate) {
-        needsCalculate = false;
-        this.calculate();
-      }
-    });
+    // ── 2. Auto-calculate once auth is initialized ────────────────────────
+    // Wait for initFromStorage() to complete so the Bearer token is in memory
+    // before the API call goes out. Using afterNextRender caused a race condition
+    // where the calculate request was sent unauthenticated → false 429.
+    if (needsCalculate) {
+      toObservable(this.userStore.initialized)
+        .pipe(filter(Boolean), take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.calculate();
+        });
+    }
 
     // ── 3. Reset custom axis when result changes ──────────────────────────
     effect(() => {
@@ -302,7 +390,15 @@ export class ContinuousTransformComponent {
   });
 
   readonly canCalculate = computed(() =>
-    this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()),
+    this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()) &&
+    !this.continuityValidating() &&
+    this.continuityErrors().every((e) => e === null) &&
+    this.orderErrors().every((e) => !e),
+  );
+
+  /** True when any input segment contains the imaginary unit (%i). */
+  readonly hasComplexInputs = computed(() =>
+    this.segments().some((s) => s.expression.includes('%i')),
   );
 
   readonly hasComputedResult = computed(
@@ -337,34 +433,35 @@ export class ContinuousTransformComponent {
     const layer: PlotLayer = {
       curves: [],
       onDraw: (ctx, vp) => {
-        // ── Original input function (piecewise) for FT mode ─────────────
-        if (this.mode() === 'ft' && showOrig) {
+        // ── Input function preview (FT and IFT modes) ────────────────────
+        // In FT mode intVariable = time var (t); in IFT mode = freq var (w).
+        // compile() returns null for complex-valued expressions, so those
+        // segments are silently skipped — the template shows a notice instead.
+        if (showOrig) {
           for (const seg of segs) {
             const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
             const from = this.parseLimit(seg.from, pv);
             const to = this.parseLimit(seg.to, pv);
             if (!fn) continue;
             if (isFinite(from) && isFinite(to)) {
-              // Bounded segment: sample exactly within [from, to]
               plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
                 color: origColor,
                 lineWidth: origLW,
               });
             } else {
-              // Infinite/semi-infinite domain: gate function and use
-              // viewport-based sampling so the canvas always shows something.
-              // x >= -Infinity and x <= Infinity are always true in JS.
               const gated = (x: number) => (x >= from && x <= to ? fn(x) : NaN);
               plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW });
             }
-            // Draw any Dirac delta terms in this segment's expression
-            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
-              seg.expression,
-              intVariable,
-              pv,
-            )) {
-              if (pos >= from && pos <= to) {
-                this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origColor, origLW);
+            // Draw Dirac delta terms (FT mode only — IFT inputs are rarely delta)
+            if (this.mode() === 'ft') {
+              for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+                seg.expression,
+                intVariable,
+                pv,
+              )) {
+                if (pos >= from && pos <= to) {
+                  this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origColor, origLW);
+                }
               }
             }
           }
@@ -467,11 +564,16 @@ export class ContinuousTransformComponent {
   });
 
   restoreFromInput(input: Record<string, unknown>): void {
-    const rawSegs = input['segments'] as Array<{
-      expression: string; expressionTex?: string;
-      from: string; fromTex?: string;
-      to: string; toTex?: string;
-    }> | undefined;
+    const rawSegs = input['segments'] as
+      | Array<{
+          expression: string;
+          expressionTex?: string;
+          from: string;
+          fromTex?: string;
+          to: string;
+          toTex?: string;
+        }>
+      | undefined;
     if (!rawSegs?.length) return;
 
     const type = input['type'] as string | undefined;
@@ -520,6 +622,7 @@ export class ContinuousTransformComponent {
   setMode(m: 'ft' | 'ift'): void {
     if (this.inputsLocked()) return;
     this.mode.set(m);
+    this.segments.set([m === 'ft' ? defaultSegmentFt() : defaultSegmentIft()]);
     this.ftResult.set(null);
     this.iftResult.set(null);
     this.errorMsg.set(null);
@@ -580,7 +683,12 @@ export class ContinuousTransformComponent {
             this.userStore.refreshQuota();
           },
           error: (e) => {
-            this.errorMsg.set(formatApiError(e, 'Error al calcular la transformada'));
+            this.errorMsg.set(formatApiError(
+              e,
+              this.transloco.translate('errors.generic'),
+              (key, params) => this.transloco.translate(key, params ?? {}),
+              this.transloco.getActiveLang(),
+            ));
             this.loading.set(false);
           },
         });
@@ -598,7 +706,12 @@ export class ContinuousTransformComponent {
             this.userStore.refreshQuota();
           },
           error: (e) => {
-            this.errorMsg.set(formatApiError(e, 'Error al calcular la transformada inversa'));
+            this.errorMsg.set(formatApiError(
+              e,
+              this.transloco.translate('errors.generic'),
+              (key, params) => this.transloco.translate(key, params ?? {}),
+              this.transloco.getActiveLang(),
+            ));
             this.loading.set(false);
           },
         });

@@ -33,6 +33,7 @@ export const config = {
     windowMs: parseInt(optionalEnv("RATE_LIMIT_WINDOW_MS", "900000")),
     maxGeneral: parseInt(optionalEnv("RATE_LIMIT_MAX_GENERAL", "100")),
     maxCompute: parseInt(optionalEnv("RATE_LIMIT_MAX_COMPUTE", "20")),
+    maxParse: parseInt(optionalEnv("RATE_LIMIT_MAX_PARSE", "200")),
   },
   database: {
     url: requireEnv("DATABASE_URL"),

@@ -5,7 +5,10 @@ export interface ParamValues {
   [name: string]: number;
 }
 
-interface ParamRange { min: number; max: number; }
+interface ParamRange {
+  min: number;
+  max: number;
+}
 
 /**
  * Reusable slider panel for free symbolic parameters detected in a Maxima result.
@@ -23,17 +26,22 @@ interface ParamRange { min: number; max: number; }
   template: `
     @if (params().length > 0) {
       <div class="mt-3 space-y-2">
-        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide px-0.5">
-          Parámetros libres
-        </p>
+        <!-- <p
+          class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide px-0.5"
+        >
+          {{ 'settingsCanvas.freeParams' | transloco }}
+        </p> -->
 
         @for (name of params(); track name) {
-          <div class="rounded-lg border border-gray-200 dark:border-gray-600
-                      bg-white dark:bg-gray-800 px-3 py-2 space-y-1.5">
-
+          <div
+            class="rounded-lg border border-gray-200 dark:border-gray-600
+                      bg-white dark:bg-gray-800 px-3 py-2 space-y-1.5"
+          >
             <!-- Row 1: param name + current value -->
             <div class="flex items-center justify-between gap-2">
-              <span class="text-sm font-mono font-semibold text-gray-700 dark:text-gray-200 shrink-0">
+              <span
+                class="text-sm font-mono font-semibold text-gray-700 dark:text-gray-200 shrink-0"
+              >
                 {{ name }} =
               </span>
               <input
@@ -83,7 +91,6 @@ interface ParamRange { min: number; max: number; }
                 (ngModelChange)="setMax(name, +$event)"
               />
             </div>
-
           </div>
         }
       </div>
@@ -91,11 +98,11 @@ interface ParamRange { min: number; max: number; }
   `,
 })
 export class ParamSlidersComponent {
-  readonly params       = input<string[]>([]);
+  readonly params = input<string[]>([]);
   readonly defaultValue = input<number>(1);
-  readonly min          = input<number>(-5);
-  readonly max          = input<number>(5);
-  readonly step         = input<number>(0.1);
+  readonly min = input<number>(-5);
+  readonly max = input<number>(5);
+  readonly step = input<number>(0.1);
 
   readonly valuesChange = output<ParamValues>();
 
@@ -107,18 +114,18 @@ export class ParamSlidersComponent {
   constructor() {
     // When the param list changes, initialise any new entries.
     effect(() => {
-      const names     = this.params();
-      const def       = this.defaultValue();
-      const defMin    = this.min();
-      const defMax    = this.max();
-      const current   = untracked(() => this.values());
+      const names = this.params();
+      const def = this.defaultValue();
+      const defMin = this.min();
+      const defMax = this.max();
+      const current = untracked(() => this.values());
       const curRanges = untracked(() => this.ranges());
 
       const next: ParamValues = {};
       const nextRanges: Record<string, ParamRange> = {};
       for (const name of names) {
-        next[name]       = current[name]    ?? def;
-        nextRanges[name] = curRanges[name]  ?? { min: defMin, max: defMax };
+        next[name] = current[name] ?? def;
+        nextRanges[name] = curRanges[name] ?? { min: defMin, max: defMax };
       }
       this.values.set(next);
       this.ranges.set(nextRanges);
@@ -148,7 +155,7 @@ export class ParamSlidersComponent {
 
   setMin(name: string, val: number): void {
     if (!isFinite(val)) return;
-    this.ranges.update(r => {
+    this.ranges.update((r) => {
       const cur = r[name] ?? { min: this.min(), max: this.max() };
       return { ...r, [name]: { ...cur, min: val } };
     });
@@ -156,7 +163,7 @@ export class ParamSlidersComponent {
 
   setMax(name: string, val: number): void {
     if (!isFinite(val)) return;
-    this.ranges.update(r => {
+    this.ranges.update((r) => {
       const cur = r[name] ?? { min: this.min(), max: this.max() };
       return { ...r, [name]: { ...cur, max: val } };
     });

@@ -1,0 +1,15 @@
+User-agent: *
+
+# Private / auth-gated routes
+Disallow: /es/auth/
+Disallow: /en/auth/
+Disallow: /es/admin/
+Disallow: /en/admin/
+Disallow: /es/profile
+Disallow: /en/profile
+Disallow: /es/history
+Disallow: /en/history
+Disallow: /es/dev/
+Disallow: /en/dev/
+
+Sitemap: https://fouriersolver.com/sitemap.xml

@@ -8,6 +8,9 @@ import {
   inject,
   input,
 } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SegmentDraft, CalculatorStore } from '../../store/calculator.store';
 import { MathquillService, MathField } from '../../../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../../../core/services/math/latex-to-maxima.service';
@@ -23,6 +26,7 @@ export interface KeyBtn {
 @Component({
   selector: 'app-segment-input',
   templateUrl: './segment-input.component.html',
+  imports: [TranslocoPipe],
 })
 export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mqExpr') mqExprRef!: ElementRef<HTMLElement>;
@@ -32,11 +36,23 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   readonly store = inject(CalculatorStore);
   readonly mqs = inject(MathquillService);
   readonly tex2max = inject(LatexToMaximaService);
+  private readonly transloco = inject(TranslocoService);
+
+  get activeFieldName(): string {
+    if (this.focusedFieldIdx === 0) return `f(${this.store.intVar()})`;
+    if (this.focusedFieldIdx === 1) return this.transloco.translate('calculator.segment.from');
+    return this.transloco.translate('calculator.segment.to');
+  }
 
   readonly segment = input.required<SegmentDraft>();
   readonly index = input.required<number>();
   readonly isOnly = input<boolean>(false);
   readonly error = input<string | null>(null);
+  readonly continuityError = input<string | null>(null);
+  /** Truthy when the previous segment has a gap with this one — highlights the `from` field. */
+  readonly prevContinuityError = input<string | null>(null);
+  /** Truthy when from >= to (definitively invalid, symbolic intervals are 'unknown' and ignored). */
+  readonly orderError = input<boolean>(false);
 
   showKeyboard = false;
   focusedFieldIdx: 0 | 1 | 2 = 0;
@@ -45,6 +61,15 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
 
   // Guard against latex() setter triggering the edit handler
   private _syncingFromStore = false;
+
+  // One Subject per field — each emits the raw LaTeX string when the user types.
+  // debounceTime + switchMap in ngAfterViewInit convert it to a Maxima string via API.
+  private readonly fieldSubjects: [Subject<string>, Subject<string>, Subject<string>] = [
+    new Subject<string>(),
+    new Subject<string>(),
+    new Subject<string>(),
+  ];
+  private readonly _subs = new Subscription();
 
   // ── Math keyboard button groups ────────────────────────────────────────────
 
@@ -140,26 +165,43 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
               this.store.updateSegment(this.segment().id, { [maximaKey]: '', [texKey]: '' });
               return;
             }
-            const result = this.tex2max.convert(latexRaw);
-            if (result.ok) {
-              this.conversionErrors[i] = null;
-              this.store.updateSegment(this.segment().id, {
-                [maximaKey]: result.maxima,
-                [texKey]: latexRaw,
-              });
-            } else {
-              this.conversionErrors[i] = result.error ?? null;
-              this.store.updateSegment(this.segment().id, { [texKey]: latexRaw });
-            }
+            // Update LaTeX immediately so the MathJax preview refreshes without delay
+            this.store.updateSegment(this.segment().id, { [texKey]: latexRaw });
+            // Debounced: send to backend for Maxima conversion
+            this.fieldSubjects[i].next(latexRaw);
           },
         },
       });
       this.fields[i] = field;
-      if (initialLatex && field) field.latex(initialLatex);
+
+      // Set initial LaTeX without triggering the edit handler
+      if (initialLatex && field) {
+        this._syncingFromStore = true;
+        field.latex(initialLatex);
+        this._syncingFromStore = false;
+      }
+
+      // Subscribe: debounce → parse API → update Maxima in store
+      this._subs.add(
+        this.fieldSubjects[i].pipe(
+          debounceTime(350),
+          switchMap((latexRaw) => this.tex2max.convert(latexRaw)),
+        ).subscribe((result) => {
+          if (result.ok) {
+            this.conversionErrors[i] = null;
+            this.store.updateSegment(this.segment().id, { [maximaKey]: result.maxima });
+          } else {
+            this.conversionErrors[i] = result.error ?? null;
+            this.store.updateSegment(this.segment().id, { [maximaKey]: '' });
+          }
+        }),
+      );
     }
   }
 
   ngOnDestroy(): void {
+    this._subs.unsubscribe();
+    for (const s of this.fieldSubjects) s.complete();
     for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {
       if (ref?.nativeElement) ref.nativeElement.innerHTML = '';
     }
@@ -210,13 +252,13 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
 
   readonly hasExpressionError = () => !!this.error() && !this.segment().expression.trim();
 
-  wrapClass(hasError: boolean): string {
+  wrapClass(hasError: boolean, hasWarning = false): string {
     const base =
-      'w-full px-2 py-1 min-h-[2rem] text-sm rounded border cursor-text ' +
+      'w-full px-2 py-1.5 min-h-[2.25rem] text-sm rounded border cursor-text ' +
       'bg-paper2 dark:bg-dark-surface2 ' +
       'focus-within:ring-1 transition-colors';
-    return hasError
-      ? `${base} border-red-400 focus-within:ring-red-400`
-      : `${base} border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent`;
+    if (hasError) return `${base} border-red-400 focus-within:ring-red-400`;
+    if (hasWarning) return `${base} border-amber-400 focus-within:ring-amber-400`;
+    return `${base} border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent`;
   }
 }

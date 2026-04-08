@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../../core/services/api/api.service';
 import { formatApiError } from '../../../shared/utils/api-error.utils';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
@@ -56,20 +57,15 @@ function defaultSegment(): SegmentDraft {
   };
 }
 
-function segmentError(s: SegmentDraft): string | null {
-  if (!s.expression.trim()) return 'Expresión requerida';
-  if (!s.from.trim()) return 'Límite inferior requerido';
-  if (!s.to.trim()) return 'Límite superior requerido';
-  return null;
-}
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class CalculatorStore {
-  private readonly api = inject(ApiService);
-  private readonly math = inject(MathUtilsService);
+  private readonly api       = inject(ApiService);
+  private readonly math      = inject(MathUtilsService);
   private readonly userStore = inject(UserStore);
+  private readonly transloco = inject(TranslocoService);
   private readonly allowedNTerms = [25, 50, 75, 100] as const;
 
   // ── Form state ─────────────────────────────────────────────────────────────
@@ -84,7 +80,14 @@ export class CalculatorStore {
   readonly result = signal<CalculatorResult | null>(null);
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  readonly segmentErrors = computed(() => this.segments().map(segmentError));
+  readonly segmentErrors = computed(() =>
+    this.segments().map((s): string | null => {
+      if (!s.expression.trim()) return this.transloco.translate('calculator.segment.expressionRequired');
+      if (!s.from.trim())       return this.transloco.translate('calculator.segment.fromRequired');
+      if (!s.to.trim())         return this.transloco.translate('calculator.segment.toRequired');
+      return null;
+    }),
+  );
 
   readonly isValid = computed(() => this.segmentErrors().every((e) => e === null));
 
@@ -398,7 +401,12 @@ export class CalculatorStore {
 
   private handleError(e: unknown): void {
     this.loading.set(false);
-    this.error.set(formatApiError(e, 'Error desconocido'));
+    this.error.set(formatApiError(
+      e,
+      this.transloco.translate('errors.generic'),
+      (key, params) => this.transloco.translate(key, params ?? {}),
+      this.transloco.getActiveLang(),
+    ));
   }
 
   /**

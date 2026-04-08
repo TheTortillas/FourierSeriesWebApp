@@ -82,7 +82,7 @@
 
     <!-- Footer -->
     <div class="p-2 border-t border-border dark:border-dark-border shrink-0">
-      <a routerLink="/home"
+      <a [routerLink]="'/' + lang() + '/home'"
          class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono
                 text-muted dark:text-dark-muted
                 hover:bg-paper dark:hover:bg-dark-bg hover:text-ink dark:hover:text-dark-ink

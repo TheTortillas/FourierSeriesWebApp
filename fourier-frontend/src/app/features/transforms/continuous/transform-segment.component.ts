@@ -9,6 +9,9 @@ import {
   input,
   output,
 } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { MathquillService, MathField } from '../../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 
@@ -33,6 +36,7 @@ interface KeyBtn {
 @Component({
   selector: 'app-transform-segment',
   templateUrl: './transform-segment.component.html',
+  imports: [TranslocoPipe],
 })
 export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mqExpr') mqExprRef!: ElementRef<HTMLElement>;
@@ -41,12 +45,22 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
 
   readonly mqs = inject(MathquillService);
   readonly tex2max = inject(LatexToMaximaService);
+  private readonly transloco = inject(TranslocoService);
+
+  get activeFieldName(): string {
+    if (this.focusedFieldIdx === 0) return `f(${this.intVar()})`;
+    if (this.focusedFieldIdx === 1) return this.transloco.translate('calculator.segment.from');
+    return this.transloco.translate('calculator.segment.to');
+  }
 
   readonly segment = input.required<TransformSegmentDraft>();
   readonly index = input.required<number>();
   readonly isOnly = input<boolean>(false);
   readonly intVar = input<string>('t');
   readonly error = input<string | null>(null);
+  readonly continuityError = input<string | null>(null);
+  readonly prevContinuityError = input<string | null>(null);
+  readonly orderError = input<boolean>(false);
 
   readonly updated = output<{ id: string; changes: Partial<TransformSegmentDraft> }>();
   readonly removed = output<string>();
@@ -57,13 +71,20 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   fields: [MathField | null, MathField | null, MathField | null] = [null, null, null];
   private _syncing = false;
 
+  private readonly fieldSubjects: [Subject<string>, Subject<string>, Subject<string>] = [
+    new Subject<string>(),
+    new Subject<string>(),
+    new Subject<string>(),
+  ];
+  private readonly _subs = new Subscription();
+
   readonly keyGroups: KeyBtn[][] = [
     // Special functions for transforms
     [
       { label: 'δ(·)', typedText: 'delta(' },
       { label: 'u(·)', typedText: 'u(' },
-      { label: 'sgn', typedText: 'sgn(' },
-      { label: 'i', write: '\\mathrm{i}' },
+      { label: 'sgn' },
+      { label: 'i', typedText: 'i' },
       { label: '∞', write: '\\infty' },
       { label: '-∞', write: '-\\infty' },
     ],
@@ -162,26 +183,43 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
               });
               return;
             }
-            const res = this.tex2max.convertForTransforms(latexRaw);
-            if (res.ok) {
-              this.conversionErrors[i] = null;
-              this.updated.emit({
-                id: this.segment().id,
-                changes: { [maximaKey]: res.maxima, [texKey]: latexRaw },
-              });
-            } else {
-              this.conversionErrors[i] = res.error ?? null;
-              this.updated.emit({ id: this.segment().id, changes: { [texKey]: latexRaw } });
-            }
+            // Update LaTeX immediately so the MathJax preview refreshes without delay
+            this.updated.emit({ id: this.segment().id, changes: { [texKey]: latexRaw } });
+            // Debounced: send to backend for Maxima conversion
+            this.fieldSubjects[i].next(latexRaw);
           },
         },
       });
       this.fields[i] = field;
-      if (initialLatex && field) field.latex(initialLatex);
+
+      // Set initial LaTeX without triggering the edit handler
+      if (initialLatex && field) {
+        this._syncing = true;
+        field.latex(initialLatex);
+        this._syncing = false;
+      }
+
+      // Subscribe: debounce → parse API → emit Maxima update
+      this._subs.add(
+        this.fieldSubjects[i].pipe(
+          debounceTime(350),
+          switchMap((latexRaw) => this.tex2max.convertForTransforms(latexRaw)),
+        ).subscribe((result) => {
+          if (result.ok) {
+            this.conversionErrors[i] = null;
+            this.updated.emit({ id: this.segment().id, changes: { [maximaKey]: result.maxima } });
+          } else {
+            this.conversionErrors[i] = result.error ?? null;
+            this.updated.emit({ id: this.segment().id, changes: { [maximaKey]: '' } });
+          }
+        }),
+      );
     }
   }
 
   ngOnDestroy(): void {
+    this._subs.unsubscribe();
+    for (const s of this.fieldSubjects) s.complete();
     for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {
       if (ref?.nativeElement) ref.nativeElement.innerHTML = '';
     }
@@ -227,6 +265,11 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
       field.keystroke('Left');
       return;
     }
+    if (btn.label === 'sgn') {
+      field.write('\\operatorname{sgn}\\left(\\right)');
+      field.keystroke('Left');
+      return;
+    }
     if (btn.typedText !== undefined) field.typedText(btn.typedText);
     else if (btn.cmd !== undefined) field.cmd(btn.cmd);
     else if (btn.write !== undefined) field.write(btn.write);
@@ -235,12 +278,12 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
 
   readonly hasExpressionError = () => !!this.error() && !this.segment().expression.trim();
 
-  wrapClass(hasError: boolean): string {
+  wrapClass(hasError: boolean, hasWarning = false): string {
     const base =
-      'w-full px-2 py-1 min-h-[2rem] text-sm rounded border cursor-text ' +
+      'w-full px-2 py-1.5 min-h-[2.25rem] text-sm rounded border cursor-text ' +
       'bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors';
-    return hasError
-      ? `${base} border-red-400 focus-within:ring-red-400`
-      : `${base} border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent`;
+    if (hasError) return `${base} border-red-400 focus-within:ring-red-400`;
+    if (hasWarning) return `${base} border-amber-400 focus-within:ring-amber-400`;
+    return `${base} border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent`;
   }
 }

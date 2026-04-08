@@ -86,6 +86,75 @@ export class AuxiliaryService {
     return match ? match[1].trim() : undefined;
   }
 
+  /**
+   * Checks symbolic equality of multiple expression pairs using Maxima ratsimp.
+   * Each pair { a, b } must already be in Maxima syntax.
+   * Returns 'equal' | 'different' | 'unknown' for each pair.
+   */
+  async compareExpressions(
+    pairs: Array<{ a: string; b: string }>,
+  ): Promise<Array<"equal" | "different" | "unknown">> {
+    if (pairs.length === 0) return [];
+
+    const checks = pairs
+      .map(
+        (p, i) =>
+          `block([_d: errcatch(ratsimp((${p.a}) - (${p.b})))],
+  if _d = [] then print("r${i}:unknown")
+  else if first(_d) = 0 then print("r${i}:equal")
+  else print("r${i}:different"))$`,
+      )
+      .join("\n");
+
+    const script = `display2d: false$\n${checks}\nkill(all)$`;
+    const result = await this.runner.run({ script });
+
+    if (!result.success) {
+      return pairs.map(() => "unknown" as const);
+    }
+
+    return pairs.map((_, i) => {
+      if (result.raw.includes(`r${i}:equal`)) return "equal";
+      if (result.raw.includes(`r${i}:different`)) return "different";
+      return "unknown";
+    });
+  }
+
+  /**
+   * Checks whether a < b for each pair using Maxima's is().
+   * Returns 'valid' when a < b, 'invalid' when a >= b, 'unknown' when indeterminate
+   * (e.g. symbolic params like h, L — silently ignored in the UI).
+   */
+  async checkOrders(
+    pairs: Array<{ a: string; b: string }>,
+  ): Promise<Array<"valid" | "invalid" | "unknown">> {
+    if (pairs.length === 0) return [];
+
+    const checks = pairs
+      .map(
+        (p, i) =>
+          `block([_r: errcatch(is((${p.a}) < (${p.b})))],
+  if _r = [] then print("o${i}:unknown")
+  else if first(_r) = true then print("o${i}:valid")
+  else if first(_r) = false then print("o${i}:invalid")
+  else print("o${i}:unknown"))$`,
+      )
+      .join("\n");
+
+    const script = `display2d: false$\n${checks}\nkill(all)$`;
+    const result = await this.runner.run({ script });
+
+    if (!result.success) {
+      return pairs.map(() => "unknown" as const);
+    }
+
+    return pairs.map((_, i) => {
+      if (result.raw.includes(`o${i}:valid`)) return "valid";
+      if (result.raw.includes(`o${i}:invalid`)) return "invalid";
+      return "unknown";
+    });
+  }
+
   private decide(singularities: Singularity[]): ValidationResult {
     const fatal = singularities.filter((s) => FATAL_TYPES.includes(s.type));
     const warnings = singularities.filter((s) => WARN_TYPES.includes(s.type));

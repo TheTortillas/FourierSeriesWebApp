@@ -11,6 +11,7 @@ import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 import { TranslocoHttpLoader } from './core/services/transloco-http-loader';
 import { tokenInterceptor } from './core/interceptors/token.interceptor';
+import { SUPPORTED_LANG_CODES, DEFAULT_LANG } from './core/config/languages';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,9 +21,9 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch(), withInterceptors([tokenInterceptor])),
     provideTransloco({
       config: {
-        availableLangs: ['es', 'en'],
-        defaultLang: 'es',
-        fallbackLang: 'en',
+        availableLangs: SUPPORTED_LANG_CODES,
+        defaultLang: DEFAULT_LANG,
+        fallbackLang: DEFAULT_LANG,
         reRenderOnLangChange: true,
         prodMode: environment.production,
       },

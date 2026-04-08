@@ -8,6 +8,7 @@ import {
   ElementRef,
   viewChild,
 } from '@angular/core';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, finalize } from 'rxjs';
@@ -116,11 +117,13 @@ function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorP
     FormsModule,
     ParamSlidersComponent,
     SpectrumChartComponent,
+    TranslocoPipe,
   ],
   templateUrl: './results-summary.component.html',
 })
 export class ResultsSummaryComponent {
   readonly store = inject(CalculatorStore);
+  private readonly transloco = inject(TranslocoService);
   readonly reconstruction = inject(FourierReconstructionService);
   readonly plotter = inject(PlottingService);
   private readonly math = inject(MathUtilsService);
@@ -397,10 +400,30 @@ export class ResultsSummaryComponent {
         }
       }
     } else if (result.type === 'complex') {
-      const terms = result.terms.terms as ComplexNumericTerm[];
+      const rawTerms = result.terms.terms as ComplexTerm[];
       const c = result.data.coefficients;
       const c0 = this.evalScalar(c.c0?.maxima, c.c0Float ?? this.parseMaxima(c.c0.maxima)) ?? 0;
       dcHarmonicValue = c0;
+      // Re-evaluate cosFloat/sinFloat with current param values, same logic as spectrumComplexTerms
+      let terms: ComplexNumericTerm[] = rawTerms;
+      if (hasPv) {
+        // Re(cn*e^{inw0x} + c-n*e^{-inw0x}) = 2*Re(cn)*cos(nw0x) - 2*Im(cn)*sin(nw0x)
+        // cnRe and cnIm are Re(cn) and Im(cn) as pure-real symbolic expressions (no %i)
+        terms = rawTerms.map((t) => {
+          if (!t.cnRe && !t.cnIm) return t;
+          const reFn = t.cnRe ? math.compile(t.cnRe, '_', pv) : null;
+          const imFn = t.cnIm ? math.compile(t.cnIm, '_', pv) : null;
+          const reV = reFn?.(0);
+          const imV = imFn?.(0);
+          const cosV = reV !== undefined && isFinite(reV) ? 2 * reV : null;
+          const sinV = imV !== undefined && isFinite(imV) ? -2 * imV : null;
+          return {
+            ...t,
+            cosFloat: cosV !== null ? cosV : t.cosFloat,
+            sinFloat: sinV !== null ? sinV : t.sinFloat,
+          };
+        });
+      }
       const activeTerms = terms.filter((t) => t.n <= nTerms && isHarmonicEnabled(t.n));
       approxFn = rec.buildComplex(c0, activeTerms, w0, activeTerms.length);
       if (showHarmonics) {
@@ -669,20 +692,16 @@ export class ResultsSummaryComponent {
     if (!rawTerms.length) return rawTerms;
 
     const pv = this.evaluationParams();
-    const intVar = r.data.input.intVar ?? 'x';
     const w0 = this.resolveW0Value();
     if (!isFinite(w0) || Math.abs(w0) < 1e-12) return rawTerms;
 
     return rawTerms.map((t) => {
-      const k = t.n * w0;
-      if (!isFinite(k) || Math.abs(k) < 1e-12) return t;
-
-      const realFn = this.math.compile(t.real.maxima, intVar, pv);
-      if (!realFn) return t;
-
-      const a = realFn(0);
-      const b = realFn(Math.PI / (2 * k));
-      if (!isFinite(a) || !isFinite(b)) return t;
+      if (!t.cnRe && !t.cnIm) return t;
+      const reFn = t.cnRe ? this.math.compile(t.cnRe, '_', pv) : null;
+      const imFn = t.cnIm ? this.math.compile(t.cnIm, '_', pv) : null;
+      const a = reFn?.(0);
+      const b = imFn?.(0);
+      if (a === undefined || b === undefined || !isFinite(a) || !isFinite(b)) return t;
 
       const amplitude = Math.sqrt(a * a + b * b) / 2;
       const phase = Math.atan2(-b, a);
@@ -698,11 +717,11 @@ export class ResultsSummaryComponent {
   });
 
   /** Typed tabs array so the template gets literal types */
-  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; label: string }[] = [
-    { id: 'coefficients', label: 'Coeficientes' },
-    { id: 'terms', label: 'Términos' },
-    { id: 'spectrum', label: 'Espectro' },
-    { id: 'validation', label: 'Validación' },
+  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; labelKey: string }[] = [
+    { id: 'coefficients', labelKey: 'settingsCanvas.tabCoefficients' },
+    { id: 'terms',        labelKey: 'settingsCanvas.tabTerms' },
+    { id: 'spectrum',     labelKey: 'settingsCanvas.tabSpectrum' },
+    { id: 'validation',   labelKey: 'settingsCanvas.tabValidation' },
   ];
 
   /** Context for the terms tab — trig / half-range branch */
@@ -733,21 +752,26 @@ export class ResultsSummaryComponent {
     };
   });
 
-  readonly singularityLabels: Record<string, string | undefined> = {
-    removible: 'Removible',
-    salto: 'Salto',
-    asintotica: 'Asintótica',
-    esencial: 'Esencial',
-    fuera_de_dominio: 'Fuera del dominio',
+  private readonly singularityKeyMap: Record<string, string> = {
+    removible:       'resultPanel.singularity.removible',
+    salto:           'resultPanel.singularity.salto',
+    asintotica:      'resultPanel.singularity.asintotica',
+    esencial:        'resultPanel.singularity.esencial',
+    fuera_de_dominio:'resultPanel.singularity.fuera_de_dominio',
   };
 
+  singularityLabel(type: string): string {
+    const key = this.singularityKeyMap[type];
+    return key ? this.transloco.translate(key) : type;
+  }
+
   // ── Profile selector options ────────────────────────────────────────────────
-  readonly profileOptions: { value: SimplifyProfile; label: string }[] = [
-    { value: 'raw', label: 'Sin simp.' },
-    { value: 'integer', label: 'Entero' },
-    { value: 'trigonometric', label: 'Trig.' },
-    { value: 'exponential', label: 'Exp.' },
-    { value: 'complete', label: 'Completo' },
+  readonly profileOptions: { value: SimplifyProfile; labelKey: string }[] = [
+    { value: 'raw',          labelKey: 'settingsCanvas.profileRaw' },
+    { value: 'integer',      labelKey: 'settingsCanvas.profileInteger' },
+    { value: 'trigonometric',labelKey: 'settingsCanvas.profileTrig' },
+    { value: 'exponential',  labelKey: 'settingsCanvas.profileExp' },
+    { value: 'complete',     labelKey: 'settingsCanvas.profileComplete' },
   ];
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
@@ -894,10 +918,6 @@ export class ResultsSummaryComponent {
       this.enabledHarmonics.set(next);
     }
     this.selectedHarmonicN.set(this.selectedHarmonicN() === n ? null : n);
-  }
-
-  clearHarmonicSelection(): void {
-    this.selectedHarmonicN.set(null);
   }
 
   setHarmonicEnabled(n: number, checked: boolean): void {

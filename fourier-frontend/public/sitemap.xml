@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+>
+
+  <!-- ── Home ─────────────────────────────────────────────────────────────── -->
+  <url>
+    <loc>https://fouriersolver.com/es/home</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/home"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/home"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/home"/>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/en/home</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/home"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/home"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/home"/>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- ── Series de Fourier ─────────────────────────────────────────────────── -->
+  <url>
+    <loc>https://fouriersolver.com/es/calculator</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/calculator"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/calculator"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/calculator"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/en/calculator</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/calculator"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/calculator"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/calculator"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- ── Transformada Continua ─────────────────────────────────────────────── -->
+  <url>
+    <loc>https://fouriersolver.com/es/transforms/continuous</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/en/transforms/continuous</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- ── Transformada Discreta (DFT) ───────────────────────────────────────── -->
+  <url>
+    <loc>https://fouriersolver.com/es/transforms/dft</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/dft"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/en/transforms/dft</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/dft"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+</urlset>

@@ -1,5 +1,4 @@
 <div class="p-6 flex flex-col gap-5">
-
   <!-- Header -->
   <div>
     <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Historial global</h1>
@@ -10,13 +9,13 @@
 
   <!-- Filters -->
   <div class="flex flex-wrap gap-2 items-end">
-
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Tipo</label>
-      <select [(ngModel)]="filterType" (change)="applyFilters()"
-              class="px-2 py-1.5 rounded-lg text-xs font-mono
-                     bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                     text-ink dark:text-dark-ink focus:outline-none focus:border-accent">
+      <select
+        [(ngModel)]="filterType"
+        (change)="applyFilters()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      >
         <option value="">Todos</option>
         @for (t of CALC_TYPES; track t) {
           <option [value]="t">{{ typeLabel(t) }}</option>
@@ -26,62 +25,79 @@
 
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">User ID</label>
-      <input type="text" [(ngModel)]="filterUserId" placeholder="uuid…"
-             (keydown.enter)="applyFilters()"
-             class="px-2 py-1.5 rounded-lg text-xs font-mono w-44
-                    bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                    text-ink dark:text-dark-ink placeholder:text-muted/50
-                    focus:outline-none focus:border-accent"/>
+      <input
+        type="text"
+        [(ngModel)]="filterUserId"
+        placeholder="uuid…"
+        (keydown.enter)="applyFilters()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono w-44 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink placeholder:text-muted/50 focus:outline-none focus:border-accent"
+      />
     </div>
 
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Desde</label>
-      <input type="date" [(ngModel)]="filterDateFrom" (change)="applyFilters()"
-             class="px-2 py-1.5 rounded-lg text-xs font-mono
-                    bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                    text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+      <input
+        type="date"
+        [(ngModel)]="filterDateFrom"
+        (change)="applyFilters()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      />
     </div>
 
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Hasta</label>
-      <input type="date" [(ngModel)]="filterDateTo" (change)="applyFilters()"
-             [min]="filterDateFrom"
-             class="px-2 py-1.5 rounded-lg text-xs font-mono
-                    bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                    text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+      <input
+        type="date"
+        [(ngModel)]="filterDateTo"
+        (change)="applyFilters()"
+        [min]="filterDateFrom"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      />
     </div>
 
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Mín. ms</label>
-      <input type="number" [(ngModel)]="filterMinExecMs" placeholder="0" min="0"
-             (keydown.enter)="applyFilters()" (change)="applyFilters()"
-             class="px-2 py-1.5 rounded-lg text-xs font-mono w-20
-                    bg-paper dark:bg-dark-bg border border-border dark:border-dark-border
-                    text-ink dark:text-dark-ink placeholder:text-muted/50
-                    focus:outline-none focus:border-accent"/>
+      <input
+        type="number"
+        [(ngModel)]="filterMinExecMs"
+        placeholder="0"
+        min="0"
+        (keydown.enter)="applyFilters()"
+        (change)="applyFilters()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono w-20 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink placeholder:text-muted/50 focus:outline-none focus:border-accent"
+      />
     </div>
 
-    <label class="flex items-center gap-1.5 cursor-pointer text-xs font-mono
-                  text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink
-                  transition-colors pb-0.5">
-      <input type="checkbox" [(ngModel)]="filterFavorites" (change)="applyFilters()"
-             class="accent-accent"/>
+    <label
+      class="flex items-center gap-1.5 cursor-pointer text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors pb-0.5"
+    >
+      <input
+        type="checkbox"
+        [(ngModel)]="filterFavorites"
+        (change)="applyFilters()"
+        class="accent-accent"
+      />
       Solo favoritos
     </label>
 
-    <label class="flex items-center gap-1.5 cursor-pointer text-xs font-mono
-                  text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink
-                  transition-colors pb-0.5">
-      <input type="checkbox" [(ngModel)]="filterAnonymous" (change)="applyFilters()"
-             class="accent-accent"/>
+    <label
+      class="flex items-center gap-1.5 cursor-pointer text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors pb-0.5"
+    >
+      <input
+        type="checkbox"
+        [(ngModel)]="filterAnonymous"
+        (change)="applyFilters()"
+        class="accent-accent"
+      />
       Solo anónimos
     </label>
 
     @if (hasFilters()) {
-      <button type="button" (click)="clearFilters()"
-              class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer transition-colors
-                     text-muted dark:text-dark-muted border border-border dark:border-dark-border
-                     hover:border-accent hover:text-accent">
+      <button
+        type="button"
+        (click)="clearFilters()"
+        class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer transition-colors text-muted dark:text-dark-muted border border-border dark:border-dark-border hover:border-accent hover:text-accent"
+      >
         Limpiar filtros
       </button>
     }
@@ -92,13 +108,32 @@
   </div>
 
   <!-- Table -->
-  <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-              rounded-xl overflow-hidden">
+  <div
+    class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+  >
     @if (loading()) {
-      <div class="flex items-center justify-center gap-2 py-10 text-muted dark:text-dark-muted text-sm font-mono">
-        <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
+      <div
+        class="flex items-center justify-center gap-2 py-10 text-muted dark:text-dark-muted text-sm font-mono"
+      >
+        <svg
+          class="w-4 h-4 animate-spin"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          />
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
+          />
         </svg>
         Cargando…
       </div>
@@ -106,8 +141,9 @@
       <div class="overflow-x-auto">
         <table class="w-full text-xs font-mono">
           <thead>
-            <tr class="border-b border-border dark:border-dark-border
-                       bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted text-left">
+            <tr
+              class="border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted text-left"
+            >
               <th class="px-4 py-2.5 font-medium w-6"></th>
               <th class="px-4 py-2.5 font-medium">Fecha</th>
               <th class="px-4 py-2.5 font-medium">Tipo</th>
@@ -120,17 +156,24 @@
           <tbody class="divide-y divide-border dark:divide-dark-border">
             @for (entry of entries(); track entry.id) {
               <!-- Main row -->
-              <tr class="hover:bg-paper dark:hover:bg-dark-bg transition-colors cursor-pointer"
-                  (click)="toggleExpand(entry.id)">
-
+              <tr
+                class="hover:bg-paper dark:hover:bg-dark-bg transition-colors cursor-pointer"
+                (click)="toggleExpand(entry.id)"
+              >
                 <!-- Expand toggle -->
                 <td class="pl-3 py-2.5 text-muted dark:text-dark-muted">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-                       class="w-3 h-3 transition-transform"
-                       [class.rotate-90]="isExpanded(entry.id)">
-                    <path fill-rule="evenodd"
-                          d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z"
-                          clip-rule="evenodd"/>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    class="w-3 h-3 transition-transform"
+                    [class.rotate-90]="isExpanded(entry.id)"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z"
+                      clip-rule="evenodd"
+                    />
                   </svg>
                 </td>
 
@@ -139,24 +182,33 @@
                 </td>
 
                 <td class="px-4 py-2.5 whitespace-nowrap">
-                  <span [class]="'px-1.5 py-0.5 rounded border text-[10px] ' + typeBadgeClass(entry.type)">
+                  <span
+                    [class]="
+                      'px-1.5 py-0.5 rounded border text-[10px] ' + typeBadgeClass(entry.type)
+                    "
+                  >
                     {{ typeLabel(entry.type) }}
                   </span>
                 </td>
 
                 <!-- Input preview -->
-                <td class="px-4 py-2.5 max-w-[260px]">
-                  <span class="text-ink dark:text-dark-ink truncate block"
-                        [title]="inputPreview(entry)">
+                <td class="px-4 py-2.5 max-w-65">
+                  <span
+                    class="text-ink dark:text-dark-ink truncate block"
+                    [title]="inputPreview(entry)"
+                  >
                     {{ inputPreview(entry) }}
                   </span>
                 </td>
 
                 <td class="px-4 py-2.5">
                   @if (entry.userId) {
-                    <button type="button" (click)="filterByUser(entry.userId); $event.stopPropagation()"
-                            class="text-accent hover:underline cursor-pointer"
-                            [title]="entry.userId">
+                    <button
+                      type="button"
+                      (click)="filterByUser(entry.userId); $event.stopPropagation()"
+                      class="text-accent hover:underline cursor-pointer"
+                      [title]="entry.userId"
+                    >
                       {{ entry.userId.slice(0, 12) }}…
                     </button>
                   } @else {
@@ -175,39 +227,45 @@
                     <span class="text-muted/30">☆</span>
                   }
                 </td>
-
               </tr>
 
               <!-- Expanded input -->
               @if (isExpanded(entry.id)) {
                 <tr class="bg-paper dark:bg-dark-bg">
                   <td colspan="7" class="px-4 py-3 flex flex-col gap-2">
-
                     <!-- ── Vista estructurada para DFT con puntos ─────────── -->
                     @if (hasDftPoints(entry) && !isRawJson(entry.id)) {
                       @let dft = dftMeta(entry);
                       <div class="flex flex-col gap-2">
-
                         <!-- Header -->
                         <div class="flex items-center gap-3">
-                          <span class="text-[10px] font-mono text-muted dark:text-dark-muted">input:</span>
+                          <span class="text-[10px] font-mono text-muted dark:text-dark-muted"
+                            >input:</span
+                          >
                           <span class="text-[10px] font-mono text-ink dark:text-dark-ink">
                             <span class="font-semibold">{{ dft.count }}</span> puntos
-                            @if (dft.mode) { · <span class="text-accent2">mode: {{ dft.mode }}</span> }
+                            @if (dft.mode) {
+                              · <span class="text-accent2">mode: {{ dft.mode }}</span>
+                            }
                           </span>
-                          <button type="button"
-                                  (click)="toggleRawJson(entry.id, $event)"
-                                  class="ml-auto text-[10px] font-mono text-muted dark:text-dark-muted
-                                         hover:text-accent transition-colors cursor-pointer">
+                          <button
+                            type="button"
+                            (click)="toggleRawJson(entry.id, $event)"
+                            class="ml-auto text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+                          >
                             Ver JSON
                           </button>
                         </div>
 
                         <!-- Mini tabla de puntos -->
-                        <div class="border border-border dark:border-dark-border rounded-lg overflow-hidden">
+                        <div
+                          class="border border-border dark:border-dark-border rounded-lg overflow-hidden"
+                        >
                           <table class="w-auto text-[10px] font-mono">
                             <thead>
-                              <tr class="bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted">
+                              <tr
+                                class="bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted"
+                              >
                                 <th class="px-3 py-1.5 text-right font-medium w-8">#</th>
                                 <th class="px-3 py-1.5 text-right font-medium">x</th>
                                 <th class="px-3 py-1.5 text-right font-medium">y</th>
@@ -216,37 +274,53 @@
                             <tbody class="divide-y divide-border dark:divide-dark-border">
                               @for (pt of dft.preview; track $index) {
                                 <tr>
-                                  <td class="px-3 py-1 text-right text-muted/50 dark:text-dark-muted/50">{{ $index }}</td>
-                                  <td class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums">{{ pt.x }}</td>
-                                  <td class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums">{{ pt.y }}</td>
+                                  <td
+                                    class="px-3 py-1 text-right text-muted/50 dark:text-dark-muted/50"
+                                  >
+                                    {{ $index }}
+                                  </td>
+                                  <td
+                                    class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums"
+                                  >
+                                    {{ pt.x }}
+                                  </td>
+                                  <td
+                                    class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums"
+                                  >
+                                    {{ pt.y }}
+                                  </td>
                                 </tr>
                               }
                             </tbody>
                           </table>
                           @if (dft.remaining > 0) {
-                            <p class="px-3 py-1.5 text-[10px] font-mono text-muted dark:text-dark-muted
-                                       border-t border-border dark:border-dark-border">
+                            <p
+                              class="px-3 py-1.5 text-[10px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border"
+                            >
                               … y {{ dft.remaining }} puntos más
                             </p>
                           }
                         </div>
-
                       </div>
 
-                    <!-- ── JSON para el resto de tipos (o Ver JSON activo) ── -->
+                      <!-- ── JSON para el resto de tipos (o Ver JSON activo) ── -->
                     } @else {
                       <div class="flex items-start gap-2">
-                        <span class="text-[10px] font-mono text-muted dark:text-dark-muted mt-0.5 shrink-0">input:</span>
+                        <span
+                          class="text-[10px] font-mono text-muted dark:text-dark-muted mt-0.5 shrink-0"
+                          >input:</span
+                        >
                         <div class="flex-1 min-w-0">
-                          <pre class="text-[10px] font-mono text-ink dark:text-dark-ink
-                                      bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                                      rounded p-2 overflow-x-auto max-h-64 overflow-y-auto
-                                      whitespace-pre-wrap break-all">{{ inputJson(entry) }}</pre>
+                          <pre
+                            class="text-[10px] font-mono text-ink dark:text-dark-ink bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded p-2 overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap break-all"
+                            >{{ inputJson(entry) }}</pre
+                          >
                           @if (hasDftPoints(entry) && isRawJson(entry.id)) {
-                            <button type="button"
-                                    (click)="toggleRawJson(entry.id, $event)"
-                                    class="mt-1.5 text-[10px] font-mono text-muted dark:text-dark-muted
-                                           hover:text-accent transition-colors cursor-pointer">
+                            <button
+                              type="button"
+                              (click)="toggleRawJson(entry.id, $event)"
+                              class="mt-1.5 text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+                            >
                               ← Vista resumida
                             </button>
                           }
@@ -259,7 +333,6 @@
                         ★ Guardado como: "{{ entry.favoriteName }}"
                       </p>
                     }
-
                   </td>
                 </tr>
               }
@@ -276,24 +349,27 @@
 
       <!-- Pagination -->
       @if (total() > 0) {
-        <div class="px-4 py-3 border-t border-border dark:border-dark-border
-                    flex items-center justify-between">
+        <div
+          class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between"
+        >
           <span class="text-xs font-mono text-muted dark:text-dark-muted">
             Página {{ currentPage() }} de {{ totalPages() || 1 }}
           </span>
           <div class="flex gap-1.5">
-            <button type="button" (click)="prevPage()" [disabled]="offset() === 0"
-                    class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer transition-colors
-                           border-border dark:border-dark-border text-muted dark:text-dark-muted
-                           hover:border-accent hover:text-accent
-                           disabled:opacity-30 disabled:cursor-not-allowed">
+            <button
+              type="button"
+              (click)="prevPage()"
+              [disabled]="offset() === 0"
+              class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed"
+            >
               ← Anterior
             </button>
-            <button type="button" (click)="nextPage()" [disabled]="offset() + pageSize >= total()"
-                    class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer transition-colors
-                           border-border dark:border-dark-border text-muted dark:text-dark-muted
-                           hover:border-accent hover:text-accent
-                           disabled:opacity-30 disabled:cursor-not-allowed">
+            <button
+              type="button"
+              (click)="nextPage()"
+              [disabled]="offset() + pageSize >= total()"
+              class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed"
+            >
               Siguiente →
             </button>
           </div>
@@ -301,5 +377,4 @@
       }
     }
   </div>
-
 </div>
