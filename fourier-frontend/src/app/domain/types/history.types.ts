@@ -4,7 +4,12 @@ export interface HistoryEntry {
   type: string;
   input: Record<string, unknown>;
   executionMs: number;
+  /** Última vez que se calculó este input (= last_calculated_at en BD). */
   createdAt: string;
+  /** Primera vez que se calculó este input. */
+  firstCalculatedAt: string;
+  /** Cuántas veces se ha recalculado el mismo input. */
+  count: number;
   isFavorite: boolean;
   favoriteName: string | null;
 }

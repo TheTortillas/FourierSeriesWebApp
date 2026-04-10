@@ -138,7 +138,16 @@
                 </td>
 
                 <td class="px-4 py-3 whitespace-nowrap text-muted dark:text-dark-muted">
-                  {{ formatDate(entry.createdAt) }}
+                  <div class="flex items-center gap-1.5">
+                    {{ formatDate(entry.createdAt) }}
+                    @if (entry.count > 1) {
+                      <span
+                        class="px-1 py-0 rounded text-[9px] font-mono font-medium leading-4
+                               bg-accent/10 text-accent border border-accent/20"
+                        [title]="'Calculado ' + entry.count + ' veces (primera vez: ' + formatDate(entry.firstCalculatedAt) + ')'"
+                      >×{{ entry.count }}</span>
+                    }
+                  </div>
                 </td>
 
                 <td class="px-4 py-3 whitespace-nowrap">

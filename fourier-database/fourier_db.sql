@@ -183,20 +183,39 @@ CREATE TABLE user_recovery_emails (
 );
 
 -- -------------------------------------------------------
--- CALCULATION HISTORY
--- Guarda el input pero no el resultado (recalculable)
--- is_favorite + custom_name para la funcionalidad de favoritos
+-- CALCULATIONS  (tabla canónica — una fila por input único)
+-- Almacena el input pero no el resultado (recalculable).
+-- La deduplicación se hace por input_hash (SHA-256 del input
+-- normalizado + tipo de cálculo), evitando guardar el mismo
+-- JSON miles de veces cuando múltiples usuarios calculan lo mismo.
 -- -------------------------------------------------------
-CREATE TABLE calculation_history (
-    id               TEXT PRIMARY KEY DEFAULT gen_ulid(),
-    user_id          TEXT REFERENCES users(id) ON DELETE CASCADE,
-    type             calculation_type NOT NULL,
-    input            JSONB NOT NULL,
-    is_favorite      BOOLEAN NOT NULL DEFAULT FALSE,
-    favorite_name    VARCHAR(100),
-    ip_address       INET,
-    execution_ms     INTEGER,
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE calculations (
+    id         TEXT PRIMARY KEY DEFAULT gen_ulid(),
+    input_hash TEXT NOT NULL UNIQUE,
+    type       calculation_type NOT NULL,
+    input      JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- -------------------------------------------------------
+-- CALCULATION_EVENTS  (evento por usuario/IP × cálculo)
+-- Una fila por par (cálculo, usuario) o (cálculo, ip).
+-- Si el mismo usuario recalcula la misma función, solo se
+-- incrementa `count` y se actualiza `last_calculated_at`.
+-- Los favoritos viven aquí: son propios de cada usuario.
+-- -------------------------------------------------------
+CREATE TABLE calculation_events (
+    id                  TEXT PRIMARY KEY DEFAULT gen_ulid(),
+    calculation_id      TEXT NOT NULL REFERENCES calculations(id) ON DELETE CASCADE,
+    user_id             TEXT REFERENCES users(id) ON DELETE CASCADE,
+    ip_address          INET,
+    first_calculated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_calculated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    count               INTEGER NOT NULL DEFAULT 1,
+    is_favorite         BOOLEAN NOT NULL DEFAULT FALSE,
+    favorite_name       VARCHAR(100),
+    execution_ms        INTEGER,
+    CONSTRAINT chk_event_owner CHECK (user_id IS NOT NULL OR ip_address IS NOT NULL)
 );
 
 -- -------------------------------------------------------
@@ -210,10 +229,24 @@ CREATE TABLE anonymous_calculation_counters (
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_calc_history_user       ON calculation_history (user_id);
-CREATE INDEX idx_calc_history_type       ON calculation_history (type);
-CREATE INDEX idx_calc_history_favorite   ON calculation_history (user_id) WHERE is_favorite = TRUE;
-CREATE INDEX idx_calc_history_created    ON calculation_history (created_at);
+-- Índices de calculations
+CREATE INDEX idx_calc_hash ON calculations (input_hash);
+CREATE INDEX idx_calc_type ON calculations (type);
+
+-- Índices de calculation_events
+-- Unique parciales: manejan NULLs correctamente en PostgreSQL
+CREATE UNIQUE INDEX uq_event_user ON calculation_events (calculation_id, user_id)
+    WHERE user_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_event_ip   ON calculation_events (calculation_id, ip_address)
+    WHERE user_id IS NULL AND ip_address IS NOT NULL;
+
+CREATE INDEX idx_event_user_date ON calculation_events (user_id, last_calculated_at DESC)
+    WHERE user_id IS NOT NULL;
+CREATE INDEX idx_event_fav       ON calculation_events (user_id)
+    WHERE is_favorite = TRUE;
+CREATE INDEX idx_event_calc      ON calculation_events (calculation_id);
+CREATE INDEX idx_event_ip        ON calculation_events (ip_address)
+    WHERE ip_address IS NOT NULL;
 
 -- -------------------------------------------------------
 -- USER CALCULATION COUNTERS
