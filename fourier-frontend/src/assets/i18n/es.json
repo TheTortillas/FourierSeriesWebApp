@@ -237,6 +237,12 @@
     "segment": "tramo",
     "segments": "tramos",
     "points": "puntos",
+    "dft": {
+      "inputLabel": "entrada:",
+      "viewJson": "Ver JSON",
+      "compactView": "← Vista resumida",
+      "remainingPoints": "... y {{ count }} puntos más"
+    },
     "columns": {
       "date": "Fecha",
       "type": "Tipo",

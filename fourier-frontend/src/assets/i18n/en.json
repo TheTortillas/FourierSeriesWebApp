@@ -237,6 +237,12 @@
     "segment": "segment",
     "segments": "segments",
     "points": "points",
+    "dft": {
+      "inputLabel": "input:",
+      "viewJson": "View JSON",
+      "compactView": "← Compact view",
+      "remainingPoints": "... and {{ count }} more points"
+    },
     "columns": {
       "date": "Date",
       "type": "Type",

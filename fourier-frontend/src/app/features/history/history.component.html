@@ -4,7 +4,9 @@
   <!-- Header -->
   <div class="flex items-center justify-between flex-wrap gap-3">
     <div>
-      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'history.title' | transloco }}</h1>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">
+        {{ 'history.title' | transloco }}
+      </h1>
       <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">
         {{ 'history.total' | transloco: { count: total() } }}
       </p>
@@ -18,7 +20,9 @@
         (change)="toggleFilter()"
         class="w-3.5 h-3.5 accent-accent cursor-pointer"
       />
-      <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'history.favoritesOnly' | transloco }}</span>
+      <span class="text-xs font-mono text-muted dark:text-dark-muted">{{
+        'history.favoritesOnly' | transloco
+      }}</span>
     </label>
   </div>
 
@@ -40,7 +44,11 @@
         />
       </svg>
       <p class="text-xs font-mono text-muted dark:text-dark-muted leading-relaxed">
-        {{ 'history.freeTierBanner' | transloco: { max: historyLimit()?.max ?? 5, favorites: historyLimit()?.favorites ?? 2 } }}
+        {{
+          'history.freeTierBanner'
+            | transloco
+              : { max: historyLimit()?.max ?? 5, favorites: historyLimit()?.favorites ?? 2 }
+        }}
       </p>
     </div>
   }
@@ -94,7 +102,11 @@
           />
         </svg>
         <p class="text-sm font-mono">
-          {{ showFavoritesOnly ? ('history.emptyFavorites' | transloco) : ('history.emptyAll' | transloco) }}
+          {{
+            showFavoritesOnly
+              ? ('history.emptyFavorites' | transloco)
+              : ('history.emptyAll' | transloco)
+          }}
         </p>
       </div>
     } @else {
@@ -142,10 +154,14 @@
                     {{ formatDate(entry.createdAt) }}
                     @if (entry.count > 1) {
                       <span
-                        class="px-1 py-0 rounded text-[9px] font-mono font-medium leading-4
-                               bg-accent/10 text-accent border border-accent/20"
-                        [title]="'history.countTooltip' | transloco: { count: entry.count, date: formatDate(entry.firstCalculatedAt) }"
-                      >×{{ entry.count }}</span>
+                        class="px-1 py-0 rounded text-[9px] font-mono font-medium leading-4 bg-accent/10 text-accent border border-accent/20"
+                        [title]="
+                          'history.countTooltip'
+                            | transloco
+                              : { count: entry.count, date: formatDate(entry.firstCalculatedAt) }
+                        "
+                        >×{{ entry.count }}</span
+                      >
                     }
                   </div>
                 </td>
@@ -197,7 +213,11 @@
                     <button
                       type="button"
                       (click)="toggleFavorite(entry, $event)"
-                      [title]="entry.isFavorite ? ('history.favorite.remove' | transloco) : ('history.favorite.add' | transloco)"
+                      [title]="
+                        entry.isFavorite
+                          ? ('history.favorite.remove' | transloco)
+                          : ('history.favorite.add' | transloco)
+                      "
                       class="cursor-pointer transition-colors"
                       [class]="
                         entry.isFavorite
@@ -275,10 +295,93 @@
               @if (isExpanded(entry.id)) {
                 <tr class="bg-paper dark:bg-dark-bg">
                   <td colspan="7" class="px-4 py-3">
-                    <pre
-                      class="text-[10px] font-mono text-ink dark:text-dark-ink bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded p-2 overflow-x-auto whitespace-pre-wrap break-all"
-                      >{{ inputJson(entry) }}</pre
-                    >
+                    <div class="flex flex-col gap-2">
+                      @if (hasDftPoints(entry) && !isRawJson(entry.id)) {
+                        @let dft = dftMeta(entry);
+                        <div class="flex flex-col gap-2">
+                          <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{
+                              'history.dft.inputLabel' | transloco
+                            }}</span>
+                            <span class="text-[10px] font-mono text-ink dark:text-dark-ink">
+                              <span class="font-semibold">{{ dft.count }}</span>
+                              {{ 'history.points' | transloco }}
+                              @if (dft.mode) {
+                                · <span class="text-accent2">mode: {{ dft.mode }}</span>
+                              }
+                            </span>
+                            <button
+                              type="button"
+                              (click)="toggleRawJson(entry.id, $event)"
+                              class="ml-auto text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+                            >
+                              {{ 'history.dft.viewJson' | transloco }}
+                            </button>
+                          </div>
+
+                          <div
+                            class="border border-border dark:border-dark-border rounded-lg overflow-hidden"
+                          >
+                            <table class="w-auto text-[10px] font-mono">
+                              <thead>
+                                <tr
+                                  class="bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted"
+                                >
+                                  <th class="px-3 py-1.5 text-right font-medium w-8">#</th>
+                                  <th class="px-3 py-1.5 text-right font-medium">x</th>
+                                  <th class="px-3 py-1.5 text-right font-medium">y</th>
+                                </tr>
+                              </thead>
+                              <tbody class="divide-y divide-border dark:divide-dark-border">
+                                @for (pt of dft.preview; track $index) {
+                                  <tr>
+                                    <td
+                                      class="px-3 py-1 text-right text-muted/50 dark:text-dark-muted/50"
+                                    >
+                                      {{ $index }}
+                                    </td>
+                                    <td
+                                      class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums"
+                                    >
+                                      {{ pt.x }}
+                                    </td>
+                                    <td
+                                      class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums"
+                                    >
+                                      {{ pt.y }}
+                                    </td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                            @if (dft.remaining > 0) {
+                              <p
+                                class="px-3 py-1.5 text-[10px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border"
+                              >
+                                {{
+                                  'history.dft.remainingPoints'
+                                    | transloco: { count: dft.remaining }
+                                }}
+                              </p>
+                            }
+                          </div>
+                        </div>
+                      } @else {
+                        <pre
+                          class="text-[10px] font-mono text-ink dark:text-dark-ink bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded p-2 overflow-x-auto whitespace-pre-wrap break-all"
+                          >{{ inputJson(entry) }}</pre
+                        >
+                        @if (hasDftPoints(entry) && isRawJson(entry.id)) {
+                          <button
+                            type="button"
+                            (click)="toggleRawJson(entry.id, $event)"
+                            class="mt-1.5 text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+                          >
+                            {{ 'history.dft.compactView' | transloco }}
+                          </button>
+                        }
+                      }
+                    </div>
                   </td>
                 </tr>
               }
@@ -293,7 +396,9 @@
           class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between"
         >
           <span class="text-xs font-mono text-muted dark:text-dark-muted">
-            {{ 'history.pagination.page' | transloco: { current: currentPage(), total: totalPages() } }}
+            {{
+              'history.pagination.page' | transloco: { current: currentPage(), total: totalPages() }
+            }}
           </span>
           <div class="flex gap-1.5">
             <button
