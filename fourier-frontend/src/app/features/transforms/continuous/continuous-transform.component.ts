@@ -37,6 +37,7 @@ import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
 } from '../../../domain/types/transform.types';
+import { HistoryEntry } from '../../../domain';
 
 let _nextId = 0;
 const mkId = () => `ts-${++_nextId}`;
@@ -148,7 +149,7 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
 })
 export class ContinuousTransformComponent implements OnInit {
   readonly api = inject(ApiService);
-  private readonly userStore  = inject(UserStore);
+  readonly userStore  = inject(UserStore);
   private readonly transloco  = inject(TranslocoService);
   private readonly seo        = inject(SeoService);
   private readonly intervalValidator = inject(LatexToMaximaService);
@@ -196,6 +197,12 @@ export class ContinuousTransformComponent implements OnInit {
   readonly originalLineWidth = signal(2);
   readonly resultLineWidth = signal(2);
   readonly showCanvasSettings = signal(false);
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+  readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
+  readonly favoriteLoading    = signal(false);
+  readonly showFavoriteDialog = signal(false);
+  favoriteName = '';
 
   // ── Free parameter sliders ────────────────────────────────────────────────
   readonly paramValues = signal<ParamValues>({});
@@ -617,6 +624,9 @@ export class ContinuousTransformComponent implements OnInit {
     this.urlCopied.set(false);
     this.paramValues.set({});
     this.paramSliders()?.reset();
+    this.latestHistoryEntry.set(null);
+    this.favoriteName = '';
+    this.showFavoriteDialog.set(false);
   }
 
   setMode(m: 'ft' | 'ift'): void {
@@ -681,6 +691,7 @@ export class ContinuousTransformComponent implements OnInit {
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
+            if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
           },
           error: (e) => {
             this.errorMsg.set(formatApiError(
@@ -704,6 +715,7 @@ export class ContinuousTransformComponent implements OnInit {
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
+            if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
           },
           error: (e) => {
             this.errorMsg.set(formatApiError(
@@ -883,5 +895,75 @@ export class ContinuousTransformComponent implements OnInit {
     // Fallback: constant expression (%pi, %e, numbers).
     const result = this.mathUtils.evaluate(s, 0, '_');
     return isFinite(result) ? result : NaN;
+  }
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+
+  openFavoriteDialog(): void {
+    const entry = this.latestHistoryEntry();
+    if (entry) {
+      this.doToggle(entry);
+    } else {
+      this.favoriteLoading.set(true);
+      this.fetchLatestEntry(() => {
+        this.favoriteLoading.set(false);
+        const loaded = this.latestHistoryEntry();
+        if (loaded) this.doToggle(loaded);
+      });
+    }
+  }
+
+  confirmFavorite(): void {
+    const entry = this.latestHistoryEntry();
+    if (!entry) return;
+    this.favoriteLoading.set(true);
+    this.showFavoriteDialog.set(false);
+    this.api
+      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.latestHistoryEntry.set(updated);
+          this.favoriteLoading.set(false);
+          this.favoriteName = '';
+        },
+        error: () => this.favoriteLoading.set(false),
+      });
+  }
+
+  cancelFavoriteDialog(): void {
+    this.showFavoriteDialog.set(false);
+    this.favoriteName = '';
+  }
+
+  private fetchLatestEntry(callback?: () => void): void {
+    this.api
+      .getHistory({ limit: 1 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.latestHistoryEntry.set(res.entries[0] ?? null);
+          callback?.();
+        },
+        error: () => callback?.(),
+      });
+  }
+
+  private doToggle(entry: HistoryEntry): void {
+    if (entry.isFavorite) {
+      this.favoriteLoading.set(true);
+      this.api
+        .toggleFavorite(entry.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (updated) => {
+            this.latestHistoryEntry.set(updated);
+            this.favoriteLoading.set(false);
+          },
+          error: () => this.favoriteLoading.set(false),
+        });
+    } else {
+      this.showFavoriteDialog.set(true);
+    }
   }
 }
