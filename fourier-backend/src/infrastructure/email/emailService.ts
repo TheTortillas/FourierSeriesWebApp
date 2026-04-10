@@ -16,7 +16,7 @@ export async function sendVerificationEmail(
   firstName: string,
   token: string,
 ): Promise<void> {
-  const verifyUrl = `${config.app.frontendUrl}/auth/verify-email?token=${token}`;
+  const verifyUrl = `${config.app.frontendUrl}/${config.app.frontendDefaultLang}/auth/verify-email?token=${token}`;
 
   await transporter.sendMail({
     from: `"Fourier Calculator" <${config.email.from}>`,
@@ -46,7 +46,7 @@ export async function sendPasswordResetEmail(
   firstName: string,
   token: string,
 ): Promise<void> {
-  const resetUrl = `${config.app.frontendUrl}/auth/reset-password?token=${token}`;
+  const resetUrl = `${config.app.frontendUrl}/${config.app.frontendDefaultLang}/auth/reset-password?token=${token}`;
 
   await transporter.sendMail({
     from: `"Fourier Calculator" <${config.email.from}>`,
@@ -75,7 +75,7 @@ export async function sendRecoveryEmail(
   firstName: string,
   token: string,
 ): Promise<void> {
-  const recoveryUrl = `${config.app.frontendUrl}/auth/reset-password?token=${token}`;
+  const recoveryUrl = `${config.app.frontendUrl}/${config.app.frontendDefaultLang}/auth/reset-password?token=${token}`;
 
   await transporter.sendMail({
     from: `"Fourier Calculator" <${config.email.from}>`,

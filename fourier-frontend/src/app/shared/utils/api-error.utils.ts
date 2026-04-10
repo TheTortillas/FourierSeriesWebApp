@@ -19,6 +19,12 @@ export function formatApiError(
   const body = e.error as Record<string, unknown> | null;
   if (!body) return e.message || fallback;
 
+  if (e.status === 403 && body['code'] === 'EMAIL_NOT_VERIFIED') {
+    return translate
+      ? translate('errors.emailNotVerified')
+      : 'Debes verificar tu correo antes de hacer cálculos.';
+  }
+
   if (e.status === 429) {
     const resetsAt = body['resetsAt'] as string | undefined;
     const retryAfterSeconds = body['retryAfterSeconds'] as number | undefined;
