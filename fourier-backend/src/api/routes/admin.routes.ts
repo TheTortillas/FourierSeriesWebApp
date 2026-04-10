@@ -36,7 +36,8 @@ adminRouter.use(authenticate, requireAdmin);
  *                     tables:
  *                       type: object
  *                       properties:
- *                         calculation_history: { type: string, example: "40 kB" }
+ *                         calculations:        { type: string, example: "24 kB" }
+ *                         calculation_events:  { type: string, example: "40 kB" }
  *                         audit_log:           { type: string, example: "16 kB" }
  *                         user_refresh_tokens: { type: string, example: "8192 bytes" }
  *                 disk:

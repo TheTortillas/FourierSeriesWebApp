@@ -378,6 +378,7 @@
     "network": "Error de conexión. Verifica tu red.",
     "unauthorized": "Sesión expirada. Inicia sesión nuevamente.",
     "validation": "Por favor corrige los errores en el formulario.",
+    "emailNotVerified": "Debes verificar tu correo antes de hacer cálculos.",
     "weeklyLimitReached": "Límite semanal alcanzado. Tu cuota se renueva el {{ date }}.",
     "tooManyRequests": "Demasiadas solicitudes. Intenta de nuevo en un momento.",
     "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos."

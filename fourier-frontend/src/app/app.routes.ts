@@ -4,7 +4,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { langGuard } from './core/guards/lang.guard';
 import { LangLayoutComponent } from './features/lang-layout/lang-layout.component';
-import { getSavedLang } from './core/config/languages';
+import { getSavedLang, DEFAULT_LANG } from './core/config/languages';
 
 export const routes: Routes = [
   // Raíz → redirige al idioma guardado en localStorage (o al idioma por defecto)
@@ -12,6 +12,27 @@ export const routes: Routes = [
     path: '',
     pathMatch: 'full',
     redirectTo: () => `${getSavedLang()}/home`,
+  },
+
+  // Auth routes without lang prefix (email links) → redirect to default lang preserving query params
+  // Must be before :lang to avoid 'auth' being captured as a language segment
+  {
+    path: 'auth/verify-email',
+    redirectTo: ({ queryParams }) => {
+      const token = queryParams['token'];
+      return token
+        ? `/${DEFAULT_LANG}/auth/verify-email?token=${encodeURIComponent(token as string)}`
+        : `/${DEFAULT_LANG}/home`;
+    },
+  },
+  {
+    path: 'auth/reset-password',
+    redirectTo: ({ queryParams }) => {
+      const token = queryParams['token'];
+      return token
+        ? `/${DEFAULT_LANG}/auth/reset-password?token=${encodeURIComponent(token as string)}`
+        : `/${DEFAULT_LANG}/home`;
+    },
   },
 
   // Rutas prefijadas con el idioma: /:lang/...
@@ -82,5 +103,5 @@ export const routes: Routes = [
   },
 
   // Catch-all — langGuard redirige rutas planas antiguas a /es/home
-  { path: '**', redirectTo: 'es/home' },
+  { path: '**', redirectTo: `${DEFAULT_LANG}/home` },
 ];

@@ -43,6 +43,7 @@ export class AuthService {
     email: string;
     password: string;
     ipAddress?: string;
+    lang?: string;
   }): Promise<AuthResult> {
     const existing = await this.userRepo.findByEmail(input.email);
 
@@ -91,7 +92,7 @@ export class AuthService {
       purpose: "email_verification",
       expiresAt: emailToken.expiresAt,
     });
-    await sendVerificationEmail(user.email, user.firstName, emailToken.token);
+    await sendVerificationEmail(user.email, user.firstName, emailToken.token, input.lang);
 
     await this.auditRepo.log({
       userId: user.id,
@@ -326,7 +327,7 @@ export class AuthService {
     ]);
   }
 
-  async forgotPassword(email: string, ipAddress?: string): Promise<void> {
+  async forgotPassword(email: string, ipAddress?: string, lang?: string): Promise<void> {
     const user = await this.userRepo.findByEmail(email);
     if (!user) return; // No revelar si el email existe
 
@@ -337,7 +338,7 @@ export class AuthService {
       expiresAt: resetToken.expiresAt,
     });
 
-    await sendPasswordResetEmail(user.email, user.firstName, resetToken.token);
+    await sendPasswordResetEmail(user.email, user.firstName, resetToken.token, lang);
 
     await this.auditRepo.log({
       userId: user.id,
@@ -401,7 +402,7 @@ export class AuthService {
     });
   }
 
-  async resendVerification(email: string, ipAddress?: string): Promise<void> {
+  async resendVerification(email: string, ipAddress?: string, lang?: string): Promise<void> {
     const user = await this.userRepo.findByEmail(email);
     if (!user || user.emailVerified) return;
 
@@ -413,6 +414,6 @@ export class AuthService {
       expiresAt: emailToken.expiresAt,
     });
 
-    await sendVerificationEmail(user.email, user.firstName, emailToken.token);
+    await sendVerificationEmail(user.email, user.firstName, emailToken.token, lang);
   }
 }

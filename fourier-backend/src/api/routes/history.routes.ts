@@ -62,6 +62,25 @@ historyRouter.get(
   },
 );
 
+/**
+ * @openapi
+ * /api/history/{id}:
+ *   get:
+ *     summary: Obtener una entrada del historial por ID
+ *     tags: [History]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Entrada del historial
+ *       404:
+ *         description: Entrada no encontrada
+ */
 historyRouter.get(
   "/:id",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -79,6 +98,35 @@ historyRouter.get(
   },
 );
 
+/**
+ * @openapi
+ * /api/history/{id}/favorite:
+ *   patch:
+ *     summary: Marcar o desmarcar una entrada como favorita
+ *     tags: [History]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nombre del favorito (opcional; omitir para desmarcar)
+ *                 example: "Serie de cos(x)"
+ *     responses:
+ *       200:
+ *         description: Favorito actualizado
+ *       404:
+ *         description: Entrada no encontrada
+ */
 historyRouter.patch(
   "/:id/favorite",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -101,6 +149,25 @@ historyRouter.patch(
   },
 );
 
+/**
+ * @openapi
+ * /api/history/{id}:
+ *   delete:
+ *     summary: Eliminar una entrada del historial
+ *     tags: [History]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Entrada eliminada
+ *       404:
+ *         description: Entrada no encontrada
+ */
 historyRouter.delete(
   "/:id",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

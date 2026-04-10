@@ -51,11 +51,12 @@ authRouter.post(
   "/register",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { firstName, lastName, email, password } = req.body as {
+      const { firstName, lastName, email, password, lang } = req.body as {
         firstName: string;
         lastName: string;
         email: string;
         password: string;
+        lang?: string;
       };
 
       if (!firstName || !lastName || !email || !password) {
@@ -76,6 +77,7 @@ authRouter.post(
         email,
         password,
         ipAddress: req.ip,
+        lang,
       });
 
       setRefreshCookie(res, result.refreshToken);
@@ -325,6 +327,24 @@ authRouter.get(
   },
 );
 
+/**
+ * @openapi
+ * /api/auth/verify-email:
+ *   get:
+ *     summary: Verificar correo electrónico con token
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema: { type: string }
+ *         description: Token recibido en el correo de verificación
+ *     responses:
+ *       200:
+ *         description: Correo verificado exitosamente
+ *       400:
+ *         description: Token inválido, expirado o ya usado
+ */
 authRouter.get(
   "/verify-email",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -346,16 +366,35 @@ authRouter.get(
   },
 );
 
+/**
+ * @openapi
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Solicitar enlace para restablecer contraseña
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, example: "usuario@email.com" }
+ *     responses:
+ *       200:
+ *         description: Si el email existe se enviará un enlace (respuesta idéntica para no revelar usuarios)
+ */
 authRouter.post(
   "/forgot-password",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email } = req.body as { email: string };
+      const { email, lang } = req.body as { email: string; lang?: string };
       if (!email) {
         res.status(400).json({ error: "Email is required" });
         return;
       }
-      await authService.forgotPassword(email, req.ip);
+      await authService.forgotPassword(email, req.ip, lang);
       res.json({
         message: "If that email exists you will receive a reset link",
       });
@@ -365,6 +404,28 @@ authRouter.post(
   },
 );
 
+/**
+ * @openapi
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Restablecer contraseña con token del correo
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, newPassword]
+ *             properties:
+ *               token: { type: string }
+ *               newPassword: { type: string, example: "nuevaContraseña123", minLength: 8 }
+ *     responses:
+ *       200:
+ *         description: Contraseña restablecida exitosamente
+ *       400:
+ *         description: Token inválido/expirado o contraseña demasiado corta
+ */
 authRouter.post(
   "/reset-password",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -399,16 +460,35 @@ authRouter.post(
   },
 );
 
+/**
+ * @openapi
+ * /api/auth/resend-verification:
+ *   post:
+ *     summary: Reenviar correo de verificación
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, example: "usuario@email.com" }
+ *     responses:
+ *       200:
+ *         description: Correo enviado si la cuenta existe y no está verificada
+ */
 authRouter.post(
   "/resend-verification",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email } = req.body as { email: string };
+      const { email, lang } = req.body as { email: string; lang?: string };
       if (!email) {
         res.status(400).json({ error: "Email is required" });
         return;
       }
-      await authService.resendVerification(email, req.ip);
+      await authService.resendVerification(email, req.ip, lang);
       res.json({ message: "Verification email sent if account exists" });
     } catch (err) {
       next(err);
@@ -458,6 +538,32 @@ authRouter.get(
   },
 );
 
+/**
+ * @openapi
+ * /api/auth/change-password:
+ *   post:
+ *     summary: Cambiar contraseña del usuario autenticado
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword: { type: string }
+ *               newPassword: { type: string, minLength: 8 }
+ *     responses:
+ *       200:
+ *         description: Contraseña actualizada exitosamente
+ *       400:
+ *         description: Contraseña actual incorrecta o nueva contraseña demasiado corta
+ *       401:
+ *         description: No autenticado
+ */
 authRouter.post(
   "/change-password",
   authenticate,

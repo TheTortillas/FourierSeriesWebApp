@@ -378,6 +378,7 @@
     "network": "Connection error. Check your network.",
     "unauthorized": "Session expired. Please log in again.",
     "validation": "Please fix the errors in the form.",
+    "emailNotVerified": "Please verify your email before making calculations.",
     "weeklyLimitReached": "Weekly limit reached. Your quota resets on {{ date }}.",
     "tooManyRequests": "Too many requests. Please try again in a moment.",
     "tooManyRequestsMinutes": "Too many requests. Please try again in {{ minutes }} minutes."

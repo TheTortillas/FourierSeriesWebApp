@@ -21,8 +21,7 @@ export async function requireVerified(
 
   if (!user.emailVerified) {
     res.status(403).json({
-      error: "Email not verified",
-      message: "Please verify your email before making calculations",
+      code: "EMAIL_NOT_VERIFIED",
       canResend: true,
     });
     return;

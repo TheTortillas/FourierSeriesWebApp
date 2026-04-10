@@ -74,7 +74,7 @@ export class RegisterComponent {
 
     const { confirmPassword: _, ...body } = this.form.getRawValue();
 
-    this.auth.register(body).subscribe({
+    this.auth.register({ ...body, lang: this.transloco.getActiveLang() }).subscribe({
       next: () => this.success.set(true),
       error: (err) => {
         this.apiError.set(err?.error?.error ?? 'Error al registrarse');
