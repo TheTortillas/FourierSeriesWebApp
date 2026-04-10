@@ -23,7 +23,8 @@ export class SystemRepository implements ISystemRepository {
            t.table_name,
            pg_size_pretty(pg_relation_size(t.table_name::regclass)) AS pretty_size
          FROM (VALUES
-           ('calculation_history'),
+           ('calculations'),
+           ('calculation_events'),
            ('audit_log'),
            ('user_refresh_tokens')
          ) AS t(table_name)`,
@@ -45,7 +46,8 @@ export class SystemRepository implements ISystemRepository {
       database: {
         totalSize: dbSizeResult.rows[0]!.db_size,
         tables: {
-          calculation_history:  tableSizeMap["calculation_history"]  ?? "0 bytes",
+          calculations:         tableSizeMap["calculations"]         ?? "0 bytes",
+          calculation_events:   tableSizeMap["calculation_events"]   ?? "0 bytes",
           audit_log:            tableSizeMap["audit_log"]            ?? "0 bytes",
           user_refresh_tokens:  tableSizeMap["user_refresh_tokens"]  ?? "0 bytes",
         },

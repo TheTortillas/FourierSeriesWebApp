@@ -1,5 +1,6 @@
 export interface TableSizes {
-  calculation_history: string;
+  calculations: string;
+  calculation_events: string;
   audit_log: string;
   user_refresh_tokens: string;
 }
