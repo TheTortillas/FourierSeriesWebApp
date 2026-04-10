@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, filter, map, of, switchMap, take, tap } from 'rxjs';
+import { catchError, debounceTime, filter, map, of, switchMap, take, tap, timer } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -323,12 +323,22 @@ export class ContinuousTransformComponent implements OnInit {
     // Wait for initFromStorage() to complete so the Bearer token is in memory
     // before the API call goes out. Using afterNextRender caused a race condition
     // where the calculate request was sent unauthenticated → false 429.
+    //
+    // We also wait for boundary validation to settle (600ms debounce) before
+    // calling calculate(), otherwise canCalculate() is false and it bails out.
+    // canCalculate$ must be created here (injection context) so toObservable
+    // captures the injector before the switchMap callback runs outside it.
+    const canCalculate$ = toObservable(this.canCalculate);
     if (needsCalculate) {
       toObservable(this.userStore.initialized)
-        .pipe(filter(Boolean), take(1), takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => {
-          this.calculate();
-        });
+        .pipe(
+          filter(Boolean),
+          take(1),
+          switchMap(() => timer(0)), // one macrotask → let effects set continuityValidating=true
+          switchMap(() => canCalculate$.pipe(filter(Boolean), take(1))),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe(() => this.calculate());
     }
 
     // ── 3. Reset custom axis when result changes ──────────────────────────
@@ -590,13 +600,18 @@ export class ContinuousTransformComponent implements OnInit {
     const intVar = input['intVar'] as string | undefined;
     const transVar = input['transVar'] as string | undefined;
     if (intVar && transVar) {
-      const match = VAR_PAIRS.find((p) => p.time === intVar && p.freq === transVar);
+      // intVar = integration variable: time var for FT, freq var for IFT
+      // transVar = result variable:    freq var for FT, time var for IFT
+      const isIft = type === 'inverse_fourier_transform';
+      const timeVar = isIft ? transVar : intVar;
+      const freqVar = isIft ? intVar : transVar;
+      const match = VAR_PAIRS.find((p) => p.time === timeVar && p.freq === freqVar);
       if (match) {
         this.varPairId.set(match.id);
       } else {
         this.varPairId.set('custom');
-        this.customTime.set(intVar);
-        this.customFreq.set(transVar);
+        this.customTime.set(timeVar);
+        this.customFreq.set(freqVar);
       }
     }
 

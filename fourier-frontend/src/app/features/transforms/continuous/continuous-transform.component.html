@@ -120,9 +120,9 @@
                 </label>
                 <input
                   type="text"
-                  [ngModel]="customTime()"
-                  (ngModelChange)="customTime.set($event)"
-                  placeholder="t"
+                  [ngModel]="mode() === 'ft' ? customTime() : customFreq()"
+                  (ngModelChange)="mode() === 'ft' ? customTime.set($event) : customFreq.set($event)"
+                  [placeholder]="mode() === 'ft' ? 't' : 'w'"
                   class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
                 />
               </div>
@@ -133,9 +133,9 @@
                 </label>
                 <input
                   type="text"
-                  [ngModel]="customFreq()"
-                  (ngModelChange)="customFreq.set($event)"
-                  placeholder="w"
+                  [ngModel]="mode() === 'ft' ? customFreq() : customTime()"
+                  (ngModelChange)="mode() === 'ft' ? customFreq.set($event) : customTime.set($event)"
+                  [placeholder]="mode() === 'ft' ? 'w' : 't'"
                   class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
                 />
               </div>
