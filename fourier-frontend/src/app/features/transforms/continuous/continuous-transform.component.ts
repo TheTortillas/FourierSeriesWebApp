@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { debounceTime, filter, of, switchMap, take, tap } from 'rxjs';
+import { catchError, debounceTime, filter, map, of, switchMap, take, tap } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -939,10 +939,25 @@ export class ContinuousTransformComponent implements OnInit {
   private fetchLatestEntry(callback?: () => void): void {
     this.api
       .getHistory({ limit: 1 })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((res) => {
+          const latest = res.entries[0] ?? null;
+          if (!latest || latest.isFavorite) return of(latest);
+          return this.api.getHistory({ favorites: true, limit: 1 }).pipe(
+            map((favRes) => {
+              const fav = favRes.entries[0];
+              return fav && JSON.stringify(fav.input) === JSON.stringify(latest.input)
+                ? fav
+                : latest;
+            }),
+            catchError(() => of(latest)),
+          );
+        }),
+      )
       .subscribe({
-        next: (res) => {
-          this.latestHistoryEntry.set(res.entries[0] ?? null);
+        next: (entry) => {
+          this.latestHistoryEntry.set(entry);
           callback?.();
         },
         error: () => callback?.(),
