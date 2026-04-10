@@ -244,6 +244,7 @@
       "ms": "ms",
       "actions": "Actions"
     },
+    "countTooltip": "Calculated {{ count }} times (first time: {{ date }})",
     "favorite": {
       "add": "Save as favorite",
       "remove": "Remove from favorites",
