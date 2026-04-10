@@ -213,6 +213,23 @@ export class ContinuousTransformComponent implements OnInit {
     return (ft ?? ift)?.params ?? [];
   });
 
+  /** LaTeX preview of the piecewise input function, mirroring calculator's previewLatex. */
+  readonly previewLatex = computed<string | null>(() => {
+    const segs = this.segments();
+    const v = this.intVar();
+    if (segs.length === 0) return null;
+    const hasContent = segs.some(s => s.expressionTex || s.fromTex || s.toTex);
+    if (!hasContent) return null;
+    if (segs.length === 1) {
+      const s = segs[0];
+      return `f(${v}) = ${s.expressionTex || '\\square'}, \\quad ${s.fromTex || '\\square'} < ${v} < ${s.toTex || '\\square'}`;
+    }
+    const rows = segs
+      .map(s => `${s.expressionTex || '\\square'}, & ${s.fromTex || '\\square'} < ${v} < ${s.toTex || '\\square'}`)
+      .join(' \\\\ ');
+    return `f(${v}) = \\begin{cases} ${rows} \\end{cases}`;
+  });
+
   /** Name of the param currently used for the custom axis unit (null = first param). */
   readonly customConstName = signal<string | null>(null);
 
