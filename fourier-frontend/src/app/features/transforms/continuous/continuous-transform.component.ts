@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, filter, map, of, switchMap, take, tap, timer } from 'rxjs';
+import { catchError, debounceTime, filter, map, of, pairwise, switchMap, take, tap, timer } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -314,6 +314,30 @@ export class ContinuousTransformComponent implements OnInit {
       this.continuityErrors.set(continuity);
       this.orderErrors.set(order);
       this.continuityValidating.set(false);
+    });
+
+    // ── Auto-replace integration variable when pair changes ───────────────
+    toObservable(this.varPairId).pipe(
+      pairwise(),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(([oldId, newId]) => {
+      const oldPair = VAR_PAIRS.find(p => p.id === oldId);
+      const newPair = VAR_PAIRS.find(p => p.id === newId);
+      if (!oldPair || !newPair) return;
+      const oldVar = this.mode() === 'ft' ? oldPair.time : oldPair.freq;
+      const newVar = this.mode() === 'ft' ? newPair.time : newPair.freq;
+      if (!oldVar || !newVar || oldVar === newVar) return;
+      this.segments.update(segs =>
+        segs.map(s => ({
+          ...s,
+          expression: this.replaceVarMaxima(s.expression, oldVar, newVar),
+          expressionTex: this.replaceVarTeX(s.expressionTex, oldVar, newVar),
+          from: this.replaceVarMaxima(s.from, oldVar, newVar),
+          fromTex: this.replaceVarTeX(s.fromTex, oldVar, newVar),
+          to: this.replaceVarMaxima(s.to, oldVar, newVar),
+          toTex: this.replaceVarTeX(s.toTex, oldVar, newVar),
+        }))
+      );
     });
 
     // Track native fullscreen changes
@@ -668,6 +692,39 @@ export class ContinuousTransformComponent implements OnInit {
     this.ftResult.set(null);
     this.iftResult.set(null);
     this.errorMsg.set(null);
+  }
+
+  // ── Variable replacement helpers ─────────────────────────────────────────
+
+  /**
+   * Replace `from` with `to` in a Maxima expression string.
+   * Uses strict word-boundary lookbehind/lookahead — safe because Maxima
+   * always separates operands with explicit operators (* + - etc.).
+   */
+  private replaceVarMaxima(expr: string, from: string, to: string): string {
+    const esc = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return expr.replace(new RegExp(`(?<![a-zA-Z])${esc}(?![a-zA-Z0-9])`, 'g'), to);
+  }
+
+  /**
+   * Replace `from` with `to` in a LaTeX TeX string.
+   * LaTeX allows implicit multiplication (e.g. `iw` = i·w), so we cannot
+   * use a strict left-side lookbehind. Strategy:
+   *   1. Temporarily replace all \commands with placeholders so their
+   *      letters won't be touched.
+   *   2. Replace `from` when NOT followed by [a-zA-Z0-9] (handles `iw`
+   *      because after protection there are no multi-letter command names).
+   *   3. Restore the placeholders.
+   */
+  private replaceVarTeX(tex: string, from: string, to: string): string {
+    const esc = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const cmds: string[] = [];
+    const safe = tex.replace(/\\[a-zA-Z]+/g, m => {
+      cmds.push(m);
+      return `\x01${cmds.length - 1}\x01`;
+    });
+    const replaced = safe.replace(new RegExp(`${esc}(?![a-zA-Z0-9])`, 'g'), to);
+    return replaced.replace(/\x01(\d+)\x01/g, (_, i) => cmds[+i]);
   }
 
   // ── Segment actions ───────────────────────────────────────────────────────

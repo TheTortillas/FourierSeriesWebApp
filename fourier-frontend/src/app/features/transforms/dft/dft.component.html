@@ -1,74 +1,97 @@
-<app-nav />
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
+  <app-nav />
 
-<main class="w-full px-4 lg:px-6 py-8 flex flex-col gap-6">
-  <div class="flex flex-col gap-1">
-    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'transforms.title' | transloco }}</h1>
-    <p class="text-sm font-mono text-muted dark:text-dark-muted">
-      {{ 'transforms.dft.selectType' | transloco }}
-    </p>
-  </div>
-
-  <div
-    class="inline-flex w-fit rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5"
-  >
-    <a
-      routerLink="../continuous"
-      routerLinkActive="bg-accent text-white shadow-sm"
-      class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors"
-    >
-      {{ 'transforms.continuous' | transloco }}
-    </a>
-    <a
-      routerLink="../dft"
-      routerLinkActive="bg-accent text-white shadow-sm"
-      [routerLinkActiveOptions]="{ exact: true }"
-      class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors inline-flex items-center gap-1.5"
-    >
-      {{ 'transforms.discrete' | transloco }}
-      <span
-        class="text-[10px] leading-none px-1.5 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted"
-      >
-        {{ 'transforms.comingSoon' | transloco }}
-      </span>
-    </a>
-  </div>
-
-  <div
-    class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-6 py-10 flex flex-col items-center gap-4 text-center max-w-3xl"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      class="w-10 h-10 text-muted dark:text-dark-muted"
-    >
-      <path d="M2 13h4l3-9 4 18 3-9h4" />
-    </svg>
-
-    <div
-      class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
-    >
-      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-      <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-        {{ 'transforms.dft.badge' | transloco }}
-      </span>
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
+  <header class="shrink-0 border-b border-border dark:border-dark-border px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'transforms.title' | transloco }}</h1>
+      <p class="text-sm font-mono text-muted dark:text-dark-muted mt-0.5">
+        {{ 'transforms.dft.selectType' | transloco }}
+      </p>
     </div>
-
-    <h2 class="font-display text-xl text-ink dark:text-dark-ink">{{ 'transforms.dft.heading' | transloco }}</h2>
-
-    <p class="text-sm font-mono text-muted dark:text-dark-muted max-w-2xl">
-      {{ 'transforms.dft.description' | transloco }}
-    </p>
-
-    <a
-      routerLink="../continuous"
-      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors"
+    <!-- Continua / Discreta tabs -->
+    <div
+      class="inline-flex w-fit rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5"
     >
-      {{ 'transforms.dft.goToContinuous' | transloco }}
-    </a>
+      <a
+        routerLink="../continuous"
+        routerLinkActive
+        #continuousRla="routerLinkActive"
+        [class]="continuousRla.isActive
+          ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
+          : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'"
+      >
+        {{ 'transforms.continuous' | transloco }}
+      </a>
+      <a
+        routerLink="../dft"
+        routerLinkActive
+        #dftRla="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [class]="dftRla.isActive
+          ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors inline-flex items-center gap-1.5'
+          : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors inline-flex items-center gap-1.5'"
+      >
+        {{ 'transforms.discrete' | transloco }}
+        <span
+          class="text-[10px] leading-none px-1.5 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted"
+        >
+          {{ 'transforms.comingSoon' | transloco }}
+        </span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ── Two-panel layout ─────────────────────────────────────────────────── -->
+  <div class="flex flex-col lg:flex-row flex-1 min-h-0">
+    <!-- ── Left panel (empty placeholder) ───────────────────────────────── -->
+    <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border">
+    </aside>
+
+    <!-- ── Right panel ───────────────────────────────────────────────────── -->
+    <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
+      <div class="p-5">
+        <div
+          class="rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-6 py-10 flex flex-col items-center gap-4 text-center max-w-3xl"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-10 h-10 text-muted dark:text-dark-muted"
+          >
+            <path d="M2 13h4l3-9 4 18 3-9h4" />
+          </svg>
+
+          <div
+            class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+              {{ 'transforms.dft.badge' | transloco }}
+            </span>
+          </div>
+
+          <h2 class="font-display text-xl text-ink dark:text-dark-ink">{{ 'transforms.dft.heading' | transloco }}</h2>
+
+          <p class="text-sm font-mono text-muted dark:text-dark-muted max-w-2xl">
+            {{ 'transforms.dft.description' | transloco }}
+          </p>
+
+          <a
+            routerLink="../continuous"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors"
+          >
+            {{ 'transforms.dft.goToContinuous' | transloco }}
+          </a>
+        </div>
+      </div>
+    </main>
+    <!-- /Right panel -->
   </div>
-</main>
+  <!-- /Two-panel layout -->
+</div>
