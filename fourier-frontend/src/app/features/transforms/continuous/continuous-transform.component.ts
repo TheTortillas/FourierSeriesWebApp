@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { debounceTime, filter, of, switchMap, take, tap } from 'rxjs';
+import { catchError, debounceTime, filter, map, of, switchMap, take, tap, timer } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -37,6 +37,7 @@ import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
 } from '../../../domain/types/transform.types';
+import { HistoryEntry } from '../../../domain';
 
 let _nextId = 0;
 const mkId = () => `ts-${++_nextId}`;
@@ -148,7 +149,7 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
 })
 export class ContinuousTransformComponent implements OnInit {
   readonly api = inject(ApiService);
-  private readonly userStore  = inject(UserStore);
+  readonly userStore  = inject(UserStore);
   private readonly transloco  = inject(TranslocoService);
   private readonly seo        = inject(SeoService);
   private readonly intervalValidator = inject(LatexToMaximaService);
@@ -196,6 +197,12 @@ export class ContinuousTransformComponent implements OnInit {
   readonly originalLineWidth = signal(2);
   readonly resultLineWidth = signal(2);
   readonly showCanvasSettings = signal(false);
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+  readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
+  readonly favoriteLoading    = signal(false);
+  readonly showFavoriteDialog = signal(false);
+  favoriteName = '';
 
   // ── Free parameter sliders ────────────────────────────────────────────────
   readonly paramValues = signal<ParamValues>({});
@@ -316,12 +323,22 @@ export class ContinuousTransformComponent implements OnInit {
     // Wait for initFromStorage() to complete so the Bearer token is in memory
     // before the API call goes out. Using afterNextRender caused a race condition
     // where the calculate request was sent unauthenticated → false 429.
+    //
+    // We also wait for boundary validation to settle (600ms debounce) before
+    // calling calculate(), otherwise canCalculate() is false and it bails out.
+    // canCalculate$ must be created here (injection context) so toObservable
+    // captures the injector before the switchMap callback runs outside it.
+    const canCalculate$ = toObservable(this.canCalculate);
     if (needsCalculate) {
       toObservable(this.userStore.initialized)
-        .pipe(filter(Boolean), take(1), takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => {
-          this.calculate();
-        });
+        .pipe(
+          filter(Boolean),
+          take(1),
+          switchMap(() => timer(0)), // one macrotask → let effects set continuityValidating=true
+          switchMap(() => canCalculate$.pipe(filter(Boolean), take(1))),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe(() => this.calculate());
     }
 
     // ── 3. Reset custom axis when result changes ──────────────────────────
@@ -583,13 +600,18 @@ export class ContinuousTransformComponent implements OnInit {
     const intVar = input['intVar'] as string | undefined;
     const transVar = input['transVar'] as string | undefined;
     if (intVar && transVar) {
-      const match = VAR_PAIRS.find((p) => p.time === intVar && p.freq === transVar);
+      // intVar = integration variable: time var for FT, freq var for IFT
+      // transVar = result variable:    freq var for FT, time var for IFT
+      const isIft = type === 'inverse_fourier_transform';
+      const timeVar = isIft ? transVar : intVar;
+      const freqVar = isIft ? intVar : transVar;
+      const match = VAR_PAIRS.find((p) => p.time === timeVar && p.freq === freqVar);
       if (match) {
         this.varPairId.set(match.id);
       } else {
         this.varPairId.set('custom');
-        this.customTime.set(intVar);
-        this.customFreq.set(transVar);
+        this.customTime.set(timeVar);
+        this.customFreq.set(freqVar);
       }
     }
 
@@ -617,6 +639,9 @@ export class ContinuousTransformComponent implements OnInit {
     this.urlCopied.set(false);
     this.paramValues.set({});
     this.paramSliders()?.reset();
+    this.latestHistoryEntry.set(null);
+    this.favoriteName = '';
+    this.showFavoriteDialog.set(false);
   }
 
   setMode(m: 'ft' | 'ift'): void {
@@ -681,6 +706,7 @@ export class ContinuousTransformComponent implements OnInit {
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
+            if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
           },
           error: (e) => {
             this.errorMsg.set(formatApiError(
@@ -704,6 +730,7 @@ export class ContinuousTransformComponent implements OnInit {
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
+            if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
           },
           error: (e) => {
             this.errorMsg.set(formatApiError(
@@ -883,5 +910,90 @@ export class ContinuousTransformComponent implements OnInit {
     // Fallback: constant expression (%pi, %e, numbers).
     const result = this.mathUtils.evaluate(s, 0, '_');
     return isFinite(result) ? result : NaN;
+  }
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+
+  openFavoriteDialog(): void {
+    const entry = this.latestHistoryEntry();
+    if (entry) {
+      this.doToggle(entry);
+    } else {
+      this.favoriteLoading.set(true);
+      this.fetchLatestEntry(() => {
+        this.favoriteLoading.set(false);
+        const loaded = this.latestHistoryEntry();
+        if (loaded) this.doToggle(loaded);
+      });
+    }
+  }
+
+  confirmFavorite(): void {
+    const entry = this.latestHistoryEntry();
+    if (!entry) return;
+    this.favoriteLoading.set(true);
+    this.showFavoriteDialog.set(false);
+    this.api
+      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.latestHistoryEntry.set(updated);
+          this.favoriteLoading.set(false);
+          this.favoriteName = '';
+        },
+        error: () => this.favoriteLoading.set(false),
+      });
+  }
+
+  cancelFavoriteDialog(): void {
+    this.showFavoriteDialog.set(false);
+    this.favoriteName = '';
+  }
+
+  private fetchLatestEntry(callback?: () => void): void {
+    this.api
+      .getHistory({ limit: 1 })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((res) => {
+          const latest = res.entries[0] ?? null;
+          if (!latest || latest.isFavorite) return of(latest);
+          return this.api.getHistory({ favorites: true, limit: 1 }).pipe(
+            map((favRes) => {
+              const fav = favRes.entries[0];
+              return fav && JSON.stringify(fav.input) === JSON.stringify(latest.input)
+                ? fav
+                : latest;
+            }),
+            catchError(() => of(latest)),
+          );
+        }),
+      )
+      .subscribe({
+        next: (entry) => {
+          this.latestHistoryEntry.set(entry);
+          callback?.();
+        },
+        error: () => callback?.(),
+      });
+  }
+
+  private doToggle(entry: HistoryEntry): void {
+    if (entry.isFavorite) {
+      this.favoriteLoading.set(true);
+      this.api
+        .toggleFavorite(entry.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (updated) => {
+            this.latestHistoryEntry.set(updated);
+            this.favoriteLoading.set(false);
+          },
+          error: () => this.favoriteLoading.set(false),
+        });
+    } else {
+      this.showFavoriteDialog.set(true);
+    }
   }
 }

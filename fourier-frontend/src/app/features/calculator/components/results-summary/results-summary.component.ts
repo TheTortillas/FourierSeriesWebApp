@@ -11,7 +11,7 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, finalize } from 'rxjs';
+import { forkJoin, finalize, of, switchMap, map, catchError } from 'rxjs';
 import { CalculatorStore } from '../../store/calculator.store';
 import {
   FunctionPlotComponent,
@@ -1043,10 +1043,25 @@ export class ResultsSummaryComponent {
   private fetchLatestEntry(callback?: () => void): void {
     this.api
       .getHistory({ limit: 1 })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((res) => {
+          const latest = res.entries[0] ?? null;
+          if (!latest || latest.isFavorite) return of(latest);
+          return this.api.getHistory({ favorites: true, limit: 1 }).pipe(
+            map((favRes) => {
+              const fav = favRes.entries[0];
+              return fav && JSON.stringify(fav.input) === JSON.stringify(latest.input)
+                ? fav
+                : latest;
+            }),
+            catchError(() => of(latest)),
+          );
+        }),
+      )
       .subscribe({
-        next: (res) => {
-          this.latestHistoryEntry.set(res.entries[0] ?? null);
+        next: (entry) => {
+          this.latestHistoryEntry.set(entry);
           callback?.();
         },
         error: () => callback?.(),
