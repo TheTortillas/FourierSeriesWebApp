@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, Validati
 
 import { ApiService } from '../../core/services/api/api.service';
 import { UserStore } from '../../core/services/auth/user.store';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
@@ -20,8 +20,9 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 })
 export class ProfileComponent {
   readonly store = inject(UserStore);
-  private readonly api = inject(ApiService);
-  private readonly fb  = inject(FormBuilder);
+  private readonly api      = inject(ApiService);
+  private readonly fb       = inject(FormBuilder);
+  private readonly transloco = inject(TranslocoService);
 
   readonly passwordForm = this.fb.nonNullable.group(
     {
@@ -71,7 +72,7 @@ export class ProfileComponent {
     if (!email || this.resendLoading()) return;
 
     this.resendLoading.set(true);
-    this.api.resendVerification(email).subscribe({
+    this.api.resendVerification(email, this.transloco.getActiveLang()).subscribe({
       next: () => { this.resendSent.set(true); this.resendLoading.set(false); },
       error: () => { this.resendSent.set(true); this.resendLoading.set(false); },
     });

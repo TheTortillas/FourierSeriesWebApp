@@ -51,11 +51,12 @@ authRouter.post(
   "/register",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { firstName, lastName, email, password } = req.body as {
+      const { firstName, lastName, email, password, lang } = req.body as {
         firstName: string;
         lastName: string;
         email: string;
         password: string;
+        lang?: string;
       };
 
       if (!firstName || !lastName || !email || !password) {
@@ -76,6 +77,7 @@ authRouter.post(
         email,
         password,
         ipAddress: req.ip,
+        lang,
       });
 
       setRefreshCookie(res, result.refreshToken);
@@ -387,12 +389,12 @@ authRouter.post(
   "/forgot-password",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email } = req.body as { email: string };
+      const { email, lang } = req.body as { email: string; lang?: string };
       if (!email) {
         res.status(400).json({ error: "Email is required" });
         return;
       }
-      await authService.forgotPassword(email, req.ip);
+      await authService.forgotPassword(email, req.ip, lang);
       res.json({
         message: "If that email exists you will receive a reset link",
       });
@@ -481,12 +483,12 @@ authRouter.post(
   "/resend-verification",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email } = req.body as { email: string };
+      const { email, lang } = req.body as { email: string; lang?: string };
       if (!email) {
         res.status(400).json({ error: "Email is required" });
         return;
       }
-      await authService.resendVerification(email, req.ip);
+      await authService.resendVerification(email, req.ip, lang);
       res.json({ message: "Verification email sent if account exists" });
     } catch (err) {
       next(err);

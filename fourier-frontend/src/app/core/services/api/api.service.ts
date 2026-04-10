@@ -86,8 +86,8 @@ export class ApiService {
     });
   }
 
-  forgotPassword(email: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.base}/auth/forgot-password`, { email });
+  forgotPassword(email: string, lang?: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/auth/forgot-password`, { email, lang });
   }
 
   resetPassword(token: string, newPassword: string): Observable<{ message: string }> {
@@ -97,8 +97,8 @@ export class ApiService {
     });
   }
 
-  resendVerification(email: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.base}/auth/resend-verification`, { email });
+  resendVerification(email: string, lang?: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/auth/resend-verification`, { email, lang });
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<{ message: string }> {
