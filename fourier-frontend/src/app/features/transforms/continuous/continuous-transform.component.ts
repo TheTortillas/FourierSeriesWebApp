@@ -784,7 +784,14 @@ export class ContinuousTransformComponent implements OnInit {
 
   addSegment(): void {
     if (this.inputsLocked()) return;
-    this.segments.update((s) => [...s, emptySegment()]);
+    this.segments.update((segs) => [
+      ...segs,
+      {
+        ...emptySegment(),
+        from: segs.at(-1)?.to ?? '',
+        fromTex: segs.at(-1)?.toTex ?? '',
+      },
+    ]);
   }
 
   removeSegment(id: string): void {
