@@ -57,6 +57,14 @@ texput(sgn, "\\operatorname{sgn}")$
 FT_is_minf(x) := is(x = minf) or is(x = -inf)$
 FT_is_inf(x)  := is(x = inf)  or is(x = +inf)$
 
+FT_limit_nonneg(x) :=
+    if numberp(x) then x >= 0
+    else is(x >= 0)$
+
+FT_limit_nonpos(x) :=
+    if numberp(x) then x <= 0
+    else is(x <= 0)$
+
 /* Devuelve los simbolos libres de expr que no estan en reserved */
 FT_free_params(expr, reserved) := block(
     [params: []],
@@ -280,22 +288,36 @@ FT_expand_abs(trozo, t_var) := block(
 
     /* Eliminar u(t_var) cuando el dominio lo hace redundante */
     if not freeof('u, f_i) then (
-        if float(ai) >= 0 then
+        if FT_limit_nonneg(ai) then
             f_i: ratsimp(subst(u(t_var) = 1, f_i))
-        else if float(bi) <= 0 then
+        else if FT_limit_nonpos(bi) then
             f_i: subst(u(t_var) = 0, f_i)
-        else if FT_is_minf(ai) and FT_is_inf(bi) then (
-            f_i: ratsimp(subst(u(t_var) = 1, f_i)),
-            ai: 0
+        else if FT_is_minf(ai) and FT_is_inf(bi) then block(
+            [fe, u_count],
+            u_count: 0,
+            fe: expand(f_i),
+            if is(op(fe) = 'u) then u_count: 1
+            else if is(op(fe) = "*") then (
+                for s in args(fe) do
+                    if not atom(s) and is(op(s) = 'u) then u_count: u_count + 1
+            )
+            else if is(op(fe) = "+") then (
+                for term in args(fe) do
+                    if not freeof('u, term) then u_count: u_count + 1
+            ),
+            if u_count = 1 then (
+                f_i: ratsimp(subst(u(t_var) = 1, f_i)),
+                ai: 0
+            )
         )
     ),
 
     if freeof('abs, f_i)
     then res: [[f_i, ai, bi]]
     else (
-        if float(ai) >= 0
+        if FT_limit_nonneg(ai)
         then res: [[ratsimp(subst(abs(t_var) =  t_var, f_i)), ai, bi]]
-        else if float(bi) <= 0
+        else if FT_limit_nonpos(bi)
         then res: [[ratsimp(subst(abs(t_var) = -t_var, f_i)), ai, bi]]
         else (
             f_neg: ratsimp(subst(abs(t_var) = -t_var, f_i)),
@@ -351,9 +373,9 @@ IFT_expand_abs(trozo, w_var) := block(
     if freeof('abs, F_i)
     then res: [trozo]
     else (
-        if float(ai) >= 0
+        if FT_limit_nonneg(ai)
         then res: [[ratsimp(subst(abs(w_var) =  w_var, F_i)), ai, bi]]
-        else if float(bi) <= 0
+        else if FT_limit_nonpos(bi)
         then res: [[ratsimp(subst(abs(w_var) = -w_var, F_i)), ai, bi]]
         else (
             F_neg: ratsimp(subst(abs(w_var) = -w_var, F_i)),
@@ -1286,18 +1308,18 @@ FT(FUNC_INPUT, t_var, w_var) := block(
     ),
 
     /* ── intento de patron para tramo [c, inf) ──
-    Multiplica por u(t_var-c) para reutilizar los detectores
-    que esperan u(t) explicito en intervalo completo.
-    Si la expresion ya contiene u(t_var), no agrega otro.  */
+       Multiplica por u(t_var-c) para reutilizar los detectores
+       que esperan u(t) explicito en intervalo completo.
+       Si la expresion ya contiene u(t_var), no agrega otro.  */
     if n_orig = 1 and not done then (
         block([tr, t0_val, f_aug],
             tr: FUNC_INPUT[1],
             if FT_is_inf(tr[3]) and not FT_is_minf(tr[2]) then (
                 t0_val: tr[2],
                 f_aug: if freeof('u, tr[1]) then
-                        tr[1] * u(t_var - t0_val)
-                    else
-                        tr[1],
+                           tr[1] * u(t_var - t0_val)
+                       else
+                           tr[1],
                 pattern: FT_pattern_lookup(f_aug, t_var, w_var),
                 if is(pattern # false) then (
                     F      : pattern[1],
@@ -1306,6 +1328,195 @@ FT(FUNC_INPUT, t_var, w_var) := block(
                     done   : true
                 )
             )
+        )
+    ),
+
+    /* ── convertir u(t-a)-u(t-b) a pulso e integrar en [a,b] ── */
+    if n_orig = 1 and not done then (
+        block([tr, fe, terms, u_terms, other_terms,
+               k1, k2, ua1, ua2, s1, s2],
+            tr: FUNC_INPUT[1],
+            if FT_is_minf(tr[2]) and FT_is_inf(tr[3]) then (
+                fe: expand(tr[1]),
+                if not freeof('u, fe) and not atom(fe) and is(op(fe) = "+") then (
+                    terms: args(fe),
+                    u_terms: sublist(terms, lambda([x], not freeof('u, x))),
+                    other_terms: sublist(terms, lambda([x], freeof('u, x))),
+                    if length(u_terms) = 2 then block(
+                        [t1, t2, u1, u2, c1, c2],
+                        t1: u_terms[1],
+                        t2: u_terms[2],
+
+                        /* funcion auxiliar para extraer [coef, u_expr] de un termino
+                           maneja: u(t-a), k*u(t-a), -u(t-a), -k*u(t-a),
+                                   k*u/n, -(k*u/n)                          */
+                        block([extract],
+                            extract: lambda([term],
+                                if is(op(term) = 'u) then [1, term]
+                                else if is(op(term) = "*") then block(
+                                    [cc: 1, uu: false],
+                                    for ss in args(term) do (
+                                        if not atom(ss) and is(op(ss) = 'u)
+                                        then uu: ss
+                                        else cc: cc * ss
+                                    ),
+                                    if is(uu # false) then [cc, uu] else false
+                                )
+                                else if is(op(term) = "-") then block(
+                                    [inner: part(term, 1)],
+                                    if is(op(inner) = 'u) then [-1, inner]
+                                    else if is(op(inner) = "*") then block(
+                                        [cc: 1, uu: false],
+                                        for ss in args(inner) do (
+                                            if not atom(ss) and is(op(ss) = 'u)
+                                            then uu: ss
+                                            else cc: cc * ss
+                                        ),
+                                        if is(uu # false) then [-cc, uu] else false
+                                    )
+                                    /* caso: -(k*u/n) */
+                                    else if is(op(inner) = "/") then block(
+                                        [num_i, den_i, inner_r2],
+                                        num_i: part(inner, 1),
+                                        den_i: part(inner, 2),
+                                        if freeof('u, den_i) then (
+                                            inner_r2:
+                                                if is(op(num_i) = 'u) then [1, num_i]
+                                                else if is(op(num_i) = "*") then block(
+                                                    [cc: 1, uu: false],
+                                                    for ss in args(num_i) do (
+                                                        if not atom(ss) and is(op(ss) = 'u)
+                                                        then uu: ss
+                                                        else cc: cc * ss
+                                                    ),
+                                                    if is(uu # false) then [cc, uu] else false
+                                                )
+                                                else false,
+                                            if is(inner_r2 # false)
+                                            then [-inner_r2[1]/den_i, inner_r2[2]]
+                                            else false
+                                        )
+                                        else false
+                                    )
+                                    else false
+                                )
+                                else if is(op(term) = "/") then block(
+                                    [num_t, den_t],
+                                    num_t: part(term, 1),
+                                    den_t: part(term, 2),
+                                    if freeof('u, den_t) then block(
+                                        [inner_r],
+                                        inner_r:
+                                            if is(op(num_t) = 'u) then [1, num_t]
+                                            else if is(op(num_t) = "*") then block(
+                                                [cc: 1, uu: false],
+                                                for ss in args(num_t) do (
+                                                    if not atom(ss) and is(op(ss) = 'u)
+                                                    then uu: ss
+                                                    else cc: cc * ss
+                                                ),
+                                                if is(uu # false) then [cc, uu] else false
+                                            )
+                                            else if is(op(num_t) = "-") then block(
+                                                [inner2: part(num_t, 1)],
+                                                if is(op(inner2) = 'u) then [-1, inner2]
+                                                else if is(op(inner2) = "*") then block(
+                                                    [cc: 1, uu: false],
+                                                    for ss in args(inner2) do (
+                                                        if not atom(ss) and is(op(ss) = 'u)
+                                                        then uu: ss
+                                                        else cc: cc * ss
+                                                    ),
+                                                    if is(uu # false) then [-cc, uu] else false
+                                                )
+                                                else false
+                                            )
+                                            else false,
+                                        if is(inner_r # false)
+                                        then [inner_r[1]/den_t, inner_r[2]]
+                                        else false
+                                    )
+                                    else false
+                                )
+                                else false
+                            ),
+                            block([r1, r2],
+                                r1: extract(t1),
+                                r2: extract(t2),
+                                if is(r1 # false) and is(r2 # false) then (
+                                    c1: r1[1],  u1: r1[2],
+                                    c2: r2[1],  u2: r2[2],
+                                    if ratsimp(c1 + c2) = 0 then block(
+                                        [a_lim, b_lim, f_base, contrib_p],
+                                        s1: ratsimp(subst(t_var=0, part(u1, 1))),
+                                        s2: ratsimp(subst(t_var=0, part(u2, 1))),
+                                        if is(ratsimp(s2-s1) > 0)
+                                        then (a_lim: s1, b_lim: s2, f_base: c1)
+                                        else (a_lim: s2, b_lim: s1, f_base: c2),
+                                        if length(other_terms) > 0 then
+                                            f_base: f_base + apply("+", other_terms),
+                                        contrib_p: FT_raw(f_base, t_var, w_var, a_lim, b_lim),
+                                        if contrib_p # 'failed then (
+                                            F: errcatch(FT_simplify(contrib_p)),
+                                            F: if F = [] then contrib_p else first(F),
+                                            F_real: if freeof(%i,F) then F
+                                                    else ratsimp(realpart(F)),
+                                            F_imag: if freeof(%i,F) then 0
+                                                    else ratsimp(imagpart(F)),
+                                            exists: FT_exists(F),
+                                            done: true
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── tramos [c,inf) con constante -> usar lookup de u(t-c) ──
+       Maneja funciones por tramos con tramos semi-infinitos.       */
+    if not done then block(
+        [F_acum2, all_ok],
+        F_acum2: 0,
+        all_ok: true,
+        for i: 1 thru n_orig do block(
+            [tr, f_tr, a_tr, b_tr, pat, contrib2],
+            tr: FUNC_INPUT[i],
+            f_tr: tr[1],
+            a_tr: tr[2],
+            b_tr: tr[3],
+            if FT_is_inf(b_tr) and not FT_is_minf(a_tr)
+               and freeof(t_var, f_tr) and not equal(f_tr, 0) then (
+                /* k en [c,inf) = k*u(t-c) */
+                pat: FT_pattern_lookup(f_tr * u(t_var - a_tr), t_var, w_var),
+                if is(pat # false)
+                then F_acum2: F_acum2 + pat[1]
+                else all_ok: false
+            )
+            else if FT_is_minf(a_tr) and not FT_is_inf(b_tr)
+               and freeof(t_var, f_tr) and not equal(f_tr, 0) then (
+                /* (-inf, c] con constante no nula — no soportado */
+                all_ok: false
+            )
+            else if not FT_is_inf(b_tr) and not FT_is_minf(a_tr) then (
+                /* tramo finito [a,b] — integrar normalmente */
+                contrib2: FT_raw(f_tr, t_var, w_var, a_tr, b_tr),
+                if contrib2 = 'failed
+                then all_ok: false
+                else F_acum2: F_acum2 + contrib2
+            )
+            /* tramos con f=0 se ignoran silenciosamente */
+        ),
+        if all_ok then (
+            F: errcatch(FT_simplify(F_acum2)),
+            F: if F = [] then F_acum2 else first(F),
+            F_real: if freeof(%i,F) then F else ratsimp(realpart(F)),
+            F_imag: if freeof(%i,F) then 0 else ratsimp(imagpart(F)),
+            exists: FT_exists(F),
+            done: true
         )
     ),
 
