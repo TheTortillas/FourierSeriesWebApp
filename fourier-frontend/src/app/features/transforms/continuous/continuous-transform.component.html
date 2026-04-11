@@ -1,182 +1,73 @@
-<app-nav />
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
+  <app-nav />
 
-<main class="w-full px-4 lg:px-6 py-8 flex flex-col gap-6">
   <!-- ── Page header ──────────────────────────────────────────────────────── -->
-  <div class="flex flex-col gap-1">
-    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'transforms.title' | transloco }}</h1>
-    <p class="text-sm font-mono text-muted dark:text-dark-muted">
-      {{ 'transforms.subtitle' | transloco }}
-    </p>
-  </div>
-
-  <div
-    class="inline-flex w-fit rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5"
-  >
-    <a
-      routerLink="../continuous"
-      routerLinkActive="bg-accent text-white shadow-sm"
-      [routerLinkActiveOptions]="{ exact: true }"
-      class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors"
+  <header class="shrink-0 border-b border-border dark:border-dark-border px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'transforms.title' | transloco }}</h1>
+      <p class="text-sm font-mono text-muted dark:text-dark-muted mt-0.5">
+        {{ 'transforms.subtitle' | transloco }}
+      </p>
+    </div>
+    <!-- Continua / Discreta tabs -->
+    <div
+      class="inline-flex w-fit rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5"
     >
-      {{ 'transforms.continuous' | transloco }}
-    </a>
-    <a
-      routerLink="../dft"
-      routerLinkActive="bg-accent text-white shadow-sm"
-      class="px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors inline-flex items-center gap-1.5"
-    >
-      {{ 'transforms.discrete' | transloco }}
-      <span
-        class="text-[10px] leading-none px-1.5 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted"
+      <a
+        routerLink="../continuous"
+        routerLinkActive
+        #continuousRla="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [class]="continuousRla.isActive
+          ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
+          : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'"
       >
-        {{ 'transforms.comingSoon' | transloco }}
-      </span>
-    </a>
-  </div>
+        {{ 'transforms.continuous' | transloco }}
+      </a>
+      <a
+        routerLink="../dft"
+        routerLinkActive
+        #dftRla="routerLinkActive"
+        [class]="dftRla.isActive
+          ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors inline-flex items-center gap-1.5'
+          : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors inline-flex items-center gap-1.5'"
+      >
+        {{ 'transforms.discrete' | transloco }}
+        <span
+          class="text-[10px] leading-none px-1.5 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted"
+        >
+          {{ 'transforms.comingSoon' | transloco }}
+        </span>
+      </a>
+    </div>
+  </header>
 
-  <!-- ── Main layout: left = controls, right = canvas ────────────────────── -->
-  <div class="w-full flex flex-col lg:flex-row gap-6 items-start">
-    <!-- ── LEFT COLUMN: controls ──────────────────────────────────────────── -->
-    <div class="w-full lg:w-105 xl:w-115 shrink-0 flex flex-col gap-4">
-      <div
-        class="flex flex-col gap-4"
-        [class.pointer-events-none]="inputsLocked()"
-        [class.opacity-70]="inputsLocked()"
-      >
-        <!-- Mode toggle -->
+  <!-- ── Two-panel layout ─────────────────────────────────────────────────── -->
+  <div class="flex flex-col lg:flex-row flex-1 min-h-0">
+    <!-- ── Left panel: controls ──────────────────────────────────────────── -->
+    <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto">
+      <div class="p-5 flex flex-col gap-5">
         <div
-          class="inline-flex rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5 self-start"
+          class="flex flex-col gap-5"
+          [class.pointer-events-none]="inputsLocked()"
+          [class.opacity-70]="inputsLocked()"
         >
-          <button
-            type="button"
-            (click)="setMode('ft')"
-            [class]="
-              mode() === 'ft'
-                ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-                : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
-            "
+          <!-- Live f(x) preview -->
+        @if (previewLatex()) {
+          <div
+            class="rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto flex items-center justify-center min-h-12"
           >
-            {{ 'transforms.direct' | transloco }}
-          </button>
-          <button
-            type="button"
-            (click)="setMode('ift')"
-            [class]="
-              mode() === 'ift'
-                ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-                : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
-            "
-          >
-            {{ 'transforms.inverse' | transloco }}
-          </button>
-        </div>
-
-        <!-- Variable pair selector -->
-        <section
-          class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-3"
-        >
-          <h2 class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-            {{ 'transforms.variables' | transloco }}
-          </h2>
-
-          <div class="flex flex-wrap gap-2">
-            @for (pair of varPairs; track pair.id) {
-              @if (pair.id !== 'custom') {
-                <button
-                  type="button"
-                  (click)="varPairId.set(pair.id)"
-                  [class]="
-                    varPairId() === pair.id
-                      ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
-                      : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
-                  "
-                >
-                  @if (mode() === 'ft') {
-                    {{ pair.timeDisplay }} → {{ pair.freqDisplay }}
-                  } @else {
-                    {{ pair.freqDisplay }} → {{ pair.timeDisplay }}
-                  }
-                </button>
-              }
-            }
-            <button
-              type="button"
-              (click)="varPairId.set('custom')"
-              [class]="
-                varPairId() === 'custom'
-                  ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
-                  : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
-              "
-            >
-              Custom
-            </button>
+            <span
+              class="text-ink dark:text-dark-ink text-base block"
+              [mathjax]="'\\[' + previewLatex() + '\\]'"
+            ></span>
           </div>
+        }
 
-          @if (varPairId() === 'custom') {
-            <div class="flex items-center gap-3 pt-1 flex-wrap">
-              <div class="flex flex-col gap-1">
-                <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                  {{ mode() === 'ft' ? ('transforms.varTime' | transloco) : ('transforms.varFreq' | transloco) }}
-                </label>
-                <input
-                  type="text"
-                  [ngModel]="mode() === 'ft' ? customTime() : customFreq()"
-                  (ngModelChange)="mode() === 'ft' ? customTime.set($event) : customFreq.set($event)"
-                  [placeholder]="mode() === 'ft' ? 't' : 'w'"
-                  class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
-                />
-              </div>
-              <span class="text-muted font-mono mt-4">→</span>
-              <div class="flex flex-col gap-1">
-                <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                  {{ mode() === 'ft' ? ('transforms.varFreq' | transloco) : ('transforms.varTime' | transloco) }}
-                </label>
-                <input
-                  type="text"
-                  [ngModel]="mode() === 'ft' ? customFreq() : customTime()"
-                  (ngModelChange)="mode() === 'ft' ? customFreq.set($event) : customTime.set($event)"
-                  [placeholder]="mode() === 'ft' ? 'w' : 't'"
-                  class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
-                />
-              </div>
-              <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-4">
-                {{ 'transforms.maximaNames' | transloco }} <code class="text-accent">nu</code>,
-                <code class="text-accent">xi</code>, <code class="text-accent">omega</code>…
-              </p>
-            </div>
-          }
-
-          <!-- Formula summary -->
-          <p
-            class="text-[11px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border pt-2"
-          >
-            @if (mode() === 'ft') {
-              F({{ activePair().freqDisplay || activePair().freq }}) = ∫ f({{
-                activePair().timeDisplay || activePair().time
-              }}) e<sup
-                >−i·{{ activePair().freqDisplay || activePair().freq }}·{{
-                  activePair().timeDisplay || activePair().time
-                }}</sup
-              >
-              d{{ activePair().timeDisplay || activePair().time }}
-            } @else {
-              f({{ activePair().timeDisplay || activePair().time }}) = (1/2π) ∫ F({{
-                activePair().freqDisplay || activePair().freq
-              }}) e<sup
-                >i·{{ activePair().freqDisplay || activePair().freq }}·{{
-                  activePair().timeDisplay || activePair().time
-                }}</sup
-              >
-              d{{ activePair().freqDisplay || activePair().freq }}
-            }
-          </p>
-        </section>
-
-        <!-- Segments -->
-        <section
-          class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-3"
-        >
-          <h2 class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+        <!-- Segments + Variables (sección unificada) -->
+        <section class="flex flex-col gap-3">
+          <!-- Trozos -->
+          <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
             {{ inputFnLabel() }}
           </h2>
 
@@ -214,19 +105,119 @@
           <button
             type="button"
             (click)="addSegment()"
-            class="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono border border-dashed border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer"
+            class="flex items-center gap-1.5 text-xs text-accent dark:text-accent hover:underline cursor-pointer font-mono transition-opacity"
           >
-            <span class="text-base leading-none">+</span>
             {{ 'transforms.addSegment' | transloco }}
           </button>
+
+          <!-- Separador + Variables -->
+          <div class="border-t border-border dark:border-dark-border pt-3 flex flex-col gap-3">
+            <p class="text-xs text-muted font-mono shrink-0">{{ 'transforms.variables' | transloco }}</p>
+
+            <div class="flex flex-wrap gap-2">
+              @for (pair of varPairs; track pair.id) {
+                @if (pair.id !== 'custom') {
+                  <button
+                    type="button"
+                    (click)="varPairId.set(pair.id)"
+                    [class]="
+                      varPairId() === pair.id
+                        ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                        : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
+                    "
+                  >
+                    @if (mode() === 'ft') {
+                      {{ pair.timeDisplay }} → {{ pair.freqDisplay }}
+                    } @else {
+                      {{ pair.freqDisplay }} → {{ pair.timeDisplay }}
+                    }
+                  </button>
+                }
+              }
+              <button
+                type="button"
+                (click)="varPairId.set('custom')"
+                [class]="
+                  varPairId() === 'custom'
+                    ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                    : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
+                "
+              >
+                Custom
+              </button>
+            </div>
+
+            @if (varPairId() === 'custom') {
+              <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex flex-col gap-1">
+                  <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                    {{ mode() === 'ft' ? ('transforms.varTime' | transloco) : ('transforms.varFreq' | transloco) }}
+                  </label>
+                  <input
+                    type="text"
+                    [ngModel]="mode() === 'ft' ? customTime() : customFreq()"
+                    (ngModelChange)="mode() === 'ft' ? customTime.set($event) : customFreq.set($event)"
+                    [placeholder]="mode() === 'ft' ? 't' : 'w'"
+                    class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <span class="text-muted font-mono mt-4">→</span>
+                <div class="flex flex-col gap-1">
+                  <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                    {{ mode() === 'ft' ? ('transforms.varFreq' | transloco) : ('transforms.varTime' | transloco) }}
+                  </label>
+                  <input
+                    type="text"
+                    [ngModel]="mode() === 'ft' ? customFreq() : customTime()"
+                    (ngModelChange)="mode() === 'ft' ? customFreq.set($event) : customTime.set($event)"
+                    [placeholder]="mode() === 'ft' ? 'w' : 't'"
+                    class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-4">
+                  {{ 'transforms.maximaNames' | transloco }} <code class="text-accent">nu</code>,
+                  <code class="text-accent">xi</code>, <code class="text-accent">omega</code>…
+                </p>
+              </div>
+            }
+
+          </div>
         </section>
+
+        <!-- Directa / Inversa mode selector -->
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="setMode('ft')"
+            [class]="mode() === 'ft'
+              ? 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-accent bg-accent/10 dark:bg-accent/20 text-ink dark:text-dark-ink'
+              : 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 hover:bg-paper2 dark:hover:bg-dark-surface2'"
+          >
+            <span class="font-semibold text-sm font-body">{{ 'transforms.direct' | transloco }}</span>
+            <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
+              F({{ activePair().freqDisplay || activePair().freq }}) = ∫ f({{ activePair().timeDisplay || activePair().time }}) e<sup>−i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup> d{{ activePair().timeDisplay || activePair().time }}
+            </span>
+          </button>
+          <button
+            type="button"
+            (click)="setMode('ift')"
+            [class]="mode() === 'ift'
+              ? 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-accent bg-accent/10 dark:bg-accent/20 text-ink dark:text-dark-ink'
+              : 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 hover:bg-paper2 dark:hover:bg-dark-surface2'"
+          >
+            <span class="font-semibold text-sm font-body">{{ 'transforms.inverse' | transloco }}</span>
+            <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
+              f({{ activePair().timeDisplay || activePair().time }}) = (1/2π) ∫ F({{ activePair().freqDisplay || activePair().freq }}) e<sup>i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup> d{{ activePair().freqDisplay || activePair().freq }}
+            </span>
+          </button>
+        </div>
 
         <!-- Calculate -->
         <button
           type="button"
           (click)="calculate()"
           [disabled]="!canCalculate() || loading() || hasComputedResult()"
-          class="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-mono font-medium bg-accent text-white border border-accent hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           @if (loading()) {
             <span class="flex items-center justify-center gap-2">
@@ -261,7 +252,7 @@
       <!-- Complex inputs notice -->
       @if (hasComplexInputs() && !hasComputedResult()) {
         <div
-          class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 flex items-start gap-2"
+          class="rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 flex items-start gap-2"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -286,9 +277,9 @@
       <!-- Error -->
       @if (errorMsg()) {
         <div
-          class="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 px-4 py-3"
+          class="rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2"
         >
-          <p class="text-sm font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
+          <p class="text-xs font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
         </div>
       }
 
@@ -302,10 +293,12 @@
         </button>
       }
     </div>
-    <!-- /LEFT COLUMN -->
+    </aside>
+    <!-- /Left panel -->
 
-    <!-- ── RIGHT COLUMN: canvas ───────────────────────────────────────────── -->
-    <div class="w-full lg:flex-1 flex flex-col gap-3">
+    <!-- ── Right panel: canvas + results ────────────────────────────────── -->
+    <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
+    <div class="p-5 flex flex-col gap-5">
       <!-- Canvas -->
       <div
         #canvasWrapper
@@ -1142,7 +1135,8 @@
         </div>
       }
     </div>
-    <!-- /RIGHT COLUMN -->
+    </main>
+    <!-- /Right panel -->
   </div>
-  <!-- /Main layout -->
-</main>
+  <!-- /Two-panel layout -->
+</div>

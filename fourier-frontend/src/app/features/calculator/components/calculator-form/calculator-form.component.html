@@ -2,10 +2,10 @@
   <!-- ── Live f(x) preview ──────────────────────────────────────────────── -->
   @if (store.previewLatex()) {
     <div
-      class="rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto text-center"
+      class="rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto flex items-center justify-center min-h-12"
     >
       <span
-        class="text-ink dark:text-dark-ink text-base"
+        class="text-ink dark:text-dark-ink text-base block"
         [mathjax]="'\\[' + store.previewLatex() + '\\]'"
       ></span>
     </div>

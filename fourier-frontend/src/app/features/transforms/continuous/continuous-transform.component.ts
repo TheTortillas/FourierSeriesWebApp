@@ -13,7 +13,18 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, filter, map, of, switchMap, take, tap, timer } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  filter,
+  map,
+  of,
+  pairwise,
+  switchMap,
+  take,
+  tap,
+  timer,
+} from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -43,7 +54,15 @@ let _nextId = 0;
 const mkId = () => `ts-${++_nextId}`;
 
 function emptySegment(): TransformSegmentDraft {
-  return { id: mkId(), expression: '', expressionTex: '', from: '', fromTex: '', to: '', toTex: '' };
+  return {
+    id: mkId(),
+    expression: '',
+    expressionTex: '',
+    from: '',
+    fromTex: '',
+    to: '',
+    toTex: '',
+  };
 }
 
 /** Default FT example: sinc function sin(πt)/(πt) */
@@ -149,9 +168,9 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
 })
 export class ContinuousTransformComponent implements OnInit {
   readonly api = inject(ApiService);
-  readonly userStore  = inject(UserStore);
-  private readonly transloco  = inject(TranslocoService);
-  private readonly seo        = inject(SeoService);
+  readonly userStore = inject(UserStore);
+  private readonly transloco = inject(TranslocoService);
+  private readonly seo = inject(SeoService);
   private readonly intervalValidator = inject(LatexToMaximaService);
 
   ngOnInit(): void {
@@ -200,7 +219,7 @@ export class ContinuousTransformComponent implements OnInit {
 
   // ── Favorites ─────────────────────────────────────────────────────────────
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
-  readonly favoriteLoading    = signal(false);
+  readonly favoriteLoading = signal(false);
   readonly showFavoriteDialog = signal(false);
   favoriteName = '';
 
@@ -211,6 +230,26 @@ export class ContinuousTransformComponent implements OnInit {
     const ft = this.ftResult();
     const ift = this.iftResult();
     return (ft ?? ift)?.params ?? [];
+  });
+
+  /** LaTeX preview of the piecewise input function, mirroring calculator's previewLatex. */
+  readonly previewLatex = computed<string | null>(() => {
+    const segs = this.segments();
+    const v = this.maximaVarToTeX(this.intVar());
+    if (segs.length === 0) return null;
+    const hasContent = segs.some((s) => s.expressionTex || s.fromTex || s.toTex);
+    if (!hasContent) return null;
+    if (segs.length === 1) {
+      const s = segs[0];
+      return `f(${v}) = ${s.expressionTex || '\\square'}, \\quad ${s.fromTex || '\\square'} < ${v} < ${s.toTex || '\\square'}`;
+    }
+    const rows = segs
+      .map(
+        (s) =>
+          `${s.expressionTex || '\\square'}, & ${s.fromTex || '\\square'} < ${v} < ${s.toTex || '\\square'}`,
+      )
+      .join(' \\\\ ');
+    return `f(${v}) = \\begin{cases} ${rows} \\end{cases}`;
   });
 
   /** Name of the param currently used for the custom axis unit (null = first param). */
@@ -250,54 +289,84 @@ export class ContinuousTransformComponent implements OnInit {
     });
 
     // ── Interval validation (continuity + order) ─────────────────────────
-    toObservable(this.segments).pipe(
-      tap((segs) => {
-        if (segs.some((s) => s.from && s.to) || segs.length > 1) this.continuityValidating.set(true);
-      }),
-      debounceTime(600),
-      switchMap((segs) => {
-        const pairIndices: number[] = [];
-        const pairs: Array<{ a: string; b: string }> = [];
-        for (let i = 0; i < segs.length - 1; i++) {
-          if (segs[i].to && segs[i + 1].from) {
-            pairIndices.push(i);
-            pairs.push({ a: segs[i].to, b: segs[i + 1].from });
+    toObservable(this.segments)
+      .pipe(
+        tap((segs) => {
+          if (segs.some((s) => s.from && s.to) || segs.length > 1)
+            this.continuityValidating.set(true);
+        }),
+        debounceTime(600),
+        switchMap((segs) => {
+          const pairIndices: number[] = [];
+          const pairs: Array<{ a: string; b: string }> = [];
+          for (let i = 0; i < segs.length - 1; i++) {
+            if (segs[i].to && segs[i + 1].from) {
+              pairIndices.push(i);
+              pairs.push({ a: segs[i].to, b: segs[i + 1].from });
+            }
           }
-        }
 
-        const orderIndices: number[] = [];
-        const orderPairs: Array<{ a: string; b: string }> = [];
-        for (let i = 0; i < segs.length; i++) {
-          if (segs[i].from && segs[i].to) {
-            orderIndices.push(i);
-            orderPairs.push({ a: segs[i].from, b: segs[i].to });
+          const orderIndices: number[] = [];
+          const orderPairs: Array<{ a: string; b: string }> = [];
+          for (let i = 0; i < segs.length; i++) {
+            if (segs[i].from && segs[i].to) {
+              orderIndices.push(i);
+              orderPairs.push({ a: segs[i].from, b: segs[i].to });
+            }
           }
-        }
 
-        if (pairs.length === 0 && orderPairs.length === 0) {
-          return of({ continuity: segs.map(() => null as string | null), order: segs.map(() => false) });
-        }
+          if (pairs.length === 0 && orderPairs.length === 0) {
+            return of({
+              continuity: segs.map(() => null as string | null),
+              order: segs.map(() => false),
+            });
+          }
 
-        return this.intervalValidator.validateBoundaries({ pairs, orderPairs }).pipe(
-          switchMap((res) => {
-            const continuity: (string | null)[] = segs.map(() => null);
-            res.results.forEach((r, ri) => {
-              if (r === 'different') continuity[pairIndices[ri]] = 'calculator.segment.continuityGap';
-            });
-            const order: boolean[] = segs.map(() => false);
-            res.orderResults.forEach((r, ri) => {
-              if (r === 'invalid') order[orderIndices[ri]] = true;
-            });
-            return of({ continuity, order });
-          }),
+          return this.intervalValidator.validateBoundaries({ pairs, orderPairs }).pipe(
+            switchMap((res) => {
+              const continuity: (string | null)[] = segs.map(() => null);
+              res.results.forEach((r, ri) => {
+                if (r === 'different')
+                  continuity[pairIndices[ri]] = 'calculator.segment.continuityGap';
+              });
+              const order: boolean[] = segs.map(() => false);
+              res.orderResults.forEach((r, ri) => {
+                if (r === 'invalid') order[orderIndices[ri]] = true;
+              });
+              return of({ continuity, order });
+            }),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ continuity, order }) => {
+        this.continuityErrors.set(continuity);
+        this.orderErrors.set(order);
+        this.continuityValidating.set(false);
+      });
+
+    // ── Auto-replace integration variable when pair changes ───────────────
+    toObservable(this.varPairId)
+      .pipe(pairwise(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(([oldId, newId]) => {
+        const oldPair = VAR_PAIRS.find((p) => p.id === oldId);
+        const newPair = VAR_PAIRS.find((p) => p.id === newId);
+        if (!oldPair || !newPair) return;
+        const oldVar = this.mode() === 'ft' ? oldPair.time : oldPair.freq;
+        const newVar = this.mode() === 'ft' ? newPair.time : newPair.freq;
+        if (!oldVar || !newVar || oldVar === newVar) return;
+        this.segments.update((segs) =>
+          segs.map((s) => ({
+            ...s,
+            expression: this.replaceVarMaxima(s.expression, oldVar, newVar),
+            expressionTex: this.replaceVarTeX(s.expressionTex, oldVar, newVar),
+            from: this.replaceVarMaxima(s.from, oldVar, newVar),
+            fromTex: this.replaceVarTeX(s.fromTex, oldVar, newVar),
+            to: this.replaceVarMaxima(s.to, oldVar, newVar),
+            toTex: this.replaceVarTeX(s.toTex, oldVar, newVar),
+          })),
         );
-      }),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(({ continuity, order }) => {
-      this.continuityErrors.set(continuity);
-      this.orderErrors.set(order);
-      this.continuityValidating.set(false);
-    });
+      });
 
     // Track native fullscreen changes
     if (typeof document !== 'undefined') {
@@ -406,11 +475,12 @@ export class ContinuousTransformComponent implements OnInit {
     return this.mode() === 'ft' ? p.freqDisplay : p.timeDisplay;
   });
 
-  readonly canCalculate = computed(() =>
-    this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()) &&
-    !this.continuityValidating() &&
-    this.continuityErrors().every((e) => e === null) &&
-    this.orderErrors().every((e) => !e),
+  readonly canCalculate = computed(
+    () =>
+      this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()) &&
+      !this.continuityValidating() &&
+      this.continuityErrors().every((e) => e === null) &&
+      this.orderErrors().every((e) => !e),
   );
 
   /** True when any input segment contains the imaginary unit (%i). */
@@ -653,11 +723,75 @@ export class ContinuousTransformComponent implements OnInit {
     this.errorMsg.set(null);
   }
 
+  // ── Variable replacement helpers ─────────────────────────────────────────
+
+  /**
+   * Replace `from` with `to` in a Maxima expression string.
+   * Uses strict word-boundary lookbehind/lookahead — safe because Maxima
+   * always separates operands with explicit operators (* + - etc.).
+   */
+  private replaceVarMaxima(expr: string, from: string, to: string): string {
+    const esc = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return expr.replace(new RegExp(`(?<![a-zA-Z])${esc}(?![a-zA-Z0-9])`, 'g'), to);
+  }
+
+  private maximaVarToTeX(name: string): string {
+    const greekMap: Record<string, string> = {
+      pi: '\\pi',
+      xi: '\\xi',
+      nu: '\\nu',
+      omega: '\\omega',
+      π: '\\pi',
+      ξ: '\\xi',
+      ν: '\\nu',
+      ω: '\\omega',
+    };
+    const key = name.trim();
+    return greekMap[key] ?? key;
+  }
+
+  /**
+   * Replace `from` with `to` in a LaTeX TeX string.
+   * LaTeX allows implicit multiplication (e.g. `iw` = i·w), so we cannot
+   * use a strict left-side lookbehind. Strategy:
+   *   1. Temporarily replace all \commands with placeholders so their
+   *      letters won't be touched.
+   *   2. Replace `from` when NOT followed by [a-zA-Z0-9] (handles `iw`
+   *      because after protection there are no multi-letter command names).
+   *   3. Restore the placeholders.
+   */
+  private replaceVarTeX(tex: string, from: string, to: string): string {
+    const toTex = this.maximaVarToTeX(to);
+    const fromTex = this.maximaVarToTeX(from);
+
+    let normalized = tex;
+    if (fromTex.startsWith('\\')) {
+      const escFromTex = fromTex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      normalized = normalized.replace(new RegExp(`${escFromTex}(?![a-zA-Z])`, 'g'), toTex);
+    }
+
+    const esc = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const cmds: string[] = [];
+    const safe = normalized.replace(/\\[a-zA-Z]+/g, (m) => {
+      cmds.push(m);
+      return `\x01${cmds.length - 1}\x01`;
+    });
+    const replaced = safe.replace(new RegExp(`${esc}(?![a-zA-Z0-9])`, 'g'), toTex);
+    return replaced.replace(/\x01(\d+)\x01/g, (_, i) => cmds[+i]);
+  }
+
   // ── Segment actions ───────────────────────────────────────────────────────
 
   addSegment(): void {
     if (this.inputsLocked()) return;
-    this.segments.update((s) => [...s, emptySegment()]);
+    this.segments.update((segs) => [
+      ...segs,
+      {
+        ...emptySegment(),
+        from: segs.at(-1)?.to ?? '',
+        fromTex: segs.at(-1)?.toTex ?? '',
+      },
+    ]);
   }
 
   removeSegment(id: string): void {
@@ -709,12 +843,14 @@ export class ContinuousTransformComponent implements OnInit {
             if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
           },
           error: (e) => {
-            this.errorMsg.set(formatApiError(
-              e,
-              this.transloco.translate('errors.generic'),
-              (key, params) => this.transloco.translate(key, params ?? {}),
-              this.transloco.getActiveLang(),
-            ));
+            this.errorMsg.set(
+              formatApiError(
+                e,
+                this.transloco.translate('errors.generic'),
+                (key, params) => this.transloco.translate(key, params ?? {}),
+                this.transloco.getActiveLang(),
+              ),
+            );
             this.loading.set(false);
           },
         });
@@ -733,12 +869,14 @@ export class ContinuousTransformComponent implements OnInit {
             if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
           },
           error: (e) => {
-            this.errorMsg.set(formatApiError(
-              e,
-              this.transloco.translate('errors.generic'),
-              (key, params) => this.transloco.translate(key, params ?? {}),
-              this.transloco.getActiveLang(),
-            ));
+            this.errorMsg.set(
+              formatApiError(
+                e,
+                this.transloco.translate('errors.generic'),
+                (key, params) => this.transloco.translate(key, params ?? {}),
+                this.transloco.getActiveLang(),
+              ),
+            );
             this.loading.set(false);
           },
         });

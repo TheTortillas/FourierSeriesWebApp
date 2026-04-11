@@ -108,7 +108,14 @@
 
 /* ─── MathQuill integration ─────────────────────────────────────────────────
    Strip MathQuill's own border/background so our wrapper div controls those.
-   Text color inherits from the parent (our ink / dark-ink tokens).          */
+   Text color inherits from the parent (our ink / dark-ink tokens).
+
+   ALIGNMENT: MathQuill fields are centered horizontally and vertically.
+   To change alignment, edit the two properties below:
+     text-align  → controls horizontal position of the math expression
+     align-items → controls vertical position within the field height
+   Valid values: text-align: left | center | right
+                 align-items: flex-start | center | flex-end             */
 .mq-editable-field {
   background: transparent !important;
   color: var(--color-ink) !important;
@@ -116,8 +123,16 @@
   box-shadow: none !important;
   font-size: 0.875rem;
   min-height: 1.5rem;
-  display: block;
+  /* Layout */
+  display: flex !important;
+  align-items: center;       /* vertical centering inside the field */
   width: 100%;
+}
+
+/* The inner root span holds the actual math — inherit the flex alignment */
+.mq-editable-field .mq-root-block {
+  flex: 1;
+  text-align: center;        /* horizontal centering of the expression */
 }
 
 .mq-editable-field .mq-cursor {
@@ -130,6 +145,15 @@ html.dark .mq-editable-field {
 
 html.dark .mq-editable-field .mq-cursor {
   border-color: var(--color-dark-accent) !important;
+}
+
+/* ─── MathJax preview container ─────────────────────────────────────────────
+   ALIGNMENT: controls how the rendered formula is positioned in the preview box.
+   To change, edit text-align on mjx-container[display="true"].
+   Valid values: left | center | right                                        */
+mjx-container[display="true"] {
+  text-align: center !important;
+  margin: 0 !important;
 }
 
 /* MathJax SVG inherits color for dark mode */
