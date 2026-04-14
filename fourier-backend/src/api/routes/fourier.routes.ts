@@ -10,6 +10,7 @@ import { sanitizeSegments, sanitizeExpression } from "../middlewares/sanitize";
 import { incrementCalculationCount } from "../middlewares/requireTierLimit";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
 import { historyRepository } from "../../infrastructure/container";
+import { trackClientConnection } from "../middlewares/requestLifecycle";
 
 export const fourierRouter = Router();
 
@@ -55,6 +56,7 @@ fourierRouter.post(
   validateFourierInput,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      const client = trackClientConnection(req, res);
       const input = req.body as PiecewiseFourierInput;
       const sanitizeCheck = sanitizeSegments(input.segments);
       if (!sanitizeCheck.valid) {
@@ -63,26 +65,30 @@ fourierRouter.post(
       }
       const result = await trigonometricService.calculate(input);
       const shouldConsume = shouldConsumeCalculation(result);
-      if (req.user) {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.user.id);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (req.user) {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.user.id);
+          }
+          await historyRepository.create({
+            userId: req.user.id,
+            type: "trigonometric",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
+        } else {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+          }
+          await historyRepository.create({
+            ipAddress: req.ip ?? undefined,
+            type: "trigonometric",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
         }
-        await historyRepository.create({
-          userId: req.user.id,
-          type: "trigonometric",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
-      } else {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-        }
-        await historyRepository.create({
-          ipAddress: req.ip ?? undefined,
-          type: "trigonometric",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
       }
       res.json(result);
     } catch (err) {
@@ -169,6 +175,7 @@ fourierRouter.post(
   validateFourierInput,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      const client = trackClientConnection(req, res);
       const input = req.body as PiecewiseFourierInput;
       const sanitizeCheck = sanitizeSegments(input.segments);
       if (!sanitizeCheck.valid) {
@@ -177,26 +184,30 @@ fourierRouter.post(
       }
       const result = await halfRangeService.calculate(input);
       const shouldConsume = shouldConsumeCalculation(result);
-      if (req.user) {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.user.id);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (req.user) {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.user.id);
+          }
+          await historyRepository.create({
+            userId: req.user.id,
+            type: "half_range",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
+        } else {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+          }
+          await historyRepository.create({
+            ipAddress: req.ip ?? undefined,
+            type: "half_range",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
         }
-        await historyRepository.create({
-          userId: req.user.id,
-          type: "half_range",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
-      } else {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-        }
-        await historyRepository.create({
-          ipAddress: req.ip ?? undefined,
-          type: "half_range",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
       }
       res.json(result);
     } catch (err) {
@@ -283,6 +294,7 @@ fourierRouter.post(
   validateFourierInput,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      const client = trackClientConnection(req, res);
       const input = req.body as PiecewiseFourierInput;
       const sanitizeCheck = sanitizeSegments(input.segments);
       if (!sanitizeCheck.valid) {
@@ -292,26 +304,30 @@ fourierRouter.post(
 
       const result = await complexService.calculate(input);
       const shouldConsume = shouldConsumeCalculation(result);
-      if (req.user) {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.user.id);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (req.user) {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.user.id);
+          }
+          await historyRepository.create({
+            userId: req.user.id,
+            type: "complex",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
+        } else {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+          }
+          await historyRepository.create({
+            ipAddress: req.ip ?? undefined,
+            type: "complex",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
         }
-        await historyRepository.create({
-          userId: req.user.id,
-          type: "complex",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
-      } else {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-        }
-        await historyRepository.create({
-          ipAddress: req.ip ?? undefined,
-          type: "complex",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
       }
       res.json(result);
     } catch (err) {

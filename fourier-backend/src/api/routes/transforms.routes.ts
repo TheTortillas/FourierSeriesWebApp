@@ -12,6 +12,7 @@ import type {
 import { sanitizeSegments, sanitizeExpression } from "../middlewares/sanitize";
 import { AuthenticatedRequest } from "../middlewares/authenticate";
 import { incrementCalculationCount } from "../middlewares/requireTierLimit";
+import { trackClientConnection } from "../middlewares/requestLifecycle";
 
 export const transformsRouter = Router();
 
@@ -65,6 +66,7 @@ transformsRouter.post(
   "/fourier",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      const client = trackClientConnection(req, res);
       const input = req.body as FourierTransformInput;
       if (!input.segments || input.segments.length === 0) {
         res.status(400).json({ error: "segments is required" });
@@ -77,26 +79,30 @@ transformsRouter.post(
       }
       const result = await fourierTransformService.transform(input);
       const shouldConsume = shouldConsumeTransformCalculation(result);
-      if (req.user) {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.user.id);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (req.user) {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.user.id);
+          }
+          await historyRepository.create({
+            userId: req.user.id,
+            type: "fourier_transform",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
+        } else {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+          }
+          await historyRepository.create({
+            ipAddress: req.ip ?? undefined,
+            type: "fourier_transform",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
         }
-        await historyRepository.create({
-          userId: req.user.id,
-          type: "fourier_transform",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
-      } else {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-        }
-        await historyRepository.create({
-          ipAddress: req.ip ?? undefined,
-          type: "fourier_transform",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
       }
       res.json(result);
     } catch (err) {
@@ -147,6 +153,7 @@ transformsRouter.post(
   "/fourier/inverse",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      const client = trackClientConnection(req, res);
       const input = req.body as InverseFourierTransformInput;
       if (!input.segments || input.segments.length === 0) {
         res.status(400).json({ error: "segments is required" });
@@ -159,26 +166,30 @@ transformsRouter.post(
       }
       const result = await fourierTransformService.inverseTransform(input);
       const shouldConsume = shouldConsumeTransformCalculation(result);
-      if (req.user) {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.user.id);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (req.user) {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.user.id);
+          }
+          await historyRepository.create({
+            userId: req.user.id,
+            type: "inverse_fourier_transform",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
+        } else {
+          if (shouldConsume) {
+            await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+          }
+          await historyRepository.create({
+            ipAddress: req.ip ?? undefined,
+            type: "inverse_fourier_transform",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
         }
-        await historyRepository.create({
-          userId: req.user.id,
-          type: "inverse_fourier_transform",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
-      } else {
-        if (shouldConsume) {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-        }
-        await historyRepository.create({
-          ipAddress: req.ip ?? undefined,
-          type: "inverse_fourier_transform",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
       }
       res.json(result);
     } catch (err) {
@@ -245,6 +256,7 @@ transformsRouter.post(
   "/dft",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      const client = trackClientConnection(req, res);
       const input = req.body as DFTInput;
 
       if (
@@ -280,22 +292,26 @@ transformsRouter.post(
       }
 
       const result = await dftService.compute(input);
-      if (req.user) {
-        await incrementCalculationCount(req.user.id);
-        await historyRepository.create({
-          userId: req.user.id,
-          type: "dft_signal",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
-      } else {
-        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-        await historyRepository.create({
-          ipAddress: req.ip ?? undefined,
-          type: "dft_signal",
-          input: input as unknown as Record<string, unknown>,
-          executionMs: result.executionTimeMs,
-        });
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (req.user) {
+          await incrementCalculationCount(req.user.id);
+          await historyRepository.create({
+            userId: req.user.id,
+            type: "dft_signal",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
+        } else {
+          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+          await historyRepository.create({
+            ipAddress: req.ip ?? undefined,
+            type: "dft_signal",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
+        }
       }
       res.json(result);
     } catch (err) {
