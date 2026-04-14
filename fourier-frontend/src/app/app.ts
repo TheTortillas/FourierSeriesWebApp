@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { ThemeService } from './core/services/theme/theme.service';
 import { AuthService } from './core/services/auth/auth.service';
 import { HreflangService } from './core/services/seo/hreflang.service';
+import { NavigationScrollService } from './core/services/navigation/navigation-scroll.service';
 import { VerifyEmailBannerComponent } from './shared/components/verify-email-banner/verify-email-banner.component';
 
 @Component({
@@ -14,12 +15,14 @@ import { VerifyEmailBannerComponent } from './shared/components/verify-email-ban
   `,
 })
 export class App {
-  private readonly theme    = inject(ThemeService);
-  private readonly auth     = inject(AuthService);
+  private readonly theme = inject(ThemeService);
+  private readonly auth = inject(AuthService);
   private readonly hreflang = inject(HreflangService);
+  private readonly navScroll = inject(NavigationScrollService);
 
   constructor() {
     this.hreflang.setup();
+    this.navScroll.setup();
 
     afterNextRender(() => {
       this.theme.applyToDocument();
