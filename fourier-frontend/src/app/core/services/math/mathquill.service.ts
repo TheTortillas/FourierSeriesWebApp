@@ -80,15 +80,39 @@ export class MathquillService {
     const field = this._activeField;
     if (!field) return;
     field.focus();
-    if (btn.label === 'δ(·)') { field.write('\\delta\\left(\\right)'); field.keystroke('Left'); return; }
-    if (btn.label === 'Γ(·)') { field.write('\\Gamma\\left(\\right)'); field.keystroke('Left'); return; }
-    if (btn.label === 'exp')   { field.write('\\operatorname{exp}\\left(\\right)'); field.keystroke('Left'); return; }
-    if (btn.label === 'sgn')   { field.write('\\operatorname{sgn}\\left(\\right)'); field.keystroke('Left'); return; }
-    if (btn.label === 'eˣ')   { field.typedText('e'); field.cmd('^'); return; }
-    if (btn.label === '|·|')   { field.write('\\operatorname{abs}\\left(\\right)'); field.keystroke('Left'); return; }
+    if (btn.label === 'δ(·)') {
+      field.write('\\delta\\left(\\right)');
+      field.keystroke('Left');
+      return;
+    }
+    if (btn.label === 'Γ(·)') {
+      field.write('\\Gamma\\left(\\right)');
+      field.keystroke('Left');
+      return;
+    }
+    if (btn.label === 'exp') {
+      field.write('\\operatorname{exp}\\left(\\right)');
+      field.keystroke('Left');
+      return;
+    }
+    if (btn.label === 'sgn') {
+      field.write('\\operatorname{sgn}\\left(\\right)');
+      field.keystroke('Left');
+      return;
+    }
+    if (btn.label === 'eˣ') {
+      field.typedText('e');
+      field.cmd('^');
+      return;
+    }
+    if (btn.label === '|·|') {
+      field.write('\\operatorname{abs}\\left(\\right)');
+      field.keystroke('Left');
+      return;
+    }
     if (btn.typedText !== undefined) field.typedText(btn.typedText);
-    else if (btn.cmd       !== undefined) field.cmd(btn.cmd);
-    else if (btn.write     !== undefined) field.write(btn.write);
+    else if (btn.cmd !== undefined) field.cmd(btn.cmd);
+    else if (btn.write !== undefined) field.write(btn.write);
     else if (btn.keystroke !== undefined) field.keystroke(btn.keystroke);
   }
 
@@ -135,28 +159,49 @@ export class MathquillService {
   }
 
   /**
-   * Returns a capture-phase keypress listener that intercepts special characters
-   * before MathQuill's internal textarea handler can see them.
+   * Returns a capture-phase listener for keyboard and beforeinput events.
    *
-   * - `|`  → inserts abs(·) with cursor inside (MathQuill throws on bare pipe)
-   * - `^`  → programmatic cmd('^') — bypasses dead-key composition issues on
-   *           Spanish/Linux keyboards where the composed keypress may not reach
-   *           MathQuill reliably
-   *
-   * Register with addEventListener('keypress', fn, true) on the host element.
+   * Why both:
+   * - Linux/ES layouts may emit `Dead` + AltGraph for caret, so keypress can miss `^`.
+   * - beforeinput can still carry the final inserted character in tricky IME/dead-key flows.
    */
-  createSpecialKeyCapture(getField: () => MathField | null): (e: KeyboardEvent) => void {
-    return (e: KeyboardEvent) => {
-      if (e.key !== '|' && e.key !== '^') return;
+  createSpecialKeyCapture(getField: () => MathField | null): (e: Event) => void {
+    const insertAbsolute = (field: MathField) => {
+      field.write('\\operatorname{abs}\\left(\\right)');
+      field.keystroke('Left');
+    };
+
+    return (e: Event) => {
       const field = getField();
       if (!field) return;
-      e.stopPropagation();
-      e.preventDefault();
-      if (e.key === '|') {
-        field.write('\\operatorname{abs}\\left(\\right)');
-        field.keystroke('Left');
-      } else {
-        field.cmd('^');
+
+      if (e instanceof KeyboardEvent) {
+        const isPipe = e.key === '|';
+        const isCaret = e.key === '^';
+        const isAltGraphDeadCaret =
+          e.key === 'Dead' && (e.getModifierState?.('AltGraph') || (e.ctrlKey && e.altKey));
+
+        if (!isPipe && !isCaret && !isAltGraphDeadCaret) return;
+
+        e.stopPropagation();
+        e.preventDefault();
+        if (isPipe) {
+          insertAbsolute(field);
+        } else {
+          field.cmd('^');
+        }
+        return;
+      }
+
+      if (typeof InputEvent !== 'undefined' && e instanceof InputEvent) {
+        if (e.data !== '|' && e.data !== '^') return;
+        e.stopPropagation();
+        e.preventDefault();
+        if (e.data === '|') {
+          insertAbsolute(field);
+        } else {
+          field.cmd('^');
+        }
       }
     };
   }
@@ -169,14 +214,15 @@ export class MathquillService {
       const win = window as any;
 
       const done = () => {
-        const MQ = win['MathQuill'] as
-          | { getInterface: (v: number) => MathQuillStatic }
-          | undefined;
+        const MQ = win['MathQuill'] as { getInterface: (v: number) => MathQuillStatic } | undefined;
         resolve(MQ ? MQ.getInterface(2) : null);
       };
 
       // If MathQuill is already on the page, nothing to do
-      if (win['MathQuill']) { done(); return; }
+      if (win['MathQuill']) {
+        done();
+        return;
+      }
 
       const injectScript = (src: string, onload: () => void) => {
         const s = document.createElement('script');
@@ -190,19 +236,16 @@ export class MathquillService {
       };
 
       const injectMathQuill = () => {
-        injectScript(
-          '/assets/vendor/mathquill.min.js',
-          () => {
-            // Also inject MathQuill CSS if not already present
-            if (!document.querySelector('link[href*="mathquill"]')) {
-              const link = document.createElement('link');
-              link.rel = 'stylesheet';
-              link.href = '/assets/vendor/mathquill.css';
-              document.head.appendChild(link);
-            }
-            done();
-          },
-        );
+        injectScript('/assets/vendor/mathquill.min.js', () => {
+          // Also inject MathQuill CSS if not already present
+          if (!document.querySelector('link[href*="mathquill"]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = '/assets/vendor/mathquill.css';
+            document.head.appendChild(link);
+          }
+          done();
+        });
       };
 
       // jQuery must be loaded first
