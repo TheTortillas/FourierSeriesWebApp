@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { MathquillService, KeyBtn } from '../../../core/services/math/mathquill.service';
 
 type TabId = '123' | 'trig' | 'fx' | 'abc' | 'extra';
@@ -128,8 +128,9 @@ const LETTERS_ROWS: KeyBtn[][] = [
   selector: 'app-mobile-math-keyboard',
   templateUrl: './mobile-math-keyboard.component.html',
 })
-export class MobileMathKeyboardComponent {
+export class MobileMathKeyboardComponent implements OnInit, OnDestroy {
   readonly mqs = inject(MathquillService);
+  private readonly elRef = inject(ElementRef<HTMLElement>);
 
   /** Context-specific extra buttons (e.g. δ, u, sgn for transforms). */
   readonly extraGroup = input<KeyBtn[]>([]);
@@ -156,6 +157,27 @@ export class MobileMathKeyboardComponent {
       default:      return NUM_ROWS;
     }
   });
+
+  // ── Close on outside tap ───────────────────────────────────────────────────
+
+  private readonly _outsideHandler = (e: PointerEvent) => {
+    if (!this.mqs.activeFieldName()) return;
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    // Tap inside the keyboard panel → keep open
+    if (this.elRef.nativeElement.contains(target)) return;
+    // Tap inside any MathQuill field → keep open (user is interacting with input)
+    if (target.closest('.mq-editable-field')) return;
+    this.mqs.clearActiveField();
+  };
+
+  ngOnInit(): void {
+    document.addEventListener('pointerdown', this._outsideHandler);
+  }
+
+  ngOnDestroy(): void {
+    document.removeEventListener('pointerdown', this._outsideHandler);
+  }
 
   stopDefault(e: MouseEvent): void {
     e.preventDefault();

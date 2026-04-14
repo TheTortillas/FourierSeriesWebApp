@@ -169,8 +169,8 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
 
   wrapClass(hasError: boolean, hasWarning = false): string {
     const base =
-      'w-full px-2 py-1.5 min-h-[2.25rem] text-sm rounded border cursor-text ' +
-      'bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors';
+      'w-full h-full px-3 py-2 min-h-[2.5rem] text-sm rounded border cursor-text ' +
+      'bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center';
     if (hasError) return `${base} border-red-400 focus-within:ring-red-400`;
     if (hasWarning) return `${base} border-amber-400 focus-within:ring-amber-400`;
     return `${base} border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent`;
