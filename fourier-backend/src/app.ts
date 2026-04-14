@@ -10,7 +10,13 @@ import { simplifyRouter } from "./api/routes/simplify.routes";
 import { transformsRouter } from "./api/routes/transforms.routes";
 import { cacheRouter } from "./api/routes/cache.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
-import { generalLimiter, computeLimiter, parseLimiter } from "./api/middlewares/rateLimiter";
+import {
+  generalLimiter,
+  computeLimiter,
+  parseBurstLimiter,
+  parseSustainedLimiter,
+  authLimiter,
+} from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
 import { optionalAuth } from "./api/middlewares/authenticate";
 import { requireVerified } from "./api/middlewares/requireVerified";
@@ -74,9 +80,15 @@ export function createApp(): Application {
     dftRouter,
   );
 
-  app.use("/api/parse", parseLimiter, parseRouter);
+  app.use(
+    "/api/parse",
+    optionalAuth,
+    parseBurstLimiter,
+    parseSustainedLimiter,
+    parseRouter,
+  );
 
-  app.use("/api/auth", authRouter);
+  app.use("/api/auth", authLimiter, authRouter);
 
   app.use("/api/history", historyRouter);
 

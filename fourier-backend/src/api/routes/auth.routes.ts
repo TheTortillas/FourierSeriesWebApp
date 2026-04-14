@@ -3,6 +3,10 @@ import { authService, userRepository } from "../../infrastructure/container";
 import { authenticate, optionalAuth } from "../middlewares/authenticate";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
 import { config } from "../../config/env";
+import {
+  authRecoveryLimiter,
+  authSignInLimiter,
+} from "../middlewares/rateLimiter";
 
 export const authRouter = Router();
 
@@ -49,6 +53,7 @@ function clearRefreshCookie(res: Response): void {
  */
 authRouter.post(
   "/register",
+  authSignInLimiter,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { firstName, lastName, email, password, lang } = req.body as {
@@ -116,6 +121,7 @@ authRouter.post(
  */
 authRouter.post(
   "/login",
+  authSignInLimiter,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, password } = req.body as {
@@ -174,6 +180,7 @@ authRouter.post(
  */
 authRouter.post(
   "/google",
+  authSignInLimiter,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { idToken } = req.body as { idToken: string };
@@ -227,7 +234,8 @@ authRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const token: string | undefined =
-        req.cookies?.[REFRESH_COOKIE] ?? (req.body as { refreshToken?: string }).refreshToken;
+        req.cookies?.[REFRESH_COOKIE] ??
+        (req.body as { refreshToken?: string }).refreshToken;
 
       if (!token) {
         res.status(400).json({ error: "refreshToken is required" });
@@ -279,7 +287,8 @@ authRouter.post(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const token: string | undefined =
-        req.cookies?.[REFRESH_COOKIE] ?? (req.body as { refreshToken?: string }).refreshToken;
+        req.cookies?.[REFRESH_COOKIE] ??
+        (req.body as { refreshToken?: string }).refreshToken;
 
       if (!token) {
         res.status(400).json({ error: "refreshToken is required" });
@@ -320,10 +329,15 @@ authRouter.get(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const user = await userRepository.findById(req.user!.id);
-      if (!user) { res.status(401).json({ error: "User not found" }); return; }
+      if (!user) {
+        res.status(401).json({ error: "User not found" });
+        return;
+      }
       const { passwordHash: _, ...safeUser } = user;
       res.json({ user: safeUser });
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   },
 );
 
@@ -347,6 +361,7 @@ authRouter.get(
  */
 authRouter.get(
   "/verify-email",
+  authRecoveryLimiter,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { token } = req.query as { token: string };
@@ -387,6 +402,7 @@ authRouter.get(
  */
 authRouter.post(
   "/forgot-password",
+  authRecoveryLimiter,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, lang } = req.body as { email: string; lang?: string };
@@ -428,6 +444,7 @@ authRouter.post(
  */
 authRouter.post(
   "/reset-password",
+  authRecoveryLimiter,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { token, newPassword } = req.body as {
@@ -481,6 +498,7 @@ authRouter.post(
  */
 authRouter.post(
   "/resend-verification",
+  authRecoveryLimiter,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, lang } = req.body as { email: string; lang?: string };
@@ -575,12 +593,16 @@ authRouter.post(
       };
 
       if (!currentPassword || !newPassword) {
-        res.status(400).json({ error: "currentPassword and newPassword are required" });
+        res
+          .status(400)
+          .json({ error: "currentPassword and newPassword are required" });
         return;
       }
 
       if (newPassword.length < 8) {
-        res.status(400).json({ error: "Password must be at least 8 characters" });
+        res
+          .status(400)
+          .json({ error: "Password must be at least 8 characters" });
         return;
       }
 
