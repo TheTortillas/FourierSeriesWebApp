@@ -14,18 +14,21 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'users',
-        loadComponent: () =>
-          import('./users/users.component').then((m) => m.UsersComponent),
+        loadComponent: () => import('./users/users.component').then((m) => m.UsersComponent),
       },
       {
         path: 'audit',
-        loadComponent: () =>
-          import('./audit/audit.component').then((m) => m.AuditComponent),
+        loadComponent: () => import('./audit/audit.component').then((m) => m.AuditComponent),
       },
       {
         path: 'history',
         loadComponent: () =>
           import('./history/admin-history.component').then((m) => m.AdminHistoryComponent),
+      },
+      {
+        path: 'rate-limit',
+        loadComponent: () =>
+          import('./rate-limit/rate-limit.component').then((m) => m.RateLimitComponent),
       },
       {
         path: 'system',

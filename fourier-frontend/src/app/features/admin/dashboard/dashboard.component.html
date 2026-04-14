@@ -1,52 +1,76 @@
 <div class="p-6 flex flex-col gap-6 max-w-5xl">
-
   <!-- Page title -->
   <div>
     <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Dashboard</h1>
-    <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">Vista general del sistema</p>
+    <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">
+      Vista general del sistema
+    </p>
   </div>
 
   @if (loading()) {
     <div class="flex items-center gap-2 text-muted dark:text-dark-muted text-sm font-mono">
-      <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
+      <svg
+        class="w-4 h-4 animate-spin"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
+        />
       </svg>
       Cargando…
     </div>
   } @else if (loadError()) {
-    <div class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono
-                bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400
-                border border-red-200 dark:border-red-800">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 shrink-0">
-        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+    <div
+      class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="w-4 h-4 shrink-0"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+          clip-rule="evenodd"
+        />
       </svg>
       No se pudieron cargar los datos del dashboard.
     </div>
   } @else {
-
     <!-- ── Stats cards ─────────────────────────────────────────────────── -->
     @if (stats(); as s) {
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                    rounded-xl p-4 flex flex-col gap-1">
+        <div
+          class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1"
+        >
           <span class="text-xs font-mono text-muted dark:text-dark-muted">Total usuarios</span>
           <span class="font-display text-3xl text-ink dark:text-dark-ink">{{ s.total }}</span>
-          <a routerLink="../users" class="text-[11px] font-mono text-accent hover:underline mt-1">Ver todos →</a>
+          <a routerLink="../users" class="text-[11px] font-mono text-accent hover:underline mt-1"
+            >Ver todos →</a
+          >
         </div>
 
-        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                    rounded-xl p-4 flex flex-col gap-1">
+        <div
+          class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1"
+        >
           <span class="text-xs font-mono text-muted dark:text-dark-muted">Premium</span>
-          <span class="font-display text-3xl text-amber-600 dark:text-amber-400">{{ s.premium }}</span>
+          <span class="font-display text-3xl text-amber-600 dark:text-amber-400">{{
+            s.premium
+          }}</span>
           <span class="text-[11px] font-mono text-muted dark:text-dark-muted mt-1">
             {{ s.total > 0 ? ((s.premium / s.total) * 100).toFixed(0) : 0 }}% del total
           </span>
         </div>
 
-        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                    rounded-xl p-4 flex flex-col gap-1">
+        <div
+          class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1"
+        >
           <span class="text-xs font-mono text-muted dark:text-dark-muted">Free</span>
           <span class="font-display text-3xl text-ink dark:text-dark-ink">{{ s.free }}</span>
           <span class="text-[11px] font-mono text-muted dark:text-dark-muted mt-1">
@@ -54,38 +78,52 @@
           </span>
         </div>
 
-        <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                    rounded-xl p-4 flex flex-col gap-1">
+        <div
+          class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1"
+        >
           <span class="text-xs font-mono text-muted dark:text-dark-muted">Inactivos</span>
           <span class="font-display text-3xl text-red-500">{{ s.inactive }}</span>
-          <a routerLink="../users" [queryParams]="{isActive: false}"
-             class="text-[11px] font-mono text-accent hover:underline mt-1">Ver →</a>
+          <a
+            routerLink="../users"
+            [queryParams]="{ isActive: false }"
+            class="text-[11px] font-mono text-accent hover:underline mt-1"
+            >Ver →</a
+          >
         </div>
-
       </div>
     }
 
     <!-- ── Sistema ───────────────────────────────────────────────────── -->
     @if (systemStats(); as sys) {
-      <a routerLink="../system"
-         class="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors
-                bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                hover:border-accent/40 group">
-
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-             class="w-5 h-5 text-accent3 shrink-0">
-          <path d="M2 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3H2V4ZM2 9h16v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9Zm10 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0Zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
+      <a
+        routerLink="../system"
+        class="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent/40 group"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          class="w-5 h-5 text-accent3 shrink-0"
+        >
+          <path
+            d="M2 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3H2V4ZM2 9h16v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9Zm10 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0Zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+          />
         </svg>
 
         <div class="flex-1 min-w-0">
-          <p class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5">
-            Disco del servidor
-          </p>
+          <p class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5">Disco del servidor</p>
           <div class="h-1.5 w-full rounded-full bg-border dark:bg-dark-border overflow-hidden">
-            <div class="h-full rounded-full transition-all"
-                 [class]="sys.disk.usedPercent >= 90 ? 'bg-red-500' : sys.disk.usedPercent >= 70 ? 'bg-amber-500' : 'bg-accent3'"
-                 [style.width.%]="sys.disk.usedPercent">
-            </div>
+            <div
+              class="h-full rounded-full transition-all"
+              [class]="
+                sys.disk.usedPercent >= 90
+                  ? 'bg-red-500'
+                  : sys.disk.usedPercent >= 70
+                    ? 'bg-amber-500'
+                    : 'bg-accent3'
+              "
+              [style.width.%]="sys.disk.usedPercent"
+            ></div>
           </div>
           <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-1">
             {{ sys.disk.used }} usados de {{ sys.disk.total }} · {{ sys.disk.usedPercent }}%
@@ -97,26 +135,44 @@
           <p class="font-mono text-sm text-ink dark:text-dark-ink">{{ sys.database.totalSize }}</p>
         </div>
 
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-             class="w-3.5 h-3.5 text-muted dark:text-dark-muted group-hover:text-accent transition-colors shrink-0">
-          <path fill-rule="evenodd" d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          class="w-3.5 h-3.5 text-muted dark:text-dark-muted group-hover:text-accent transition-colors shrink-0"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z"
+            clip-rule="evenodd"
+          />
         </svg>
       </a>
     }
 
     <!-- ── Recent activity + Recent calcs ─────────────────────────────── -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
       <!-- Recent audit -->
-      <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-        <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+      <div
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
+        <div
+          class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between"
+        >
           <h2 class="font-mono text-sm text-ink dark:text-dark-ink">Actividad reciente</h2>
-          <a routerLink="../audit" class="text-[11px] font-mono text-accent hover:underline">Ver todo →</a>
+          <a routerLink="../audit" class="text-[11px] font-mono text-accent hover:underline"
+            >Ver todo →</a
+          >
         </div>
         <div class="divide-y divide-border dark:divide-dark-border">
           @for (entry of recentAudit(); track entry.id) {
             <div class="px-4 py-2.5 flex items-start gap-3">
-              <span [class]="'shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded border ' + auditBadgeClass(entry.action)">
+              <span
+                [class]="
+                  'shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded border ' +
+                  auditBadgeClass(entry.action)
+                "
+              >
                 {{ entry.action }}
               </span>
               <div class="flex-1 min-w-0">
@@ -135,17 +191,23 @@
       </div>
 
       <!-- Recent calculations -->
-      <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-        <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+      <div
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
+        <div
+          class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between"
+        >
           <h2 class="font-mono text-sm text-ink dark:text-dark-ink">Cálculos recientes</h2>
-          <a routerLink="../history" class="text-[11px] font-mono text-accent hover:underline">Ver todo →</a>
+          <a routerLink="../history" class="text-[11px] font-mono text-accent hover:underline"
+            >Ver todo →</a
+          >
         </div>
         <div class="divide-y divide-border dark:divide-dark-border">
           @for (entry of recentCalcs(); track entry.id) {
             <div class="px-4 py-2.5 flex items-center gap-3">
-              <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded border
-                           bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400
-                           border-blue-200 dark:border-blue-800">
+              <span
+                class="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded border bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+              >
                 {{ calcLabel(entry.type) }}
               </span>
               <div class="flex-1 min-w-0">
@@ -165,8 +227,6 @@
           }
         </div>
       </div>
-
     </div>
   }
-
 </div>

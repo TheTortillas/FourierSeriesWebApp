@@ -22,9 +22,9 @@ interface Stats {
 export class DashboardComponent implements OnInit {
   private readonly api = inject(ApiService);
 
-  readonly loading     = signal(true);
-  readonly loadError   = signal(false);
-  readonly stats       = signal<Stats | null>(null);
+  readonly loading = signal(true);
+  readonly loadError = signal(false);
+  readonly stats = signal<Stats | null>(null);
   readonly systemStats = signal<SystemStats | null>(null);
   readonly recentAudit = signal<AuditEntry[]>([]);
   readonly recentCalcs = signal<HistoryEntry[]>([]);
@@ -34,9 +34,9 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     forkJoin({
-      stats:   this.api.getAdminStats(),
-      system:  this.api.getSystemStats(),
-      audit:   this.api.getAuditLog({ limit: 6 }),
+      stats: this.api.getAdminStats(),
+      system: this.api.getSystemStats(),
+      audit: this.api.getAuditLog({ limit: 6 }),
       history: this.api.getAdminHistory({ limit: 6 }),
     }).subscribe({
       next: ({ stats, system, audit, history }) => {
@@ -46,7 +46,10 @@ export class DashboardComponent implements OnInit {
         this.recentCalcs.set(history.entries);
         this.loading.set(false);
       },
-      error: () => { this.loadError.set(true); this.loading.set(false); },
+      error: () => {
+        this.loadError.set(true);
+        this.loading.set(false);
+      },
     });
   }
 }

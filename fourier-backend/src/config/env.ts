@@ -34,6 +34,32 @@ export const config = {
     maxGeneral: parseInt(optionalEnv("RATE_LIMIT_MAX_GENERAL", "100")),
     maxCompute: parseInt(optionalEnv("RATE_LIMIT_MAX_COMPUTE", "20")),
     maxParse: parseInt(optionalEnv("RATE_LIMIT_MAX_PARSE", "200")),
+    maxComputeAuthenticated: parseInt(
+      optionalEnv("RATE_LIMIT_MAX_COMPUTE_AUTH", "120"),
+    ),
+    parseBurstWindowMs: parseInt(
+      optionalEnv("RATE_LIMIT_PARSE_BURST_WINDOW_MS", "60000"),
+    ),
+    maxParseBurstAnonymous: parseInt(
+      optionalEnv("RATE_LIMIT_MAX_PARSE_BURST_ANON", "120"),
+    ),
+    maxParseBurstAuthenticated: parseInt(
+      optionalEnv("RATE_LIMIT_MAX_PARSE_BURST_AUTH", "240"),
+    ),
+    maxParseAnonymous: parseInt(
+      optionalEnv("RATE_LIMIT_MAX_PARSE_ANON", "400"),
+    ),
+    maxParseAuthenticated: parseInt(
+      optionalEnv("RATE_LIMIT_MAX_PARSE_AUTH", "1500"),
+    ),
+    maxAuth: parseInt(optionalEnv("RATE_LIMIT_MAX_AUTH", "200")),
+    authSignInWindowMs: parseInt(
+      optionalEnv("RATE_LIMIT_AUTH_SIGNIN_WINDOW_MS", "900000"),
+    ),
+    maxAuthSignIn: parseInt(optionalEnv("RATE_LIMIT_MAX_AUTH_SIGNIN", "30")),
+    maxAuthRecovery: parseInt(
+      optionalEnv("RATE_LIMIT_MAX_AUTH_RECOVERY", "40"),
+    ),
   },
   database: {
     url: requireEnv("DATABASE_URL"),

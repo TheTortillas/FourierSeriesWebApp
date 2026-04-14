@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./api/swagger";
 import { fourierRouter } from "./api/routes/fourier.routes";
@@ -9,7 +10,14 @@ import { simplifyRouter } from "./api/routes/simplify.routes";
 import { transformsRouter } from "./api/routes/transforms.routes";
 import { cacheRouter } from "./api/routes/cache.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
-import { generalLimiter, computeLimiter, parseLimiter } from "./api/middlewares/rateLimiter";
+import {
+  generalLimiter,
+  computeLimiter,
+  parseBurstLimiter,
+  parseSustainedLimiter,
+  authLimiter,
+  trackRateLimitRequests,
+} from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
 import { optionalAuth } from "./api/middlewares/authenticate";
 import { requireVerified } from "./api/middlewares/requireVerified";
@@ -21,6 +29,9 @@ import { config } from "./config/env";
 
 export function createApp(): Application {
   const app = express();
+
+  app.disable("x-powered-by");
+  app.use(helmet());
 
   app.use(
     cors({
@@ -39,6 +50,7 @@ export function createApp(): Application {
   // Endpoints de cálculo: requieren auth + email verificado + rate limit
   app.use(
     "/api/fourier",
+    trackRateLimitRequests("compute"),
     optionalAuth,
     requireVerified,
     requireTierLimit,
@@ -47,6 +59,7 @@ export function createApp(): Application {
   );
   app.use(
     "/api/simplify",
+    trackRateLimitRequests("compute"),
     optionalAuth,
     requireVerified,
     requireTierLimit,
@@ -55,6 +68,7 @@ export function createApp(): Application {
   );
   app.use(
     "/api/transforms",
+    trackRateLimitRequests("compute"),
     optionalAuth,
     requireVerified,
     requireTierLimit,
@@ -63,15 +77,24 @@ export function createApp(): Application {
   );
   app.use(
     "/api/dft",
-    dftRouter,
+    trackRateLimitRequests("compute"),
     optionalAuth,
     requireVerified,
     requireTierLimit,
+    computeLimiter,
+    dftRouter,
   );
 
-  app.use("/api/parse", parseLimiter, parseRouter);
+  app.use(
+    "/api/parse",
+    trackRateLimitRequests("parse"),
+    optionalAuth,
+    parseBurstLimiter,
+    parseSustainedLimiter,
+    parseRouter,
+  );
 
-  app.use("/api/auth", authRouter);
+  app.use("/api/auth", trackRateLimitRequests("auth"), authLimiter, authRouter);
 
   app.use("/api/history", historyRouter);
 

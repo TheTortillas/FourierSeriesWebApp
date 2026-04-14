@@ -7,11 +7,61 @@ import {
 } from "../../infrastructure/container";
 import { authenticate, requireAdmin } from "../middlewares/authenticate";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
-import type { AuditAction, AuditFilters } from "../../domain/interfaces/repositories/IAuditRepository";
+import type {
+  AuditAction,
+  AuditFilters,
+} from "../../domain/interfaces/repositories/IAuditRepository";
+import { getRateLimitMetricsSnapshot } from "../middlewares/rateLimiter";
 
 export const adminRouter = Router();
 
 adminRouter.use(authenticate, requireAdmin);
+
+/**
+ * @openapi
+ * /api/admin/rate-limit/metrics:
+ *   get:
+ *     summary: Obtener métricas en memoria de rate limiting
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Snapshot de métricas de rate limiting por bucket y endpoint
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 startedAt: { type: string, format: date-time }
+ *                 requestsByBucket:
+ *                   type: object
+ *                   properties:
+ *                     compute: { type: integer }
+ *                     parse: { type: integer }
+ *                     auth: { type: integer }
+ *                 blockedByBucket:
+ *                   type: object
+ *                   properties:
+ *                     compute: { type: integer }
+ *                     parse: { type: integer }
+ *                     auth: { type: integer }
+ *                 requestsByEndpoint:
+ *                   type: object
+ *                   additionalProperties: { type: integer }
+ *                 blockedByEndpoint:
+ *                   type: object
+ *                   additionalProperties: { type: integer }
+ *                 blockedByLimiter:
+ *                   type: object
+ *                   additionalProperties: { type: integer }
+ *                 ratios:
+ *                   type: object
+ *                   properties:
+ *                     compute: { type: number, format: float }
+ *                     parse: { type: number, format: float }
+ *                     auth: { type: number, format: float }
+ */
 
 /**
  * @openapi
@@ -48,6 +98,17 @@ adminRouter.use(authenticate, requireAdmin);
  *                     free:        { type: string, example: "811.17 GB" }
  *                     usedPercent: { type: integer, example: 13 }
  */
+adminRouter.get(
+  "/rate-limit/metrics",
+  async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      res.json(getRateLimitMetricsSnapshot());
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 adminRouter.get(
   "/system/stats",
   async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -365,14 +426,17 @@ adminRouter.get(
   "/audit",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const limit  = parseInt(req.query["limit"]  as string) || 50;
+      const limit = parseInt(req.query["limit"] as string) || 50;
       const offset = parseInt(req.query["offset"] as string) || 0;
 
       const filters: AuditFilters = {};
-      if (req.query["action"])        filters.action        = req.query["action"] as AuditAction;
-      if (req.query["userId"])        filters.userId        = req.query["userId"] as string;
-      if (req.query["dateFrom"])      filters.dateFrom      = new Date(req.query["dateFrom"] as string);
-      if (req.query["dateTo"])        filters.dateTo        = new Date(req.query["dateTo"] as string);
+      if (req.query["action"])
+        filters.action = req.query["action"] as AuditAction;
+      if (req.query["userId"]) filters.userId = req.query["userId"] as string;
+      if (req.query["dateFrom"])
+        filters.dateFrom = new Date(req.query["dateFrom"] as string);
+      if (req.query["dateTo"])
+        filters.dateTo = new Date(req.query["dateTo"] as string);
       if (req.query["anonymousOnly"] === "true") filters.anonymousOnly = true;
 
       const [entries, total] = await Promise.all([
@@ -495,21 +559,30 @@ adminRouter.get(
   "/history",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const limit  = parseInt(req.query["limit"]  as string) || 20;
+      const limit = parseInt(req.query["limit"] as string) || 20;
       const offset = parseInt(req.query["offset"] as string) || 0;
 
       const filters: {
-        userId?: string; type?: string;
-        anonymousOnly?: boolean; favoritesOnly?: boolean;
-        dateFrom?: Date; dateTo?: Date; minExecutionMs?: number;
+        userId?: string;
+        type?: string;
+        anonymousOnly?: boolean;
+        favoritesOnly?: boolean;
+        dateFrom?: Date;
+        dateTo?: Date;
+        minExecutionMs?: number;
       } = {};
-      if (req.query["userId"])        filters.userId        = req.query["userId"] as string;
-      if (req.query["type"])          filters.type          = req.query["type"] as string;
-      if (req.query["anonymousOnly"] === "true")  filters.anonymousOnly  = true;
-      if (req.query["favoritesOnly"] === "true")  filters.favoritesOnly  = true;
-      if (req.query["dateFrom"])      filters.dateFrom      = new Date(req.query["dateFrom"] as string);
-      if (req.query["dateTo"])        filters.dateTo        = new Date(req.query["dateTo"] as string);
-      if (req.query["minExecutionMs"]) filters.minExecutionMs = parseInt(req.query["minExecutionMs"] as string);
+      if (req.query["userId"]) filters.userId = req.query["userId"] as string;
+      if (req.query["type"]) filters.type = req.query["type"] as string;
+      if (req.query["anonymousOnly"] === "true") filters.anonymousOnly = true;
+      if (req.query["favoritesOnly"] === "true") filters.favoritesOnly = true;
+      if (req.query["dateFrom"])
+        filters.dateFrom = new Date(req.query["dateFrom"] as string);
+      if (req.query["dateTo"])
+        filters.dateTo = new Date(req.query["dateTo"] as string);
+      if (req.query["minExecutionMs"])
+        filters.minExecutionMs = parseInt(
+          req.query["minExecutionMs"] as string,
+        );
 
       const [entries, total] = await Promise.all([
         historyRepository.findAll(limit, offset, filters),
