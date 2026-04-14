@@ -214,15 +214,17 @@ block(
         else block([lim: errcatch(limit(Coeff_Bn, n, i))],
           bn_used_limit: true,
           if lim = [] then val else first(lim)))),
-    an_float: block([result: if freeof('integrate, an_i)
-      then errcatch(float(an_i))
+    an_float: block([candidate: realpart(rectform(an_i)),
+      result: if freeof('integrate, candidate)
+      then errcatch(float(candidate))
       else []],
       if result = [] or not numberp(first(result))
       then block([qv: ${quadIntegralAn}],
         if numberp(qv) and freeof(${intVar}, qv) then qv else 0)
       else first(result)),
-    bn_float: block([result: if freeof('integrate, bn_i)
-      then errcatch(float(bn_i))
+    bn_float: block([candidate: realpart(rectform(bn_i)),
+      result: if freeof('integrate, candidate)
+      then errcatch(float(candidate))
       else []],
       if result = [] or not numberp(first(result))
       then block([qv: ${quadIntegralBn}],
