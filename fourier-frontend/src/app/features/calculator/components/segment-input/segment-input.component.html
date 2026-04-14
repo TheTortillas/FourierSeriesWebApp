@@ -6,7 +6,7 @@
     </div>
 
     <!-- Expression f(var) -->
-    <div class="flex-1 min-w-0 flex flex-col" (focusin)="onFocusIn(0)">
+    <div class="flex-1 min-w-24 flex flex-col" (focusin)="onFocusIn(0)">
       <label class="block text-[10px] text-muted font-mono mb-0.5">f({{ store.intVar() }})</label>
       <div class="flex-1" [class]="wrapClass(hasExpressionError())" (click)="focusField(0)">
         <div #mqExpr></div>
@@ -21,8 +21,14 @@
 
     <!-- From -->
     <div class="w-24 shrink-0 flex flex-col" (focusin)="onFocusIn(1)">
-      <label class="block text-[10px] text-muted font-mono mb-0.5">{{ 'calculator.segment.from' | transloco }}</label>
-      <div class="flex-1" [class]="wrapClass(orderError(), !!prevContinuityError())" (click)="focusField(1)">
+      <label class="block text-[10px] text-muted font-mono mb-0.5">{{
+        'calculator.segment.from' | transloco
+      }}</label>
+      <div
+        class="flex-1"
+        [class]="wrapClass(orderError(), !!prevContinuityError())"
+        (click)="focusField(1)"
+      >
         <div #mqFrom></div>
       </div>
       @if (conversionErrors[1]) {
@@ -32,8 +38,14 @@
 
     <!-- To -->
     <div class="w-24 shrink-0 flex flex-col" (focusin)="onFocusIn(2)">
-      <label class="block text-[10px] text-muted font-mono mb-0.5">{{ 'calculator.segment.to' | transloco }}</label>
-      <div class="flex-1" [class]="wrapClass(orderError(), !!continuityError())" (click)="focusField(2)">
+      <label class="block text-[10px] text-muted font-mono mb-0.5">{{
+        'calculator.segment.to' | transloco
+      }}</label>
+      <div
+        class="flex-1"
+        [class]="wrapClass(orderError(), !!continuityError())"
+        (click)="focusField(2)"
+      >
         <div #mqTo></div>
       </div>
       @if (conversionErrors[2]) {
