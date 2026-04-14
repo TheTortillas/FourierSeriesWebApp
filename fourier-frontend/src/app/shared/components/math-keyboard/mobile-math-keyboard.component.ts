@@ -1,5 +1,15 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { MathquillService, KeyBtn } from '../../../core/services/math/mathquill.service';
+import { PlatformService } from '../../../core/services/platform/platform.service';
 
 type TabId = '123' | 'trig' | 'fx' | 'abc' | 'extra';
 
@@ -130,6 +140,7 @@ const LETTERS_ROWS: KeyBtn[][] = [
 })
 export class MobileMathKeyboardComponent implements OnInit, OnDestroy {
   readonly mqs = inject(MathquillService);
+  private readonly platform = inject(PlatformService);
   private readonly elRef = inject(ElementRef<HTMLElement>);
 
   /** Context-specific extra buttons (e.g. δ, u, sgn for transforms). */
@@ -150,17 +161,25 @@ export class MobileMathKeyboardComponent implements OnInit, OnDestroy {
 
   readonly activeRows = computed<KeyBtn[][]>(() => {
     switch (this.activeTab()) {
-      case 'abc':   return LETTERS_ROWS;
-      case 'trig':  return TRIG_ROWS;
-      case 'fx':    return FX_ROWS;
-      case 'extra': return [this.extraGroup()];
-      default:      return NUM_ROWS;
+      case 'abc':
+        return LETTERS_ROWS;
+      case 'trig':
+        return TRIG_ROWS;
+      case 'fx':
+        return FX_ROWS;
+      case 'extra':
+        return [this.extraGroup()];
+      default:
+        return NUM_ROWS;
     }
   });
 
   // ── Close on outside tap ───────────────────────────────────────────────────
 
   private readonly _outsideHandler = (e: PointerEvent) => {
+    // This component stays mounted on desktop for responsive layouts,
+    // but outside-tap behavior must only run for mobile viewports.
+    if (!this.mqs.isMobileViewport) return;
     if (!this.mqs.activeFieldName()) return;
     const target = e.target as HTMLElement | null;
     if (!target) return;
@@ -172,10 +191,12 @@ export class MobileMathKeyboardComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
+    if (!this.platform.isBrowser) return;
     document.addEventListener('pointerdown', this._outsideHandler);
   }
 
   ngOnDestroy(): void {
+    if (!this.platform.isBrowser) return;
     document.removeEventListener('pointerdown', this._outsideHandler);
   }
 

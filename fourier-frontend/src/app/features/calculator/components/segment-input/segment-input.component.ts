@@ -50,9 +50,9 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   );
 
   // Only TeX signals — prevents backend Maxima updates from ejecting the cursor
-  private readonly exprTex  = computed(() => this.segment().expressionTex);
+  private readonly exprTex = computed(() => this.segment().expressionTex);
   private readonly fromTex_ = computed(() => this.segment().fromTex);
-  private readonly toTex_   = computed(() => this.segment().toTex);
+  private readonly toTex_ = computed(() => this.segment().toTex);
 
   private readonly fieldSubjects: [Subject<string>, Subject<string>, Subject<string>] = [
     new Subject<string>(),
@@ -65,9 +65,9 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       this.store.intVar(); // re-sync when integration variable changes
       const pairs: [number, string][] = [
-        [0, this.exprTex()  || ''],
+        [0, this.exprTex() || ''],
         [1, this.fromTex_() || ''],
-        [2, this.toTex_()   || ''],
+        [2, this.toTex_() || ''],
       ];
       this._syncingFromStore = true;
       try {
@@ -82,7 +82,12 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit(): Promise<void> {
-    this.elRef.nativeElement.addEventListener('keypress', this._specialCapture, true);
+    this.elRef.nativeElement.addEventListener('keydown', this._specialCapture, true);
+    this.elRef.nativeElement.addEventListener(
+      'beforeinput',
+      this._specialCapture as EventListener,
+      true,
+    );
     const keys: Array<
       [0 | 1 | 2, keyof Omit<SegmentDraft, 'id'>, keyof Omit<SegmentDraft, 'id'>, string]
     > = [
@@ -118,24 +123,31 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
       }
 
       this._subs.add(
-        this.fieldSubjects[i].pipe(
-          debounceTime(350),
-          switchMap((latexRaw) => this.tex2max.convert(latexRaw)),
-        ).subscribe((result) => {
-          if (result.ok) {
-            this.conversionErrors[i] = null;
-            this.store.updateSegment(this.segment().id, { [maximaKey]: result.maxima });
-          } else {
-            this.conversionErrors[i] = result.error ?? null;
-            this.store.updateSegment(this.segment().id, { [maximaKey]: '' });
-          }
-        }),
+        this.fieldSubjects[i]
+          .pipe(
+            debounceTime(350),
+            switchMap((latexRaw) => this.tex2max.convert(latexRaw)),
+          )
+          .subscribe((result) => {
+            if (result.ok) {
+              this.conversionErrors[i] = null;
+              this.store.updateSegment(this.segment().id, { [maximaKey]: result.maxima });
+            } else {
+              this.conversionErrors[i] = result.error ?? null;
+              this.store.updateSegment(this.segment().id, { [maximaKey]: '' });
+            }
+          }),
       );
     }
   }
 
   ngOnDestroy(): void {
-    this.elRef.nativeElement.removeEventListener('keypress', this._specialCapture, true);
+    this.elRef.nativeElement.removeEventListener('keydown', this._specialCapture, true);
+    this.elRef.nativeElement.removeEventListener(
+      'beforeinput',
+      this._specialCapture as EventListener,
+      true,
+    );
     this._subs.unsubscribe();
     for (const s of this.fieldSubjects) s.complete();
     for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {
@@ -146,7 +158,10 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   onKeyDown(e: KeyboardEvent): void {
     const field = this.fields[this.focusedFieldIdx];
     if (!field) return;
-    if (e.key === '\\') { e.preventDefault(); field.typedText('\\'); }
+    if (e.key === '\\') {
+      e.preventDefault();
+      field.typedText('\\');
+    }
   }
 
   /** Called from (focusin) on each field wrapper and from (click) → focusField. */
