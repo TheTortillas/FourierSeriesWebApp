@@ -13,6 +13,12 @@ import { historyRepository } from "../../infrastructure/container";
 
 export const fourierRouter = Router();
 
+function shouldConsumeCalculation(result: {
+  validation?: { decision?: string };
+}): boolean {
+  return result.validation?.decision !== "reject";
+}
+
 /**
  * @openapi
  * /api/fourier/trigonometric:
@@ -56,8 +62,11 @@ fourierRouter.post(
         return;
       }
       const result = await trigonometricService.calculate(input);
+      const shouldConsume = shouldConsumeCalculation(result);
       if (req.user) {
-        await incrementCalculationCount(req.user.id);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.user.id);
+        }
         await historyRepository.create({
           userId: req.user.id,
           type: "trigonometric",
@@ -65,7 +74,9 @@ fourierRouter.post(
           executionMs: result.executionTimeMs,
         });
       } else {
-        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        }
         await historyRepository.create({
           ipAddress: req.ip ?? undefined,
           type: "trigonometric",
@@ -165,8 +176,11 @@ fourierRouter.post(
         return;
       }
       const result = await halfRangeService.calculate(input);
+      const shouldConsume = shouldConsumeCalculation(result);
       if (req.user) {
-        await incrementCalculationCount(req.user.id);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.user.id);
+        }
         await historyRepository.create({
           userId: req.user.id,
           type: "half_range",
@@ -174,7 +188,9 @@ fourierRouter.post(
           executionMs: result.executionTimeMs,
         });
       } else {
-        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        }
         await historyRepository.create({
           ipAddress: req.ip ?? undefined,
           type: "half_range",
@@ -275,8 +291,11 @@ fourierRouter.post(
       }
 
       const result = await complexService.calculate(input);
+      const shouldConsume = shouldConsumeCalculation(result);
       if (req.user) {
-        await incrementCalculationCount(req.user.id);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.user.id);
+        }
         await historyRepository.create({
           userId: req.user.id,
           type: "complex",
@@ -284,7 +303,9 @@ fourierRouter.post(
           executionMs: result.executionTimeMs,
         });
       } else {
-        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        }
         await historyRepository.create({
           ipAddress: req.ip ?? undefined,
           type: "complex",
