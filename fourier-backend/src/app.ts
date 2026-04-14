@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./api/swagger";
 import { fourierRouter } from "./api/routes/fourier.routes";
@@ -21,6 +22,9 @@ import { config } from "./config/env";
 
 export function createApp(): Application {
   const app = express();
+
+  app.disable("x-powered-by");
+  app.use(helmet());
 
   app.use(
     cors({
@@ -63,10 +67,11 @@ export function createApp(): Application {
   );
   app.use(
     "/api/dft",
-    dftRouter,
     optionalAuth,
     requireVerified,
     requireTierLimit,
+    computeLimiter,
+    dftRouter,
   );
 
   app.use("/api/parse", parseLimiter, parseRouter);

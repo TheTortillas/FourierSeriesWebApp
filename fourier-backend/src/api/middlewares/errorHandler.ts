@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { config } from "../../config/env";
 
 export function errorHandler(
   err: Error,
@@ -7,5 +8,11 @@ export function errorHandler(
   _next: NextFunction,
 ): void {
   console.error(err.stack);
-  res.status(500).json({ error: err.message });
+
+  if (config.server.isDevelopment) {
+    res.status(500).json({ error: err.message });
+    return;
+  }
+
+  res.status(500).json({ error: "Internal server error" });
 }

@@ -20,7 +20,7 @@ export const cacheRouter = Router();
  *       200:
  *         description: Estadísticas actuales del caché
  */
-cacheRouter.get("/stats", (_req: Request, res: Response) => {
+cacheRouter.get("/stats", authenticate, requireAdmin, (_req: Request, res: Response) => {
   res.json(getCacheStats());
 });
 
