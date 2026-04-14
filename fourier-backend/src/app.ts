@@ -16,6 +16,7 @@ import {
   parseBurstLimiter,
   parseSustainedLimiter,
   authLimiter,
+  trackRateLimitRequests,
 } from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
 import { optionalAuth } from "./api/middlewares/authenticate";
@@ -49,6 +50,7 @@ export function createApp(): Application {
   // Endpoints de cálculo: requieren auth + email verificado + rate limit
   app.use(
     "/api/fourier",
+    trackRateLimitRequests("compute"),
     optionalAuth,
     requireVerified,
     requireTierLimit,
@@ -57,6 +59,7 @@ export function createApp(): Application {
   );
   app.use(
     "/api/simplify",
+    trackRateLimitRequests("compute"),
     optionalAuth,
     requireVerified,
     requireTierLimit,
@@ -65,6 +68,7 @@ export function createApp(): Application {
   );
   app.use(
     "/api/transforms",
+    trackRateLimitRequests("compute"),
     optionalAuth,
     requireVerified,
     requireTierLimit,
@@ -73,6 +77,7 @@ export function createApp(): Application {
   );
   app.use(
     "/api/dft",
+    trackRateLimitRequests("compute"),
     optionalAuth,
     requireVerified,
     requireTierLimit,
@@ -82,13 +87,14 @@ export function createApp(): Application {
 
   app.use(
     "/api/parse",
+    trackRateLimitRequests("parse"),
     optionalAuth,
     parseBurstLimiter,
     parseSustainedLimiter,
     parseRouter,
   );
 
-  app.use("/api/auth", authLimiter, authRouter);
+  app.use("/api/auth", trackRateLimitRequests("auth"), authLimiter, authRouter);
 
   app.use("/api/history", historyRouter);
 

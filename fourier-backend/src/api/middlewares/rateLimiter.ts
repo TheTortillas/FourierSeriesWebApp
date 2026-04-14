@@ -1,10 +1,145 @@
 import rateLimit from "express-rate-limit";
 import { config } from "../../config/env";
+import type { NextFunction, Response } from "express";
+import type { AuthenticatedRequest } from "./authenticate";
 
 type RequestLike = {
   path: string;
+  method?: string;
+  originalUrl?: string;
+  ip?: string;
+  headers?: Record<string, unknown>;
   user?: { id?: string };
 };
+
+type RateLimitBucket = "compute" | "parse" | "auth";
+
+type RateLimitMetricsSnapshot = {
+  startedAt: string;
+  requestsByBucket: Record<RateLimitBucket, number>;
+  blockedByBucket: Record<RateLimitBucket, number>;
+  requestsByEndpoint: Record<string, number>;
+  blockedByEndpoint: Record<string, number>;
+  blockedByLimiter: Record<string, number>;
+  ratios: Record<RateLimitBucket, number>;
+};
+
+const metrics: Omit<RateLimitMetricsSnapshot, "ratios"> = {
+  startedAt: new Date().toISOString(),
+  requestsByBucket: {
+    compute: 0,
+    parse: 0,
+    auth: 0,
+  },
+  blockedByBucket: {
+    compute: 0,
+    parse: 0,
+    auth: 0,
+  },
+  requestsByEndpoint: {},
+  blockedByEndpoint: {},
+  blockedByLimiter: {},
+};
+
+function incrementCounter(store: Record<string, number>, key: string): void {
+  store[key] = (store[key] ?? 0) + 1;
+}
+
+function normalizeEndpoint(req: RequestLike): string {
+  const url = req.originalUrl ?? req.path ?? "unknown";
+  const q = url.indexOf("?");
+  return q === -1 ? url : url.slice(0, q);
+}
+
+function recordRequest(bucket: RateLimitBucket, req: RequestLike): void {
+  metrics.requestsByBucket[bucket] += 1;
+  incrementCounter(metrics.requestsByEndpoint, normalizeEndpoint(req));
+}
+
+function recordBlocked(
+  bucket: RateLimitBucket,
+  limiter: string,
+  req: RequestLike,
+): void {
+  metrics.blockedByBucket[bucket] += 1;
+  incrementCounter(metrics.blockedByLimiter, limiter);
+  incrementCounter(metrics.blockedByEndpoint, normalizeEndpoint(req));
+}
+
+function logRateLimitEvent(
+  bucket: RateLimitBucket,
+  limiter: string,
+  req: RequestLike,
+  retryAfter: number,
+): void {
+  const identity = req.user?.id
+    ? `user:${req.user.id}`
+    : `ip:${req.ip ?? "unknown"}`;
+  const payload = {
+    event: "rate_limit_blocked",
+    bucket,
+    limiter,
+    method: req.method ?? "UNKNOWN",
+    endpoint: normalizeEndpoint(req),
+    identity,
+    retryAfterSeconds: retryAfter,
+    at: new Date().toISOString(),
+  };
+
+  console.warn(JSON.stringify(payload));
+}
+
+function rateLimitHandler(
+  bucket: RateLimitBucket,
+  limiter: string,
+  message: string,
+) {
+  return (req: RequestLike, res: Response): void => {
+    const seconds = retryAfterSeconds(res);
+    recordBlocked(bucket, limiter, req);
+    logRateLimitEvent(bucket, limiter, req, seconds);
+    res.status(429).json({
+      error: message,
+      retryAfterSeconds: seconds,
+      retryAfterMinutes: Math.ceil(seconds / 60),
+    });
+  };
+}
+
+export function trackRateLimitRequests(bucket: RateLimitBucket) {
+  return (
+    req: AuthenticatedRequest,
+    _res: Response,
+    next: NextFunction,
+  ): void => {
+    recordRequest(bucket, req as RequestLike);
+    next();
+  };
+}
+
+export function getRateLimitMetricsSnapshot(): RateLimitMetricsSnapshot {
+  const requestsByBucket = { ...metrics.requestsByBucket };
+  const blockedByBucket = { ...metrics.blockedByBucket };
+
+  const ratio = (blocked: number, total: number): number => {
+    if (total <= 0) return 0;
+    return Number(((blocked / total) * 100).toFixed(3));
+  };
+
+  return {
+    startedAt: metrics.startedAt,
+    requestsByBucket,
+    blockedByBucket,
+    requestsByEndpoint: { ...metrics.requestsByEndpoint },
+    blockedByEndpoint: { ...metrics.blockedByEndpoint },
+    blockedByLimiter: { ...metrics.blockedByLimiter },
+    ratios: {
+      compute: ratio(blockedByBucket.compute, requestsByBucket.compute),
+      parse: ratio(blockedByBucket.parse, requestsByBucket.parse),
+      auth: ratio(blockedByBucket.auth, requestsByBucket.auth),
+    },
+  };
+}
 
 function isAuthenticated(req: RequestLike): boolean {
   return Boolean(req.user?.id);
@@ -36,14 +171,11 @@ export const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => hasDedicatedLimiter(req.path),
-  handler: (_req, res) => {
-    const seconds = retryAfterSeconds(res);
-    res.status(429).json({
-      error: "Too many requests, please try again later.",
-      retryAfterSeconds: seconds,
-      retryAfterMinutes: Math.ceil(seconds / 60),
-    });
-  },
+  handler: rateLimitHandler(
+    "auth",
+    "general",
+    "Too many requests, please try again later.",
+  ),
 });
 
 export const computeLimiter = rateLimit({
@@ -56,14 +188,11 @@ export const computeLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (_req, res) => {
-    const seconds = retryAfterSeconds(res);
-    res.status(429).json({
-      error: "Too many computation requests, please try again later.",
-      retryAfterSeconds: seconds,
-      retryAfterMinutes: Math.ceil(seconds / 60),
-    });
-  },
+  handler: rateLimitHandler(
+    "compute",
+    "compute",
+    "Too many computation requests, please try again later.",
+  ),
 });
 
 export const parseBurstLimiter = rateLimit({
@@ -76,15 +205,11 @@ export const parseBurstLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (_req, res) => {
-    const seconds = retryAfterSeconds(res);
-    res.status(429).json({
-      error:
-        "Too many parse requests in a short burst. Please keep typing and retry in a few seconds.",
-      retryAfterSeconds: seconds,
-      retryAfterMinutes: Math.ceil(seconds / 60),
-    });
-  },
+  handler: rateLimitHandler(
+    "parse",
+    "parse_burst",
+    "Too many parse requests in a short burst. Please keep typing and retry in a few seconds.",
+  ),
 });
 
 export const parseSustainedLimiter = rateLimit({
@@ -97,14 +222,11 @@ export const parseSustainedLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (_req, res) => {
-    const seconds = retryAfterSeconds(res);
-    res.status(429).json({
-      error: "Too many parse requests, please try again later.",
-      retryAfterSeconds: seconds,
-      retryAfterMinutes: Math.ceil(seconds / 60),
-    });
-  },
+  handler: rateLimitHandler(
+    "parse",
+    "parse_sustained",
+    "Too many parse requests, please try again later.",
+  ),
 });
 
 export const authLimiter = rateLimit({
@@ -112,14 +234,11 @@ export const authLimiter = rateLimit({
   max: config.rateLimit.maxAuth,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (_req, res) => {
-    const seconds = retryAfterSeconds(res);
-    res.status(429).json({
-      error: "Too many authentication requests, please try again later.",
-      retryAfterSeconds: seconds,
-      retryAfterMinutes: Math.ceil(seconds / 60),
-    });
-  },
+  handler: rateLimitHandler(
+    "auth",
+    "auth",
+    "Too many authentication requests, please try again later.",
+  ),
 });
 
 export const authSignInLimiter = rateLimit({
@@ -127,14 +246,11 @@ export const authSignInLimiter = rateLimit({
   max: config.rateLimit.maxAuthSignIn,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (_req, res) => {
-    const seconds = retryAfterSeconds(res);
-    res.status(429).json({
-      error: "Too many sign-in attempts, please try again later.",
-      retryAfterSeconds: seconds,
-      retryAfterMinutes: Math.ceil(seconds / 60),
-    });
-  },
+  handler: rateLimitHandler(
+    "auth",
+    "auth_signin",
+    "Too many sign-in attempts, please try again later.",
+  ),
 });
 
 export const authRecoveryLimiter = rateLimit({
@@ -142,13 +258,9 @@ export const authRecoveryLimiter = rateLimit({
   max: config.rateLimit.maxAuthRecovery,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (_req, res) => {
-    const seconds = retryAfterSeconds(res);
-    res.status(429).json({
-      error:
-        "Too many recovery or verification requests, please try again later.",
-      retryAfterSeconds: seconds,
-      retryAfterMinutes: Math.ceil(seconds / 60),
-    });
-  },
+  handler: rateLimitHandler(
+    "auth",
+    "auth_recovery",
+    "Too many recovery or verification requests, please try again later.",
+  ),
 });
