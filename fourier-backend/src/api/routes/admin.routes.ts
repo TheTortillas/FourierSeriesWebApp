@@ -19,6 +19,52 @@ adminRouter.use(authenticate, requireAdmin);
 
 /**
  * @openapi
+ * /api/admin/rate-limit/metrics:
+ *   get:
+ *     summary: Obtener métricas en memoria de rate limiting
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Snapshot de métricas de rate limiting por bucket y endpoint
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 startedAt: { type: string, format: date-time }
+ *                 requestsByBucket:
+ *                   type: object
+ *                   properties:
+ *                     compute: { type: integer }
+ *                     parse: { type: integer }
+ *                     auth: { type: integer }
+ *                 blockedByBucket:
+ *                   type: object
+ *                   properties:
+ *                     compute: { type: integer }
+ *                     parse: { type: integer }
+ *                     auth: { type: integer }
+ *                 requestsByEndpoint:
+ *                   type: object
+ *                   additionalProperties: { type: integer }
+ *                 blockedByEndpoint:
+ *                   type: object
+ *                   additionalProperties: { type: integer }
+ *                 blockedByLimiter:
+ *                   type: object
+ *                   additionalProperties: { type: integer }
+ *                 ratios:
+ *                   type: object
+ *                   properties:
+ *                     compute: { type: number, format: float }
+ *                     parse: { type: number, format: float }
+ *                     auth: { type: number, format: float }
+ */
+
+/**
+ * @openapi
  * /api/admin/system/stats:
  *   get:
  *     summary: Obtener estadísticas de almacenamiento del sistema

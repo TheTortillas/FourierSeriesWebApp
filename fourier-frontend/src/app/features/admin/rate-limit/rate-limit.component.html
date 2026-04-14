@@ -1,0 +1,141 @@
+<div class="p-6 flex flex-col gap-6 max-w-5xl">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Rate Limit Health</h1>
+      <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">
+        Estado de throttling por bucket, endpoint y limiter
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="refresh()"
+      class="px-3 py-2 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-ink dark:text-dark-ink hover:border-accent/40 transition-colors"
+    >
+      Actualizar
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center gap-2 text-muted dark:text-dark-muted text-sm font-mono">
+      <svg
+        class="w-4 h-4 animate-spin"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
+        />
+      </svg>
+      Cargando métricas…
+    </div>
+  } @else if (loadError()) {
+    <div
+      class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+    >
+      No se pudieron cargar las métricas de rate limit.
+    </div>
+  } @else if (metrics(); as rm) {
+    <div
+      class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-4 py-3"
+    >
+      <p class="text-[11px] font-mono text-muted dark:text-dark-muted">
+        Snapshot activo desde: {{ rm.startedAt | adminDate: 'seconds' }}
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div
+        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4"
+      >
+        <p class="text-xs font-mono text-muted dark:text-dark-muted">Compute</p>
+        <p class="font-display text-3xl text-ink dark:text-dark-ink mt-1">
+          {{ rm.ratios.compute.toFixed(2) }}%
+        </p>
+        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-2">
+          {{ rm.blockedByBucket.compute }} bloqueadas de {{ rm.requestsByBucket.compute }}
+        </p>
+      </div>
+
+      <div
+        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4"
+      >
+        <p class="text-xs font-mono text-muted dark:text-dark-muted">Parse</p>
+        <p class="font-display text-3xl text-ink dark:text-dark-ink mt-1">
+          {{ rm.ratios.parse.toFixed(2) }}%
+        </p>
+        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-2">
+          {{ rm.blockedByBucket.parse }} bloqueadas de {{ rm.requestsByBucket.parse }}
+        </p>
+      </div>
+
+      <div
+        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4"
+      >
+        <p class="text-xs font-mono text-muted dark:text-dark-muted">Auth</p>
+        <p class="font-display text-3xl text-ink dark:text-dark-ink mt-1">
+          {{ rm.ratios.auth.toFixed(2) }}%
+        </p>
+        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-2">
+          {{ rm.blockedByBucket.auth }} bloqueadas de {{ rm.requestsByBucket.auth }}
+        </p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div
+        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
+      >
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+          <h2 class="text-sm font-mono text-ink dark:text-dark-ink">Top bloqueos por limiter</h2>
+        </div>
+        <div class="divide-y divide-border dark:divide-dark-border">
+          @for (item of topEntries(rm.blockedByLimiter); track item.key) {
+            <div class="px-4 py-2.5 flex items-center justify-between gap-2">
+              <span class="text-[11px] font-mono text-muted dark:text-dark-muted truncate">{{
+                item.key
+              }}</span>
+              <span
+                class="text-[11px] font-mono px-2 py-0.5 rounded border border-border dark:border-dark-border"
+                >{{ item.value }}</span
+              >
+            </div>
+          } @empty {
+            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">
+              Sin bloqueos registrados.
+            </p>
+          }
+        </div>
+      </div>
+
+      <div
+        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
+      >
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+          <h2 class="text-sm font-mono text-ink dark:text-dark-ink">Top endpoints bloqueados</h2>
+        </div>
+        <div class="divide-y divide-border dark:divide-dark-border">
+          @for (item of topEntries(rm.blockedByEndpoint); track item.key) {
+            <div class="px-4 py-2.5 flex items-center justify-between gap-2">
+              <span class="text-[11px] font-mono text-muted dark:text-dark-muted truncate">{{
+                item.key
+              }}</span>
+              <span
+                class="text-[11px] font-mono px-2 py-0.5 rounded border border-border dark:border-dark-border"
+                >{{ item.value }}</span
+              >
+            </div>
+          } @empty {
+            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">
+              Sin endpoints bloqueados.
+            </p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

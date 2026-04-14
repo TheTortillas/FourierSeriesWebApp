@@ -41,6 +41,7 @@ import {
   AuditQuery,
   AdminHistoryQuery,
   SystemStats,
+  RateLimitMetricsSnapshot,
   // Common
   PaginatedResponse,
 } from '../../../domain';
@@ -53,7 +54,9 @@ export class ApiService {
   // ─── Auth ────────────────────────────────────────────────────────────────
 
   register(body: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.base}/auth/register`, body, { withCredentials: true });
+    return this.http.post<AuthResponse>(`${this.base}/auth/register`, body, {
+      withCredentials: true,
+    });
   }
 
   login(body: LoginRequest): Observable<AuthResponse> {
@@ -61,7 +64,9 @@ export class ApiService {
   }
 
   loginWithGoogle(body: GoogleLoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.base}/auth/google`, body, { withCredentials: true });
+    return this.http.post<AuthResponse>(`${this.base}/auth/google`, body, {
+      withCredentials: true,
+    });
   }
 
   refreshToken(): Observable<AuthResponse> {
@@ -69,7 +74,11 @@ export class ApiService {
   }
 
   logout(): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.base}/auth/logout`, {}, { withCredentials: true });
+    return this.http.post<{ message: string }>(
+      `${this.base}/auth/logout`,
+      {},
+      { withCredentials: true },
+    );
   }
 
   getMe(): Observable<{ user: User }> {
@@ -87,7 +96,10 @@ export class ApiService {
   }
 
   forgotPassword(email: string, lang?: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.base}/auth/forgot-password`, { email, lang });
+    return this.http.post<{ message: string }>(`${this.base}/auth/forgot-password`, {
+      email,
+      lang,
+    });
   }
 
   resetPassword(token: string, newPassword: string): Observable<{ message: string }> {
@@ -98,7 +110,10 @@ export class ApiService {
   }
 
   resendVerification(email: string, lang?: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.base}/auth/resend-verification`, { email, lang });
+    return this.http.post<{ message: string }>(`${this.base}/auth/resend-verification`, {
+      email,
+      lang,
+    });
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<{ message: string }> {
@@ -142,9 +157,7 @@ export class ApiService {
 
   // ─── Transforms ──────────────────────────────────────────────────────────
 
-  calculateFourierTransform(
-    body: FourierTransformRequest,
-  ): Observable<FourierTransformResponse> {
+  calculateFourierTransform(body: FourierTransformRequest): Observable<FourierTransformResponse> {
     return this.http.post<FourierTransformResponse>(`${this.base}/transforms/fourier`, body);
   }
 
@@ -163,7 +176,10 @@ export class ApiService {
 
   // ─── Parse ───────────────────────────────────────────────────────────────
 
-  parseLaTeX(latex: string, mode: 'series' | 'transform' = 'series'): Observable<{ maxima: string; ok: boolean; error?: string }> {
+  parseLaTeX(
+    latex: string,
+    mode: 'series' | 'transform' = 'series',
+  ): Observable<{ maxima: string; ok: boolean; error?: string }> {
     return this.http.post<{ maxima: string; ok: boolean; error?: string }>(
       `${this.base}/parse/latex`,
       { latex, mode },
@@ -241,27 +257,28 @@ export class ApiService {
 
   getAuditLog(query?: AuditQuery): Observable<PaginatedResponse<AuditEntry>> {
     let params = new HttpParams();
-    if (query?.limit         !== undefined) params = params.set('limit',         query.limit);
-    if (query?.offset        !== undefined) params = params.set('offset',        query.offset);
-    if (query?.action)                      params = params.set('action',        query.action);
-    if (query?.userId)                      params = params.set('userId',        query.userId);
-    if (query?.dateFrom)                    params = params.set('dateFrom',      query.dateFrom);
-    if (query?.dateTo)                      params = params.set('dateTo',        query.dateTo);
-    if (query?.anonymousOnly)               params = params.set('anonymousOnly', query.anonymousOnly);
+    if (query?.limit !== undefined) params = params.set('limit', query.limit);
+    if (query?.offset !== undefined) params = params.set('offset', query.offset);
+    if (query?.action) params = params.set('action', query.action);
+    if (query?.userId) params = params.set('userId', query.userId);
+    if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
+    if (query?.dateTo) params = params.set('dateTo', query.dateTo);
+    if (query?.anonymousOnly) params = params.set('anonymousOnly', query.anonymousOnly);
     return this.http.get<PaginatedResponse<AuditEntry>>(`${this.base}/admin/audit`, { params });
   }
 
   getAdminHistory(query?: AdminHistoryQuery): Observable<HistoryListResponse> {
     let params = new HttpParams();
-    if (query?.limit          !== undefined) params = params.set('limit',          query.limit);
-    if (query?.offset         !== undefined) params = params.set('offset',         query.offset);
-    if (query?.userId)                       params = params.set('userId',         query.userId);
-    if (query?.type)                         params = params.set('type',           query.type);
-    if (query?.dateFrom)                     params = params.set('dateFrom',       query.dateFrom);
-    if (query?.dateTo)                       params = params.set('dateTo',         query.dateTo);
-    if (query?.favoritesOnly)                params = params.set('favoritesOnly',  query.favoritesOnly);
-    if (query?.anonymousOnly)                params = params.set('anonymousOnly',  query.anonymousOnly);
-    if (query?.minExecutionMs !== undefined) params = params.set('minExecutionMs', query.minExecutionMs);
+    if (query?.limit !== undefined) params = params.set('limit', query.limit);
+    if (query?.offset !== undefined) params = params.set('offset', query.offset);
+    if (query?.userId) params = params.set('userId', query.userId);
+    if (query?.type) params = params.set('type', query.type);
+    if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
+    if (query?.dateTo) params = params.set('dateTo', query.dateTo);
+    if (query?.favoritesOnly) params = params.set('favoritesOnly', query.favoritesOnly);
+    if (query?.anonymousOnly) params = params.set('anonymousOnly', query.anonymousOnly);
+    if (query?.minExecutionMs !== undefined)
+      params = params.set('minExecutionMs', query.minExecutionMs);
     return this.http.get<HistoryListResponse>(`${this.base}/admin/history`, { params });
   }
 
@@ -272,10 +289,16 @@ export class ApiService {
   }
 
   getAdminStats(): Observable<{ total: number; premium: number; free: number; inactive: number }> {
-    return this.http.get<{ total: number; premium: number; free: number; inactive: number }>(`${this.base}/admin/stats`);
+    return this.http.get<{ total: number; premium: number; free: number; inactive: number }>(
+      `${this.base}/admin/stats`,
+    );
   }
 
   getSystemStats(): Observable<SystemStats> {
     return this.http.get<SystemStats>(`${this.base}/admin/system/stats`);
+  }
+
+  getRateLimitMetrics(): Observable<RateLimitMetricsSnapshot> {
+    return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
   }
 }

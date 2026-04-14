@@ -77,12 +77,34 @@ export interface SystemStats {
   disk: SystemDiskStats;
 }
 
+export interface RateLimitMetricsSnapshot {
+  startedAt: string;
+  requestsByBucket: {
+    compute: number;
+    parse: number;
+    auth: number;
+  };
+  blockedByBucket: {
+    compute: number;
+    parse: number;
+    auth: number;
+  };
+  requestsByEndpoint: Record<string, number>;
+  blockedByEndpoint: Record<string, number>;
+  blockedByLimiter: Record<string, number>;
+  ratios: {
+    compute: number;
+    parse: number;
+    auth: number;
+  };
+}
+
 export const CALC_TYPE_LABEL: Record<string, string> = {
-  trigonometric:             'Trigonométrica',
-  half_range:                'Medio rango',
-  complex:                   'Compleja',
-  fourier_transform:         'Transformada',
+  trigonometric: 'Trigonométrica',
+  half_range: 'Medio rango',
+  complex: 'Compleja',
+  fourier_transform: 'Transformada',
   inverse_fourier_transform: 'T. Inversa',
-  dft_signal:                'DFT señal',
-  dft_epicycles:             'DFT epiciclos',
+  dft_signal: 'DFT señal',
+  dft_epicycles: 'DFT epiciclos',
 };
