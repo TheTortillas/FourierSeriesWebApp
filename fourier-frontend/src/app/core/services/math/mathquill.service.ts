@@ -64,7 +64,6 @@ export class MathquillService {
 
   defaultConfig(): MathQuillConfig {
     return {
-      spaceBehavesLikeTab: true,
       autoCommands: 'pi theta sqrt sum int',
       autoOperatorNames:
         'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
@@ -72,7 +71,33 @@ export class MathquillService {
         'sen tg senh ctg arcsin arccos arctan ' +
         'gamma factorial ' +
         'delta sgn',
-      charsThatBreakOutOfSupSub: '+-*/=<>',
+    };
+  }
+
+  /**
+   * Returns a capture-phase keypress listener that intercepts special characters
+   * before MathQuill's internal textarea handler can see them.
+   *
+   * - `|`  → inserts abs(·) with cursor inside (MathQuill throws on bare pipe)
+   * - `^`  → programmatic cmd('^') — bypasses dead-key composition issues on
+   *           Spanish/Linux keyboards where the composed keypress may not reach
+   *           MathQuill reliably
+   *
+   * Register with addEventListener('keypress', fn, true) on the host element.
+   */
+  createSpecialKeyCapture(getField: () => MathField | null): (e: KeyboardEvent) => void {
+    return (e: KeyboardEvent) => {
+      if (e.key !== '|' && e.key !== '^') return;
+      const field = getField();
+      if (!field) return;
+      e.stopPropagation();
+      e.preventDefault();
+      if (e.key === '|') {
+        field.write('\\operatorname{abs}\\left(\\right)');
+        field.keystroke('Left');
+      } else {
+        field.cmd('^');
+      }
     };
   }
 
