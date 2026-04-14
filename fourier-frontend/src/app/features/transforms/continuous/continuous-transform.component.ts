@@ -45,6 +45,7 @@ import type { ParamValues } from '../../../shared/components/param-sliders/param
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 import { MathquillService, KeyBtn } from '../../../core/services/math/mathquill.service';
+import { MobileMathKeyboardComponent } from '../../../shared/components/math-keyboard/mobile-math-keyboard.component';
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
@@ -165,6 +166,7 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     RouterLink,
     RouterLinkActive,
     TranslocoPipe,
+    MobileMathKeyboardComponent,
   ],
 })
 export class ContinuousTransformComponent implements OnInit {
@@ -174,6 +176,16 @@ export class ContinuousTransformComponent implements OnInit {
   private readonly transloco = inject(TranslocoService);
 
   showKeyboard = false;
+
+  /** Extra buttons passed to the mobile keyboard (transforms-specific). */
+  readonly mobileExtraGroup: KeyBtn[] = [
+    { label: 'δ(·)', typedText: 'delta(' },
+    { label: 'u(·)', typedText: 'u(' },
+    { label: 'sgn' },
+    { label: 'i', typedText: 'i' },
+    { label: '∞', write: '\\infty' },
+    { label: '-∞', write: '-\\infty' },
+  ];
 
   readonly keyGroups: KeyBtn[][] = [
     // Transform-specific functions
@@ -185,6 +197,7 @@ export class ContinuousTransformComponent implements OnInit {
       { label: '∞', write: '\\infty' },
       { label: '-∞', write: '-\\infty' },
     ],
+    // Basic trig
     [
       { label: 'sin', typedText: 'sin(' },
       { label: 'cos', typedText: 'cos(' },
@@ -193,30 +206,24 @@ export class ContinuousTransformComponent implements OnInit {
       { label: 'sec', typedText: 'sec(' },
       { label: 'csc', typedText: 'csc(' },
     ],
+    // Inverse trig (common in FT: arctan for signum derivations, arcsin/arccos in edge cases)
     [
       { label: 'asin', typedText: 'asin(' },
       { label: 'acos', typedText: 'acos(' },
       { label: 'atan', typedText: 'atan(' },
-      { label: 'acot', typedText: 'acot(' },
-      { label: 'asec', typedText: 'asec(' },
-      { label: 'acsc', typedText: 'acsc(' },
     ],
+    // Hyperbolic (sech(t) and relatives have known FTs)
     [
       { label: 'sinh', typedText: 'sinh(' },
       { label: 'cosh', typedText: 'cosh(' },
       { label: 'tanh', typedText: 'tanh(' },
-      { label: 'asinh', typedText: 'asinh(' },
-      { label: 'acosh', typedText: 'acosh(' },
-      { label: 'atanh', typedText: 'atanh(' },
     ],
+    // Misc
     [
       { label: 'log', typedText: 'log(' },
       { label: 'ln', typedText: 'ln(' },
       { label: 'exp', typedText: 'exp(' },
       { label: '\\', typedText: '\\' },
-      { label: 'Γ(·)', write: '\\Gamma(' },
-      { label: 'n!', typedText: 'factorial(' },
-      { label: 'x!', typedText: '!' },
       { label: '√·', cmd: '\\sqrt' },
       { label: '|·|' },
       { label: 'π', typedText: 'pi' },

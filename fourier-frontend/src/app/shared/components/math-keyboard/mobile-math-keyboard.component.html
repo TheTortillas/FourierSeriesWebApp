@@ -1,0 +1,63 @@
+@if (mqs.activeFieldName()) {
+  <div
+    class="fixed inset-x-0 bottom-0 z-50 bg-paper2 dark:bg-dark-surface border-t border-border dark:border-dark-border shadow-xl flex flex-col"
+    style="padding-bottom: env(safe-area-inset-bottom, 0px);"
+  >
+    <!-- ── Header: active field name + close ───────────────────────────────── -->
+    <div class="flex items-center justify-between px-3 py-1.5 border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg">
+      <span class="text-[11px] text-muted dark:text-dark-muted font-mono truncate max-w-[75%]">
+        {{ mqs.activeFieldName() }}
+      </span>
+      <button
+        type="button"
+        (mousedown)="stopDefault($event)"
+        (click)="mqs.clearActiveField()"
+        class="flex items-center justify-center w-7 h-7 rounded text-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer shrink-0"
+        aria-label="Cerrar teclado"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ── Tabs ────────────────────────────────────────────────────────────── -->
+    <div class="flex border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg shrink-0">
+      @for (tab of visibleTabs(); track tab.id) {
+        <button
+          type="button"
+          (mousedown)="stopDefault($event)"
+          (click)="activeTab.set(tab.id)"
+          class="flex-1 py-2 text-xs font-mono transition-colors cursor-pointer"
+          [class]="activeTab() === tab.id
+            ? 'text-accent border-b-2 border-accent font-semibold'
+            : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink border-b-2 border-transparent'"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+
+    <!-- ── Key grid ─────────────────────────────────────────────────────────── -->
+    <div class="p-2 space-y-1.5 overflow-y-auto">
+      @for (row of activeRows(); track $index) {
+        <div class="flex gap-1.5">
+          @for (btn of row; track btn.label) {
+            <button
+              type="button"
+              (mousedown)="stopDefault($event)"
+              (click)="mqs.insertKey(btn)"
+              class="flex-1 h-11 rounded border text-sm font-mono transition-colors cursor-pointer select-none active:scale-95"
+              [class]="btn.label === '⌫'
+                ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40'
+                : 'bg-paper dark:bg-dark-bg border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent'"
+            >
+              {{ btn.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

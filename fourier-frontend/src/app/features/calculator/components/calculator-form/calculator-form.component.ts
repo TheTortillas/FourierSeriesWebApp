@@ -8,10 +8,11 @@ import { MathjaxDirective } from '../../../../shared/directives/mathjax.directiv
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LatexToMaximaService } from '../../../../core/services/math/latex-to-maxima.service';
 import { MathquillService, KeyBtn } from '../../../../core/services/math/mathquill.service';
+import { MobileMathKeyboardComponent } from '../../../../shared/components/math-keyboard/mobile-math-keyboard.component';
 
 @Component({
   selector: 'app-calculator-form',
-  imports: [SegmentInputComponent, SeriesTypeSelectorComponent, MathjaxDirective, TranslocoPipe],
+  imports: [SegmentInputComponent, SeriesTypeSelectorComponent, MathjaxDirective, TranslocoPipe, MobileMathKeyboardComponent],
   templateUrl: './calculator-form.component.html',
 })
 export class CalculatorFormComponent {

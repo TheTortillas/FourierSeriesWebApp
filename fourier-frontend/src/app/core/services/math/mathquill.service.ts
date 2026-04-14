@@ -31,6 +31,9 @@ export interface MathQuillConfig {
   autoCommands?: string;
   autoOperatorNames?: string;
   charsThatBreakOutOfSupSub?: string;
+  /** Replace MathQuill's hidden textarea with a custom element.
+   *  On mobile we use a non-editable span so the native keyboard never appears. */
+  substituteTextarea?: () => HTMLElement;
   handlers?: {
     edit?: (mathField: MathField) => void;
     enter?: (mathField: MathField) => void;
@@ -68,6 +71,11 @@ export class MathquillService {
     this.activeFieldName.set(name);
   }
 
+  clearActiveField(): void {
+    this._activeField = null;
+    this.activeFieldName.set('');
+  }
+
   insertKey(btn: KeyBtn): void {
     const field = this._activeField;
     if (!field) return;
@@ -98,8 +106,13 @@ export class MathquillService {
     return mq ? mq.MathField(element, config ?? this.defaultConfig()) : null;
   }
 
+  /** True when the viewport width is below the lg Tailwind breakpoint (1024px). */
+  get isMobileViewport(): boolean {
+    return this.platform.isBrowser && window.matchMedia('(max-width: 1023px)').matches;
+  }
+
   defaultConfig(): MathQuillConfig {
-    return {
+    const config: MathQuillConfig = {
       autoCommands: 'pi theta sqrt sum int',
       autoOperatorNames:
         'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
@@ -108,6 +121,17 @@ export class MathquillService {
         'gamma factorial ' +
         'delta sgn',
     };
+    // On mobile viewports, replace MathQuill's hidden textarea with a non-editable
+    // span so the native OS keyboard never appears. Input is handled exclusively
+    // by the MobileMathKeyboardComponent.
+    if (this.isMobileViewport) {
+      config.substituteTextarea = () => {
+        const el = document.createElement('span');
+        el.setAttribute('tabindex', '0');
+        return el;
+      };
+    }
+    return config;
   }
 
   /**
