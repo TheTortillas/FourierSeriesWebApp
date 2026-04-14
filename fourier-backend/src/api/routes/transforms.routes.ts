@@ -15,6 +15,12 @@ import { incrementCalculationCount } from "../middlewares/requireTierLimit";
 
 export const transformsRouter = Router();
 
+function shouldConsumeTransformCalculation(result: {
+  exists?: boolean;
+}): boolean {
+  return result.exists !== false;
+}
+
 /**
  * @openapi
  * /api/transforms/fourier:
@@ -70,8 +76,11 @@ transformsRouter.post(
         return;
       }
       const result = await fourierTransformService.transform(input);
+      const shouldConsume = shouldConsumeTransformCalculation(result);
       if (req.user) {
-        await incrementCalculationCount(req.user.id);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.user.id);
+        }
         await historyRepository.create({
           userId: req.user.id,
           type: "fourier_transform",
@@ -79,7 +88,9 @@ transformsRouter.post(
           executionMs: result.executionTimeMs,
         });
       } else {
-        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        }
         await historyRepository.create({
           ipAddress: req.ip ?? undefined,
           type: "fourier_transform",
@@ -147,8 +158,11 @@ transformsRouter.post(
         return;
       }
       const result = await fourierTransformService.inverseTransform(input);
+      const shouldConsume = shouldConsumeTransformCalculation(result);
       if (req.user) {
-        await incrementCalculationCount(req.user.id);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.user.id);
+        }
         await historyRepository.create({
           userId: req.user.id,
           type: "inverse_fourier_transform",
@@ -156,7 +170,9 @@ transformsRouter.post(
           executionMs: result.executionTimeMs,
         });
       } else {
-        await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        if (shouldConsume) {
+          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+        }
         await historyRepository.create({
           ipAddress: req.ip ?? undefined,
           type: "inverse_fourier_transform",
