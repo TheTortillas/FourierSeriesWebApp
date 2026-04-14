@@ -72,17 +72,9 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   conversionErrors: [string | null, string | null, string | null] = [null, null, null];
   fields: [MathField | null, MathField | null, MathField | null] = [null, null, null];
   private _syncing = false;
-  // Intercept physical '|' in the keypress capture phase — before MathQuill's
-  // textarea handler can see it. MathQuill processes characters on keypress, so
-  // capture-phase stopPropagation here prevents the error
-  // "Pipe symbols may only be used with 'left' / 'right' delimiters".
-  private readonly _pipeCapture = (e: KeyboardEvent) => {
-    if (e.key !== '|') return;
-    e.stopPropagation();
-    e.preventDefault();
-    const field = this.fields[this.focusedFieldIdx];
-    if (field) { field.write('\\operatorname{abs}\\left(\\right)'); field.keystroke('Left'); }
-  };
+  private readonly _specialCapture = this.mqs.createSpecialKeyCapture(
+    () => this.fields[this.focusedFieldIdx],
+  );
 
   // Only the TeX display fields should trigger MathQuill sync — NOT expression/from/to (Maxima).
   // If the effect read this.segment() directly, any backend Maxima update would re-run it and
@@ -177,7 +169,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit(): Promise<void> {
-    this.elRef.nativeElement.addEventListener('keypress', this._pipeCapture, true);
+    this.elRef.nativeElement.addEventListener('keypress', this._specialCapture, true);
     type Key = [
       0 | 1 | 2,
       keyof Pick<TransformSegmentDraft, 'expression' | 'from' | 'to'>,
@@ -241,7 +233,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.elRef.nativeElement.removeEventListener('keypress', this._pipeCapture, true);
+    this.elRef.nativeElement.removeEventListener('keypress', this._specialCapture, true);
     this._subs.unsubscribe();
     for (const s of this.fieldSubjects) s.complete();
     for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {
