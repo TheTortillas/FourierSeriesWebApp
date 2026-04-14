@@ -209,8 +209,9 @@ block(
     cos_coeff: block(
       [expanded: expand(term_real),
       candidate: coeff(expanded, cos(i * w0 * ${intVar})),
-      r: if freeof('integrate, candidate)
-        then errcatch(float(candidate))
+      candidate_num: realpart(rectform(candidate)),
+      r: if freeof('integrate, candidate_num)
+        then errcatch(float(candidate_num))
         else []],
       if r = [] or not numberp(first(r))
       then block([qv: ${quadCos}],
@@ -219,8 +220,9 @@ block(
     sin_coeff: block(
       [expanded: expand(term_real),
       candidate: coeff(expanded, sin(i * w0 * ${intVar})),
-      r: if freeof('integrate, candidate)
-        then errcatch(float(candidate))
+      candidate_num: realpart(rectform(candidate)),
+      r: if freeof('integrate, candidate_num)
+        then errcatch(float(candidate_num))
         else []],
       if r = [] or not numberp(first(r))
       then block([qv: ${quadSin}],
@@ -308,10 +310,20 @@ kill(all)$
       const realTex = this.extractTex(
         this.extractBetween(block, "__REAL_TEX__", "__COS_FLOAT__"),
       );
-      const cnReMaxima = this.extractBetween(block, "__CN_RE_MAXIMA__", "__CN_IM_MAXIMA__")
-        .replace(/false/g, "").trim();
-      const cnImMaxima = this.extractBetween(block, "__CN_IM_MAXIMA__", "__COS_FLOAT__")
-        .replace(/false/g, "").trim();
+      const cnReMaxima = this.extractBetween(
+        block,
+        "__CN_RE_MAXIMA__",
+        "__CN_IM_MAXIMA__",
+      )
+        .replace(/false/g, "")
+        .trim();
+      const cnImMaxima = this.extractBetween(
+        block,
+        "__CN_IM_MAXIMA__",
+        "__COS_FLOAT__",
+      )
+        .replace(/false/g, "")
+        .trim();
       const cosFloatStr = this.extractBetween(
         block,
         "__COS_FLOAT__",
