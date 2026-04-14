@@ -26,14 +26,6 @@ export interface TransformSegmentDraft {
   toTex: string;
 }
 
-interface KeyBtn {
-  label: string;
-  typedText?: string;
-  cmd?: string;
-  write?: string;
-  keystroke?: string;
-}
-
 @Component({
   selector: 'app-transform-segment',
   templateUrl: './transform-segment.component.html',
@@ -49,12 +41,6 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   private readonly transloco = inject(TranslocoService);
   private readonly elRef = inject(ElementRef<HTMLElement>);
 
-  get activeFieldName(): string {
-    if (this.focusedFieldIdx === 0) return `f(${this.intVar()})`;
-    if (this.focusedFieldIdx === 1) return this.transloco.translate('calculator.segment.from');
-    return this.transloco.translate('calculator.segment.to');
-  }
-
   readonly segment = input.required<TransformSegmentDraft>();
   readonly index = input.required<number>();
   readonly isOnly = input<boolean>(false);
@@ -67,18 +53,16 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   readonly updated = output<{ id: string; changes: Partial<TransformSegmentDraft> }>();
   readonly removed = output<string>();
 
-  showKeyboard = false;
   focusedFieldIdx: 0 | 1 | 2 = 0;
   conversionErrors: [string | null, string | null, string | null] = [null, null, null];
   fields: [MathField | null, MathField | null, MathField | null] = [null, null, null];
+
   private _syncing = false;
   private readonly _specialCapture = this.mqs.createSpecialKeyCapture(
     () => this.fields[this.focusedFieldIdx],
   );
 
-  // Only the TeX display fields should trigger MathQuill sync — NOT expression/from/to (Maxima).
-  // If the effect read this.segment() directly, any backend Maxima update would re-run it and
-  // call field.latex() while the cursor is inside a superscript, ejecting it unexpectedly.
+  // Only TeX signals — prevents backend Maxima updates from ejecting the cursor
   private readonly exprTex  = computed(() => this.segment().expressionTex);
   private readonly fromTex_ = computed(() => this.segment().fromTex);
   private readonly toTex_   = computed(() => this.segment().toTex);
@@ -89,65 +73,6 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
     new Subject<string>(),
   ];
   private readonly _subs = new Subscription();
-
-  readonly keyGroups: KeyBtn[][] = [
-    // Special functions for transforms
-    [
-      { label: 'δ(·)', typedText: 'delta(' },
-      { label: 'u(·)', typedText: 'u(' },
-      { label: 'sgn' },
-      { label: 'i', typedText: 'i' },
-      { label: '∞', write: '\\infty' },
-      { label: '-∞', write: '-\\infty' },
-    ],
-    // Basic trig
-    [
-      { label: 'sin', typedText: 'sin(' },
-      { label: 'cos', typedText: 'cos(' },
-      { label: 'tan', typedText: 'tan(' },
-      { label: 'cot', typedText: 'cot(' },
-      { label: 'sec', typedText: 'sec(' },
-      { label: 'csc', typedText: 'csc(' },
-    ],
-    // Inverse trig
-    [
-      { label: 'asin', typedText: 'asin(' },
-      { label: 'acos', typedText: 'acos(' },
-      { label: 'atan', typedText: 'atan(' },
-      { label: 'acot', typedText: 'acot(' },
-      { label: 'asec', typedText: 'asec(' },
-      { label: 'acsc', typedText: 'acsc(' },
-    ],
-    // Hyperbolic + inverse hyperbolic
-    [
-      { label: 'sinh', typedText: 'sinh(' },
-      { label: 'cosh', typedText: 'cosh(' },
-      { label: 'tanh', typedText: 'tanh(' },
-      { label: 'asinh', typedText: 'asinh(' },
-      { label: 'acosh', typedText: 'acosh(' },
-      { label: 'atanh', typedText: 'atanh(' },
-    ],
-    // Misc
-    [
-      { label: 'log', typedText: 'log(' },
-      { label: 'ln', typedText: 'ln(' },
-      { label: 'exp', typedText: 'exp(' },
-      { label: '\\', typedText: '\\' },
-      { label: 'Γ(·)', write: '\\Gamma(' },
-      { label: 'n!', typedText: 'factorial(' },
-      { label: 'x!', typedText: '!' },
-      { label: '√·', cmd: '\\sqrt' },
-      { label: '|·|', typedText: 'abs(' },
-      { label: 'π', typedText: 'pi' },
-      { label: 'eˣ' },
-      { label: 'xⁿ', cmd: '^' },
-      { label: '(', typedText: '(' },
-      { label: ')', typedText: ')' },
-      { label: '−', write: '-' },
-      { label: '/', typedText: '/' },
-      { label: '⌫', keystroke: 'Backspace' },
-    ],
-  ];
 
   constructor() {
     effect(() => {
@@ -192,29 +117,22 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
             const latexRaw = mf.latex();
             if (!latexRaw.trim()) {
               this.conversionErrors[i] = null;
-              this.updated.emit({
-                id: this.segment().id,
-                changes: { [maximaKey]: '', [texKey]: '' },
-              });
+              this.updated.emit({ id: this.segment().id, changes: { [maximaKey]: '', [texKey]: '' } });
               return;
             }
-            // Update LaTeX immediately so the MathJax preview refreshes without delay
             this.updated.emit({ id: this.segment().id, changes: { [texKey]: latexRaw } });
-            // Debounced: send to backend for Maxima conversion
             this.fieldSubjects[i].next(latexRaw);
           },
         },
       });
       this.fields[i] = field;
 
-      // Set initial LaTeX without triggering the edit handler
       if (initialLatex && field) {
         this._syncing = true;
         field.latex(initialLatex);
         this._syncing = false;
       }
 
-      // Subscribe: debounce → parse API → emit Maxima update
       this._subs.add(
         this.fieldSubjects[i].pipe(
           debounceTime(350),
@@ -244,60 +162,23 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   onKeyDown(e: KeyboardEvent): void {
     const field = this.fields[this.focusedFieldIdx];
     if (!field) return;
-    // Do NOT intercept '^' here — MathQuill handles superscripts natively via
-    // keypress/input, which covers dead-key compositions (e.g. AltGr+^ on
-    // Spanish keyboards where keydown reports 'Dead', not '^').
-    // Intercepting it caused double-processing (keydown + keypress) that made
-    // the superscript toggle on and off intermittently.
-    if (e.key === '\\') {
-      e.preventDefault();
-      field.typedText('\\');
-    }
+    if (e.key === '\\') { e.preventDefault(); field.typedText('\\'); }
+  }
+
+  /** Called from (focusin) on each field wrapper and from (click) → focusField. */
+  onFocusIn(idx: 0 | 1 | 2): void {
+    this.focusedFieldIdx = idx;
+    const names: [string, string, string] = [
+      `f(${this.intVar()})`,
+      this.transloco.translate('calculator.segment.from'),
+      this.transloco.translate('calculator.segment.to'),
+    ];
+    this.mqs.setActiveField(this.fields[idx], names[idx]);
   }
 
   focusField(idx: 0 | 1 | 2): void {
-    this.focusedFieldIdx = idx;
+    this.onFocusIn(idx);
     this.fields[idx]?.focus();
-  }
-
-  insertKey(btn: KeyBtn): void {
-    const field = this.fields[this.focusedFieldIdx];
-    if (!field) return;
-    field.focus();
-    if (btn.label === 'δ(·)') {
-      field.write('\\delta\\left(\\right)');
-      field.keystroke('Left');
-      return;
-    }
-    if (btn.label === 'Γ(·)') {
-      field.write('\\Gamma\\left(\\right)');
-      field.keystroke('Left');
-      return;
-    }
-    if (btn.label === 'exp') {
-      field.write('\\operatorname{exp}\\left(\\right)');
-      field.keystroke('Left');
-      return;
-    }
-    if (btn.label === 'sgn') {
-      field.write('\\operatorname{sgn}\\left(\\right)');
-      field.keystroke('Left');
-      return;
-    }
-    if (btn.label === 'eˣ') {
-      field.typedText('e');
-      field.cmd('^');
-      return;
-    }
-    if (btn.label === '|·|') {
-      field.write('\\operatorname{abs}\\left(\\right)');
-      field.keystroke('Left');
-      return;
-    }
-    if (btn.typedText !== undefined) field.typedText(btn.typedText);
-    else if (btn.cmd !== undefined) field.cmd(btn.cmd);
-    else if (btn.write !== undefined) field.write(btn.write);
-    else if (btn.keystroke !== undefined) field.keystroke(btn.keystroke);
   }
 
   readonly hasExpressionError = () => !!this.error() && !this.segment().expression.trim();

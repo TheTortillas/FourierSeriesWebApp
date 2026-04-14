@@ -44,6 +44,7 @@ import { ParamSlidersComponent } from '../../../shared/components/param-sliders/
 import type { ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
+import { MathquillService, KeyBtn } from '../../../core/services/math/mathquill.service';
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
@@ -168,8 +169,66 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
 })
 export class ContinuousTransformComponent implements OnInit {
   readonly api = inject(ApiService);
+  readonly mqs = inject(MathquillService);
   readonly userStore = inject(UserStore);
   private readonly transloco = inject(TranslocoService);
+
+  showKeyboard = false;
+
+  readonly keyGroups: KeyBtn[][] = [
+    // Transform-specific functions
+    [
+      { label: 'δ(·)', typedText: 'delta(' },
+      { label: 'u(·)', typedText: 'u(' },
+      { label: 'sgn' },
+      { label: 'i', typedText: 'i' },
+      { label: '∞', write: '\\infty' },
+      { label: '-∞', write: '-\\infty' },
+    ],
+    [
+      { label: 'sin', typedText: 'sin(' },
+      { label: 'cos', typedText: 'cos(' },
+      { label: 'tan', typedText: 'tan(' },
+      { label: 'cot', typedText: 'cot(' },
+      { label: 'sec', typedText: 'sec(' },
+      { label: 'csc', typedText: 'csc(' },
+    ],
+    [
+      { label: 'asin', typedText: 'asin(' },
+      { label: 'acos', typedText: 'acos(' },
+      { label: 'atan', typedText: 'atan(' },
+      { label: 'acot', typedText: 'acot(' },
+      { label: 'asec', typedText: 'asec(' },
+      { label: 'acsc', typedText: 'acsc(' },
+    ],
+    [
+      { label: 'sinh', typedText: 'sinh(' },
+      { label: 'cosh', typedText: 'cosh(' },
+      { label: 'tanh', typedText: 'tanh(' },
+      { label: 'asinh', typedText: 'asinh(' },
+      { label: 'acosh', typedText: 'acosh(' },
+      { label: 'atanh', typedText: 'atanh(' },
+    ],
+    [
+      { label: 'log', typedText: 'log(' },
+      { label: 'ln', typedText: 'ln(' },
+      { label: 'exp', typedText: 'exp(' },
+      { label: '\\', typedText: '\\' },
+      { label: 'Γ(·)', write: '\\Gamma(' },
+      { label: 'n!', typedText: 'factorial(' },
+      { label: 'x!', typedText: '!' },
+      { label: '√·', cmd: '\\sqrt' },
+      { label: '|·|' },
+      { label: 'π', typedText: 'pi' },
+      { label: 'eˣ' },
+      { label: 'xⁿ', cmd: '^' },
+      { label: '(', typedText: '(' },
+      { label: ')', typedText: ')' },
+      { label: '−', write: '-' },
+      { label: '/', typedText: '/' },
+      { label: '⌫', keystroke: 'Backspace' },
+    ],
+  ];
   private readonly seo = inject(SeoService);
   private readonly intervalValidator = inject(LatexToMaximaService);
 
