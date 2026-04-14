@@ -52,7 +52,14 @@
       <div
         class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4"
       >
-        <p class="text-xs font-mono text-muted dark:text-dark-muted">Compute</p>
+        <p class="text-xs font-mono text-muted dark:text-dark-muted flex items-center gap-1">
+          Compute
+          <span
+            class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-border dark:border-dark-border text-[10px]"
+            title="Porcentaje de requests bloqueadas (429) en endpoints de cálculo pesado como Fourier, transforms y DFT."
+            >?</span
+          >
+        </p>
         <p class="font-display text-3xl text-ink dark:text-dark-ink mt-1">
           {{ rm.ratios.compute.toFixed(2) }}%
         </p>
@@ -64,7 +71,14 @@
       <div
         class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4"
       >
-        <p class="text-xs font-mono text-muted dark:text-dark-muted">Parse</p>
+        <p class="text-xs font-mono text-muted dark:text-dark-muted flex items-center gap-1">
+          Parse
+          <span
+            class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-border dark:border-dark-border text-[10px]"
+            title="Porcentaje de 429 en endpoints de parse/validación rápida, típicamente usados durante escritura en tiempo real."
+            >?</span
+          >
+        </p>
         <p class="font-display text-3xl text-ink dark:text-dark-ink mt-1">
           {{ rm.ratios.parse.toFixed(2) }}%
         </p>
@@ -76,7 +90,14 @@
       <div
         class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4"
       >
-        <p class="text-xs font-mono text-muted dark:text-dark-muted">Auth</p>
+        <p class="text-xs font-mono text-muted dark:text-dark-muted flex items-center gap-1">
+          Auth
+          <span
+            class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-border dark:border-dark-border text-[10px]"
+            title="Porcentaje de 429 en endpoints de autenticación (login, recuperación, verificación)."
+            >?</span
+          >
+        </p>
         <p class="font-display text-3xl text-ink dark:text-dark-ink mt-1">
           {{ rm.ratios.auth.toFixed(2) }}%
         </p>
@@ -91,7 +112,12 @@
         class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
       >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <h2 class="text-sm font-mono text-ink dark:text-dark-ink">Top bloqueos por limiter</h2>
+          <h2
+            class="text-sm font-mono text-ink dark:text-dark-ink"
+            title="Limiters que más respuestas 429 generaron desde que inició el snapshot."
+          >
+            Top bloqueos por limiter
+          </h2>
         </div>
         <div class="divide-y divide-border dark:divide-dark-border">
           @for (item of topEntries(rm.blockedByLimiter); track item.key) {
@@ -116,7 +142,12 @@
         class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
       >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <h2 class="text-sm font-mono text-ink dark:text-dark-ink">Top endpoints bloqueados</h2>
+          <h2
+            class="text-sm font-mono text-ink dark:text-dark-ink"
+            title="Endpoints con mayor número de respuestas 429."
+          >
+            Top endpoints bloqueados
+          </h2>
         </div>
         <div class="divide-y divide-border dark:divide-dark-border">
           @for (item of topEntries(rm.blockedByEndpoint); track item.key) {

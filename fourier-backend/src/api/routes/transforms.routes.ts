@@ -9,7 +9,10 @@ import type {
   InverseFourierTransformInput,
   DFTInput,
 } from "../../domain/types/fourier.types";
-import { sanitizeSegments, sanitizeExpression } from "../middlewares/sanitize";
+import {
+  sanitizeSegments,
+  sanitizeVariableName,
+} from "../middlewares/sanitize";
 import { AuthenticatedRequest } from "../middlewares/authenticate";
 import { incrementCalculationCount } from "../middlewares/requireTierLimit";
 import { trackClientConnection } from "../middlewares/requestLifecycle";
@@ -72,6 +75,23 @@ transformsRouter.post(
         res.status(400).json({ error: "segments is required" });
         return;
       }
+
+      if (input.intVar) {
+        const intVarCheck = sanitizeVariableName(input.intVar, "intVar");
+        if (!intVarCheck.valid) {
+          res.status(400).json({ error: intVarCheck.error });
+          return;
+        }
+      }
+
+      if (input.transVar) {
+        const transVarCheck = sanitizeVariableName(input.transVar, "transVar");
+        if (!transVarCheck.valid) {
+          res.status(400).json({ error: transVarCheck.error });
+          return;
+        }
+      }
+
       const sanitizeCheck = sanitizeSegments(input.segments);
       if (!sanitizeCheck.valid) {
         res.status(400).json({ error: sanitizeCheck.error });
@@ -159,6 +179,23 @@ transformsRouter.post(
         res.status(400).json({ error: "segments is required" });
         return;
       }
+
+      if (input.intVar) {
+        const intVarCheck = sanitizeVariableName(input.intVar, "intVar");
+        if (!intVarCheck.valid) {
+          res.status(400).json({ error: intVarCheck.error });
+          return;
+        }
+      }
+
+      if (input.transVar) {
+        const transVarCheck = sanitizeVariableName(input.transVar, "transVar");
+        if (!transVarCheck.valid) {
+          res.status(400).json({ error: transVarCheck.error });
+          return;
+        }
+      }
+
       const sanitizeCheck = sanitizeSegments(input.segments);
       if (!sanitizeCheck.valid) {
         res.status(400).json({ error: sanitizeCheck.error });
