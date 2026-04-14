@@ -6,7 +6,10 @@ import {
 } from "../../infrastructure/container";
 import { validateFourierInput } from "../middlewares/validate";
 import type { PiecewiseFourierInput } from "../../domain/types/fourier.types";
-import { sanitizeSegments, sanitizeExpression } from "../middlewares/sanitize";
+import {
+  sanitizeSegments,
+  sanitizeVariableName,
+} from "../middlewares/sanitize";
 import { incrementCalculationCount } from "../middlewares/requireTierLimit";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
 import { historyRepository } from "../../infrastructure/container";
@@ -18,6 +21,38 @@ function shouldConsumeCalculation(result: {
   validation?: { decision?: string };
 }): boolean {
   return result.validation?.decision !== "reject";
+}
+
+function sanitizeFourierInput(input: PiecewiseFourierInput): {
+  valid: boolean;
+  error?: string;
+} {
+  if (!input || typeof input !== "object") {
+    return { valid: false, error: "Invalid Fourier input payload" };
+  }
+
+  if (!Array.isArray(input.segments)) {
+    return { valid: false, error: "Input segments must be an array" };
+  }
+
+  const segmentsCheck = sanitizeSegments(input.segments);
+  if (!segmentsCheck.valid) {
+    return segmentsCheck;
+  }
+
+  if (typeof input.intVar !== "string") {
+    return { valid: false, error: "integration variable must be provided" };
+  }
+
+  const intVarCheck = sanitizeVariableName(
+    input.intVar,
+    "integration variable",
+  );
+  if (!intVarCheck.valid) {
+    return intVarCheck;
+  }
+
+  return { valid: true };
 }
 
 /**
@@ -58,7 +93,7 @@ fourierRouter.post(
     try {
       const client = trackClientConnection(req, res);
       const input = req.body as PiecewiseFourierInput;
-      const sanitizeCheck = sanitizeSegments(input.segments);
+      const sanitizeCheck = sanitizeFourierInput(input);
       if (!sanitizeCheck.valid) {
         res.status(400).json({ error: sanitizeCheck.error });
         return;
@@ -130,7 +165,7 @@ fourierRouter.post(
         input: PiecewiseFourierInput;
         nTerms: number;
       };
-      const sanitizeCheck = sanitizeSegments(input.segments);
+      const sanitizeCheck = sanitizeFourierInput(input);
       if (!sanitizeCheck.valid) {
         res.status(400).json({ error: sanitizeCheck.error });
         return;
@@ -177,7 +212,7 @@ fourierRouter.post(
     try {
       const client = trackClientConnection(req, res);
       const input = req.body as PiecewiseFourierInput;
-      const sanitizeCheck = sanitizeSegments(input.segments);
+      const sanitizeCheck = sanitizeFourierInput(input);
       if (!sanitizeCheck.valid) {
         res.status(400).json({ error: sanitizeCheck.error });
         return;
@@ -249,7 +284,7 @@ fourierRouter.post(
         input: PiecewiseFourierInput;
         nTerms: number;
       };
-      const sanitizeCheck = sanitizeSegments(input.segments);
+      const sanitizeCheck = sanitizeFourierInput(input);
       if (!sanitizeCheck.valid) {
         res.status(400).json({ error: sanitizeCheck.error });
         return;
@@ -296,7 +331,7 @@ fourierRouter.post(
     try {
       const client = trackClientConnection(req, res);
       const input = req.body as PiecewiseFourierInput;
-      const sanitizeCheck = sanitizeSegments(input.segments);
+      const sanitizeCheck = sanitizeFourierInput(input);
       if (!sanitizeCheck.valid) {
         res.status(400).json({ error: sanitizeCheck.error });
         return;
@@ -369,7 +404,7 @@ fourierRouter.post(
         input: PiecewiseFourierInput;
         nTerms: number;
       };
-      const sanitizeCheck = sanitizeSegments(input.segments);
+      const sanitizeCheck = sanitizeFourierInput(input);
       if (!sanitizeCheck.valid) {
         res.status(400).json({ error: sanitizeCheck.error });
         return;
