@@ -1,5 +1,13 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { PlatformService } from '../platform/platform.service';
+
+export interface KeyBtn {
+  label: string;
+  typedText?: string;
+  cmd?: string;
+  write?: string;
+  keystroke?: string;
+}
 
 export interface MathField {
   latex(): string;
@@ -23,6 +31,9 @@ export interface MathQuillConfig {
   autoCommands?: string;
   autoOperatorNames?: string;
   charsThatBreakOutOfSupSub?: string;
+  /** Replace MathQuill's hidden textarea with a custom element.
+   *  On mobile we use a non-editable span so the native keyboard never appears. */
+  substituteTextarea?: () => HTMLElement;
   handlers?: {
     edit?: (mathField: MathField) => void;
     enter?: (mathField: MathField) => void;
@@ -48,6 +59,39 @@ export class MathquillService {
   private mq: MathQuillStatic | null = null;
   private loading: Promise<MathQuillStatic | null> | null = null;
 
+  // ── Active field tracking ──────────────────────────────────────────────────
+  // Segment components call setActiveField() on focus; the section-level
+  // keyboard panel reads activeField / activeFieldName to know where to insert.
+
+  private _activeField: MathField | null = null;
+  readonly activeFieldName = signal<string>('');
+
+  setActiveField(field: MathField | null, name: string): void {
+    this._activeField = field;
+    this.activeFieldName.set(name);
+  }
+
+  clearActiveField(): void {
+    this._activeField = null;
+    this.activeFieldName.set('');
+  }
+
+  insertKey(btn: KeyBtn): void {
+    const field = this._activeField;
+    if (!field) return;
+    field.focus();
+    if (btn.label === 'δ(·)') { field.write('\\delta\\left(\\right)'); field.keystroke('Left'); return; }
+    if (btn.label === 'Γ(·)') { field.write('\\Gamma\\left(\\right)'); field.keystroke('Left'); return; }
+    if (btn.label === 'exp')   { field.write('\\operatorname{exp}\\left(\\right)'); field.keystroke('Left'); return; }
+    if (btn.label === 'sgn')   { field.write('\\operatorname{sgn}\\left(\\right)'); field.keystroke('Left'); return; }
+    if (btn.label === 'eˣ')   { field.typedText('e'); field.cmd('^'); return; }
+    if (btn.label === '|·|')   { field.write('\\operatorname{abs}\\left(\\right)'); field.keystroke('Left'); return; }
+    if (btn.typedText !== undefined) field.typedText(btn.typedText);
+    else if (btn.cmd       !== undefined) field.cmd(btn.cmd);
+    else if (btn.write     !== undefined) field.write(btn.write);
+    else if (btn.keystroke !== undefined) field.keystroke(btn.keystroke);
+  }
+
   async getMQ(): Promise<MathQuillStatic | null> {
     if (!this.platform.isBrowser) return null;
     if (this.mq) return this.mq;
@@ -62,8 +106,13 @@ export class MathquillService {
     return mq ? mq.MathField(element, config ?? this.defaultConfig()) : null;
   }
 
+  /** True when the viewport width is below the lg Tailwind breakpoint (1024px). */
+  get isMobileViewport(): boolean {
+    return this.platform.isBrowser && window.matchMedia('(max-width: 1023px)').matches;
+  }
+
   defaultConfig(): MathQuillConfig {
-    return {
+    const config: MathQuillConfig = {
       autoCommands: 'pi theta sqrt sum int',
       autoOperatorNames:
         'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
@@ -72,6 +121,17 @@ export class MathquillService {
         'gamma factorial ' +
         'delta sgn',
     };
+    // On mobile viewports, replace MathQuill's hidden textarea with a non-editable
+    // span so the native OS keyboard never appears. Input is handled exclusively
+    // by the MobileMathKeyboardComponent.
+    if (this.isMobileViewport) {
+      config.substituteTextarea = () => {
+        const el = document.createElement('span');
+        el.setAttribute('tabindex', '0');
+        return el;
+      };
+    }
+    return config;
   }
 
   /**

@@ -22,7 +22,7 @@
                c0,15.259-12.419,27.677-27.68,27.677C407.94,124.72,395.527,112.308,395.527,97.043z"
       />
     </svg>
-    <span class="flex flex-col items-start leading-none gap-0.5">
+    <span class="hidden lg:flex flex-col items-start leading-none gap-0.5">
       <span class="font-display text-base leading-none">Fourier Web Calculator</span>
       <!-- <span class="text-[9px] font-mono text-muted dark:text-dark-muted tracking-wide">{{ 'nav.tagline' | transloco }}</span> -->
     </span>
@@ -30,15 +30,16 @@
 
   <!-- Actions -->
   <div class="flex items-center gap-0.5">
-
     <!-- Grupo 1: Navegación -->
     <div class="relative hidden sm:block" (focusout)="onFourierMenuFocusOut($event)">
       <button
         type="button"
         (click)="fourierMenuOpen.set(!fourierMenuOpen())"
-        [class]="isAnalysisActive()
-          ? 'flex items-center gap-0.5 px-2 py-1.5 rounded text-xs font-mono text-accent hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
-          : 'flex items-center gap-0.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'"
+        [class]="
+          isAnalysisActive()
+            ? 'flex items-center gap-0.5 px-2 py-1.5 rounded text-xs font-mono text-accent hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
+            : 'flex items-center gap-0.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
+        "
       >
         {{ 'nav.fourierAnalysis' | transloco }}
         <svg
@@ -220,7 +221,9 @@
     <button
       (click)="theme.togglePalette()"
       type="button"
-      [title]="theme.isNeutral ? ('nav.changeToCoffee' | transloco) : ('nav.changeToNeutral' | transloco)"
+      [title]="
+        theme.isNeutral ? ('nav.changeToCoffee' | transloco) : ('nav.changeToNeutral' | transloco)
+      "
       class="px-2 py-1.5 rounded text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
     >
       {{ theme.isNeutral ? ('nav.paletteNeutral' | transloco) : ('nav.paletteCoffee' | transloco) }}
@@ -263,6 +266,5 @@
         </svg>
       }
     </button>
-
   </div>
 </nav>

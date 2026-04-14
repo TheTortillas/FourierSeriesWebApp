@@ -7,16 +7,67 @@ import { SeriesTypeSelectorComponent } from '../series-type-selector/series-type
 import { MathjaxDirective } from '../../../../shared/directives/mathjax.directive';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LatexToMaximaService } from '../../../../core/services/math/latex-to-maxima.service';
+import { MathquillService, KeyBtn } from '../../../../core/services/math/mathquill.service';
+import { MobileMathKeyboardComponent } from '../../../../shared/components/math-keyboard/mobile-math-keyboard.component';
 
 @Component({
   selector: 'app-calculator-form',
-  imports: [SegmentInputComponent, SeriesTypeSelectorComponent, MathjaxDirective, TranslocoPipe],
+  imports: [SegmentInputComponent, SeriesTypeSelectorComponent, MathjaxDirective, TranslocoPipe, MobileMathKeyboardComponent],
   templateUrl: './calculator-form.component.html',
 })
 export class CalculatorFormComponent {
   readonly store = inject(CalculatorStore);
+  readonly mqs = inject(MathquillService);
   private readonly intervalValidator = inject(LatexToMaximaService);
   private readonly destroyRef = inject(DestroyRef);
+
+  showKeyboard = false;
+
+  readonly keyGroups: KeyBtn[][] = [
+    [
+      { label: 'sin', typedText: 'sin(' },
+      { label: 'cos', typedText: 'cos(' },
+      { label: 'tan', typedText: 'tan(' },
+      { label: 'cot', typedText: 'cot(' },
+      { label: 'sec', typedText: 'sec(' },
+      { label: 'csc', typedText: 'csc(' },
+    ],
+    [
+      { label: 'asin', typedText: 'asin(' },
+      { label: 'acos', typedText: 'acos(' },
+      { label: 'atan', typedText: 'atan(' },
+      { label: 'acot', typedText: 'acot(' },
+      { label: 'asec', typedText: 'asec(' },
+      { label: 'acsc', typedText: 'acsc(' },
+    ],
+    [
+      { label: 'sinh', typedText: 'sinh(' },
+      { label: 'cosh', typedText: 'cosh(' },
+      { label: 'tanh', typedText: 'tanh(' },
+      { label: 'asinh', typedText: 'asinh(' },
+      { label: 'acosh', typedText: 'acosh(' },
+      { label: 'atanh', typedText: 'atanh(' },
+    ],
+    [
+      { label: 'log', typedText: 'log(' },
+      { label: 'ln', typedText: 'ln(' },
+      { label: 'exp', typedText: 'exp(' },
+      { label: '\\', typedText: '\\' },
+      { label: 'Γ(·)', write: '\\Gamma(' },
+      { label: 'n!', typedText: 'factorial(' },
+      { label: 'x!', typedText: '!' },
+      { label: '√·', cmd: '\\sqrt' },
+      { label: '|·|' },
+      { label: 'π', typedText: 'pi' },
+      { label: 'eˣ' },
+      { label: 'xⁿ', cmd: '^' },
+      { label: '(', typedText: '(' },
+      { label: ')', typedText: ')' },
+      { label: '−', write: '-' },
+      { label: '/', typedText: '/' },
+      { label: '⌫', keystroke: 'Backspace' },
+    ],
+  ];
 
   /** Per-segment continuity error key (amber border). null = ok. */
   readonly continuityErrors = signal<(string | null)[]>([null]);
