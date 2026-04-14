@@ -64,7 +64,6 @@ export class MathquillService {
 
   defaultConfig(): MathQuillConfig {
     return {
-      spaceBehavesLikeTab: true,
       autoCommands: 'pi theta sqrt sum int',
       autoOperatorNames:
         'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
@@ -72,7 +71,6 @@ export class MathquillService {
         'sen tg senh ctg arcsin arccos arctan ' +
         'gamma factorial ' +
         'delta sgn',
-      charsThatBreakOutOfSupSub: '+-*/=<>',
     };
   }
 

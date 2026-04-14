@@ -4,6 +4,7 @@ import {
   ElementRef,
   OnDestroy,
   ViewChild,
+  computed,
   effect,
   inject,
   input,
@@ -37,6 +38,7 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   readonly mqs = inject(MathquillService);
   readonly tex2max = inject(LatexToMaximaService);
   private readonly transloco = inject(TranslocoService);
+  private readonly elRef = inject(ElementRef<HTMLElement>);
 
   get activeFieldName(): string {
     if (this.focusedFieldIdx === 0) return `f(${this.store.intVar()})`;
@@ -61,6 +63,20 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
 
   // Guard against latex() setter triggering the edit handler
   private _syncingFromStore = false;
+  private readonly _pipeCapture = (e: KeyboardEvent) => {
+    if (e.key !== '|') return;
+    e.stopPropagation();
+    e.preventDefault();
+    const field = this.fields[this.focusedFieldIdx];
+    if (field) { field.write('\\operatorname{abs}\\left(\\right)'); field.keystroke('Left'); }
+  };
+
+  // Only the TeX display fields should trigger MathQuill sync — NOT expression/from/to (Maxima).
+  // If the effect read this.segment() directly, any backend Maxima update would re-run it and
+  // call field.latex() while the cursor is inside a superscript, ejecting it unexpectedly.
+  private readonly exprTex  = computed(() => this.segment().expressionTex);
+  private readonly fromTex_ = computed(() => this.segment().fromTex);
+  private readonly toTex_   = computed(() => this.segment().toTex);
 
   // One Subject per field — each emits the raw LaTeX string when the user types.
   // debounceTime + switchMap in ngAfterViewInit convert it to a Maxima string via API.
@@ -113,8 +129,8 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
       { label: '√·', cmd: '\\sqrt' },
       { label: '|·|', typedText: 'abs(' },
       { label: 'π', typedText: 'pi' },
-      { label: 'eˣ', typedText: 'e^' },
-      { label: 'xⁿ', typedText: '^' },
+      { label: 'eˣ' },
+      { label: 'xⁿ', cmd: '^' },
       { label: '(', typedText: '(' },
       { label: ')', typedText: ')' },
       { label: '−', write: '-' },
@@ -124,25 +140,31 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   ];
 
   constructor() {
-    // Sync MathQuill display whenever the store segment or intVar changes
+    // Sync MathQuill display whenever a TeX display field or intVar changes.
+    // Reading computed signals (exprTex/fromTex_/toTex_) instead of segment()
+    // directly prevents backend Maxima responses from triggering a re-sync that
+    // would eject the cursor from a superscript the user is actively editing.
     effect(() => {
-      this.store.intVar(); // subscribe so rename triggers sync
-      const seg = this.segment();
+      this.store.intVar(); // also re-sync when the integration variable is renamed
       const pairs: [number, string][] = [
-        [0, seg.expressionTex || ''],
-        [1, seg.fromTex || ''],
-        [2, seg.toTex || ''],
+        [0, this.exprTex()  || ''],
+        [1, this.fromTex_() || ''],
+        [2, this.toTex_()   || ''],
       ];
       this._syncingFromStore = true;
-      for (const [i, tex] of pairs) {
-        const f = this.fields[i];
-        if (f && f.latex() !== tex) f.latex(tex);
+      try {
+        for (const [i, tex] of pairs) {
+          const f = this.fields[i];
+          if (f && f.latex() !== tex) f.latex(tex);
+        }
+      } finally {
+        this._syncingFromStore = false;
       }
-      this._syncingFromStore = false;
     });
   }
 
   async ngAfterViewInit(): Promise<void> {
+    this.elRef.nativeElement.addEventListener('keypress', this._pipeCapture, true);
     const keys: Array<
       [0 | 1 | 2, keyof Omit<SegmentDraft, 'id'>, keyof Omit<SegmentDraft, 'id'>, string]
     > = [
@@ -200,6 +222,7 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.elRef.nativeElement.removeEventListener('keypress', this._pipeCapture, true);
     this._subs.unsubscribe();
     for (const s of this.fieldSubjects) s.complete();
     for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {
@@ -210,18 +233,11 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   // ── Actions ────────────────────────────────────────────────────────────────
 
   onKeyDown(e: KeyboardEvent): void {
-    if (e.key === '^') {
-      const field = this.fields[this.focusedFieldIdx];
-      if (field) {
-        e.preventDefault();
-        field.typedText('^');
-      }
-    } else if (e.key === '\\' || e.code === 'Backslash' || e.code === 'IntlBackslash') {
-      const field = this.fields[this.focusedFieldIdx];
-      if (field) {
-        e.preventDefault();
-        field.typedText('\\');
-      }
+    const field = this.fields[this.focusedFieldIdx];
+    if (!field) return;
+    if (e.key === '\\') {
+      e.preventDefault();
+      field.typedText('\\');
     }
   }
 
@@ -241,6 +257,16 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
     }
     if (btn.label === 'exp') {
       field.write('\\operatorname{exp}\\left(\\right)');
+      field.keystroke('Left');
+      return;
+    }
+    if (btn.label === 'eˣ') {
+      field.typedText('e');
+      field.cmd('^');
+      return;
+    }
+    if (btn.label === '|·|') {
+      field.write('\\operatorname{abs}\\left(\\right)');
       field.keystroke('Left');
       return;
     }

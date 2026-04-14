@@ -4,6 +4,7 @@ import {
   ElementRef,
   OnDestroy,
   ViewChild,
+  computed,
   effect,
   inject,
   input,
@@ -46,6 +47,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   readonly mqs = inject(MathquillService);
   readonly tex2max = inject(LatexToMaximaService);
   private readonly transloco = inject(TranslocoService);
+  private readonly elRef = inject(ElementRef<HTMLElement>);
 
   get activeFieldName(): string {
     if (this.focusedFieldIdx === 0) return `f(${this.intVar()})`;
@@ -70,6 +72,24 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   conversionErrors: [string | null, string | null, string | null] = [null, null, null];
   fields: [MathField | null, MathField | null, MathField | null] = [null, null, null];
   private _syncing = false;
+  // Intercept physical '|' in the keypress capture phase — before MathQuill's
+  // textarea handler can see it. MathQuill processes characters on keypress, so
+  // capture-phase stopPropagation here prevents the error
+  // "Pipe symbols may only be used with 'left' / 'right' delimiters".
+  private readonly _pipeCapture = (e: KeyboardEvent) => {
+    if (e.key !== '|') return;
+    e.stopPropagation();
+    e.preventDefault();
+    const field = this.fields[this.focusedFieldIdx];
+    if (field) { field.write('\\operatorname{abs}\\left(\\right)'); field.keystroke('Left'); }
+  };
+
+  // Only the TeX display fields should trigger MathQuill sync — NOT expression/from/to (Maxima).
+  // If the effect read this.segment() directly, any backend Maxima update would re-run it and
+  // call field.latex() while the cursor is inside a superscript, ejecting it unexpectedly.
+  private readonly exprTex  = computed(() => this.segment().expressionTex);
+  private readonly fromTex_ = computed(() => this.segment().fromTex);
+  private readonly toTex_   = computed(() => this.segment().toTex);
 
   private readonly fieldSubjects: [Subject<string>, Subject<string>, Subject<string>] = [
     new Subject<string>(),
@@ -127,8 +147,8 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
       { label: '√·', cmd: '\\sqrt' },
       { label: '|·|', typedText: 'abs(' },
       { label: 'π', typedText: 'pi' },
-      { label: 'eˣ', typedText: 'e^' },
-      { label: 'xⁿ', typedText: '^' },
+      { label: 'eˣ' },
+      { label: 'xⁿ', cmd: '^' },
       { label: '(', typedText: '(' },
       { label: ')', typedText: ')' },
       { label: '−', write: '-' },
@@ -139,22 +159,25 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      const seg = this.segment();
       const pairs: [number, string][] = [
-        [0, seg.expressionTex || ''],
-        [1, seg.fromTex || ''],
-        [2, seg.toTex || ''],
+        [0, this.exprTex()  || ''],
+        [1, this.fromTex_() || ''],
+        [2, this.toTex_()   || ''],
       ];
       this._syncing = true;
-      for (const [i, tex] of pairs) {
-        const f = this.fields[i];
-        if (f && f.latex() !== tex) f.latex(tex);
+      try {
+        for (const [i, tex] of pairs) {
+          const f = this.fields[i];
+          if (f && f.latex() !== tex) f.latex(tex);
+        }
+      } finally {
+        this._syncing = false;
       }
-      this._syncing = false;
     });
   }
 
   async ngAfterViewInit(): Promise<void> {
+    this.elRef.nativeElement.addEventListener('keypress', this._pipeCapture, true);
     type Key = [
       0 | 1 | 2,
       keyof Pick<TransformSegmentDraft, 'expression' | 'from' | 'to'>,
@@ -218,6 +241,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.elRef.nativeElement.removeEventListener('keypress', this._pipeCapture, true);
     this._subs.unsubscribe();
     for (const s of this.fieldSubjects) s.complete();
     for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {
@@ -226,18 +250,16 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
   }
 
   onKeyDown(e: KeyboardEvent): void {
-    if (e.key === '^') {
-      const field = this.fields[this.focusedFieldIdx];
-      if (field) {
-        e.preventDefault();
-        field.typedText('^');
-      }
-    } else if (e.key === '\\' || e.code === 'Backslash' || e.code === 'IntlBackslash') {
-      const field = this.fields[this.focusedFieldIdx];
-      if (field) {
-        e.preventDefault();
-        field.typedText('\\');
-      }
+    const field = this.fields[this.focusedFieldIdx];
+    if (!field) return;
+    // Do NOT intercept '^' here — MathQuill handles superscripts natively via
+    // keypress/input, which covers dead-key compositions (e.g. AltGr+^ on
+    // Spanish keyboards where keydown reports 'Dead', not '^').
+    // Intercepting it caused double-processing (keydown + keypress) that made
+    // the superscript toggle on and off intermittently.
+    if (e.key === '\\') {
+      e.preventDefault();
+      field.typedText('\\');
     }
   }
 
@@ -267,6 +289,16 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
     }
     if (btn.label === 'sgn') {
       field.write('\\operatorname{sgn}\\left(\\right)');
+      field.keystroke('Left');
+      return;
+    }
+    if (btn.label === 'eˣ') {
+      field.typedText('e');
+      field.cmd('^');
+      return;
+    }
+    if (btn.label === '|·|') {
+      field.write('\\operatorname{abs}\\left(\\right)');
       field.keystroke('Left');
       return;
     }
