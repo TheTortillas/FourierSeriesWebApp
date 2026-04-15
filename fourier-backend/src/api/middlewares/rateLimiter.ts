@@ -1,5 +1,6 @@
 import rateLimit from "express-rate-limit";
 import { config } from "../../config/env";
+import { logger } from "../../infrastructure/logging/logger";
 import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest } from "./authenticate";
 
@@ -75,18 +76,19 @@ function logRateLimitEvent(
   const identity = req.user?.id
     ? `user:${req.user.id}`
     : `ip:${req.ip ?? "unknown"}`;
-  const payload = {
-    event: "rate_limit_blocked",
-    bucket,
-    limiter,
-    method: req.method ?? "UNKNOWN",
-    endpoint: normalizeEndpoint(req),
-    identity,
-    retryAfterSeconds: retryAfter,
-    at: new Date().toISOString(),
-  };
 
-  console.warn(JSON.stringify(payload));
+  logger.warn(
+    {
+      event: "rate_limit_blocked",
+      bucket,
+      limiter,
+      method: req.method ?? "UNKNOWN",
+      endpoint: normalizeEndpoint(req),
+      identity,
+      retryAfterSeconds: retryAfter,
+    },
+    "Rate limit exceeded",
+  );
 }
 
 function rateLimitHandler(
