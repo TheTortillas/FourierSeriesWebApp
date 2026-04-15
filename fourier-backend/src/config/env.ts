@@ -13,11 +13,18 @@ function optionalEnv(key: string, defaultValue: string): string {
   return process.env[key] ?? defaultValue;
 }
 
+// Computed once so logging config can reference it without a circular dependency
+const isDevelopment = optionalEnv("NODE_ENV", "development") === "development";
+
 export const config = {
   server: {
     port: parseInt(optionalEnv("PORT", "3000")),
     nodeEnv: optionalEnv("NODE_ENV", "development"),
-    isDevelopment: optionalEnv("NODE_ENV", "development") === "development",
+    isDevelopment,
+  },
+  logging: {
+    /** Accepted values: trace | debug | info | warn | error | fatal */
+    level: optionalEnv("LOG_LEVEL", isDevelopment ? "debug" : "info"),
   },
   maxima: {
     timeoutMs: parseInt(optionalEnv("MAXIMA_TIMEOUT_MS", "15000")),

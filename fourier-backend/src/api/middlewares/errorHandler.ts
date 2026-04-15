@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { config } from "../../config/env";
+import { logger } from "../../infrastructure/logging/logger";
 
 export function errorHandler(
   err: Error,
@@ -7,7 +8,7 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
-  console.error(err.stack);
+  logger.error({ err }, "Unhandled error");
 
   if (config.server.isDevelopment) {
     res.status(500).json({ error: err.message });

@@ -2,6 +2,7 @@ import express, { Application } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import pinoHttp from "pino-http";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./api/swagger";
 import { fourierRouter } from "./api/routes/fourier.routes";
@@ -9,6 +10,7 @@ import { dftRouter } from "./api/routes/dft.routes";
 import { simplifyRouter } from "./api/routes/simplify.routes";
 import { transformsRouter } from "./api/routes/transforms.routes";
 import { cacheRouter } from "./api/routes/cache.routes";
+import { healthRouter } from "./api/routes/health.routes";
 import { errorHandler } from "./api/middlewares/errorHandler";
 import {
   generalLimiter,
@@ -26,6 +28,7 @@ import { historyRouter } from "./api/routes/history.routes";
 import { parseRouter } from "./api/routes/parse.routes";
 import { adminRouter } from "./api/routes/admin.routes";
 import { config } from "./config/env";
+import { logger } from "./infrastructure/logging/logger";
 
 export function createApp(): Application {
   const app = express();
@@ -41,6 +44,23 @@ export function createApp(): Application {
   );
   app.use(cookieParser());
   app.use(express.json());
+
+  // ── HTTP request logging ────────────────────────────────────────────────────
+  // Skip /health to avoid flooding logs with uptime-monitor pings.
+  app.use(
+    pinoHttp({
+      logger,
+      autoLogging: { ignore: (req) => req.url === "/health" },
+      customLogLevel: (_req, res) => {
+        if (res.statusCode >= 500) return "error";
+        if (res.statusCode >= 400) return "warn";
+        return "info";
+      },
+    }),
+  );
+
+  // ── Health endpoint — no auth, no rate limit ────────────────────────────────
+  app.use("/health", healthRouter);
 
   app.use(generalLimiter);
 
