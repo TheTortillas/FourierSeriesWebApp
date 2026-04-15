@@ -557,10 +557,18 @@
           <!-- Series formula -->
           @if (composedSeriesTex()) {
             <div class="px-4 pt-4 pb-2">
-              <p class="text-[10px] font-mono text-muted dark:text-dark-muted mb-1.5">
-                {{ 'resultPanel.fourierSeries' | transloco }}
-              </p>
+              <div class="flex items-center justify-between mb-1.5">
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                  {{ 'resultPanel.fourierSeries' | transloco }}
+                </p>
+                <app-export-button
+                  [tex]="composedSeriesTex() ?? ''"
+                  [mathEl]="seriesFormulaEl"
+                  filename="fourier-series"
+                />
+              </div>
               <div
+                #seriesFormulaEl
                 class="overflow-x-auto text-ink dark:text-dark-ink"
                 [mathjax]="'\\[' + composedSeriesTex() + '\\]'"
               ></div>
@@ -665,51 +673,62 @@
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">ω₀ =</span>
                 <span
+                  #w0El
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.w0"
                 ></span>
+                <app-export-button [tex]="activeCoeffTex()!.w0" [mathEl]="w0El" filename="fourier-w0" />
               </div>
             }
             @if (a0DisplayTex(); as a0Tex) {
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">a₀ =</span>
-                <span class="text-ink dark:text-dark-ink text-sm" [mathjax]="a0Tex"></span>
+                <span #a0El class="text-ink dark:text-dark-ink text-sm" [mathjax]="a0Tex"></span>
+                <app-export-button [tex]="a0Tex" [mathEl]="a0El" filename="fourier-a0" />
               </div>
             }
             @if (activeCoeffTex()!.an) {
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">aₙ =</span>
                 <span
+                  #anEl
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.an"
                 ></span>
+                <app-export-button [tex]="activeCoeffTex()!.an ?? ''" [mathEl]="anEl" filename="fourier-an" />
               </div>
             }
             @if (activeCoeffTex()!.bn) {
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">bₙ =</span>
                 <span
+                  #bnEl
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.bn"
                 ></span>
+                <app-export-button [tex]="activeCoeffTex()!.bn ?? ''" [mathEl]="bnEl" filename="fourier-bn" />
               </div>
             }
             @if (activeCoeffTex()!.c0) {
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">c₀ =</span>
                 <span
+                  #c0El
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.c0"
                 ></span>
+                <app-export-button [tex]="activeCoeffTex()!.c0 ?? ''" [mathEl]="c0El" filename="fourier-c0" />
               </div>
             }
             @if (activeCoeffTex()!.cn) {
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">cₙ =</span>
                 <span
+                  #cnEl
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.cn"
                 ></span>
+                <app-export-button [tex]="activeCoeffTex()!.cn ?? ''" [mathEl]="cnEl" filename="fourier-cn" />
               </div>
             }
           </div>

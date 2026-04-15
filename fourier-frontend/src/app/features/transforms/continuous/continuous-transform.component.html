@@ -1014,14 +1014,16 @@
                 >
                   {{ 'transforms.fullTransform' | transloco }}
                 </span>
-                <div class="flex items-baseline gap-2 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">
                     F({{ resultVarDisplay() }}) =
                   </span>
                   <span
+                    #ftMainEl
                     [mathjax]="display(res.F!.tex)"
                     class="text-ink dark:text-dark-ink overflow-x-auto"
                   ></span>
+                  <app-export-button [tex]="res.F!.tex" [mathEl]="ftMainEl" filename="fourier-transform" />
                 </div>
               </div>
             }
@@ -1037,10 +1039,14 @@
                     <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
                     {{ 'transforms.realPart' | transloco }}
                   </span>
-                  <span
-                    [mathjax]="display(res.realPart!.tex)"
-                    class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                  ></span>
+                  <div class="flex items-center gap-2">
+                    <span
+                      #ftRealEl
+                      [mathjax]="display(res.realPart!.tex)"
+                      class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                    ></span>
+                    <app-export-button [tex]="res.realPart!.tex" [mathEl]="ftRealEl" filename="fourier-transform-real" />
+                  </div>
                 </div>
               }
               @if (res.imagPart?.tex) {
@@ -1053,10 +1059,14 @@
                     <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
                     {{ 'transforms.imagPart' | transloco }}
                   </span>
-                  <span
-                    [mathjax]="display(res.imagPart!.tex)"
-                    class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                  ></span>
+                  <div class="flex items-center gap-2">
+                    <span
+                      #ftImagEl
+                      [mathjax]="display(res.imagPart!.tex)"
+                      class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                    ></span>
+                    <app-export-button [tex]="res.imagPart!.tex" [mathEl]="ftImagEl" filename="fourier-transform-imag" />
+                  </div>
                 </div>
               }
             </div>
@@ -1094,10 +1104,14 @@
               </span>
 
               @if (res.fCombined) {
-                <span
-                  [mathjax]="display(res.fCombined.tex)"
-                  class="text-ink dark:text-dark-ink overflow-x-auto"
-                ></span>
+                <div class="flex items-center gap-2">
+                  <span
+                    #iftCombinedEl
+                    [mathjax]="display(res.fCombined.tex)"
+                    class="text-ink dark:text-dark-ink overflow-x-auto"
+                  ></span>
+                  <app-export-button [tex]="res.fCombined.tex" [mathEl]="iftCombinedEl" filename="inverse-fourier-transform" />
+                </div>
               } @else {
                 @if (res.fPositive) {
                   <div
@@ -1106,10 +1120,14 @@
                     <span class="text-xs font-mono text-accent"
                       >{{ resultVarDisplay() }} &gt; 0</span
                     >
-                    <span
-                      [mathjax]="display(res.fPositive.tex)"
-                      class="text-ink dark:text-dark-ink overflow-x-auto"
-                    ></span>
+                    <div class="flex items-center gap-2">
+                      <span
+                        #iftPosEl
+                        [mathjax]="display(res.fPositive.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto"
+                      ></span>
+                      <app-export-button [tex]="res.fPositive.tex" [mathEl]="iftPosEl" filename="ift-positive" />
+                    </div>
                   </div>
                 }
                 @if (res.fNegative) {
@@ -1119,10 +1137,14 @@
                     <span class="text-xs font-mono text-accent"
                       >{{ resultVarDisplay() }} &lt; 0</span
                     >
-                    <span
-                      [mathjax]="display(res.fNegative.tex)"
-                      class="text-ink dark:text-dark-ink overflow-x-auto"
-                    ></span>
+                    <div class="flex items-center gap-2">
+                      <span
+                        #iftNegEl
+                        [mathjax]="display(res.fNegative.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto"
+                      ></span>
+                      <app-export-button [tex]="res.fNegative.tex" [mathEl]="iftNegEl" filename="ift-negative" />
+                    </div>
                   </div>
                 }
               }
