@@ -55,12 +55,20 @@
           <!-- Live f(x) preview -->
         @if (previewLatex()) {
           <div
-            class="rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto flex items-center justify-center min-h-12"
+            class="relative rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto flex items-center justify-center min-h-12"
           >
             <span
+              #transformPreviewEl
               class="text-ink dark:text-dark-ink text-base block"
               [mathjax]="'\\[' + previewLatex() + '\\]'"
             ></span>
+            <div class="absolute top-1.5 right-1.5">
+              <app-export-button
+                [tex]="previewLatex() ?? ''"
+                [mathEl]="transformPreviewEl"
+                filename="fourier-function"
+              />
+            </div>
           </div>
         }
 

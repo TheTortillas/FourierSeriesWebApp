@@ -9,10 +9,11 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { LatexToMaximaService } from '../../../../core/services/math/latex-to-maxima.service';
 import { MathquillService, KeyBtn } from '../../../../core/services/math/mathquill.service';
 import { MobileMathKeyboardComponent } from '../../../../shared/components/math-keyboard/mobile-math-keyboard.component';
+import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button.component';
 
 @Component({
   selector: 'app-calculator-form',
-  imports: [SegmentInputComponent, SeriesTypeSelectorComponent, MathjaxDirective, TranslocoPipe, MobileMathKeyboardComponent],
+  imports: [SegmentInputComponent, SeriesTypeSelectorComponent, MathjaxDirective, TranslocoPipe, MobileMathKeyboardComponent, ExportButtonComponent],
   templateUrl: './calculator-form.component.html',
 })
 export class CalculatorFormComponent {

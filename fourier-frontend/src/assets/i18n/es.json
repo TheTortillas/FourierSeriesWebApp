@@ -16,7 +16,11 @@
     "explore": "Explorar",
     "copy": "Copiar",
     "copied": "Copiado",
-    "copiedMessage": "Copiado al portapapeles"
+    "copiedMessage": "Copiado al portapapeles",
+    "export": "Exportar",
+    "copyLatex": "Copiar LaTeX",
+    "downloadSvg": "Descargar SVG",
+    "downloadPng": "Descargar PNG"
   },
   "nav": {
     "fourierAnalysis": "Análisis de Fourier",

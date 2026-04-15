@@ -7,11 +7,13 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { PlatformService } from '../../../core/services/platform/platform.service';
 
 @Component({
   selector: 'app-export-button',
   templateUrl: './export-button.component.html',
+  imports: [TranslocoPipe],
 })
 export class ExportButtonComponent implements OnInit, OnDestroy {
   private readonly platform = inject(PlatformService);
