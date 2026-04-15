@@ -33,6 +33,7 @@ import { SpectrumChartComponent } from '../../../../shared/components/spectrum-c
 import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
 import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
+import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button.component';
 
 /** Cycling hue palette for individual harmonics */
 interface SeriesColorPreset {
@@ -118,6 +119,7 @@ function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorP
     ParamSlidersComponent,
     SpectrumChartComponent,
     TranslocoPipe,
+    ExportButtonComponent,
   ],
   templateUrl: './results-summary.component.html',
 })

@@ -16,7 +16,11 @@
     "explore": "Explore",
     "copy": "Copy",
     "copied": "Copied",
-    "copiedMessage": "Copied to clipboard"
+    "copiedMessage": "Copied to clipboard",
+    "export": "Export",
+    "copyLatex": "Copy LaTeX",
+    "downloadSvg": "Download SVG",
+    "downloadPng": "Download PNG"
   },
   "nav": {
     "fourierAnalysis": "Fourier Analysis",

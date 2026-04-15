@@ -46,6 +46,7 @@ import { TransformSegmentComponent, TransformSegmentDraft } from './transform-se
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 import { MathquillService, KeyBtn } from '../../../core/services/math/mathquill.service';
 import { MobileMathKeyboardComponent } from '../../../shared/components/math-keyboard/mobile-math-keyboard.component';
+import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
@@ -167,6 +168,7 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     RouterLinkActive,
     TranslocoPipe,
     MobileMathKeyboardComponent,
+    ExportButtonComponent,
   ],
 })
 export class ContinuousTransformComponent implements OnInit {
