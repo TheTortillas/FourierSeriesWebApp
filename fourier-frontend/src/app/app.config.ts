@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
@@ -9,6 +9,7 @@ import { environment } from '../environments/environment';
 import { TranslocoHttpLoader } from './core/services/transloco-http-loader';
 import { tokenInterceptor } from './core/interceptors/token.interceptor';
 import { SUPPORTED_LANG_CODES, DEFAULT_LANG } from './core/config/languages';
+import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -32,6 +33,10 @@ export const appConfig: ApplicationConfig = {
         prodMode: environment.production,
       },
       loader: TranslocoHttpLoader,
+    }),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
     }),
   ],
 };
