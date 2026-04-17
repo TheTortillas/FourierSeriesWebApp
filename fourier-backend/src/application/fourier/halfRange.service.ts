@@ -46,7 +46,7 @@ export class HalfRangeService {
 
   async calculate(input: PiecewiseFourierInput): Promise<HalfRangeResult> {
     const cacheKey = buildCacheKey(input);
-    const cached = getFromCache(cacheKey);
+    const cached = await getFromCache(cacheKey);
     if (cached) return cached as HalfRangeResult;
 
     const startTime = Date.now();
@@ -136,7 +136,7 @@ kill(all)$
       executionTimeMs: Date.now() - startTime,
     };
 
-    setInCache(cacheKey, halfRangeResult);
+    void setInCache(cacheKey, halfRangeResult);
     return halfRangeResult;
   }
 

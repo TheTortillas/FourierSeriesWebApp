@@ -55,10 +55,11 @@ async function checkDatabase(): Promise<
 healthRouter.get("/", async (_req: Request, res: Response): Promise<void> => {
   const [database] = await Promise.all([checkDatabase()]);
 
-  const cacheStats = getCacheStats();
+  const cacheStats = await getCacheStats();
   const cache: HealthResponse["components"]["cache"] = {
-    status: "ok",
-    ...cacheStats,
+    status: cacheStats.connected ? "ok" : "degraded",
+    size: cacheStats.size,
+    max: cacheStats.max,
   };
 
   const overallStatus: ComponentStatus =

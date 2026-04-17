@@ -45,11 +45,8 @@ export class TrigonometricService {
 
   async calculate(input: PiecewiseFourierInput): Promise<FourierResult> {
     const cacheKey = buildCacheKey(input);
-    const cached = getFromCache(cacheKey);
-    if (cached) {
-      //console.log(`Cache hit: ${cacheKey} at ${Date.now()}`);
-      return cached as FourierResult;
-    }
+    const cached = await getFromCache(cacheKey);
+    if (cached) return cached as FourierResult;
     const startTime = Date.now();
     const intVar = input.intVar ?? "x";
 
@@ -140,11 +137,11 @@ kill(all)$
       (parsed["bn"] && this.postProcessor.canProcess(parsed["bn"]))
     ) {
       const processed = await this.postProcessor.process(fourierResult);
-      setInCache(cacheKey, processed);
+      void setInCache(cacheKey, processed);
       return processed;
     }
 
-    setInCache(cacheKey, fourierResult);
+    void setInCache(cacheKey, fourierResult);
     return fourierResult;
   }
 

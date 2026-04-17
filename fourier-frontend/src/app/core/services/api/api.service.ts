@@ -42,6 +42,7 @@ import {
   AdminHistoryQuery,
   SystemStats,
   RateLimitMetricsSnapshot,
+  CacheStats,
   // Common
   PaginatedResponse,
 } from '../../../domain';
@@ -300,5 +301,15 @@ export class ApiService {
 
   getRateLimitMetrics(): Observable<RateLimitMetricsSnapshot> {
     return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
+  }
+
+  // ─── Cache ───────────────────────────────────────────────────────────────
+
+  getCacheStats(): Observable<CacheStats> {
+    return this.http.get<CacheStats>(`${this.base}/cache/stats`);
+  }
+
+  clearCache(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/cache/clear`, {});
   }
 }

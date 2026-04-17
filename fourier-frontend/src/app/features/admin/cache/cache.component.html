@@ -1,0 +1,203 @@
+<div class="p-6 flex flex-col gap-6 max-w-2xl">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="font-display text-xl text-ink dark:text-dark-ink">Caché</h1>
+      <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">
+        Gestión del caché de cálculos simbólicos
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="load()"
+      [disabled]="loading()"
+      class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        [class.animate-spin]="loading()">
+        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+        <path d="M21 3v5h-5"/>
+      </svg>
+      Refrescar
+    </button>
+  </div>
+
+  <!-- ── Error ──────────────────────────────────────────────────────────── -->
+  @if (error()) {
+    <div class="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 px-4 py-3">
+      <p class="text-sm font-mono text-red-600 dark:text-red-400">No se pudieron cargar las estadísticas del caché.</p>
+    </div>
+  }
+
+  <!-- ── Loading skeleton ───────────────────────────────────────────────── -->
+  @if (loading() && !stats()) {
+    <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-5 flex flex-col gap-4 animate-pulse">
+      <div class="h-4 w-32 rounded bg-paper dark:bg-dark-bg"></div>
+      <div class="h-3 w-full rounded bg-paper dark:bg-dark-bg"></div>
+      <div class="h-3 w-3/4 rounded bg-paper dark:bg-dark-bg"></div>
+    </div>
+  }
+
+  <!-- ── Stats card ─────────────────────────────────────────────────────── -->
+  @if (stats(); as s) {
+    <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
+
+      <!-- Backend badge row -->
+      <div class="px-5 py-4 border-b border-border dark:border-dark-border flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-3">
+          <!-- Backend icon -->
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+            [class]="s.backend === 'redis' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-accent/10'">
+            @if (s.backend === 'redis') {
+              <!-- Redis bolt icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500 dark:text-red-400" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+            } @else {
+              <!-- LRU memory icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2"/>
+                <path d="M8 21h8M12 17v4"/>
+              </svg>
+            }
+          </div>
+          <div>
+            <p class="text-sm font-mono font-semibold text-ink dark:text-dark-ink">
+              {{ s.backend === 'redis' ? 'Redis' : 'LRU en memoria' }}
+            </p>
+            <p class="text-xs font-mono text-muted dark:text-dark-muted">
+              versión {{ s.version }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Connection status -->
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full inline-block"
+            [class]="s.connected ? 'bg-green-500' : 'bg-red-500'">
+          </span>
+          <span class="text-xs font-mono"
+            [class]="s.connected ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'">
+            {{ s.connected ? 'Conectado' : 'Sin conexión' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Metrics grid -->
+      <div class="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+
+        <!-- Entries -->
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">Entradas</span>
+          <span class="text-2xl font-mono font-semibold text-ink dark:text-dark-ink">{{ s.size }}</span>
+          @if (s.max > 0) {
+            <span class="text-xs font-mono text-muted dark:text-dark-muted">máx. {{ s.max }}</span>
+          } @else {
+            <span class="text-xs font-mono text-muted dark:text-dark-muted">sin límite</span>
+          }
+        </div>
+
+        <!-- TTL -->
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">TTL</span>
+          @if (s.ttlDays > 0) {
+            <span class="text-2xl font-mono font-semibold text-ink dark:text-dark-ink">{{ s.ttlDays }}</span>
+            <span class="text-xs font-mono text-muted dark:text-dark-muted">días por entrada</span>
+          } @else {
+            <span class="text-2xl font-mono font-semibold text-muted dark:text-dark-muted">—</span>
+            <span class="text-xs font-mono text-muted dark:text-dark-muted">sin expiración</span>
+          }
+        </div>
+
+        <!-- Backend -->
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">Backend</span>
+          <span class="text-2xl font-mono font-semibold text-ink dark:text-dark-ink uppercase">{{ s.backend }}</span>
+          <span class="text-xs font-mono text-muted dark:text-dark-muted">motor activo</span>
+        </div>
+      </div>
+
+      <!-- LRU fill bar (only when max is known) -->
+      @if (s.max > 0) {
+        <div class="px-5 pb-4">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-mono text-muted dark:text-dark-muted">Ocupación</span>
+            <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">{{ fillPct(s) }}%</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-paper dark:bg-dark-bg overflow-hidden">
+            <div
+              class="h-2 rounded-full transition-all duration-500"
+              [class]="fillBarClass(fillPct(s))"
+              [style.width.%]="fillPct(s)"
+            ></div>
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- ── Actions ──────────────────────────────────────────────────────── -->
+    <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-5 flex flex-col gap-3">
+      <h2 class="text-xs font-mono font-semibold uppercase tracking-wider text-muted dark:text-dark-muted">Acciones</h2>
+
+      <!-- Cleared feedback -->
+      @if (cleared()) {
+        <div class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 px-4 py-2.5 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+          <span class="text-sm font-mono text-green-700 dark:text-green-400">Caché limpiado correctamente.</span>
+        </div>
+      }
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <!-- Clear button -->
+        @if (!confirmOpen()) {
+          <button
+            type="button"
+            (click)="openConfirm()"
+            [disabled]="clearing() || s.size === 0"
+            class="flex items-center gap-1.5 px-4 py-2 rounded border border-red-300 dark:border-red-700 text-sm font-mono text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            @if (clearing()) {
+              Limpiando…
+            } @else {
+              Limpiar caché
+              @if (s.size > 0) { <span class="text-xs opacity-60">({{ s.size }})</span> }
+            }
+          </button>
+        }
+
+        <!-- Confirm row -->
+        @if (confirmOpen()) {
+          <div class="flex items-center gap-2 px-4 py-2 rounded border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/20">
+            <span class="text-xs font-mono text-red-700 dark:text-red-400">¿Confirmar? Esta acción no se puede deshacer.</span>
+            <button
+              type="button"
+              (click)="confirmClear()"
+              class="px-3 py-1 rounded bg-red-600 text-white text-xs font-mono hover:bg-red-700 transition-colors cursor-pointer"
+            >Sí, limpiar</button>
+            <button
+              type="button"
+              (click)="cancelConfirm()"
+              class="px-3 py-1 rounded border border-red-300 dark:border-red-700 text-xs font-mono text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+            >Cancelar</button>
+          </div>
+        }
+      </div>
+
+      <p class="text-[11px] font-mono text-muted dark:text-dark-muted leading-relaxed">
+        Limpiar el caché fuerza que la próxima vez que se calcule cualquier función,
+        Maxima lo procese desde cero. Útil tras actualizar los scripts de cálculo.
+      </p>
+    </section>
+  }
+</div>
