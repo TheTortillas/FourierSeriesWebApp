@@ -1239,6 +1239,73 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── k/((iw+a)^2+b^2) -> k*e^{-at}*sin(bt)*u(t)/b  (a,b > 0) ──
+       La expansión real de (iw+a)^2+b^2 = -w^2 + 2iaw + a^2+b^2
+       tiene coeficiente -1 para w^2, no +1 como asumen los patrones
+       anteriores. Estos patrones correctos cubren el caso simbólico. */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [num6, den6, d2_6, d1_6, d0_6, aa6, bb6sq, bb6, kk6],
+            num6: part(er, 1),
+            den6: rat(expand(part(er, 2))),
+            if freeof(w_var, num6) and not freeof(w_var, den6) then (
+                d2_6: ratsimp(diff(den6, w_var, 2) / 2),
+                /* coef de w^2 debe ser -1 */
+                if ratsimp(d2_6 + 1) = 0 then (
+                    d1_6: ratsimp(diff(den6, w_var) + 2*w_var),
+                    d0_6: ratsimp(subst(w_var=0, den6)),
+                    aa6: ratsimp(d1_6 / (2*%i)),
+                    if freeof(w_var, aa6) and is(aa6 > 0) then (
+                        bb6sq: ratsimp(d0_6 - aa6^2),
+                        if is(bb6sq > 0) then (
+                            bb6: sqrt(bb6sq),
+                            if freeof(w_var, bb6) and is(bb6 > 0) then (
+                                kk6: ratsimp(num6 / bb6),
+                                res: [kk6 * exp(-aa6*t_var) * sin(bb6*t_var) * u(t_var),
+                                      concat("k/((iw+a)^2+b^2) -> k*e^{-at}sin(bt)u(t)/b, a=",
+                                             string(aa6), ", b=", string(bb6))]
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── (iw+a)/((iw+a)^2+b^2) -> e^{-at}*cos(bt)*u(t)  (a,b > 0) ──
+       Misma corrección: coef -1 para w^2 en el denominador.          */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [num7, den7, nc1_7, nc0_7, d2_7, d1_7, d0_7, aa7, bb7sq, bb7, kk7],
+            num7: rat(expand(part(er, 1))),
+            den7: rat(expand(part(er, 2))),
+            if not freeof(w_var, num7) and not freeof(w_var, den7) then (
+                nc1_7: ratsimp(diff(num7, w_var)),
+                nc0_7: ratsimp(subst(w_var=0, num7)),
+                if ratsimp(nc1_7 - %i) = 0 and freeof(w_var, nc0_7) then (
+                    aa7: nc0_7,
+                    if is(aa7 > 0) then (
+                        d2_7: ratsimp(diff(den7, w_var, 2) / 2),
+                        if ratsimp(d2_7 + 1) = 0 then (
+                            d1_7: ratsimp(diff(den7, w_var) + 2*w_var),
+                            d0_7: ratsimp(subst(w_var=0, den7)),
+                            if ratsimp(d1_7 / (2*%i) - aa7) = 0 then (
+                                bb7sq: ratsimp(d0_7 - aa7^2),
+                                if is(bb7sq > 0) then (
+                                    bb7: sqrt(bb7sq),
+                                    if freeof(w_var, bb7) and is(bb7 > 0) then
+                                        res: [exp(-aa7*t_var) * cos(bb7*t_var) * u(t_var),
+                                              concat("(iw+a)/((iw+a)^2+b^2) -> e^{-at}cos(bt)u(t), a=",
+                                                     string(aa7), ", b=", string(bb7))]
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── (pi/a)*e^{-a|w|} -> 1/(a^2+t^2)  (a > 0) ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "*") then block(
@@ -1501,10 +1568,30 @@ FT(FUNC_INPUT, t_var, w_var) := block(
                 all_ok: false
             )
             else if not FT_is_inf(b_tr) and not FT_is_minf(a_tr) then (
-                contrib2: FT_raw(f_tr, t_var, w_var, a_tr, b_tr),
-                if contrib2 = 'failed
-                then all_ok: false
-                else (F_acum2: F_acum2 + contrib2, processed: processed + 1)
+                /* Si el tramo contiene abs(), expandirlo antes de integrar.
+                   FT_raw no puede integrar abs(t) directamente y devuelve
+                   una integral sin evaluar (no el sentinel 'failed), lo que
+                   falsamente marca el tramo como procesado.                 */
+                if not freeof('abs, f_tr) then block(
+                    [abs_pieces, ok_abs],
+                    abs_pieces: FT_expand_abs([f_tr, a_tr, b_tr], t_var),
+                    ok_abs: true,
+                    for piece in abs_pieces do block(
+                        [c3],
+                        c3: FT_raw(piece[1], t_var, w_var, piece[2], piece[3]),
+                        if c3 = 'failed or not FT_exists(c3)
+                        then ok_abs: false
+                        else F_acum2: F_acum2 + c3
+                    ),
+                    if ok_abs then processed: processed + 1
+                    else all_ok: false
+                )
+                else (
+                    contrib2: FT_raw(f_tr, t_var, w_var, a_tr, b_tr),
+                    if contrib2 = 'failed or not FT_exists(contrib2)
+                    then all_ok: false
+                    else (F_acum2: F_acum2 + contrib2, processed: processed + 1)
+                )
             )
             /* tramos con f=0 cuentan como procesados */
             else if equal(f_tr, 0) then processed: processed + 1
