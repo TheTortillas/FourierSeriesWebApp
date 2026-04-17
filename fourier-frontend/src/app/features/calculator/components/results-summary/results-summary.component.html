@@ -677,14 +677,14 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.w0"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.w0" [mathEl]="w0El" filename="fourier-w0" />
+                <app-export-button [tex]="activeCoeffTex()!.w0" [maxima]="coeffMaxima()?.w0 ?? undefined" [mathEl]="w0El" filename="fourier-w0" />
               </div>
             }
             @if (a0DisplayTex(); as a0Tex) {
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">a₀ =</span>
                 <span #a0El class="text-ink dark:text-dark-ink text-sm" [mathjax]="a0Tex"></span>
-                <app-export-button [tex]="a0Tex" [mathEl]="a0El" filename="fourier-a0" />
+                <app-export-button [tex]="a0Tex" [maxima]="coeffMaxima()?.a0 ?? undefined" [mathEl]="a0El" filename="fourier-a0" />
               </div>
             }
             @if (activeCoeffTex()!.an) {
@@ -695,7 +695,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.an"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.an ?? ''" [mathEl]="anEl" filename="fourier-an" />
+                <app-export-button [tex]="activeCoeffTex()!.an ?? ''" [maxima]="coeffMaxima()?.an ?? undefined" [mathEl]="anEl" filename="fourier-an" />
               </div>
             }
             @if (activeCoeffTex()!.bn) {
@@ -706,7 +706,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.bn"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.bn ?? ''" [mathEl]="bnEl" filename="fourier-bn" />
+                <app-export-button [tex]="activeCoeffTex()!.bn ?? ''" [maxima]="coeffMaxima()?.bn ?? undefined" [mathEl]="bnEl" filename="fourier-bn" />
               </div>
             }
             @if (activeCoeffTex()!.c0) {
@@ -717,7 +717,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.c0"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.c0 ?? ''" [mathEl]="c0El" filename="fourier-c0" />
+                <app-export-button [tex]="activeCoeffTex()!.c0 ?? ''" [maxima]="coeffMaxima()?.c0 ?? undefined" [mathEl]="c0El" filename="fourier-c0" />
               </div>
             }
             @if (activeCoeffTex()!.cn) {
@@ -728,7 +728,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.cn"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.cn ?? ''" [mathEl]="cnEl" filename="fourier-cn" />
+                <app-export-button [tex]="activeCoeffTex()!.cn ?? ''" [maxima]="coeffMaxima()?.cn ?? undefined" [mathEl]="cnEl" filename="fourier-cn" />
               </div>
             }
           </div>

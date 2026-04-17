@@ -18,9 +18,14 @@
     "copied": "Copied",
     "copiedMessage": "Copied to clipboard",
     "export": "Export",
+    "viewExpression": "View expression",
     "copyLatex": "Copy LaTeX",
+    "copyMaxima": "Copy Maxima",
     "downloadSvg": "Download SVG",
-    "downloadPng": "Download PNG"
+    "downloadPng": "Download PNG",
+    "latex": "LaTeX",
+    "maxima": "Maxima",
+    "close": "Close"
   },
   "nav": {
     "fourierAnalysis": "Fourier Analysis",

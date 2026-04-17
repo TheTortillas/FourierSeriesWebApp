@@ -18,9 +18,14 @@
     "copied": "Copiado",
     "copiedMessage": "Copiado al portapapeles",
     "export": "Exportar",
+    "viewExpression": "Ver expresión",
     "copyLatex": "Copiar LaTeX",
+    "copyMaxima": "Copiar Maxima",
     "downloadSvg": "Descargar SVG",
-    "downloadPng": "Descargar PNG"
+    "downloadPng": "Descargar PNG",
+    "latex": "LaTeX",
+    "maxima": "Maxima",
+    "close": "Cerrar"
   },
   "nav": {
     "fourierAnalysis": "Análisis de Fourier",

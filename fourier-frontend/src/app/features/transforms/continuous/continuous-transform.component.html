@@ -47,12 +47,7 @@
     <!-- ── Left panel: controls ──────────────────────────────────────────── -->
     <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto">
       <div class="p-5 flex flex-col gap-5">
-        <div
-          class="flex flex-col gap-5"
-          [class.pointer-events-none]="inputsLocked()"
-          [class.opacity-70]="inputsLocked()"
-        >
-          <!-- Live f(x) preview -->
+        <!-- Live f(x) preview — outside locking wrapper so it stays interactive during calculation -->
         @if (previewLatex()) {
           <div
             class="relative rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto flex items-center justify-center min-h-12"
@@ -72,6 +67,11 @@
           </div>
         }
 
+        <div
+          class="flex flex-col gap-5"
+          [class.pointer-events-none]="inputsLocked()"
+          [class.opacity-70]="inputsLocked()"
+        >
         <!-- Segments + Variables (sección unificada) -->
         <section class="flex flex-col gap-3">
           <!-- Header: título + botón teclado -->
@@ -336,7 +336,7 @@
         <button
           type="button"
           (click)="startNewCalculation()"
-          class="w-full py-1.5 rounded border border-border dark:border-dark-border text-xs text-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors cursor-pointer font-mono"
+          class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold"
         >
           {{ 'transforms.newCalculation' | transloco }}
         </button>
@@ -1031,7 +1031,7 @@
                     [mathjax]="display(res.F!.tex)"
                     class="text-ink dark:text-dark-ink overflow-x-auto"
                   ></span>
-                  <app-export-button [tex]="res.F!.tex" [mathEl]="ftMainEl" filename="fourier-transform" />
+                  <app-export-button [tex]="res.F!.tex" [maxima]="res.F!.maxima" [mathEl]="ftMainEl" filename="fourier-transform" />
                 </div>
               </div>
             }
@@ -1053,7 +1053,7 @@
                       [mathjax]="display(res.realPart!.tex)"
                       class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
                     ></span>
-                    <app-export-button [tex]="res.realPart!.tex" [mathEl]="ftRealEl" filename="fourier-transform-real" />
+                    <app-export-button [tex]="res.realPart!.tex" [maxima]="res.realPart!.maxima" [mathEl]="ftRealEl" filename="fourier-transform-real" />
                   </div>
                 </div>
               }
@@ -1073,7 +1073,7 @@
                       [mathjax]="display(res.imagPart!.tex)"
                       class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
                     ></span>
-                    <app-export-button [tex]="res.imagPart!.tex" [mathEl]="ftImagEl" filename="fourier-transform-imag" />
+                    <app-export-button [tex]="res.imagPart!.tex" [maxima]="res.imagPart!.maxima" [mathEl]="ftImagEl" filename="fourier-transform-imag" />
                   </div>
                 </div>
               }
@@ -1118,7 +1118,7 @@
                     [mathjax]="display(res.fCombined.tex)"
                     class="text-ink dark:text-dark-ink overflow-x-auto"
                   ></span>
-                  <app-export-button [tex]="res.fCombined.tex" [mathEl]="iftCombinedEl" filename="inverse-fourier-transform" />
+                  <app-export-button [tex]="res.fCombined.tex" [maxima]="res.fCombined.maxima" [mathEl]="iftCombinedEl" filename="inverse-fourier-transform" />
                 </div>
               } @else {
                 @if (res.fPositive) {
@@ -1134,7 +1134,7 @@
                         [mathjax]="display(res.fPositive.tex)"
                         class="text-ink dark:text-dark-ink overflow-x-auto"
                       ></span>
-                      <app-export-button [tex]="res.fPositive.tex" [mathEl]="iftPosEl" filename="ift-positive" />
+                      <app-export-button [tex]="res.fPositive.tex" [maxima]="res.fPositive.maxima" [mathEl]="iftPosEl" filename="ift-positive" />
                     </div>
                   </div>
                 }
@@ -1151,7 +1151,7 @@
                         [mathjax]="display(res.fNegative.tex)"
                         class="text-ink dark:text-dark-ink overflow-x-auto"
                       ></span>
-                      <app-export-button [tex]="res.fNegative.tex" [mathEl]="iftNegEl" filename="ift-negative" />
+                      <app-export-button [tex]="res.fNegative.tex" [maxima]="res.fNegative.maxima" [mathEl]="iftNegEl" filename="ift-negative" />
                     </div>
                   </div>
                 }
