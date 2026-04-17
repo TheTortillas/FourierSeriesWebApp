@@ -513,6 +513,34 @@ export class ResultsSummaryComponent {
     return null;
   });
 
+  /** Raw Maxima strings for each coefficient (always unsimplified, for copy-to-Maxima). */
+  readonly coeffMaxima = computed(() => {
+    const result = this.store.result();
+    const hrMode = this.halfRangeMode();
+    if (!result) return null;
+
+    if (result.type === 'trigonometric') {
+      const c = result.data.coefficients;
+      return {
+        a0: c.a0?.maxima ?? null,
+        an: c.an?.maxima ?? null,
+        bn: c.bn?.maxima ?? null,
+        w0: result.data.w0.maxima,
+      };
+    }
+    if (result.type === 'halfRange') {
+      const c = result.data.coefficients;
+      return hrMode === 'cosine'
+        ? { a0: c.a0?.maxima ?? null, an: c.an?.maxima ?? null, w0: result.data.w0.maxima }
+        : { bn: c.bn?.maxima ?? null, w0: result.data.w0.maxima };
+    }
+    if (result.type === 'complex') {
+      const c = result.data.coefficients;
+      return { c0: c.c0.maxima, cn: c.cn.maxima, w0: result.data.w0.maxima };
+    }
+    return null;
+  });
+
   /** Active coefficient LaTeX: uses simplified values when available, else falls back to coeffTex */
   readonly activeCoeffTex = computed(() => {
     const simplified = this.simplifiedCoeffs();
@@ -551,6 +579,10 @@ export class ResultsSummaryComponent {
     const r = this.store.result();
     return r ? r.data.executionTimeMs : null;
   });
+
+  /** Label for the series export modal: "f(x)", "f(t)", etc. */
+  readonly seriesLabel = computed(() => `f(${this.store.intVar()})`);
+
 
   // ── Tab state ─────────────────────────────────────────────────────────────
   readonly activeTab = signal<'coefficients' | 'terms' | 'spectrum' | 'validation'>('coefficients');
