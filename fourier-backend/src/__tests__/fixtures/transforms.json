@@ -347,5 +347,17 @@
     "description": "REGRESIÓN: π·δ(w)+1/(iw) debe dar u(t), no sgn(t)",
     "input": { "segments": [{ "expression": "%pi*delta(w)+1/(%i*w)", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
     "expected": { "fCombined": "u(t)", "exists": true }
+  },
+  {
+    "id": "N06", "type": "ft",
+    "description": "REGRESIÓN: FT de a-|t| en [-a,a] — abs() en tramo acotado debe expandirse antes de integrar",
+    "input": { "segments": [{ "expression": "a-abs(t)", "from": "-a", "to": "a" }], "intVar": "t", "transVar": "w" },
+    "expected": { "F": "2*(1-cos(a*w))/w^2", "exists": true, "params": ["a"] }
+  },
+  {
+    "id": "N07", "type": "ift",
+    "description": "REGRESIÓN: IFT de 1/((iw+1+ai)(iw+1-ai)) con a simbólico → sin(at)·e^{-t}·u(t)/a",
+    "input": { "segments": [{ "expression": "((1)/((1+a*%i)+%i*w))*((1)/(%i*w+(1-a*%i)))", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
+    "expected": { "fCombined": "%e^-t*sin(a*t)*u(t)/a", "exists": true, "params": ["a"] }
   }
 ]
