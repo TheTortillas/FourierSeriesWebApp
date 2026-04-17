@@ -15,14 +15,14 @@ export const cacheRouter = Router();
  *     tags: [Cache]
  *     responses:
  *       200:
- *         description: Estadísticas actuales del caché
+ *         description: Estadísticas actuales del caché (backend, tamaño, TTL, versión)
  */
 cacheRouter.get(
   "/stats",
   authenticate,
   requireAdmin,
-  (_req: Request, res: Response) => {
-    res.json(getCacheStats());
+  async (_req: Request, res: Response): Promise<void> => {
+    res.json(await getCacheStats());
   },
 );
 
@@ -40,8 +40,8 @@ cacheRouter.post(
   "/clear",
   authenticate,
   requireAdmin,
-  (_req: Request, res: Response) => {
-    clearCache();
+  async (_req: Request, res: Response): Promise<void> => {
+    await clearCache();
     res.json({ message: "Cache cleared" });
   },
 );

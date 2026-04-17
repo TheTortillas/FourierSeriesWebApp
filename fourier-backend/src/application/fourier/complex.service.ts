@@ -40,7 +40,7 @@ export class ComplexService {
 
   async calculate(input: PiecewiseFourierInput): Promise<ComplexFourierResult> {
     const cacheKey = buildCacheKey(input);
-    const cached = getFromCache(cacheKey);
+    const cached = await getFromCache(cacheKey);
     if (cached) return cached as ComplexFourierResult;
 
     const startTime = Date.now();
@@ -129,7 +129,7 @@ kill(all)$
       executionTimeMs: Date.now() - startTime,
     };
 
-    setInCache(cacheKey, complexResult);
+    void setInCache(cacheKey, complexResult);
     return complexResult;
   }
 

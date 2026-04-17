@@ -99,6 +99,16 @@ export interface RateLimitMetricsSnapshot {
   };
 }
 
+export interface CacheStats {
+  backend: 'redis' | 'lru';
+  connected: boolean;
+  size: number;
+  /** -1 means Redis (unbounded by entry count) */
+  max: number;
+  ttlDays: number;
+  version: string;
+}
+
 export const CALC_TYPE_LABEL: Record<string, string> = {
   trigonometric: 'Trigonométrica',
   half_range: 'Medio rango',
