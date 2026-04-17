@@ -580,6 +580,10 @@ export class ResultsSummaryComponent {
     return r ? r.data.executionTimeMs : null;
   });
 
+  /** Label for the series export modal: "f(x)", "f(t)", etc. */
+  readonly seriesLabel = computed(() => `f(${this.store.intVar()})`);
+
+
   // ── Tab state ─────────────────────────────────────────────────────────────
   readonly activeTab = signal<'coefficients' | 'terms' | 'spectrum' | 'validation'>('coefficients');
   readonly termsTabInitialized = signal(false);

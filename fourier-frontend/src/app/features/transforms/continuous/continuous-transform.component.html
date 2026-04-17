@@ -1031,7 +1031,7 @@
                     [mathjax]="display(res.F!.tex)"
                     class="text-ink dark:text-dark-ink overflow-x-auto"
                   ></span>
-                  <app-export-button [tex]="res.F!.tex" [maxima]="res.F!.maxima" [mathEl]="ftMainEl" filename="fourier-transform" />
+                  <app-export-button [tex]="res.F!.tex" [maxima]="res.F!.maxima" [mathEl]="ftMainEl" filename="fourier-transform" [label]="'F(' + resultVarDisplay() + ')'" />
                 </div>
               </div>
             }
@@ -1053,7 +1053,7 @@
                       [mathjax]="display(res.realPart!.tex)"
                       class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
                     ></span>
-                    <app-export-button [tex]="res.realPart!.tex" [maxima]="res.realPart!.maxima" [mathEl]="ftRealEl" filename="fourier-transform-real" />
+                    <app-export-button [tex]="res.realPart!.tex" [maxima]="res.realPart!.maxima" [mathEl]="ftRealEl" filename="fourier-transform-real" [label]="'Re{F(' + resultVarDisplay() + ')}'" />
                   </div>
                 </div>
               }
@@ -1073,7 +1073,7 @@
                       [mathjax]="display(res.imagPart!.tex)"
                       class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
                     ></span>
-                    <app-export-button [tex]="res.imagPart!.tex" [maxima]="res.imagPart!.maxima" [mathEl]="ftImagEl" filename="fourier-transform-imag" />
+                    <app-export-button [tex]="res.imagPart!.tex" [maxima]="res.imagPart!.maxima" [mathEl]="ftImagEl" filename="fourier-transform-imag" [label]="'Im{F(' + resultVarDisplay() + ')}'" />
                   </div>
                 </div>
               }
@@ -1118,7 +1118,7 @@
                     [mathjax]="display(res.fCombined.tex)"
                     class="text-ink dark:text-dark-ink overflow-x-auto"
                   ></span>
-                  <app-export-button [tex]="res.fCombined.tex" [maxima]="res.fCombined.maxima" [mathEl]="iftCombinedEl" filename="inverse-fourier-transform" />
+                  <app-export-button [tex]="res.fCombined.tex" [maxima]="res.fCombined.maxima" [mathEl]="iftCombinedEl" filename="inverse-fourier-transform" [label]="'f(' + resultVarDisplay() + ')'" />
                 </div>
               } @else {
                 @if (res.fPositive) {
@@ -1134,7 +1134,7 @@
                         [mathjax]="display(res.fPositive.tex)"
                         class="text-ink dark:text-dark-ink overflow-x-auto"
                       ></span>
-                      <app-export-button [tex]="res.fPositive.tex" [maxima]="res.fPositive.maxima" [mathEl]="iftPosEl" filename="ift-positive" />
+                      <app-export-button [tex]="res.fPositive.tex" [maxima]="res.fPositive.maxima" [mathEl]="iftPosEl" filename="ift-positive" [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' > 0'" />
                     </div>
                   </div>
                 }
@@ -1151,7 +1151,7 @@
                         [mathjax]="display(res.fNegative.tex)"
                         class="text-ink dark:text-dark-ink overflow-x-auto"
                       ></span>
-                      <app-export-button [tex]="res.fNegative.tex" [maxima]="res.fNegative.maxima" [mathEl]="iftNegEl" filename="ift-negative" />
+                      <app-export-button [tex]="res.fNegative.tex" [maxima]="res.fNegative.maxima" [mathEl]="iftNegEl" filename="ift-negative" [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' < 0'" />
                     </div>
                   </div>
                 }

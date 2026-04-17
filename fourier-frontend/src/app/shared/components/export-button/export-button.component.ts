@@ -26,6 +26,9 @@ export class ExportButtonComponent implements OnInit, OnDestroy {
   /** Raw Maxima string — shown in modal for easy copying. */
   readonly maxima = input<string | undefined>(undefined);
 
+  /** Optional label shown in the modal header (e.g. "a₀", "F(ω)"). */
+  readonly label = input<string | undefined>(undefined);
+
   /**
    * The DOM element that contains the MathJax-rendered SVG.
    * Pass a template-reference variable: [mathEl]="myRef"
