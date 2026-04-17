@@ -1174,10 +1174,20 @@
                       ></span>
                       Re F({{ intVar() }})
                     </span>
-                    <span
-                      [mathjax]="display(res.inputRealPart!.tex)"
-                      class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                    ></span>
+                    <div class="flex items-center gap-2">
+                      <span
+                        #iftInputRealEl
+                        [mathjax]="display(res.inputRealPart!.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                      ></span>
+                      <app-export-button
+                        [tex]="res.inputRealPart!.tex"
+                        [maxima]="res.inputRealPart!.maxima"
+                        [mathEl]="iftInputRealEl"
+                        filename="ift-input-real"
+                        [label]="'Re F(' + intVar() + ')'"
+                      />
+                    </div>
                   </div>
                 }
                 @if (res.inputImagPart?.tex) {
@@ -1194,10 +1204,20 @@
                       ></span>
                       Im F({{ intVar() }})
                     </span>
-                    <span
-                      [mathjax]="display(res.inputImagPart!.tex)"
-                      class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                    ></span>
+                    <div class="flex items-center gap-2">
+                      <span
+                        #iftInputImagEl
+                        [mathjax]="display(res.inputImagPart!.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                      ></span>
+                      <app-export-button
+                        [tex]="res.inputImagPart!.tex"
+                        [maxima]="res.inputImagPart!.maxima"
+                        [mathEl]="iftInputImagEl"
+                        filename="ift-input-imag"
+                        [label]="'Im F(' + intVar() + ')'"
+                      />
+                    </div>
                   </div>
                 }
               </div>
