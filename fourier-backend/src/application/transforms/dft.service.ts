@@ -1,9 +1,13 @@
 import { MaximaRunner } from "../../infrastructure/maxima/maximaRunner";
+import { loadScript } from "../../infrastructure/maxima/scriptLoader";
 import type {
   DFTInput,
   DFTResult,
   DFTCoefficient,
+  DFTFunctionInput,
+  DFTFunctionResult,
   DFTPoint,
+  PiecewiseSegment,
 } from "../../domain/types/fourier.types";
 
 const TAU = Math.PI * 2;
@@ -209,6 +213,71 @@ export class DFTService {
     }
 
     return points;
+  }
+
+  async computeFromFunction(input: DFTFunctionInput): Promise<DFTFunctionResult> {
+    const startTime = Date.now();
+    const N = Math.max(2, Math.min(4096, input.N));
+    const intVar = input.intVar ?? "x";
+
+    const script = await loadScript("transforms", "eval_function.mac");
+    const funcInput = this.buildFuncInput(input.segments);
+
+    const fullScript = `
+FUNC_INPUT: ${funcInput};
+INTVAR: ${intVar};
+N_SAMPLES: ${N};
+${script}
+kill(all)$
+`;
+    const result = await this.runner.run({ script: fullScript });
+    if (!result.success) {
+      throw new Error(`Maxima error during function evaluation: ${result.error}`);
+    }
+
+    const a = parseFloat(this.extractSection(result.raw, "__A__", "__B__"));
+    const b = parseFloat(this.extractSection(result.raw, "__B__", "__XS__"));
+    const xs = this.parseFloatList(this.extractSection(result.raw, "__XS__", "__YS__"));
+    const ys = this.parseFloatList(this.extractSection(result.raw, "__YS__", null));
+
+    if (xs.length === 0 || ys.length === 0) {
+      throw new Error("Function evaluation returned no points");
+    }
+
+    const sampledPoints: DFTPoint[] = xs.map((x, i) => ({ x, y: ys[i] ?? 0 }));
+    const dftResult = await this.compute({ points: sampledPoints, mode: "signal" });
+
+    return {
+      ...dftResult,
+      sampledPoints,
+      interval: { a, b },
+      executionTimeMs: Date.now() - startTime,
+    };
+  }
+
+  private buildFuncInput(segments: PiecewiseSegment[]): string {
+    const rows = segments.map((s) => `[${s.expression}, ${s.from}, ${s.to}]`).join(", ");
+    return `matrix(${rows})`;
+  }
+
+  private extractSection(raw: string, start: string, end: string | null): string {
+    const si = raw.indexOf(start);
+    if (si === -1) return "";
+    const after = si + start.length;
+    if (end === null) return raw.slice(after).trim();
+    const ei = raw.indexOf(end, after);
+    return ei === -1 ? raw.slice(after).trim() : raw.slice(after, ei).trim();
+  }
+
+  private parseFloatList(raw: string): number[] {
+    const clean = raw.replace(/\\\n/g, "").replace(/\s+/g, "").trim();
+    if (!clean.startsWith("[")) return [];
+    const inner = clean.slice(1, -1);
+    if (!inner) return [];
+    return inner.split(",").map((s) => {
+      const n = parseFloat(s);
+      return isFinite(n) ? n : 0;
+    });
   }
 
   private computeRmsError(

@@ -1,0 +1,38 @@
+/* ═══════════════════════════════════════════════════════════════
+   Evaluación numérica de función a trozos en N puntos
+   Input:  FUNC_INPUT  → matrix([expr, a, b], ...)
+           INTVAR      → variable de integración (símbolo)
+           N_SAMPLES   → número de puntos de muestreo
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+
+_n_segs: length(FUNC_INPUT)$
+_a: float(FUNC_INPUT[1][2])$
+_b: float(FUNC_INPUT[_n_segs][3])$
+_N: N_SAMPLES$
+_dx: (_b - _a) / _N$
+
+/* Evalúa la función piecewise en un punto xval */
+_eval_at(xval) := block(
+  [_res: 0.0, _i, _seg, _v, _lo, _hi],
+  for _i: 1 thru _n_segs do (
+    _seg: FUNC_INPUT[_i],
+    _lo: float(_seg[2]),
+    _hi: float(_seg[3]),
+    if xval >= _lo and (xval < _hi or _i = _n_segs) then (
+      _v: errcatch(float(subst(xval, INTVAR, _seg[1]))),
+      _res: if _v = [] or not numberp(first(_v)) then 0.0 else first(_v),
+      return(_res)
+    )
+  ),
+  _res
+)$
+
+_xs: makelist(float(_a + k * _dx), k, 0, _N - 1)$
+_ys: makelist(_eval_at(_xs[k + 1]), k, 0, _N - 1)$
+
+print("__A__")$    print(string(_a))$
+print("__B__")$    print(string(_b))$
+print("__XS__")$   print(string(_xs))$
+print("__YS__")$   print(string(_ys))$

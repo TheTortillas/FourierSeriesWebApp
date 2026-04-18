@@ -8,6 +8,7 @@ import type {
   FourierTransformInput,
   InverseFourierTransformInput,
   DFTInput,
+  DFTFunctionInput,
 } from "../../domain/types/fourier.types";
 import {
   sanitizeSegments,
@@ -329,6 +330,66 @@ transformsRouter.post(
       }
 
       const result = await dftService.compute(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (req.user) {
+          await incrementCalculationCount(req.user.id);
+          await historyRepository.create({
+            userId: req.user.id,
+            type: "dft_signal",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
+        } else {
+          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+          await historyRepository.create({
+            ipAddress: req.ip ?? undefined,
+            type: "dft_signal",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.executionTimeMs,
+          });
+        }
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+transformsRouter.post(
+  "/dft/function",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const client = trackClientConnection(req, res);
+      const input = req.body as DFTFunctionInput;
+
+      if (!input.segments || !Array.isArray(input.segments) || input.segments.length === 0) {
+        res.status(400).json({ error: "segments is required" });
+        return;
+      }
+
+      if (!input.N || input.N < 4 || input.N > 4096) {
+        res.status(400).json({ error: "N must be between 4 and 4096" });
+        return;
+      }
+
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
+
+      if (input.intVar) {
+        const varCheck = sanitizeVariableName(input.intVar, "intVar");
+        if (!varCheck.valid) {
+          res.status(400).json({ error: varCheck.error });
+          return;
+        }
+      }
+
+      const result = await dftService.computeFromFunction(input);
       const shouldPersistSideEffects = !client.isDisconnected();
 
       if (shouldPersistSideEffects) {

@@ -31,3 +31,22 @@ export interface DftResponse {
   rmsError: number;
   executionTimeMs: number;
 }
+
+// ── DFT from function ─────────────────────────────────────────────────────────
+
+export interface DftSegment {
+  expression: string;
+  from: string;
+  to: string;
+}
+
+export interface DftFunctionRequest {
+  segments: DftSegment[];
+  intVar?: string;
+  N: number;
+}
+
+export interface DftFunctionResponse extends DftResponse {
+  sampledPoints: DftPoint[];
+  interval: { a: number; b: number };
+}
