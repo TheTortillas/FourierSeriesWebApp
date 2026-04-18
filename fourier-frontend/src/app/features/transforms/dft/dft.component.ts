@@ -19,6 +19,8 @@ import { ApiService } from '../../../core/services/api/api.service';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
+import { PlottingService } from '../../../core/services/canvas/plotting.service';
+import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { DftComputeService } from '../../../core/services/dft/dft-compute.service';
 import {
   FunctionPlotComponent,
@@ -40,7 +42,7 @@ import type {
 import type { DftSegment } from '../../../domain/types/dft.types';
 import type { CanvasViewport } from '../../../core/services/canvas/canvas.types';
 
-const N_OPTIONS = [16, 32, 64, 128, 256, 512, 1024];
+const N_OPTIONS = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
 const INT_VARS = ['x', 't', 'u', 's'];
 const TOP_LIMIT = 256;
 
@@ -99,6 +101,8 @@ export class DftComponent implements OnInit {
   private readonly theme   = inject(ThemeService);
   private readonly du      = inject(DrawingUtilsService);
   private readonly coords  = inject(CoordinateTransformService);
+  private readonly plotter = inject(PlottingService);
+  private readonly mathUtils = inject(MathUtilsService);
   private readonly dftCompute = inject(DftComputeService);
   readonly mqs             = inject(MathquillService);
 
@@ -330,6 +334,37 @@ export class DftComponent implements OnInit {
     }];
   });
 
+  /** Live curve preview of the piecewise function (function mode, before compute). */
+  readonly functionPreviewLayers = computed<PlotLayer[]>(() => {
+    if (this.inputMode() !== 'function' || this.result() !== null) return [];
+    const segs = this.segments();
+    const v = this.intVar();
+    const color = this.samplesColor();
+    void this.theme.isDark;
+    const plotter = this.plotter;
+    const mathUtils = this.mathUtils;
+    const parseLimit = this._parseLimit.bind(this);
+    return [{
+      curves: [],
+      onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
+        for (const seg of segs) {
+          const fn = mathUtils.compile(seg.expression, v);
+          const from = parseLimit(seg.from);
+          const to = parseLimit(seg.to);
+          if (!fn || !isFinite(from) || !isFinite(to)) continue;
+          plotter.plotFnRange(ctx, fn, from, to, 400, vp, { color, lineWidth: 1.8 });
+        }
+      },
+    }];
+  });
+
+  private _parseLimit(s: string): number {
+    if (!s.trim()) return NaN;
+    const fn = this.mathUtils.compile(s, '_');
+    if (fn) { try { const r = fn(0); if (isFinite(r)) return r; } catch { /* */ } }
+    return this.mathUtils.evaluate(s, 0, '_');
+  }
+
   // ── Manual presets ─────────────────────────────────────────────────────────
 
   manualPresets(N: number) {
@@ -536,8 +571,6 @@ export class DftComponent implements OnInit {
   reset(): void {
     this.result.set(null);
     this.error.set(null);
-    this.segments.set([defaultSegment(this.intVar())]);
-    this.N.set(128);
     this.showCanvasSettings.set(false);
     this.showSpecSettings.set(false);
     this.selectedCoeff.set(null);
@@ -571,17 +604,30 @@ export class DftComponent implements OnInit {
     const res = this.result();
     if (!res || !this._lastSpecVp) return;
     const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const mathX = this.coords.cssToMathX(event.clientX - rect.left, this._lastSpecVp);
+    const vp = this._lastSpecVp;
+    const mathX = this.coords.cssToMathX(event.clientX - rect.left, vp);
+    const mathY = this.coords.cssToMathY(event.clientY - rect.top, vp);
     const shift = this.fftShift();
+    const mode  = this.specMode();
 
-    let nearest: DftCoefficient | null = null;
-    let minDist = Infinity;
+    // Stem width in math units — half a unit gap between stems
+    const xTol = 0.35;
+
+    let hit: DftCoefficient | null = null;
     for (const c of res.coefficients) {
       const kDisplay = shift ? (c.k <= res.N / 2 ? c.k : c.k - res.N) : c.k;
-      const d = Math.abs(kDisplay - mathX);
-      if (d < minDist) { minDist = d; nearest = c; }
+      if (Math.abs(kDisplay - mathX) > xTol) continue;
+
+      // Check Y: cursor must be between 0 and the stem value (with small margin)
+      const val = mode === 'amplitude' ? c.amplitude : c.phase;
+      const yMin = Math.min(0, val) - 0.02;
+      const yMax = Math.max(0, val) + 0.02;
+      if (mathY < yMin || mathY > yMax) continue;
+
+      hit = c;
+      break;
     }
-    this.hoveredCoeff.set(minDist < 1.5 ? nearest : null);
+    this.hoveredCoeff.set(hit);
   }
 
   onSpecMouseLeave(): void { this.hoveredCoeff.set(null); }

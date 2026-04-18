@@ -61,6 +61,19 @@
             </div>
           }
 
+          <!-- Real-time function preview -->
+          @if (functionPreviewLayers().length > 0) {
+            <div class="rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
+              <div class="px-3 py-1.5 border-b border-border dark:border-dark-border">
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">f({{ intVar() }})</span>
+              </div>
+              <div class="h-28">
+                <app-function-plot [layers]="functionPreviewLayers()" [initialUnit]="1"
+                  class="w-full h-full block"/>
+              </div>
+            </div>
+          }
+
           <!-- Algorithm toggle — below preview, above variable -->
           <section class="flex flex-col gap-2">
             <p class="text-xs text-muted font-mono">{{ 'transforms.dft.algorithm' | transloco }}</p>
