@@ -9,7 +9,6 @@
         {{ 'transforms.dft.subtitle' | transloco }}
       </p>
     </div>
-    <!-- Continua / Discreta tabs -->
     <div class="inline-flex w-fit rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5">
       <a routerLink="../continuous" routerLinkActive #cRla="routerLinkActive"
         [class]="cRla.isActive
@@ -33,7 +32,7 @@
     <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto">
       <div class="p-5 flex flex-col gap-5">
 
-        <!-- ── Input mode tabs ──────────────────────────────────────────── -->
+        <!-- Input mode tabs -->
         <div class="flex rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-0.5 gap-0.5"
           [class.pointer-events-none]="inputsLocked()"
           [class.opacity-60]="inputsLocked()">
@@ -51,34 +50,10 @@
           </button>
         </div>
 
-        <!-- ── Algorithm toggle (always visible) ──────────────────────── -->
-        <section class="flex flex-col gap-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-muted font-mono">{{ 'transforms.dft.algorithm' | transloco }}</p>
-          </div>
-          <div class="flex gap-1.5">
-            <button type="button" (click)="switchAlgorithm('fft')"
-              [class]="algorithm() === 'fft'
-                ? 'flex-1 py-1.5 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent text-xs font-mono font-semibold cursor-pointer transition-colors'
-                : 'flex-1 py-1.5 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted text-xs font-mono hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-              FFT <span class="opacity-60 font-normal text-[10px]">O(N log N)</span>
-            </button>
-            <button type="button" (click)="switchAlgorithm('dft')"
-              [class]="algorithm() === 'dft'
-                ? 'flex-1 py-1.5 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent text-xs font-mono font-semibold cursor-pointer transition-colors'
-                : 'flex-1 py-1.5 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted text-xs font-mono hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-              DFT <span class="opacity-60 font-normal text-[10px]">O(N²)</span>
-            </button>
-          </div>
-          <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
-            {{ 'transforms.dft.algorithmNote' | transloco }}
-          </p>
-        </section>
-
         <!-- ══ FUNCTION MODE ══════════════════════════════════════════════ -->
         @if (inputMode() === 'function') {
 
-          <!-- LaTeX preview -->
+          <!-- LaTeX preview — "función renderizada" -->
           @if (previewLatex()) {
             <div class="relative rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto flex items-center justify-center min-h-12">
               <span class="text-ink dark:text-dark-ink text-base block"
@@ -86,12 +61,34 @@
             </div>
           }
 
+          <!-- Algorithm toggle — below preview, above variable -->
+          <section class="flex flex-col gap-2">
+            <p class="text-xs text-muted font-mono">{{ 'transforms.dft.algorithm' | transloco }}</p>
+            <div class="flex gap-1.5">
+              <button type="button" (click)="switchAlgorithm('fft')"
+                [class]="algorithm() === 'fft'
+                  ? 'flex-1 py-1.5 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent text-xs font-mono font-semibold cursor-pointer transition-colors'
+                  : 'flex-1 py-1.5 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted text-xs font-mono hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                FFT <span class="opacity-60 font-normal text-[10px]">O(N log N)</span>
+              </button>
+              <button type="button" (click)="switchAlgorithm('dft')"
+                [class]="algorithm() === 'dft'
+                  ? 'flex-1 py-1.5 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent text-xs font-mono font-semibold cursor-pointer transition-colors'
+                  : 'flex-1 py-1.5 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted text-xs font-mono hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                DFT <span class="opacity-60 font-normal text-[10px]">O(N²)</span>
+              </button>
+            </div>
+            <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+              {{ 'transforms.dft.algorithmNote' | transloco }}
+            </p>
+          </section>
+
           <div class="flex flex-col gap-5"
             [class.pointer-events-none]="inputsLocked()"
             [class.opacity-70]="inputsLocked()">
 
             <!-- Segments -->
-            <section class="flex flex-col gap-3">
+            <section class="flex flex-col gap-3 border-t border-border dark:border-dark-border pt-4">
               <div class="flex items-center justify-between">
                 <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
                   {{ 'calculator.piecewiseFunction' | transloco }}
@@ -164,53 +161,112 @@
               </div>
             </section>
 
-            <!-- N samples -->
+            <!-- N selector — adapts to algorithm -->
             <section class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4">
               <div class="flex items-center justify-between">
                 <p class="text-xs text-muted font-mono">{{ 'transforms.dft.samplingPoints' | transloco }}</p>
-                <span class="text-sm font-mono font-semibold text-accent">{{ N() }}</span>
+                <span class="text-sm font-mono font-semibold text-accent">N = {{ effectiveN() }}</span>
               </div>
-              <div class="flex flex-wrap gap-1.5">
-                @for (n of nOptions; track n) {
-                  <button type="button" (click)="setN(n)"
-                    [class]="N() === n
-                      ? 'px-2.5 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer font-semibold'
-                      : 'px-2.5 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-                    {{ n }}
-                  </button>
-                }
-              </div>
-              <p class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.higherN' | transloco }}</p>
+
+              @if (algorithm() === 'fft') {
+                <!-- FFT: only powers of 2 -->
+                <div class="flex flex-wrap gap-1.5">
+                  @for (n of nOptions; track n) {
+                    <button type="button" (click)="setN(n)"
+                      [class]="N() === n
+                        ? 'px-2.5 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer font-semibold'
+                        : 'px-2.5 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                      {{ n }}
+                    </button>
+                  }
+                </div>
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.higherN' | transloco }}</p>
+              } @else {
+                <!-- DFT: any N via slider -->
+                <div class="flex items-center gap-3">
+                  <input type="range" min="4" max="1024" step="1"
+                    [value]="dftCustomN()"
+                    (input)="dftCustomN.set(+$any($event.target).value)"
+                    class="flex-1 accent-accent cursor-pointer"/>
+                  <input type="number" min="4" max="4096"
+                    [value]="dftCustomN()"
+                    (input)="setDftCustomN(+$any($event.target).value)"
+                    class="w-16 px-2 py-1 text-xs font-mono border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
+                </div>
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.dftAnyN' | transloco }}</p>
+              }
             </section>
 
           </div><!-- /locked wrapper -->
-
         }
         <!-- ══ END FUNCTION MODE ══════════════════════════════════════════ -->
 
         <!-- ══ MANUAL MODE ═══════════════════════════════════════════════ -->
         @if (inputMode() === 'manual') {
 
+          <!-- Live preview of the discrete sequence -->
+          @if (parsedManual().length > 0) {
+            <div class="rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
+              <div class="px-3 py-1.5 border-b border-border dark:border-dark-border">
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">x[n]</span>
+              </div>
+              <div class="h-28">
+                <app-function-plot [layers]="manualPreviewLayers()" [initialUnit]="24" [xAxisFormat]="'integer'"
+                  class="w-full h-full block"/>
+              </div>
+            </div>
+          }
+
+          <!-- Algorithm toggle (manual mode) -->
+          <section class="flex flex-col gap-2">
+            <p class="text-xs text-muted font-mono">{{ 'transforms.dft.algorithm' | transloco }}</p>
+            <div class="flex gap-1.5">
+              <button type="button" (click)="switchAlgorithm('fft')"
+                [class]="algorithm() === 'fft'
+                  ? 'flex-1 py-1.5 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent text-xs font-mono font-semibold cursor-pointer transition-colors'
+                  : 'flex-1 py-1.5 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted text-xs font-mono hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                FFT <span class="opacity-60 font-normal text-[10px]">O(N log N)</span>
+              </button>
+              <button type="button" (click)="switchAlgorithm('dft')"
+                [class]="algorithm() === 'dft'
+                  ? 'flex-1 py-1.5 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent text-xs font-mono font-semibold cursor-pointer transition-colors'
+                  : 'flex-1 py-1.5 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted text-xs font-mono hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                DFT <span class="opacity-60 font-normal text-[10px]">O(N²)</span>
+              </button>
+            </div>
+          </section>
+
           <div class="flex flex-col gap-5"
             [class.pointer-events-none]="inputsLocked()"
             [class.opacity-70]="inputsLocked()">
 
             <!-- N for manual -->
-            <section class="flex flex-col gap-2">
+            <section class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4">
               <div class="flex items-center justify-between">
                 <p class="text-xs text-muted font-mono">{{ 'transforms.dft.manualN' | transloco }}</p>
                 <span class="text-sm font-mono font-semibold text-accent">N = {{ manualN() }}</span>
               </div>
-              <div class="flex flex-wrap gap-1.5">
-                @for (n of manualNOpts; track n) {
-                  <button type="button" (click)="setManualN(n)"
-                    [class]="manualN() === n
-                      ? 'px-2.5 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer font-semibold'
-                      : 'px-2.5 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-                    {{ n }}
-                  </button>
-                }
-              </div>
+              @if (algorithm() === 'fft') {
+                <div class="flex flex-wrap gap-1.5">
+                  @for (n of manualNOpts; track n) {
+                    <button type="button" (click)="setManualN(n)"
+                      [class]="manualN() === n
+                        ? 'px-2.5 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer font-semibold'
+                        : 'px-2.5 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                      {{ n }}
+                    </button>
+                  }
+                </div>
+              } @else {
+                <div class="flex items-center gap-3">
+                  <input type="range" min="2" max="64" step="1"
+                    [value]="manualN()"
+                    (input)="setManualN(+$any($event.target).value)"
+                    class="flex-1 accent-accent cursor-pointer"/>
+                  <span class="text-xs font-mono text-ink dark:text-dark-ink w-8 text-center">{{ manualN() }}</span>
+                </div>
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.dftAnyN' | transloco }}</p>
+              }
             </section>
 
             <!-- Presets -->
@@ -252,7 +308,6 @@
             </section>
 
           </div><!-- /locked wrapper -->
-
         }
         <!-- ══ END MANUAL MODE ════════════════════════════════════════════ -->
 
@@ -264,7 +319,8 @@
         }
 
         <!-- Compute button -->
-        <button type="button" (click)="compute()" [disabled]="loading() || !!result() || (inputMode() === 'manual' && !manualValid())"
+        <button type="button" (click)="compute()"
+          [disabled]="loading() || !!result() || (inputMode() === 'manual' && !manualValid())"
           class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed">
           @if (loading()) {
             <span class="flex items-center justify-center gap-2">
@@ -288,7 +344,6 @@
 
       </div>
     </aside>
-    <!-- /Left panel -->
 
     <!-- ── Right panel ───────────────────────────────────────────────────── -->
     <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
@@ -329,7 +384,7 @@
           @if (stats(); as s) {
             <div class="flex flex-wrap gap-4 px-4 py-3 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-xs font-mono">
               <div class="flex flex-col gap-0.5">
-                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.statsN' | transloco }}</span>
+                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">N</span>
                 <span class="font-semibold text-ink dark:text-dark-ink">{{ s.N }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
@@ -374,7 +429,6 @@
                 </span>
               </div>
               <button type="button" (click)="showCanvasSettings.set(!showCanvasSettings())"
-                [title]="'results.canvasSettings' | transloco"
                 [class]="showCanvasSettings()
                   ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
                   : 'w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink hover:border-accent flex items-center justify-center transition-colors cursor-pointer'">
@@ -466,7 +520,6 @@
                 </button>
               </div>
               <button type="button" (click)="showSpecSettings.set(!showSpecSettings())"
-                [title]="'results.canvasSettings' | transloco"
                 [class]="showSpecSettings()
                   ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
                   : 'w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink hover:border-accent flex items-center justify-center transition-colors cursor-pointer'">
@@ -530,7 +583,7 @@
                   flex gap-3 items-center whitespace-nowrap">
                   <span class="text-muted dark:text-dark-muted">k = <span class="text-ink dark:text-dark-ink font-semibold">{{ kDisplay(hov) }}</span></span>
                   <span class="text-muted dark:text-dark-muted">|X[k]| = <span class="text-ink dark:text-dark-ink font-semibold">{{ hov.amplitude | number:'1.4-4' }}</span></span>
-                  <span class="text-muted dark:text-dark-muted">∠ = <span class="text-ink dark:text-dark-ink font-semibold">{{ hov.phaseInPi }}π</span></span>
+                  <span class="text-muted dark:text-dark-muted">∠ = <span class="text-ink dark:text-dark-ink font-semibold">{{ phaseInDeg(hov.phase) }}°</span></span>
                   <span class="text-muted dark:text-dark-muted">{{ hov.amplitudePercent | number:'1.1-1' }}%</span>
                 </div>
               }
@@ -545,6 +598,7 @@
           <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
             <div class="px-4 py-2.5 border-b border-border dark:border-dark-border flex items-center gap-2">
               <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">{{ 'transforms.dft.coeffsTitle' | transloco }}</span>
+              <span class="text-[10px] font-mono text-muted dark:text-dark-muted ml-1">{{ 'transforms.dft.coeffsNote' | transloco }}</span>
               @if (selectedCoeff()) {
                 <button type="button" (click)="selectedCoeff.set(null)"
                   class="ml-auto text-[10px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer px-2 py-0.5 rounded border border-border dark:border-dark-border hover:border-ink dark:hover:border-dark-ink">
@@ -556,26 +610,37 @@
               <table class="w-full text-xs font-mono">
                 <thead>
                   <tr class="border-b border-border dark:border-dark-border text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                    <th class="px-4 py-2 text-left">k</th>
-                    <th class="px-4 py-2 text-left">Re</th>
-                    <th class="px-4 py-2 text-left">Im</th>
-                    <th class="px-4 py-2 text-left">|X[k]|</th>
-                    <th class="px-4 py-2 text-left">%</th>
-                    <th class="px-4 py-2 text-left">∠ /π</th>
+                    <th class="px-3 py-2 text-left">k</th>
+                    <th class="px-3 py-2 text-left">|X[k]|</th>
+                    <th class="px-3 py-2 text-left" title="{{ 'transforms.dft.colWeightTitle' | transloco }}">{{ 'transforms.dft.colWeight' | transloco }}</th>
+                    <th class="px-3 py-2 text-left">Re</th>
+                    <th class="px-3 py-2 text-left">Im</th>
+                    <th class="px-3 py-2 text-left">∠ (°)</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (c of topCoeffs(); track c.k) {
-                    <tr (click)="selectCoeff(c)" class="border-b border-border/50 dark:border-dark-border/50 cursor-pointer transition-colors"
+                    <tr (click)="selectCoeff(c)"
+                      class="border-b border-border/50 dark:border-dark-border/50 cursor-pointer transition-colors"
                       [class]="selectedCoeff()?.k === c.k
                         ? 'bg-accent/10 dark:bg-accent/15'
                         : 'hover:bg-paper dark:hover:bg-dark-bg'">
-                      <td class="px-4 py-2 font-semibold" [style.color]="specColor()">{{ kDisplay(c) }}</td>
-                      <td class="px-4 py-2 text-ink dark:text-dark-ink">{{ c.re | number:'1.4-4' }}</td>
-                      <td class="px-4 py-2 text-muted dark:text-dark-muted">{{ c.im | number:'1.4-4' }}</td>
-                      <td class="px-4 py-2 text-ink dark:text-dark-ink">{{ c.amplitude | number:'1.6-6' }}</td>
-                      <td class="px-4 py-2 text-ink dark:text-dark-ink">{{ c.amplitudePercent | number:'1.2-2' }}%</td>
-                      <td class="px-4 py-2 text-muted dark:text-dark-muted">{{ c.phaseInPi }}</td>
+                      <td class="px-3 py-1.5 font-semibold" [style.color]="specColor()">{{ kDisplay(c) }}</td>
+                      <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ c.amplitude | number:'1.5-5' }}</td>
+                      <td class="px-3 py-1.5">
+                        <!-- Visual weight bar + value -->
+                        <div class="flex items-center gap-1.5">
+                          <div class="w-12 h-1.5 rounded-full bg-border dark:bg-dark-border overflow-hidden">
+                            <div class="h-full rounded-full"
+                              [style.width.%]="c.amplitudePercent"
+                              [style.background]="specColor()"></div>
+                          </div>
+                          <span class="text-ink dark:text-dark-ink">{{ c.amplitudePercent | number:'1.1-1' }}%</span>
+                        </div>
+                      </td>
+                      <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.re | number:'1.4-4' }}</td>
+                      <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.im | number:'1.4-4' }}</td>
+                      <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ phaseInDeg(c.phase) }}°</td>
                     </tr>
                   }
                 </tbody>
@@ -586,7 +651,6 @@
         }<!-- /result block -->
       </div>
     </main>
-    <!-- /Right panel -->
   </div>
 
   <div class="lg:hidden">

@@ -117,6 +117,14 @@ export class DftComponent implements OnInit {
   readonly nOptions = N_OPTIONS;
   readonly intVars  = INT_VARS;
 
+  /** Custom N for DFT naive (any value, not limited to powers of 2). */
+  readonly dftCustomN = signal(128);
+
+  /** N used for computation — power-of-2 for FFT, free value for DFT. */
+  readonly effectiveN = computed(() =>
+    this.algorithm() === 'fft' ? this.N() : this.dftCustomN(),
+  );
+
   // ── Manual-mode state ────────────────────────────────────────────────────────
   readonly manualRaw  = signal<string>('1, 0, 0, 0, 0, 0, 0, 0');
   readonly manualN    = signal(8);
@@ -304,6 +312,24 @@ export class DftComponent implements OnInit {
     this.specMode() === 'amplitude' ? this.specAmplitudeColor() : this.specPhaseColor(),
   );
 
+  /** Live stem preview of the manually entered sequence. */
+  readonly manualPreviewLayers = computed<PlotLayer[]>(() => {
+    if (this.inputMode() !== 'manual') return [];
+    const values = this.parsedManual();
+    if (values.length === 0) return [];
+    const color = this.samplesColor();
+    const lw    = this.specStemWidth();
+    void this.theme.isDark;
+    return [{
+      curves: [],
+      onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
+        for (let n = 0; n < values.length; n++) {
+          this.du.drawStem(ctx, vp, n, values[n] ?? 0, color, lw, 3);
+        }
+      },
+    }];
+  });
+
   // ── Manual presets ─────────────────────────────────────────────────────────
 
   manualPresets(N: number) {
@@ -355,7 +381,26 @@ export class DftComponent implements OnInit {
   }
 
   switchAlgorithm(alg: DftAlgorithm): void {
+    if (alg === 'fft') {
+      // Round current DFT N to the nearest power of 2 within nOptions
+      const cur = this.dftCustomN();
+      const nearest = N_OPTIONS.reduce((best, n) =>
+        Math.abs(n - cur) < Math.abs(best - cur) ? n : best,
+      );
+      this.N.set(nearest);
+    } else {
+      this.dftCustomN.set(this.N());
+    }
     this.algorithm.set(alg);
+  }
+
+  phaseInDeg(phase: number): string {
+    return (phase * 180 / Math.PI).toFixed(1);
+  }
+
+  setDftCustomN(raw: number): void {
+    const n = Math.max(4, Math.min(4096, raw || 4));
+    this.dftCustomN.set(n);
   }
 
   // ── Segment helpers ────────────────────────────────────────────────────────
@@ -447,7 +492,7 @@ export class DftComponent implements OnInit {
     const body = {
       segments: segs.map((s): DftSegment => ({ expression: s.expression, from: s.from, to: s.to })),
       intVar: this.intVar(),
-      N: this.N(),
+      N: this.effectiveN(),
     };
 
     this.api.sampleDFTFunction(body).subscribe({
