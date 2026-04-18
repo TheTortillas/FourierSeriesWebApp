@@ -1,12 +1,12 @@
 <div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
   <app-nav />
 
-  <!-- ── Header ────────────────────────────────────────────────────────────── -->
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
   <header class="shrink-0 border-b border-border dark:border-dark-border px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
     <div>
       <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'transforms.title' | transloco }}</h1>
       <p class="text-sm font-mono text-muted dark:text-dark-muted mt-0.5">
-        Analiza el espectro de frecuencias de una función muestreada
+        {{ 'transforms.dft.subtitle' | transloco }}
       </p>
     </div>
     <!-- Continua / Discreta tabs -->
@@ -26,179 +26,202 @@
     </div>
   </header>
 
-  <!-- ── Two-panel layout ──────────────────────────────────────────────────── -->
+  <!-- ── Two-panel layout ─────────────────────────────────────────────────── -->
   <div class="flex flex-col lg:flex-row flex-1 min-h-0">
 
-    <!-- ── Left panel: form ──────────────────────────────────────────────────── -->
-    <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border flex flex-col overflow-y-auto">
+    <!-- ── Left panel ───────────────────────────────────────────────────── -->
+    <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto">
+      <div class="p-5 flex flex-col gap-5">
 
-      <div class="p-4 flex flex-col gap-5">
+        <!-- LaTeX preview -->
+        @if (previewLatex()) {
+          <div class="relative rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto flex items-center justify-center min-h-12">
+            <span class="text-ink dark:text-dark-ink text-base block"
+              [mathjax]="'\\[' + previewLatex() + '\\]'"></span>
+          </div>
+        }
 
-        <!-- Variable -->
-        <div class="flex flex-col gap-1.5">
-          <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">Variable</span>
-          <div class="flex gap-1.5">
-            @for (v of intVars; track v) {
-              <button type="button" (click)="setIntVar(v)"
-                [class]="intVar() === v
-                  ? 'px-3 py-1 rounded border border-accent bg-accent/10 text-accent text-xs font-mono font-semibold'
-                  : 'px-3 py-1 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'">
-                {{ v }}
+        <div class="flex flex-col gap-5"
+          [class.pointer-events-none]="inputsLocked()"
+          [class.opacity-70]="inputsLocked()">
+
+          <!-- Segments section -->
+          <section class="flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                {{ 'calculator.piecewiseFunction' | transloco }}
+                <span class="font-normal text-muted dark:text-dark-muted font-mono text-xs ml-1">f({{ intVar() }})</span>
+              </h2>
+              <!-- Keyboard toggle — desktop only -->
+              <button type="button" (click)="showKeyboard = !showKeyboard"
+                [title]="'calculator.segment.keyboardTitle' | transloco"
+                class="hidden lg:flex items-center gap-1 px-2 h-6 rounded text-[10px] font-mono border transition-colors cursor-pointer"
+                [class]="showKeyboard
+                  ? 'bg-accent/10 border-accent/40 text-accent'
+                  : 'border-border dark:border-dark-border text-muted hover:border-accent hover:text-accent'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="6" width="20" height="12" rx="2"/>
+                  <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/>
+                </svg>
+                {{ 'calculator.segment.keyboardTitle' | transloco }}
               </button>
-            }
-          </div>
-        </div>
-
-        <!-- Segments -->
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">Función a trozos</span>
-            <button type="button" (click)="addSegment()"
-              class="flex items-center gap-1 px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Añadir tramo
-            </button>
-          </div>
-
-          @for (seg of segments(); track $index; let i = $index) {
-            <div class="rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-3 flex flex-col gap-2">
-              <!-- Expression -->
-              <div class="flex flex-col gap-1">
-                <label class="text-[10px] font-mono text-muted dark:text-dark-muted">f({{ intVar() }})</label>
-                <input type="text" [value]="seg.expression"
-                  (input)="updateSegment(i, 'expression', $any($event.target).value)"
-                  class="w-full px-2.5 py-1.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
-                  placeholder="sin(x)" />
-              </div>
-              <!-- Interval -->
-              <div class="flex items-center gap-2">
-                <div class="flex-1 flex flex-col gap-1">
-                  <label class="text-[10px] font-mono text-muted dark:text-dark-muted">desde</label>
-                  <input type="text" [value]="seg.from"
-                    (input)="updateSegment(i, 'from', $any($event.target).value)"
-                    class="w-full px-2.5 py-1.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
-                    placeholder="-%pi" />
-                </div>
-                <span class="text-muted dark:text-dark-muted text-sm mt-4">—</span>
-                <div class="flex-1 flex flex-col gap-1">
-                  <label class="text-[10px] font-mono text-muted dark:text-dark-muted">hasta</label>
-                  <input type="text" [value]="seg.to"
-                    (input)="updateSegment(i, 'to', $any($event.target).value)"
-                    class="w-full px-2.5 py-1.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
-                    placeholder="%pi" />
-                </div>
-                @if (segments().length > 1) {
-                  <button type="button" (click)="removeSegment(i)"
-                    class="mt-4 p-1.5 rounded text-muted dark:text-dark-muted hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                  </button>
-                }
-              </div>
             </div>
-          }
-        </div>
 
-        <!-- N samples -->
-        <div class="flex flex-col gap-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">Puntos de muestreo (N)</span>
-            <span class="text-sm font-mono font-semibold text-accent">{{ N() }}</span>
-          </div>
-          <div class="flex gap-1.5 flex-wrap">
-            @for (n of nOptions; track n) {
-              <button type="button" (click)="setN(n)"
-                [class]="N() === n
-                  ? 'px-2.5 py-1 rounded border border-accent bg-accent/10 text-accent text-xs font-mono font-semibold'
-                  : 'px-2.5 py-1 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'">
-                {{ n }}
-              </button>
+            @for (seg of segments(); track seg.id; let i = $index) {
+              <app-transform-segment
+                [segment]="seg"
+                [index]="i"
+                [isOnly]="segments().length === 1"
+                [intVar]="intVar()"
+                (updated)="updateSegment($event.id, $event.changes)"
+                (removed)="removeSegment($event)"
+              />
             }
-          </div>
-          <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
-            Mayor N → mejor aproximación, más coeficientes espectrales
-          </p>
-        </div>
+
+            <!-- Desktop math keyboard -->
+            @if (showKeyboard) {
+              <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
+                @for (row of keyGroups; track $index) {
+                  <div class="flex flex-wrap gap-1">
+                    @for (btn of row; track btn.label) {
+                      <button type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="mqs.insertKey(btn)"
+                        class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent transition-colors cursor-pointer select-none">
+                        {{ btn.label }}
+                      </button>
+                    }
+                  </div>
+                }
+                <p class="text-[10px] text-muted font-mono pt-0.5">
+                  {{ 'calculator.segment.activeField' | transloco: { field: mqs.activeFieldName() } }}
+                </p>
+              </div>
+            }
+
+            <button type="button" (click)="addSegment()"
+              class="flex items-center gap-1.5 text-xs text-accent dark:text-accent hover:underline cursor-pointer font-mono transition-opacity">
+              {{ 'transforms.addSegment' | transloco }}
+            </button>
+          </section>
+
+          <!-- Variable selector -->
+          <section class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4">
+            <p class="text-xs text-muted font-mono shrink-0">{{ 'transforms.dft.variable' | transloco }}</p>
+            <div class="flex flex-wrap gap-2">
+              @for (v of intVars; track v) {
+                <button type="button" (click)="setIntVar(v)"
+                  [class]="intVar() === v
+                    ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                    : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                  {{ v }}
+                </button>
+              }
+            </div>
+          </section>
+
+          <!-- N samples selector -->
+          <section class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4">
+            <div class="flex items-center justify-between">
+              <p class="text-xs text-muted font-mono">{{ 'transforms.dft.samplingPoints' | transloco }}</p>
+              <span class="text-sm font-mono font-semibold text-accent">{{ N() }}</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              @for (n of nOptions; track n) {
+                <button type="button" (click)="setN(n)"
+                  [class]="N() === n
+                    ? 'px-2.5 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer font-semibold'
+                    : 'px-2.5 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                  {{ n }}
+                </button>
+              }
+            </div>
+            <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+              {{ 'transforms.dft.higherN' | transloco }}
+            </p>
+          </section>
+
+        </div><!-- /locked wrapper -->
 
         <!-- Error -->
         @if (error()) {
-          <div class="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 px-4 py-3">
-            <p class="text-sm font-mono text-red-600 dark:text-red-400">{{ error() }}</p>
+          <div class="rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2">
+            <p class="text-xs font-mono text-red-600 dark:text-red-400">{{ error() }}</p>
           </div>
         }
 
         <!-- Compute button -->
-        <button type="button" (click)="compute()" [disabled]="loading()"
-          class="w-full py-2 rounded border border-accent bg-accent text-white text-sm font-mono font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+        <button type="button" (click)="compute()" [disabled]="loading() || !!result()"
+          class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed">
           @if (loading()) {
-            <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            Calculando…
+            <span class="flex items-center justify-center gap-2">
+              <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              {{ 'common.calculating' | transloco }}
+            </span>
           } @else {
-            Calcular DFT
+            {{ 'transforms.dft.compute' | transloco }}
           }
         </button>
 
         @if (result()) {
           <button type="button" (click)="reset()"
-            class="w-full py-1.5 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-ink dark:hover:border-dark-ink transition-colors">
-            Nuevo cálculo
+            class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold">
+            {{ 'transforms.newCalculation' | transloco }}
           </button>
         }
 
       </div>
     </aside>
+    <!-- /Left panel -->
 
-    <!-- ── Right panel: results ─────────────────────────────────────────────── -->
-    <main class="flex-1 min-h-0 overflow-y-auto">
+    <!-- ── Right panel ───────────────────────────────────────────────────── -->
+    <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
+      <div class="p-5 flex flex-col gap-5">
 
-      @if (!result() && !loading()) {
         <!-- Placeholder -->
-        <div class="p-5">
-          <div class="rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-6 py-10 flex flex-col items-center gap-4 text-center max-w-2xl">
+        @if (!result() && !loading()) {
+          <div class="rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-6 py-10 flex flex-col items-center gap-4 text-center">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
               class="w-10 h-10 text-muted dark:text-dark-muted">
               <path d="M2 13h4l3-9 4 18 3-9h4"/>
             </svg>
-            <h2 class="font-display text-lg text-ink dark:text-dark-ink">Transformada Discreta de Fourier</h2>
+            <h2 class="font-display text-lg text-ink dark:text-dark-ink">{{ 'transforms.dft.title' | transloco }}</h2>
             <p class="text-sm font-mono text-muted dark:text-dark-muted max-w-md">
-              Introduce una función a trozos, selecciona el número de muestras N y obtén el espectro de frecuencias y la reconstrucción por IDFT.
+              {{ 'transforms.dft.placeholderDesc' | transloco }}
             </p>
             <div class="grid grid-cols-3 gap-4 text-left mt-2 w-full max-w-sm">
               <div class="flex flex-col gap-1">
-                <span class="text-[10px] font-mono uppercase tracking-wider text-accent">f(x)</span>
-                <span class="text-xs font-mono text-muted dark:text-dark-muted">Función a analizar</span>
+                <span class="text-[10px] font-mono uppercase tracking-wider text-accent">f({{ intVar() }})</span>
+                <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.placeholderFx' | transloco }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 <span class="text-[10px] font-mono uppercase tracking-wider text-accent">DFT</span>
-                <span class="text-xs font-mono text-muted dark:text-dark-muted">Coeficientes X[k]</span>
+                <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.placeholderDft' | transloco }}</span>
               </div>
               <div class="flex flex-col gap-1">
                 <span class="text-[10px] font-mono uppercase tracking-wider text-accent">IDFT</span>
-                <span class="text-xs font-mono text-muted dark:text-dark-muted">Reconstrucción exacta</span>
+                <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.placeholderIdft' | transloco }}</span>
               </div>
             </div>
           </div>
-        </div>
-      }
+        }
 
-      @if (result(); as res) {
-        <div class="p-4 flex flex-col gap-4">
+        @if (result(); as res) {
 
           <!-- Stats bar -->
           @if (stats(); as s) {
             <div class="flex flex-wrap gap-4 px-4 py-3 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-xs font-mono">
               <div class="flex flex-col gap-0.5">
-                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">N muestras</span>
+                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.statsN' | transloco }}</span>
                 <span class="font-semibold text-ink dark:text-dark-ink">{{ s.N }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
-                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">Intervalo</span>
+                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.statsInterval' | transloco }}</span>
                 <span class="font-semibold text-ink dark:text-dark-ink">[{{ s.a | number:'1.2-2' }}, {{ s.b | number:'1.2-2' }}]</span>
               </div>
               <div class="flex flex-col gap-0.5">
@@ -206,81 +229,237 @@
                 <span class="font-semibold text-ink dark:text-dark-ink">{{ s.dx | number:'1.4-4' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
-                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">Error RMS</span>
+                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.statsRms' | transloco }}</span>
                 <span class="font-semibold text-ink dark:text-dark-ink">{{ s.rmsError | number:'1.2-8' }}</span>
               </div>
               <div class="flex flex-col gap-0.5">
-                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">Tiempo</span>
+                <span class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.statsTime' | transloco }}</span>
                 <span class="font-semibold text-ink dark:text-dark-ink">{{ s.executionTimeMs }} ms</span>
               </div>
             </div>
           }
 
-          <!-- Signal chart -->
+          <!-- ── Signal chart ────────────────────────────────────────────── -->
           <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
-            <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center gap-3">
-              <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">Señal muestreada y reconstrucción (IDFT)</span>
-              <div class="flex items-center gap-3 ml-auto">
-                <span class="flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted">
-                  <span class="w-3 h-1 rounded-full bg-orange-500 inline-block"></span>Muestras f(xₙ)
+            <div class="px-4 py-2.5 border-b border-border dark:border-dark-border flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">{{ 'transforms.dft.signalTitle' | transloco }}</span>
+              <!-- Legend -->
+              <div class="flex items-center gap-3 ml-auto text-[10px] font-mono text-muted dark:text-dark-muted">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full inline-block" [style.background]="samplesColor()"></span>
+                  {{ 'transforms.dft.samplesLabel' | transloco }}
                 </span>
-                <span class="flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted">
-                  <span class="w-3 h-0.5 rounded-full bg-indigo-500 inline-block"></span>Reconstrucción IDFT
+                <span class="flex items-center gap-1.5">
+                  <span class="inline-block w-4 h-0.5 rounded" [style.background]="reconstructionColor()"></span>
+                  {{ 'transforms.dft.reconstructionLabel' | transloco }}
                 </span>
               </div>
+              <!-- Settings gear -->
+              <button type="button" (click)="showCanvasSettings.set(!showCanvasSettings())"
+                [title]="'results.canvasSettings' | transloco"
+                [class]="showCanvasSettings()
+                  ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
+                  : 'w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink hover:border-accent flex items-center justify-center transition-colors cursor-pointer'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </button>
             </div>
+
+            <!-- Signal settings panel -->
+            @if (showCanvasSettings()) {
+              <div class="px-4 py-3 border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg flex flex-col gap-3 text-[11px] font-mono">
+                <section class="flex flex-col gap-2">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.layersShow' | transloco }}</h4>
+                    <button type="button" (click)="resetSignalColors()"
+                      class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer">
+                      {{ 'transforms.reset' | transloco }}
+                    </button>
+                  </div>
+                  <div class="flex flex-wrap gap-2 items-center">
+                    <!-- Samples toggle -->
+                    <button type="button" (click)="showSamples.set(!showSamples())"
+                      class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
+                      [style.borderColor]="showSamples() ? samplesColor() : null"
+                      [style.color]="showSamples() ? samplesColor() : null"
+                      [style.backgroundColor]="showSamples() ? samplesColor() + '1A' : null"
+                      [class]="showSamples() ? '' : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'">
+                      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showSamples() ? samplesColor() : 'currentColor'"></span>
+                      {{ 'transforms.dft.showSamples' | transloco }}
+                    </button>
+                    <!-- Reconstruction toggle -->
+                    <button type="button" (click)="showReconstruction.set(!showReconstruction())"
+                      class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
+                      [style.borderColor]="showReconstruction() ? reconstructionColor() : null"
+                      [style.color]="showReconstruction() ? reconstructionColor() : null"
+                      [style.backgroundColor]="showReconstruction() ? reconstructionColor() + '1A' : null"
+                      [class]="showReconstruction() ? '' : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'">
+                      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showReconstruction() ? reconstructionColor() : 'currentColor'"></span>
+                      {{ 'transforms.dft.showReconstruction' | transloco }}
+                    </button>
+                  </div>
+                </section>
+                <div class="border-t border-border dark:border-dark-border"></div>
+                <section class="flex flex-col gap-2">
+                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.lineStyle' | transloco }}</h4>
+                  <div class="flex flex-wrap gap-3 items-center">
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">{{ 'transforms.dft.showSamples' | transloco }}</span>
+                      <input type="color" [value]="samplesColor()" (input)="onSamplesColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
+                      <input type="number" [value]="samplesRadius()" min="1" max="6" step="0.5"
+                        (input)="samplesRadius.set(+$any($event.target).value)"
+                        class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">{{ 'transforms.dft.showReconstruction' | transloco }}</span>
+                      <input type="color" [value]="reconstructionColor()" (input)="onReconColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
+                      <input type="number" [value]="reconstructionLineWidth()" min="0.5" max="5" step="0.5"
+                        (input)="reconstructionLineWidth.set(+$any($event.target).value)"
+                        class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            }
+
             <div class="h-64">
-              <app-function-plot [layers]="signalLayers()" [initialUnit]="48" />
+              <app-function-plot #signalPlot [layers]="signalLayers()" [initialUnit]="48" class="w-full h-full block"/>
             </div>
           </section>
 
-          <!-- Spectrum chart -->
+          <!-- ── Spectrum chart ──────────────────────────────────────────── -->
           <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
-            <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center gap-3 flex-wrap">
-              <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">Espectro DFT</span>
-              <div class="flex gap-1.5 ml-auto">
+            <div class="px-4 py-2.5 border-b border-border dark:border-dark-border flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">{{ 'transforms.dft.spectrumTitle' | transloco }}</span>
+              <!-- Amplitude / Phase toggle -->
+              <div class="flex gap-1 ml-auto">
                 <button type="button" (click)="specMode.set('amplitude')"
                   [class]="specMode() === 'amplitude'
-                    ? 'px-2.5 py-1 rounded border border-violet-400 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 text-[10px] font-mono font-semibold'
-                    : 'px-2.5 py-1 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'">
-                  |X[k]| Amplitud
+                    ? 'px-2.5 py-1 rounded border border-violet-400 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 text-[10px] font-mono font-semibold cursor-pointer'
+                    : 'px-2.5 py-1 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
+                  {{ 'transforms.dft.amplitudeMode' | transloco }}
                 </button>
                 <button type="button" (click)="specMode.set('phase')"
                   [class]="specMode() === 'phase'
-                    ? 'px-2.5 py-1 rounded border border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-semibold'
-                    : 'px-2.5 py-1 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'">
-                  ∠X[k] Fase
+                    ? 'px-2.5 py-1 rounded border border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-semibold cursor-pointer'
+                    : 'px-2.5 py-1 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
+                  {{ 'transforms.dft.phaseMode' | transloco }}
                 </button>
               </div>
+              <!-- Settings gear -->
+              <button type="button" (click)="showSpecSettings.set(!showSpecSettings())"
+                [title]="'results.canvasSettings' | transloco"
+                [class]="showSpecSettings()
+                  ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
+                  : 'w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink hover:border-accent flex items-center justify-center transition-colors cursor-pointer'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </button>
             </div>
-            <div class="h-64">
-              <app-function-plot [layers]="spectrumLayers()" [initialUnit]="24" [xAxisFormat]="'integer'" />
+
+            <!-- Spectrum settings panel -->
+            @if (showSpecSettings()) {
+              <div class="px-4 py-3 border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg flex flex-col gap-3 text-[11px] font-mono">
+                <div class="flex items-center justify-between">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" [checked]="fftShift()" (change)="fftShift.set($any($event.target).checked)"
+                      class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                    <span class="text-ink dark:text-dark-ink text-xs">{{ 'transforms.dft.fftShift' | transloco }}</span>
+                    <span class="text-muted dark:text-dark-muted text-[10px]">(k &lt; 0 = {{ 'transforms.dft.negFreq' | transloco }})</span>
+                  </label>
+                  <button type="button" (click)="resetSpecColors()"
+                    class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer">
+                    {{ 'transforms.reset' | transloco }}
+                  </button>
+                </div>
+                <div class="border-t border-border dark:border-dark-border"></div>
+                <section class="flex flex-col gap-2">
+                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.lineStyle' | transloco }}</h4>
+                  <div class="flex flex-wrap gap-3 items-center">
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">|X[k]|</span>
+                      <input type="color" [value]="specAmplitudeColor()" (input)="onSpecAmpColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">∠X[k]</span>
+                      <input type="color" [value]="specPhaseColor()" (input)="onSpecPhaseColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">{{ 'transforms.dft.stemWidth' | transloco }}</span>
+                      <input type="number" [value]="specStemWidth()" min="0.5" max="4" step="0.5"
+                        (input)="specStemWidth.set(+$any($event.target).value)"
+                        class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            }
+
+            <!-- Canvas + tooltip wrapper -->
+            <div class="relative h-64" #spectrumWrapper
+              (mousemove)="onSpecMouseMove($event)"
+              (mouseleave)="onSpecMouseLeave()">
+              <app-function-plot #spectrumPlot [layers]="spectrumLayers()" [initialUnit]="24" [xAxisFormat]="'integer'"
+                class="w-full h-full block"/>
+
+              <!-- Hover tooltip -->
+              @if (hoveredCoeff(); as hov) {
+                <div class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none z-10
+                  px-3 py-2 rounded-lg border border-border dark:border-dark-border
+                  bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow text-[11px] font-mono
+                  flex gap-3 items-center whitespace-nowrap">
+                  <span class="text-muted dark:text-dark-muted">k = <span class="text-ink dark:text-dark-ink font-semibold">{{ kDisplay(hov) }}</span></span>
+                  <span class="text-muted dark:text-dark-muted">|X[k]| = <span class="text-ink dark:text-dark-ink font-semibold">{{ hov.amplitude | number:'1.4-4' }}</span></span>
+                  <span class="text-muted dark:text-dark-muted">∠ = <span class="text-ink dark:text-dark-ink font-semibold">{{ hov.phaseInPi }}π</span></span>
+                  <span class="text-muted dark:text-dark-muted">{{ hov.amplitudePercent | number:'1.1-1' }}%</span>
+                </div>
+              }
             </div>
+
             <p class="px-4 py-2 text-[10px] font-mono text-muted dark:text-dark-muted">
-              Eje X: índice de frecuencia k centrado (k &lt; 0 = frecuencias negativas). Eje Y: amplitud normalizada |X[k]|/N.
+              {{ 'transforms.dft.spectrumNote' | transloco }}
             </p>
           </section>
 
-          <!-- Top coefficients table -->
+          <!-- ── Coefficients table ──────────────────────────────────────── -->
           <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
-            <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-              <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">Coeficientes dominantes</span>
+            <div class="px-4 py-2.5 border-b border-border dark:border-dark-border flex items-center gap-2">
+              <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">{{ 'transforms.dft.coeffsTitle' | transloco }}</span>
+              @if (selectedCoeff()) {
+                <button type="button" (click)="selectedCoeff.set(null)"
+                  class="ml-auto text-[10px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer px-2 py-0.5 rounded border border-border dark:border-dark-border hover:border-ink dark:hover:border-dark-ink">
+                  {{ 'transforms.dft.clearSelection' | transloco }}
+                </button>
+              }
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-xs font-mono">
                 <thead>
                   <tr class="border-b border-border dark:border-dark-border text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                    <th class="px-4 py-2 text-left">k</th>
-                    <th class="px-4 py-2 text-left">Frecuencia (k/N)</th>
-                    <th class="px-4 py-2 text-left">|X[k]|</th>
-                    <th class="px-4 py-2 text-left">% potencia</th>
-                    <th class="px-4 py-2 text-left">Fase (π)</th>
+                    <th class="px-4 py-2 text-left">{{ 'transforms.dft.colK' | transloco }}</th>
+                    <th class="px-4 py-2 text-left">{{ 'transforms.dft.colFreq' | transloco }}</th>
+                    <th class="px-4 py-2 text-left">{{ 'transforms.dft.colAmp' | transloco }}</th>
+                    <th class="px-4 py-2 text-left">{{ 'transforms.dft.colPower' | transloco }}</th>
+                    <th class="px-4 py-2 text-left">{{ 'transforms.dft.colPhase' | transloco }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (c of topCoeffs(); track c.k) {
-                    <tr class="border-b border-border/50 dark:border-dark-border/50 hover:bg-paper dark:hover:bg-dark-bg transition-colors">
-                      <td class="px-4 py-2 font-semibold text-accent">{{ c.k }}</td>
+                    <tr (click)="selectCoeff(c)" class="border-b border-border/50 dark:border-dark-border/50 cursor-pointer transition-colors"
+                      [class]="selectedCoeff()?.k === c.k
+                        ? 'bg-accent/10 dark:bg-accent/15'
+                        : 'hover:bg-paper dark:hover:bg-dark-bg'">
+                      <td class="px-4 py-2 font-semibold" [style.color]="specColor()">{{ c.k }}</td>
                       <td class="px-4 py-2 text-muted dark:text-dark-muted">{{ c.freq | number:'1.4-4' }}</td>
                       <td class="px-4 py-2 text-ink dark:text-dark-ink">{{ c.amplitude | number:'1.6-6' }}</td>
                       <td class="px-4 py-2 text-ink dark:text-dark-ink">{{ c.amplitudePercent | number:'1.2-2' }}%</td>
@@ -292,9 +471,14 @@
             </div>
           </section>
 
-        </div>
-      }
+        }<!-- /result block -->
+      </div>
     </main>
+    <!-- /Right panel -->
+  </div>
 
+  <!-- ── Mobile math keyboard (< lg only) ───────────────────────────────────── -->
+  <div class="lg:hidden">
+    <app-mobile-math-keyboard [extraGroup]="mobileExtraGroup" />
   </div>
 </div>
