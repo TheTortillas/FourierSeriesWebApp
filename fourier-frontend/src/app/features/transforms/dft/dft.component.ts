@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -96,19 +96,22 @@ function makePreset(name: string, fn: (n: number, N: number) => number, N: numbe
   ],
 })
 export class DftComponent implements OnInit {
-  private readonly seo     = inject(SeoService);
-  private readonly api     = inject(ApiService);
-  private readonly theme   = inject(ThemeService);
-  private readonly du      = inject(DrawingUtilsService);
-  private readonly coords  = inject(CoordinateTransformService);
-  private readonly plotter = inject(PlottingService);
-  private readonly mathUtils = inject(MathUtilsService);
+  private readonly seo        = inject(SeoService);
+  private readonly api        = inject(ApiService);
+  private readonly theme      = inject(ThemeService);
+  private readonly du         = inject(DrawingUtilsService);
+  private readonly coords     = inject(CoordinateTransformService);
+  private readonly plotter    = inject(PlottingService);
+  private readonly mathUtils  = inject(MathUtilsService);
   private readonly dftCompute = inject(DftComputeService);
-  readonly mqs             = inject(MathquillService);
+  private readonly route      = inject(ActivatedRoute);
+  private readonly router     = inject(Router);
+  readonly mqs                = inject(MathquillService);
 
-  readonly signalPlotRef   = viewChild<FunctionPlotComponent>('signalPlot');
-  readonly spectrumPlotRef = viewChild<FunctionPlotComponent>('spectrumPlot');
-  readonly specWrapperRef  = viewChild<ElementRef<HTMLDivElement>>('spectrumWrapper');
+  readonly signalPlotRef    = viewChild<FunctionPlotComponent>('signalPlot');
+  readonly spectrumPlotRef  = viewChild<FunctionPlotComponent>('spectrumPlot');
+  readonly specWrapperRef   = viewChild<ElementRef<HTMLDivElement>>('spectrumWrapper');
+  readonly signalWrapperRef = viewChild<ElementRef<HTMLDivElement>>('signalWrapper');
 
   // ── Mode / algorithm ────────────────────────────────────────────────────────
   readonly inputMode = signal<DftInputMode>('function');
@@ -222,6 +225,14 @@ export class DftComponent implements OnInit {
 
   private _lastSpecVp: CanvasViewport | null = null;
 
+  // ── Share / URL ─────────────────────────────────────────────────────────────
+  readonly showShareDialog  = signal(false);
+  readonly urlCopied        = signal(false);
+  private urlPopulated      = false;
+
+  // ── Signal canvas X-axis format ─────────────────────────────────────────────
+  readonly signalXAxisFormat = signal<'integer' | 'pi' | 'e'>('integer');
+
   // ── LaTeX preview (function mode) ─────────────────────────────────────────
   readonly previewLatex = computed<string | null>(() => {
     if (this.inputMode() !== 'function') return null;
@@ -316,6 +327,18 @@ export class DftComponent implements OnInit {
     this.specMode() === 'amplitude' ? this.specAmplitudeColor() : this.specPhaseColor(),
   );
 
+  /**
+   * Main signal canvas layers — always visible in the right panel.
+   * Before compute: shows a function curve preview (function mode) or discrete
+   * stems preview (manual mode). After compute: shows sampled points + IDFT.
+   */
+  readonly mainSignalLayers = computed<PlotLayer[]>(() => {
+    if (this.result()) return this.signalLayers();
+    return this.inputMode() === 'function'
+      ? this.functionPreviewLayers()
+      : this.manualPreviewLayers();
+  });
+
   /** Live stem preview of the manually entered sequence. */
   readonly manualPreviewLayers = computed<PlotLayer[]>(() => {
     if (this.inputMode() !== 'manual') return [];
@@ -401,10 +424,32 @@ export class DftComponent implements OnInit {
       this.signalPlotRef()?.redraw();
       this.spectrumPlotRef()?.redraw();
     });
+
+    // Sync result → URL query param
+    effect(() => {
+      if (this.result()) {
+        this.urlPopulated = true;
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { s: this._encodeState() },
+          replaceUrl: true,
+        });
+      } else if (this.urlPopulated) {
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true,
+        });
+      }
+    });
   }
 
   ngOnInit(): void {
     this.seo.setPage('seo.dft.title', 'seo.dft.description');
+    const encoded = this.route.snapshot.queryParamMap.get('s');
+    if (encoded && this._restoreState(encoded)) {
+      this.compute();
+    }
   }
 
   // ── Mode helpers ───────────────────────────────────────────────────────────
@@ -640,6 +685,85 @@ export class DftComponent implements OnInit {
     const res = this.result();
     if (!res || !this.fftShift()) return c.k;
     return c.k <= res.N / 2 ? c.k : c.k - res.N;
+  }
+
+  // ── Canvas drawing ─────────────────────────────────────────────────────────
+
+  // ── URL state ──────────────────────────────────────────────────────────────
+
+  private _encodeState(): string {
+    const state = {
+      mode: this.inputMode(),
+      alg:  this.algorithm(),
+      v:    this.intVar(),
+      N:    this.N(),
+      dN:   this.dftCustomN(),
+      seg:  this.segments().map((s) => ({
+        e: s.expression, et: s.expressionTex,
+        f: s.from, ft: s.fromTex,
+        t: s.to, tt: s.toTex,
+      })),
+      mr: this.inputMode() === 'manual' ? this.manualRaw() : undefined,
+      mN: this.inputMode() === 'manual' ? this.manualN()  : undefined,
+    };
+    try {
+      const json = JSON.stringify(state);
+      return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16))));
+    } catch { return ''; }
+  }
+
+  private _restoreState(encoded: string): boolean {
+    try {
+      const json = decodeURIComponent(atob(encoded).split('').map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
+      const s = JSON.parse(json) as {
+        mode?: string; alg?: string; v?: string; N?: number; dN?: number;
+        seg?: Array<{ e: string; et: string; f: string; ft: string; t: string; tt: string }>;
+        mr?: string; mN?: number;
+      };
+      if (s.mode === 'function' || s.mode === 'manual') this.inputMode.set(s.mode);
+      if (s.alg === 'fft' || s.alg === 'dft') this.algorithm.set(s.alg);
+      if (s.v && INT_VARS.includes(s.v)) this.intVar.set(s.v);
+      if (s.N && N_OPTIONS.includes(s.N)) this.N.set(s.N);
+      if (s.dN && s.dN >= 4 && s.dN <= 4096) this.dftCustomN.set(s.dN);
+      if (Array.isArray(s.seg) && s.seg.length) {
+        this.segments.set(s.seg.map((seg) => ({
+          id: mkId(),
+          expression: seg.e ?? '', expressionTex: seg.et ?? '',
+          from: seg.f ?? '', fromTex: seg.ft ?? '',
+          to: seg.t ?? '', toTex: seg.tt ?? '',
+        })));
+      }
+      if (s.mr !== undefined) this.manualRaw.set(s.mr);
+      if (s.mN !== undefined) this.manualN.set(s.mN);
+      return true;
+    } catch { return false; }
+  }
+
+  // ── Share ──────────────────────────────────────────────────────────────────
+
+  get shareHref(): string {
+    return typeof window !== 'undefined' ? window.location.href : '';
+  }
+
+  openShareDialog(): void { this.showShareDialog.set(true); }
+
+  async copyShareUrl(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this.urlCopied.set(true);
+      setTimeout(() => this.urlCopied.set(false), 2000);
+    } catch { /* clipboard unavailable */ }
+  }
+
+  // ── Download ───────────────────────────────────────────────────────────────
+
+  downloadCanvas(wrapperRef: ElementRef<HTMLDivElement> | undefined, filename: string): void {
+    const canvas = wrapperRef?.nativeElement?.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = filename;
+    a.click();
   }
 
   // ── Canvas drawing ─────────────────────────────────────────────────────────
