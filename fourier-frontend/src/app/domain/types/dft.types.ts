@@ -1,4 +1,6 @@
 export type DftMode = 'signal' | 'epicycles';
+export type DftAlgorithm = 'fft' | 'dft';
+export type DftInputMode = 'function' | 'manual';
 
 export interface DftPoint {
   x: number;
@@ -49,4 +51,26 @@ export interface DftFunctionRequest {
 export interface DftFunctionResponse extends DftResponse {
   sampledPoints: DftPoint[];
   interval: { a: number; b: number };
+}
+
+/** Response from POST /transforms/dft/sample — only samples, no DFT. */
+export interface DftSampleResponse {
+  sampledPoints: DftPoint[];
+  interval: { a: number; b: number };
+  samplingTimeMs: number;
+}
+
+/** Unified local result produced entirely in the frontend after receiving samples. */
+export interface LocalDftResult {
+  inputMode: DftInputMode;
+  algorithm: DftAlgorithm;
+  N: number;
+  sampledPoints: DftPoint[];
+  coefficients: DftCoefficient[];
+  topCoefficients: DftCoefficient[];
+  reconstructed: DftPoint[];
+  rmsError: number;
+  computeTimeMs: number;
+  samplingTimeMs?: number;
+  interval?: { a: number; b: number };
 }

@@ -359,6 +359,44 @@ transformsRouter.post(
 );
 
 transformsRouter.post(
+  "/dft/sample",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const input = req.body as DFTFunctionInput;
+
+      if (!input.segments || !Array.isArray(input.segments) || input.segments.length === 0) {
+        res.status(400).json({ error: "segments is required" });
+        return;
+      }
+
+      if (!input.N || input.N < 4 || input.N > 4096) {
+        res.status(400).json({ error: "N must be between 4 and 4096" });
+        return;
+      }
+
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
+
+      if (input.intVar) {
+        const varCheck = sanitizeVariableName(input.intVar, "intVar");
+        if (!varCheck.valid) {
+          res.status(400).json({ error: varCheck.error });
+          return;
+        }
+      }
+
+      const result = await dftService.sampleFunction(input);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+transformsRouter.post(
   "/dft/function",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {

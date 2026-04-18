@@ -280,3 +280,10 @@ export interface DFTFunctionResult extends DFTResult {
   /** Interval of the function [a, b]. */
   interval: { a: number; b: number };
 }
+
+/** Result of sampling a piecewise function without computing DFT. */
+export interface DFTSampleResult {
+  sampledPoints: DFTPoint[];
+  interval: { a: number; b: number };
+  samplingTimeMs: number;
+}

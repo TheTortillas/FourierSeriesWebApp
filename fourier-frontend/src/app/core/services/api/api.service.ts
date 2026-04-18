@@ -24,6 +24,7 @@ import {
   DftResponse,
   DftFunctionRequest,
   DftFunctionResponse,
+  DftSampleResponse,
   // Transforms
   FourierTransformRequest,
   FourierTransformResponse,
@@ -179,6 +180,10 @@ export class ApiService {
 
   calculateDFTFromFunction(body: DftFunctionRequest): Observable<DftFunctionResponse> {
     return this.http.post<DftFunctionResponse>(`${this.base}/transforms/dft/function`, body);
+  }
+
+  sampleDFTFunction(body: DftFunctionRequest): Observable<DftSampleResponse> {
+    return this.http.post<DftSampleResponse>(`${this.base}/transforms/dft/sample`, body);
   }
 
   // ─── Parse ───────────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import type {
   DFTCoefficient,
   DFTFunctionInput,
   DFTFunctionResult,
+  DFTSampleResult,
   DFTPoint,
   PiecewiseSegment,
 } from "../../domain/types/fourier.types";
@@ -213,6 +214,43 @@ export class DFTService {
     }
 
     return points;
+  }
+
+  /** Sample a piecewise function at N points using Maxima — no DFT computation. */
+  async sampleFunction(input: DFTFunctionInput): Promise<DFTSampleResult> {
+    const startTime = Date.now();
+    const N = Math.max(2, Math.min(4096, input.N));
+    const intVar = input.intVar ?? "x";
+
+    const script = await loadScript("transforms", "eval_function.mac");
+    const funcInput = this.buildFuncInput(input.segments);
+
+    const fullScript = `
+FUNC_INPUT: ${funcInput};
+INTVAR: ${intVar};
+N_SAMPLES: ${N};
+${script}
+kill(all)$
+`;
+    const result = await this.runner.run({ script: fullScript });
+    if (!result.success) {
+      throw new Error(`Maxima error during function evaluation: ${result.error}`);
+    }
+
+    const a = parseFloat(this.extractSection(result.raw, "__A__", "__B__"));
+    const b = parseFloat(this.extractSection(result.raw, "__B__", "__XS__"));
+    const xs = this.parseFloatList(this.extractSection(result.raw, "__XS__", "__YS__"));
+    const ys = this.parseFloatList(this.extractSection(result.raw, "__YS__", null));
+
+    if (xs.length === 0 || ys.length === 0) {
+      throw new Error("Function evaluation returned no points");
+    }
+
+    return {
+      sampledPoints: xs.map((x, i) => ({ x, y: ys[i] ?? 0 })),
+      interval: { a, b },
+      samplingTimeMs: Date.now() - startTime,
+    };
   }
 
   async computeFromFunction(input: DFTFunctionInput): Promise<DFTFunctionResult> {
