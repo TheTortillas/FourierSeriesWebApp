@@ -904,6 +904,43 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── scalar: k*f(t) -> k*FT(f(t))  (k constante en t) ──
+       Separa el coeficiente constante de la parte t-dependiente.
+       Solo activa cuando hay exactamente UN factor que depende de t
+       (los productos multi-funcion los manejan los patrones anteriores). */
+    if is(res = false) and not atom(e) and is(op(e) = "*") then block(
+        [_factors, _const_k, _t_parts, _ft_core],
+        _factors: args(e),
+        _const_k: 1,
+        _t_parts: [],
+        for _fac in _factors do (
+            if freeof(t_var, _fac)
+            then _const_k: _const_k * _fac
+            else _t_parts: cons(_fac, _t_parts)
+        ),
+        if length(_t_parts) = 1 then (
+            _ft_core: FT_pattern_lookup(first(_t_parts), t_var, w_var),
+            if is(_ft_core # false) then
+                res: [_const_k * _ft_core[1],
+                      concat("k*f(t): k=", string(_const_k), ", ", _ft_core[2])]
+        )
+    ),
+
+    /* ── linearity: FT(f+g+...) = FT(f)+FT(g)+... ── */
+    if is(res = false) and not atom(e) and is(op(e) = "+") then block(
+        [_terms, _all_ok, _F_sum, _ft_i],
+        _terms: args(e),
+        _all_ok: true,
+        _F_sum: 0,
+        for _term in _terms while _all_ok do (
+            _ft_i: FT_pattern_lookup(_term, t_var, w_var),
+            if is(_ft_i = false)
+            then _all_ok: false
+            else _F_sum: _F_sum + _ft_i[1]
+        ),
+        if _all_ok then res: [_F_sum, "linearity: FT(f+g+...) = FT(f)+FT(g)+..."]
+    ),
+
     res
 )$
 
@@ -1327,6 +1364,40 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                           concat("(pi/a)*e^{-a|w|} -> 1/(a^2+t^2), a=", string(aa))]
             )
         )
+    ),
+
+    /* ── scalar: k*F(w) -> k*IFT(F(w))  (k constante en w) ── */
+    if is(res = false) and not atom(e) and is(op(e) = "*") then block(
+        [_factors, _const_k, _w_parts, _ift_core],
+        _factors: args(e),
+        _const_k: 1,
+        _w_parts: [],
+        for _fac in _factors do (
+            if freeof(w_var, _fac)
+            then _const_k: _const_k * _fac
+            else _w_parts: cons(_fac, _w_parts)
+        ),
+        if length(_w_parts) = 1 then (
+            _ift_core: IFT_pattern_lookup(first(_w_parts), w_var, t_var),
+            if is(_ift_core # false) then
+                res: [_const_k * _ift_core[1],
+                      concat("k*F(w): k=", string(_const_k), ", ", _ift_core[2])]
+        )
+    ),
+
+    /* ── linearity: IFT(F+G+...) = IFT(F)+IFT(G)+... ── */
+    if is(res = false) and not atom(e) and is(op(e) = "+") then block(
+        [_terms, _all_ok, _f_sum, _ift_i],
+        _terms: args(e),
+        _all_ok: true,
+        _f_sum: 0,
+        for _term in _terms while _all_ok do (
+            _ift_i: IFT_pattern_lookup(_term, w_var, t_var),
+            if is(_ift_i = false)
+            then _all_ok: false
+            else _f_sum: _f_sum + _ift_i[1]
+        ),
+        if _all_ok then res: [_f_sum, "linearity: IFT(F+G+...) = IFT(F)+IFT(G)+..."]
     ),
 
     res
