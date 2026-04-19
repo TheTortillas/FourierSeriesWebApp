@@ -337,151 +337,141 @@
       <div class="p-5 flex flex-col gap-5">
 
         <!-- ── Signal chart — always visible (preview before compute, result after) ── -->
-          <!-- ── Signal chart ────────────────────────────────────────────── -->
           <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
-            <div class="px-4 py-2.5 border-b border-border dark:border-dark-border flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">{{ 'transforms.dft.signalTitle' | transloco }}</span>
-              <div class="flex items-center gap-3 ml-auto text-[10px] font-mono text-muted dark:text-dark-muted">
-                @if (result()) {
-                  <span class="flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full inline-block" [style.background]="samplesColor()"></span>
-                    {{ 'transforms.dft.samplesLabel' | transloco }}
-                  </span>
-                  <span class="flex items-center gap-1.5">
-                    <span class="inline-block w-4 h-0.5 rounded" [style.background]="reconstructionColor()"></span>
-                    IDFT
-                  </span>
-                }
-              </div>
-              @if (result()) {
-                <!-- Favorite -->
-                @if (userStore.isAuthenticated()) {
-                  <button type="button" (click)="openFavoriteDialog()"
-                    [title]="latestHistoryEntry()?.isFavorite ? ('results.removeFav' | transloco) : ('results.addFav' | transloco)"
-                    [class]="latestHistoryEntry()?.isFavorite
-                      ? 'w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center cursor-pointer'
-                      : 'w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'">
-                    @if (favoriteLoading()) {
-                      <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                      </svg>
-                    } @else {
-                      <span class="text-sm leading-none">★</span>
-                    }
-                  </button>
-                }
-                <!-- Download signal -->
-                <button type="button" (click)="downloadCanvas(signalWrapperRef(), 'dft-signal.png')"
-                  [title]="'results.downloadImage' | transloco"
-                  class="w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink hover:border-accent flex items-center justify-center transition-colors cursor-pointer">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                </button>
-                <!-- Settings -->
-                <button type="button" (click)="showCanvasSettings.set(!showCanvasSettings())"
-                  [class]="showCanvasSettings()
-                    ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
-                    : 'w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink hover:border-accent flex items-center justify-center transition-colors cursor-pointer'">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                  </svg>
-                </button>
-              }
-            </div>
-
-            @if (showCanvasSettings()) {
-              <div class="px-4 py-3 border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg flex flex-col gap-3 text-[11px] font-mono">
-                <section class="flex flex-col gap-2">
-                  <div class="flex items-center justify-between">
-                    <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.layersShow' | transloco }}</h4>
-                    <button type="button" (click)="resetSignalColors()"
-                      class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer">
-                      {{ 'transforms.reset' | transloco }}
-                    </button>
-                  </div>
-                  <div class="flex flex-wrap gap-2 items-center">
-                    <button type="button" (click)="showSamples.set(!showSamples())"
-                      class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
-                      [style.borderColor]="showSamples() ? samplesColor() : null"
-                      [style.color]="showSamples() ? samplesColor() : null"
-                      [style.backgroundColor]="showSamples() ? samplesColor() + '1A' : null"
-                      [class]="showSamples() ? '' : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'">
-                      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showSamples() ? samplesColor() : 'currentColor'"></span>
-                      {{ 'transforms.dft.showSamples' | transloco }}
-                    </button>
-                    <button type="button" (click)="showReconstruction.set(!showReconstruction())"
-                      class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
-                      [style.borderColor]="showReconstruction() ? reconstructionColor() : null"
-                      [style.color]="showReconstruction() ? reconstructionColor() : null"
-                      [style.backgroundColor]="showReconstruction() ? reconstructionColor() + '1A' : null"
-                      [class]="showReconstruction() ? '' : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'">
-                      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showReconstruction() ? reconstructionColor() : 'currentColor'"></span>
-                      IDFT
-                    </button>
-                  </div>
-                </section>
-                <div class="border-t border-border dark:border-dark-border"></div>
-                <section class="flex flex-col gap-2">
-                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.lineStyle' | transloco }}</h4>
-                  <div class="flex flex-wrap gap-3 items-center">
-                    <div class="flex items-center gap-2">
-                      <span class="text-muted dark:text-dark-muted">{{ 'transforms.dft.showSamples' | transloco }}</span>
-                      <input type="color" [value]="samplesColor()" (input)="onSamplesColorInput($any($event.target).value)"
-                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
-                      <input type="number" [value]="samplesRadius()" min="1" max="6" step="0.5"
-                        (input)="samplesRadius.set(+$any($event.target).value)"
-                        class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-muted dark:text-dark-muted">IDFT</span>
-                      <input type="color" [value]="reconstructionColor()" (input)="onReconColorInput($any($event.target).value)"
-                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
-                      <input type="number" [value]="reconstructionLineWidth()" min="0.5" max="5" step="0.5"
-                        (input)="reconstructionLineWidth.set(+$any($event.target).value)"
-                        class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
-                    </div>
-                  </div>
-                </section>
-                <div class="border-t border-border dark:border-dark-border"></div>
-                <section class="flex flex-col gap-2">
-                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.axisAndUnits' | transloco }}</h4>
-                  <div class="flex items-center gap-2">
-                    <span class="text-muted dark:text-dark-muted">{{ 'transforms.axisX' | transloco }}</span>
-                    <div class="flex rounded border border-border dark:border-dark-border overflow-hidden">
-                      <button type="button" (click)="signalXAxisFormat.set('pi')"
-                        [class]="signalXAxisFormat() === 'pi'
-                          ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
-                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
-                        π
-                      </button>
-                      <button type="button" (click)="signalXAxisFormat.set('e')"
-                        [class]="signalXAxisFormat() === 'e'
-                          ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
-                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
-                        e
-                      </button>
-                      <button type="button" (click)="signalXAxisFormat.set('integer')"
-                        [class]="signalXAxisFormat() === 'integer'
-                          ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
-                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
-                        1,2
-                      </button>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            }
-
-            <div class="h-64" #signalWrapper>
+            <div class="relative h-64" #signalWrapper>
               <app-function-plot #signalPlot [layers]="mainSignalLayers()" [initialUnit]="48"
                 [xAxisFormat]="signalXAxisFormat()" class="w-full h-full block"/>
+
+              <!-- Overlay buttons top-left -->
+              <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
+                @if (result()) {
+                  @if (userStore.isAuthenticated()) {
+                    <button type="button" (click)="openFavoriteDialog()"
+                      [title]="latestHistoryEntry()?.isFavorite ? ('results.removeFav' | transloco) : ('results.addFav' | transloco)"
+                      [class]="latestHistoryEntry()?.isFavorite
+                        ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center cursor-pointer'
+                        : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'">
+                      @if (favoriteLoading()) {
+                        <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                      } @else {
+                        <span class="text-sm leading-none">★</span>
+                      }
+                    </button>
+                  }
+                  <button type="button" (click)="showCanvasSettings.set(!showCanvasSettings())"
+                    [title]="'results.canvasSettings' | transloco"
+                    [class]="showCanvasSettings()
+                      ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
+                      : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                  </button>
+                  <button type="button" (click)="downloadCanvas(signalWrapperRef(), 'dft-signal.png')"
+                    [title]="'results.downloadImage' | transloco"
+                    class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+
+              <!-- Legend overlay top-right (only after compute) -->
+              @if (result()) {
+                <div class="absolute top-2 right-2 flex items-center gap-3 text-[10px] font-mono pointer-events-none
+                  px-2 py-1 rounded border border-border/40 dark:border-dark-border/40
+                  bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                  <span class="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                    <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="samplesColor()"></span>
+                    {{ 'transforms.dft.samplesLabel' | transloco }}
+                  </span>
+                  <span class="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                    <span class="inline-block w-4 h-0.5 rounded shrink-0" [style.background]="reconstructionColor()"></span>
+                    IDFT
+                  </span>
+                </div>
+              }
+
+              <!-- Settings panel overlay -->
+              @if (showCanvasSettings()) {
+                <div class="absolute top-11 left-2 right-2 sm:right-auto sm:w-80 z-20 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow flex flex-col gap-3 text-[11px] font-mono max-h-[calc(100%-3.5rem)] overflow-y-auto">
+                  <section class="flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                      <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.layersShow' | transloco }}</h4>
+                      <button type="button" (click)="resetSignalColors()"
+                        class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer">
+                        {{ 'transforms.reset' | transloco }}
+                      </button>
+                    </div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                      <button type="button" (click)="showSamples.set(!showSamples())"
+                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
+                        [style.borderColor]="showSamples() ? samplesColor() : null"
+                        [style.color]="showSamples() ? samplesColor() : null"
+                        [style.backgroundColor]="showSamples() ? samplesColor() + '1A' : null"
+                        [class]="showSamples() ? '' : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'">
+                        <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showSamples() ? samplesColor() : 'currentColor'"></span>
+                        {{ 'transforms.dft.showSamples' | transloco }}
+                      </button>
+                      <button type="button" (click)="showReconstruction.set(!showReconstruction())"
+                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
+                        [style.borderColor]="showReconstruction() ? reconstructionColor() : null"
+                        [style.color]="showReconstruction() ? reconstructionColor() : null"
+                        [style.backgroundColor]="showReconstruction() ? reconstructionColor() + '1A' : null"
+                        [class]="showReconstruction() ? '' : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'">
+                        <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showReconstruction() ? reconstructionColor() : 'currentColor'"></span>
+                        IDFT
+                      </button>
+                    </div>
+                  </section>
+                  <div class="border-t border-border dark:border-dark-border"></div>
+                  <section class="flex flex-col gap-2">
+                    <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.lineStyle' | transloco }}</h4>
+                    <div class="flex flex-wrap gap-3 items-center">
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted dark:text-dark-muted">{{ 'transforms.dft.showSamples' | transloco }}</span>
+                        <input type="color" [value]="samplesColor()" (input)="onSamplesColorInput($any($event.target).value)"
+                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
+                        <input type="number" [value]="samplesRadius()" min="1" max="6" step="0.5"
+                          (input)="samplesRadius.set(+$any($event.target).value)"
+                          class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted dark:text-dark-muted">IDFT</span>
+                        <input type="color" [value]="reconstructionColor()" (input)="onReconColorInput($any($event.target).value)"
+                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
+                        <input type="number" [value]="reconstructionLineWidth()" min="0.5" max="5" step="0.5"
+                          (input)="reconstructionLineWidth.set(+$any($event.target).value)"
+                          class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
+                      </div>
+                    </div>
+                  </section>
+                  <div class="border-t border-border dark:border-dark-border"></div>
+                  <section class="flex flex-col gap-2">
+                    <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.axisAndUnits' | transloco }}</h4>
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">{{ 'transforms.axisX' | transloco }}</span>
+                      <div class="flex rounded border border-border dark:border-dark-border overflow-hidden">
+                        <button type="button" (click)="signalXAxisFormat.set('pi')"
+                          [class]="signalXAxisFormat() === 'pi' ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">π</button>
+                        <button type="button" (click)="signalXAxisFormat.set('e')"
+                          [class]="signalXAxisFormat() === 'e' ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">e</button>
+                        <button type="button" (click)="signalXAxisFormat.set('integer')"
+                          [class]="signalXAxisFormat() === 'integer' ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">1,2</button>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              }
             </div>
           </section>
 
@@ -544,13 +534,33 @@
 
           <!-- ── Spectrum chart ──────────────────────────────────────────── -->
           <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
-            <div class="px-4 py-2.5 border-b border-border dark:border-dark-border flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">{{ 'transforms.dft.spectrumTitle' | transloco }}</span>
-              <div class="flex gap-1 ml-auto">
-                <!-- Share URL -->
+            <div class="relative h-64" #spectrumWrapper
+              (mousemove)="onSpecMouseMove($event)"
+              (mouseleave)="onSpecMouseLeave()">
+              <app-function-plot #spectrumPlot [layers]="spectrumLayers()" [initialUnit]="24" [xAxisFormat]="'integer'"
+                class="w-full h-full block"/>
+
+              <!-- Mode buttons overlay top-left -->
+              <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
+                <button type="button" (click)="specMode.set('amplitude')"
+                  [class]="specMode() === 'amplitude'
+                    ? 'pointer-events-auto px-2.5 py-1 rounded border border-violet-400 bg-violet-50/90 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[10px] font-mono font-semibold cursor-pointer backdrop-blur-sm'
+                    : 'pointer-events-auto px-2.5 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-[10px] font-mono text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer backdrop-blur-sm'">
+                  |X[k]|
+                </button>
+                <button type="button" (click)="specMode.set('phase')"
+                  [class]="specMode() === 'phase'
+                    ? 'pointer-events-auto px-2.5 py-1 rounded border border-emerald-400 bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-semibold cursor-pointer backdrop-blur-sm'
+                    : 'pointer-events-auto px-2.5 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-[10px] font-mono text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer backdrop-blur-sm'">
+                  ∠X[k]
+                </button>
+              </div>
+
+              <!-- Action buttons overlay top-right -->
+              <div class="absolute top-2 right-2 flex gap-1 pointer-events-none">
                 <button type="button" (click)="openShareDialog()"
                   [title]="'transforms.shareLink' | transloco"
-                  class="w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink hover:border-accent flex items-center justify-center transition-colors cursor-pointer">
+                  class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -558,10 +568,9 @@
                     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                   </svg>
                 </button>
-                <!-- Download spectrum -->
                 <button type="button" (click)="downloadCanvas(specWrapperRef(), 'dft-spectrum.png')"
                   [title]="'results.downloadImage' | transloco"
-                  class="w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink hover:border-accent flex items-center justify-center transition-colors cursor-pointer">
+                  class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -569,78 +578,20 @@
                     <line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
                 </button>
-              </div>
-              <div class="flex gap-1">
-                <button type="button" (click)="specMode.set('amplitude')"
-                  [class]="specMode() === 'amplitude'
-                    ? 'px-2.5 py-1 rounded border border-violet-400 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 text-[10px] font-mono font-semibold cursor-pointer'
-                    : 'px-2.5 py-1 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
-                  |X[k]|
-                </button>
-                <button type="button" (click)="specMode.set('phase')"
-                  [class]="specMode() === 'phase'
-                    ? 'px-2.5 py-1 rounded border border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-semibold cursor-pointer'
-                    : 'px-2.5 py-1 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'">
-                  ∠X[k]
+                <button type="button" (click)="showSpecSettings.set(!showSpecSettings())"
+                  [title]="'results.canvasSettings' | transloco"
+                  [class]="showSpecSettings()
+                    ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
+                    : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer'">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
                 </button>
               </div>
-              <button type="button" (click)="showSpecSettings.set(!showSpecSettings())"
-                [class]="showSpecSettings()
-                  ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
-                  : 'w-7 h-7 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink hover:border-accent flex items-center justify-center transition-colors cursor-pointer'">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-              </button>
-            </div>
 
-            @if (showSpecSettings()) {
-              <div class="px-4 py-3 border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg flex flex-col gap-3 text-[11px] font-mono">
-                <div class="flex items-center justify-between">
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" [checked]="fftShift()" (change)="fftShift.set($any($event.target).checked)"
-                      class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-                    <span class="text-ink dark:text-dark-ink text-xs">{{ 'transforms.dft.fftShift' | transloco }}</span>
-                    <span class="text-muted dark:text-dark-muted text-[10px]">(k &lt; 0 = {{ 'transforms.dft.negFreq' | transloco }})</span>
-                  </label>
-                  <button type="button" (click)="resetSpecColors()"
-                    class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer">
-                    {{ 'transforms.reset' | transloco }}
-                  </button>
-                </div>
-                <div class="border-t border-border dark:border-dark-border"></div>
-                <section class="flex flex-col gap-2">
-                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.lineStyle' | transloco }}</h4>
-                  <div class="flex flex-wrap gap-3 items-center">
-                    <div class="flex items-center gap-2">
-                      <span class="text-muted dark:text-dark-muted">|X[k]|</span>
-                      <input type="color" [value]="specAmplitudeColor()" (input)="onSpecAmpColorInput($any($event.target).value)"
-                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-muted dark:text-dark-muted">∠X[k]</span>
-                      <input type="color" [value]="specPhaseColor()" (input)="onSpecPhaseColorInput($any($event.target).value)"
-                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-muted dark:text-dark-muted">{{ 'transforms.dft.stemWidth' | transloco }}</span>
-                      <input type="number" [value]="specStemWidth()" min="0.5" max="4" step="0.5"
-                        (input)="specStemWidth.set(+$any($event.target).value)"
-                        class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            }
-
-            <div class="relative h-64" #spectrumWrapper
-              (mousemove)="onSpecMouseMove($event)"
-              (mouseleave)="onSpecMouseLeave()">
-              <app-function-plot #spectrumPlot [layers]="spectrumLayers()" [initialUnit]="24" [xAxisFormat]="'integer'"
-                class="w-full h-full block"/>
-
+              <!-- Hover tooltip -->
               @if (hoveredCoeff(); as hov) {
                 <div class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none z-10
                   px-3 py-2 rounded-lg border border-border dark:border-dark-border
@@ -652,9 +603,48 @@
                   <span class="text-muted dark:text-dark-muted">{{ hov.amplitudePercent | number:'1.1-1' }}%</span>
                 </div>
               }
-            </div>
 
-            <p class="px-4 py-2 text-[10px] font-mono text-muted dark:text-dark-muted">
+              <!-- Spectrum settings panel overlay -->
+              @if (showSpecSettings()) {
+                <div class="absolute top-11 right-2 z-20 w-72 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow flex flex-col gap-3 text-[11px] font-mono">
+                  <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" [checked]="fftShift()" (change)="fftShift.set($any($event.target).checked)"
+                        class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                      <span class="text-ink dark:text-dark-ink text-xs">{{ 'transforms.dft.fftShift' | transloco }}</span>
+                      <span class="text-muted dark:text-dark-muted text-[10px]">(k &lt; 0 = {{ 'transforms.dft.negFreq' | transloco }})</span>
+                    </label>
+                    <button type="button" (click)="resetSpecColors()"
+                      class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer">
+                      {{ 'transforms.reset' | transloco }}
+                    </button>
+                  </div>
+                  <div class="border-t border-border dark:border-dark-border"></div>
+                  <section class="flex flex-col gap-2">
+                    <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.lineStyle' | transloco }}</h4>
+                    <div class="flex flex-wrap gap-3 items-center">
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted dark:text-dark-muted">|X[k]|</span>
+                        <input type="color" [value]="specAmplitudeColor()" (input)="onSpecAmpColorInput($any($event.target).value)"
+                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted dark:text-dark-muted">∠X[k]</span>
+                        <input type="color" [value]="specPhaseColor()" (input)="onSpecPhaseColorInput($any($event.target).value)"
+                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"/>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted dark:text-dark-muted">{{ 'transforms.dft.stemWidth' | transloco }}</span>
+                        <input type="number" [value]="specStemWidth()" min="0.5" max="4" step="0.5"
+                          (input)="specStemWidth.set(+$any($event.target).value)"
+                          class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"/>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              }
+            </div>
+            <p class="px-4 py-2 text-[10px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border">
               {{ 'transforms.dft.spectrumNote' | transloco }}
             </p>
           </section>

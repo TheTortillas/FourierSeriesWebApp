@@ -570,6 +570,17 @@ export class DftComponent implements OnInit {
     this.selectedCoeff.set(null);
     this.hoveredCoeff.set(null);
     this.showCanvasSettings.set(true);
+
+    // Track quota on backend (manual compute is client-side, so we fire a lightweight call)
+    this.api.calculateDFT({ points: sampledPoints, mode: 'signal' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.userStore.refreshQuota();
+          if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
+        },
+        error: () => {},
+      });
   }
 
   private _computeFromFunction(): void {
