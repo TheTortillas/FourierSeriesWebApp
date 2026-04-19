@@ -1,6 +1,7 @@
 import {
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -12,10 +13,14 @@ import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, map, of, switchMap } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { ApiService } from '../../../core/services/api/api.service';
+import { UserStore } from '../../../core/services/auth/user.store';
+import { HistoryEntry } from '../../../domain';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
@@ -103,10 +108,12 @@ export class DftComponent implements OnInit {
   private readonly coords     = inject(CoordinateTransformService);
   private readonly plotter    = inject(PlottingService);
   private readonly mathUtils  = inject(MathUtilsService);
-  private readonly dftCompute = inject(DftComputeService);
-  private readonly route      = inject(ActivatedRoute);
-  private readonly router     = inject(Router);
-  readonly mqs                = inject(MathquillService);
+  private readonly dftCompute  = inject(DftComputeService);
+  private readonly route       = inject(ActivatedRoute);
+  private readonly router      = inject(Router);
+  private readonly destroyRef  = inject(DestroyRef);
+  readonly mqs                 = inject(MathquillService);
+  readonly userStore           = inject(UserStore);
 
   readonly signalPlotRef    = viewChild<FunctionPlotComponent>('signalPlot');
   readonly spectrumPlotRef  = viewChild<FunctionPlotComponent>('spectrumPlot');
@@ -229,6 +236,12 @@ export class DftComponent implements OnInit {
   readonly showShareDialog  = signal(false);
   readonly urlCopied        = signal(false);
   private urlPopulated      = false;
+
+  // ── Favorites ──────────────────────────────────────────────────────────────
+  readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
+  readonly showFavoriteDialog = signal(false);
+  readonly favoriteLoading    = signal(false);
+  favoriteName = '';
 
   // ── Signal canvas X-axis format ─────────────────────────────────────────────
   readonly signalXAxisFormat = signal<'integer' | 'pi' | 'e'>('integer');
@@ -605,6 +618,8 @@ export class DftComponent implements OnInit {
         this.selectedCoeff.set(null);
         this.hoveredCoeff.set(null);
         this.showCanvasSettings.set(true);
+        this.userStore.refreshQuota();
+        if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       },
       error: (err) => {
         this.error.set(err?.error?.error ?? 'Error al evaluar la función.');
@@ -620,6 +635,8 @@ export class DftComponent implements OnInit {
     this.showSpecSettings.set(false);
     this.selectedCoeff.set(null);
     this.hoveredCoeff.set(null);
+    this.latestHistoryEntry.set(null);
+    this.showFavoriteDialog.set(false);
   }
 
   // ── Color controls ─────────────────────────────────────────────────────────
@@ -764,6 +781,91 @@ export class DftComponent implements OnInit {
     a.href = canvas.toDataURL('image/png');
     a.download = filename;
     a.click();
+  }
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+
+  openFavoriteDialog(): void {
+    const entry = this.latestHistoryEntry();
+    if (entry) {
+      this.doToggle(entry);
+    } else {
+      this.favoriteLoading.set(true);
+      this.fetchLatestEntry(() => {
+        this.favoriteLoading.set(false);
+        const loaded = this.latestHistoryEntry();
+        if (loaded) this.doToggle(loaded);
+      });
+    }
+  }
+
+  confirmFavorite(): void {
+    const entry = this.latestHistoryEntry();
+    if (!entry) return;
+    this.favoriteLoading.set(true);
+    this.showFavoriteDialog.set(false);
+    this.api
+      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.latestHistoryEntry.set(updated);
+          this.favoriteLoading.set(false);
+          this.favoriteName = '';
+        },
+        error: () => this.favoriteLoading.set(false),
+      });
+  }
+
+  cancelFavoriteDialog(): void {
+    this.showFavoriteDialog.set(false);
+    this.favoriteName = '';
+  }
+
+  private fetchLatestEntry(callback?: () => void): void {
+    this.api
+      .getHistory({ limit: 1 })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((res) => {
+          const latest = res.entries[0] ?? null;
+          if (!latest || latest.isFavorite) return of(latest);
+          return this.api.getHistory({ favorites: true, limit: 1 }).pipe(
+            map((favRes) => {
+              const fav = favRes.entries[0];
+              return fav && JSON.stringify(fav.input) === JSON.stringify(latest.input)
+                ? fav
+                : latest;
+            }),
+            catchError(() => of(latest)),
+          );
+        }),
+      )
+      .subscribe({
+        next: (entry) => {
+          this.latestHistoryEntry.set(entry);
+          callback?.();
+        },
+        error: () => callback?.(),
+      });
+  }
+
+  private doToggle(entry: HistoryEntry): void {
+    if (entry.isFavorite) {
+      this.favoriteLoading.set(true);
+      this.api
+        .toggleFavorite(entry.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (updated) => {
+            this.latestHistoryEntry.set(updated);
+            this.favoriteLoading.set(false);
+          },
+          error: () => this.favoriteLoading.set(false),
+        });
+    } else {
+      this.showFavoriteDialog.set(true);
+    }
   }
 
   // ── Canvas drawing ─────────────────────────────────────────────────────────

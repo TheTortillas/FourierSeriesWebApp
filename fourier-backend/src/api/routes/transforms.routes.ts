@@ -362,6 +362,7 @@ transformsRouter.post(
   "/dft/sample",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      const client = trackClientConnection(req, res);
       const input = req.body as DFTFunctionInput;
 
       if (!input.segments || !Array.isArray(input.segments) || input.segments.length === 0) {
@@ -389,6 +390,28 @@ transformsRouter.post(
       }
 
       const result = await dftService.sampleFunction(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (req.user) {
+          await incrementCalculationCount(req.user.id);
+          await historyRepository.create({
+            userId: req.user.id,
+            type: "dft_function",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.samplingTimeMs,
+          });
+        } else {
+          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
+          await historyRepository.create({
+            ipAddress: req.ip ?? undefined,
+            type: "dft_function",
+            input: input as unknown as Record<string, unknown>,
+            executionMs: result.samplingTimeMs,
+          });
+        }
+      }
+
       res.json(result);
     } catch (err) {
       next(err);
