@@ -841,25 +841,43 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
-    /* ── k/(a^2+t^2) -> (k*pi/a)*e^{-a|w|}  (a > 0) ──
-       ratdisrep() antes de sqrt() evita que radcan(sqrt(rat(1))) = 1.0
-       y que radcan(sqrt(a)) = a^0.5 (exponente decimal)             */
+    /* ── k/(A*t^2+B*t+C) — Lorentziana generalizada  (discriminante < 0) ──
+       Completa el cuadrado: A*(t-t0)^2 + a^2  donde t0=-B/(2A), a^2=(4AC-B^2)/(4A)
+       FT = (kπ/(A*a)) * e^{-a|w|}                    si t0 = 0
+          = (kπ/(A*a)) * e^{-a|w|} * e^{-i*w*t0}      si t0 ≠ 0
+       Cubre casos simples (t0=0) y desplazados (e.g. 1/(t^2-4t+13)).
+       ratdisrep() antes de sqrt() evita flotantes (ver nota en beg. file). */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "/") then block(
-            [_numer, denom, sqterm, dconst, a_cand, _q],
+            [_numer, _denom, _A, _B, _C, _disc, _t0, _asq, _acand, _k],
             _numer: part(e, 1),
-            denom: rat(rationalize(expand(part(e, 2)))),
-            if freeof(t_var, _numer) and not freeof(t_var, denom) then (
-                sqterm: rat(coeff(denom, t_var, 2)),
-                dconst: ratsimp(subst(t_var=0, denom)),
-                if freeof(t_var, sqterm) and freeof(t_var, dconst)
-                   and is(sqterm > 0) and is(dconst > 0) then (
-                    _q: rat(dconst / sqterm),
-                    a_cand: sqrt(ratdisrep(_q)),
-                    if freeof(t_var, a_cand) and is(a_cand > 0) then (
-                        k: ratsimp(_numer / sqterm),
-                        res: [k * (%piexact/a_cand) * exp(-a_cand*abs(w_var)),
-                              concat("k/(a^2+t^2) -> (k*pi/a)*e^{-a|w|}, a=", string(a_cand))]
+            _denom: rat(rationalize(expand(part(e, 2)))),
+            if freeof(t_var, _numer) and not freeof(t_var, _denom) then (
+                _A: ratdisrep(rat(coeff(_denom, t_var, 2))),
+                _B: ratdisrep(rat(coeff(_denom, t_var, 1))),
+                _C: ratdisrep(ratsimp(subst(t_var=0, _denom))),
+                if freeof(t_var, _A) and freeof(t_var, _B) and freeof(t_var, _C)
+                   and is(_A > 0)
+                   and ratsimp(_denom - (_A*t_var^2 + _B*t_var + _C)) = 0 then (
+                    _disc: ratsimp(_B^2 - 4*_A*_C),
+                    if is(_disc < 0) then (
+                        _t0: ratsimp(-_B / (2*_A)),
+                        _asq: ratsimp(-_disc / (4*_A)),
+                        _acand: sqrt(ratdisrep(rat(_asq))),
+                        if is(_acand > 0) and freeof(t_var, _acand) then (
+                            _k: ratsimp(_numer / _A),
+                            if freeof(t_var, _k) then (
+                                if ratsimp(_t0) = 0 then
+                                    res: [_k * (%piexact/_acand) * exp(-_acand*abs(w_var)),
+                                          concat("k/(a^2+t^2) -> (kπ/a)*e^{-a|w|}, a=",
+                                                 string(_acand))]
+                                else
+                                    res: [_k * (%piexact/_acand) * exp(-_acand*abs(w_var))
+                                              * exp(-%i*w_var*_t0),
+                                          concat("k/(A(t-t0)^2+a^2) -> (kπ/Aa)*e^{-a|w|}*e^{-iwt0}, t0=",
+                                                 string(_t0), ", a=", string(_acand))]
+                            )
+                        )
                     )
                 )
             )
@@ -1060,6 +1078,48 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
             if is(_ft_core # false) then
                 res: [_const_k * _ft_core[1],
                       concat("k*f(t): k=", string(_const_k), ", ", _ft_core[2])]
+        )
+    ),
+
+    /* ── frequency-shift: e^{i*w0*t} * g(t) -> G(w - w0) ──
+       Frequency-shift theorem: FT[e^{iw0t} f(t)](w) = F(w-w0).
+       Uses f_expr (NOT the expanded e) because expand() may absorb negative
+       exponentials into the denominator: expand(e^{-2it}/(4+t^2)) gives
+       1/(e^{2it}*(t^2+4)), hiding the exponential factor in the numerator.
+       ratsimp(f_expr) normalizes without that problem.
+       Handles: op="*" (e^{iw0t}*g) and op="/" (e^{iw0t}/h or k/(e^{iw0t}*h)).
+       In Maxima exp(x) = %e^x, so the base must be %e (op="^", part 1 = %e). */
+    if is(res = false) then block(
+        [_fs_e, _fs_factors, _fs_denom, _exp_fac, _w0, _g_rest, _g_ft, _earg, _w0c],
+        _fs_e: ratsimp(f_expr),
+        _exp_fac: false, _w0: false, _g_rest: 1,
+        if not atom(_fs_e) and (is(op(_fs_e) = "*") or is(op(_fs_e) = "/")) then (
+            /* Collect numerator factors; keep denominator separate */
+            _fs_denom: if is(op(_fs_e) = "/") then part(_fs_e, 2) else 1,
+            _fs_factors: block([_n: if is(op(_fs_e) = "/") then part(_fs_e, 1)
+                                    else _fs_e],
+                if not atom(_n) and is(op(_n) = "*") then args(_n) else [_n]),
+            for _fac in _fs_factors do (
+                if is(_exp_fac = false) and not atom(_fac)
+                   and is(op(_fac) = "^") and is(part(_fac, 1) = %e) then (
+                    _earg: part(_fac, 2),
+                    _w0c: errcatch(ratsimp(_earg / (%i * t_var))),
+                    if _w0c # [] and freeof(t_var, first(_w0c))
+                       and not equal(first(_w0c), 0)
+                       and ratsimp(_earg - %i * first(_w0c) * t_var) = 0 then (
+                        _exp_fac: _fac,
+                        _w0: first(_w0c)
+                    ) else _g_rest: _g_rest * _fac
+                ) else _g_rest: _g_rest * _fac
+            ),
+            if is(_exp_fac # false) then (
+                _g_rest: _g_rest / _fs_denom,
+                _g_ft: FT_pattern_lookup(_g_rest, t_var, w_var),
+                if is(_g_ft # false) then
+                    res: [subst(w_var = w_var - _w0, _g_ft[1]),
+                          concat("freq-shift: e^{iw0t}*g(t)->G(w-w0), w0=", string(_w0),
+                                 ", G=", _g_ft[2])]
+            )
         )
     ),
 
