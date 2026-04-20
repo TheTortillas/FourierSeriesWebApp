@@ -1026,6 +1026,21 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── f(t)/c -> FT(f(t))/c  (c constante en t, op="/") ──
+       Handles Maxima's representation of k/c * f(t) as (k*f(t))/c.
+       Delegates to FT_pattern_lookup on the numerator. */
+    if is(res = false) and not atom(e) and is(op(e) = "/") then block(
+        [_num_e, _den_e, _ft_num],
+        _num_e: part(e, 1),
+        _den_e: part(e, 2),
+        if freeof(t_var, _den_e) then (
+            _ft_num: FT_pattern_lookup(_num_e, t_var, w_var),
+            if is(_ft_num # false) then
+                res: [_ft_num[1] / _den_e,
+                      concat("f(t)/c: c=", string(_den_e), ", ", _ft_num[2])]
+        )
+    ),
+
     /* ── scalar: k*f(t) -> k*FT(f(t))  (k constante en t) ──
        Separa el coeficiente constante de la parte t-dependiente.
        Solo activa cuando hay exactamente UN factor que depende de t
@@ -1068,7 +1083,25 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 else _F_sum: _F_sum + _ft_i[1]
             )
         ),
-        if _all_ok then res: [_F_sum, "linearity: FT(f+g+...) = FT(f)+FT(g)+..."]
+        if _all_ok then block(
+            [_simplified, _dm],
+            /* Simplify the accumulated sum.
+               Try demoivre to collapse imaginary exponentials to trig form:
+               e.g. (exp(iw)-exp(-iw))/(iw) -> 2*sin(w)/w.
+               demoivre must come BEFORE ratsimp — ratsimp first changes the
+               exp form in a way that blocks later trig simplification.
+               Only accept the demoivre result if it eliminated all %e terms
+               (freeof(%e, result)). This guards against accidentally expanding
+               real-decaying phase factors like exp(-at0)*exp(-iw*t0) into
+               trig, which would give a messier (not simpler) form. */
+            if not freeof(%e, _F_sum) and not freeof(%i, _F_sum) then (
+                _dm: errcatch(ratsimp(demoivre(_F_sum))),
+                if _dm # [] and freeof(%e, first(_dm))
+                then _simplified: first(_dm)
+                else _simplified: ratsimp(_F_sum)
+            ) else _simplified: ratsimp(_F_sum),
+            res: [_simplified, "linearity: FT(f+g+...) = FT(f)+FT(g)+..."]
+        )
     ),
 
     res
