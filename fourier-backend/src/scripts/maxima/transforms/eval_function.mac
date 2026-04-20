@@ -1,0 +1,58 @@
+/* ═══════════════════════════════════════════════════════════════
+   Evaluación numérica de función a trozos en N puntos
+   Input:  FUNC_INPUT  → matrix([expr, a, b], ...)
+           INTVAR      → variable de integración (símbolo)
+           N_SAMPLES   → número de puntos de muestreo
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+
+_n_segs: length(FUNC_INPUT)$
+_a: float(FUNC_INPUT[1][2])$
+_b: float(FUNC_INPUT[_n_segs][3])$
+_N: N_SAMPLES$
+_dx: (_b - _a) / _N$
+
+/* Si la evaluación directa falla, intenta el límite bilateral.
+   Devuelve el valor flotante si el límite existe y es finito (singularidad
+   removible), o 'failed en cualquier otro caso. */
+_try_limit(expr, xval) := block(
+  [_lp, _lm],
+  _lp: errcatch(limit(expr, INTVAR, xval, 'plus)),
+  _lm: errcatch(limit(expr, INTVAR, xval, 'minus)),
+  _lp: if _lp = [] then 'failed else first(_lp),
+  _lm: if _lm = [] then 'failed else first(_lm),
+  if _lp = 'failed or _lm = 'failed then return('failed),
+  if not floatnump(float(_lp)) or not floatnump(float(_lm)) then return('failed),
+  if ratsimp(_lp - _lm) = 0 then float(_lp) else 'failed
+)$
+
+/* Evalúa la función piecewise en un punto xval */
+_eval_at(xval) := block(
+  [_res: 0.0, _i, _seg, _v, _lo, _hi, _lim],
+  for _i: 1 thru _n_segs do (
+    _seg: FUNC_INPUT[_i],
+    _lo: float(_seg[2]),
+    _hi: float(_seg[3]),
+    if xval >= _lo and (xval < _hi or _i = _n_segs) then (
+      _v: errcatch(float(subst(xval, INTVAR, _seg[1]))),
+      if _v # [] and numberp(first(_v)) then
+        _res: first(_v)
+      else (
+        /* Evaluación directa falló — puede ser singularidad removible */
+        _lim: _try_limit(_seg[1], xval),
+        _res: if _lim # 'failed then _lim else 0.0
+      ),
+      return(_res)
+    )
+  ),
+  _res
+)$
+
+_xs: makelist(float(_a + k * _dx), k, 0, _N - 1)$
+_ys: makelist(_eval_at(_xs[k + 1]), k, 0, _N - 1)$
+
+print("__A__")$    print(string(_a))$
+print("__B__")$    print(string(_b))$
+print("__XS__")$   print(string(_xs))$
+print("__YS__")$   print(string(_ys))$

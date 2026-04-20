@@ -29,15 +29,10 @@
         routerLinkActive
         #dftRla="routerLinkActive"
         [class]="dftRla.isActive
-          ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors inline-flex items-center gap-1.5'
-          : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors inline-flex items-center gap-1.5'"
+          ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
+          : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'"
       >
         {{ 'transforms.discrete' | transloco }}
-        <span
-          class="text-[10px] leading-none px-1.5 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted"
-        >
-          {{ 'transforms.comingSoon' | transloco }}
-        </span>
       </a>
     </div>
   </header>
