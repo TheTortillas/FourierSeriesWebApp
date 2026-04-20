@@ -1626,6 +1626,135 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── k/(a²+w²) -> k*e^{-a|t|}/(2a)  (a > 0) ──
+       Desde FT[e^{-a|t|}] = 2a/(a²+w²) */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [_n_ltz, _d_ltz, _c2_ltz, _c0_ltz, _a_ltz, _k_ltz],
+            _n_ltz: part(er, 1),
+            _d_ltz: rat(expand(part(er, 2))),
+            if freeof(w_var, _n_ltz) and not freeof(w_var, _d_ltz)
+               and freeof('abs, _d_ltz) and freeof(%e, _d_ltz) then (
+                _c2_ltz: ratsimp(diff(_d_ltz, w_var, 2) / 2),
+                _c0_ltz: ratsimp(subst(w_var=0, _d_ltz)),
+                if ratsimp(_c2_ltz - 1) = 0 and is(_c0_ltz > 0)
+                   and ratsimp(_d_ltz - (w_var^2 + _c0_ltz)) = 0 then (
+                    _a_ltz: sqrt(ratdisrep(rat(_c0_ltz))),
+                    if freeof(w_var, _a_ltz) and is(_a_ltz > 0) then (
+                        _k_ltz: ratsimp(_n_ltz),
+                        if freeof(w_var, _k_ltz) then
+                            res: [_k_ltz * exp(-_a_ltz * abs(t_var)) / (2 * _a_ltz),
+                                  concat("k/(a^2+w^2) -> k*exp(-a|t|)/(2a), a=",
+                                         string(_a_ltz))]
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── k/(w*(iw+a)) -> (ik/a)*(sgn(t)/2 - e^{-at}*u(t))  (a > 0) ──
+       Via fracciones parciales: 1/(w*(iw+a)) = (1/a)/w - (i/a)/(iw+a) */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [_n_wa, _d_wa, _c2_wa, _c1_wa, _c0_wa, _aa_wa, _k_wa],
+            _n_wa: part(er, 1),
+            _d_wa: rat(expand(part(er, 2))),
+            if freeof(w_var, _n_wa) and not freeof(w_var, _d_wa)
+               and freeof('abs, _d_wa) and freeof(%e, _d_wa) then (
+                _c2_wa: ratsimp(diff(_d_wa, w_var, 2) / 2),
+                _c1_wa: ratsimp(subst(w_var=0, diff(_d_wa, w_var))),
+                _c0_wa: ratsimp(subst(w_var=0, _d_wa)),
+                /* denominador = %i*w^2 + a*w  =>  c2=%i, c0=0 */
+                if ratsimp(_c2_wa - %i) = 0 and ratsimp(_c0_wa) = 0 then (
+                    _aa_wa: _c1_wa,
+                    if freeof(w_var, _aa_wa) and is(_aa_wa > 0)
+                       and ratsimp(_d_wa - (%i*w_var^2 + _aa_wa*w_var)) = 0 then (
+                        _k_wa: ratsimp(_n_wa),
+                        if freeof(w_var, _k_wa) then
+                            res: [%i * _k_wa / _aa_wa
+                                      * (sgn(t_var)/2 - exp(-_aa_wa*t_var)*u(t_var)),
+                                  concat("k/(w*(iw+a)) -> ik/a*(sgn(t)/2-e^{-at}u(t)), a=",
+                                         string(_aa_wa))]
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── time-shift: e^{it0*w}*G(w) -> IFT[G](t+t0) ──
+       Simétrico al freq-shift de FT. Usa F_expr (no expand) para que
+       el exponente no sea absorbido al denominador. */
+    if is(res = false) then block(
+        [_ts_e, _ts_numer, _ts_denom, _ts_factors,
+         _exp_fac_ts, _t0_ts, _g_rest_ts, _g_ift_ts, _earg_ts, _t0c_ts],
+        _ts_e: ratsimp(F_expr),
+        _exp_fac_ts: false, _t0_ts: false, _g_rest_ts: 1,
+        if not atom(_ts_e) and (is(op(_ts_e) = "*") or is(op(_ts_e) = "/")) then (
+            _ts_denom: if is(op(_ts_e) = "/") then part(_ts_e, 2) else 1,
+            _ts_numer: if is(op(_ts_e) = "/") then part(_ts_e, 1) else _ts_e,
+            _ts_factors: if not atom(_ts_numer) and is(op(_ts_numer) = "*")
+                         then args(_ts_numer) else [_ts_numer],
+            for _fac in _ts_factors do (
+                if is(_exp_fac_ts = false) and not atom(_fac)
+                   and is(op(_fac) = "^") and is(part(_fac, 1) = %e) then (
+                    _earg_ts: part(_fac, 2),
+                    _t0c_ts: errcatch(ratsimp(_earg_ts / (%i * w_var))),
+                    if _t0c_ts # [] and freeof(w_var, first(_t0c_ts))
+                       and not equal(first(_t0c_ts), 0)
+                       and ratsimp(_earg_ts - %i * first(_t0c_ts) * w_var) = 0 then (
+                        _exp_fac_ts: _fac,
+                        _t0_ts: first(_t0c_ts)
+                    ) else _g_rest_ts: _g_rest_ts * _fac
+                ) else _g_rest_ts: _g_rest_ts * _fac
+            ),
+            if is(_exp_fac_ts # false) then (
+                _g_rest_ts: _g_rest_ts / _ts_denom,
+                _g_ift_ts: IFT_pattern_lookup(_g_rest_ts, w_var, t_var),
+                if is(_g_ift_ts # false) then
+                    res: [subst(t_var = t_var + _t0_ts, _g_ift_ts[1]),
+                          concat("time-shift: e^{it0w}*G(w)->IFT[G](t+t0), t0=",
+                                 string(_t0_ts), ", G=", _g_ift_ts[2])]
+            )
+        )
+    ),
+
+    /* ── sin(b*w)*F(w) -> (IFT[F](t+b) - IFT[F](t-b))/(2i) ──
+       Via fórmula de Euler: sin(bw) = (e^{ibw} - e^{-ibw})/(2i) */
+    if is(res = false) then block(
+        [_sm_numer, _sm_denom, _sin_fac_sm, _b_sm, _rest_sm,
+         _nfacs_sm, _fac_sm, _sin_arg_sm, _b_sm_c,
+         _F_sm, _f_ift_sm],
+        _sin_fac_sm: false, _b_sm: false, _rest_sm: 1,
+        if not atom(e) and (is(op(e) = "*") or is(op(e) = "/")) then (
+            _sm_numer: if is(op(e) = "/") then part(e, 1) else e,
+            _sm_denom: if is(op(e) = "/") then part(e, 2) else 1,
+            _nfacs_sm: if not atom(_sm_numer) and is(op(_sm_numer) = "*")
+                       then args(_sm_numer) else [_sm_numer],
+            for _fac_sm in _nfacs_sm do (
+                if is(_sin_fac_sm = false) and not atom(_fac_sm)
+                   and is(op(_fac_sm) = 'sin) then (
+                    _sin_arg_sm: part(_fac_sm, 1),
+                    _b_sm_c: errcatch(ratsimp(_sin_arg_sm / w_var)),
+                    if _b_sm_c # [] and freeof(w_var, first(_b_sm_c))
+                       and not equal(first(_b_sm_c), 0)
+                       and ratsimp(_sin_arg_sm - first(_b_sm_c) * w_var) = 0 then (
+                        _sin_fac_sm: _fac_sm,
+                        _b_sm: first(_b_sm_c)
+                    ) else _rest_sm: _rest_sm * _fac_sm
+                ) else _rest_sm: _rest_sm * _fac_sm
+            ),
+            if is(_sin_fac_sm # false) then (
+                _F_sm: _rest_sm / _sm_denom,
+                _f_ift_sm: IFT_pattern_lookup(_F_sm, w_var, t_var),
+                if is(_f_ift_sm # false) then
+                    res: [(subst(t_var = t_var + _b_sm, _f_ift_sm[1])
+                           - subst(t_var = t_var - _b_sm, _f_ift_sm[1])) / (2*%i),
+                          concat("sin(bw)*F(w)->(f(t+b)-f(t-b))/(2i), b=",
+                                 string(_b_sm), ", IFT[F]=", _f_ift_sm[2])]
+            )
+        )
+    ),
+
     /* ── scalar: k*F(w) -> k*IFT(F(w))  (k constante en w) ── */
     if is(res = false) and not atom(e) and is(op(e) = "*") then block(
         [_factors, _const_k, _w_parts, _ift_core],
