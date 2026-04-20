@@ -330,6 +330,8 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
 
   // ── Rendering ─────────────────────────────────────────────────────────────
 
+  redraw(): void { this.scheduleRedraw(); }
+
   private scheduleRedraw(): void {
     if (this.raf !== null) cancelAnimationFrame(this.raf);
     this.raf = requestAnimationFrame(() => {

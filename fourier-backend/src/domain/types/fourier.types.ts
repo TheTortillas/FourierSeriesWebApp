@@ -265,3 +265,25 @@ export interface DFTResult {
   rmsError: number;
   executionTimeMs: number;
 }
+
+// ── DFT from function (Stage 1) ───────────────────────────────────────────────
+
+export interface DFTFunctionInput {
+  segments: PiecewiseSegment[];
+  intVar?: string;
+  N: number;
+}
+
+export interface DFTFunctionResult extends DFTResult {
+  /** Sampled points from the original function (for plotting). */
+  sampledPoints: DFTPoint[];
+  /** Interval of the function [a, b]. */
+  interval: { a: number; b: number };
+}
+
+/** Result of sampling a piecewise function without computing DFT. */
+export interface DFTSampleResult {
+  sampledPoints: DFTPoint[];
+  interval: { a: number; b: number };
+  samplingTimeMs: number;
+}

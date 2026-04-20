@@ -39,7 +39,7 @@
             "server": "src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": []
+              "allowedHosts": ["192.168.1.101", "localhost"]
             },
             "ssr": {
               "entry": "src/server.ts"
@@ -81,7 +81,11 @@
           "options": {
             "headers": {
               "Cross-Origin-Opener-Policy": "same-origin-allow-popups"
-            }
+            },
+            "allowedHosts": [
+              "192.168.1.101",
+              "localhost"
+            ]
           },
           "configurations": {
             "production": {

@@ -601,7 +601,8 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
     /* ── k*exp(-at)*u(t) -> k/(iw+a)  (a > 0) ──
        Detecta producto con factor u(t_var) y factor exp con t_var.
        Solo activa si NO hay factor trigonometrico (sin/cos) — esos
-       casos los manejan los dos patrones siguientes.               */
+       casos los manejan los dos patrones siguientes.
+       NOTA: exp_part requiere part(s,1)=%e para no confundir t^n con exp. */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "*") then block(
             [u_part, exp_part, trig_part, coef_k, exp_arg, aa],
@@ -613,8 +614,8 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 if not atom(s) and is(op(s) = 'u) and part(s,1) = t_var
                 then u_part: s
                 else if not atom(s) and is(op(s) = "^")
+                     and is(part(s, 1) = %e)
                      and not freeof(t_var, s)
-                     and freeof('sin, s) and freeof('cos, s)
                 then exp_part: s
                 else if not atom(s) and (is(op(s) = 'sin) or is(op(s) = 'cos))
                 then trig_part: s
@@ -645,9 +646,8 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 if not atom(_s) and is(op(_s) = 'u)
                 then _u_part: _s
                 else if not atom(_s) and is(op(_s) = "^")
+                     and is(part(_s, 1) = %e)
                      and not freeof(t_var, _s)
-                     and freeof('sin, _s) and freeof('cos, _s)
-                     and freeof('u, _s)
                 then _exp_part: _s
                 else _coef_k: _coef_k * _s
             ),
@@ -666,6 +666,61 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k*t^n*exp(-at)*u(t-t0) -> k*exp(-at0)*e^{-iwt0}*S  (a>0, n>=1) ──
+       S = sum_{j=0}^{n} C(n,j)*t0^{n-j}*j! / (iw+a)^{j+1}
+       Derivado de: FT[t^n*exp(-at)*u(t-t0)] = exp(-(a+iw)*t0) * integral de
+       (s+t0)^n*exp(-as)*ds sobre [0,inf), expandiendo con binomio de Newton.
+       Casos cubiertos directamente:
+         n=1, t0=0: t*exp(-at)*u(t)    -> 1/(iw+a)^2
+         n=2, t0=0: t^2*exp(-at)*u(t)  -> 2/(iw+a)^3  [corrige resultado incorrecto anterior]
+         n=1, t0≠0: t*exp(-at)*u(t-t0) -> componente al combinar via linealidad
+       Via expand()+linealidad cubre (t-t0)^n*exp(-at)*u(t-t0) completo. */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "*") then block(
+            [_u_part, _exp_part, _const_k, _t_mono, _u_arg, _t0, _exp_arg,
+             _aa, _n, _c_mono, _sum, _j],
+            _u_part: false,
+            _exp_part: false,
+            _const_k: 1,
+            _t_mono: 1,
+            for _s in args(e) do (
+                if not atom(_s) and is(op(_s) = 'u)
+                then _u_part: _s
+                else if not atom(_s) and is(op(_s) = "^")
+                     and is(part(_s, 1) = %e)
+                     and not freeof(t_var, _s)
+                then _exp_part: _s
+                else if freeof(t_var, _s)
+                then _const_k: _const_k * _s
+                else _t_mono: _t_mono * _s
+            ),
+            if is(_u_part # false) and is(_exp_part # false)
+               and not freeof(t_var, _t_mono) then (
+                _u_arg: part(_u_part, 1),
+                _t0: ratsimp(t_var - _u_arg),
+                _exp_arg: part(_exp_part, 2),
+                _aa: ratsimp(_exp_arg / (-t_var)),
+                if freeof(t_var, _t0) and freeof(t_var, _aa) and is(_aa > 0) then (
+                    /* _t_mono debe ser monomio puro: _c_mono * t_var^n */
+                    _n: hipow(rat(_t_mono), t_var),
+                    _c_mono: ratsimp(_t_mono / t_var^_n),
+                    if is(_n >= 1) and freeof(t_var, _c_mono)
+                       and ratsimp(_t_mono - _c_mono * t_var^_n) = 0 then (
+                        _sum: 0,
+                        for _j: 0 thru _n do
+                            _sum: _sum + binomial(_n, _j)
+                                       * (if _n - _j = 0 then 1 else _t0^(_n - _j))
+                                       * factorial(_j) / (%i*w_var + _aa)^(_j+1),
+                        res: [_const_k * _c_mono
+                              * exp(-_aa * _t0) * exp(-%i*w_var*_t0) * _sum,
+                              concat("k*t^n*exp(-at)*u(t-t0) n=", string(_n),
+                                     " a=", string(_aa), " t0=", string(_t0))]
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── k*exp(-at)*cos(bt)*u(t) -> k*(iw+a)/((iw+a)^2+b^2)  (a,b > 0) ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "*") then block(
@@ -680,6 +735,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 else if not atom(s) and is(op(s) = 'cos)
                 then cos_part: s
                 else if not atom(s) and is(op(s) = "^")
+                     and is(part(s, 1) = %e)
                      and not freeof(t_var, s)
                 then exp_part: s
                 else coef_k: coef_k * s
@@ -713,6 +769,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 else if not atom(s) and is(op(s) = 'sin)
                 then sin_part: s
                 else if not atom(s) and is(op(s) = "^")
+                     and is(part(s, 1) = %e)
                      and not freeof(t_var, s)
                 then exp_part: s
                 else coef_k: coef_k * s
@@ -991,17 +1048,25 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
-    /* ── linearity: FT(f+g+...) = FT(f)+FT(g)+... ── */
+    /* ── linearity: FT(f+g+...) = FT(f)+FT(g)+... ──
+       Handles unary minus terms: Maxima represents -(k*f) with op="-",
+       not as (-k)*f. We negate the FT of the inner expression. */
     if is(res = false) and not atom(e) and is(op(e) = "+") then block(
-        [_terms, _all_ok, _F_sum, _ft_i],
+        [_terms, _all_ok, _F_sum, _ft_i, _inner],
         _terms: args(e),
         _all_ok: true,
         _F_sum: 0,
         for _term in _terms while _all_ok do (
-            _ft_i: FT_pattern_lookup(_term, t_var, w_var),
-            if is(_ft_i = false)
-            then _all_ok: false
-            else _F_sum: _F_sum + _ft_i[1]
+            if not atom(_term) and is(op(_term) = "-") then (
+                _inner: first(args(_term)),
+                _ft_i: FT_pattern_lookup(_inner, t_var, w_var),
+                if is(_ft_i = false) then _all_ok: false
+                else _F_sum: _F_sum - _ft_i[1]
+            ) else (
+                _ft_i: FT_pattern_lookup(_term, t_var, w_var),
+                if is(_ft_i = false) then _all_ok: false
+                else _F_sum: _F_sum + _ft_i[1]
+            )
         ),
         if _all_ok then res: [_F_sum, "linearity: FT(f+g+...) = FT(f)+FT(g)+..."]
     ),
@@ -1487,17 +1552,24 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
-    /* ── linearity: IFT(F+G+...) = IFT(F)+IFT(G)+... ── */
+    /* ── linearity: IFT(F+G+...) = IFT(F)+IFT(G)+... ──
+       Handles unary minus terms (op="-") by negating the inner IFT. */
     if is(res = false) and not atom(e) and is(op(e) = "+") then block(
-        [_terms, _all_ok, _f_sum, _ift_i],
+        [_terms, _all_ok, _f_sum, _ift_i, _inner],
         _terms: args(e),
         _all_ok: true,
         _f_sum: 0,
         for _term in _terms while _all_ok do (
-            _ift_i: IFT_pattern_lookup(_term, w_var, t_var),
-            if is(_ift_i = false)
-            then _all_ok: false
-            else _f_sum: _f_sum + _ift_i[1]
+            if not atom(_term) and is(op(_term) = "-") then (
+                _inner: first(args(_term)),
+                _ift_i: IFT_pattern_lookup(_inner, w_var, t_var),
+                if is(_ift_i = false) then _all_ok: false
+                else _f_sum: _f_sum - _ift_i[1]
+            ) else (
+                _ift_i: IFT_pattern_lookup(_term, w_var, t_var),
+                if is(_ift_i = false) then _all_ok: false
+                else _f_sum: _f_sum + _ift_i[1]
+            )
         ),
         if _all_ok then res: [_f_sum, "linearity: IFT(F+G+...) = IFT(F)+IFT(G)+..."]
     ),

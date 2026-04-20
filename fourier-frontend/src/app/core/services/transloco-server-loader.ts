@@ -20,8 +20,8 @@ import { join } from 'node:path';
 export class TranslocoServerLoader implements TranslocoLoader {
   getTranslation(lang: string): Observable<Translation> {
     const candidates = [
-      join(process.cwd(), `dist/fourier-frontend/browser/assets/i18n/${lang}.json`),
       join(process.cwd(), `src/assets/i18n/${lang}.json`),
+      join(process.cwd(), `dist/fourier-frontend/browser/assets/i18n/${lang}.json`),
     ];
 
     for (const filePath of candidates) {

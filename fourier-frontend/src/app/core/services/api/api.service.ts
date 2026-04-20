@@ -22,6 +22,9 @@ import {
   // DFT
   DftRequest,
   DftResponse,
+  DftFunctionRequest,
+  DftFunctionResponse,
+  DftSampleResponse,
   // Transforms
   FourierTransformRequest,
   FourierTransformResponse,
@@ -42,6 +45,7 @@ import {
   AdminHistoryQuery,
   SystemStats,
   RateLimitMetricsSnapshot,
+  CacheStats,
   // Common
   PaginatedResponse,
 } from '../../../domain';
@@ -174,6 +178,14 @@ export class ApiService {
     return this.http.post<DftResponse>(`${this.base}/transforms/dft`, body);
   }
 
+  calculateDFTFromFunction(body: DftFunctionRequest): Observable<DftFunctionResponse> {
+    return this.http.post<DftFunctionResponse>(`${this.base}/transforms/dft/function`, body);
+  }
+
+  sampleDFTFunction(body: DftFunctionRequest): Observable<DftSampleResponse> {
+    return this.http.post<DftSampleResponse>(`${this.base}/transforms/dft/sample`, body);
+  }
+
   // ─── Parse ───────────────────────────────────────────────────────────────
 
   parseLaTeX(
@@ -300,5 +312,15 @@ export class ApiService {
 
   getRateLimitMetrics(): Observable<RateLimitMetricsSnapshot> {
     return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
+  }
+
+  // ─── Cache ───────────────────────────────────────────────────────────────
+
+  getCacheStats(): Observable<CacheStats> {
+    return this.http.get<CacheStats>(`${this.base}/cache/stats`);
+  }
+
+  clearCache(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/cache/clear`, {});
   }
 }

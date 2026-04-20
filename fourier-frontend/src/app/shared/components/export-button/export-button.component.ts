@@ -8,19 +8,26 @@ import {
   signal,
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { MathjaxDirective } from '../../directives/mathjax.directive';
 import { PlatformService } from '../../../core/services/platform/platform.service';
 
 @Component({
   selector: 'app-export-button',
   templateUrl: './export-button.component.html',
-  imports: [TranslocoPipe],
+  imports: [TranslocoPipe, MathjaxDirective],
 })
 export class ExportButtonComponent implements OnInit, OnDestroy {
   private readonly platform = inject(PlatformService);
   private readonly elRef = inject(ElementRef<HTMLElement>);
 
-  /** Raw LaTeX string (without display delimiters) — copied to clipboard. */
+  /** Raw LaTeX string (without display delimiters) — rendered in modal and copied to clipboard. */
   readonly tex = input.required<string>();
+
+  /** Raw Maxima string — shown in modal for easy copying. */
+  readonly maxima = input<string | undefined>(undefined);
+
+  /** Optional label shown in the modal header (e.g. "a₀", "F(ω)"). */
+  readonly label = input<string | undefined>(undefined);
 
   /**
    * The DOM element that contains the MathJax-rendered SVG.
@@ -33,25 +40,24 @@ export class ExportButtonComponent implements OnInit, OnDestroy {
 
   readonly isOpen = signal(false);
   readonly copiedLatex = signal(false);
+  readonly copiedMaxima = signal(false);
   readonly exportingPng = signal(false);
 
-  // ── Outside-click to close ─────────────────────────────────────────────────
+  // ── Escape key to close ────────────────────────────────────────────────────
 
-  private readonly _outsideHandler = (e: PointerEvent): void => {
-    if (!this.isOpen()) return;
-    if (this.elRef.nativeElement.contains(e.target as Node)) return;
-    this.isOpen.set(false);
+  private readonly _keyHandler = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape' && this.isOpen()) this.isOpen.set(false);
   };
 
   ngOnInit(): void {
     if (this.platform.isBrowser) {
-      document.addEventListener('pointerdown', this._outsideHandler);
+      document.addEventListener('keydown', this._keyHandler);
     }
   }
 
   ngOnDestroy(): void {
     if (this.platform.isBrowser) {
-      document.removeEventListener('pointerdown', this._outsideHandler);
+      document.removeEventListener('keydown', this._keyHandler);
     }
   }
 
@@ -61,12 +67,24 @@ export class ExportButtonComponent implements OnInit, OnDestroy {
     this.isOpen.update((v) => !v);
   }
 
+  close(): void {
+    this.isOpen.set(false);
+  }
+
   async copyLatex(): Promise<void> {
     if (!this.platform.isBrowser) return;
     await navigator.clipboard.writeText(this.tex());
     this.copiedLatex.set(true);
-    this.isOpen.set(false);
     setTimeout(() => this.copiedLatex.set(false), 2000);
+  }
+
+  async copyMaximaExpr(): Promise<void> {
+    if (!this.platform.isBrowser) return;
+    const mx = this.maxima();
+    if (!mx) return;
+    await navigator.clipboard.writeText(mx);
+    this.copiedMaxima.set(true);
+    setTimeout(() => this.copiedMaxima.set(false), 2000);
   }
 
   exportSvg(): void {
@@ -76,14 +94,12 @@ export class ExportButtonComponent implements OnInit, OnDestroy {
       new Blob([svgData], { type: 'image/svg+xml' }),
       `${this.filename()}.svg`,
     );
-    this.isOpen.set(false);
   }
 
   async exportPng(): Promise<void> {
     const svgData = this.buildStandaloneSvg();
     if (!svgData) return;
     this.exportingPng.set(true);
-    this.isOpen.set(false);
     const blob = new Blob([svgData], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     try {

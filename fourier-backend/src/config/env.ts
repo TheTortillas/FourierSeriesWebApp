@@ -35,6 +35,11 @@ export const config = {
   },
   cache: {
     maxSize: parseInt(optionalEnv("CACHE_MAX_SIZE", "500")),
+    ttlDays: parseInt(optionalEnv("CACHE_TTL_DAYS", "7")),
+  },
+  redis: {
+    enabled: optionalEnv("REDIS_ENABLED", "false") === "true",
+    url: optionalEnv("REDIS_URL", "redis://localhost:6379"),
   },
   rateLimit: {
     windowMs: parseInt(optionalEnv("RATE_LIMIT_WINDOW_MS", "900000")),

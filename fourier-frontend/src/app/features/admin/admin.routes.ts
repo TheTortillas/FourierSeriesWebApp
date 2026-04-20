@@ -31,6 +31,11 @@ export const adminRoutes: Routes = [
           import('./rate-limit/rate-limit.component').then((m) => m.RateLimitComponent),
       },
       {
+        path: 'cache',
+        loadComponent: () =>
+          import('./cache/cache.component').then((m) => m.CacheComponent),
+      },
+      {
         path: 'system',
         loadComponent: () =>
           import('./system/system-stats.component').then((m) => m.SystemStatsComponent),

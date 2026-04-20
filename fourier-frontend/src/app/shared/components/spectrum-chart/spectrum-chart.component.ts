@@ -133,32 +133,16 @@ interface StemPoint {
             class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
           >
             @if (isFullscreen()) {
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-3.5 h-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="4 14 10 14 10 20" />
                 <polyline points="20 10 14 10 14 4" />
                 <line x1="10" y1="14" x2="3" y2="21" />
                 <line x1="21" y1="3" x2="14" y2="10" />
               </svg>
             } @else {
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-3.5 h-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="15 3 21 3 21 9" />
                 <polyline points="9 21 3 21 3 15" />
                 <line x1="21" y1="3" x2="14" y2="10" />
@@ -168,14 +152,13 @@ interface StemPoint {
           </button>
         </div>
 
-        @if (tooltip(); as t) {
-          <div
-            class="absolute z-20 pointer-events-none px-2 py-1 rounded bg-ink/90 text-white text-[11px] font-mono shadow"
-            [style.left.px]="t.x"
-            [style.top.px]="t.y"
-          >
-            <div class="font-semibold">{{ t.label }}</div>
-            <div>{{ t.value.toFixed(6) }}</div>
+        @if (hoveredPoint(); as hov) {
+          <div class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none z-10
+            px-3 py-2 rounded-lg border border-border dark:border-dark-border
+            bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow text-[11px] font-mono
+            flex gap-3 items-center whitespace-nowrap">
+            <span class="text-muted dark:text-dark-muted font-semibold" [style.color]="stemColor()">{{ hov.label }}</span>
+            <span class="text-muted dark:text-dark-muted">= <span class="text-ink dark:text-dark-ink font-semibold">{{ hov.value.toFixed(6) }}</span></span>
           </div>
         }
       </div>
@@ -198,7 +181,7 @@ export class SpectrumChartComponent {
   readonly halfRangeMode = input<'cosine' | 'sine'>('cosine');
 
   readonly spectrumMode = signal<SpectrumMode>('trigAmp');
-  readonly tooltip = signal<{ x: number; y: number; label: string; value: number } | null>(null);
+  readonly hoveredPoint = signal<StemPoint | null>(null);
   readonly showStylePanel = signal(false);
   readonly useAutoColor = signal(true);
   readonly stemColor = signal('#3b82f6');
@@ -260,11 +243,12 @@ export class SpectrumChartComponent {
     const points = this.points();
     const color = this.stemColor();
     const width = this.stemWidth();
+    const hovered = this.hoveredPoint();
 
     return [
       {
         curves: [],
-        onDraw: (ctx, vp) => this.drawStemChart(ctx, vp, points, color, width),
+        onDraw: (ctx, vp) => this.drawStemChart(ctx, vp, points, color, width, hovered),
       },
     ];
   });
@@ -389,36 +373,25 @@ export class SpectrumChartComponent {
     const cssY = event.clientY - rect.top;
 
     const vp = plot.getViewport();
-    const pointerX = cssX * vp.dpr;
-    const pointerY = cssY * vp.dpr;
+    const mathX = this.coordTransform.cssToMathX(cssX, vp);
+    const mathY = this.coordTransform.cssToMathY(cssY, vp);
     const points = this.points();
 
-    let nearest: StemPoint | null = null;
-    let minDist = Infinity;
-    const threshold = 14 * vp.dpr;
-
+    // Check if cursor is over a stem (X proximity + Y between 0 and tip)
+    const xTol = 0.4;
+    let hit: StemPoint | null = null;
     for (const point of points) {
-      const sx = this.coordTransform.mathToScreenX(point.x, vp);
-      const sy = this.coordTransform.mathToScreenY(point.y, vp);
-      const dx = sx - pointerX;
-      const dy = sy - pointerY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < minDist) {
-        minDist = dist;
-        nearest = point;
-      }
+      if (Math.abs(point.x - mathX) > xTol) continue;
+      const yMin = Math.min(0, point.y) - Math.abs(point.y) * 0.05 - 0.02;
+      const yMax = Math.max(0, point.y) + Math.abs(point.y) * 0.05 + 0.02;
+      if (mathY >= yMin && mathY <= yMax) { hit = point; break; }
     }
 
-    if (!nearest || minDist > threshold) {
-      this.tooltip.set(null);
-      return;
-    }
-
-    this.tooltip.set({ x: cssX + 12, y: cssY - 12, label: nearest.label, value: nearest.value });
+    this.hoveredPoint.set(hit);
   }
 
   onChartPointerLeave(): void {
-    this.tooltip.set(null);
+    this.hoveredPoint.set(null);
   }
 
   private buildTrigPoints(
@@ -559,12 +532,21 @@ export class SpectrumChartComponent {
     points: StemPoint[],
     color: string,
     width: number,
+    hovered: StemPoint | null,
   ): void {
     if (points.length === 0) return;
 
+    const isDark = this.theme.isDark;
+    const highlightColor = isDark ? '#fbbf24' : '#d97706';
     const markerRadius = Math.max(2.5, width + 1.2);
     for (const point of points) {
-      this.drawingUtils.drawStem(ctx, vp, point.x, point.y, color, width, markerRadius);
+      const isHovered = hovered?.x === point.x && hovered?.label === point.label;
+      this.drawingUtils.drawStem(
+        ctx, vp, point.x, point.y,
+        isHovered ? highlightColor : color,
+        isHovered ? width * 2 : width,
+        isHovered ? markerRadius + 2 : markerRadius,
+      );
     }
   }
 }
