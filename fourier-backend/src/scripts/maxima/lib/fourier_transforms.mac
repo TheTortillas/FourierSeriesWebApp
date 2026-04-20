@@ -842,8 +842,8 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
     ),
 
     /* ── k/(a^2+t^2) -> (k*pi/a)*e^{-a|w|}  (a > 0) ──
-       Usa rat() y coeff() para evitar flotantes.
-       ratnump() antes de radcan evita que sqrt(1/1) = 1.0        */
+       ratdisrep() antes de sqrt() evita que radcan(sqrt(rat(1))) = 1.0
+       y que radcan(sqrt(a)) = a^0.5 (exponente decimal)             */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "/") then block(
             [numer, denom, sqterm, dconst, a_cand, _q],
@@ -855,7 +855,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 if freeof(t_var, sqterm) and freeof(t_var, dconst)
                    and is(sqterm > 0) and is(dconst > 0) then (
                     _q: rat(dconst / sqterm),
-                    a_cand: if ratnump(_q) then sqrt(_q) else radcan(sqrt(_q)),
+                    a_cand: sqrt(ratdisrep(_q)),
                     if freeof(t_var, a_cand) and is(a_cand > 0) then (
                         k: ratsimp(numer / sqterm),
                         res: [k * (%piexact/a_cand) * exp(-a_cand*abs(w_var)),
@@ -884,7 +884,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     if freeof(t_var, sqt) and freeof(t_var, dct)
                        and is(sqt > 0) and is(dct > 0) then (
                         _q2: rat(dct / sqt),
-                        ac: if ratnump(_q2) then sqrt(_q2) else radcan(sqrt(_q2)),
+                        ac: sqrt(ratdisrep(_q2)),
                         if freeof(t_var, ac) and is(ac > 0) then (
                             kk: ratsimp(1 / sqt),
                             res: [kk * (%piexact/(2*ac)) *
@@ -916,7 +916,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                         if freeof(t_var, sq2) and freeof(t_var, dc2)
                            and is(sq2 > 0) and is(dc2 > 0) then (
                             _q3: rat(dc2 / sq2),
-                            aa2: if ratnump(_q3) then sqrt(_q3) else radcan(sqrt(_q3)),
+                            aa2: sqrt(ratdisrep(_q3)),
                             if freeof(t_var, aa2) and is(aa2 > 0) then (
                                 kk: ratsimp(part(rest,1) / sq2),
                                 res: [kk * (%piexact/(2*aa2)) *
@@ -949,7 +949,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     if freeof(t_var, sqt2) and freeof(t_var, dct2)
                        and is(sqt2 > 0) and is(dct2 > 0) then (
                         _q4: rat(dct2 / sqt2),
-                        ac2: if ratnump(_q4) then sqrt(_q4) else radcan(sqrt(_q4)),
+                        ac2: sqrt(ratdisrep(_q4)),
                         if freeof(t_var, ac2) and is(ac2 > 0) then (
                             kk2: ratsimp(1 / sqt2),
                             res: [kk2 * (%piexact/(2*ac2*%i)) *
@@ -981,7 +981,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                         if freeof(t_var, sq3) and freeof(t_var, dc3)
                            and is(sq3 > 0) and is(dc3 > 0) then (
                             _q5: rat(dc3 / sq3),
-                            aa3: if ratnump(_q5) then sqrt(_q5) else radcan(sqrt(_q5)),
+                            aa3: sqrt(ratdisrep(_q5)),
                             if freeof(t_var, aa3) and is(aa3 > 0) then (
                                 kk2: ratsimp(part(rest3,1) / sq3),
                                 res: [kk2 * (%piexact/(2*aa3*%i)) *
@@ -1014,7 +1014,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 if freeof(t_var, _sqt) and freeof(t_var, _dct)
                    and is(_sqt > 0) and is(_dct > 0) then (
                     _q: rat(_dct / _sqt),
-                    _ac: if ratnump(_q) then sqrt(_q) else radcan(sqrt(_q)),
+                    _ac: sqrt(ratdisrep(_q)),
                     if freeof(t_var, _ac) and is(_ac > 0) then (
                         _cc: ratsimp(_cc / _sqt),
                         res: [-%i * _cc * %piexact * sgn(w_var) * exp(-_ac*abs(w_var)),
