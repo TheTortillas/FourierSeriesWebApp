@@ -4,10 +4,7 @@ import { FourierTransformService } from '../application/transforms/fourierTransf
 import { isEquivalent } from './helpers/equiv';
 import allCases from './fixtures/transforms.json';
 
-// Known backend bugs — FT of u(t+a)-u(t-a) patterns returns wrong sign.
-// E01 (direct piecewise segment) passes; these u()-based forms don't.
-// Tracked as open bugs; skip so they don't block CI.
-const KNOWN_FAILURES = new Set(['E02', 'E03', 'E04']);
+const KNOWN_FAILURES = new Set<string>();
 
 const ftCases = allCases.filter((c) => c.type === 'ft');
 

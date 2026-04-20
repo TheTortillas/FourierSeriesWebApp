@@ -4,10 +4,7 @@ import { FourierTransformService } from '../application/transforms/fourierTransf
 import { isEquivalent } from './helpers/equiv';
 import allCases from './fixtures/transforms.json';
 
-// Known backend limitations — Maxima cannot resolve IFT of these standard
-// rational forms with symbolic parameters via the residue theorem.
-// Tracked as open bugs; skip so they don't block CI.
-const KNOWN_FAILURES = new Set(['K06', 'K07']);
+const KNOWN_FAILURES = new Set<string>();
 
 const iftCases = allCases.filter((c) => c.type === 'ift');
 
