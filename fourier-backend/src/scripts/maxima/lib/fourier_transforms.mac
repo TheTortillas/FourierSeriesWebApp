@@ -846,10 +846,10 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
        y que radcan(sqrt(a)) = a^0.5 (exponente decimal)             */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "/") then block(
-            [numer, denom, sqterm, dconst, a_cand, _q],
-            numer: part(e, 1),
+            [_numer, denom, sqterm, dconst, a_cand, _q],
+            _numer: part(e, 1),
             denom: rat(rationalize(expand(part(e, 2)))),
-            if freeof(t_var, numer) and not freeof(t_var, denom) then (
+            if freeof(t_var, _numer) and not freeof(t_var, denom) then (
                 sqterm: rat(coeff(denom, t_var, 2)),
                 dconst: ratsimp(subst(t_var=0, denom)),
                 if freeof(t_var, sqterm) and freeof(t_var, dconst)
@@ -857,7 +857,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     _q: rat(dconst / sqterm),
                     a_cand: sqrt(ratdisrep(_q)),
                     if freeof(t_var, a_cand) and is(a_cand > 0) then (
-                        k: ratsimp(numer / sqterm),
+                        k: ratsimp(_numer / sqterm),
                         res: [k * (%piexact/a_cand) * exp(-a_cand*abs(w_var)),
                               concat("k/(a^2+t^2) -> (k*pi/a)*e^{-a|w|}, a=", string(a_cand))]
                     )
