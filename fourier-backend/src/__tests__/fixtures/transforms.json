@@ -1509,5 +1509,126 @@
             "F": "2/(%i*w+2)^3",
             "exists": true
         }
+    },
+    {
+        "id": "R01",
+        "type": "ft",
+        "description": "LORENTZIANA DESPLAZADA: FT(1/(t²-4t+13)) — completa el cuadrado: (t-2)²+9",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(t^2-4*t+13)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "(%pi*%e^(-(3*abs(w))-2*%i*w))/3",
+            "exists": true
+        }
+    },
+    {
+        "id": "R02",
+        "type": "ft",
+        "description": "FREQ-SHIFT: FT(5·exp(3it)/(t²-4t+13)) = (5π/3)·e^{-3|w-3|}·e^{-2i(w-3)}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "5*%e^(3*%i*t)/(t^2-4*t+13)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "(5*%pi*%e^(-(2*%i*(w-3))-3*abs(w-3)))/3",
+            "exists": true
+        }
+    },
+    {
+        "id": "R03",
+        "type": "ft",
+        "description": "FREQ-SHIFT negativo: FT(exp(-2it)/(4+t²)) = (π/2)·e^{-2|w+2|}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%e^(-%i*2*t)/(4+t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "(%pi*%e^-(2*abs(w+2)))/2",
+            "exists": true
+        }
+    },
+    {
+        "id": "R04",
+        "type": "ft",
+        "description": "FREQ-SHIFT con escalar: FT(3·exp(it)/(9+t²)) = π·e^{-3|w-1|}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "3*%e^(%i*t)/(9+t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%pi*%e^-(3*abs(w-1))",
+            "exists": true
+        }
+    },
+    {
+        "id": "R05",
+        "type": "ft",
+        "description": "REGRESIÓN: FT(1/(a+t²)) sigue exacto con sqrt(a), sin decimales",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(a+t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "(%pi*%e^-(sqrt(a)*abs(w)))/sqrt(a)",
+            "exists": true,
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "R06",
+        "type": "ft",
+        "description": "REGRESIÓN: freq-shift NO interfiere con exp(-2t)·u(t) — patrón causal sin cambios",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%e^(-2*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w+2)",
+            "exists": true
+        }
     }
 ]
