@@ -1608,7 +1608,9 @@
         "expected": {
             "F": "(%pi*%e^-(sqrt(a)*abs(w)))/sqrt(a)",
             "exists": true,
-            "params": ["a"]
+            "params": [
+                "a"
+            ]
         }
     },
     {
@@ -1629,6 +1631,46 @@
         "expected": {
             "F": "1/(%i*w+2)",
             "exists": true
+        }
+    },
+    {
+        "id": "S01",
+        "type": "ift",
+        "description": "IFT sin-modulación + time-shift: IFT(6·e^{4iw}·sin(2w)/(9+w²)) — resultado en t>0",
+        "input": {
+            "segments": [
+                {
+                    "expression": "6*%e^(4*%i*w)*sin(2*w)/(9+w^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-(%i*(%e^-(3*(t+6))-%e^-(3*(t+2))))/2"
+        }
+    },
+    {
+        "id": "S02",
+        "type": "ift",
+        "description": "IFT sin-modulación + 1/(w*(iw+a)): IFT(sin(3w)/(w*(2+iw)))",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(3*w)/(w*(2+%i*w))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(sgn(t+3)/2-sgn(t-3)/2-(%e^-(2*(t+3))*u(t+3)-u(t-3)*%e^-(2*(t-3))))/4"
         }
     }
 ]
