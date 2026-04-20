@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { MaximaRunner } from '../infrastructure/maxima/maximaRunner';
-import { MaximaPostProcessor } from '../infrastructure/postprocessor/maximaPostProcessor';
-import { AuxiliaryService } from '../application/auxiliary/auxiliaryService';
-import { ComplexService } from '../application/fourier/complex.service';
-import { isEquivSeries } from './helpers/equivSeries';
-import allCases from './fixtures/series.json';
+import { describe, it, expect, beforeAll } from "vitest";
+import { MaximaRunner } from "../infrastructure/maxima/maximaRunner";
+import { MaximaPostProcessor } from "../infrastructure/postprocessor/maximaPostProcessor";
+import { AuxiliaryService } from "../application/auxiliary/auxiliaryService";
+import { ComplexService } from "../application/fourier/complex.service";
+import { isEquivSeries } from "./helpers/equivSeries";
+import allCases from "./fixtures/series.json";
 
-const cases = allCases.filter((c) => c.type === 'complex');
+const cases = allCases.filter((c) => c.type === "complex");
 
 let service: ComplexService;
 
@@ -17,12 +17,13 @@ beforeAll(() => {
   service = new ComplexService(runner, pp, aux);
 });
 
-describe('Complex Fourier Series', () => {
+describe("Complex Fourier Series", () => {
   for (const tc of cases) {
     it(`[${tc.id}] ${tc.description}`, async () => {
       const result = await service.calculate({
         segments: tc.input.segments,
         intVar: tc.input.intVar,
+        seriesType: "complex",
       });
 
       const exp = tc.expected as {
@@ -38,8 +39,14 @@ describe('Complex Fourier Series', () => {
 
       // ── c0 ────────────────────────────────────────────────────────────
       if (exp.c0 !== undefined) {
-        expect(result.coefficients.c0?.maxima, `c0 should be defined`).toBeDefined();
-        const equiv = await isEquivSeries(result.coefficients.c0!.maxima, exp.c0);
+        expect(
+          result.coefficients.c0?.maxima,
+          `c0 should be defined`,
+        ).toBeDefined();
+        const equiv = await isEquivSeries(
+          result.coefficients.c0!.maxima,
+          exp.c0,
+        );
         expect(
           equiv,
           `[${tc.id}] c0 not equivalent.\n  got:      ${result.coefficients.c0!.maxima}\n  expected: ${exp.c0}`,
@@ -48,8 +55,14 @@ describe('Complex Fourier Series', () => {
 
       // ── cn ────────────────────────────────────────────────────────────
       if (exp.cn !== undefined) {
-        expect(result.coefficients.cn?.maxima, `cn should be defined`).toBeDefined();
-        const equiv = await isEquivSeries(result.coefficients.cn!.maxima, exp.cn);
+        expect(
+          result.coefficients.cn?.maxima,
+          `cn should be defined`,
+        ).toBeDefined();
+        const equiv = await isEquivSeries(
+          result.coefficients.cn!.maxima,
+          exp.cn,
+        );
         expect(
           equiv,
           `[${tc.id}] cn not equivalent.\n  got:      ${result.coefficients.cn!.maxima}\n  expected: ${exp.cn}`,
