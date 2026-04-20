@@ -1409,5 +1409,105 @@
             "F": "5*(%pi*delta(w)-(%i*%e^-(2*%i*w))/w)",
             "exists": true
         }
+    },
+    {
+        "id": "Q01",
+        "type": "ft",
+        "description": "FT(t·exp(-3t)·u(t)) = 1/(iw+3)^2  [n=1, t0=0]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t*%e^(-3*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w+3)^2",
+            "exists": true
+        }
+    },
+    {
+        "id": "Q02",
+        "type": "ft",
+        "description": "FT(t^2·exp(-t)·u(t)) = 2/(iw+1)^3  [n=2, t0=0]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t^2*%e^(-t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2/(%i*w+1)^3",
+            "exists": true
+        }
+    },
+    {
+        "id": "Q03",
+        "type": "ft",
+        "description": "FT(t·exp(-4t)·u(t-3)) = exp(-12)·exp(-3iw)·(3/(iw+4)+1/(iw+4)^2)  [n=1, t0=3]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t*%e^(-4*t)*u(t-3)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%e^(-(3*%i*w)-12)*(3/(%i*w+4)+1/(%i*w+4)^2)",
+            "exists": true
+        }
+    },
+    {
+        "id": "Q04",
+        "type": "ft",
+        "description": "FT((t-3)·exp(-4t)·u(t-3)) = exp(-12)·exp(-3iw)/(iw+4)^2  [via expand+linearity]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "(t-3)*%e^(-4*t)*u(t-3)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%e^(-(3*%i*w)-12)/(%i*w+4)^2",
+            "exists": true
+        }
+    },
+    {
+        "id": "Q05",
+        "type": "ft",
+        "description": "REGRESIÓN: FT(t^2·exp(-2t)·u(t)) no es afectado por patrones anteriores",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t^2*%e^(-2*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2/(%i*w+2)^3",
+            "exists": true
+        }
     }
 ]
