@@ -531,14 +531,14 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 res: [%piexact*delta(w_var) + exp(-%i*w_var*t0)/(%i*w_var),
                     concat("u(t-t0) -> (pi*delta(w)+1/(iw))*exp(-i*w*t0), t0=", string(t0))]
         ),
-        /* detecta k*u(t-t0) */
+        /* detecta k*u(t-t0) — k DEBE ser constante en t */
         if is(res = false) and not atom(e) and is(op(e) = "*") then (
             for s in args(e) do (
                 if not atom(s) and is(op(s) = 'u)
                 then u_part: s
                 else coef_k: coef_k * s
             ),
-            if is(u_part # false) then (
+            if is(u_part # false) and freeof(t_var, coef_k) then (
                 u_arg: part(u_part, 1),
                 t0: ratsimp(t_var - u_arg),
                 if freeof(t_var, t0) and not equal(t0, 0) then
@@ -627,6 +627,41 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 if freeof(t_var, coef_k) and freeof(t_var, aa) and is(aa > 0) then
                     res: [coef_k / (%i*w_var + aa),
                           concat("k*exp(-at)*u(t) -> k/(iw+a), a=", string(aa))]
+            )
+        )
+    ),
+
+    /* ── k*exp(-a*t)*u(t-t0) -> k*exp(-a*t0)*e^{-iwt0}/(iw+a)  (a>0, t0>=0) ──
+       Cubre el caso desplazado: exp(-at) = exp(-a*(t-t0)) * exp(-at0).
+       El patrón anterior k*exp(-at)*u(t) requiere u(t) no desplazado;
+       este cubre u(t-t0) con t0 != 0. Prioridad: va despues del no-desplazado. */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "*") then block(
+            [_u_part, _exp_part, _coef_k, _u_arg, _t0, _exp_arg, _aa],
+            _u_part: false,
+            _exp_part: false,
+            _coef_k: 1,
+            for _s in args(e) do (
+                if not atom(_s) and is(op(_s) = 'u)
+                then _u_part: _s
+                else if not atom(_s) and is(op(_s) = "^")
+                     and not freeof(t_var, _s)
+                     and freeof('sin, _s) and freeof('cos, _s)
+                     and freeof('u, _s)
+                then _exp_part: _s
+                else _coef_k: _coef_k * _s
+            ),
+            if is(_u_part # false) and is(_exp_part # false)
+               and freeof(t_var, _coef_k) then (
+                _u_arg: part(_u_part, 1),
+                _t0: ratsimp(t_var - _u_arg),
+                _exp_arg: part(_exp_part, 2),
+                _aa: ratsimp(_exp_arg / (-t_var)),
+                if freeof(t_var, _t0) and freeof(t_var, _aa)
+                   and is(_aa > 0) and not equal(_t0, 0) then
+                    res: [_coef_k * exp(-_aa*_t0) * exp(-%i*w_var*_t0) / (%i*w_var + _aa),
+                          concat("k*exp(-at)*u(t-t0) -> k*exp(-at0)*e^{-iwt0}/(iw+a), a=",
+                                 string(_aa), ", t0=", string(_t0))]
             )
         )
     ),
@@ -898,6 +933,36 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                                              string(aa3), ", b=", string(bb2))]
                             )
                         )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── c*t/(a^2+t^2) -> -i*c*pi*sgn(w)*e^{-a|w|}  (a > 0) ──
+       Par: FT[t/(a^2+t^2)] = -i*pi*sgn(w)*e^{-a|w|}
+       Detecta numerador proporcional a t_var, denominador tipo a^2+t^2. */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "/") then block(
+            [_num_t, _den_t, _cc, _sqt, _dct, _ac, _q],
+            _num_t: expand(part(e, 1)),
+            _den_t: rat(rationalize(expand(part(e, 2)))),
+            /* numerador: c*t (lineal en t, sin termino independiente) */
+            _cc: ratsimp(_num_t / t_var),
+            if freeof(t_var, _cc) and not equal(_cc, 0)
+               and ratsimp(_num_t - _cc*t_var) = 0 then (
+                /* denominador: a^2 + t^2 */
+                _sqt: rat(coeff(_den_t, t_var, 2)),
+                _dct: ratsimp(subst(t_var=0, _den_t)),
+                if freeof(t_var, _sqt) and freeof(t_var, _dct)
+                   and is(_sqt > 0) and is(_dct > 0) then (
+                    _q: rat(_dct / _sqt),
+                    _ac: if ratnump(_q) then sqrt(_q) else radcan(sqrt(_q)),
+                    if freeof(t_var, _ac) and is(_ac > 0) then (
+                        _cc: ratsimp(_cc / _sqt),
+                        res: [-%i * _cc * %piexact * sgn(w_var) * exp(-_ac*abs(w_var)),
+                              concat("c*t/(a^2+t^2) -> -i*c*pi*sgn(w)*e^{-a|w|}, a=",
+                                     string(_ac), ", c=", string(_cc))]
                     )
                 )
             )
@@ -1363,6 +1428,43 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                     res: [1/(aa^2 + t_var^2),
                           concat("(pi/a)*e^{-a|w|} -> 1/(a^2+t^2), a=", string(aa))]
             )
+        )
+    ),
+
+    /* ── exp(-a*|w+w0|) -> (a/pi)*e^{-iw0*t}/(a^2+t^2)  (a>0, w0 real) ──
+       Maxima representa el exponente como negación unaria: -(c*abs(w+w0)).
+       Solo activa para op="^" puro; el coeficiente k lo cubre el scalar handler. */
+    if is(res = false) and not atom(e) and is(op(e) = "^")
+       and not freeof('abs, e) then block(
+        [_exp_arg, _inner, _abs_part, _aa_raw, _aa, _w0, _abs_arg],
+        _exp_arg: part(e, 2),
+        _abs_part: false,
+        _aa_raw: false,
+        /* El exponente siempre llega como -(c*abs(w+w0)), op="-" */
+        if not atom(_exp_arg) and is(op(_exp_arg) = "-") then (
+            _inner: first(args(_exp_arg)),
+            if not atom(_inner) and is(op(_inner) = 'abs) then (
+                /* exp(-abs(w+w0)): coef = 1 */
+                _abs_part: _inner,
+                _aa_raw: 1
+            ) else if not atom(_inner) and is(op(_inner) = "*") then (
+                /* exp(-(c*abs(w+w0))): extraer c y abs */
+                _aa_raw: 1,
+                for _s in args(_inner) do (
+                    if not atom(_s) and is(op(_s) = 'abs)
+                    then _abs_part: _s
+                    else _aa_raw: _aa_raw * _s
+                )
+            )
+        ),
+        if is(_abs_part # false) and is(_aa_raw # false) then (
+            _abs_arg: part(_abs_part, 1),
+            _w0: ratsimp(_abs_arg - w_var),
+            _aa: ratsimp(_aa_raw),
+            if freeof(w_var, _w0) and freeof(w_var, _aa) and is(_aa > 0) then
+                res: [(_aa/%pi) * exp(-%i*_w0*t_var) / (_aa^2 + t_var^2),
+                      concat("exp(-a|w+w0|) -> (a/pi)*e^{-iw0t}/(a^2+t^2), a=",
+                             string(_aa), ", w0=", string(_w0))]
         )
     ),
 
