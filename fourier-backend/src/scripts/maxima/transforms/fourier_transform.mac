@@ -20,6 +20,26 @@ F_imag      : result[3]$
 exists      : result[4]$
 free_params : result[5]$
 
+/* ── Real / imaginary parts of the input f(t) for post-calc plotting ── */
+block([_i, _e, _a, _b, _gate],
+        f_in_expr : 0,
+        for _i : 1 thru length(FUNC_INPUT) do (
+                _e : FUNC_INPUT[_i][1],
+                _a : FUNC_INPUT[_i][2],
+                _b : FUNC_INPUT[_i][3],
+                _gate : if FT_is_minf(_a) and FT_is_inf(_b) then 1
+                                else if FT_is_minf(_a) then u(_b-INTVAR)
+                                else if FT_is_inf(_b) then u(INTVAR-_a)
+                                else (u(INTVAR-_a)-u(INTVAR-_b)),
+                f_in_expr : f_in_expr + _e*_gate
+        )
+)$
+
+F_in_real : errcatch(ratsimp(if freeof(%i, f_in_expr) then f_in_expr else realpart(f_in_expr)))$
+F_in_real : if F_in_real = [] then false else first(F_in_real)$
+F_in_imag : errcatch(ratsimp(if freeof(%i, f_in_expr) then 0 else imagpart(f_in_expr)))$
+F_in_imag : if F_in_imag = [] then false else first(F_in_imag)$
+
 print("__EXISTS__")$       print(string(exists))$
 print("__F_MAXIMA__")$     print(string(F))$
 print("__F_TEX__")$        tex(F)$
@@ -27,4 +47,8 @@ print("__REAL_MAXIMA__")$  print(string(F_real))$
 print("__REAL_TEX__")$     tex(F_real)$
 print("__IMAG_MAXIMA__")$  print(string(F_imag))$
 print("__IMAG_TEX__")$     tex(F_imag)$
+print("__INPUT_REAL_MAXIMA__")$ print(string(F_in_real))$
+print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else print("")$
+print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$
+print("__INPUT_IMAG_TEX__")$    if F_in_imag # false then tex(F_in_imag) else print("")$
 print("__PARAMS__")$       print(string(free_params))$

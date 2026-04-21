@@ -28,6 +28,10 @@ export interface FourierTransformResponse {
   F?: SymbolicExpression;
   realPart?: SymbolicExpression;
   imagPart?: SymbolicExpression;
+  /** Real part of the input f(t) after piecewise normalization (for plotting). */
+  inputRealPart?: SymbolicExpression;
+  /** Imaginary part of the input f(t) after piecewise normalization (for plotting). */
+  inputImagPart?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }
@@ -45,18 +49,17 @@ export interface InverseFourierTransformResponse {
   inputRealPart?: SymbolicExpression;
   /** Imaginary part of the input F(ω) (for canvas plotting) */
   inputImagPart?: SymbolicExpression;
+  /** Real part of reconstructed f(t) (for canvas plotting when output is complex). */
+  outputRealPart?: SymbolicExpression;
+  /** Imaginary part of reconstructed f(t) (for canvas plotting when output is complex). */
+  outputImagPart?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }
 
 // ─── Simplify ─────────────────────────────────────────────────────────────────
 
-export type SimplifyProfile =
-  | 'raw'
-  | 'integer'
-  | 'trigonometric'
-  | 'exponential'
-  | 'complete';
+export type SimplifyProfile = 'raw' | 'integer' | 'trigonometric' | 'exponential' | 'complete';
 
 export type SimplifyFunction =
   | 'fullratsimp'
