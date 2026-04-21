@@ -1771,7 +1771,16 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             ),
             if is(_sin_fac_sm # false) then (
                 _F_sm: _rest_sm / _sm_denom,
-                _f_ift_sm: IFT_pattern_lookup(_F_sm, w_var, t_var),
+                /* Clear t sign assumptions so inner lookup preserves abs(t) form.
+                   forget() returns its arg unconditionally — use is() to check first. */
+                block([_had_pos_sm, _had_neg_sm],
+                    _had_pos_sm: errcatch(is(t_var > 0)) = [true],
+                    _had_neg_sm: errcatch(is(t_var < 0)) = [true],
+                    forget(t_var > 0), forget(t_var < 0),
+                    _f_ift_sm: IFT_pattern_lookup(_F_sm, w_var, t_var),
+                    if _had_pos_sm then assume(t_var > 0),
+                    if _had_neg_sm then assume(t_var < 0)
+                ),
                 if is(_f_ift_sm # false) then
                     res: [(subst(t_var = t_var + _b_sm, _f_ift_sm[1])
                            - subst(t_var = t_var - _b_sm, _f_ift_sm[1])) / (2*%i),
@@ -1808,7 +1817,16 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             ),
             if is(_cos_fac_cm # false) then (
                 _F_cm: _rest_cm / _cm_denom,
-                _f_ift_cm: IFT_pattern_lookup(_F_cm, w_var, t_var),
+                /* Clear t sign assumptions so inner lookup preserves abs(t) form.
+                   forget() returns its arg unconditionally — use is() to check first. */
+                block([_had_pos_cm, _had_neg_cm],
+                    _had_pos_cm: errcatch(is(t_var > 0)) = [true],
+                    _had_neg_cm: errcatch(is(t_var < 0)) = [true],
+                    forget(t_var > 0), forget(t_var < 0),
+                    _f_ift_cm: IFT_pattern_lookup(_F_cm, w_var, t_var),
+                    if _had_pos_cm then assume(t_var > 0),
+                    if _had_neg_cm then assume(t_var < 0)
+                ),
                 if is(_f_ift_cm # false) then
                     res: [(subst(t_var = t_var + _b_cm, _f_ift_cm[1])
                            + subst(t_var = t_var - _b_cm, _f_ift_cm[1])) / 2,
