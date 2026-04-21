@@ -558,6 +558,32 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k/t^n -> k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w))  (n >= 1, entero) ──
+       Transformada distribucional (valor principal de Cauchy).
+       n=1: k/t -> -i*pi*k*sgn(w)
+       n≥2: FT[k/t^n] = k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w)) */
+    if is(res = false) then block(
+        [_tn_num, _tn_den, _tn_k, _tn_n],
+        _tn_n: false, _tn_k: false,
+        if not atom(e) and is(op(e) = "/") then (
+            _tn_num: part(e, 1),
+            _tn_den: part(e, 2),
+            if is(_tn_den = t_var) then (
+                _tn_n: 1, _tn_k: _tn_num
+            ) else if not atom(_tn_den) and is(op(_tn_den) = "^")
+                      and is(part(_tn_den, 1) = t_var)
+                      and integerp(part(_tn_den, 2))
+                      and is(part(_tn_den, 2) >= 2) then (
+                _tn_n: part(_tn_den, 2), _tn_k: _tn_num
+            ),
+            if is(_tn_n # false) and freeof(t_var, _tn_k) then
+                res: [_tn_k * (-%i*w_var)^(_tn_n-1) / factorial(_tn_n-1)
+                             * (-%i*%pi*sgn(w_var)),
+                      concat("k/t^n -> k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w)), n=",
+                             string(_tn_n), ", k=", string(_tn_k))]
+        )
+    ),
+
     /* ── k*sin(at)/(pi*t) -> k*(u(w+a)-u(w-a))  (a > 0) ── */
     if is(res = false) then block(
         [num_s, den_s, sin_part, kk2, sin_arg, aa, den_coef],
@@ -1751,6 +1777,43 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                            - subst(t_var = t_var - _b_sm, _f_ift_sm[1])) / (2*%i),
                           concat("sin(bw)*F(w)->(f(t+b)-f(t-b))/(2i), b=",
                                  string(_b_sm), ", IFT[F]=", _f_ift_sm[2])]
+            )
+        )
+    ),
+
+    /* ── cos(b*w)*F(w) -> (IFT[F](t+b) + IFT[F](t-b))/2 ──
+       Via fórmula de Euler: cos(bw) = (e^{ibw} + e^{-ibw})/2 */
+    if is(res = false) then block(
+        [_cm_numer, _cm_denom, _cos_fac_cm, _b_cm, _rest_cm,
+         _nfacs_cm, _fac_cm, _cos_arg_cm, _b_cm_c,
+         _F_cm, _f_ift_cm],
+        _cos_fac_cm: false, _b_cm: false, _rest_cm: 1,
+        if not atom(e) and (is(op(e) = "*") or is(op(e) = "/")) then (
+            _cm_numer: if is(op(e) = "/") then part(e, 1) else e,
+            _cm_denom: if is(op(e) = "/") then part(e, 2) else 1,
+            _nfacs_cm: if not atom(_cm_numer) and is(op(_cm_numer) = "*")
+                       then args(_cm_numer) else [_cm_numer],
+            for _fac_cm in _nfacs_cm do (
+                if is(_cos_fac_cm = false) and not atom(_fac_cm)
+                   and is(op(_fac_cm) = 'cos) then (
+                    _cos_arg_cm: part(_fac_cm, 1),
+                    _b_cm_c: errcatch(ratsimp(_cos_arg_cm / w_var)),
+                    if _b_cm_c # [] and freeof(w_var, first(_b_cm_c))
+                       and not equal(first(_b_cm_c), 0)
+                       and ratsimp(_cos_arg_cm - first(_b_cm_c) * w_var) = 0 then (
+                        _cos_fac_cm: _fac_cm,
+                        _b_cm: first(_b_cm_c)
+                    ) else _rest_cm: _rest_cm * _fac_cm
+                ) else _rest_cm: _rest_cm * _fac_cm
+            ),
+            if is(_cos_fac_cm # false) then (
+                _F_cm: _rest_cm / _cm_denom,
+                _f_ift_cm: IFT_pattern_lookup(_F_cm, w_var, t_var),
+                if is(_f_ift_cm # false) then
+                    res: [(subst(t_var = t_var + _b_cm, _f_ift_cm[1])
+                           + subst(t_var = t_var - _b_cm, _f_ift_cm[1])) / 2,
+                          concat("cos(bw)*F(w)->(f(t+b)+f(t-b))/2, b=",
+                                 string(_b_cm), ", IFT[F]=", _f_ift_cm[2])]
             )
         )
     ),
