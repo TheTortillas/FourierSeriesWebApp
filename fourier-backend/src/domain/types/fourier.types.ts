@@ -201,6 +201,8 @@ export interface FourierTransformResult {
   F?: SymbolicExpression;
   realPart?: SymbolicExpression;
   imagPart?: SymbolicExpression;
+  inputRealPart?: SymbolicExpression;
+  inputImagPart?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }
@@ -230,6 +232,8 @@ export interface InverseFourierTransformResult {
   fCombined?: SymbolicExpression;
   inputRealPart?: SymbolicExpression;
   inputImagPart?: SymbolicExpression;
+  outputRealPart?: SymbolicExpression;
+  outputImagPart?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }
