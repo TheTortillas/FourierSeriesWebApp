@@ -1672,5 +1672,105 @@
             "exists": true,
             "fCombined": "(sgn(t+3)/2-sgn(t-3)/2-(%e^-(2*(t+3))*u(t+3)-u(t-3)*%e^-(2*(t-3))))/4"
         }
+    },
+    {
+        "id": "C01",
+        "type": "ift",
+        "description": "IFT cos-modulación: IFT(cos(2w)/(9+w²)) = (e^{-3|t+2|}+e^{-3|t-2|})/12",
+        "input": {
+            "segments": [
+                {
+                    "expression": "cos(2*w)/(9+w^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^(-(3*abs(abs(t)-2))-3*abs(t)-6)*(%e^(3*abs(abs(t)-2))+%e^(3*abs(t)+6)))/12"
+        }
+    },
+    {
+        "id": "C02",
+        "type": "ift",
+        "description": "IFT cos-modulación escalada: IFT(6*cos(3w)/(4+w²))",
+        "input": {
+            "segments": [
+                {
+                    "expression": "6*cos(3*w)/(4+w^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^(-(2*abs(abs(t)-3))-2*abs(t)-6)*(3*%e^(2*abs(abs(t)-3))+3*%e^(2*abs(t)+6)))/4"
+        }
+    },
+    {
+        "id": "T01",
+        "type": "ft",
+        "description": "FT distribucional: FT(1/t) = -i·π·sgn(w) (valor principal de Cauchy, n=1)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/t",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%i*%pi*sgn(w))"
+        }
+    },
+    {
+        "id": "T02",
+        "type": "ft",
+        "description": "FT distribucional: FT(1/t²) = -π·w·sgn(w) (valor principal, n=2)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/t^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%pi*w*sgn(w))"
+        }
+    },
+    {
+        "id": "T03",
+        "type": "ft",
+        "description": "FT distribucional: FT(3/t³) = 3iπw²sgn(w)/2 (valor principal, n=3, k=3)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "3/t^3",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(3*%i*%pi*w^2*sgn(w))/2"
+        }
     }
 ]
