@@ -1815,12 +1815,20 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                         if freeof(w_var, _a_gl) and is(_a_gl > 0)
                            and freeof(w_var, _om0_gl) then (
                             _k_gl: ratsimp(_n_gl),
-                            if freeof(w_var, _k_gl) then
-                                res: [_k_gl / (2*_A_gl*_a_gl)
-                                          * exp(-_a_gl*abs(t_var))
-                                          * exp(%i*_om0_gl*t_var),
+                            if freeof(w_var, _k_gl) then block(
+                                [_had_pos_gl, _had_neg_gl, _expr_gl],
+                                _had_pos_gl: errcatch(is(t_var > 0)) = [true],
+                                _had_neg_gl: errcatch(is(t_var < 0)) = [true],
+                                forget(t_var > 0), forget(t_var < 0),
+                                _expr_gl: _k_gl / (2*_A_gl*_a_gl)
+                                              * exp(-_a_gl*abs(t_var))
+                                              * exp(%i*_om0_gl*t_var),
+                                if _had_pos_gl then assume(t_var > 0),
+                                if _had_neg_gl then assume(t_var < 0),
+                                res: [_expr_gl,
                                       concat("k/(Aw²+Bw+C) -> k/(2Aa)*e^{-a|t|}e^{iω₀t}, ω₀=",
                                              string(_om0_gl), ", a=", string(_a_gl))]
+                            )
                         )
                     )
                 )

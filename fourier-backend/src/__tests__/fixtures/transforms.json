@@ -1772,5 +1772,105 @@
             "exists": true,
             "F": "(3*%i*%pi*w^2*sgn(w))/2"
         }
+    },
+    {
+        "id": "B01",
+        "type": "ft",
+        "description": "FT decaimiento bilateral: FT(exp(-3|t|)) = 6/(w²+9)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-3*abs(t))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "6/(w^2+9)"
+        }
+    },
+    {
+        "id": "M01",
+        "type": "ft",
+        "description": "FT modulación seno: FT(sin(2t)·exp(-3|t|)) = (G(w-2)-G(w+2))/(2i), G=6/(w²+9)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(2*t)*exp(-3*abs(t))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%i*(6/((w-2)^2+9)-6/((w+2)^2+9)))/2)"
+        }
+    },
+    {
+        "id": "M02",
+        "type": "ft",
+        "description": "FT modulación coseno: FT(cos(2t)·exp(-3|t|)) = (G(w-2)+G(w+2))/2, G=6/(w²+9)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "cos(2*t)*exp(-3*abs(t))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(6/((w+2)^2+9)+6/((w-2)^2+9))/2"
+        }
+    },
+    {
+        "id": "L01",
+        "type": "ift",
+        "description": "IFT Lorentziana generalizada: IFT(1/(w²+4w+13)) = e^{-3|t|-2it}/6  (ω₀=-2, a=3)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(w^2+4*w+13)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-(3*abs(t))-2*%i*t)/6"
+        }
+    },
+    {
+        "id": "L02",
+        "type": "ift",
+        "description": "IFT Lorentziana generalizada escalada: IFT(6/(w²-2w+10)) = e^{it-3|t|}  (ω₀=1, a=3)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "6/(w^2-2*w+10)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(%i*t-3*abs(t))"
+        }
     }
 ]
