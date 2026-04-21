@@ -2,9 +2,13 @@
   <app-nav />
 
   <!-- ── Page header ──────────────────────────────────────────────────────── -->
-  <header class="shrink-0 border-b border-border dark:border-dark-border px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+  <header
+    class="shrink-0 border-b border-border dark:border-dark-border px-6 py-4 flex items-center justify-between gap-4 flex-wrap"
+  >
     <div>
-      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'transforms.title' | transloco }}</h1>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">
+        {{ 'transforms.title' | transloco }}
+      </h1>
       <p class="text-sm font-mono text-muted dark:text-dark-muted mt-0.5">
         {{ 'transforms.subtitle' | transloco }}
       </p>
@@ -18,9 +22,11 @@
         routerLinkActive
         #continuousRla="routerLinkActive"
         [routerLinkActiveOptions]="{ exact: true }"
-        [class]="continuousRla.isActive
-          ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
-          : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'"
+        [class]="
+          continuousRla.isActive
+            ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
+            : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'
+        "
       >
         {{ 'transforms.continuous' | transloco }}
       </a>
@@ -28,9 +34,11 @@
         routerLink="../dft"
         routerLinkActive
         #dftRla="routerLinkActive"
-        [class]="dftRla.isActive
-          ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
-          : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'"
+        [class]="
+          dftRla.isActive
+            ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
+            : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'
+        "
       >
         {{ 'transforms.discrete' | transloco }}
       </a>
@@ -40,7 +48,9 @@
   <!-- ── Two-panel layout ─────────────────────────────────────────────────── -->
   <div class="flex flex-col lg:flex-row flex-1 min-h-0">
     <!-- ── Left panel: controls ──────────────────────────────────────────── -->
-    <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto">
+    <aside
+      class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto"
+    >
       <div class="p-5 flex flex-col gap-5">
         <!-- Live f(x) preview — outside locking wrapper so it stays interactive during calculation -->
         @if (previewLatex()) {
@@ -67,365 +77,426 @@
           [class.pointer-events-none]="inputsLocked()"
           [class.opacity-70]="inputsLocked()"
         >
-        <!-- Segments + Variables (sección unificada) -->
-        <section class="flex flex-col gap-3">
-          <!-- Header: título + botón teclado -->
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-              {{ 'calculator.piecewiseFunction' | transloco }}
-              <span class="font-normal text-muted dark:text-dark-muted font-mono text-xs ml-1">{{ inputFnLabel() }}</span>
-            </h2>
-            <!-- Keyboard toggle — desktop only -->
-            <button
-              type="button"
-              (click)="showKeyboard = !showKeyboard"
-              [title]="'calculator.segment.keyboardTitle' | transloco"
-              class="hidden lg:flex items-center gap-1 px-2 h-6 rounded text-[10px] font-mono border transition-colors cursor-pointer"
-              [class]="showKeyboard
-                ? 'bg-accent/10 border-accent/40 text-accent'
-                : 'border-border dark:border-dark-border text-muted hover:border-accent hover:text-accent'"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="6" width="20" height="12" rx="2"/>
-                <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/>
-              </svg>
-              {{ 'calculator.segment.keyboardTitle' | transloco }}
-            </button>
-          </div>
-
-          @for (seg of segments(); track seg.id; let i = $index) {
-            <app-transform-segment
-              [segment]="seg"
-              [index]="i"
-              [isOnly]="segments().length === 1"
-              [intVar]="intVar()"
-              [continuityError]="continuityErrors()[i] ?? null"
-              [prevContinuityError]="i > 0 ? (continuityErrors()[i - 1] ?? null) : null"
-              [orderError]="orderErrors()[i] || false"
-              (updated)="updateSegment($event.id, $event.changes)"
-              (removed)="removeSegment($event)"
-            />
-          }
-
-          @if (orderErrors().some(e => e)) {
-            <div class="flex items-start gap-2 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 px-3 py-2">
-              <span class="text-red-500 shrink-0 text-sm leading-none mt-0.5">✕</span>
-              <p class="text-xs text-red-700 dark:text-red-400 font-mono">
-                {{ 'calculator.segment.orderError' | transloco }}
-              </p>
-            </div>
-          }
-          @if (continuityErrors().some(e => e !== null)) {
-            <div class="flex items-start gap-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
-              <span class="text-amber-500 shrink-0 text-sm leading-none mt-0.5">⚠</span>
-              <p class="text-xs text-amber-700 dark:text-amber-400 font-mono">
-                {{ 'calculator.segment.continuityWarning' | transloco }}
-              </p>
-            </div>
-          }
-
-          <!-- Math keyboard — desktop only, no layout shift -->
-          @if (showKeyboard) {
-            <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
-              @for (row of keyGroups; track $index) {
-                <div class="flex flex-wrap gap-1">
-                  @for (btn of row; track btn.label) {
-                    <button
-                      type="button"
-                      (mousedown)="$event.preventDefault()"
-                      (click)="mqs.insertKey(btn)"
-                      class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
-                    >{{ btn.label }}</button>
-                  }
-                </div>
-              }
-              <p class="text-[10px] text-muted font-mono pt-0.5">
-                {{ 'calculator.segment.activeField' | transloco: { field: mqs.activeFieldName() } }}
-              </p>
-            </div>
-          }
-
-          <button
-            type="button"
-            (click)="addSegment()"
-            class="flex items-center gap-1.5 text-xs text-accent dark:text-accent hover:underline cursor-pointer font-mono transition-opacity"
-          >
-            {{ 'transforms.addSegment' | transloco }}
-          </button>
-
-          <!-- Separador + Variables -->
-          <div class="border-t border-border dark:border-dark-border pt-3 flex flex-col gap-3">
-            <p class="text-xs text-muted font-mono shrink-0">{{ 'transforms.variables' | transloco }}</p>
-
-            <div class="flex flex-wrap gap-2">
-              @for (pair of varPairs; track pair.id) {
-                @if (pair.id !== 'custom') {
-                  <button
-                    type="button"
-                    (click)="varPairId.set(pair.id)"
-                    [class]="
-                      varPairId() === pair.id
-                        ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
-                        : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
-                    "
-                  >
-                    @if (mode() === 'ft') {
-                      {{ pair.timeDisplay }} → {{ pair.freqDisplay }}
-                    } @else {
-                      {{ pair.freqDisplay }} → {{ pair.timeDisplay }}
-                    }
-                  </button>
-                }
-              }
+          <!-- Segments + Variables (sección unificada) -->
+          <section class="flex flex-col gap-3">
+            <!-- Header: título + botón teclado -->
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                {{ 'calculator.piecewiseFunction' | transloco }}
+                <span class="font-normal text-muted dark:text-dark-muted font-mono text-xs ml-1">{{
+                  inputFnLabel()
+                }}</span>
+              </h2>
+              <!-- Keyboard toggle — desktop only -->
               <button
                 type="button"
-                (click)="varPairId.set('custom')"
+                (click)="showKeyboard = !showKeyboard"
+                [title]="'calculator.segment.keyboardTitle' | transloco"
+                class="hidden lg:flex items-center gap-1 px-2 h-6 rounded text-[10px] font-mono border transition-colors cursor-pointer"
                 [class]="
-                  varPairId() === 'custom'
-                    ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
-                    : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
+                  showKeyboard
+                    ? 'bg-accent/10 border-accent/40 text-accent'
+                    : 'border-border dark:border-dark-border text-muted hover:border-accent hover:text-accent'
                 "
               >
-                Custom
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-3 h-3"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="2" y="6" width="20" height="12" rx="2" />
+                  <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" />
+                </svg>
+                {{ 'calculator.segment.keyboardTitle' | transloco }}
               </button>
             </div>
 
-            @if (varPairId() === 'custom') {
-              <div class="flex items-center gap-3 flex-wrap">
-                <div class="flex flex-col gap-1">
-                  <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                    {{ mode() === 'ft' ? ('transforms.varTime' | transloco) : ('transforms.varFreq' | transloco) }}
-                  </label>
-                  <input
-                    type="text"
-                    [ngModel]="mode() === 'ft' ? customTime() : customFreq()"
-                    (ngModelChange)="mode() === 'ft' ? customTime.set($event) : customFreq.set($event)"
-                    [placeholder]="mode() === 'ft' ? 't' : 'w'"
-                    class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <span class="text-muted font-mono mt-4">→</span>
-                <div class="flex flex-col gap-1">
-                  <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                    {{ mode() === 'ft' ? ('transforms.varFreq' | transloco) : ('transforms.varTime' | transloco) }}
-                  </label>
-                  <input
-                    type="text"
-                    [ngModel]="mode() === 'ft' ? customFreq() : customTime()"
-                    (ngModelChange)="mode() === 'ft' ? customFreq.set($event) : customTime.set($event)"
-                    [placeholder]="mode() === 'ft' ? 'w' : 't'"
-                    class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-4">
-                  {{ 'transforms.maximaNames' | transloco }} <code class="text-accent">nu</code>,
-                  <code class="text-accent">xi</code>, <code class="text-accent">omega</code>…
+            @for (seg of segments(); track seg.id; let i = $index) {
+              <app-transform-segment
+                [segment]="seg"
+                [index]="i"
+                [isOnly]="segments().length === 1"
+                [intVar]="intVar()"
+                [continuityError]="continuityErrors()[i] ?? null"
+                [prevContinuityError]="i > 0 ? (continuityErrors()[i - 1] ?? null) : null"
+                [orderError]="orderErrors()[i] || false"
+                (updated)="updateSegment($event.id, $event.changes)"
+                (removed)="removeSegment($event)"
+              />
+            }
+
+            @if (orderErrors().some(e => e)) {
+              <div
+                class="flex items-start gap-2 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 px-3 py-2"
+              >
+                <span class="text-red-500 shrink-0 text-sm leading-none mt-0.5">✕</span>
+                <p class="text-xs text-red-700 dark:text-red-400 font-mono">
+                  {{ 'calculator.segment.orderError' | transloco }}
+                </p>
+              </div>
+            }
+            @if (continuityErrors().some(e => e !== null)) {
+              <div
+                class="flex items-start gap-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-3 py-2"
+              >
+                <span class="text-amber-500 shrink-0 text-sm leading-none mt-0.5">⚠</span>
+                <p class="text-xs text-amber-700 dark:text-amber-400 font-mono">
+                  {{ 'calculator.segment.continuityWarning' | transloco }}
                 </p>
               </div>
             }
 
-          </div>
-        </section>
-
-        <!-- Directa / Inversa mode selector -->
-        <div class="flex gap-2">
-          <button
-            type="button"
-            (click)="setMode('ft')"
-            [class]="mode() === 'ft'
-              ? 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-accent bg-accent/10 dark:bg-accent/20 text-ink dark:text-dark-ink'
-              : 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 hover:bg-paper2 dark:hover:bg-dark-surface2'"
-          >
-            <span class="font-semibold text-sm font-body">{{ 'transforms.direct' | transloco }}</span>
-            <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
-              F({{ activePair().freqDisplay || activePair().freq }}) = ∫ f({{ activePair().timeDisplay || activePair().time }}) e<sup>−i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup> d{{ activePair().timeDisplay || activePair().time }}
-            </span>
-          </button>
-          <button
-            type="button"
-            (click)="setMode('ift')"
-            [class]="mode() === 'ift'
-              ? 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-accent bg-accent/10 dark:bg-accent/20 text-ink dark:text-dark-ink'
-              : 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 hover:bg-paper2 dark:hover:bg-dark-surface2'"
-          >
-            <span class="font-semibold text-sm font-body">{{ 'transforms.inverse' | transloco }}</span>
-            <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
-              f({{ activePair().timeDisplay || activePair().time }}) = (1/2π) ∫ F({{ activePair().freqDisplay || activePair().freq }}) e<sup>i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup> d{{ activePair().freqDisplay || activePair().freq }}
-            </span>
-          </button>
-        </div>
-
-        <!-- Calculate -->
-        <button
-          type="button"
-          (click)="calculate()"
-          [disabled]="!canCalculate() || loading() || hasComputedResult()"
-          class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          @if (loading()) {
-            <span class="flex items-center justify-center gap-2">
-              <svg
-                class="animate-spin w-4 h-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
+            <!-- Math keyboard — desktop only, no layout shift -->
+            @if (showKeyboard) {
+              <div
+                class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5"
               >
-                <circle
-                  class="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  stroke-width="4"
-                />
-                <path
-                  class="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
-              {{ 'common.calculating' | transloco }}
-            </span>
-          } @else {
-            {{ 'transforms.calculate' | transloco }}
-          }
-        </button>
-      </div>
+                @for (row of keyGroups; track $index) {
+                  <div class="flex flex-wrap gap-1">
+                    @for (btn of row; track btn.label) {
+                      <button
+                        type="button"
+                        (mousedown)="$event.preventDefault()"
+                        (click)="mqs.insertKey(btn)"
+                        class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
+                      >
+                        {{ btn.label }}
+                      </button>
+                    }
+                  </div>
+                }
+                <p class="text-[10px] text-muted font-mono pt-0.5">
+                  {{
+                    'calculator.segment.activeField' | transloco: { field: mqs.activeFieldName() }
+                  }}
+                </p>
+              </div>
+            }
 
-      <!-- Complex inputs notice -->
-      @if (hasComplexInputs() && !hasComputedResult()) {
-        <div
-          class="rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 flex items-start gap-2"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="w-4 h-4 shrink-0 mt-0.5 text-amber-500 dark:text-amber-400"
+            <button
+              type="button"
+              (click)="addSegment()"
+              class="flex items-center gap-1.5 text-xs text-accent dark:text-accent hover:underline cursor-pointer font-mono transition-opacity"
+            >
+              {{ 'transforms.addSegment' | transloco }}
+            </button>
+
+            <!-- Separador + Variables -->
+            <div class="border-t border-border dark:border-dark-border pt-3 flex flex-col gap-3">
+              <p class="text-xs text-muted font-mono shrink-0">
+                {{ 'transforms.variables' | transloco }}
+              </p>
+
+              <div class="flex flex-wrap gap-2">
+                @for (pair of varPairs; track pair.id) {
+                  @if (pair.id !== 'custom') {
+                    <button
+                      type="button"
+                      (click)="varPairId.set(pair.id)"
+                      [class]="
+                        varPairId() === pair.id
+                          ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                          : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
+                      "
+                    >
+                      @if (mode() === 'ft') {
+                        {{ pair.timeDisplay }} → {{ pair.freqDisplay }}
+                      } @else {
+                        {{ pair.freqDisplay }} → {{ pair.timeDisplay }}
+                      }
+                    </button>
+                  }
+                }
+                <button
+                  type="button"
+                  (click)="varPairId.set('custom')"
+                  [class]="
+                    varPairId() === 'custom'
+                      ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                      : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
+                  "
+                >
+                  Custom
+                </button>
+              </div>
+
+              @if (varPairId() === 'custom') {
+                <div class="flex items-center gap-3 flex-wrap">
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                      {{
+                        mode() === 'ft'
+                          ? ('transforms.varTime' | transloco)
+                          : ('transforms.varFreq' | transloco)
+                      }}
+                    </label>
+                    <input
+                      type="text"
+                      [ngModel]="mode() === 'ft' ? customTime() : customFreq()"
+                      (ngModelChange)="
+                        mode() === 'ft' ? customTime.set($event) : customFreq.set($event)
+                      "
+                      [placeholder]="mode() === 'ft' ? 't' : 'w'"
+                      class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <span class="text-muted font-mono mt-4">→</span>
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                      {{
+                        mode() === 'ft'
+                          ? ('transforms.varFreq' | transloco)
+                          : ('transforms.varTime' | transloco)
+                      }}
+                    </label>
+                    <input
+                      type="text"
+                      [ngModel]="mode() === 'ft' ? customFreq() : customTime()"
+                      (ngModelChange)="
+                        mode() === 'ft' ? customFreq.set($event) : customTime.set($event)
+                      "
+                      [placeholder]="mode() === 'ft' ? 'w' : 't'"
+                      class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-4">
+                    {{ 'transforms.maximaNames' | transloco }} <code class="text-accent">nu</code>,
+                    <code class="text-accent">xi</code>, <code class="text-accent">omega</code>…
+                  </p>
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- Directa / Inversa mode selector -->
+          <div class="flex gap-2">
+            <button
+              type="button"
+              (click)="setMode('ft')"
+              [class]="
+                mode() === 'ft'
+                  ? 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-accent bg-accent/10 dark:bg-accent/20 text-ink dark:text-dark-ink'
+                  : 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 hover:bg-paper2 dark:hover:bg-dark-surface2'
+              "
+            >
+              <span class="font-semibold text-sm font-body">{{
+                'transforms.direct' | transloco
+              }}</span>
+              <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
+                F({{ activePair().freqDisplay || activePair().freq }}) = ∫ f({{
+                  activePair().timeDisplay || activePair().time
+                }}) e<sup
+                  >−i·{{ activePair().freqDisplay || activePair().freq }}·{{
+                    activePair().timeDisplay || activePair().time
+                  }}</sup
+                >
+                d{{ activePair().timeDisplay || activePair().time }}
+              </span>
+            </button>
+            <button
+              type="button"
+              (click)="setMode('ift')"
+              [class]="
+                mode() === 'ift'
+                  ? 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-accent bg-accent/10 dark:bg-accent/20 text-ink dark:text-dark-ink'
+                  : 'flex-1 flex flex-col items-center px-3 py-2 rounded border cursor-pointer transition-all text-center border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 hover:bg-paper2 dark:hover:bg-dark-surface2'
+              "
+            >
+              <span class="font-semibold text-sm font-body">{{
+                'transforms.inverse' | transloco
+              }}</span>
+              <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
+                f({{ activePair().timeDisplay || activePair().time }}) = (1/2π) ∫ F({{
+                  activePair().freqDisplay || activePair().freq
+                }}) e<sup
+                  >i·{{ activePair().freqDisplay || activePair().freq }}·{{
+                    activePair().timeDisplay || activePair().time
+                  }}</sup
+                >
+                d{{ activePair().freqDisplay || activePair().freq }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Calculate -->
+          <button
+            type="button"
+            (click)="calculate()"
+            [disabled]="!canCalculate() || loading() || hasComputedResult()"
+            class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-          <p class="text-xs font-mono text-amber-700 dark:text-amber-300">
-            {{ 'transforms.complexInputNotice' | transloco }}
-          </p>
+            @if (loading()) {
+              <span class="flex items-center justify-center gap-2">
+                <svg
+                  class="animate-spin w-4 h-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  />
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+                {{ 'common.calculating' | transloco }}
+              </span>
+            } @else {
+              {{ 'transforms.calculate' | transloco }}
+            }
+          </button>
         </div>
-      }
 
-      <!-- Error -->
-      @if (errorMsg()) {
-        <div
-          class="rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2"
-        >
-          <p class="text-xs font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
-        </div>
-      }
+        <!-- Complex inputs notice -->
+        @if (hasComplexInputs() && !hasComputedResult()) {
+          <div
+            class="rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-3 py-2 flex items-start gap-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="w-4 h-4 shrink-0 mt-0.5 text-amber-500 dark:text-amber-400"
+            >
+              <path
+                d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+              />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <p class="text-xs font-mono text-amber-700 dark:text-amber-300">
+              {{ 'transforms.complexInputNotice' | transloco }}
+            </p>
+          </div>
+        }
 
-      @if (hasComputedResult()) {
-        <button
-          type="button"
-          (click)="startNewCalculation()"
-          class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold"
-        >
-          {{ 'transforms.newCalculation' | transloco }}
-        </button>
-      }
-    </div>
+        <!-- Error -->
+        @if (errorMsg()) {
+          <div
+            class="rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2"
+          >
+            <p class="text-xs font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
+          </div>
+        }
+
+        @if (hasComputedResult()) {
+          <button
+            type="button"
+            (click)="startNewCalculation()"
+            class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold"
+          >
+            {{ 'transforms.newCalculation' | transloco }}
+          </button>
+        }
+      </div>
     </aside>
     <!-- /Left panel -->
 
     <!-- ── Right panel: canvas + results ────────────────────────────────── -->
     <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
-    <div class="p-5 flex flex-col gap-5">
-      <!-- Canvas -->
-      <div
-        #canvasWrapper
-        class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
-        style="height: 420px"
-      >
-        <app-function-plot
-          #plotRef
-          [layers]="layers()"
-          [xAxisFormat]="xAxisFormat()"
-          [customConst]="customConst()"
-          class="w-full h-full block"
-        />
+      <div class="p-5 flex flex-col gap-5">
+        <!-- Canvas -->
+        <div
+          #canvasWrapper
+          class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
+          style="height: 420px"
+        >
+          <app-function-plot
+            #plotRef
+            [layers]="layers()"
+            [xAxisFormat]="xAxisFormat()"
+            [customConst]="customConst()"
+            class="w-full h-full block"
+          />
 
-        <!-- Overlay buttons (top-left) -->
-        <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
-          <!-- Fullscreen toggle -->
-          <button
-            type="button"
-            (click)="toggleFullscreen()"
-            [title]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
-            class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
-          >
-            @if (isFullscreen()) {
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-3.5 h-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="4 14 10 14 10 20" />
-                <polyline points="20 10 14 10 14 4" />
-                <line x1="10" y1="14" x2="3" y2="21" />
-                <line x1="21" y1="3" x2="14" y2="10" />
-              </svg>
-            } @else {
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-3.5 h-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="15 3 21 3 21 9" />
-                <polyline points="9 21 3 21 3 15" />
-                <line x1="21" y1="3" x2="14" y2="10" />
-                <line x1="3" y1="21" x2="10" y2="14" />
-              </svg>
-            }
-          </button>
-
-          <!-- Settings toggle (only when result exists) -->
-          @if (hasComputedResult()) {
+          <!-- Overlay buttons (top-left) -->
+          <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
+            <!-- Fullscreen toggle -->
             <button
               type="button"
-              (click)="showCanvasSettings.set(!showCanvasSettings())"
-              [title]="'results.canvasSettings' | transloco"
-              [class]="
-                showCanvasSettings()
-                  ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent dark:text-accent transition-colors flex items-center justify-center'
-                  : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center'
+              (click)="toggleFullscreen()"
+              [title]="
+                (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco
               "
+              class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-3.5 h-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+              @if (isFullscreen()) {
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="4 14 10 14 10 20" />
+                  <polyline points="20 10 14 10 14 4" />
+                  <line x1="10" y1="14" x2="3" y2="21" />
+                  <line x1="21" y1="3" x2="14" y2="10" />
+                </svg>
+              } @else {
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="15 3 21 3 21 9" />
+                  <polyline points="9 21 3 21 3 15" />
+                  <line x1="21" y1="3" x2="14" y2="10" />
+                  <line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+              }
+            </button>
+
+            <!-- Settings toggle (only when result exists) -->
+            @if (hasComputedResult()) {
+              <button
+                type="button"
+                (click)="showCanvasSettings.set(!showCanvasSettings())"
+                [title]="'results.canvasSettings' | transloco"
+                [class]="
+                  showCanvasSettings()
+                    ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent dark:text-accent transition-colors flex items-center justify-center'
+                    : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center'
+                "
               >
-                <circle cx="12" cy="12" r="3" />
-                <path
-                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
                          a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
                          A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
                          l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
@@ -434,61 +505,16 @@
                          a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
                          l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
                          a1.65 1.65 0 0 0-1.51 1z"
-                />
-              </svg>
-            </button>
-          }
-
-          <!-- Download canvas -->
-          <button
-            type="button"
-            (click)="downloadCanvas()"
-            [title]="'results.downloadImage' | transloco"
-            class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-3.5 h-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-          </button>
-
-          <!-- Favorite (only when result exists and user is authenticated) -->
-          @if (hasComputedResult() && userStore.isAuthenticated()) {
-            <button
-              type="button"
-              (click)="openFavoriteDialog()"
-              [title]="latestHistoryEntry()?.isFavorite ? ('results.removeFav' | transloco) : ('results.addFav' | transloco)"
-              [class]="latestHistoryEntry()?.isFavorite
-                ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center'
-                : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center'"
-            >
-              @if (favoriteLoading()) {
-                <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  />
                 </svg>
-              } @else {
-                <span class="text-sm leading-none">★</span>
-              }
-            </button>
-          }
+              </button>
+            }
 
-          <!-- Share URL (only when result exists) -->
-          @if (hasComputedResult()) {
+            <!-- Download canvas -->
             <button
               type="button"
-              (click)="openShareDialog()"
-              [title]="'transforms.shareLink' | transloco"
+              (click)="downloadCanvas()"
+              [title]="'results.downloadImage' | transloco"
               class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
             >
               <svg
@@ -501,369 +527,62 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
             </button>
-          }
-        </div>
-        @if (hasComputedResult() && showCanvasSettings()) {
-          <div
-            class="absolute top-11 left-2 right-2 sm:right-auto sm:w-152 z-20 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow shrink-0 flex flex-col gap-3 text-[11px] font-mono max-h-[calc(100%-3.5rem)] overflow-y-auto"
-          >
-            <section class="flex flex-col gap-2">
-              <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                {{ 'transforms.layersToShow' | transloco }}
-              </h4>
-              <div class="flex flex-wrap gap-2 items-center">
-                <button
-                  type="button"
-                  (click)="showOriginal.set(!showOriginal())"
-                  [class]="
-                    showOriginal()
-                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
-                      : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
-                  "
-                  [style.borderColor]="showOriginal() ? originalColor() : null"
-                  [style.color]="showOriginal() ? originalColor() : null"
-                  [style.backgroundColor]="showOriginal() ? originalColor() + '1A' : null"
-                >
-                  <span
-                    class="w-2 h-2 rounded-full shrink-0"
-                    [style.background]="showOriginal() ? originalColor() : 'currentColor'"
-                  ></span>
-                  @if (mode() === 'ft') {
-                    {{ inputFnLabel() }}
-                  } @else {
-                    f({{ resultVarDisplay() }})
-                  }
-                </button>
 
-                <button
-                  type="button"
-                  (click)="showReal.set(!showReal())"
-                  [class]="
-                    showReal()
-                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
-                      : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
-                  "
-                  [style.borderColor]="showReal() ? resultColor() : null"
-                  [style.color]="showReal() ? resultColor() : null"
-                  [style.backgroundColor]="showReal() ? resultColor() + '1A' : null"
-                >
-                  <span
-                    class="w-2 h-2 rounded-full shrink-0"
-                    [style.backgroundColor]="resultColor()"
-                  ></span>
-                  @if (mode() === 'ft') {
-                    Re F({{ transVar() }})
-                  } @else {
-                    Re F({{ intVar() }})
-                  }
-                </button>
-
-                <button
-                  type="button"
-                  (click)="showImag.set(!showImag())"
-                  [class]="
-                    showImag()
-                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
-                      : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
-                  "
-                  [style.borderColor]="showImag() ? imagColor() : null"
-                  [style.color]="showImag() ? imagColor() : null"
-                  [style.backgroundColor]="showImag() ? imagColor() + '1A' : null"
-                >
-                  <span
-                    class="w-2 h-2 rounded-full shrink-0"
-                    [style.backgroundColor]="imagColor()"
-                  ></span>
-                  @if (mode() === 'ft') {
-                    Im F({{ transVar() }})
-                  } @else {
-                    Im F({{ intVar() }})
-                  }
-                </button>
-
-                <button
-                  type="button"
-                  (click)="showMag.set(!showMag())"
-                  [class]="
-                    showMag()
-                      ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
-                      : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
-                  "
-                  [style.borderColor]="showMag() ? magColor() : null"
-                  [style.color]="showMag() ? magColor() : null"
-                  [style.backgroundColor]="showMag() ? magColor() + '1A' : null"
-                >
-                  <span
-                    class="w-2 h-2 rounded-full shrink-0"
-                    [style.backgroundColor]="magColor()"
-                  ></span>
-                  @if (mode() === 'ft') {
-                    |F({{ transVar() }})|
-                  } @else {
-                    |F({{ intVar() }})|
-                  }
-                </button>
-              </div>
-            </section>
-
-            <div class="border-t border-border dark:border-dark-border"></div>
-
-            <section class="flex flex-col gap-2">
-              <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                {{ 'transforms.axisAndUnits' | transloco }}
-              </h4>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-muted dark:text-dark-muted">{{ 'transforms.axisX' | transloco }}</span>
-                <div
-                  class="flex rounded border border-border dark:border-dark-border overflow-hidden"
-                >
-                  <button
-                    type="button"
-                    (click)="xAxisFormat.set('pi')"
-                    [class]="
-                      xAxisFormat() === 'pi'
-                        ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
-                        : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'
-                    "
+            <!-- Favorite (only when result exists and user is authenticated) -->
+            @if (hasComputedResult() && userStore.isAuthenticated()) {
+              <button
+                type="button"
+                (click)="openFavoriteDialog()"
+                [title]="
+                  latestHistoryEntry()?.isFavorite
+                    ? ('results.removeFav' | transloco)
+                    : ('results.addFav' | transloco)
+                "
+                [class]="
+                  latestHistoryEntry()?.isFavorite
+                    ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center'
+                    : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center'
+                "
+              >
+                @if (favoriteLoading()) {
+                  <svg
+                    class="w-3.5 h-3.5 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
                   >
-                    π
-                  </button>
-                  <button
-                    type="button"
-                    (click)="xAxisFormat.set('e')"
-                    [class]="
-                      xAxisFormat() === 'e'
-                        ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
-                        : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'
-                    "
-                  >
-                    e
-                  </button>
-                  <button
-                    type="button"
-                    (click)="xAxisFormat.set('integer')"
-                    [class]="
-                      xAxisFormat() === 'integer'
-                        ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
-                        : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'
-                    "
-                  >
-                    1,2
-                  </button>
-                  @for (p of activeParams(); track p) {
-                    <button
-                      type="button"
-                      (click)="customConstName.set(p); xAxisFormat.set('custom')"
-                      [class]="
-                        xAxisFormat() === 'custom' && customConst().symbol === p
-                          ? 'px-2 py-0.5 bg-accent text-white cursor-pointer font-mono'
-                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer font-mono'
-                      "
-                    >
-                      {{ p }}
-                    </button>
-                  }
-                </div>
-              </div>
-            </section>
-
-            <div class="border-t border-border dark:border-dark-border"></div>
-
-            <section class="flex flex-col gap-2">
-              <div class="flex items-center justify-between gap-2">
-                <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                  {{ 'transforms.lineStyle' | transloco }}
-                </h4>
-                <button
-                  type="button"
-                  (click)="resetLineColorsToPreset()"
-                  class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors cursor-pointer"
-                >
-                  {{ 'transforms.reset' | transloco }}
-                </button>
-              </div>
-              <div class="flex flex-wrap gap-3">
-                <div class="flex items-center gap-2">
-                  @if (mode() === 'ft') {
-                    <span class="text-muted dark:text-dark-muted">{{ 'transforms.original' | transloco }}</span>
-                  } @else {
-                    <span class="text-muted dark:text-dark-muted">f({{ resultVarDisplay() }})</span>
-                  }
-                  <input
-                    type="color"
-                    [value]="originalColor()"
-                    (input)="onOriginalColorInput($any($event.target).value)"
-                    class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                  />
-                  <input
-                    type="number"
-                    [value]="originalLineWidth()"
-                    min="0.5"
-                    max="5"
-                    step="0.5"
-                    (input)="originalLineWidth.set(+$any($event.target).value)"
-                    class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
-                  />
-                </div>
-
-                <div class="flex items-center gap-2">
-                  @if (mode() === 'ft') {
-                    <span class="text-muted dark:text-dark-muted">Re F({{ transVar() }})</span>
-                  } @else {
-                    <span class="text-muted dark:text-dark-muted">Re F({{ intVar() }})</span>
-                  }
-                  <input
-                    type="color"
-                    [value]="resultColor()"
-                    (input)="onResultColorInput($any($event.target).value)"
-                    class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                  />
-                  <input
-                    type="number"
-                    [value]="resultLineWidth()"
-                    min="0.5"
-                    max="5"
-                    step="0.5"
-                    (input)="resultLineWidth.set(+$any($event.target).value)"
-                    class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
-                  />
-                </div>
-
-                <div class="flex items-center gap-2">
-                  @if (mode() === 'ft') {
-                    <span class="text-muted dark:text-dark-muted">Im F({{ transVar() }})</span>
-                  } @else {
-                    <span class="text-muted dark:text-dark-muted">Im F({{ intVar() }})</span>
-                  }
-                  <input
-                    type="color"
-                    [value]="imagColor()"
-                    (input)="onImagColorInput($any($event.target).value)"
-                    class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                  />
-                </div>
-
-                <div class="flex items-center gap-2">
-                  @if (mode() === 'ft') {
-                    <span class="text-muted dark:text-dark-muted">|F({{ transVar() }})|</span>
-                  } @else {
-                    <span class="text-muted dark:text-dark-muted">|F({{ intVar() }})|</span>
-                  }
-                  <input
-                    type="color"
-                    [value]="magColor()"
-                    (input)="onMagColorInput($any($event.target).value)"
-                    class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                  />
-                </div>
-              </div>
-            </section>
-
-            <div class="border-t border-border dark:border-dark-border"></div>
-
-            @if (activeParams().length) {
-              <section class="flex flex-col gap-2">
-                <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                  {{ 'transforms.freeParams' | transloco }}
-                </h4>
-                <app-param-sliders
-                  [params]="activeParams()"
-                  (valuesChange)="paramValues.set($event)"
-                />
-              </section>
-
-              <div class="border-t border-border dark:border-dark-border"></div>
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                } @else {
+                  <span class="text-sm leading-none">★</span>
+                }
+              </button>
             }
 
-            <section class="flex flex-col gap-2">
-              <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                {{ 'transforms.lineLegend' | transloco }}
-              </h4>
-              <div class="flex flex-wrap gap-4 text-xs">
-                <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
-                  <span
-                    class="inline-block w-4 h-0.5 rounded"
-                    [style.backgroundColor]="originalColor()"
-                  ></span>
-                  @if (mode() === 'ft') {
-                    {{ inputFnLabel() }}
-                  } @else {
-                    f({{ resultVarDisplay() }})
-                  }
-                </span>
-                <div class="flex items-center gap-2">
-                  <span
-                    class="inline-block w-4 h-0.5 rounded"
-                    [style.backgroundColor]="resultColor()"
-                  ></span>
-                  @if (mode() === 'ft') {
-                    <span class="text-muted dark:text-dark-muted">Re F({{ transVar() }})</span>
-                  } @else {
-                    <span class="text-muted dark:text-dark-muted">Re F({{ intVar() }})</span>
-                  }
-                </div>
-                <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
-                  <span
-                    class="inline-block w-4 h-0.5 rounded"
-                    [style.backgroundColor]="imagColor()"
-                  ></span>
-                  @if (mode() === 'ft') {
-                    Im F({{ transVar() }})
-                  } @else {
-                    Im F({{ intVar() }})
-                  }
-                </span>
-                <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
-                  <span
-                    class="inline-block w-4 h-0.5 rounded"
-                    [style.backgroundColor]="magColor()"
-                  ></span>
-                  @if (mode() === 'ft') {
-                    |F({{ transVar() }})|
-                  } @else {
-                    |F({{ intVar() }})|
-                  }
-                </span>
-              </div>
-            </section>
-
-            <p class="text-[10px] text-muted dark:text-dark-muted">
-              {{ 'transforms.dragToPan' | transloco }}
-              @if (mode() === 'ft') {
-                {{ 'transforms.xAxisRepresents' | transloco: { var: activePair().freqDisplay || activePair().freq } }}
-              } @else {
-                {{ 'transforms.xAxisRepresents' | transloco: { var: activePair().timeDisplay || activePair().time } }}
-              }
-            </p>
-          </div>
-        }
-      </div>
-
-      <!-- Share dialog -->
-      @if (showShareDialog()) {
-        <div
-          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          (click)="showShareDialog.set(false)"
-          (keydown.escape)="showShareDialog.set(false)"
-        >
-          <div
-            class="bg-paper dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl shadow-2xl w-full max-w-sm p-5"
-            (click)="$event.stopPropagation()"
-          >
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2">
+            <!-- Share URL (only when result exists) -->
+            @if (hasComputedResult()) {
+              <button
+                type="button"
+                (click)="openShareDialog()"
+                [title]="'transforms.shareLink' | transloco"
+                class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  class="w-4 h-4 text-accent"
+                  class="w-3.5 h-3.5"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -877,58 +596,423 @@
                   <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                   <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                 </svg>
-                <h3 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-                  {{ 'transforms.shareTitle' | transloco }}
-                </h3>
-              </div>
-              <button
-                type="button"
-                (click)="showShareDialog.set(false)"
-                class="w-7 h-7 flex items-center justify-center rounded text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 hover:text-ink dark:hover:text-dark-ink transition-colors text-lg leading-none cursor-pointer"
-              >
-                ×
               </button>
-            </div>
-
-            <p class="text-xs text-muted dark:text-dark-muted font-body mb-3">
-              {{ 'transforms.shareDescription' | transloco }}
-            </p>
-
-            <div class="flex gap-2">
-              <input
-                type="text"
-                readonly
-                [value]="shareHref"
-                (click)="$any($event.target).select()"
-                class="flex-1 min-w-0 px-2.5 py-2 text-[11px] font-mono bg-paper2 dark:bg-dark-bg border border-border dark:border-dark-border rounded text-ink dark:text-dark-ink outline-none focus:border-accent cursor-text select-all"
-              />
-              <button
-                type="button"
-                (click)="copyShareUrl()"
-                [class]="
-                  urlCopied()
-                    ? 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 transition-colors flex items-center gap-1.5 cursor-pointer'
-                    : 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-accent text-white hover:bg-accent/90 transition-colors flex items-center gap-1.5 cursor-pointer'
-                "
-              >
-                @if (urlCopied()) {
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-3 h-3"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+            }
+          </div>
+          @if (hasComputedResult() && showCanvasSettings()) {
+            <div
+              class="absolute top-11 left-2 right-2 sm:right-auto sm:w-152 z-20 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow shrink-0 flex flex-col gap-3 text-[11px] font-mono max-h-[calc(100%-3.5rem)] overflow-y-auto"
+            >
+              <section class="flex flex-col gap-2">
+                <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                  {{ 'transforms.layersToShow' | transloco }}
+                </h4>
+                <div class="flex flex-wrap gap-2 items-center">
+                  <button
+                    type="button"
+                    (click)="showOriginalReal.set(!showOriginalReal())"
+                    [class]="
+                      showOriginalReal()
+                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
+                        : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
+                    "
+                    [style.borderColor]="showOriginalReal() ? originalColor() : null"
+                    [style.color]="showOriginalReal() ? originalColor() : null"
+                    [style.backgroundColor]="showOriginalReal() ? originalColor() + '1A' : null"
                   >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  {{ 'transforms.copied' | transloco }}
+                    <span
+                      class="w-2 h-2 rounded-full shrink-0"
+                      [style.background]="showOriginalReal() ? originalColor() : 'currentColor'"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      Re {{ inputFnLabel() }}
+                    } @else {
+                      Re f({{ resultVarDisplay() }})
+                    }
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="showOriginalImag.set(!showOriginalImag())"
+                    [class]="
+                      showOriginalImag()
+                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
+                        : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
+                    "
+                    [style.borderColor]="showOriginalImag() ? originalImagColor() : null"
+                    [style.color]="showOriginalImag() ? originalImagColor() : null"
+                    [style.backgroundColor]="showOriginalImag() ? originalImagColor() + '1A' : null"
+                  >
+                    <span
+                      class="w-2 h-2 rounded-full shrink-0"
+                      [style.background]="showOriginalImag() ? originalImagColor() : 'currentColor'"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      Im {{ inputFnLabel() }}
+                    } @else {
+                      Im f({{ resultVarDisplay() }})
+                    }
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="showReal.set(!showReal())"
+                    [class]="
+                      showReal()
+                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
+                        : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
+                    "
+                    [style.borderColor]="showReal() ? resultColor() : null"
+                    [style.color]="showReal() ? resultColor() : null"
+                    [style.backgroundColor]="showReal() ? resultColor() + '1A' : null"
+                  >
+                    <span
+                      class="w-2 h-2 rounded-full shrink-0"
+                      [style.backgroundColor]="resultColor()"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      Re F({{ transVar() }})
+                    } @else {
+                      Re F({{ intVar() }})
+                    }
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="showImag.set(!showImag())"
+                    [class]="
+                      showImag()
+                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
+                        : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
+                    "
+                    [style.borderColor]="showImag() ? imagColor() : null"
+                    [style.color]="showImag() ? imagColor() : null"
+                    [style.backgroundColor]="showImag() ? imagColor() + '1A' : null"
+                  >
+                    <span
+                      class="w-2 h-2 rounded-full shrink-0"
+                      [style.backgroundColor]="imagColor()"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      Im F({{ transVar() }})
+                    } @else {
+                      Im F({{ intVar() }})
+                    }
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="showMag.set(!showMag())"
+                    [class]="
+                      showMag()
+                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
+                        : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
+                    "
+                    [style.borderColor]="showMag() ? magColor() : null"
+                    [style.color]="showMag() ? magColor() : null"
+                    [style.backgroundColor]="showMag() ? magColor() + '1A' : null"
+                  >
+                    <span
+                      class="w-2 h-2 rounded-full shrink-0"
+                      [style.backgroundColor]="magColor()"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      |F({{ transVar() }})|
+                    } @else {
+                      |F({{ intVar() }})|
+                    }
+                  </button>
+                </div>
+              </section>
+
+              <div class="border-t border-border dark:border-dark-border"></div>
+
+              <section class="flex flex-col gap-2">
+                <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                  {{ 'transforms.axisAndUnits' | transloco }}
+                </h4>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-muted dark:text-dark-muted">{{
+                    'transforms.axisX' | transloco
+                  }}</span>
+                  <div
+                    class="flex rounded border border-border dark:border-dark-border overflow-hidden"
+                  >
+                    <button
+                      type="button"
+                      (click)="xAxisFormat.set('pi')"
+                      [class]="
+                        xAxisFormat() === 'pi'
+                          ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'
+                      "
+                    >
+                      π
+                    </button>
+                    <button
+                      type="button"
+                      (click)="xAxisFormat.set('e')"
+                      [class]="
+                        xAxisFormat() === 'e'
+                          ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'
+                      "
+                    >
+                      e
+                    </button>
+                    <button
+                      type="button"
+                      (click)="xAxisFormat.set('integer')"
+                      [class]="
+                        xAxisFormat() === 'integer'
+                          ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'
+                      "
+                    >
+                      1,2
+                    </button>
+                    @for (p of activeParams(); track p) {
+                      <button
+                        type="button"
+                        (click)="customConstName.set(p); xAxisFormat.set('custom')"
+                        [class]="
+                          xAxisFormat() === 'custom' && customConst().symbol === p
+                            ? 'px-2 py-0.5 bg-accent text-white cursor-pointer font-mono'
+                            : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer font-mono'
+                        "
+                      >
+                        {{ p }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              </section>
+
+              <div class="border-t border-border dark:border-dark-border"></div>
+
+              <section class="flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-2">
+                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                    {{ 'transforms.lineStyle' | transloco }}
+                  </h4>
+                  <button
+                    type="button"
+                    (click)="resetLineColorsToPreset()"
+                    class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors cursor-pointer"
+                  >
+                    {{ 'transforms.reset' | transloco }}
+                  </button>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                  <div class="flex items-center gap-2">
+                    @if (mode() === 'ft') {
+                      <span class="text-muted dark:text-dark-muted">Re {{ inputFnLabel() }}</span>
+                    } @else {
+                      <span class="text-muted dark:text-dark-muted"
+                        >Re f({{ resultVarDisplay() }})</span
+                      >
+                    }
+                    <input
+                      type="color"
+                      [value]="originalColor()"
+                      (input)="onOriginalColorInput($any($event.target).value)"
+                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                    />
+                    <input
+                      type="number"
+                      [value]="originalLineWidth()"
+                      min="0.5"
+                      max="5"
+                      step="0.5"
+                      (input)="originalLineWidth.set(+$any($event.target).value)"
+                      class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
+                    />
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    @if (mode() === 'ft') {
+                      <span class="text-muted dark:text-dark-muted">Im {{ inputFnLabel() }}</span>
+                    } @else {
+                      <span class="text-muted dark:text-dark-muted"
+                        >Im f({{ resultVarDisplay() }})</span
+                      >
+                    }
+                    <input
+                      type="color"
+                      [value]="originalImagColor()"
+                      (input)="onOriginalImagColorInput($any($event.target).value)"
+                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                    />
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    @if (mode() === 'ft') {
+                      <span class="text-muted dark:text-dark-muted">Re F({{ transVar() }})</span>
+                    } @else {
+                      <span class="text-muted dark:text-dark-muted">Re F({{ intVar() }})</span>
+                    }
+                    <input
+                      type="color"
+                      [value]="resultColor()"
+                      (input)="onResultColorInput($any($event.target).value)"
+                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                    />
+                    <input
+                      type="number"
+                      [value]="resultLineWidth()"
+                      min="0.5"
+                      max="5"
+                      step="0.5"
+                      (input)="resultLineWidth.set(+$any($event.target).value)"
+                      class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
+                    />
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    @if (mode() === 'ft') {
+                      <span class="text-muted dark:text-dark-muted">Im F({{ transVar() }})</span>
+                    } @else {
+                      <span class="text-muted dark:text-dark-muted">Im F({{ intVar() }})</span>
+                    }
+                    <input
+                      type="color"
+                      [value]="imagColor()"
+                      (input)="onImagColorInput($any($event.target).value)"
+                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                    />
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    @if (mode() === 'ft') {
+                      <span class="text-muted dark:text-dark-muted">|F({{ transVar() }})|</span>
+                    } @else {
+                      <span class="text-muted dark:text-dark-muted">|F({{ intVar() }})|</span>
+                    }
+                    <input
+                      type="color"
+                      [value]="magColor()"
+                      (input)="onMagColorInput($any($event.target).value)"
+                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <div class="border-t border-border dark:border-dark-border"></div>
+
+              @if (activeParams().length) {
+                <section class="flex flex-col gap-2">
+                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                    {{ 'transforms.freeParams' | transloco }}
+                  </h4>
+                  <app-param-sliders
+                    [params]="activeParams()"
+                    (valuesChange)="paramValues.set($event)"
+                  />
+                </section>
+
+                <div class="border-t border-border dark:border-dark-border"></div>
+              }
+
+              <section class="flex flex-col gap-2">
+                <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                  {{ 'transforms.lineLegend' | transloco }}
+                </h4>
+                <div class="flex flex-wrap gap-4 text-xs">
+                  <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
+                    <span
+                      class="inline-block w-4 h-0.5 rounded"
+                      [style.backgroundColor]="originalColor()"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      Re {{ inputFnLabel() }}
+                    } @else {
+                      Re f({{ resultVarDisplay() }})
+                    }
+                  </span>
+                  <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
+                    <span
+                      class="inline-block w-4 h-0.5 rounded border-t border-dashed"
+                      [style.borderColor]="originalImagColor()"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      Im {{ inputFnLabel() }}
+                    } @else {
+                      Im f({{ resultVarDisplay() }})
+                    }
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="inline-block w-4 h-0.5 rounded"
+                      [style.backgroundColor]="resultColor()"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      <span class="text-muted dark:text-dark-muted">Re F({{ transVar() }})</span>
+                    } @else {
+                      <span class="text-muted dark:text-dark-muted">Re F({{ intVar() }})</span>
+                    }
+                  </div>
+                  <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
+                    <span
+                      class="inline-block w-4 h-0.5 rounded"
+                      [style.backgroundColor]="imagColor()"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      Im F({{ transVar() }})
+                    } @else {
+                      Im F({{ intVar() }})
+                    }
+                  </span>
+                  <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
+                    <span
+                      class="inline-block w-4 h-0.5 rounded"
+                      [style.backgroundColor]="magColor()"
+                    ></span>
+                    @if (mode() === 'ft') {
+                      |F({{ transVar() }})|
+                    } @else {
+                      |F({{ intVar() }})|
+                    }
+                  </span>
+                </div>
+              </section>
+
+              <p class="text-[10px] text-muted dark:text-dark-muted">
+                {{ 'transforms.dragToPan' | transloco }}
+                @if (mode() === 'ft') {
+                  {{
+                    'transforms.xAxisRepresents'
+                      | transloco: { var: activePair().freqDisplay || activePair().freq }
+                  }}
                 } @else {
+                  {{
+                    'transforms.xAxisRepresents'
+                      | transloco: { var: activePair().timeDisplay || activePair().time }
+                  }}
+                }
+              </p>
+            </div>
+          }
+        </div>
+
+        <!-- Share dialog -->
+        @if (showShareDialog()) {
+          <div
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            (click)="showShareDialog.set(false)"
+            (keydown.escape)="showShareDialog.set(false)"
+          >
+            <div
+              class="bg-paper dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl shadow-2xl w-full max-w-sm p-5"
+              (click)="$event.stopPropagation()"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="w-3 h-3"
+                    class="w-4 h-4 text-accent"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -936,291 +1020,526 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                   </svg>
-                  {{ 'transforms.copy' | transloco }}
-                }
-              </button>
+                  <h3 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                    {{ 'transforms.shareTitle' | transloco }}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  (click)="showShareDialog.set(false)"
+                  class="w-7 h-7 flex items-center justify-center rounded text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 hover:text-ink dark:hover:text-dark-ink transition-colors text-lg leading-none cursor-pointer"
+                >
+                  ×
+                </button>
+              </div>
+
+              <p class="text-xs text-muted dark:text-dark-muted font-body mb-3">
+                {{ 'transforms.shareDescription' | transloco }}
+              </p>
+
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  readonly
+                  [value]="shareHref"
+                  (click)="$any($event.target).select()"
+                  class="flex-1 min-w-0 px-2.5 py-2 text-[11px] font-mono bg-paper2 dark:bg-dark-bg border border-border dark:border-dark-border rounded text-ink dark:text-dark-ink outline-none focus:border-accent cursor-text select-all"
+                />
+                <button
+                  type="button"
+                  (click)="copyShareUrl()"
+                  [class]="
+                    urlCopied()
+                      ? 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 transition-colors flex items-center gap-1.5 cursor-pointer'
+                      : 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-accent text-white hover:bg-accent/90 transition-colors flex items-center gap-1.5 cursor-pointer'
+                  "
+                >
+                  @if (urlCopied()) {
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="w-3 h-3"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {{ 'transforms.copied' | transloco }}
+                  } @else {
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="w-3 h-3"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    {{ 'transforms.copy' | transloco }}
+                  }
+                </button>
+              </div>
+
+              @if (urlCopied()) {
+                <p
+                  class="mt-2.5 text-[11px] font-mono text-green-600 dark:text-green-400 text-center"
+                >
+                  {{ 'transforms.urlCopied' | transloco }}
+                </p>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- ── Favorite name dialog ──────────────────────────────────────────── -->
+        @if (showFavoriteDialog()) {
+          <div
+            class="border border-amber-300 dark:border-amber-700 rounded-xl p-3 bg-amber-50/60 dark:bg-amber-950/20 flex items-center gap-2 flex-wrap text-xs font-mono"
+          >
+            <span class="text-amber-700 dark:text-amber-400 shrink-0">
+              {{ 'history.favorite.nameLabel' | transloco }}
+            </span>
+            <input
+              type="text"
+              [(ngModel)]="favoriteName"
+              [placeholder]="'history.favorite.namePlaceholder' | transloco"
+              (keydown.enter)="confirmFavorite()"
+              (keydown.escape)="cancelFavoriteDialog()"
+              autofocus
+              class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 text-ink dark:text-dark-ink outline-none focus:border-amber-500"
+            />
+            <button
+              type="button"
+              (click)="confirmFavorite()"
+              class="px-3 py-1 rounded bg-amber-400 hover:bg-amber-500 text-white transition-colors cursor-pointer"
+            >
+              {{ 'common.save' | transloco }}
+            </button>
+            <button
+              type="button"
+              (click)="cancelFavoriteDialog()"
+              class="px-3 py-1 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer"
+            >
+              {{ 'common.cancel' | transloco }}
+            </button>
+          </div>
+        }
+
+        <!-- ── FT symbolic results ─────────────────────────────────────────── -->
+        @if (ftResult(); as res) {
+          <div class="flex flex-col gap-3 pt-1">
+            <div class="flex items-center gap-2">
+              <h2 class="font-display text-base text-ink dark:text-dark-ink">
+                {{ 'transforms.result' | transloco }}
+              </h2>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">
+                {{ res.executionTimeMs }} ms
+              </span>
             </div>
 
-            @if (urlCopied()) {
-              <p
-                class="mt-2.5 text-[11px] font-mono text-green-600 dark:text-green-400 text-center"
+            @if (!res.exists) {
+              <div
+                class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3"
               >
-                {{ 'transforms.urlCopied' | transloco }}
-              </p>
+                <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
+                  {{ 'transforms.ftNotExists' | transloco }}
+                </p>
+              </div>
+            } @else {
+              @if (res.F?.tex) {
+                <div
+                  class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                >
+                  <span
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider"
+                  >
+                    {{ 'transforms.fullTransform' | transloco }}
+                  </span>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">
+                      F({{ resultVarDisplay() }}) =
+                    </span>
+                    <span
+                      #ftMainEl
+                      [mathjax]="display(res.F!.tex)"
+                      class="text-ink dark:text-dark-ink overflow-x-auto"
+                    ></span>
+                    <app-export-button
+                      [tex]="res.F!.tex"
+                      [maxima]="res.F!.maxima"
+                      [mathEl]="ftMainEl"
+                      filename="fourier-transform"
+                      [label]="'F(' + resultVarDisplay() + ')'"
+                    />
+                  </div>
+                </div>
+              }
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                @if (res.realPart?.tex) {
+                  <div
+                    class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                  >
+                    <span
+                      class="text-[10px] font-mono text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5"
+                    >
+                      <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                      {{ 'transforms.realPart' | transloco }}
+                    </span>
+                    <div class="flex items-center gap-2">
+                      <span
+                        #ftRealEl
+                        [mathjax]="display(res.realPart!.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                      ></span>
+                      <app-export-button
+                        [tex]="res.realPart!.tex"
+                        [maxima]="res.realPart!.maxima"
+                        [mathEl]="ftRealEl"
+                        filename="fourier-transform-real"
+                        [label]="'Re{F(' + resultVarDisplay() + ')}'"
+                      />
+                    </div>
+                  </div>
+                }
+                @if (res.imagPart?.tex) {
+                  <div
+                    class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                  >
+                    <span
+                      class="text-[10px] font-mono text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5"
+                    >
+                      <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                      {{ 'transforms.imagPart' | transloco }}
+                    </span>
+                    <div class="flex items-center gap-2">
+                      <span
+                        #ftImagEl
+                        [mathjax]="display(res.imagPart!.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                      ></span>
+                      <app-export-button
+                        [tex]="res.imagPart!.tex"
+                        [maxima]="res.imagPart!.maxima"
+                        [mathEl]="ftImagEl"
+                        filename="fourier-transform-imag"
+                        [label]="'Im{F(' + resultVarDisplay() + ')}'"
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (res.inputRealPart?.tex || res.inputImagPart?.tex) {
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  @if (res.inputRealPart?.tex) {
+                    <div
+                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                    >
+                      <span
+                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                        [style.color]="originalColor()"
+                      >
+                        <span
+                          class="w-2 h-2 rounded-full inline-block shrink-0"
+                          [style.backgroundColor]="originalColor()"
+                        ></span>
+                        Re {{ inputFnLabel() }}
+                      </span>
+                      <div class="flex items-center gap-2">
+                        <span
+                          #ftInputRealEl
+                          [mathjax]="display(res.inputRealPart!.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                        ></span>
+                        <app-export-button
+                          [tex]="res.inputRealPart!.tex"
+                          [maxima]="res.inputRealPart!.maxima"
+                          [mathEl]="ftInputRealEl"
+                          filename="ft-input-real"
+                          [label]="'Re ' + inputFnLabel()"
+                        />
+                      </div>
+                    </div>
+                  }
+                  @if (res.inputImagPart?.tex) {
+                    <div
+                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                    >
+                      <span
+                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                        [style.color]="originalImagColor()"
+                      >
+                        <span
+                          class="w-2 h-2 rounded-full inline-block shrink-0"
+                          [style.backgroundColor]="originalImagColor()"
+                        ></span>
+                        Im {{ inputFnLabel() }}
+                      </span>
+                      <div class="flex items-center gap-2">
+                        <span
+                          #ftInputImagEl
+                          [mathjax]="display(res.inputImagPart!.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                        ></span>
+                        <app-export-button
+                          [tex]="res.inputImagPart!.tex"
+                          [maxima]="res.inputImagPart!.maxima"
+                          [mathEl]="ftInputImagEl"
+                          filename="ft-input-imag"
+                          [label]="'Im ' + inputFnLabel()"
+                        />
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
             }
           </div>
-        </div>
-      }
+        }
 
-      <!-- ── Favorite name dialog ──────────────────────────────────────────── -->
-      @if (showFavoriteDialog()) {
-        <div
-          class="border border-amber-300 dark:border-amber-700 rounded-xl p-3 bg-amber-50/60 dark:bg-amber-950/20 flex items-center gap-2 flex-wrap text-xs font-mono"
-        >
-          <span class="text-amber-700 dark:text-amber-400 shrink-0">
-            {{ 'history.favorite.nameLabel' | transloco }}
-          </span>
-          <input
-            type="text"
-            [(ngModel)]="favoriteName"
-            [placeholder]="'history.favorite.namePlaceholder' | transloco"
-            (keydown.enter)="confirmFavorite()"
-            (keydown.escape)="cancelFavoriteDialog()"
-            autofocus
-            class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 text-ink dark:text-dark-ink outline-none focus:border-amber-500"
-          />
-          <button
-            type="button"
-            (click)="confirmFavorite()"
-            class="px-3 py-1 rounded bg-amber-400 hover:bg-amber-500 text-white transition-colors cursor-pointer"
-          >
-            {{ 'common.save' | transloco }}
-          </button>
-          <button
-            type="button"
-            (click)="cancelFavoriteDialog()"
-            class="px-3 py-1 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer"
-          >
-            {{ 'common.cancel' | transloco }}
-          </button>
-        </div>
-      }
-
-      <!-- ── FT symbolic results ─────────────────────────────────────────── -->
-      @if (ftResult(); as res) {
-        <div class="flex flex-col gap-3 pt-1">
-          <div class="flex items-center gap-2">
-            <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'transforms.result' | transloco }}</h2>
-            <span class="text-xs font-mono text-muted dark:text-dark-muted">
-              {{ res.executionTimeMs }} ms
-            </span>
-          </div>
-
-          @if (!res.exists) {
-            <div
-              class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3"
-            >
-              <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
-                {{ 'transforms.ftNotExists' | transloco }}
-              </p>
+        <!-- ── IFT symbolic results ────────────────────────────────────────── -->
+        @if (iftResult(); as res) {
+          <div class="flex flex-col gap-3 pt-1">
+            <div class="flex items-center gap-2">
+              <h2 class="font-display text-base text-ink dark:text-dark-ink">
+                {{ 'transforms.result' | transloco }}
+              </h2>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">
+                {{ res.executionTimeMs }} ms
+              </span>
             </div>
-          } @else {
-            @if (res.F?.tex) {
+
+            @if (!res.exists) {
               <div
-                class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3"
+              >
+                <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
+                  {{ 'transforms.iftNotExists' | transloco }}
+                </p>
+              </div>
+            } @else {
+              <div
+                class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-3"
               >
                 <span
-                  class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider"
+                  class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider flex items-center gap-1.5"
                 >
-                  {{ 'transforms.fullTransform' | transloco }}
+                  <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                  f({{ resultVarDisplay() }})
                 </span>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">
-                    F({{ resultVarDisplay() }}) =
-                  </span>
-                  <span
-                    #ftMainEl
-                    [mathjax]="display(res.F!.tex)"
-                    class="text-ink dark:text-dark-ink overflow-x-auto"
-                  ></span>
-                  <app-export-button [tex]="res.F!.tex" [maxima]="res.F!.maxima" [mathEl]="ftMainEl" filename="fourier-transform" [label]="'F(' + resultVarDisplay() + ')'" />
-                </div>
+
+                @if (res.fCombined) {
+                  <div class="flex items-center gap-2">
+                    <span
+                      #iftCombinedEl
+                      [mathjax]="display(res.fCombined.tex)"
+                      class="text-ink dark:text-dark-ink overflow-x-auto"
+                    ></span>
+                    <app-export-button
+                      [tex]="res.fCombined.tex"
+                      [maxima]="res.fCombined.maxima"
+                      [mathEl]="iftCombinedEl"
+                      filename="inverse-fourier-transform"
+                      [label]="'f(' + resultVarDisplay() + ')'"
+                    />
+                  </div>
+                } @else {
+                  @if (res.fPositive) {
+                    <div
+                      class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2 first:border-t-0 first:pt-0"
+                    >
+                      <span class="text-xs font-mono text-accent"
+                        >{{ resultVarDisplay() }} &gt; 0</span
+                      >
+                      <div class="flex items-center gap-2">
+                        <span
+                          #iftPosEl
+                          [mathjax]="display(res.fPositive.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto"
+                        ></span>
+                        <app-export-button
+                          [tex]="res.fPositive.tex"
+                          [maxima]="res.fPositive.maxima"
+                          [mathEl]="iftPosEl"
+                          filename="ift-positive"
+                          [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' > 0'"
+                        />
+                      </div>
+                    </div>
+                  }
+                  @if (res.fNegative) {
+                    <div
+                      class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2"
+                    >
+                      <span class="text-xs font-mono text-accent"
+                        >{{ resultVarDisplay() }} &lt; 0</span
+                      >
+                      <div class="flex items-center gap-2">
+                        <span
+                          #iftNegEl
+                          [mathjax]="display(res.fNegative.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto"
+                        ></span>
+                        <app-export-button
+                          [tex]="res.fNegative.tex"
+                          [maxima]="res.fNegative.maxima"
+                          [mathEl]="iftNegEl"
+                          filename="ift-negative"
+                          [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' < 0'"
+                        />
+                      </div>
+                    </div>
+                  }
+                }
               </div>
+
+              @if (res.outputRealPart?.tex || res.outputImagPart?.tex) {
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  @if (res.outputRealPart?.tex) {
+                    <div
+                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                    >
+                      <span
+                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                        [style.color]="originalColor()"
+                      >
+                        <span
+                          class="w-2 h-2 rounded-full inline-block shrink-0"
+                          [style.backgroundColor]="originalColor()"
+                        ></span>
+                        Re f({{ resultVarDisplay() }})
+                      </span>
+                      <div class="flex items-center gap-2">
+                        <span
+                          #iftOutputRealEl
+                          [mathjax]="display(res.outputRealPart!.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                        ></span>
+                        <app-export-button
+                          [tex]="res.outputRealPart!.tex"
+                          [maxima]="res.outputRealPart!.maxima"
+                          [mathEl]="iftOutputRealEl"
+                          filename="ift-output-real"
+                          [label]="'Re f(' + resultVarDisplay() + ')'"
+                        />
+                      </div>
+                    </div>
+                  }
+                  @if (res.outputImagPart?.tex) {
+                    <div
+                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                    >
+                      <span
+                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                        [style.color]="originalImagColor()"
+                      >
+                        <span
+                          class="w-2 h-2 rounded-full inline-block shrink-0"
+                          [style.backgroundColor]="originalImagColor()"
+                        ></span>
+                        Im f({{ resultVarDisplay() }})
+                      </span>
+                      <div class="flex items-center gap-2">
+                        <span
+                          #iftOutputImagEl
+                          [mathjax]="display(res.outputImagPart!.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                        ></span>
+                        <app-export-button
+                          [tex]="res.outputImagPart!.tex"
+                          [maxima]="res.outputImagPart!.maxima"
+                          [mathEl]="iftOutputImagEl"
+                          filename="ift-output-imag"
+                          [label]="'Im f(' + resultVarDisplay() + ')'"
+                        />
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              @if (res.inputRealPart?.tex || res.inputImagPart?.tex) {
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  @if (res.inputRealPart?.tex) {
+                    <div
+                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                    >
+                      <span
+                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                        [style.color]="resultColor()"
+                      >
+                        <span
+                          class="w-2 h-2 rounded-full inline-block shrink-0"
+                          [style.backgroundColor]="resultColor()"
+                        ></span>
+                        Re F({{ intVar() }})
+                      </span>
+                      <div class="flex items-center gap-2">
+                        <span
+                          #iftInputRealEl
+                          [mathjax]="display(res.inputRealPart!.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                        ></span>
+                        <app-export-button
+                          [tex]="res.inputRealPart!.tex"
+                          [maxima]="res.inputRealPart!.maxima"
+                          [mathEl]="iftInputRealEl"
+                          filename="ift-input-real"
+                          [label]="'Re F(' + intVar() + ')'"
+                        />
+                      </div>
+                    </div>
+                  }
+                  @if (res.inputImagPart?.tex) {
+                    <div
+                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                    >
+                      <span
+                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                        [style.color]="imagColor()"
+                      >
+                        <span
+                          class="w-2 h-2 rounded-full inline-block shrink-0"
+                          [style.backgroundColor]="imagColor()"
+                        ></span>
+                        Im F({{ intVar() }})
+                      </span>
+                      <div class="flex items-center gap-2">
+                        <span
+                          #iftInputImagEl
+                          [mathjax]="display(res.inputImagPart!.tex)"
+                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                        ></span>
+                        <app-export-button
+                          [tex]="res.inputImagPart!.tex"
+                          [maxima]="res.inputImagPart!.maxima"
+                          [mathEl]="iftInputImagEl"
+                          filename="ift-input-imag"
+                          [label]="'Im F(' + intVar() + ')'"
+                        />
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
             }
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              @if (res.realPart?.tex) {
-                <div
-                  class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
-                >
-                  <span
-                    class="text-[10px] font-mono text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5"
-                  >
-                    <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-                    {{ 'transforms.realPart' | transloco }}
-                  </span>
-                  <div class="flex items-center gap-2">
-                    <span
-                      #ftRealEl
-                      [mathjax]="display(res.realPart!.tex)"
-                      class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                    ></span>
-                    <app-export-button [tex]="res.realPart!.tex" [maxima]="res.realPart!.maxima" [mathEl]="ftRealEl" filename="fourier-transform-real" [label]="'Re{F(' + resultVarDisplay() + ')}'" />
-                  </div>
-                </div>
-              }
-              @if (res.imagPart?.tex) {
-                <div
-                  class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
-                >
-                  <span
-                    class="text-[10px] font-mono text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5"
-                  >
-                    <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
-                    {{ 'transforms.imagPart' | transloco }}
-                  </span>
-                  <div class="flex items-center gap-2">
-                    <span
-                      #ftImagEl
-                      [mathjax]="display(res.imagPart!.tex)"
-                      class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                    ></span>
-                    <app-export-button [tex]="res.imagPart!.tex" [maxima]="res.imagPart!.maxima" [mathEl]="ftImagEl" filename="fourier-transform-imag" [label]="'Im{F(' + resultVarDisplay() + ')}'" />
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-      }
-
-      <!-- ── IFT symbolic results ────────────────────────────────────────── -->
-      @if (iftResult(); as res) {
-        <div class="flex flex-col gap-3 pt-1">
-          <div class="flex items-center gap-2">
-            <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'transforms.result' | transloco }}</h2>
-            <span class="text-xs font-mono text-muted dark:text-dark-muted">
-              {{ res.executionTimeMs }} ms
-            </span>
           </div>
-
-          @if (!res.exists) {
-            <div
-              class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3"
-            >
-              <p class="text-sm font-mono text-amber-700 dark:text-amber-400">
-                {{ 'transforms.iftNotExists' | transloco }}
-              </p>
-            </div>
-          } @else {
-            <div
-              class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-3"
-            >
-              <span
-                class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider flex items-center gap-1.5"
-              >
-                <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-                f({{ resultVarDisplay() }})
-              </span>
-
-              @if (res.fCombined) {
-                <div class="flex items-center gap-2">
-                  <span
-                    #iftCombinedEl
-                    [mathjax]="display(res.fCombined.tex)"
-                    class="text-ink dark:text-dark-ink overflow-x-auto"
-                  ></span>
-                  <app-export-button [tex]="res.fCombined.tex" [maxima]="res.fCombined.maxima" [mathEl]="iftCombinedEl" filename="inverse-fourier-transform" [label]="'f(' + resultVarDisplay() + ')'" />
-                </div>
-              } @else {
-                @if (res.fPositive) {
-                  <div
-                    class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2 first:border-t-0 first:pt-0"
-                  >
-                    <span class="text-xs font-mono text-accent"
-                      >{{ resultVarDisplay() }} &gt; 0</span
-                    >
-                    <div class="flex items-center gap-2">
-                      <span
-                        #iftPosEl
-                        [mathjax]="display(res.fPositive.tex)"
-                        class="text-ink dark:text-dark-ink overflow-x-auto"
-                      ></span>
-                      <app-export-button [tex]="res.fPositive.tex" [maxima]="res.fPositive.maxima" [mathEl]="iftPosEl" filename="ift-positive" [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' > 0'" />
-                    </div>
-                  </div>
-                }
-                @if (res.fNegative) {
-                  <div
-                    class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2"
-                  >
-                    <span class="text-xs font-mono text-accent"
-                      >{{ resultVarDisplay() }} &lt; 0</span
-                    >
-                    <div class="flex items-center gap-2">
-                      <span
-                        #iftNegEl
-                        [mathjax]="display(res.fNegative.tex)"
-                        class="text-ink dark:text-dark-ink overflow-x-auto"
-                      ></span>
-                      <app-export-button [tex]="res.fNegative.tex" [maxima]="res.fNegative.maxima" [mathEl]="iftNegEl" filename="ift-negative" [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' < 0'" />
-                    </div>
-                  </div>
-                }
-              }
-            </div>
-
-            @if (res.inputRealPart?.tex || res.inputImagPart?.tex) {
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                @if (res.inputRealPart?.tex) {
-                  <div
-                    class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
-                  >
-                    <span
-                      class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
-                      [style.color]="resultColor()"
-                    >
-                      <span
-                        class="w-2 h-2 rounded-full inline-block shrink-0"
-                        [style.backgroundColor]="resultColor()"
-                      ></span>
-                      Re F({{ intVar() }})
-                    </span>
-                    <div class="flex items-center gap-2">
-                      <span
-                        #iftInputRealEl
-                        [mathjax]="display(res.inputRealPart!.tex)"
-                        class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                      ></span>
-                      <app-export-button
-                        [tex]="res.inputRealPart!.tex"
-                        [maxima]="res.inputRealPart!.maxima"
-                        [mathEl]="iftInputRealEl"
-                        filename="ift-input-real"
-                        [label]="'Re F(' + intVar() + ')'"
-                      />
-                    </div>
-                  </div>
-                }
-                @if (res.inputImagPart?.tex) {
-                  <div
-                    class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
-                  >
-                    <span
-                      class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
-                      [style.color]="imagColor()"
-                    >
-                      <span
-                        class="w-2 h-2 rounded-full inline-block shrink-0"
-                        [style.backgroundColor]="imagColor()"
-                      ></span>
-                      Im F({{ intVar() }})
-                    </span>
-                    <div class="flex items-center gap-2">
-                      <span
-                        #iftInputImagEl
-                        [mathjax]="display(res.inputImagPart!.tex)"
-                        class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                      ></span>
-                      <app-export-button
-                        [tex]="res.inputImagPart!.tex"
-                        [maxima]="res.inputImagPart!.maxima"
-                        [mathEl]="iftInputImagEl"
-                        filename="ift-input-imag"
-                        [label]="'Im F(' + intVar() + ')'"
-                      />
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          }
-        </div>
-      }
-    </div>
+        }
+      </div>
     </main>
     <!-- /Right panel -->
   </div>

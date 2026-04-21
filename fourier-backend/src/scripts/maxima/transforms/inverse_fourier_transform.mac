@@ -21,20 +21,34 @@ free_params : result[4]$
 
 has_combined : is(f_combined # false)$
 
+f_out_expr : if has_combined
+             then f_combined
+             else ratsimp(f_pos*u(TRANSVAR) + f_neg*u(-TRANSVAR))$
+
 /* ── Real / imaginary parts of the input F(w) for plotting ── */
-block([_n, _e],
-    _n : length(FUNC_INPUT),
-    if _n = 1 then (
-        _e : FUNC_INPUT[1][1],
-        F_in_real : errcatch(ratsimp(if freeof(%i, _e) then _e else realpart(_e))),
-        F_in_real : if F_in_real = [] then false else first(F_in_real),
-        F_in_imag : errcatch(ratsimp(if freeof(%i, _e) then 0  else imagpart(_e))),
-        F_in_imag : if F_in_imag = [] then false else first(F_in_imag)
-    ) else (
-        F_in_real : false,
-        F_in_imag : false
+block([_i, _e, _a, _b, _gate],
+    F_in_expr : 0,
+    for _i : 1 thru length(FUNC_INPUT) do (
+        _e : FUNC_INPUT[_i][1],
+        _a : FUNC_INPUT[_i][2],
+        _b : FUNC_INPUT[_i][3],
+        _gate : if FT_is_minf(_a) and FT_is_inf(_b) then 1
+                else if FT_is_minf(_a) then u(_b-INTVAR)
+                else if FT_is_inf(_b) then u(INTVAR-_a)
+                else (u(INTVAR-_a)-u(INTVAR-_b)),
+        F_in_expr : F_in_expr + _e*_gate
     )
 )$
+
+F_in_real : errcatch(ratsimp(if freeof(%i, F_in_expr) then F_in_expr else realpart(F_in_expr)))$
+F_in_real : if F_in_real = [] then false else first(F_in_real)$
+F_in_imag : errcatch(ratsimp(if freeof(%i, F_in_expr) then 0  else imagpart(F_in_expr)))$
+F_in_imag : if F_in_imag = [] then false else first(F_in_imag)$
+
+f_out_real : errcatch(ratsimp(if freeof(%i, f_out_expr) then f_out_expr else realpart(f_out_expr)))$
+f_out_real : if f_out_real = [] then false else first(f_out_real)$
+f_out_imag : errcatch(ratsimp(if freeof(%i, f_out_expr) then 0 else imagpart(f_out_expr)))$
+f_out_imag : if f_out_imag = [] then false else first(f_out_imag)$
 
 print("__F_POS_MAXIMA__")$      print(string(f_pos))$
 print("__F_POS_TEX__")$         tex(f_pos)$
@@ -47,4 +61,8 @@ print("__INPUT_REAL_MAXIMA__")$ print(string(F_in_real))$
 print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else print("")$
 print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$
 print("__INPUT_IMAG_TEX__")$    if F_in_imag # false then tex(F_in_imag) else print("")$
+print("__OUTPUT_REAL_MAXIMA__")$ print(string(f_out_real))$
+print("__OUTPUT_REAL_TEX__")$    if f_out_real # false then tex(f_out_real) else print("")$
+print("__OUTPUT_IMAG_MAXIMA__")$ print(string(f_out_imag))$
+print("__OUTPUT_IMAG_TEX__")$    if f_out_imag # false then tex(f_out_imag) else print("")$
 print("__PARAMS__")$            print(string(free_params))$

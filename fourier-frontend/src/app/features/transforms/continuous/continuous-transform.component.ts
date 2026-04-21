@@ -266,7 +266,8 @@ export class ContinuousTransformComponent implements OnInit {
   readonly iftResult = signal<InverseFourierTransformResponse | null>(null);
 
   // ── Canvas layer toggles ─────────────────────────────────────────────────
-  readonly showOriginal = signal(true);
+  readonly showOriginalReal = signal(true);
+  readonly showOriginalImag = signal(false);
   readonly showReal = signal(true);
   readonly showImag = signal(true);
   readonly showMag = signal(false);
@@ -274,10 +275,12 @@ export class ContinuousTransformComponent implements OnInit {
   // ── Canvas style settings ────────────────────────────────────────────────
   readonly xAxisFormat = signal<'integer' | 'pi' | 'e' | 'custom'>('integer');
   readonly originalColor = signal('#c14030');
+  readonly originalImagColor = signal('#9b2c2c');
   readonly resultColor = signal('#2563eb');
   readonly imagColor = signal('#d97706');
   readonly magColor = signal('#16a34a');
   readonly customOriginalColor = signal(false);
+  readonly customOriginalImagColor = signal(false);
   readonly customResultColor = signal(false);
   readonly customImagColor = signal(false);
   readonly customMagColor = signal(false);
@@ -351,6 +354,7 @@ export class ContinuousTransformComponent implements OnInit {
       void this.theme.palette();
       const preset = this.currentColorPreset();
       if (!this.customOriginalColor()) this.originalColor.set(preset.original);
+      if (!this.customOriginalImagColor()) this.originalImagColor.set(preset.original);
       if (!this.customResultColor()) this.resultColor.set(preset.result);
       if (!this.customImagColor()) this.imagColor.set(preset.imag);
       if (!this.customMagColor()) this.magColor.set(preset.mag);
@@ -570,12 +574,14 @@ export class ContinuousTransformComponent implements OnInit {
     const intVariable = this.intVar();
     const transVariable = this.transVar();
 
-    const showOrig = this.showOriginal();
+    const showOrigRe = this.showOriginalReal();
+    const showOrigIm = this.showOriginalImag();
     const showRe = this.showReal();
     const showIm = this.showImag();
     const showM = this.showMag();
 
-    const origColor = this.originalColor();
+    const origReColor = this.originalColor();
+    const origImColor = this.originalImagColor();
     const reColor = this.resultColor();
     const imColor = this.imagColor();
     const mgColor = this.magColor();
@@ -589,11 +595,18 @@ export class ContinuousTransformComponent implements OnInit {
       curves: [],
       onDraw: (ctx, vp) => {
         // ── Input function preview ───────────────────────────────────────
-        // FT: always preview f(t) input.
-        // IFT: preview F(w) only before a result exists, to avoid overlapping
-        // with reconstructed f(t) which uses the same "show original" toggle.
-        const shouldDrawInputPreview = this.mode() === 'ft' || !ift?.exists;
-        if (showOrig && shouldDrawInputPreview) {
+        // FT: keep live preview until a calculation returns normalized
+        // input Re/Im parts. After that, prefer backend symbolic parts so
+        // complex inputs can still be plotted post-calculation.
+        // IFT: preview F(w) only before a result exists, to avoid overlap
+        // with reconstructed f(t) under the same toggle.
+        const hasFtComputedInput =
+          this.mode() === 'ft' &&
+          !!ft?.exists &&
+          (!!ft.inputRealPart?.maxima || !!ft.inputImagPart?.maxima);
+        const shouldDrawInputPreview =
+          (this.mode() === 'ft' && !hasFtComputedInput) || (this.mode() === 'ift' && !ift?.exists);
+        if (showOrigRe && shouldDrawInputPreview) {
           for (const seg of segs) {
             const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
             const from = this.parseLimit(seg.from, pv);
@@ -601,12 +614,12 @@ export class ContinuousTransformComponent implements OnInit {
             if (!fn) continue;
             if (isFinite(from) && isFinite(to)) {
               plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
-                color: origColor,
+                color: origReColor,
                 lineWidth: origLW,
               });
             } else {
               const gated = (x: number) => (x >= from && x <= to ? fn(x) : NaN);
-              plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW });
+              plotter.plotFn(ctx, gated, vp, { color: origReColor, lineWidth: origLW });
             }
             // Draw Dirac delta terms (FT mode only — IFT inputs are rarely delta)
             if (this.mode() === 'ft') {
@@ -616,9 +629,55 @@ export class ContinuousTransformComponent implements OnInit {
                 pv,
               )) {
                 if (pos >= from && pos <= to) {
-                  this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origColor, origLW);
+                  this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origReColor, origLW);
                 }
               }
+            }
+          }
+        }
+
+        // ── FT input decomposition (post-calc) ──────────────────────────
+        if ((showOrigRe || showOrigIm) && hasFtComputedInput && ft) {
+          const inputRealExpr = ft.inputRealPart?.maxima?.trim();
+          const inputImagExpr = ft.inputImagPart?.maxima?.trim();
+
+          const inputReFn =
+            showOrigRe && inputRealExpr
+              ? this.mathUtils.compile(inputRealExpr, intVariable, pv)
+              : null;
+          if (inputReFn) {
+            plotter.plotFn(ctx, inputReFn, vp, { color: origReColor, lineWidth: origLW });
+          }
+
+          const hasInputImag = !!inputImagExpr && !this.isZeroExpression(inputImagExpr);
+          const inputImFn =
+            showOrigIm && hasInputImag
+              ? this.mathUtils.compile(inputImagExpr!, intVariable, pv)
+              : null;
+          if (inputImFn) {
+            plotter.plotFn(ctx, inputImFn, vp, {
+              color: origImColor,
+              lineWidth: Math.max(1, origLW - 0.25),
+              dashed: true,
+            });
+          }
+
+          if (showOrigRe && inputRealExpr) {
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+              inputRealExpr,
+              intVariable,
+              pv,
+            )) {
+              this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origReColor, origLW);
+            }
+          }
+          if (showOrigIm && hasInputImag && inputImagExpr) {
+            for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+              inputImagExpr,
+              intVariable,
+              pv,
+            )) {
+              this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origImColor, origLW);
             }
           }
         }
@@ -669,16 +728,60 @@ export class ContinuousTransformComponent implements OnInit {
         // ── IFT layers ────────────────────────────────────────────────────
         if (ift?.exists) {
           // Result f(t): keep as independent layer/toggle (showOrig).
-          if (showOrig) {
-            if (ift.fPositive?.maxima) {
-              const raw = this.mathUtils.compile(ift.fPositive.maxima, transVariable, pv);
-              const fn = raw ? (x: number) => (x >= 0 ? raw(x) : NaN) : null;
-              if (fn) plotter.plotFn(ctx, fn, vp, { color: origColor, lineWidth: origLW });
-            }
-            if (ift.fNegative?.maxima) {
-              const raw = this.mathUtils.compile(ift.fNegative.maxima, transVariable, pv);
-              const fn = raw ? (x: number) => (x <= 0 ? raw(x) : NaN) : null;
-              if (fn) plotter.plotFn(ctx, fn, vp, { color: origColor, lineWidth: origLW });
+          if (showOrigRe || showOrigIm) {
+            const outputRealExpr = ift.outputRealPart?.maxima?.trim();
+            const outputImagExpr = ift.outputImagPart?.maxima?.trim();
+
+            const outputReFn =
+              showOrigRe && outputRealExpr
+                ? this.mathUtils.compile(outputRealExpr, transVariable, pv)
+                : null;
+            const hasOutputImag = !!outputImagExpr && !this.isZeroExpression(outputImagExpr);
+            const outputImFn =
+              showOrigIm && hasOutputImag
+                ? this.mathUtils.compile(outputImagExpr!, transVariable, pv)
+                : null;
+
+            if (outputReFn || outputImFn) {
+              if (outputReFn) {
+                plotter.plotFn(ctx, outputReFn, vp, { color: origReColor, lineWidth: origLW });
+              }
+              if (outputImFn) {
+                plotter.plotFn(ctx, outputImFn, vp, {
+                  color: origImColor,
+                  lineWidth: Math.max(1, origLW - 0.25),
+                  dashed: true,
+                });
+              }
+              if (showOrigRe && outputRealExpr) {
+                for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+                  outputRealExpr,
+                  transVariable,
+                  pv,
+                )) {
+                  this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origReColor, origLW);
+                }
+              }
+              if (showOrigIm && hasOutputImag && outputImagExpr) {
+                for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
+                  outputImagExpr,
+                  transVariable,
+                  pv,
+                )) {
+                  this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origImColor, origLW);
+                }
+              }
+            } else {
+              if (showOrigRe && ift.fPositive?.maxima) {
+                const raw = this.mathUtils.compile(ift.fPositive.maxima, transVariable, pv);
+                const fn = raw ? (x: number) => (x >= 0 ? raw(x) : NaN) : null;
+                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW });
+              }
+              if (showOrigRe && ift.fNegative?.maxima) {
+                const raw = this.mathUtils.compile(ift.fNegative.maxima, transVariable, pv);
+                const fn = raw ? (x: number) => (x <= 0 ? raw(x) : NaN) : null;
+                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW });
+              }
             }
           }
 
@@ -1060,6 +1163,11 @@ export class ContinuousTransformComponent implements OnInit {
     this.originalColor.set(value);
   }
 
+  onOriginalImagColorInput(value: string): void {
+    this.customOriginalImagColor.set(true);
+    this.originalImagColor.set(value);
+  }
+
   onResultColorInput(value: string): void {
     this.customResultColor.set(true);
     this.resultColor.set(value);
@@ -1078,13 +1186,20 @@ export class ContinuousTransformComponent implements OnInit {
   resetLineColorsToPreset(): void {
     const preset = this.currentColorPreset();
     this.customOriginalColor.set(false);
+    this.customOriginalImagColor.set(false);
     this.customResultColor.set(false);
     this.customImagColor.set(false);
     this.customMagColor.set(false);
     this.originalColor.set(preset.original);
+    this.originalImagColor.set(preset.original);
     this.resultColor.set(preset.result);
     this.imagColor.set(preset.imag);
     this.magColor.set(preset.mag);
+  }
+
+  private isZeroExpression(expr: string): boolean {
+    const normalized = expr.replace(/\s+/g, '');
+    return normalized === '0' || normalized === '(0)' || normalized === '0.0';
   }
 
   private buildMagFn(
