@@ -588,11 +588,12 @@ export class ContinuousTransformComponent implements OnInit {
     const layer: PlotLayer = {
       curves: [],
       onDraw: (ctx, vp) => {
-        // ── Input function preview (FT and IFT modes) ────────────────────
-        // In FT mode intVariable = time var (t); in IFT mode = freq var (w).
-        // compile() returns null for complex-valued expressions, so those
-        // segments are silently skipped — the template shows a notice instead.
-        if (showOrig) {
+        // ── Input function preview ───────────────────────────────────────
+        // FT: always preview f(t) input.
+        // IFT: preview F(w) only before a result exists, to avoid overlapping
+        // with reconstructed f(t) which uses the same "show original" toggle.
+        const shouldDrawInputPreview = this.mode() === 'ft' || !ift?.exists;
+        if (showOrig && shouldDrawInputPreview) {
           for (const seg of segs) {
             const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
             const from = this.parseLimit(seg.from, pv);
