@@ -680,7 +680,7 @@
                         class="w-2 h-2 rounded-full shrink-0"
                         [style.background]="showOriginalMag() ? originalMagColor() : 'currentColor'"
                       ></span>
-                        @if (mode() === 'ft') {
+                      @if (mode() === 'ft') {
                         |{{ inputFnLabel() }}|
                       } @else {
                         |f({{ resultVarDisplay() }})|
@@ -855,62 +855,62 @@
                     }
                   </p>
                   <div class="flex flex-wrap gap-3">
-                  <div class="flex items-center gap-2">
-                    @if (mode() === 'ft') {
-                      <span class="text-muted dark:text-dark-muted">Re {{ inputFnLabel() }}</span>
-                    } @else {
-                      <span class="text-muted dark:text-dark-muted"
-                        >Re f({{ resultVarDisplay() }})</span
-                      >
-                    }
-                    <input
-                      type="color"
-                      [value]="originalColor()"
-                      (input)="onOriginalColorInput($any($event.target).value)"
-                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                    />
-                    <input
-                      type="number"
-                      [value]="originalLineWidth()"
-                      min="0.5"
-                      max="5"
-                      step="0.5"
-                      (input)="originalLineWidth.set(+$any($event.target).value)"
-                      class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
-                    />
-                  </div>
+                    <div class="flex items-center gap-2">
+                      @if (mode() === 'ft') {
+                        <span class="text-muted dark:text-dark-muted">Re {{ inputFnLabel() }}</span>
+                      } @else {
+                        <span class="text-muted dark:text-dark-muted"
+                          >Re f({{ resultVarDisplay() }})</span
+                        >
+                      }
+                      <input
+                        type="color"
+                        [value]="originalColor()"
+                        (input)="onOriginalColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                      />
+                      <input
+                        type="number"
+                        [value]="originalLineWidth()"
+                        min="0.5"
+                        max="5"
+                        step="0.5"
+                        (input)="originalLineWidth.set(+$any($event.target).value)"
+                        class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
+                      />
+                    </div>
 
-                  <div class="flex items-center gap-2">
-                    @if (mode() === 'ft') {
-                      <span class="text-muted dark:text-dark-muted">Im {{ inputFnLabel() }}</span>
-                    } @else {
-                      <span class="text-muted dark:text-dark-muted"
-                        >Im f({{ resultVarDisplay() }})</span
-                      >
-                    }
-                    <input
-                      type="color"
-                      [value]="originalImagColor()"
-                      (input)="onOriginalImagColorInput($any($event.target).value)"
-                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                    />
-                  </div>
+                    <div class="flex items-center gap-2">
+                      @if (mode() === 'ft') {
+                        <span class="text-muted dark:text-dark-muted">Im {{ inputFnLabel() }}</span>
+                      } @else {
+                        <span class="text-muted dark:text-dark-muted"
+                          >Im f({{ resultVarDisplay() }})</span
+                        >
+                      }
+                      <input
+                        type="color"
+                        [value]="originalImagColor()"
+                        (input)="onOriginalImagColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                      />
+                    </div>
 
-                  <div class="flex items-center gap-2">
-                    @if (mode() === 'ft') {
-                      <span class="text-muted dark:text-dark-muted">|{{ inputFnLabel() }}|</span>
-                    } @else {
-                      <span class="text-muted dark:text-dark-muted"
-                        >|f({{ resultVarDisplay() }})|</span
-                      >
-                    }
-                    <input
-                      type="color"
-                      [value]="originalMagColor()"
-                      (input)="onOriginalMagColorInput($any($event.target).value)"
-                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                    />
-                  </div>
+                    <div class="flex items-center gap-2">
+                      @if (mode() === 'ft') {
+                        <span class="text-muted dark:text-dark-muted">|{{ inputFnLabel() }}|</span>
+                      } @else {
+                        <span class="text-muted dark:text-dark-muted"
+                          >|f({{ resultVarDisplay() }})|</span
+                        >
+                      }
+                      <input
+                        type="color"
+                        [value]="originalMagColor()"
+                        (input)="onOriginalMagColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -923,56 +923,56 @@
                     }
                   </p>
                   <div class="flex flex-wrap gap-3">
-                  <div class="flex items-center gap-2">
-                    @if (mode() === 'ft') {
-                      <span class="text-muted dark:text-dark-muted">Re F({{ transVar() }})</span>
-                    } @else {
-                      <span class="text-muted dark:text-dark-muted">Re F({{ intVar() }})</span>
-                    }
-                    <input
-                      type="color"
-                      [value]="resultColor()"
-                      (input)="onResultColorInput($any($event.target).value)"
-                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                    />
-                    <input
-                      type="number"
-                      [value]="resultLineWidth()"
-                      min="0.5"
-                      max="5"
-                      step="0.5"
-                      (input)="resultLineWidth.set(+$any($event.target).value)"
-                      class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
-                    />
-                  </div>
+                    <div class="flex items-center gap-2">
+                      @if (mode() === 'ft') {
+                        <span class="text-muted dark:text-dark-muted">Re F({{ transVar() }})</span>
+                      } @else {
+                        <span class="text-muted dark:text-dark-muted">Re F({{ intVar() }})</span>
+                      }
+                      <input
+                        type="color"
+                        [value]="resultColor()"
+                        (input)="onResultColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                      />
+                      <input
+                        type="number"
+                        [value]="resultLineWidth()"
+                        min="0.5"
+                        max="5"
+                        step="0.5"
+                        (input)="resultLineWidth.set(+$any($event.target).value)"
+                        class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
+                      />
+                    </div>
 
-                  <div class="flex items-center gap-2">
-                    @if (mode() === 'ft') {
-                      <span class="text-muted dark:text-dark-muted">Im F({{ transVar() }})</span>
-                    } @else {
-                      <span class="text-muted dark:text-dark-muted">Im F({{ intVar() }})</span>
-                    }
-                    <input
-                      type="color"
-                      [value]="imagColor()"
-                      (input)="onImagColorInput($any($event.target).value)"
-                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                    />
-                  </div>
+                    <div class="flex items-center gap-2">
+                      @if (mode() === 'ft') {
+                        <span class="text-muted dark:text-dark-muted">Im F({{ transVar() }})</span>
+                      } @else {
+                        <span class="text-muted dark:text-dark-muted">Im F({{ intVar() }})</span>
+                      }
+                      <input
+                        type="color"
+                        [value]="imagColor()"
+                        (input)="onImagColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                      />
+                    </div>
 
-                  <div class="flex items-center gap-2">
-                    @if (mode() === 'ft') {
-                      <span class="text-muted dark:text-dark-muted">|F({{ transVar() }})|</span>
-                    } @else {
-                      <span class="text-muted dark:text-dark-muted">|F({{ intVar() }})|</span>
-                    }
-                    <input
-                      type="color"
-                      [value]="magColor()"
-                      (input)="onMagColorInput($any($event.target).value)"
-                      class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                    />
-                  </div>
+                    <div class="flex items-center gap-2">
+                      @if (mode() === 'ft') {
+                        <span class="text-muted dark:text-dark-muted">|F({{ transVar() }})|</span>
+                      } @else {
+                        <span class="text-muted dark:text-dark-muted">|F({{ intVar() }})|</span>
+                      }
+                      <input
+                        type="color"
+                        [value]="magColor()"
+                        (input)="onMagColorInput($any($event.target).value)"
+                        class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+                      />
+                    </div>
                   </div>
                 </div>
               </section>
