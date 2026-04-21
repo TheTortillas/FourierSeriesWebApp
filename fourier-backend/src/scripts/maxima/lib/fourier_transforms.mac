@@ -584,6 +584,40 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k*exp(-a*abs(t)) -> 2*a*k/(a^2+w^2)  (a > 0) ──
+       Transformada bilateral del decaimiento exponencial simétrico.
+       Inversa de: IFT[k/(a^2+w^2)] = k*exp(-a|t|)/(2a). */
+    if is(res = false) then block(
+        [_ea_exp, _ea_k, _ea_arg, _ea_cn, _ea_a],
+        _ea_exp: false, _ea_k: 1,
+        if not atom(e) then (
+            if is(op(e) = "^") and is(part(e, 1) = %e) then
+                _ea_exp: e
+            else if is(op(e) = "*") then
+                for _s in args(e) do (
+                    if is(_ea_exp = false) and not atom(_s)
+                       and is(op(_s) = "^") and is(part(_s, 1) = %e)
+                       and not freeof('abs, _s)
+                    then _ea_exp: _s
+                    else _ea_k: _ea_k * _s
+                )
+        ),
+        if is(_ea_exp # false) then (
+            _ea_arg: part(_ea_exp, 2),
+            if not freeof('abs, _ea_arg) then (
+                _ea_cn: errcatch(ratsimp(_ea_arg / abs(t_var))),
+                if _ea_cn # [] and freeof(t_var, first(_ea_cn))
+                   and is(first(_ea_cn) < 0)
+                   and ratsimp(_ea_arg - first(_ea_cn)*abs(t_var)) = 0
+                   and freeof(t_var, _ea_k) then (
+                    _ea_a: -first(_ea_cn),
+                    res: [2*_ea_a*_ea_k / (_ea_a^2 + w_var^2),
+                          concat("k*exp(-a|t|)->2ak/(a^2+w^2), a=", string(_ea_a))]
+                )
+            )
+        )
+    ),
+
     /* ── k*sin(at)/(pi*t) -> k*(u(w+a)-u(w-a))  (a > 0) ── */
     if is(res = false) then block(
         [num_s, den_s, sin_part, kk2, sin_arg, aa, den_coef],
@@ -1149,6 +1183,81 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── sin(bt)*f(t) -> (G(w-b) - G(w+b))/(2i)  (FT modulación por seno) ──
+       Vía fórmula de Euler: sin(bt) = (e^{ibt} - e^{-ibt})/(2i)
+       Combinado con freq-shift: FT[e^{±ibt}f(t)] = G(w∓b). */
+    if is(res = false) then block(
+        [_sm_numer_ft, _sm_denom_ft, _sin_fac_ft, _b_ft_s, _rest_ft_s,
+         _nfacs_ft_s, _fac_ft_s, _sin_arg_ft_s, _b_ft_sc,
+         _F_ft_s, _g_ft_s],
+        _sin_fac_ft: false, _b_ft_s: false, _rest_ft_s: 1,
+        if not atom(e) and (is(op(e) = "*") or is(op(e) = "/")) then (
+            _sm_numer_ft: if is(op(e) = "/") then part(e, 1) else e,
+            _sm_denom_ft: if is(op(e) = "/") then part(e, 2) else 1,
+            _nfacs_ft_s: if not atom(_sm_numer_ft) and is(op(_sm_numer_ft) = "*")
+                         then args(_sm_numer_ft) else [_sm_numer_ft],
+            for _fac_ft_s in _nfacs_ft_s do (
+                if is(_sin_fac_ft = false) and not atom(_fac_ft_s)
+                   and is(op(_fac_ft_s) = 'sin) then (
+                    _sin_arg_ft_s: part(_fac_ft_s, 1),
+                    _b_ft_sc: errcatch(ratsimp(_sin_arg_ft_s / t_var)),
+                    if _b_ft_sc # [] and freeof(t_var, first(_b_ft_sc))
+                       and not equal(first(_b_ft_sc), 0)
+                       and ratsimp(_sin_arg_ft_s - first(_b_ft_sc)*t_var) = 0 then (
+                        _sin_fac_ft: _fac_ft_s,
+                        _b_ft_s: first(_b_ft_sc)
+                    ) else _rest_ft_s: _rest_ft_s * _fac_ft_s
+                ) else _rest_ft_s: _rest_ft_s * _fac_ft_s
+            ),
+            if is(_sin_fac_ft # false) then (
+                _F_ft_s: _rest_ft_s / _sm_denom_ft,
+                _g_ft_s: FT_pattern_lookup(_F_ft_s, t_var, w_var),
+                if is(_g_ft_s # false) then
+                    res: [(subst(w_var = w_var - _b_ft_s, _g_ft_s[1])
+                           - subst(w_var = w_var + _b_ft_s, _g_ft_s[1])) / (2*%i),
+                          concat("sin(bt)*f(t)->(G(w-b)-G(w+b))/(2i), b=",
+                                 string(_b_ft_s), ", FT[f]=", _g_ft_s[2])]
+            )
+        )
+    ),
+
+    /* ── cos(bt)*f(t) -> (G(w-b) + G(w+b))/2  (FT modulación por coseno) ──
+       Vía fórmula de Euler: cos(bt) = (e^{ibt} + e^{-ibt})/2. */
+    if is(res = false) then block(
+        [_cm_numer_ft, _cm_denom_ft, _cos_fac_ft, _b_ft_c, _rest_ft_c,
+         _nfacs_ft_c, _fac_ft_c, _cos_arg_ft_c, _b_ft_cc,
+         _F_ft_c, _g_ft_c],
+        _cos_fac_ft: false, _b_ft_c: false, _rest_ft_c: 1,
+        if not atom(e) and (is(op(e) = "*") or is(op(e) = "/")) then (
+            _cm_numer_ft: if is(op(e) = "/") then part(e, 1) else e,
+            _cm_denom_ft: if is(op(e) = "/") then part(e, 2) else 1,
+            _nfacs_ft_c: if not atom(_cm_numer_ft) and is(op(_cm_numer_ft) = "*")
+                         then args(_cm_numer_ft) else [_cm_numer_ft],
+            for _fac_ft_c in _nfacs_ft_c do (
+                if is(_cos_fac_ft = false) and not atom(_fac_ft_c)
+                   and is(op(_fac_ft_c) = 'cos) then (
+                    _cos_arg_ft_c: part(_fac_ft_c, 1),
+                    _b_ft_cc: errcatch(ratsimp(_cos_arg_ft_c / t_var)),
+                    if _b_ft_cc # [] and freeof(t_var, first(_b_ft_cc))
+                       and not equal(first(_b_ft_cc), 0)
+                       and ratsimp(_cos_arg_ft_c - first(_b_ft_cc)*t_var) = 0 then (
+                        _cos_fac_ft: _fac_ft_c,
+                        _b_ft_c: first(_b_ft_cc)
+                    ) else _rest_ft_c: _rest_ft_c * _fac_ft_c
+                ) else _rest_ft_c: _rest_ft_c * _fac_ft_c
+            ),
+            if is(_cos_fac_ft # false) then (
+                _F_ft_c: _rest_ft_c / _cm_denom_ft,
+                _g_ft_c: FT_pattern_lookup(_F_ft_c, t_var, w_var),
+                if is(_g_ft_c # false) then
+                    res: [(subst(w_var = w_var - _b_ft_c, _g_ft_c[1])
+                           + subst(w_var = w_var + _b_ft_c, _g_ft_c[1])) / 2,
+                          concat("cos(bt)*f(t)->(G(w-b)+G(w+b))/2, b=",
+                                 string(_b_ft_c), ", FT[f]=", _g_ft_c[2])]
+            )
+        )
+    ),
+
     /* ── linearity: FT(f+g+...) = FT(f)+FT(g)+... ──
        Handles unary minus terms: Maxima represents -(k*f) with op="-",
        not as (-k)*f. We negate the FT of the inner expression. */
@@ -1672,6 +1781,47 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                             res: [_k_ltz * exp(-_a_ltz * abs(t_var)) / (2 * _a_ltz),
                                   concat("k/(a^2+w^2) -> k*exp(-a|t|)/(2a), a=",
                                          string(_a_ltz))]
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── k/(Aw²+Bw+C) -> k/(2Aa)*e^{-a|t|}*e^{iω₀t}  (A>0, 4AC-B²>0) ──
+       Generaliza k/(a²+w²) al caso con término lineal completando el cuadrado.
+       Aw²+Bw+C = A[(w-ω₀)²+a²]  con  ω₀=-B/(2A),  a=sqrt(4AC-B²)/(2A).
+       IFT[(k/A)/(a²+(w-ω₀)²)] = freq-shift de IFT[k/A/(a²+w²)]
+                                = k/(2Aa) * e^{-a|t|} * e^{iω₀t}
+       Solo activa cuando B≠0 (B=0 lo cubre el handler k/(a²+w²) anterior). */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [_n_gl, _d_gl, _A_gl, _B_gl, _C_gl, _disc_gl, _a_gl, _om0_gl, _k_gl],
+            _n_gl: part(er, 1),
+            _d_gl: rat(expand(part(er, 2))),
+            if freeof(w_var, _n_gl) and not freeof(w_var, _d_gl)
+               and freeof('abs, _d_gl) and freeof(%e, _d_gl) then (
+                _A_gl: ratsimp(diff(_d_gl, w_var, 2) / 2),
+                _B_gl: ratsimp(subst(w_var=0, diff(_d_gl, w_var))),
+                _C_gl: ratsimp(subst(w_var=0, _d_gl)),
+                /* Solo cuadráticos puros (A>0 real, B≠0, reconstrucción exacta) */
+                if freeof(w_var, _A_gl) and freeof(w_var, _B_gl)
+                   and freeof(w_var, _C_gl)
+                   and is(_A_gl > 0) and not equal(_B_gl, 0)
+                   and ratsimp(_d_gl - (_A_gl*w_var^2 + _B_gl*w_var + _C_gl)) = 0 then (
+                    _disc_gl: 4*_A_gl*_C_gl - _B_gl^2,
+                    if is(_disc_gl > 0) then (
+                        _a_gl: sqrt(ratdisrep(rat(_disc_gl / (4*_A_gl^2)))),
+                        _om0_gl: ratsimp(-_B_gl / (2*_A_gl)),
+                        if freeof(w_var, _a_gl) and is(_a_gl > 0)
+                           and freeof(w_var, _om0_gl) then (
+                            _k_gl: ratsimp(_n_gl),
+                            if freeof(w_var, _k_gl) then
+                                res: [_k_gl / (2*_A_gl*_a_gl)
+                                          * exp(-_a_gl*abs(t_var))
+                                          * exp(%i*_om0_gl*t_var),
+                                      concat("k/(Aw²+Bw+C) -> k/(2Aa)*e^{-a|t|}e^{iω₀t}, ω₀=",
+                                             string(_om0_gl), ", a=", string(_a_gl))]
+                        )
                     )
                 )
             )
