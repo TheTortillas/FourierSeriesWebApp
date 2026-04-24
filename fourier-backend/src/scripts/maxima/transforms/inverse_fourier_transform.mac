@@ -134,8 +134,9 @@ print("__DISPLAY_OUTPUT_REAL_MAXIMA__")$ print(string(f_out_real_disp))$
 print("__DISPLAY_OUTPUT_REAL_TEX__")$    if f_out_real_disp # false and string(f_out_real_disp) # string(f_out_real) then tex(f_out_real_disp) else print("")$
 print("__DISPLAY_OUTPUT_IMAG_MAXIMA__")$ print(string(f_out_imag_disp))$
 print("__DISPLAY_OUTPUT_IMAG_TEX__")$    if f_out_imag_disp # false and string(f_out_imag_disp) # string(f_out_imag) then tex(f_out_imag_disp) else print("")$
-print("__DISPLAY_OUTPUT_REAL_POS_TEX__")$ if f_pos_real_disp # false and string(f_pos_real_disp) # string(f_pos_real) then tex(f_pos_real_disp) else print("")$
-print("__DISPLAY_OUTPUT_REAL_NEG_TEX__")$ if f_neg_real_disp # false and string(f_neg_real_disp) # string(f_neg_real) then tex(f_neg_real_disp) else print("")$
-print("__DISPLAY_OUTPUT_IMAG_POS_TEX__")$ if f_pos_imag_disp # false and string(f_pos_imag_disp) # string(f_pos_imag) then tex(f_pos_imag_disp) else print("")$
-print("__DISPLAY_OUTPUT_IMAG_NEG_TEX__")$ if f_neg_imag_disp # false and string(f_neg_imag_disp) # string(f_neg_imag) then tex(f_neg_imag_disp) else print("")$
+/* Piecewise pos/neg tex: siempre emitir cuando existe — buildPiecewiseTex las necesita */
+print("__DISPLAY_OUTPUT_REAL_POS_TEX__")$ if f_pos_real_disp # false then tex(f_pos_real_disp) else print("")$
+print("__DISPLAY_OUTPUT_REAL_NEG_TEX__")$ if f_neg_real_disp # false then tex(f_neg_real_disp) else print("")$
+print("__DISPLAY_OUTPUT_IMAG_POS_TEX__")$ if f_pos_imag_disp # false then tex(f_pos_imag_disp) else print("")$
+print("__DISPLAY_OUTPUT_IMAG_NEG_TEX__")$ if f_neg_imag_disp # false then tex(f_neg_imag_disp) else print("")$
 print("__PARAMS__")$            print(string(free_params))$
