@@ -113,6 +113,8 @@ const VAR_PAIRS: VarPair[] = [
 
 interface TransformColorPreset {
   original: string;
+  originalImag: string;
+  originalMag: string;
   result: string;
   imag: string;
   mag: string;
@@ -121,36 +123,44 @@ interface TransformColorPreset {
 function getTransformColorPreset(isDark: boolean, isNeutral: boolean): TransformColorPreset {
   if (!isNeutral && !isDark) {
     return {
-      original: '#c14030',
-      result: '#2563eb',
-      imag: '#d97706',
-      mag: '#16a34a',
+      original: '#dc2626',    // red-600   — Re f(t)
+      originalImag: '#9333ea', // purple-600 — Im f(t)
+      originalMag: '#0891b2',  // cyan-600   — |f(t)|
+      result: '#2563eb',       // blue-600   — Re F(w)
+      imag: '#d97706',         // amber-600  — Im F(w)
+      mag: '#16a34a',          // green-600  — |F(w)|
     };
   }
 
   if (!isNeutral && isDark) {
     return {
-      original: '#e0ad74',
-      result: '#7db7e8',
-      imag: '#f6b26b',
-      mag: '#7dd3a0',
+      original: '#f87171',    // red-400
+      originalImag: '#c084fc', // purple-400
+      originalMag: '#22d3ee',  // cyan-400
+      result: '#60a5fa',       // blue-400
+      imag: '#fbbf24',         // amber-400
+      mag: '#4ade80',          // green-400
     };
   }
 
   if (isNeutral && !isDark) {
     return {
-      original: '#2563eb',
-      result: '#0f766e',
-      imag: '#c2410c',
-      mag: '#4f46e5',
+      original: '#2563eb',    // blue-600
+      originalImag: '#7c3aed', // violet-600
+      originalMag: '#0891b2',  // cyan-600
+      result: '#0f766e',       // teal-700
+      imag: '#c2410c',         // orange-700
+      mag: '#4f46e5',          // indigo-600
     };
   }
 
   return {
-    original: '#60a5fa',
-    result: '#2dd4bf',
-    imag: '#fb923c',
-    mag: '#a78bfa',
+    original: '#60a5fa',    // blue-400
+    originalImag: '#a78bfa', // violet-400
+    originalMag: '#22d3ee',  // cyan-400
+    result: '#2dd4bf',       // teal-400
+    imag: '#fb923c',         // orange-400
+    mag: '#818cf8',          // indigo-400
   };
 }
 
@@ -275,9 +285,9 @@ export class ContinuousTransformComponent implements OnInit {
 
   // ── Canvas style settings ────────────────────────────────────────────────
   readonly xAxisFormat = signal<'integer' | 'pi' | 'e' | 'custom'>('integer');
-  readonly originalColor = signal('#c14030');
-  readonly originalImagColor = signal('#9b2c2c');
-  readonly originalMagColor = signal('#6d28d9');
+  readonly originalColor = signal('#dc2626');
+  readonly originalImagColor = signal('#9333ea');
+  readonly originalMagColor = signal('#0891b2');
   readonly resultColor = signal('#2563eb');
   readonly imagColor = signal('#d97706');
   readonly magColor = signal('#16a34a');
@@ -357,8 +367,8 @@ export class ContinuousTransformComponent implements OnInit {
       void this.theme.palette();
       const preset = this.currentColorPreset();
       if (!this.customOriginalColor()) this.originalColor.set(preset.original);
-      if (!this.customOriginalImagColor()) this.originalImagColor.set(preset.original);
-      if (!this.customOriginalMagColor()) this.originalMagColor.set('#6d28d9');
+      if (!this.customOriginalImagColor()) this.originalImagColor.set(preset.originalImag);
+      if (!this.customOriginalMagColor()) this.originalMagColor.set(preset.originalMag);
       if (!this.customResultColor()) this.resultColor.set(preset.result);
       if (!this.customImagColor()) this.imagColor.set(preset.imag);
       if (!this.customMagColor()) this.magColor.set(preset.mag);
@@ -681,7 +691,6 @@ export class ContinuousTransformComponent implements OnInit {
             plotter.plotFn(ctx, inputImFn, vp, {
               color: origImColor,
               lineWidth: Math.max(1, origLW - 0.25),
-              dashed: true,
             });
           }
 
@@ -795,7 +804,6 @@ export class ContinuousTransformComponent implements OnInit {
                 plotter.plotFn(ctx, outputImFn, vp, {
                   color: origImColor,
                   lineWidth: Math.max(1, origLW - 0.25),
-                  dashed: true,
                 });
               }
               if (outputMagFn) {
@@ -1267,8 +1275,8 @@ export class ContinuousTransformComponent implements OnInit {
     this.customImagColor.set(false);
     this.customMagColor.set(false);
     this.originalColor.set(preset.original);
-    this.originalImagColor.set(preset.original);
-    this.originalMagColor.set('#6d28d9');
+    this.originalImagColor.set(preset.originalImag);
+    this.originalMagColor.set(preset.originalMag);
     this.resultColor.set(preset.result);
     this.imagColor.set(preset.imag);
     this.magColor.set(preset.mag);

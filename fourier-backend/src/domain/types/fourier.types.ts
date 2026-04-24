@@ -239,6 +239,8 @@ export interface InverseFourierTransformResult {
   outputRealPartNegative?: SymbolicExpression;
   outputImagPartPositive?: SymbolicExpression;
   outputImagPartNegative?: SymbolicExpression;
+  outputRealUForm?: SymbolicExpression;
+  outputImagUForm?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }

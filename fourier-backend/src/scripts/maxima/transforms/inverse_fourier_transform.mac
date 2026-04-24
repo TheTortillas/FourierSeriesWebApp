@@ -84,6 +84,15 @@ f_out_imag_disp : if f_out_imag_disp = [] then f_out_imag else first(f_out_imag_
 f_out_u_form_disp : errcatch(FT_pick_display_expr_algebraic(f_out_u_form))$
 f_out_u_form_disp : if f_out_u_form_disp = [] then f_out_u_form else first(f_out_u_form_disp)$
 
+f_out_u_form_real : errcatch(ratsimp(if freeof(%i, f_out_u_form) then f_out_u_form else realpart(f_out_u_form)))$
+f_out_u_form_real : if f_out_u_form_real = [] then false else first(f_out_u_form_real)$
+f_out_u_form_imag : errcatch(ratsimp(if freeof(%i, f_out_u_form) then 0 else imagpart(f_out_u_form)))$
+f_out_u_form_imag : if f_out_u_form_imag = [] then false else first(f_out_u_form_imag)$
+f_out_u_form_real_disp : errcatch(FT_pick_display_expr_algebraic(f_out_u_form_real))$
+f_out_u_form_real_disp : if f_out_u_form_real_disp = [] then f_out_u_form_real else first(f_out_u_form_real_disp)$
+f_out_u_form_imag_disp : errcatch(FT_pick_display_expr_algebraic(f_out_u_form_imag))$
+f_out_u_form_imag_disp : if f_out_u_form_imag_disp = [] then f_out_u_form_imag else first(f_out_u_form_imag_disp)$
+
 /* Display for piecewise pos/neg — computed unconditionally */
 f_pos_real_disp : errcatch(FT_pick_display_expr_algebraic(f_pos_real))$
 f_pos_real_disp : if f_pos_real_disp = [] then f_pos_real else first(f_pos_real_disp)$
@@ -134,4 +143,8 @@ print("__OUTPUT_IMAG_NEG_MAXIMA__")$ if f_neg_imag # false then print(string(f_n
 print("__F_OUT_U_FORM_MAXIMA__")$    print(string(f_out_u_form))$
 print("__F_OUT_U_FORM_TEX__")$       if f_out_u_form # false then tex(f_out_u_form) else print("")$
 print("__DISPLAY_F_OUT_U_FORM_TEX__")$ if f_out_u_form_disp # false and string(f_out_u_form_disp) # string(f_out_u_form) then tex(f_out_u_form_disp) else print("")$
+print("__F_OUT_U_FORM_REAL_MAXIMA__")$ if f_out_u_form_real # false then print(string(f_out_u_form_real)) else print("false")$
+print("__F_OUT_U_FORM_REAL_TEX__")$    if f_out_u_form_real_disp # false then tex(f_out_u_form_real_disp) else print("")$
+print("__F_OUT_U_FORM_IMAG_MAXIMA__")$ if f_out_u_form_imag # false then print(string(f_out_u_form_imag)) else print("false")$
+print("__F_OUT_U_FORM_IMAG_TEX__")$    if f_out_u_form_imag_disp # false then tex(f_out_u_form_imag_disp) else print("")$
 print("__PARAMS__")$            print(string(free_params))$

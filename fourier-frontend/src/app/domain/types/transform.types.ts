@@ -63,6 +63,10 @@ export interface InverseFourierTransformResponse {
   outputImagPartPositive?: SymbolicExpression;
   /** Imaginary part of f(t) for t < 0 */
   outputImagPartNegative?: SymbolicExpression;
+  /** Real part of f_out_u_form: Re(f_pos·u(t) + f_neg·u(−t)) */
+  outputRealUForm?: SymbolicExpression;
+  /** Imaginary part of f_out_u_form */
+  outputImagUForm?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }

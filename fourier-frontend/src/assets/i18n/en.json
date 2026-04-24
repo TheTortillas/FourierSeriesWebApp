@@ -223,6 +223,8 @@
     "result": "Result",
     "ftNotExists": "The transform does not exist for this function (divergent integral).",
     "iftNotExists": "The inverse transform does not exist for this function.",
+    "formCompact": "compact form",
+    "formUt": "u(t) form",
     "fullTransform": "Full transform",
     "realPart": "Real part",
     "imagPart": "Imaginary part",

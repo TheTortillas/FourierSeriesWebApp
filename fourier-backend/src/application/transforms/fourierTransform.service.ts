@@ -404,7 +404,27 @@ kill(all)$
       this.extractBetween(raw, "__F_OUT_U_FORM_TEX__", "__DISPLAY_F_OUT_U_FORM_TEX__"),
     );
     const displayFOutUFormTex = this.extractTex(
-      this.extractBetween(raw, "__DISPLAY_F_OUT_U_FORM_TEX__", "__PARAMS__"),
+      this.extractBetween(raw, "__DISPLAY_F_OUT_U_FORM_TEX__", "__F_OUT_U_FORM_REAL_MAXIMA__"),
+    );
+    const fOutUFormRealMaxima = this.extractBetween(
+      raw,
+      "__F_OUT_U_FORM_REAL_MAXIMA__",
+      "__F_OUT_U_FORM_REAL_TEX__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
+    const fOutUFormRealTex = this.extractTex(
+      this.extractBetween(raw, "__F_OUT_U_FORM_REAL_TEX__", "__F_OUT_U_FORM_IMAG_MAXIMA__"),
+    );
+    const fOutUFormImagMaxima = this.extractBetween(
+      raw,
+      "__F_OUT_U_FORM_IMAG_MAXIMA__",
+      "__F_OUT_U_FORM_IMAG_TEX__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
+    const fOutUFormImagTex = this.extractTex(
+      this.extractBetween(raw, "__F_OUT_U_FORM_IMAG_TEX__", "__PARAMS__"),
     );
 
     const params = this.extractParams(raw, "__PARAMS__");
@@ -457,6 +477,8 @@ kill(all)$
         outputImagNegMaxima,
         displayOutputImagNegTex,
       ),
+      outputRealUForm: this.toSymbolic(fOutUFormRealMaxima, fOutUFormRealTex),
+      outputImagUForm: this.toSymbolic(fOutUFormImagMaxima, fOutUFormImagTex),
       params,
       executionTimeMs: Date.now() - startTime,
     };

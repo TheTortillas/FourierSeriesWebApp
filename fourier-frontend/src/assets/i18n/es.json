@@ -223,6 +223,8 @@
     "result": "Resultado",
     "ftNotExists": "La transformada no existe para esta función (integral divergente).",
     "iftNotExists": "La transformada inversa no existe para esta función.",
+    "formCompact": "forma compacta",
+    "formUt": "forma u(t)",
     "fullTransform": "Transformada completa",
     "realPart": "Parte real",
     "imagPart": "Parte imaginaria",

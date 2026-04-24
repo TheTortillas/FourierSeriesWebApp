@@ -1436,7 +1436,7 @@
                 <!-- Compact combined form (e.g. e^{-a|t|}) -->
                 @if (res.fCombined) {
                   <div class="flex flex-col gap-0.5">
-                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">forma compacta</span>
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.formCompact' | transloco }}</span>
                     <div class="flex items-center gap-2">
                       <span
                         #iftCombinedEl
@@ -1457,7 +1457,7 @@
                 <!-- u(t) combined form -->
                 @if (res.fOutUForm) {
                   <div class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2">
-                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">forma u(t)</span>
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.formUt' | transloco }}</span>
                     <div class="flex items-center gap-2">
                       <span
                         #iftUFormEl
@@ -1556,6 +1556,26 @@
                           [label]="'Re f(' + resultVarDisplay() + ')'"
                         />
                       </div>
+                      <!-- u(t) combined form -->
+                      @if (res.outputRealUForm?.tex) {
+                        <div class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2">
+                          <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.formUt' | transloco }}</span>
+                          <div class="flex items-center gap-2">
+                            <span
+                              #iftOutputRealUFormEl
+                              [mathjax]="display(res.outputRealUForm!.tex)"
+                              class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                            ></span>
+                            <app-export-button
+                              [tex]="res.outputRealUForm!.tex"
+                              [maxima]="res.outputRealUForm!.maxima"
+                              [mathEl]="iftOutputRealUFormEl"
+                              filename="ift-output-real-uform"
+                              [label]="'Re f(' + resultVarDisplay() + ') u(t)'"
+                            />
+                          </div>
+                        </div>
+                      }
                       <!-- Piecewise breakdown -->
                       @if (res.outputRealPartPositive?.tex || res.outputRealPartNegative?.tex) {
                         <div class="flex flex-col gap-1 border-t border-border dark:border-dark-border pt-2">
@@ -1630,6 +1650,26 @@
                           [label]="'Im f(' + resultVarDisplay() + ')'"
                         />
                       </div>
+                      <!-- u(t) combined form -->
+                      @if (res.outputImagUForm?.tex) {
+                        <div class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2">
+                          <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.formUt' | transloco }}</span>
+                          <div class="flex items-center gap-2">
+                            <span
+                              #iftOutputImagUFormEl
+                              [mathjax]="display(res.outputImagUForm!.tex)"
+                              class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                            ></span>
+                            <app-export-button
+                              [tex]="res.outputImagUForm!.tex"
+                              [maxima]="res.outputImagUForm!.maxima"
+                              [mathEl]="iftOutputImagUFormEl"
+                              filename="ift-output-imag-uform"
+                              [label]="'Im f(' + resultVarDisplay() + ') u(t)'"
+                            />
+                          </div>
+                        </div>
+                      }
                       <!-- Piecewise breakdown -->
                       @if (res.outputImagPartPositive?.tex || res.outputImagPartNegative?.tex) {
                         <div class="flex flex-col gap-1 border-t border-border dark:border-dark-border pt-2">
