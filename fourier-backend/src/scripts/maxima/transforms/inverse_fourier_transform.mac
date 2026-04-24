@@ -21,15 +21,9 @@ free_params : result[4]$
 
 has_combined : is(f_combined # false)$
 
-f_out_expr : if has_combined
-             then f_combined
-           else block([_u_form, _s_form, _fp_abs, _fn_abs],
-               _u_form : ratsimp(f_pos*u(TRANSVAR) + f_neg*u(-TRANSVAR)),
-               _fp_abs : subst(TRANSVAR = abs(TRANSVAR), f_pos),
-               _fn_abs : subst(TRANSVAR = -abs(TRANSVAR), f_neg),
-               _s_form : ratsimp(((_fp_abs + _fn_abs)/2) + (((_fp_abs - _fn_abs)/2) * sgn(TRANSVAR))),
-               if slength(string(_s_form)) < slength(string(_u_form)) then _s_form else _u_form
-           )$
+/* Always compute the u(t) combined form for display */
+f_out_u_form : ratsimp(f_pos*u(TRANSVAR) + f_neg*u(-TRANSVAR))$
+f_out_expr   : if has_combined then f_combined else f_out_u_form$
 
 /* ── Real / imaginary parts of the input F(w) for plotting ── */
 block([_i, _e, _a, _b, _gate],
@@ -62,19 +56,15 @@ f_out_real : if f_out_real = [] then false else first(f_out_real)$
 f_out_imag : errcatch(ratsimp(f_out_imag_raw))$
 f_out_imag : if f_out_imag = [] then false else first(f_out_imag)$
 
-/* f_pos/neg real-imag splits: solo necesarias para piecewise display cuando no hay combined */
-f_pos_real : false$  f_pos_imag : false$
-f_neg_real : false$  f_neg_imag : false$
-if not has_combined then (
-    f_pos_real : errcatch(ratsimp(if freeof(%i, f_pos) then f_pos else realpart(f_pos))),
-    f_pos_real : if f_pos_real = [] then false else first(f_pos_real),
-    f_pos_imag : errcatch(ratsimp(if freeof(%i, f_pos) then 0 else imagpart(f_pos))),
-    f_pos_imag : if f_pos_imag = [] then false else first(f_pos_imag),
-    f_neg_real : errcatch(ratsimp(if freeof(%i, f_neg) then f_neg else realpart(f_neg))),
-    f_neg_real : if f_neg_real = [] then false else first(f_neg_real),
-    f_neg_imag : errcatch(ratsimp(if freeof(%i, f_neg) then 0 else imagpart(f_neg))),
-    f_neg_imag : if f_neg_imag = [] then false else first(f_neg_imag)
-)$
+/* f_pos/neg real-imag splits — computed unconditionally */
+f_pos_real : errcatch(ratsimp(if freeof(%i, f_pos) then f_pos else realpart(f_pos)))$
+f_pos_real : if f_pos_real = [] then false else first(f_pos_real)$
+f_pos_imag : errcatch(ratsimp(if freeof(%i, f_pos) then 0 else imagpart(f_pos)))$
+f_pos_imag : if f_pos_imag = [] then false else first(f_pos_imag)$
+f_neg_real : errcatch(ratsimp(if freeof(%i, f_neg) then f_neg else realpart(f_neg)))$
+f_neg_real : if f_neg_real = [] then false else first(f_neg_real)$
+f_neg_imag : errcatch(ratsimp(if freeof(%i, f_neg) then 0 else imagpart(f_neg)))$
+f_neg_imag : if f_neg_imag = [] then false else first(f_neg_imag)$
 
 f_pos_disp : errcatch(FT_pick_display_expr_algebraic(f_pos))$
 f_pos_disp : if f_pos_disp = [] then f_pos else first(f_pos_disp)$
@@ -91,19 +81,18 @@ f_out_real_disp : if f_out_real_disp = [] then f_out_real else first(f_out_real_
 f_out_imag_disp : errcatch(FT_pick_display_expr_algebraic(f_out_imag))$
 f_out_imag_disp : if f_out_imag_disp = [] then f_out_imag else first(f_out_imag_disp)$
 
-/* Display de piezas pos/neg: solo si no hay combined */
-f_pos_real_disp : false$  f_pos_imag_disp : false$
-f_neg_real_disp : false$  f_neg_imag_disp : false$
-if not has_combined then (
-    f_pos_real_disp : errcatch(FT_pick_display_expr_algebraic(f_pos_real)),
-    f_pos_real_disp : if f_pos_real_disp = [] then f_pos_real else first(f_pos_real_disp),
-    f_pos_imag_disp : errcatch(FT_pick_display_expr_algebraic(f_pos_imag)),
-    f_pos_imag_disp : if f_pos_imag_disp = [] then f_pos_imag else first(f_pos_imag_disp),
-    f_neg_real_disp : errcatch(FT_pick_display_expr_algebraic(f_neg_real)),
-    f_neg_real_disp : if f_neg_real_disp = [] then f_neg_real else first(f_neg_real_disp),
-    f_neg_imag_disp : errcatch(FT_pick_display_expr_algebraic(f_neg_imag)),
-    f_neg_imag_disp : if f_neg_imag_disp = [] then f_neg_imag else first(f_neg_imag_disp)
-)$
+f_out_u_form_disp : errcatch(FT_pick_display_expr_algebraic(f_out_u_form))$
+f_out_u_form_disp : if f_out_u_form_disp = [] then f_out_u_form else first(f_out_u_form_disp)$
+
+/* Display for piecewise pos/neg — computed unconditionally */
+f_pos_real_disp : errcatch(FT_pick_display_expr_algebraic(f_pos_real))$
+f_pos_real_disp : if f_pos_real_disp = [] then f_pos_real else first(f_pos_real_disp)$
+f_pos_imag_disp : errcatch(FT_pick_display_expr_algebraic(f_pos_imag))$
+f_pos_imag_disp : if f_pos_imag_disp = [] then f_pos_imag else first(f_pos_imag_disp)$
+f_neg_real_disp : errcatch(FT_pick_display_expr_algebraic(f_neg_real))$
+f_neg_real_disp : if f_neg_real_disp = [] then f_neg_real else first(f_neg_real_disp)$
+f_neg_imag_disp : errcatch(FT_pick_display_expr_algebraic(f_neg_imag))$
+f_neg_imag_disp : if f_neg_imag_disp = [] then f_neg_imag else first(f_neg_imag_disp)$
 
 print("__F_POS_MAXIMA__")$      print(string(f_pos))$
 print("__F_POS_TEX__")$         tex(f_pos)$
@@ -134,8 +123,15 @@ print("__DISPLAY_OUTPUT_REAL_MAXIMA__")$ print(string(f_out_real_disp))$
 print("__DISPLAY_OUTPUT_REAL_TEX__")$    if f_out_real_disp # false and string(f_out_real_disp) # string(f_out_real) then tex(f_out_real_disp) else print("")$
 print("__DISPLAY_OUTPUT_IMAG_MAXIMA__")$ print(string(f_out_imag_disp))$
 print("__DISPLAY_OUTPUT_IMAG_TEX__")$    if f_out_imag_disp # false and string(f_out_imag_disp) # string(f_out_imag) then tex(f_out_imag_disp) else print("")$
-print("__DISPLAY_OUTPUT_REAL_POS_TEX__")$ if f_pos_real_disp # false and string(f_pos_real_disp) # string(f_pos_real) then tex(f_pos_real_disp) else print("")$
-print("__DISPLAY_OUTPUT_REAL_NEG_TEX__")$ if f_neg_real_disp # false and string(f_neg_real_disp) # string(f_neg_real) then tex(f_neg_real_disp) else print("")$
-print("__DISPLAY_OUTPUT_IMAG_POS_TEX__")$ if f_pos_imag_disp # false and string(f_pos_imag_disp) # string(f_pos_imag) then tex(f_pos_imag_disp) else print("")$
-print("__DISPLAY_OUTPUT_IMAG_NEG_TEX__")$ if f_neg_imag_disp # false and string(f_neg_imag_disp) # string(f_neg_imag) then tex(f_neg_imag_disp) else print("")$
+print("__DISPLAY_OUTPUT_REAL_POS_TEX__")$ if f_pos_real_disp # false then tex(f_pos_real_disp) else print("")$
+print("__DISPLAY_OUTPUT_REAL_NEG_TEX__")$ if f_neg_real_disp # false then tex(f_neg_real_disp) else print("")$
+print("__DISPLAY_OUTPUT_IMAG_POS_TEX__")$ if f_pos_imag_disp # false then tex(f_pos_imag_disp) else print("")$
+print("__DISPLAY_OUTPUT_IMAG_NEG_TEX__")$ if f_neg_imag_disp # false then tex(f_neg_imag_disp) else print("")$
+print("__OUTPUT_REAL_POS_MAXIMA__")$ if f_pos_real # false then print(string(f_pos_real)) else print("false")$
+print("__OUTPUT_REAL_NEG_MAXIMA__")$ if f_neg_real # false then print(string(f_neg_real)) else print("false")$
+print("__OUTPUT_IMAG_POS_MAXIMA__")$ if f_pos_imag # false then print(string(f_pos_imag)) else print("false")$
+print("__OUTPUT_IMAG_NEG_MAXIMA__")$ if f_neg_imag # false then print(string(f_neg_imag)) else print("false")$
+print("__F_OUT_U_FORM_MAXIMA__")$    print(string(f_out_u_form))$
+print("__F_OUT_U_FORM_TEX__")$       if f_out_u_form # false then tex(f_out_u_form) else print("")$
+print("__DISPLAY_F_OUT_U_FORM_TEX__")$ if f_out_u_form_disp # false and string(f_out_u_form_disp) # string(f_out_u_form) then tex(f_out_u_form_disp) else print("")$
 print("__PARAMS__")$            print(string(free_params))$

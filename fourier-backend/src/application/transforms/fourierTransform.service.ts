@@ -358,23 +358,54 @@ kill(all)$
       ),
     );
     const displayOutputImagNegTex = this.extractTex(
-      this.extractBetween(raw, "__DISPLAY_OUTPUT_IMAG_NEG_TEX__", "__PARAMS__"),
+      this.extractBetween(
+        raw,
+        "__DISPLAY_OUTPUT_IMAG_NEG_TEX__",
+        "__OUTPUT_REAL_POS_MAXIMA__",
+      ),
     );
 
-    const outputRealDisplayTex = hasCombined
-      ? displayOutputRealTex
-      : this.buildPiecewiseTex(
-          transVar,
-          displayOutputRealPosTex,
-          displayOutputRealNegTex,
-        ) || displayOutputRealTex;
-    const outputImagDisplayTex = hasCombined
-      ? displayOutputImagTex
-      : this.buildPiecewiseTex(
-          transVar,
-          displayOutputImagPosTex,
-          displayOutputImagNegTex,
-        ) || displayOutputImagTex;
+    const outputRealPosMaxima = this.extractBetween(
+      raw,
+      "__OUTPUT_REAL_POS_MAXIMA__",
+      "__OUTPUT_REAL_NEG_MAXIMA__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
+    const outputRealNegMaxima = this.extractBetween(
+      raw,
+      "__OUTPUT_REAL_NEG_MAXIMA__",
+      "__OUTPUT_IMAG_POS_MAXIMA__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
+    const outputImagPosMaxima = this.extractBetween(
+      raw,
+      "__OUTPUT_IMAG_POS_MAXIMA__",
+      "__OUTPUT_IMAG_NEG_MAXIMA__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
+    const outputImagNegMaxima = this.extractBetween(
+      raw,
+      "__OUTPUT_IMAG_NEG_MAXIMA__",
+      "__F_OUT_U_FORM_MAXIMA__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
+    const fOutUFormMaxima = this.extractBetween(
+      raw,
+      "__F_OUT_U_FORM_MAXIMA__",
+      "__F_OUT_U_FORM_TEX__",
+    )
+      .replace(/false/g, "")
+      .trim();
+    const fOutUFormTex = this.extractTex(
+      this.extractBetween(raw, "__F_OUT_U_FORM_TEX__", "__DISPLAY_F_OUT_U_FORM_TEX__"),
+    );
+    const displayFOutUFormTex = this.extractTex(
+      this.extractBetween(raw, "__DISPLAY_F_OUT_U_FORM_TEX__", "__PARAMS__"),
+    );
 
     const params = this.extractParams(raw, "__PARAMS__");
 
@@ -387,6 +418,9 @@ kill(all)$
         hasCombined && fCombinedMaxima
           ? this.toSymbolic(fCombinedMaxima, fCombinedTex, displayFCombinedTex)
           : undefined,
+      fOutUForm: fOutUFormMaxima
+        ? this.toSymbolic(fOutUFormMaxima, fOutUFormTex, displayFOutUFormTex)
+        : undefined,
       inputRealPart: this.toSymbolic(
         inputRealMaxima,
         inputRealTex,
@@ -400,12 +434,28 @@ kill(all)$
       outputRealPart: this.toSymbolic(
         outputRealMaxima,
         outputRealTex,
-        outputRealDisplayTex,
+        displayOutputRealTex,
       ),
       outputImagPart: this.toSymbolic(
         outputImagMaxima,
         outputImagTex,
-        outputImagDisplayTex,
+        displayOutputImagTex,
+      ),
+      outputRealPartPositive: this.toSymbolic(
+        outputRealPosMaxima,
+        displayOutputRealPosTex,
+      ),
+      outputRealPartNegative: this.toSymbolic(
+        outputRealNegMaxima,
+        displayOutputRealNegTex,
+      ),
+      outputImagPartPositive: this.toSymbolic(
+        outputImagPosMaxima,
+        displayOutputImagPosTex,
+      ),
+      outputImagPartNegative: this.toSymbolic(
+        outputImagNegMaxima,
+        displayOutputImagNegTex,
       ),
       params,
       executionTimeMs: Date.now() - startTime,
@@ -418,18 +468,6 @@ kill(all)$
       maxima,
       tex: displayTex || tex,
     };
-  }
-
-  private buildPiecewiseTex(
-    variable: string,
-    positiveTex?: string,
-    negativeTex?: string,
-  ): string | undefined {
-    const pos = positiveTex?.trim();
-    const neg = negativeTex?.trim();
-    if (!pos && !neg) return undefined;
-    if (pos && neg && pos === neg) return pos;
-    return `\\begin{cases} ${pos || "0"}, & ${variable} > 0 \\\\ ${neg || "0"}, & ${variable} < 0 \\end{cases}`;
   }
 
   private buildFuncInput(segments: PiecewiseSegment[]): string {

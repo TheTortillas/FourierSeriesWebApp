@@ -45,14 +45,24 @@ export interface InverseFourierTransformResponse {
   fNegative?: SymbolicExpression;
   /** Combined/simplified form when both regions yield a clean expression */
   fCombined?: SymbolicExpression;
+  /** u(t) combined form: f_pos·u(t) + f_neg·u(−t) */
+  fOutUForm?: SymbolicExpression;
   /** Real part of the input F(ω) (for canvas plotting) */
   inputRealPart?: SymbolicExpression;
   /** Imaginary part of the input F(ω) (for canvas plotting) */
   inputImagPart?: SymbolicExpression;
-  /** Real part of reconstructed f(t) (for canvas plotting when output is complex). */
+  /** Real part of reconstructed f(t) — combined form (for canvas plotting) */
   outputRealPart?: SymbolicExpression;
-  /** Imaginary part of reconstructed f(t) (for canvas plotting when output is complex). */
+  /** Imaginary part of reconstructed f(t) — combined form (for canvas plotting) */
   outputImagPart?: SymbolicExpression;
+  /** Real part of f(t) for t > 0 */
+  outputRealPartPositive?: SymbolicExpression;
+  /** Real part of f(t) for t < 0 */
+  outputRealPartNegative?: SymbolicExpression;
+  /** Imaginary part of f(t) for t > 0 */
+  outputImagPartPositive?: SymbolicExpression;
+  /** Imaginary part of f(t) for t < 0 */
+  outputImagPartNegative?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }

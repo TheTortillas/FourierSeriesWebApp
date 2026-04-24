@@ -1422,6 +1422,7 @@
                 </p>
               </div>
             } @else {
+              <!-- ── f(t) result card: show all available representations ── -->
               <div
                 class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-3"
               >
@@ -1432,76 +1433,103 @@
                   f({{ resultVarDisplay() }})
                 </span>
 
+                <!-- Compact combined form (e.g. e^{-a|t|}) -->
                 @if (res.fCombined) {
-                  <div class="flex items-center gap-2">
-                    <span
-                      #iftCombinedEl
-                      [mathjax]="display(res.fCombined.tex)"
-                      class="text-ink dark:text-dark-ink overflow-x-auto"
-                    ></span>
-                    <app-export-button
-                      [tex]="res.fCombined.tex"
-                      [maxima]="res.fCombined.maxima"
-                      [mathEl]="iftCombinedEl"
-                      filename="inverse-fourier-transform"
-                      [label]="'f(' + resultVarDisplay() + ')'"
-                    />
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">forma compacta</span>
+                    <div class="flex items-center gap-2">
+                      <span
+                        #iftCombinedEl
+                        [mathjax]="display(res.fCombined.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto"
+                      ></span>
+                      <app-export-button
+                        [tex]="res.fCombined.tex"
+                        [maxima]="res.fCombined.maxima"
+                        [mathEl]="iftCombinedEl"
+                        filename="inverse-fourier-transform"
+                        [label]="'f(' + resultVarDisplay() + ')'"
+                      />
+                    </div>
                   </div>
-                } @else {
-                  @if (res.fPositive) {
-                    <div
-                      class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2 first:border-t-0 first:pt-0"
-                    >
-                      <span class="text-xs font-mono text-accent"
-                        >{{ resultVarDisplay() }} &gt; 0</span
-                      >
-                      <div class="flex items-center gap-2">
-                        <span
-                          #iftPosEl
-                          [mathjax]="display(res.fPositive.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.fPositive.tex"
-                          [maxima]="res.fPositive.maxima"
-                          [mathEl]="iftPosEl"
-                          filename="ift-positive"
-                          [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' > 0'"
-                        />
-                      </div>
+                }
+
+                <!-- u(t) combined form -->
+                @if (res.fOutUForm) {
+                  <div class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2">
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">forma u(t)</span>
+                    <div class="flex items-center gap-2">
+                      <span
+                        #iftUFormEl
+                        [mathjax]="display(res.fOutUForm.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto"
+                      ></span>
+                      <app-export-button
+                        [tex]="res.fOutUForm.tex"
+                        [maxima]="res.fOutUForm.maxima"
+                        [mathEl]="iftUFormEl"
+                        filename="ift-u-form"
+                        [label]="'f(' + resultVarDisplay() + ') — u(t)'"
+                      />
                     </div>
-                  }
-                  @if (res.fNegative) {
-                    <div
-                      class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2"
+                  </div>
+                }
+
+                <!-- Piecewise: t > 0 and t < 0 -->
+                @if (res.fPositive) {
+                  <div
+                    class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2"
+                  >
+                    <span class="text-xs font-mono text-accent"
+                      >{{ resultVarDisplay() }} &gt; 0</span
                     >
-                      <span class="text-xs font-mono text-accent"
-                        >{{ resultVarDisplay() }} &lt; 0</span
-                      >
-                      <div class="flex items-center gap-2">
-                        <span
-                          #iftNegEl
-                          [mathjax]="display(res.fNegative.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.fNegative.tex"
-                          [maxima]="res.fNegative.maxima"
-                          [mathEl]="iftNegEl"
-                          filename="ift-negative"
-                          [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' < 0'"
-                        />
-                      </div>
+                    <div class="flex items-center gap-2">
+                      <span
+                        #iftPosEl
+                        [mathjax]="display(res.fPositive.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto"
+                      ></span>
+                      <app-export-button
+                        [tex]="res.fPositive.tex"
+                        [maxima]="res.fPositive.maxima"
+                        [mathEl]="iftPosEl"
+                        filename="ift-positive"
+                        [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' > 0'"
+                      />
                     </div>
-                  }
+                  </div>
+                }
+                @if (res.fNegative) {
+                  <div
+                    class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2"
+                  >
+                    <span class="text-xs font-mono text-accent"
+                      >{{ resultVarDisplay() }} &lt; 0</span
+                    >
+                    <div class="flex items-center gap-2">
+                      <span
+                        #iftNegEl
+                        [mathjax]="display(res.fNegative.tex)"
+                        class="text-ink dark:text-dark-ink overflow-x-auto"
+                      ></span>
+                      <app-export-button
+                        [tex]="res.fNegative.tex"
+                        [maxima]="res.fNegative.maxima"
+                        [mathEl]="iftNegEl"
+                        filename="ift-negative"
+                        [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' < 0'"
+                      />
+                    </div>
+                  </div>
                 }
               </div>
 
+              <!-- ── RE / IM of f(t): combined + piecewise breakdown ── -->
               @if (res.outputRealPart?.tex || res.outputImagPart?.tex) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   @if (res.outputRealPart?.tex) {
                     <div
-                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-2"
                     >
                       <span
                         class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
@@ -1513,6 +1541,7 @@
                         ></span>
                         Re f({{ resultVarDisplay() }})
                       </span>
+                      <!-- Combined -->
                       <div class="flex items-center gap-2">
                         <span
                           #iftOutputRealEl
@@ -1527,11 +1556,54 @@
                           [label]="'Re f(' + resultVarDisplay() + ')'"
                         />
                       </div>
+                      <!-- Piecewise breakdown -->
+                      @if (res.outputRealPartPositive?.tex || res.outputRealPartNegative?.tex) {
+                        <div class="flex flex-col gap-1 border-t border-border dark:border-dark-border pt-2">
+                          @if (res.outputRealPartPositive?.tex) {
+                            <div class="flex flex-col gap-0.5">
+                              <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
+                              <div class="flex items-center gap-2">
+                                <span
+                                  #iftOutputRealPosEl
+                                  [mathjax]="display(res.outputRealPartPositive!.tex)"
+                                  class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                                ></span>
+                                <app-export-button
+                                  [tex]="res.outputRealPartPositive!.tex"
+                                  [maxima]="res.outputRealPartPositive!.maxima"
+                                  [mathEl]="iftOutputRealPosEl"
+                                  filename="ift-output-real-pos"
+                                  [label]="'Re f(' + resultVarDisplay() + '), t>0'"
+                                />
+                              </div>
+                            </div>
+                          }
+                          @if (res.outputRealPartNegative?.tex) {
+                            <div class="flex flex-col gap-0.5">
+                              <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
+                              <div class="flex items-center gap-2">
+                                <span
+                                  #iftOutputRealNegEl
+                                  [mathjax]="display(res.outputRealPartNegative!.tex)"
+                                  class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                                ></span>
+                                <app-export-button
+                                  [tex]="res.outputRealPartNegative!.tex"
+                                  [maxima]="res.outputRealPartNegative!.maxima"
+                                  [mathEl]="iftOutputRealNegEl"
+                                  filename="ift-output-real-neg"
+                                  [label]="'Re f(' + resultVarDisplay() + '), t<0'"
+                                />
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
                     </div>
                   }
                   @if (res.outputImagPart?.tex) {
                     <div
-                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
+                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-2"
                     >
                       <span
                         class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
@@ -1543,6 +1615,7 @@
                         ></span>
                         Im f({{ resultVarDisplay() }})
                       </span>
+                      <!-- Combined -->
                       <div class="flex items-center gap-2">
                         <span
                           #iftOutputImagEl
@@ -1557,6 +1630,49 @@
                           [label]="'Im f(' + resultVarDisplay() + ')'"
                         />
                       </div>
+                      <!-- Piecewise breakdown -->
+                      @if (res.outputImagPartPositive?.tex || res.outputImagPartNegative?.tex) {
+                        <div class="flex flex-col gap-1 border-t border-border dark:border-dark-border pt-2">
+                          @if (res.outputImagPartPositive?.tex) {
+                            <div class="flex flex-col gap-0.5">
+                              <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
+                              <div class="flex items-center gap-2">
+                                <span
+                                  #iftOutputImagPosEl
+                                  [mathjax]="display(res.outputImagPartPositive!.tex)"
+                                  class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                                ></span>
+                                <app-export-button
+                                  [tex]="res.outputImagPartPositive!.tex"
+                                  [maxima]="res.outputImagPartPositive!.maxima"
+                                  [mathEl]="iftOutputImagPosEl"
+                                  filename="ift-output-imag-pos"
+                                  [label]="'Im f(' + resultVarDisplay() + '), t>0'"
+                                />
+                              </div>
+                            </div>
+                          }
+                          @if (res.outputImagPartNegative?.tex) {
+                            <div class="flex flex-col gap-0.5">
+                              <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
+                              <div class="flex items-center gap-2">
+                                <span
+                                  #iftOutputImagNegEl
+                                  [mathjax]="display(res.outputImagPartNegative!.tex)"
+                                  class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                                ></span>
+                                <app-export-button
+                                  [tex]="res.outputImagPartNegative!.tex"
+                                  [maxima]="res.outputImagPartNegative!.maxima"
+                                  [mathEl]="iftOutputImagNegEl"
+                                  filename="ift-output-imag-neg"
+                                  [label]="'Im f(' + resultVarDisplay() + '), t<0'"
+                                />
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
                     </div>
                   }
                 </div>

@@ -432,24 +432,24 @@ FT_pick_display_expr(expr) := block(
     [tmp],
     if expr = false then return(false),
     if freeof(%i, expr) then (
-        tmp : errcatch(ratsimp(expr)),
+        tmp : errcatch(fullratsimp(expr)),
         return(if tmp = [] then expr else first(tmp))
     ),
-    tmp : errcatch(ratsimp(rectform(expr))),
+    tmp : errcatch(fullratsimp(rectform(expr))),
     if tmp # [] then return(first(tmp)),
-    tmp : errcatch(ratsimp(expr)),
+    tmp : errcatch(fullratsimp(expr)),
     if tmp # [] then return(first(tmp)),
     expr
 )$
 
 /*
   Display normalization for time-domain expressions (f(t)).
-  One ratsimp pass; fallback to original if Maxima errors.
+  One fullratsimp pass; fallback to original if Maxima errors.
 */
 FT_pick_display_expr_algebraic(expr) := block(
         [tmp],
         if expr = false then return(false),
-        tmp : errcatch(ratsimp(expr)),
+        tmp : errcatch(fullratsimp(expr)),
         if tmp # [] then return(first(tmp)),
         expr
 )$
