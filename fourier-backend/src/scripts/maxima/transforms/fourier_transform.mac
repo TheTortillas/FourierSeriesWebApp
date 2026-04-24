@@ -38,9 +38,9 @@ block([_i, _e, _a, _b, _gate],
 F_in_real_raw : if freeof(%i, f_in_expr) then f_in_expr else realpart(f_in_expr)$
 F_in_imag_raw : if freeof(%i, f_in_expr) then 0 else imagpart(f_in_expr)$
 
-F_in_real : errcatch(F_in_real_raw)$
+F_in_real : errcatch(ratsimp(F_in_real_raw))$
 F_in_real : if F_in_real = [] then false else first(F_in_real)$
-F_in_imag : errcatch(F_in_imag_raw)$
+F_in_imag : errcatch(ratsimp(F_in_imag_raw))$
 F_in_imag : if F_in_imag = [] then false else first(F_in_imag)$
 
 F_disp : errcatch(FT_pick_display_expr(F))$
@@ -66,13 +66,13 @@ print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else pr
 print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$
 print("__INPUT_IMAG_TEX__")$    if F_in_imag # false then tex(F_in_imag) else print("")$
 print("__DISPLAY_F_MAXIMA__")$      print(string(F_disp))$
-print("__DISPLAY_F_TEX__")$         if F_disp # false then tex(F_disp) else print("")$
+print("__DISPLAY_F_TEX__")$         if F_disp # false and string(F_disp) # string(F) then tex(F_disp) else print("")$
 print("__DISPLAY_REAL_MAXIMA__")$   print(string(F_real_disp))$
-print("__DISPLAY_REAL_TEX__")$      if F_real_disp # false then tex(F_real_disp) else print("")$
+print("__DISPLAY_REAL_TEX__")$      if F_real_disp # false and string(F_real_disp) # string(F_real) then tex(F_real_disp) else print("")$
 print("__DISPLAY_IMAG_MAXIMA__")$   print(string(F_imag_disp))$
-print("__DISPLAY_IMAG_TEX__")$      if F_imag_disp # false then tex(F_imag_disp) else print("")$
+print("__DISPLAY_IMAG_TEX__")$      if F_imag_disp # false and string(F_imag_disp) # string(F_imag) then tex(F_imag_disp) else print("")$
 print("__DISPLAY_INPUT_REAL_MAXIMA__")$ print(string(F_in_real_disp))$
-print("__DISPLAY_INPUT_REAL_TEX__")$    if F_in_real_disp # false then tex(F_in_real_disp) else print("")$
+print("__DISPLAY_INPUT_REAL_TEX__")$    if F_in_real_disp # false and string(F_in_real_disp) # string(F_in_real) then tex(F_in_real_disp) else print("")$
 print("__DISPLAY_INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag_disp))$
-print("__DISPLAY_INPUT_IMAG_TEX__")$    if F_in_imag_disp # false then tex(F_in_imag_disp) else print("")$
+print("__DISPLAY_INPUT_IMAG_TEX__")$    if F_in_imag_disp # false and string(F_in_imag_disp) # string(F_in_imag) then tex(F_in_imag_disp) else print("")$
 print("__PARAMS__")$       print(string(free_params))$

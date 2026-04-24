@@ -423,48 +423,34 @@ IFT_simplify(expr) := block(
   This does not alter the transform computation; it only post-processes
   already computed expressions using multiple safe simplification passes.
 */
+/*
+  Display normalization for frequency-domain expressions (F(w)).
+  Real expressions: ratsimp only. Complex: try ratsimp(rectform) first,
+  fall back to ratsimp. Avoids slength/string comparisons (SBCL JIT cost).
+*/
 FT_pick_display_expr(expr) := block(
-    [cands, tmp, best, best_len, cur, cur_len],
+    [tmp],
     if expr = false then return(false),
-
-    cands : [expr],
-
-    tmp : errcatch(fullratsimp(expr)),
-    if tmp # [] then cands : endcons(first(tmp), cands),
-
+    if freeof(%i, expr) then (
+        tmp : errcatch(ratsimp(expr)),
+        return(if tmp = [] then expr else first(tmp))
+    ),
+    tmp : errcatch(ratsimp(rectform(expr))),
+    if tmp # [] then return(first(tmp)),
     tmp : errcatch(ratsimp(expr)),
-    if tmp # [] then cands : endcons(first(tmp), cands),
-
-    tmp : errcatch(rectform(expr)),
-    if tmp # [] then (
-        tmp : errcatch(ratsimp(first(tmp))),
-        if tmp # [] then cands : endcons(first(tmp), cands)
-    ),
-
-    best : first(cands),
-    best_len : slength(string(best)),
-    for cur in rest(cands) do (
-        cur_len : slength(string(cur)),
-        if cur_len < best_len then (
-            best : cur,
-            best_len : cur_len
-        )
-    ),
-
-    best
+    if tmp # [] then return(first(tmp)),
+    expr
 )$
 
 /*
-    Fast algebraic display normalization: one fullratsimp pass, then fallback
-    to the original expression if Maxima cannot simplify safely.
+  Display normalization for time-domain expressions (f(t)).
+  One ratsimp pass; fallback to original if Maxima errors.
 */
 FT_pick_display_expr_algebraic(expr) := block(
         [tmp],
         if expr = false then return(false),
-
-        tmp : errcatch(fullratsimp(expr)),
+        tmp : errcatch(ratsimp(expr)),
         if tmp # [] then return(first(tmp)),
-
         expr
 )$
 
