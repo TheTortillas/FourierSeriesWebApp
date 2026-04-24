@@ -103,7 +103,34 @@ kill(all)$
       .replace(/\bfalse\b/g, "")
       .trim();
     const inputImagTex = this.extractTex(
-      this.extractBetween(raw, "__INPUT_IMAG_TEX__", "__PARAMS__"),
+      this.extractBetween(raw, "__INPUT_IMAG_TEX__", "__DISPLAY_F_MAXIMA__"),
+    );
+    const displayFTex = this.extractTex(
+      this.extractBetween(raw, "__DISPLAY_F_TEX__", "__DISPLAY_REAL_MAXIMA__"),
+    );
+    const displayRealTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_REAL_TEX__",
+        "__DISPLAY_IMAG_MAXIMA__",
+      ),
+    );
+    const displayImagTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_IMAG_TEX__",
+        "__DISPLAY_INPUT_REAL_MAXIMA__",
+      ),
+    );
+    const displayInputRealTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_INPUT_REAL_TEX__",
+        "__DISPLAY_INPUT_IMAG_MAXIMA__",
+      ),
+    );
+    const displayInputImagTex = this.extractTex(
+      this.extractBetween(raw, "__DISPLAY_INPUT_IMAG_TEX__", "__PARAMS__"),
     );
 
     const params = this.extractParams(raw, "__PARAMS__");
@@ -111,15 +138,23 @@ kill(all)$
     return {
       input,
       exists,
-      F: exists ? { maxima: fMaxima, tex: fTex } : undefined,
-      realPart: exists ? { maxima: realMaxima, tex: realTex } : undefined,
-      imagPart: exists ? { maxima: imagMaxima, tex: imagTex } : undefined,
-      inputRealPart: inputRealMaxima
-        ? { maxima: inputRealMaxima, tex: inputRealTex }
+      F: exists ? this.toSymbolic(fMaxima, fTex, displayFTex) : undefined,
+      realPart: exists
+        ? this.toSymbolic(realMaxima, realTex, displayRealTex)
         : undefined,
-      inputImagPart: inputImagMaxima
-        ? { maxima: inputImagMaxima, tex: inputImagTex }
+      imagPart: exists
+        ? this.toSymbolic(imagMaxima, imagTex, displayImagTex)
         : undefined,
+      inputRealPart: this.toSymbolic(
+        inputRealMaxima,
+        inputRealTex,
+        displayInputRealTex,
+      ),
+      inputImagPart: this.toSymbolic(
+        inputImagMaxima,
+        inputImagTex,
+        displayInputImagTex,
+      ),
       params,
       executionTimeMs: Date.now() - startTime,
     };
@@ -246,35 +281,155 @@ kill(all)$
       .replace(/\bfalse\b/g, "")
       .trim();
     const outputImagTex = this.extractTex(
-      this.extractBetween(raw, "__OUTPUT_IMAG_TEX__", "__PARAMS__"),
+      this.extractBetween(
+        raw,
+        "__OUTPUT_IMAG_TEX__",
+        "__DISPLAY_F_POS_MAXIMA__",
+      ),
     );
+    const displayFPosTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_F_POS_TEX__",
+        "__DISPLAY_F_NEG_MAXIMA__",
+      ),
+    );
+    const displayFNegTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_F_NEG_TEX__",
+        "__DISPLAY_F_COMBINED_MAXIMA__",
+      ),
+    );
+    const displayFCombinedTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_F_COMBINED_TEX__",
+        "__DISPLAY_INPUT_REAL_MAXIMA__",
+      ),
+    );
+    const displayInputRealTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_INPUT_REAL_TEX__",
+        "__DISPLAY_INPUT_IMAG_MAXIMA__",
+      ),
+    );
+    const displayInputImagTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_INPUT_IMAG_TEX__",
+        "__DISPLAY_OUTPUT_REAL_MAXIMA__",
+      ),
+    );
+    const displayOutputRealTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_OUTPUT_REAL_TEX__",
+        "__DISPLAY_OUTPUT_IMAG_MAXIMA__",
+      ),
+    );
+    const displayOutputImagTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_OUTPUT_IMAG_TEX__",
+        "__DISPLAY_OUTPUT_REAL_POS_TEX__",
+      ),
+    );
+    const displayOutputRealPosTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_OUTPUT_REAL_POS_TEX__",
+        "__DISPLAY_OUTPUT_REAL_NEG_TEX__",
+      ),
+    );
+    const displayOutputRealNegTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_OUTPUT_REAL_NEG_TEX__",
+        "__DISPLAY_OUTPUT_IMAG_POS_TEX__",
+      ),
+    );
+    const displayOutputImagPosTex = this.extractTex(
+      this.extractBetween(
+        raw,
+        "__DISPLAY_OUTPUT_IMAG_POS_TEX__",
+        "__DISPLAY_OUTPUT_IMAG_NEG_TEX__",
+      ),
+    );
+    const displayOutputImagNegTex = this.extractTex(
+      this.extractBetween(raw, "__DISPLAY_OUTPUT_IMAG_NEG_TEX__", "__PARAMS__"),
+    );
+
+    const outputRealDisplayTex = hasCombined
+      ? displayOutputRealTex
+      : this.buildPiecewiseTex(
+          transVar,
+          displayOutputRealPosTex,
+          displayOutputRealNegTex,
+        ) || displayOutputRealTex;
+    const outputImagDisplayTex = hasCombined
+      ? displayOutputImagTex
+      : this.buildPiecewiseTex(
+          transVar,
+          displayOutputImagPosTex,
+          displayOutputImagNegTex,
+        ) || displayOutputImagTex;
 
     const params = this.extractParams(raw, "__PARAMS__");
 
     return {
       input,
       exists: fPosMaxima !== "" || fNegMaxima !== "",
-      fPositive: fPosMaxima ? { maxima: fPosMaxima, tex: fPosTex } : undefined,
-      fNegative: fNegMaxima ? { maxima: fNegMaxima, tex: fNegTex } : undefined,
+      fPositive: this.toSymbolic(fPosMaxima, fPosTex, displayFPosTex),
+      fNegative: this.toSymbolic(fNegMaxima, fNegTex, displayFNegTex),
       fCombined:
         hasCombined && fCombinedMaxima
-          ? { maxima: fCombinedMaxima, tex: fCombinedTex }
+          ? this.toSymbolic(fCombinedMaxima, fCombinedTex, displayFCombinedTex)
           : undefined,
-      inputRealPart: inputRealMaxima
-        ? { maxima: inputRealMaxima, tex: inputRealTex }
-        : undefined,
-      inputImagPart: inputImagMaxima
-        ? { maxima: inputImagMaxima, tex: inputImagTex }
-        : undefined,
-      outputRealPart: outputRealMaxima
-        ? { maxima: outputRealMaxima, tex: outputRealTex }
-        : undefined,
-      outputImagPart: outputImagMaxima
-        ? { maxima: outputImagMaxima, tex: outputImagTex }
-        : undefined,
+      inputRealPart: this.toSymbolic(
+        inputRealMaxima,
+        inputRealTex,
+        displayInputRealTex,
+      ),
+      inputImagPart: this.toSymbolic(
+        inputImagMaxima,
+        inputImagTex,
+        displayInputImagTex,
+      ),
+      outputRealPart: this.toSymbolic(
+        outputRealMaxima,
+        outputRealTex,
+        outputRealDisplayTex,
+      ),
+      outputImagPart: this.toSymbolic(
+        outputImagMaxima,
+        outputImagTex,
+        outputImagDisplayTex,
+      ),
       params,
       executionTimeMs: Date.now() - startTime,
     };
+  }
+
+  private toSymbolic(maxima: string, tex: string, displayTex?: string) {
+    if (!maxima) return undefined;
+    return {
+      maxima,
+      tex: displayTex || tex,
+    };
+  }
+
+  private buildPiecewiseTex(
+    variable: string,
+    positiveTex?: string,
+    negativeTex?: string,
+  ): string | undefined {
+    const pos = positiveTex?.trim();
+    const neg = negativeTex?.trim();
+    if (!pos && !neg) return undefined;
+    if (pos && neg && pos === neg) return pos;
+    return `\\begin{cases} ${pos || "0"}, & ${variable} > 0 \\\\ ${neg || "0"}, & ${variable} < 0 \\end{cases}`;
   }
 
   private buildFuncInput(segments: PiecewiseSegment[]): string {

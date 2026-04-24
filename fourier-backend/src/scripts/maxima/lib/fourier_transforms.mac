@@ -418,6 +418,56 @@ IFT_simplify(expr) := block(
     if ef # [] then first(ef) else e
 )$
 
+/*
+  Choose a compact symbolic representation for UI display.
+  This does not alter the transform computation; it only post-processes
+  already computed expressions using multiple safe simplification passes.
+*/
+FT_pick_display_expr(expr) := block(
+    [cands, tmp, best, best_len, cur, cur_len],
+    if expr = false then return(false),
+
+    cands : [expr],
+
+    tmp : errcatch(fullratsimp(expr)),
+    if tmp # [] then cands : endcons(first(tmp), cands),
+
+    tmp : errcatch(ratsimp(expr)),
+    if tmp # [] then cands : endcons(first(tmp), cands),
+
+    tmp : errcatch(rectform(expr)),
+    if tmp # [] then (
+        tmp : errcatch(ratsimp(first(tmp))),
+        if tmp # [] then cands : endcons(first(tmp), cands)
+    ),
+
+    best : first(cands),
+    best_len : slength(string(best)),
+    for cur in rest(cands) do (
+        cur_len : slength(string(cur)),
+        if cur_len < best_len then (
+            best : cur,
+            best_len : cur_len
+        )
+    ),
+
+    best
+)$
+
+/*
+    Fast algebraic display normalization: one fullratsimp pass, then fallback
+    to the original expression if Maxima cannot simplify safely.
+*/
+FT_pick_display_expr_algebraic(expr) := block(
+        [tmp],
+        if expr = false then return(false),
+
+        tmp : errcatch(fullratsimp(expr)),
+        if tmp # [] then return(first(tmp)),
+
+        expr
+)$
+
 IFT_exists(expr) :=
     freeof('integrate,        expr) and
     freeof('limit,            expr) and
@@ -2448,7 +2498,8 @@ IFT(FUNC_INPUT, w_var, t_var) := block(
    ════════════════════════════════════════════════════════════════════ */
 
 IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
-    [rp, rn, f_pos, f_neg, f_combined, fn_flip, dcheck,
+    [rp, rn, f_pos, f_neg, f_combined, fn_flip, dcheck, same_branch,
+     eq_pos, eq_neg,
      free_params, _ift_reserved, _ift_ref],
 
     assume(t_var > 0),
@@ -2463,8 +2514,28 @@ IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
 
     fn_flip: ratsimp(subst(t_var = -t_var, f_neg)),
     dcheck:  ratsimp(fn_flip - f_pos),
+    same_branch: ratsimp(f_pos - f_neg),
 
-    f_combined: if dcheck = 0
+        /*
+            Robust bilateral merge:
+            - compare f_pos(t) with mirrored branch f_neg(-t)
+            - enforce assumptions in each valid region to simplify abs/branching
+        */
+        assume(t_var > 0),
+        eq_pos: errcatch(fullratsimp(ratsimp(subst(t_var = -t_var, f_neg) - f_pos))),
+        forget(t_var > 0),
+        eq_pos: if eq_pos = [] then false else first(eq_pos),
+
+        assume(t_var < 0),
+        eq_neg: errcatch(fullratsimp(ratsimp(subst(t_var = -t_var, f_pos) - f_neg))),
+        forget(t_var < 0),
+        eq_neg: if eq_neg = [] then false else first(eq_neg),
+
+        f_combined: if same_branch = 0
+        then f_pos
+                else if eq_pos = 0 and eq_neg = 0
+                then ratsimp(subst(t_var = abs(t_var), f_pos))
+        else if dcheck = 0
         then ratsimp(subst(t_var = abs(t_var), f_pos))
         else if ratsimp(f_neg) = 0 then f_pos * u(t_var)
         else if ratsimp(f_pos) = 0 then f_neg * u(t_var)
