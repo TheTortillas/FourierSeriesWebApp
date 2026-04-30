@@ -1993,5 +1993,133 @@
             "exists": true,
             "fCombined": "(sgn(t+2)-sgn(t-2))/4"
         }
+    },
+
+    {
+        "id": "Q01",
+        "type": "ift",
+        "description": "IFT de 1/(iw+1)^3 → t²/2·e^{-t}·u(t)  (polo causal orden 3)",
+        "input": {
+            "segments": [{ "expression": "1/(%i*w+1)^3", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(t^2*%e^(-t)*u(t))/2"
+        }
+    },
+    {
+        "id": "Q02",
+        "type": "ift",
+        "description": "IFT de 6/(iw+2)^4 → t³·e^{-2t}·u(t)  (polo causal orden 4 con escalar)",
+        "input": {
+            "segments": [{ "expression": "6/(%i*w+2)^4", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t^3*%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "Q03",
+        "type": "ift",
+        "description": "IFT de 1/(iw+a)^3 parámetro simbólico → t²/2·e^{-at}·u(t)",
+        "input": {
+            "segments": [{ "expression": "1/(%i*w+a)^3", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(t^2*%e^(-a*t)*u(t))/2",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "Q04",
+        "type": "ift",
+        "description": "IFT de e^{-3iw}/(iw+1)^3 → (t-3)²/2·e^{-(t-3)}·u(t-3)  (polo orden 3 desplazado)",
+        "input": {
+            "segments": [{ "expression": "%e^(-3*%i*w)/(%i*w+1)^3", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(u(t-3)*(t-3)^2*%e^(-(t-3)))/2"
+        }
+    },
+    {
+        "id": "Q05",
+        "type": "ift",
+        "description": "IFT de 1/((iw+1)(iw+2)) → e^{-t}·u(t) - e^{-2t}·u(t)  (fracciones parciales 2 polos)",
+        "input": {
+            "segments": [{ "expression": "1/((%i*w+1)*(%i*w+2))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-t)*u(t)-%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "Q06",
+        "type": "ift",
+        "description": "IFT de (iw+3)/((iw+1)(iw+2)) → 2e^{-t}·u(t) - e^{-2t}·u(t)  (numerador no constante, fracciones parciales)",
+        "input": {
+            "segments": [{ "expression": "(%i*w+3)/((%i*w+1)*(%i*w+2))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "2*%e^(-t)*u(t)-%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "Q07",
+        "type": "ift",
+        "description": "IFT de (iw)/((iw+1)^2) → e^{-t}·u(t) - t·e^{-t}·u(t)  (numerador iw, fracciones parciales orden 2)",
+        "input": {
+            "segments": [{ "expression": "(%i*w)/(%i*w+1)^2", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-t)*u(t)-t*%e^(-t)*u(t)"
+        }
+    },
+    {
+        "id": "Q08",
+        "type": "ift",
+        "description": "IFT de 1/((iw+1)(iw+2)(iw+3)) → 3 polos distintos via fracciones parciales",
+        "input": {
+            "segments": [{ "expression": "1/((%i*w+1)*(%i*w+2)*(%i*w+3))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^(-t)*u(t))/2-%e^(-2*t)*u(t)+(%e^(-3*t)*u(t))/2"
+        }
+    },
+    {
+        "id": "Q09",
+        "type": "ift",
+        "description": "IFT de 1/((iw+1)^2*(iw+2)) → polo orden 2 + orden 1 via fracciones parciales",
+        "input": {
+            "segments": [{ "expression": "1/((%i*w+1)^2*(%i*w+2))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t*%e^(-t)*u(t)-%e^(-t)*u(t)+%e^(-2*t)*u(t)"
+        }
     }
 ]

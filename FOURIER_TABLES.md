@@ -103,7 +103,7 @@ Pares adicionales expresados desde el dominio de frecuencia, útiles al aplicar 
 | 39 | $\pi\,\delta(\omega) + \dfrac{1}{i\omega}$ | $u(t)$ | |
 | 40 | $\dfrac{k}{i\omega + a}$ | $k\,e^{-at}u(t)$ | $a > 0$ |
 | 41 | $\dfrac{k}{(i\omega + a)^2}$ | $k\,t\,e^{-at}u(t)$ | $a > 0$ |
-| 42 | $\dfrac{k}{(i\omega + a)^n}$ | $\dfrac{k\,t^{n-1}}{(n-1)!}\,e^{-at}u(t)$ | $a > 0,\;n \geq 1$ |
+| 42 | $\dfrac{k}{(i\omega + a)^n}$ | $\dfrac{k\,t^{n-1}}{(n-1)!}\,e^{-at}u(t)$ | $a > 0,\;n \geq 1$ entero |
 | 43 | $\dfrac{b}{(i\omega+a)^2+b^2}$ | $e^{-at}\sin(bt)\,u(t)$ | $a, b > 0$ |
 | 44 | $\dfrac{i\omega+a}{(i\omega+a)^2+b^2}$ | $e^{-at}\cos(bt)\,u(t)$ | $a, b > 0$ |
 | 45 | $\dfrac{2a}{a^2 + \omega^2}$ | $e^{-a\lvert t\rvert}$ | $a > 0$ |
@@ -115,8 +115,9 @@ Pares adicionales expresados desde el dominio de frecuencia, útiles al aplicar 
 | 51 | $\sin(b\omega)\,F(\omega)$ | $\dfrac{f(t+b) - f(t-b)}{2i}$ | $b > 0$ |
 | 52 | $\cos(b\omega)\,F(\omega)$ | $\dfrac{f(t+b) + f(t-b)}{2}$ | $b > 0$ |
 | 53 | $\dfrac{k}{A\omega^2 + B\omega + C}$ | $\dfrac{k}{2Aa}\,e^{-a\lvert t\rvert}\,e^{i\omega_0 t}$ | $A > 0$,\; $4AC - B^2 > 0$,<br>$\omega_0 = -B/(2A)$,<br>$a = \sqrt{(4AC-B^2)/(4A^2)}$ |
-| 54 | $\dfrac{k\,e^{-i\omega t_0}}{(i\omega+a)^2}$ | $k\,(t-t_0)\,e^{-a(t-t_0)}\,u(t-t_0)$ | $a > 0,\;t_0 \in \mathbb{R}$ |
+| 54 | $\dfrac{k\,e^{-i\omega t_0}}{(i\omega+a)^n}$ | $\dfrac{k\,(t-t_0)^{n-1}}{(n-1)!}\,e^{-a(t-t_0)}\,u(t-t_0)$ | $a > 0,\;n \geq 1,\;t_0 \in \mathbb{R}$ |
 | 55 | $\dfrac{k\,\sin\!\bigl(c(\omega-\omega_0)\bigr)}{\omega - \omega_0}$ | $\dfrac{k}{2}\,e^{-i\omega_0 t}\,\bigl(u(t+c)-u(t-c)\bigr)$ | $c > 0,\;\omega_0 \in \mathbb{R}$ |
+| 56 | $\dfrac{P(\omega)}{Q(\omega)}$ (fracción propia) | $\displaystyle\sum_i \mathcal{F}^{-1}\!\left\{\frac{r_i}{(i\omega+a_i)^{n_i}}\right\}$ | vía descomposición en fracciones parciales sobre los pares anteriores |
 
 ---
 
@@ -221,24 +222,59 @@ $$\mathcal{F}^{-1}\{\cos(b\omega)\,F(\omega)\} = \frac{f(t+b) + f(t-b)}{2}$$
 
 ---
 
-## 13. Polo causal desplazado en tiempo — par #54
+## 13. Polo causal de orden n con desplazamiento en tiempo — par #54
 
-$$\mathcal{F}^{-1}\!\left\{\frac{k\,e^{-i\omega t_0}}{(i\omega+a)^2}\right\} = k\,(t-t_0)\,e^{-a(t-t_0)}\,u(t-t_0), \qquad a > 0$$
+$$\mathcal{F}^{-1}\!\left\{\frac{k\,e^{-i\omega t_0}}{(i\omega+a)^n}\right\} = \frac{k\,(t-t_0)^{n-1}}{(n-1)!}\,e^{-a(t-t_0)}\,u(t-t_0), \qquad a > 0,\; n \geq 1$$
 
-Derivado del par #41 aplicando la **propiedad de desplazamiento en tiempo** ($e^{-i\omega t_0} F(\omega) \leftrightarrow f(t-t_0)$):
+Caso general del par #42 con desplazamiento en tiempo ($e^{-i\omega t_0} F(\omega) \leftrightarrow f(t-t_0)$):
 
-$$\mathcal{F}^{-1}\!\left\{\frac{k}{(i\omega+a)^2}\right\} = k\,t\,e^{-at}\,u(t) \quad\xrightarrow{t_0\text{-shift}}\quad k\,(t-t_0)\,e^{-a(t-t_0)}\,u(t-t_0)$$
+$$\mathcal{F}^{-1}\!\left\{\frac{k}{(i\omega+a)^n}\right\} = \frac{k\,t^{n-1}}{(n-1)!}\,e^{-at}\,u(t) \quad\xrightarrow{t_0\text{-shift}}\quad \frac{k\,(t-t_0)^{n-1}}{(n-1)!}\,e^{-a(t-t_0)}\,u(t-t_0)$$
 
-Implementado en `IFT_pattern_lookup` mediante el **time-shift handler**: detecta el factor $e^{it_0\omega}$ en el numerador y delega el resto al handler de $k/(i\omega+a)^2$.
+Implementado combinando el **handler general** `k/(iω+a)^n` (par #42) con el **time-shift handler**, que detecta el factor $e^{it_0\omega}$ y delega el resto recursivamente.
 
 ---
 
 ## 14. Sinc desplazado en frecuencia — par #55
 
-$$\mathcal{F}^{-1}\!\left\{\frac{k\,\sin(c(\omega-\omega_0))}{\omega - \omega_0}\right\} = \frac{k}{2}\,e^{-i\omega_0 t}\,\bigl(u(t+c)-u(t-c)\bigr), \qquad c > 0$$
+$$\mathcal{F}^{-1}\!\left\{\frac{k\,\sin\!\bigl(c(\omega-\omega_0)\bigr)}{\omega - \omega_0}\right\} = \frac{k}{2}\,e^{-i\omega_0 t}\,\bigl(u(t+c)-u(t-c)\bigr), \qquad c > 0$$
 
 Derivado combinando $\mathcal{F}^{-1}\{\sin(c\omega)/\omega\} = (u(t+c)-u(t-c))/2$ con el **desplazamiento en frecuencia**:
 
-$$\frac{\sin(c(\omega-\omega_0))}{\omega-\omega_0} = e^{-i\omega_0 t_{\text{dom}}} * \frac{\sin(c\omega)}{\omega} \;\Rightarrow\; f(t) = e^{-i\omega_0 t}\cdot\frac{u(t+c)-u(t-c)}{2}$$
+$$\frac{\sin(c(\omega-\omega_0))}{\omega-\omega_0} \;\xrightarrow{\mathcal{F}^{-1}}\; e^{-i\omega_0 t}\cdot\frac{u(t+c)-u(t-c)}{2}$$
 
-El caso $\omega_0 = 0$ recupera el sinc no desplazado ($\sin(c\omega)/\omega \to (u(t+c)-u(t-c))/2$). Cuando $k = 1$ y $\omega_0 = 0$, la función de tiempo es la función **rect** de ancho $2c$ escalada por $1/2$.
+El caso $\omega_0 = 0$ recupera el sinc no desplazado. Cuando $k=1$ y $\omega_0=0$, la función de tiempo es la función **rect** de ancho $2c$ escalada por $1/2$.
+
+---
+
+## 15. Handler general para polos causales de orden n — par #42
+
+El detector en `IFT_pattern_lookup` identifica denominadores de la forma $s \cdot (i\omega+a)^n$ para cualquier $n \geq 1$ y escalar real $s \neq 0$:
+
+1. Extraer grado $n = \deg_\omega(\text{denom})$ y coeficiente líder $c_n = s \cdot i^n$
+2. Calcular $s = c_n / i^n$ (escalar real absorbido)
+3. Extraer $a = (c_0/s)^{1/n}$ donde $c_0 = \text{denom}\big|_{\omega=0}$
+4. Verificar $\text{denom} = s \cdot (i\omega+a)^n$ exactamente
+5. Resultado: $k_{\text{eff}} = \text{num}/s$, $f(t) = k_{\text{eff}}\,\dfrac{t^{n-1}}{(n-1)!}\,e^{-at}\,u(t)$
+
+El escalar $s$ en el denominador aparece naturalmente en las fracciones parciales (p.ej. $1/(2\,(i\omega+3))$ da $s=2$, $k_\text{eff} = 1/2$). Este handler **reemplaza** los handlers separados para $n=1$ y $n=2$.
+
+---
+
+## 16. Fracciones racionales propias via fracciones parciales — par #56
+
+Cualquier fracción racional causal propia $P(\omega)/Q(\omega)$ con $\deg P < \deg Q$ y raíces de $Q$ en el semiplano izquierdo ($\text{Re}(p_i) < 0$) se descompone automáticamente:
+
+$$\frac{P(\omega)}{Q(\omega)} = \sum_{i}\sum_{j=1}^{n_i} \frac{r_{ij}}{(i\omega - p_i)^j}
+\quad\xrightarrow{\mathcal{F}^{-1}}\quad
+\sum_{i}\sum_{j=1}^{n_i} \frac{r_{ij}\,t^{j-1}}{(j-1)!}\,e^{p_i t}\,u(t)$$
+
+Implementado como último recurso en `IFT_pattern_lookup`: aplica `partfrac(F, ω)` y si el resultado es una suma, delega cada término al resto del lookup via linealidad.
+
+**Ejemplos cubiertos automáticamente:**
+
+| $F(\omega)$ | Descomposición | $f(t)$ |
+|---|---|---|
+| $\dfrac{1}{(i\omega+1)(i\omega+2)}$ | $\dfrac{1}{i\omega+1} - \dfrac{1}{i\omega+2}$ | $(e^{-t} - e^{-2t})\,u(t)$ |
+| $\dfrac{i\omega+3}{(i\omega+1)(i\omega+2)}$ | $\dfrac{2}{i\omega+1} - \dfrac{1}{i\omega+2}$ | $(2e^{-t} - e^{-2t})\,u(t)$ |
+| $\dfrac{i\omega}{(i\omega+1)^2}$ | $\dfrac{1}{i\omega+1} - \dfrac{1}{(i\omega+1)^2}$ | $(1-t)\,e^{-t}\,u(t)$ |
+| $\dfrac{1}{(i\omega+1)^2(i\omega+2)}$ | $\dfrac{1}{i\omega+1} - \dfrac{1}{(i\omega+1)^2} + \dfrac{1}{i\omega+2}$ | $(1-t)\,e^{-t}\,u(t) + e^{-2t}\,u(t)$ |

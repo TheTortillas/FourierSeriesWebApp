@@ -10,11 +10,14 @@
          k*exp(-at)*cos(bt)*u(t)
          k*exp(-at)*sin(bt)*u(t)
      - IFT_pattern_lookup ampliado:
-         k/(iw+a), k/(iw+a)^2 (detector reescrito — coeff grado 2),
+         k/(iw+a)^n  handler GENERAL  n>=1 (reemplaza handlers n=1,n=2;
+           absorbe escalar en denominador para fracciones parciales),
          b/((iw+a)^2+b^2), (iw+a)/((iw+a)^2+b^2),
          (pi/a)*e^{-a|w|},
-         k*e^{-iwt0}/(iw+a)^2 via time-shift (corregido: F_expr no ratsimp),
-         k*sin(c*(w-w0))/(w-w0) -> k*e^{-iw0t}*(u(t+c)-u(t-c))/2
+         k*e^{-iwt0}/(iw+a)^n via time-shift (corregido: F_expr no ratsimp),
+         k*sin(c*(w-w0))/(w-w0) -> k*e^{-iw0t}*(u(t+c)-u(t-c))/2,
+         fracciones parciales: partfrac(F,w) como último recurso — cubre
+           cualquier fraccion racional propia sobre polos (iw+a)^n
      - Loop defensivo en FT() e IFT() ANTES de integracion por tramos
        para que parametros simbolicos esten declarados cuando
        integrate() los necesite — no solo dentro del lookup
@@ -1572,46 +1575,54 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
-    /* ── k/(iw+a) -> k*e^{-at}*u(t)  (a > 0) ── */
+    /* ── k/(iw+a)^n -> k*t^(n-1)/(n-1)! * e^{-at}*u(t)  (a>0, n>=1 entero) ──
+       Denominador expandido: (iw+a)^n tiene grado n en w.
+       Permite un escalar real s en el denominador: denom = s*(iw+a)^n,
+       lo que absorbe términos como 1/(2*(iw+3)) de fracciones parciales.
+       Algoritmo:
+         1. Extraer grado n y coef líder cn = s*(%i)^n  →  s = cn/%i^n
+         2. Extraer aa = (c0/s)^(1/n)  (constante real positiva)
+         3. Verificar denom = s*expand((iw+aa)^n)
+         4. k_eff = num/s;  resultado = k_eff*t^(n-1)/(n-1)!*e^{-aa*t}*u(t)
+       Reemplaza los dos handlers separados para n=1 y n=2.               */
     if is(res = false) then (
         if not atom(er) and is(op(er) = "/") then block(
-            [numer2, denom2, coef_w, coef_0],
-            numer2: part(er, 1),
-            denom2: rat(expand(part(er, 2))),
-            if freeof(w_var, numer2) and not freeof(w_var, denom2) then (
-                coef_w: ratsimp(diff(denom2, w_var)),
-                coef_0: ratsimp(subst(w_var=0, denom2)),
-                if ratsimp(coef_w - %i) = 0 and freeof(w_var, coef_0)
-                   and is(coef_0 > 0) then (
-                    a: coef_0,
-                    k: numer2,
-                    res: [k * exp(-a*t_var) * u(t_var),
-                          concat("k/(iw+a) -> k*e^{-at}*u(t), a=", string(a))]
-                )
-            )
-        )
-    ),
-
-    /* ── k/(iw+a)^2 -> k*t*e^{-at}*u(t)  (a > 0) ──
-       Denominador expandido: (iw+a)^2 = -w^2 + 2*i*a*w + a^2
-       Detecta por coeficientes del polinomio de grado 2.             */
-    if is(res = false) then (
-        if not atom(er) and is(op(er) = "/") then block(
-            [numer3, denom3, _c2_p2, _c1_p2, _c0_p2, _aa_p2, _kk_p2],
-            numer3: expand(part(er, 1)),
-            denom3: rat(expand(part(er, 2))),
-            _c2_p2: ratsimp(coeff(denom3, w_var, 2)),
-            if ratsimp(_c2_p2 + 1) = 0 then (
-                _c1_p2: ratsimp(coeff(denom3, w_var, 1)),
-                _c0_p2: ratsimp(coeff(denom3, w_var, 0)),
-                _aa_p2: ratsimp(_c1_p2 / (2 * %i)),
-                if freeof(w_var, _aa_p2) and is(_aa_p2 > 0)
-                   and ratsimp(_c0_p2 - _aa_p2^2) = 0 then (
-                    _kk_p2: errcatch(ratsimp(numer3)),
-                    if _kk_p2 # [] and freeof(w_var, first(_kk_p2)) then (
-                        _kk_p2: first(_kk_p2),
-                        res: [_kk_p2 * t_var * exp(-_aa_p2*t_var) * u(t_var),
-                              concat("k/(iw+a)^2 -> k*t*e^{-at}*u(t), a=", string(_aa_p2))]
+            [_np_num, _np_den, _np_n, _np_cn, _np_c0, _np_s, _np_aa, _np_kk, _np_ok],
+            _np_num: expand(part(er, 1)),
+            _np_den: rat(expand(part(er, 2))),
+            _np_n: hipow(_np_den, w_var),
+            if _np_n >= 1 then (
+                _np_cn: ratsimp(coeff(_np_den, w_var, _np_n)),
+                _np_c0: ratsimp(coeff(_np_den, w_var, 0)),
+                /* escalar real s = cn / %i^n */
+                _np_s: errcatch(ratsimp(_np_cn / %i^_np_n)),
+                if _np_s # [] then (
+                    _np_s: first(_np_s),
+                    if freeof(w_var, _np_s) and freeof(%i, _np_s)
+                       and is(_np_s # 0) and freeof(w_var, _np_c0)
+                       and freeof(%i, _np_c0) then (
+                        /* a = (c0/s)^(1/n), debe ser real positivo */
+                        _np_aa: errcatch(ratsimp((_np_c0 / _np_s)^(1/_np_n))),
+                        if _np_aa # [] then (
+                            _np_aa: first(_np_aa),
+                            if freeof(w_var, _np_aa) and freeof(%i, _np_aa)
+                               and is(_np_aa > 0) then (
+                                /* verificar denom = s*(iw+aa)^n exactamente */
+                                _np_ok: errcatch(ratsimp(
+                                    _np_den - _np_s*expand((%i*w_var+_np_aa)^_np_n))),
+                                if _np_ok # [] and first(_np_ok) = 0 then (
+                                    /* k efectiva absorbe el escalar s del denom */
+                                    _np_kk: errcatch(ratsimp(_np_num / _np_s)),
+                                    if _np_kk # [] and freeof(w_var, first(_np_kk)) then (
+                                        _np_kk: first(_np_kk),
+                                        res: [_np_kk * t_var^(_np_n-1) / (_np_n-1)!
+                                                   * exp(-_np_aa*t_var) * u(t_var),
+                                              concat("k/(iw+a)^n -> k*t^(n-1)/(n-1)!*e^{-at}*u(t), n=",
+                                                     string(_np_n), ", a=", string(_np_aa))]
+                                    )
+                                )
+                            )
+                        )
                     )
                 )
             )
@@ -2124,6 +2135,40 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             )
         ),
         if _all_ok then res: [_f_sum, "linearity: IFT(F+G+...) = IFT(F)+IFT(G)+..."]
+    ),
+
+    /* ── partfrac: descomponer en fracciones parciales y aplicar linealidad ──
+       Último recurso antes de devolver false.  Aplica partfrac(F_expr, w_var)
+       al racional er; si el resultado es una suma, intenta IFT term a term.
+       Cubre: 1/((iw+a)(iw+b)), (iw+c)/((iw+a)^2*(iw+b)), etc.
+       Solo activa si er tiene op="/" (no sobre sumas ni deltas).           */
+    if is(res = false) and not atom(er) and is(op(er) = "/")
+       and freeof('delta, er) and not freeof(w_var, er) then block(
+        [_pf_expr, _pf_terms, _pf_ok, _pf_sum, _pf_i, _pf_inner],
+        _pf_expr: errcatch(partfrac(er, w_var)),
+        if _pf_expr # [] then (
+            _pf_expr: first(_pf_expr),
+            /* solo útil si partfrac produjo una suma de términos */
+            if not atom(_pf_expr) and is(op(_pf_expr) = "+") then (
+                _pf_terms: args(_pf_expr),
+                _pf_ok: true,
+                _pf_sum: 0,
+                for _pf_t in _pf_terms while _pf_ok do (
+                    if not atom(_pf_t) and is(op(_pf_t) = "-") then (
+                        _pf_inner: first(args(_pf_t)),
+                        _pf_i: IFT_pattern_lookup(_pf_inner, w_var, t_var),
+                        if is(_pf_i = false) then _pf_ok: false
+                        else _pf_sum: _pf_sum - _pf_i[1]
+                    ) else (
+                        _pf_i: IFT_pattern_lookup(_pf_t, w_var, t_var),
+                        if is(_pf_i = false) then _pf_ok: false
+                        else _pf_sum: _pf_sum + _pf_i[1]
+                    )
+                ),
+                if _pf_ok then
+                    res: [_pf_sum, "partfrac -> linearity"]
+            )
+        )
     ),
 
     res
