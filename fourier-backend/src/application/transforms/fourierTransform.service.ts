@@ -486,6 +486,10 @@ kill(all)$
 
   private toSymbolic(maxima: string, tex: string, displayTex?: string) {
     if (!maxima) return undefined;
+    // Maxima sometimes returns internal label names (result3, %r2, %t1, …) when
+    // integrate() leaves an expression unsimplified. These are meaningless to the
+    // user and should be treated as "no closed form found".
+    if (/^(result\d+|%r\d+|%t\d+|%c\d+)$/.test(maxima.trim())) return undefined;
     return {
       maxima,
       tex: displayTex || tex,

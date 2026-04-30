@@ -1872,5 +1872,126 @@
             "exists": true,
             "fCombined": "%e^(%i*t-3*abs(t))"
         }
+    },
+    {
+        "id": "K09",
+        "type": "ift",
+        "description": "IFT de 1/(iw+1)^2 → t·e^{-t}·u(t)  (polo causal orden 2, a=1)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(%i*w+1)^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t*%e^(-t)*u(t)"
+        }
+    },
+    {
+        "id": "K10",
+        "type": "ift",
+        "description": "IFT de 3/(iw+2)^2 → 3t·e^{-2t}·u(t)  (polo causal orden 2 con escalar)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "3/(%i*w+2)^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "3*t*%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "K11",
+        "type": "ift",
+        "description": "IFT de 1/(iw+a)^2 parámetro simbólico → t·e^{-at}·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(%i*w+a)^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t*%e^(-a*t)*u(t)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "P06",
+        "type": "ift",
+        "description": "IFT de e^{-2iw}/(iw+1)^2 → (t-2)·e^{-(t-2)}·u(t-2)  (polo causal orden 2 desplazado)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%e^(-2*%i*w)/(%i*w+1)^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(t-2)*%e^(-(t-2))*u(t-2)"
+        }
+    },
+    {
+        "id": "P07",
+        "type": "ift",
+        "description": "IFT de sin(2*(w-3))/(w-3) → e^{-3it}·(u(t+2)-u(t-2))/2  (sinc desplazado en frecuencia)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(2*(w-3))/(w-3)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-(3*%i*t))*(u(t+2)-u(t-2))/2"
+        }
+    },
+    {
+        "id": "P08",
+        "type": "ift",
+        "description": "IFT de sin(2*w)/w → (sgn(t+2)-sgn(t-2))/4 ≡ (u(t+2)-u(t-2))/2  (sinc no desplazado, regresión)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(2*w)/w",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(sgn(t+2)-sgn(t-2))/4"
+        }
     }
 ]

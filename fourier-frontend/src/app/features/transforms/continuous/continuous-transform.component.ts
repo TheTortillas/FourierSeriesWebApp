@@ -633,8 +633,12 @@ export class ContinuousTransformComponent implements OnInit {
           this.mode() === 'ft' &&
           !!ft?.exists &&
           (!!ft.inputRealPart?.maxima || !!ft.inputImagPart?.maxima);
+        // IFT: never draw a raw preview for complex inputs — the "imaginary values" warning
+        // already informs the user, and compile() would map %i→0 producing a wrong curve.
+        const iftInputIsComplex = this.mode() === 'ift' && this.hasComplexInputs();
         const shouldDrawInputPreview =
-          (this.mode() === 'ft' && !hasFtComputedInput) || (this.mode() === 'ift' && !ift?.exists);
+          (this.mode() === 'ft' && !hasFtComputedInput) ||
+          (this.mode() === 'ift' && !ift?.exists && !iftInputIsComplex);
         if ((showOrigRe || showOrigM) && shouldDrawInputPreview) {
           for (const seg of segs) {
             const fn = this.mathUtils.compile(seg.expression, intVariable, pv);

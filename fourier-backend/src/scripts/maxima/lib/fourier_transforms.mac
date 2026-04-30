@@ -10,9 +10,11 @@
          k*exp(-at)*cos(bt)*u(t)
          k*exp(-at)*sin(bt)*u(t)
      - IFT_pattern_lookup ampliado:
-         k/(iw+a), k/(iw+a)^2,
+         k/(iw+a), k/(iw+a)^2 (detector reescrito — coeff grado 2),
          b/((iw+a)^2+b^2), (iw+a)/((iw+a)^2+b^2),
-         (pi/a)*e^{-a|w|}
+         (pi/a)*e^{-a|w|},
+         k*e^{-iwt0}/(iw+a)^2 via time-shift (corregido: F_expr no ratsimp),
+         k*sin(c*(w-w0))/(w-w0) -> k*e^{-iw0t}*(u(t+c)-u(t-c))/2
      - Loop defensivo en FT() e IFT() ANTES de integracion por tramos
        para que parametros simbolicos esten declarados cuando
        integrate() los necesite — no solo dentro del lookup
@@ -1590,25 +1592,26 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
-    /* ── k/(iw+a)^2 -> k*t*e^{-at}*u(t)  (a > 0) ── */
+    /* ── k/(iw+a)^2 -> k*t*e^{-at}*u(t)  (a > 0) ──
+       Denominador expandido: (iw+a)^2 = -w^2 + 2*i*a*w + a^2
+       Detecta por coeficientes del polinomio de grado 2.             */
     if is(res = false) then (
         if not atom(er) and is(op(er) = "/") then block(
-            [numer3, denom3, d4, d2, d0, aa, expected_num, kk],
+            [numer3, denom3, _c2_p2, _c1_p2, _c0_p2, _aa_p2, _kk_p2],
             numer3: expand(part(er, 1)),
             denom3: rat(expand(part(er, 2))),
-            d4: ratsimp(diff(denom3, w_var, 4) / 24),
-            if ratsimp(d4 - 1) = 0 then (
-                d2: ratsimp(subst(w_var=0, diff(denom3, w_var, 2)) / 2),
-                d0: ratsimp(subst(w_var=0, denom3)),
-                if freeof(w_var, d2) and is(d2 > 0)
-                   and ratsimp(d0 - d2^2) = 0 then (
-                    aa: sqrt(d2),
-                    expected_num: -(w_var^2 + 2*%i*aa*w_var - aa^2),
-                    kk: errcatch(ratsimp(numer3 / expand(expected_num))),
-                    if kk # [] and freeof(w_var, first(kk)) then (
-                        kk: first(kk),
-                        res: [kk * t_var * exp(-aa*t_var) * u(t_var),
-                              concat("k/(iw+a)^2 -> k*t*e^{-at}*u(t), a=", string(aa))]
+            _c2_p2: ratsimp(coeff(denom3, w_var, 2)),
+            if ratsimp(_c2_p2 + 1) = 0 then (
+                _c1_p2: ratsimp(coeff(denom3, w_var, 1)),
+                _c0_p2: ratsimp(coeff(denom3, w_var, 0)),
+                _aa_p2: ratsimp(_c1_p2 / (2 * %i)),
+                if freeof(w_var, _aa_p2) and is(_aa_p2 > 0)
+                   and ratsimp(_c0_p2 - _aa_p2^2) = 0 then (
+                    _kk_p2: errcatch(ratsimp(numer3)),
+                    if _kk_p2 # [] and freeof(w_var, first(_kk_p2)) then (
+                        _kk_p2: first(_kk_p2),
+                        res: [_kk_p2 * t_var * exp(-_aa_p2*t_var) * u(t_var),
+                              concat("k/(iw+a)^2 -> k*t*e^{-at}*u(t), a=", string(_aa_p2))]
                     )
                 )
             )
@@ -1907,7 +1910,9 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
     if is(res = false) then block(
         [_ts_e, _ts_numer, _ts_denom, _ts_factors,
          _exp_fac_ts, _t0_ts, _g_rest_ts, _g_ift_ts, _earg_ts, _t0c_ts],
-        _ts_e: ratsimp(F_expr),
+        /* Use F_expr directly — ratsimp can change op from "/" to "-",
+           breaking the structural check below.                        */
+        _ts_e: F_expr,
         _exp_fac_ts: false, _t0_ts: false, _g_rest_ts: 1,
         if not atom(_ts_e) and (is(op(_ts_e) = "*") or is(op(_ts_e) = "/")) then (
             _ts_denom: if is(op(_ts_e) = "/") then part(_ts_e, 2) else 1,
@@ -1980,6 +1985,56 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                            - subst(t_var = t_var - _b_sm, _f_ift_sm[1])) / (2*%i),
                           concat("sin(bw)*F(w)->(f(t+b)-f(t-b))/(2i), b=",
                                  string(_b_sm), ", IFT[F]=", _f_ift_sm[2])]
+            )
+        )
+    ),
+
+    /* ── k*sin(c*(w-w0))/(w-w0) -> k*e^{-iw0*t}*(u(t+c)-u(t-c))/2 ──
+       Sinc desplazado en frecuencia.
+       IFT[sin(c*(w-w0))/(w-w0)] = e^{-iw0*t} * (u(t+c)-u(t-c))/2
+       Detecta denominador lineal (w-w0) y numerador k*sin(c*(w-w0)).
+       La normalización extra _c1_ss recoge el coef de w en el denom. */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [_nss, _dss, _c2_ss, _c1_ss, _c0_ss, _w0_ss,
+             _sin_f_ss, _sin_arg_ss, _cc_ss, _kk_ss],
+            _nss: part(er, 1),
+            _dss: rat(expand(part(er, 2))),
+            _c2_ss: ratsimp(coeff(_dss, w_var, 2)),
+            _c1_ss: ratsimp(coeff(_dss, w_var, 1)),
+            _c0_ss: ratsimp(coeff(_dss, w_var, 0)),
+            if ratsimp(_c2_ss) = 0 and freeof(w_var, _c1_ss)
+               and freeof(w_var, _c0_ss) and freeof(%i, _c1_ss)
+               and not equal(_c1_ss, 0) then (
+                _w0_ss: ratsimp(-_c0_ss / _c1_ss),
+                if freeof(w_var, _w0_ss) and freeof(%i, _w0_ss) then (
+                    _sin_f_ss: false, _kk_ss: 1,
+                    if not atom(_nss) and is(op(_nss) = "*") then (
+                        for _sf in args(_nss) do (
+                            if is(_sin_f_ss = false) and not atom(_sf)
+                               and is(op(_sf) = 'sin)
+                            then _sin_f_ss: _sf
+                            else _kk_ss: _kk_ss * _sf
+                        )
+                    ) else if not atom(_nss) and is(op(_nss) = 'sin) then (
+                        _sin_f_ss: _nss, _kk_ss: 1
+                    ),
+                    if is(_sin_f_ss # false) then (
+                        _sin_arg_ss: part(_sin_f_ss, 1),
+                        _cc_ss: errcatch(ratsimp(_sin_arg_ss / (w_var - _w0_ss))),
+                        if _cc_ss # [] and freeof(w_var, first(_cc_ss))
+                           and freeof(%i, first(_cc_ss))
+                           and not equal(first(_cc_ss), 0)
+                           and ratsimp(_sin_arg_ss - first(_cc_ss)*(w_var - _w0_ss)) = 0 then (
+                            _cc_ss: first(_cc_ss),
+                            if is(_cc_ss > 0) and freeof(w_var, _kk_ss) then
+                                res: [_kk_ss * _c1_ss * exp(-%i*_w0_ss*t_var)
+                                           * (u(t_var + _cc_ss) - u(t_var - _cc_ss)) / 2,
+                                      concat("k*sin(c*(w-w0))/(w-w0)->k*e^{-iw0t}*(u(t+c)-u(t-c))/2, c=",
+                                             string(_cc_ss), ", w0=", string(_w0_ss))]
+                        )
+                    )
+                )
             )
         )
     ),
