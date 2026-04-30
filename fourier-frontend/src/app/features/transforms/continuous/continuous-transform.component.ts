@@ -316,6 +316,19 @@ export class ContinuousTransformComponent implements OnInit {
     return (ft ?? ift)?.params ?? [];
   });
 
+  /** TeX for the piecewise Re f(t) primary display — used in results section. */
+  readonly inputRealPiecewiseTex = computed<string>(() => {
+    const segs = this.segments();
+    const v = this.intVar();
+    if (segs.length === 0) return '';
+    if (segs.length === 1) return segs[0].expressionTex;
+    return (
+      '\\begin{cases}' +
+      segs.map((s) => s.expressionTex + ',&' + s.fromTex + '<' + v + '<' + s.toTex).join('\\\\') +
+      '\\end{cases}'
+    );
+  });
+
   /** LaTeX preview of the piecewise input function, mirroring calculator's previewLatex. */
   readonly previewLatex = computed<string | null>(() => {
     const segs = this.segments();
