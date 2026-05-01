@@ -1886,6 +1886,56 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── k/sqrt(iw+a) -> k*e^{-at}/sqrt(pi*t)*u(t)  (a > 0) ──
+       Detecta denominador sqrt(iw+a) o s*sqrt(iw+a) (s real).
+       Usa F_expr directamente — rat() y expand() preservan sqrt aquí,
+       pero la estructura op='sqrt' no es "^", hay que verificar explícitamente. */
+    if is(res = false) and not atom(F_expr) and is(op(F_expr) = "/") then block(
+        [_sq_num, _sq_den, _sq_base, _sq_s, _sq_c1, _sq_c0, _sq_aa, _sq_kk],
+        _sq_num: part(F_expr, 1),
+        _sq_den: part(F_expr, 2),
+        /* denominador: sqrt(base)  o  s * sqrt(base) */
+        if not atom(_sq_den) then (
+            if is(op(_sq_den) = 'sqrt) then (
+                _sq_base: part(_sq_den, 1),
+                _sq_s: 1
+            ) else if is(op(_sq_den) = "*") then (
+                /* buscar el factor sqrt que contiene w_var */
+                _sq_base: false, _sq_s: 1,
+                for _f in args(_sq_den) do (
+                    if not atom(_f) and is(op(_f) = 'sqrt)
+                       and not freeof(w_var, part(_f, 1))
+                    then _sq_base: part(_f, 1)
+                    else _sq_s: _sq_s * _f
+                )
+            ),
+            if is(_sq_base # false) and freeof('delta, _sq_base)
+               and not freeof(w_var, _sq_base) then (
+                /* base debe ser lineal en w: expand -> c1*w + c0, c1=i, c0 real>0 */
+                _sq_c1: errcatch(ratsimp(diff(expand(_sq_base), w_var))),
+                _sq_c0: errcatch(ratsimp(subst(w_var=0, expand(_sq_base)))),
+                if _sq_c1 # [] and _sq_c0 # [] then (
+                    _sq_c1: first(_sq_c1),
+                    _sq_c0: first(_sq_c0),
+                    if ratsimp(_sq_c1 - %i) = 0
+                       and freeof(w_var, _sq_c0) and freeof(%i, _sq_c0)
+                       and is(_sq_c0 > 0) then (
+                        _sq_aa: _sq_c0,
+                        /* k_eff = num / s  (absorbe el escalar del denominador) */
+                        _sq_kk: errcatch(ratsimp(_sq_num / _sq_s)),
+                        if _sq_kk # [] and freeof(w_var, first(_sq_kk)) then (
+                            _sq_kk: first(_sq_kk),
+                            res: [_sq_kk * exp(-_sq_aa*t_var)
+                                      / (sqrt(%pi) * sqrt(t_var)) * u(t_var),
+                                  concat("k/sqrt(iw+a)->k*e^{-at}/sqrt(pi*t)*u(t), a=",
+                                         string(_sq_aa))]
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── k/(w*(iw+a)) -> (ik/a)*(sgn(t)/2 - e^{-at}*u(t))  (a > 0) ──
        Via fracciones parciales: 1/(w*(iw+a)) = (1/a)/w - (i/a)/(iw+a) */
     if is(res = false) then (
@@ -1950,6 +2000,66 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                     res: [subst(t_var = t_var + _t0_ts, _g_ift_ts[1]),
                           concat("time-shift: e^{it0w}*G(w)->IFT[G](t+t0), t0=",
                                  string(_t0_ts), ", G=", _g_ift_ts[2])]
+            )
+        )
+    ),
+
+    /* ── freq-shift: F(w-w0) -> e^{+iw0*t}*f(t) ──
+       IFT convention: IFT[F(w-w0)] = e^{+iw0*t} * f(t).
+       Detect a rational/exponential F_expr whose denominator, when expanded,
+       has a complex constant term — extract w0 = -Im(c0)/Im(c1) so that
+       substituting w -> w+w0 removes the imaginary shift from the denom.
+       Must use F_expr (not er) to avoid rat() absorbing exponentials.      */
+    if is(res = false) and not atom(F_expr)
+       and (is(op(F_expr) = "/") or is(op(F_expr) = "*")) then block(
+        [_fs_den, _fs_lin, _fs_dexp, _fs_c1, _fs_c0, _fs_im_c1, _fs_im_c0,
+         _fs_w0, _fs_G, _fs_ift_G],
+        /* extract denominator; if it is L(w)^n, use the base L(w) */
+        _fs_den: if is(op(F_expr) = "/") then part(F_expr, 2) else false,
+        if is(_fs_den # false) and freeof('delta, _fs_den) then (
+            /* unwrap power: den = base^n -> extract linear base; else use den itself */
+            _fs_lin: if not atom(_fs_den) and is(op(_fs_den) = "^")
+                     then part(_fs_den, 1)
+                     else _fs_den,
+            _fs_dexp: expand(_fs_lin),
+            _fs_c1: errcatch(ratsimp(diff(_fs_dexp, w_var))),
+            _fs_c0: errcatch(ratsimp(subst(w_var=0, _fs_dexp))),
+            if _fs_c1 # [] and _fs_c0 # [] then (
+                _fs_c1: first(_fs_c1),
+                _fs_c0: first(_fs_c0),
+                /* require linear factor (in w) with imaginary parts */
+                if freeof(w_var, _fs_c1) and freeof(w_var, _fs_c0)
+                   and not freeof(%i, _fs_c0) then (
+                    _fs_im_c1: errcatch(ratsimp(imagpart(_fs_c1))),
+                    _fs_im_c0: errcatch(ratsimp(imagpart(_fs_c0))),
+                    if _fs_im_c1 # [] and _fs_im_c0 # [] then (
+                        _fs_im_c1: first(_fs_im_c1),
+                        _fs_im_c0: first(_fs_im_c0),
+                        if freeof(w_var, _fs_im_c1) and freeof(w_var, _fs_im_c0)
+                           and not equal(_fs_im_c1, 0) and not equal(_fs_im_c0, 0) then (
+                            _fs_w0: errcatch(ratsimp(-_fs_im_c0 / _fs_im_c1)),
+                            if _fs_w0 # [] then (
+                                _fs_w0: first(_fs_w0),
+                                if freeof(w_var, _fs_w0) and freeof(%i, _fs_w0)
+                                   and not equal(_fs_w0, 0) then (
+                                    /* substitute w -> w+w0 to unshift.
+                                       Use subst only — ratsimp inside IFT_pattern_lookup
+                                       can expand negative exponentials into the denominator
+                                       due to internal rat() context, hiding the exp factor. */
+                                    _fs_G: errcatch(subst(w_var = w_var + _fs_w0, F_expr)),
+                                    if _fs_G # [] then (
+                                        _fs_G: first(_fs_G),
+                                        _fs_ift_G: IFT_pattern_lookup(_fs_G, w_var, t_var),
+                                        if is(_fs_ift_G # false) then
+                                            res: [exp(+%i*_fs_w0*t_var) * _fs_ift_G[1],
+                                                  concat("freq-shift: F(w-w0)->e^{iw0t}*f(t), w0=",
+                                                         string(_fs_w0), ", IFT[G]=", _fs_ift_G[2])]
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
             )
         )
     ),
@@ -2039,9 +2149,9 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                            and ratsimp(_sin_arg_ss - first(_cc_ss)*(w_var - _w0_ss)) = 0 then (
                             _cc_ss: first(_cc_ss),
                             if is(_cc_ss > 0) and freeof(w_var, _kk_ss) then
-                                res: [_kk_ss * _c1_ss * exp(-%i*_w0_ss*t_var)
+                                res: [_kk_ss * _c1_ss * exp(+%i*_w0_ss*t_var)
                                            * (u(t_var + _cc_ss) - u(t_var - _cc_ss)) / 2,
-                                      concat("k*sin(c*(w-w0))/(w-w0)->k*e^{-iw0t}*(u(t+c)-u(t-c))/2, c=",
+                                      concat("k*sin(c*(w-w0))/(w-w0)->k*e^{+iw0t}*(u(t+c)-u(t-c))/2, c=",
                                              string(_cc_ss), ", w0=", string(_w0_ss))]
                         )
                     )

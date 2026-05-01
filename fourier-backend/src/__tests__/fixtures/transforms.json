@@ -1957,7 +1957,7 @@
     {
         "id": "P07",
         "type": "ift",
-        "description": "IFT de sin(2*(w-3))/(w-3) → e^{-3it}·(u(t+2)-u(t-2))/2  (sinc desplazado en frecuencia)",
+        "description": "IFT de sin(2*(w-3))/(w-3) → e^{+3it}·(u(t+2)-u(t-2))/2  (sinc desplazado en frecuencia)",
         "input": {
             "segments": [
                 {
@@ -1971,7 +1971,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "%e^(-(3*%i*t))*(u(t+2)-u(t-2))/2"
+            "fCombined": "%e^(3*%i*t)*(u(t+2)-u(t-2))/2"
         }
     },
     {
@@ -2120,6 +2120,146 @@
         "expected": {
             "exists": true,
             "fCombined": "t*%e^(-t)*u(t)-%e^(-t)*u(t)+%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "R01",
+        "type": "ift",
+        "description": "IFT de 1/(i*(w-3)+5) → e^{+3it}·e^{-5t}·u(t)  (freq-shift simple, polo en w=3)",
+        "input": {
+            "segments": [{ "expression": "1/(%i*(w-3)+5)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(3*%i*t)*%e^(-5*t)*u(t)"
+        }
+    },
+    {
+        "id": "R02",
+        "type": "ift",
+        "description": "IFT de e^{-2i(w-3)}/(i(w-3)+5) → e^{3it}·e^{-5(t-2)}·u(t-2)  (freq-shift + time-shift)",
+        "input": {
+            "segments": [{ "expression": "%e^(-2*%i*(w-3))/(%i*(w-3)+5)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(3*%i*t)*%e^(-5*(t-2))*u(t-2)"
+        }
+    },
+    {
+        "id": "R03",
+        "type": "ift",
+        "description": "IFT de 1/((i*(w-2)+3)^2) → e^{2it}·t·e^{-3t}·u(t)  (freq-shift, polo doble)",
+        "input": {
+            "segments": [{ "expression": "1/((%i*(w-2)+3)^2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t*%e^(2*%i*t-3*t)*u(t)"
+        }
+    },
+    {
+        "id": "R04",
+        "type": "ift",
+        "description": "IFT de 4/(i*(w-1)+2) → 4·e^{it}·e^{-2t}·u(t)  (freq-shift con ganancia k=4)",
+        "input": {
+            "segments": [{ "expression": "4/(%i*(w-1)+2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "4*%e^(%i*t)*%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "R05",
+        "type": "ift",
+        "description": "IFT de 2*sin(w-1)/(w-1) → e^{+it}·(u(t+1)-u(t-1))  (sinc desplazado, k=2)",
+        "input": {
+            "segments": [{ "expression": "2*sin(w-1)/(w-1)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(%i*t)*(u(t+1)-u(t-1))"
+        }
+    },
+    {
+        "id": "S01",
+        "type": "ift",
+        "description": "IFT de 1/sqrt(i*w+1) → e^{-t}/sqrt(pi*t)*u(t)  (polo de orden 1/2)",
+        "input": {
+            "segments": [{ "expression": "1/sqrt(%i*w+1)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^-t*u(t))/(sqrt(%pi)*sqrt(t))"
+        }
+    },
+    {
+        "id": "S02",
+        "type": "ift",
+        "description": "IFT de 1/sqrt(i*w+3) → e^{-3t}/sqrt(pi*t)*u(t)  (a=3)",
+        "input": {
+            "segments": [{ "expression": "1/sqrt(%i*w+3)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^-(3*t)*u(t))/(sqrt(%pi)*sqrt(t))"
+        }
+    },
+    {
+        "id": "S03",
+        "type": "ift",
+        "description": "IFT de 5/sqrt(i*w+2) → 5*e^{-2t}/sqrt(pi*t)*u(t)  (k=5)",
+        "input": {
+            "segments": [{ "expression": "5/sqrt(%i*w+2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(5*%e^-(2*t)*u(t))/(sqrt(%pi)*sqrt(t))"
+        }
+    },
+    {
+        "id": "S04",
+        "type": "ift",
+        "description": "IFT de 1/sqrt(2*(i*w+1)) → e^{-t}/sqrt(2*pi*t)*u(t)  (escalar en raíz)",
+        "input": {
+            "segments": [{ "expression": "1/sqrt(2*(%i*w+1))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^-t*u(t))/(sqrt(2)*sqrt(%pi)*sqrt(t))"
+        }
+    },
+    {
+        "id": "S05",
+        "type": "ift",
+        "description": "IFT de e^{-iw}/sqrt(i*w+1) → e^{-(t-1)}/sqrt(pi*(t-1))*u(t-1)  (time-shift + sqrt)",
+        "input": {
+            "segments": [{ "expression": "%e^(-%i*w)/sqrt(%i*w+1)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(u(t-1)*%e^(1-t))/(sqrt(%pi)*sqrt(t-1))"
         }
     }
 ]
