@@ -1299,6 +1299,34 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── trig power reduction: sin^n(f(t)) / cos^n(f(t))  (n >= 2) ──
+       trigreduce reduces sin(x)^n and cos(x)^n to sums of sin/cos of
+       multiples of x for any integer n, e.g. sin(t)^2 -> (1-cos(2t))/2.
+       Works for any argument f(t), including shifts like sin(t-a)^n.
+       Only activates when op="^", base is sin or cos, exponent is integer >= 2
+       and the result differs from the input (trigreduce did something). */
+    if is(res = false) and not atom(e) and is(op(e) = "^") then block(
+        [_tp_base, _tp_exp, _tp_reduced, _tp_ft],
+        _tp_base: part(e, 1),
+        _tp_exp:  part(e, 2),
+        if not atom(_tp_base)
+           and (is(op(_tp_base) = 'sin) or is(op(_tp_base) = 'cos))
+           and integerp(_tp_exp) and _tp_exp >= 2 then (
+            _tp_reduced: errcatch(trigreduce(e)),
+            if _tp_reduced # [] then (
+                _tp_reduced: first(_tp_reduced),
+                /* Guard: trigreduce must have changed op away from "^" —
+                   if it still returns a power we'd recurse infinitely. */
+                if atom(_tp_reduced) or not is(op(_tp_reduced) = "^") then (
+                    _tp_ft: FT_pattern_lookup(_tp_reduced, t_var, w_var),
+                    if is(_tp_ft # false) then
+                        res: [_tp_ft[1],
+                              concat("sin/cos^n -> trigreduce -> ", _tp_ft[2])]
+                )
+            )
+        )
+    ),
+
     /* ── linearity: FT(f+g+...) = FT(f)+FT(g)+... ──
        Handles unary minus terms: Maxima represents -(k*f) with op="-",
        not as (-k)*f. We negate the FT of the inner expression. */
@@ -1813,6 +1841,59 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
 
     /* ── k/(a²+w²) -> k*e^{-a|t|}/(2a)  (a > 0) ──
        Desde FT[e^{-a|t|}] = 2a/(a²+w²) */
+    /* ── k*w/(w²+a²)  ->  -i/2 * sgn(t) * e^{-a|t|}  (a > 0) ──
+       ── k*i*w/(w²+a²) ->   1/2 * sgn(t) * e^{-a|t|}  (a > 0) ──
+       Dual del par k/(w²+a²): numerador es k*w o k*i*w (lineal en w).
+       Verificamos denominador = w²+a² y numerador proporcional a w o i*w. */
+    if is(res = false) then (
+        if not atom(er) and is(op(er) = "/") then block(
+            [_n_wq, _d_wq, _c2_wq, _c0_wq, _a_wq,
+             _cn1_wq, _cn0_wq, _ki_wq, _k_wq],
+            _n_wq: part(er, 1),
+            _d_wq: rat(expand(part(er, 2))),
+            if not freeof(w_var, _d_wq) and freeof('abs, _d_wq)
+               and freeof(%e, _d_wq) then (
+                _c2_wq: ratsimp(diff(_d_wq, w_var, 2) / 2),
+                _c0_wq: ratsimp(subst(w_var=0, _d_wq)),
+                /* denominator must be exactly w^2 + a^2 */
+                if ratsimp(_c2_wq - 1) = 0 and is(_c0_wq > 0)
+                   and ratsimp(_d_wq - (w_var^2 + _c0_wq)) = 0 then (
+                    _a_wq: sqrt(ratdisrep(rat(_c0_wq))),
+                    if freeof(w_var, _a_wq) and is(_a_wq > 0) then (
+                        /* numerator: check proportional to w or i*w */
+                        _cn1_wq: errcatch(ratsimp(rat(_n_wq) / w_var)),
+                        _cn0_wq: errcatch(ratsimp(subst(w_var=0, rat(_n_wq)))),
+                        if _cn1_wq # [] and _cn0_wq # []
+                           and freeof(w_var, first(_cn1_wq))
+                           and ratsimp(first(_cn0_wq)) = 0 then (
+                            _ki_wq: first(_cn1_wq),
+                            /* split: k*w case (ki real) vs k*i*w case (ki = k*i) */
+                            if freeof(%i, _ki_wq) then (
+                                /* k*w/(w^2+a^2) -> +i*k/2 * sgn(t) * e^{-a|t|} */
+                                res: [%i * _ki_wq / 2
+                                          * sgn(t_var) * exp(-_a_wq*abs(t_var)),
+                                      concat("k*w/(w^2+a^2)->ik/2*sgn(t)*e^{-a|t|}, a=",
+                                             string(_a_wq))]
+                            ) else (
+                                /* check ki = k*i, extract real k */
+                                _k_wq: errcatch(ratsimp(_ki_wq / %i)),
+                                if _k_wq # [] and freeof(%i, first(_k_wq)) then (
+                                    _k_wq: first(_k_wq),
+                                    /* k*i*w/(w^2+a^2) -> -k/2 * sgn(t) * e^{-a|t|} */
+                                    res: [-_k_wq / 2
+                                              * sgn(t_var) * exp(-_a_wq*abs(t_var)),
+                                          concat("k*iw/(w^2+a^2)->-k/2*sgn(t)*e^{-a|t|}, a=",
+                                                 string(_a_wq))]
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── k/(w²+a²) -> k*exp(-a|t|)/(2a)  (a > 0) ── */
     if is(res = false) then (
         if not atom(er) and is(op(er) = "/") then block(
             [_n_ltz, _d_ltz, _c2_ltz, _c0_ltz, _a_ltz, _k_ltz],
@@ -2222,6 +2303,84 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             if is(_ift_core # false) then
                 res: [_const_k * _ift_core[1],
                       concat("k*F(w): k=", string(_const_k), ", ", _ift_core[2])]
+        )
+    ),
+
+    /* ── (alpha*w + beta)/(w^2+a^2) -> combined causal/anti-causal result ──
+       Handles F_expr = k*(alpha*w + beta)/(w^2+a^2) directly, without expanding,
+       to avoid linearity splitting it into two terms that can't recombine.
+       IFT[(alpha*w+beta)/(w^2+a^2)]
+         = alpha*i/2*sgn(t)*e^{-a|t|} + beta/(2a)*e^{-a|t|}
+         = e^{-a|t|} * (alpha*i*a + beta) / (2a)
+       When alpha*i*a = +beta: coeff = beta/a, result = beta/a*e^{-at}*u(t) (causal)
+       When alpha*i*a = -beta: coeff = -beta/a, result = -beta/a*e^{-at}*u(-t) (anti-causal)
+       Uses F_expr (not er) so that negation/scalar outside the fraction is preserved. */
+    if is(res = false) and not atom(F_expr)
+       and (is(op(F_expr) = "/") or is(op(F_expr) = "*")
+            or is(op(F_expr) = "-")) then block(
+        [_lq_num, _lq_den, _lq_c2, _lq_c0, _lq_a,
+         _lq_nc1, _lq_nc0, _lq_alpha, _lq_beta, _lq_check, _lq_k],
+        /* Normalize: extract outer scalar k so core = _lq_num/_lq_den */
+        _lq_k: 1,
+        _lq_num: false, _lq_den: false,
+        block([_lq_tmp],
+            _lq_tmp: F_expr,
+            /* absorb unary minus */
+            if not atom(_lq_tmp) and is(op(_lq_tmp) = "-") then (
+                _lq_k: -1, _lq_tmp: first(args(_lq_tmp))
+            ),
+            /* absorb outer scalar in product  k * (numer/denom) */
+            if not atom(_lq_tmp) and is(op(_lq_tmp) = "*") then (
+                for _lf in args(_lq_tmp) do (
+                    if freeof(w_var, _lf) then _lq_k: _lq_k * _lf
+                    else if not atom(_lf) and is(op(_lf) = "/")
+                    then (_lq_num: part(_lf, 1), _lq_den: part(_lf, 2))
+                )
+            ) else if not atom(_lq_tmp) and is(op(_lq_tmp) = "/") then (
+                _lq_num: part(_lq_tmp, 1),
+                _lq_den: part(_lq_tmp, 2)
+            )
+        ),
+        if is(_lq_num # false) and is(_lq_den # false)
+           and not freeof(w_var, _lq_num)  /* numerator must depend on w */
+           and not freeof(w_var, _lq_den)
+           and freeof(%e, _lq_den) and freeof('abs, _lq_den)
+           and freeof('delta, _lq_den) then (
+            _lq_c2: errcatch(ratsimp(diff(rat(expand(_lq_den)), w_var, 2) / 2)),
+            _lq_c0: errcatch(ratsimp(subst(w_var=0, rat(expand(_lq_den))))),
+            if _lq_c2 # [] and _lq_c0 # []
+               and ratsimp(first(_lq_c2) - 1) = 0   /* coeff w^2 = 1 */
+               and is(first(_lq_c0) > 0)
+               and ratsimp(rat(expand(_lq_den)) - (w_var^2 + first(_lq_c0))) = 0 then (
+                _lq_a: sqrt(ratdisrep(rat(first(_lq_c0)))),
+                if freeof(w_var, _lq_a) and is(_lq_a > 0) then (
+                    _lq_nc1: errcatch(ratsimp(diff(rat(expand(_lq_num)), w_var))),
+                    _lq_nc0: errcatch(ratsimp(subst(w_var=0, rat(expand(_lq_num))))),
+                    if _lq_nc1 # [] and _lq_nc0 # []
+                       and freeof(w_var, first(_lq_nc1))
+                       and freeof(w_var, first(_lq_nc0))
+                       and ratsimp(rat(expand(_lq_num))
+                                   - (first(_lq_nc1)*w_var + first(_lq_nc0))) = 0 then (
+                        _lq_alpha: first(_lq_nc1),
+                        _lq_beta:  first(_lq_nc0),
+                        /* check causal: alpha*i*a = beta  =>  result k*beta/a*e^{-at}*u(t) */
+                        _lq_check: errcatch(ratsimp(_lq_alpha * %i * _lq_a - _lq_beta)),
+                        if _lq_check # [] and ratsimp(first(_lq_check)) = 0 then (
+                            res: [_lq_k * (_lq_beta / _lq_a) * exp(-_lq_a*t_var) * u(t_var),
+                                  concat("(alphaW+beta)/(w^2+a^2)->causal, a=",
+                                         string(_lq_a))]
+                        ) else (
+                            /* check anti-causal: alpha*i*a = -beta */
+                            _lq_check: errcatch(ratsimp(_lq_alpha * %i * _lq_a + _lq_beta)),
+                            if _lq_check # [] and ratsimp(first(_lq_check)) = 0 then
+                                res: [_lq_k * (-_lq_beta / _lq_a)
+                                          * exp(-_lq_a*t_var) * u(-t_var),
+                                      concat("(alphaW+beta)/(w^2+a^2)->anti-causal, a=",
+                                             string(_lq_a))]
+                        )
+                    )
+                )
+            )
         )
     ),
 

@@ -2261,5 +2261,173 @@
             "exists": true,
             "fCombined": "(u(t-1)*%e^(1-t))/(sqrt(%pi)*sqrt(t-1))"
         }
+    },
+    {
+        "id": "T01",
+        "type": "ift",
+        "description": "IFT de w/(w²+4) → i/2·sgn(t)·e^{-2t}  (odd bilateral, fPositive)",
+        "input": {
+            "segments": [{ "expression": "w/(w^2+4)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%i*%e^-(2*t)*sgn(t))/2"
+        }
+    },
+    {
+        "id": "T02",
+        "type": "ift",
+        "description": "IFT de 3w/(w²+9) → 3i/2·sgn(t)·e^{-3t}  (odd bilateral, fPositive)",
+        "input": {
+            "segments": [{ "expression": "3*w/(w^2+9)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(3*%i*%e^-(3*t)*sgn(t))/2"
+        }
+    },
+    {
+        "id": "T03",
+        "type": "ift",
+        "description": "IFT de %i*w/(w²+4) → -1/2·sgn(t)·e^{-2t}  (odd bilateral, fPositive)",
+        "input": {
+            "segments": [{ "expression": "%i*w/(w^2+4)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-((%e^-(2*t)*sgn(t))/2)"
+        }
+    },
+    {
+        "id": "T04",
+        "type": "ift",
+        "description": "IFT de -(iw-2)/(w²+4) → e^{-2t}·u(t)  (regresión M03 fix)",
+        "input": {
+            "segments": [{ "expression": "-((%i*w-2)/(w^2+4))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "T05",
+        "type": "ift",
+        "description": "IFT de (%i*w+3)/(w²+9) → -e^{-3t}·u(-t)  (anti-causal linear-over-quadratic)",
+        "input": {
+            "segments": [{ "expression": "(%i*w+3)/(w^2+9)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-(u(-t)*%e^-(3*t))"
+        }
+    },
+    {
+        "id": "T06",
+        "type": "ft",
+        "description": "FT de sin²(t) → π(2δ(w)-δ(w+2)-δ(w-2))/2  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "sin(t)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%pi*delta(w+2)-2*%pi*delta(w)+%pi*delta(w-2))/2)"
+        }
+    },
+    {
+        "id": "T07",
+        "type": "ft",
+        "description": "FT de cos²(t) → π(δ(w+2)+2δ(w)+δ(w-2))/2  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "cos(t)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi*(delta(w+2)+2*delta(w)+delta(w-2))/2"
+        }
+    },
+    {
+        "id": "T08",
+        "type": "ft",
+        "description": "FT de sin³(t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "sin(t)^3", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*%i*(3*delta(w+1)-delta(w+3)-3*delta(w-1)+delta(w-3)))/4"
+        }
+    },
+    {
+        "id": "T09",
+        "type": "ft",
+        "description": "FT de cos³(t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "cos(t)^3", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(3*delta(w+1)+delta(w+3)+3*delta(w-1)+delta(w-3)))/4"
+        }
+    },
+    {
+        "id": "T10",
+        "type": "ft",
+        "description": "FT de sin⁴(t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "sin(t)^4", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(6*delta(w)-4*delta(w+2)+delta(w+4)-4*delta(w-2)+delta(w-4)))/8"
+        }
+    },
+    {
+        "id": "T11",
+        "type": "ft",
+        "description": "FT de sin²(2t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "sin(2*t)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%pi*delta(w+4)-2*%pi*delta(w)+%pi*delta(w-4))/2)"
+        }
+    },
+    {
+        "id": "T12",
+        "type": "ft",
+        "description": "FT de cos²(3t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "cos(3*t)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi*(delta(w+6)+2*delta(w)+delta(w-6))/2"
+        }
     }
 ]
