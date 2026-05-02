@@ -1275,6 +1275,53 @@
                       [label]="'F(' + resultVarDisplay() + ')'"
                     />
                   </div>
+
+                  <!-- Otras formas -->
+                  <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                    <button
+                      type="button"
+                      (click)="toggleAltForms('ft')"
+                      class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1"
+                    >
+                      <span>{{ 'transforms.altForms' | transloco }}</span>
+                      <span class="text-[9px]">{{ altFormsOpenFt() ? '▲' : '▼' }}</span>
+                    </button>
+                    @if (altFormsOpenFt()) {
+                      @if (altFormsLoadingFt()) {
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">
+                          {{ 'transforms.altFormsLoading' | transloco }}
+                        </p>
+                      } @else if (altFormsFt().length === 0) {
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">
+                          {{ 'transforms.altFormsEmpty' | transloco }}
+                        </p>
+                      } @else {
+                        <div class="flex flex-col gap-2 mt-2">
+                          @for (form of altFormsFt(); track form.labelKey) {
+                            <div class="flex flex-col gap-0.5">
+                              <span class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                                {{ form.labelKey | transloco }}
+                              </span>
+                              <div class="flex items-center gap-2 flex-wrap">
+                                <span
+                                  #ftAltFormEl
+                                  [mathjax]="display(form.tex)"
+                                  class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                                ></span>
+                                <app-export-button
+                                  [tex]="form.tex"
+                                  [maxima]="form.maxima"
+                                  [mathEl]="ftAltFormEl"
+                                  filename="fourier-transform-alt"
+                                  [label]="'F(' + resultVarDisplay() + ') — ' + (form.labelKey | transloco)"
+                                />
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
                 </div>
               }
 
@@ -1496,6 +1543,53 @@
                     </div>
                   </details>
                 }
+
+                <!-- Otras formas (IFT) -->
+                <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                  <button
+                    type="button"
+                    (click)="toggleAltForms('ift')"
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1"
+                  >
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenIft() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenIft()) {
+                    @if (altFormsLoadingIft()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">
+                        {{ 'transforms.altFormsLoading' | transloco }}
+                      </p>
+                    } @else if (altFormsIft().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">
+                        {{ 'transforms.altFormsEmpty' | transloco }}
+                      </p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsIft(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                              {{ form.labelKey | transloco }}
+                            </span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span
+                                #iftAltFormEl
+                                [mathjax]="display(form.tex)"
+                                class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                              ></span>
+                              <app-export-button
+                                [tex]="form.tex"
+                                [maxima]="form.maxima"
+                                [mathEl]="iftAltFormEl"
+                                filename="ift-alt"
+                                [label]="'f(' + resultVarDisplay() + ') — ' + (form.labelKey | transloco)"
+                              />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
               </div>
 
               <!-- ── RE / IM de f(t) ── -->

@@ -50,9 +50,17 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 11 | $u(t - t_0)$ | $\left(\pi\,\delta(\omega) + \dfrac{1}{i\omega}\right)e^{-i\omega t_0}$ |
 | 12 | $k\,u(t - t_0)$ | $k\!\left(\pi\,\delta(\omega) + \dfrac{e^{-i\omega t_0}}{i\omega}\right)$ | 
 | 13 | $\text{sgn}(t)$ | $\dfrac{2}{i\omega}$ |
+| 13b | $k\,\text{sgn}(t - t_0)$ | $\dfrac{2k\,e^{-i\omega t_0}}{i\omega}$ | $k$ cte., $t_0 \neq 0$ |
 | 14 | $\dfrac{\sin(at)}{\pi t}$ | $u(\omega + a) - u(\omega - a)$ (rect) |
+| 14b | $k\,u(\omega+a) - k\,u(\omega-a)$ | $\dfrac{k\sin(at)}{\pi t}$ | rect en frecuencia |
 | 15 | $\dfrac{k}{t}$ | $-ik\pi\,\text{sgn}(\omega)$ | V.P. de Cauchy, $n=1$ |
 | 16 | $\dfrac{k}{t^n}$ | $\dfrac{k\,(-i\omega)^{n-1}}{(n-1)!}\,(-i\pi\,\text{sgn}(\omega))$ | V.P., $n \geq 1$ entero |
+
+| 16b | $\sin^2(\omega_0 t)$ | $\dfrac{\pi}{2}\bigl[2\delta(\omega) - \delta(\omega-2\omega_0) - \delta(\omega+2\omega_0)\bigr]$ | vía $\cos(2\omega_0 t) = 1 - 2\sin^2$ |
+| 16c | $\cos^2(\omega_0 t)$ | $\dfrac{\pi}{2}\bigl[\delta(\omega-2\omega_0) + 2\delta(\omega) + \delta(\omega+2\omega_0)\bigr]$ | vía $2\cos^2 - 1 = \cos(2\omega_0 t)$ |
+| 16d | $\sin^3(\omega_0 t)$ | $\dfrac{i\pi}{4}\bigl[3\delta(\omega+\omega_0) - 3\delta(\omega-\omega_0) - \delta(\omega+3\omega_0) + \delta(\omega-3\omega_0)\bigr]$ | `trigreduce` |
+| 16e | $\cos^3(\omega_0 t)$ | $\dfrac{\pi}{4}\bigl[3\delta(\omega-\omega_0) + 3\delta(\omega+\omega_0) + \delta(\omega-3\omega_0) + \delta(\omega+3\omega_0)\bigr]$ | `trigreduce` |
+| 16f | $\sin^n(\omega_0 t)$, $\cos^n(\omega_0 t)$ | suma de deltas via reducción trigonométrica | `trigreduce` generalizado |
 
 ---
 
@@ -80,6 +88,8 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 25 | $e^{-a\lvert t\rvert}$ | $\dfrac{2a}{a^2 + \omega^2}$ | $a > 0$ |
 | 26 | $\dfrac{1}{a^2 + t^2}$ | $\dfrac{\pi}{a}\,e^{-a\lvert\omega\rvert}$ | $a > 0$ |
 | 27 | $\dfrac{k}{A t^2 + B t + C}$ | $\dfrac{k\pi}{Aa}\,e^{-a\lvert\omega\rvert}\,e^{-i\omega t_0}$ | $B^2 - 4AC < 0$,<br>$A > 0$,<br>$t_0 = -B/(2A)$,<br>$a = \sqrt{(4AC - B^2)/(4A^2)}$ |
+| 27b | $\dfrac{k\,\omega}{\omega_0^2 + \omega^2}$ | $-\dfrac{ik}{2}\,\text{sgn}(t)\,e^{-\omega_0\lvert t\rvert}$ | $\omega_0 > 0$; bilateral impar |
+| 27c | $\dfrac{k\,i\omega}{\omega_0^2 + \omega^2}$ | $\dfrac{k}{2}\,\text{sgn}(t)\,e^{-\omega_0\lvert t\rvert}$ | $\omega_0 > 0$ |
 | 28 | $\dfrac{t}{a^2 + t^2}$ | $-i\pi\,\text{sgn}(\omega)\,e^{-a\lvert\omega\rvert}$ | $a > 0$ |
 | 29 | $\dfrac{\cos(bt)}{a^2 + t^2}$ | $\dfrac{\pi}{2a}\bigl[e^{-a\lvert\omega - b\rvert} + e^{-a\lvert\omega + b\rvert}\bigr]$ | $a, b > 0$ |
 | 30 | $\dfrac{\sin(bt)}{a^2 + t^2}$ | $\dfrac{\pi}{2ai}\bigl[e^{-a\lvert\omega - b\rvert} - e^{-a\lvert\omega + b\rvert}\bigr]$ | $a, b > 0$ |
@@ -100,6 +110,7 @@ Pares adicionales expresados desde el dominio de frecuencia, útiles al aplicar 
 | 36 | $e^{-i\omega t_0}$ | $\delta(t - t_0)$ | |
 | 37 | $e^{+i\omega t_0}$ | $\delta(t + t_0)$ | |
 | 38 | $\dfrac{k}{i\omega}$ | $\dfrac{k}{2}\,\text{sgn}(t)$ | |
+| 38b | $\dfrac{k\,e^{-i\omega t_0}}{i\omega}$ | $\dfrac{k}{2}\,\text{sgn}(t - t_0)$ | $t_0 \neq 0$; sgn desplazado |
 | 39 | $\pi\,\delta(\omega) + \dfrac{1}{i\omega}$ | $u(t)$ | |
 | 40 | $\dfrac{k}{i\omega + a}$ | $k\,e^{-at}u(t)$ | $a > 0$ |
 | 41 | $\dfrac{k}{(i\omega + a)^2}$ | $k\,t\,e^{-at}u(t)$ | $a > 0$ |
@@ -323,3 +334,61 @@ Aparece en sistemas con dinámica de difusión o respuestas de "medio orden". El
 
 > **Nota**: `1/sqrt(w)` bilateral no está soportado — diverge en $\omega=0$ y solo tiene sentido como distribución unilateral ($\omega>0$).
 
+
+---
+
+## 19. Potencias de seno y coseno — pares #16b–16f
+
+Para $\sin^n(\omega_0 t)$ y $\cos^n(\omega_0 t)$ se aplica **reducción trigonométrica** (`trigreduce`) que expresa la potencia como suma de senos/cosenos de múltiplos, y luego cada término usa los pares #6–9.
+
+**Casos explícitos** ($\omega_0 = 1$ para brevedad):
+
+| $f(t)$ | Reducción | $F(\omega)$ |
+|--------|-----------|-------------|
+| $\sin^2(t)$ | $\frac{1-\cos(2t)}{2}$ | $\pi\delta(\omega) - \frac{\pi}{2}[\delta(\omega-2)+\delta(\omega+2)]$ |
+| $\cos^2(t)$ | $\frac{1+\cos(2t)}{2}$ | $\pi\delta(\omega) + \frac{\pi}{2}[\delta(\omega-2)+\delta(\omega+2)]$ |
+| $\sin^3(t)$ | $\frac{3\sin(t)-\sin(3t)}{4}$ | $\frac{i\pi}{4}[-3\delta(\omega-1)+3\delta(\omega+1)+\delta(\omega-3)-\delta(\omega+3)]$ |
+| $\cos^3(t)$ | $\frac{3\cos(t)+\cos(3t)}{4}$ | $\frac{\pi}{4}[3\delta(\omega-1)+3\delta(\omega+1)+\delta(\omega-3)+\delta(\omega+3)]$ |
+
+El handler activa `trigreduce` cuando detecta `sin(...)^n` o `cos(...)^n` con $n \geq 2$ entero, y solo acepta el resultado si **desaparece el exponente** (guard contra falsos positivos).
+
+---
+
+## 20. Función bilateral impar: $k\omega / (a^2 + \omega^2)$ — pares #27b–27c
+
+$$\mathcal{F}^{-1}\!\left\{\frac{k\,\omega}{a^2 + \omega^2}\right\} = -\frac{ik}{2}\,\text{sgn}(t)\,e^{-a|t|}, \qquad a > 0$$
+
+$$\mathcal{F}^{-1}\!\left\{\frac{k\,i\omega}{a^2 + \omega^2}\right\} = \frac{k}{2}\,\text{sgn}(t)\,e^{-a|t|}, \qquad a > 0$$
+
+Derivados del par #25 via diferenciación en frecuencia: si $\mathcal{F}\{e^{-a|t|}\} = \frac{2a}{a^2+\omega^2}$, entonces $\mathcal{F}\{-it\,e^{-a|t|}\} = \frac{d}{d\omega}\frac{2a}{a^2+\omega^2} = \frac{-4a\omega}{(a^2+\omega^2)^2}$. La forma bilateral de $\omega/(a^2+\omega^2)$ sigue directamente de la distribución de sgn·exponencial.
+
+El detector clasifica el numerador: si contiene $\omega$ real → resultado lleva $-i/2$; si contiene $i\omega$ → resultado lleva $+1/2$.
+
+**Ejemplos:**
+
+| $F(\omega)$ | $f(t)$ |
+|---|---|
+| $\dfrac{\omega}{\omega^2+4}$ | $\dfrac{i}{2}\,\text{sgn}(t)\,e^{-2|t|}$ |
+| $\dfrac{3\omega}{\omega^2+9}$ | $\dfrac{3i}{2}\,\text{sgn}(t)\,e^{-3|t|}$ |
+| $\dfrac{i\omega}{\omega^2+4}$ | $-\dfrac{1}{2}\,\text{sgn}(t)\,e^{-2|t|}$ |
+
+---
+
+## 21. sgn desplazado — pares #13b y #38b
+
+$$\mathcal{F}\{k\,\text{sgn}(t-t_0)\} = \frac{2k\,e^{-i\omega t_0}}{i\omega}, \qquad t_0 \neq 0$$
+
+$$\mathcal{F}^{-1}\!\left\{\frac{k\,e^{-i\omega t_0}}{i\omega}\right\} = \frac{k}{2}\,\text{sgn}(t - t_0)$$
+
+Se deriva de $\text{sgn}(t-t_0) = 2u(t-t_0) - 1$, cuya transformada es $2(\pi\delta(\omega) + e^{-i\omega t_0}/(i\omega)) - 2\pi\delta(\omega) = 2e^{-i\omega t_0}/(i\omega)$. El detector en `FT_pattern_lookup` extrae el desplazamiento $t_0$ del argumento de sgn directamente; el detector IFT multiplica la expresión por $i\omega$ y factoriza el exponencial resultante.
+
+**Ejemplos:**
+
+| Dirección | $f(t)$ / $F(\omega)$ | Resultado |
+|---|---|---|
+| FT | $\text{sgn}(t-2)$ | $-2i\,e^{-2i\omega}/\omega$ |
+| FT | $3\,\text{sgn}(t-a)$ | $-6i\,e^{-ia\omega}/\omega$ |
+| FT | $5\,\text{sgn}(t-a)/b$ | $-10i\,e^{-ia\omega}/(b\omega)$ |
+| IFT | $2\,e^{-2i\omega}/(i\omega)$ | $\text{sgn}(t-2)$ |
+| IFT | $k\,e^{-ia\omega}/(i\omega)$ | $\frac{k}{2}\,\text{sgn}(t-a)$ |
+| IFT | $6\,e^{-ia\omega}/(ib\omega)$ | $3\,\text{sgn}(t-a)/b$ |

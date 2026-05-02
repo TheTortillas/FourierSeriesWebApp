@@ -17,6 +17,7 @@ import {
   catchError,
   debounceTime,
   filter,
+  forkJoin,
   map,
   of,
   pairwise,
@@ -50,8 +51,16 @@ import { ExportButtonComponent } from '../../../shared/components/export-button/
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
+  SimplifyRequest,
+  SimplifyResponse,
 } from '../../../domain/types/transform.types';
 import { HistoryEntry } from '../../../domain';
+
+export interface AltForm {
+  labelKey: string;
+  tex: string;
+  maxima: string;
+}
 
 let _nextId = 0;
 const mkId = () => `ts-${++_nextId}`;
@@ -274,6 +283,14 @@ export class ContinuousTransformComponent implements OnInit {
   readonly errorMsg = signal<string | null>(null);
   readonly ftResult = signal<FourierTransformResponse | null>(null);
   readonly iftResult = signal<InverseFourierTransformResponse | null>(null);
+
+  // ── Alt forms ─────────────────────────────────────────────────────────────
+  readonly altFormsFt = signal<AltForm[]>([]);
+  readonly altFormsIft = signal<AltForm[]>([]);
+  readonly altFormsLoadingFt = signal(false);
+  readonly altFormsLoadingIft = signal(false);
+  readonly altFormsOpenFt = signal(false);
+  readonly altFormsOpenIft = signal(false);
 
   // ── Canvas layer toggles ─────────────────────────────────────────────────
   readonly showOriginalReal = signal(true);
@@ -1071,6 +1088,102 @@ export class ContinuousTransformComponent implements OnInit {
     this.segments.update((list) => list.map((s) => (s.id === id ? { ...s, ...changes } : s)));
   }
 
+  // ── Alt forms ─────────────────────────────────────────────────────────────
+
+  toggleAltForms(mode: 'ft' | 'ift'): void {
+    if (mode === 'ft') {
+      const nowOpen = !this.altFormsOpenFt();
+      this.altFormsOpenFt.set(nowOpen);
+      if (nowOpen && this.altFormsFt().length === 0) this.loadAltForms('ft');
+    } else {
+      const nowOpen = !this.altFormsOpenIft();
+      this.altFormsOpenIft.set(nowOpen);
+      if (nowOpen && this.altFormsIft().length === 0) this.loadAltForms('ift');
+    }
+  }
+
+  private loadAltForms(mode: 'ft' | 'ift'): void {
+    const res = mode === 'ft' ? this.ftResult() : this.iftResult();
+    if (!res?.exists) return;
+
+    const mainExpr =
+      mode === 'ft'
+        ? (res as FourierTransformResponse).F?.maxima
+        : ((res as InverseFourierTransformResponse).fCombined?.maxima ??
+          (res as InverseFourierTransformResponse).fPositive?.maxima);
+
+    if (!mainExpr) return;
+
+    if (mode === 'ft') {
+      this.altFormsLoadingFt.set(true);
+    } else {
+      this.altFormsLoadingIft.set(true);
+    }
+
+    const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
+      {
+        labelKey: 'transforms.altFormFactor',
+        req: { expression: mainExpr, profile: 'complete', functions: ['factor'] },
+      },
+      {
+        labelKey: 'transforms.altFormExpand',
+        req: { expression: mainExpr, profile: 'complete', functions: ['expand'] },
+      },
+      {
+        labelKey: 'transforms.altFormTrig',
+        req: {
+          expression: mainExpr,
+          profile: 'complete',
+          functions: ['trigreduce'],
+          displayFlags: { demoivre: true },
+        },
+      },
+      {
+        labelKey: 'transforms.altFormRect',
+        req: {
+          expression: mainExpr,
+          profile: 'complete',
+          functions: ['rectform'],
+          displayFlags: { demoivre: true },
+        },
+      },
+      {
+        labelKey: 'transforms.altFormExp',
+        req: {
+          expression: mainExpr,
+          profile: 'complete',
+          displayFlags: { exponentialize: true },
+        },
+      },
+    ];
+
+    const requests = profiles.map(({ req }) =>
+      this.api.simplify(req).pipe(catchError(() => of(null))),
+    );
+
+    forkJoin(requests)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((results) => {
+        const mainMaxima = mainExpr;
+        const forms: AltForm[] = [];
+        results.forEach((r: SimplifyResponse | null, i) => {
+          if (!r) return;
+          const tex = r.simplified.tex;
+          const maxima = r.simplified.maxima;
+          if (tex && maxima && maxima !== mainMaxima) {
+            forms.push({ labelKey: profiles[i].labelKey, tex, maxima });
+          }
+        });
+        if (mode === 'ft') {
+          this.altFormsFt.set(forms);
+          this.altFormsLoadingFt.set(false);
+        } else {
+          this.altFormsIft.set(forms);
+          this.altFormsLoadingIft.set(false);
+        }
+      });
+  }
+
   // ── Calculate ─────────────────────────────────────────────────────────────
 
   calculate(): void {
@@ -1091,6 +1204,10 @@ export class ContinuousTransformComponent implements OnInit {
     this.errorMsg.set(null);
     this.ftResult.set(null);
     this.iftResult.set(null);
+    this.altFormsFt.set([]);
+    this.altFormsIft.set([]);
+    this.altFormsOpenFt.set(false);
+    this.altFormsOpenIft.set(false);
 
     const payload = { segments: segs, intVar, transVar };
     console.log('[transforms] payload →', JSON.stringify(payload, null, 2));
