@@ -1460,6 +1460,84 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── u(w+a)-u(w-b) -> (e^{ibt}-e^{-iat})/(2πit)  (a,b > 0) ──
+       IFT of a rectangular window in frequency: integral from -a to b of e^{iωt}/(2π).
+       When a=b: simplifies to sin(at)/(πt).
+       Detects sum e = u(w+a) + k*u(w-b) where k=-1 (difference of steps).
+       Uses e (expanded form) since u-expressions don't survive rat(). */
+    if is(res = false) and not atom(e) and is(op(e) = "+") then block(
+        [_ur_terms, _ur_pos, _ur_neg, _ur_a, _ur_b, _ur_k, _ur_c,
+         _ur_ta, _ur_tb, _ur_arg],
+        _ur_pos: false, _ur_neg: false, _ur_k: 1,
+        _ur_terms: args(e),
+        /* helper: extract u-shift from a term, return [coeff, shift] or false */
+        block([_ur_extract],
+        _ur_extract: lambda([_trm],
+            block([_uu, _kk, _sh, _ca],
+                _uu: false, _kk: 1,
+                if not atom(_trm) and is(op(_trm) = 'u) then (
+                    _uu: _trm
+                ) else if not atom(_trm) and is(op(_trm) = "*") then (
+                    for _ff in args(_trm) do (
+                        if not atom(_ff) and is(op(_ff) = 'u) then _uu: _ff
+                        else if freeof(w_var, _ff) then _kk: _kk * _ff
+                    )
+                ),
+                if is(_uu # false) then (
+                    _sh: errcatch(ratsimp(part(_uu, 1) - w_var)),
+                    if _sh # [] then [_kk, first(_sh)] else false
+                ) else false
+            )
+        ),
+        for _ur_t in _ur_terms do block([_ur_ext, _ur_sign, _ur_base],
+            _ur_sign: 1,
+            _ur_base: _ur_t,
+            /* handle unary minus */
+            if not atom(_ur_t) and is(op(_ur_t) = "-") then (
+                _ur_sign: -1, _ur_base: first(args(_ur_t))
+            ),
+            _ur_ext: _ur_extract(_ur_base),
+            if is(_ur_ext # false) then (
+                block([_coeff, _shift],
+                    _coeff: _ur_sign * first(_ur_ext),
+                    _shift: second(_ur_ext),
+                    if freeof(w_var, _coeff) and freeof(w_var, _shift) then (
+                        if is(_coeff > 0) then (
+                            /* positive step: u(w+a), shift = a > 0 */
+                            if is(_shift > 0) then (
+                                _ur_pos: _shift, _ur_k: _coeff
+                            )
+                        ) else (
+                            /* negative step: -k*u(w-b), shift = -b < 0 */
+                            if is(_shift < 0) then
+                                _ur_neg: -_shift
+                        )
+                    )
+                )
+            )
+        )
+        ),
+        /* require both steps found, a>0, b>0 */
+        if is(_ur_pos # false) and is(_ur_neg # false)
+           and is(_ur_pos > 0) and is(_ur_neg > 0)
+           and freeof(w_var, _ur_pos) and freeof(w_var, _ur_neg) then (
+            _ur_a: _ur_pos,   /* upper limit integral: -a to b */
+            _ur_b: _ur_neg,
+            if ratsimp(_ur_a - _ur_b) = 0 then (
+                /* symmetric: sin(at)/(πt) */
+                res: [_ur_k * sin(_ur_a * t_var) / (%pi * t_var),
+                      concat("u(w+a)-u(w-a)->(k*sin(at))/(pit), a=", string(_ur_a))]
+            ) else (
+                /* asymmetric: (e^{ibt}-e^{-iat})/(2πit) */
+                _ur_ta: exp(-%i * _ur_a * t_var),
+                _ur_tb: exp( %i * _ur_b * t_var),
+                res: [_ur_k * (_ur_tb - _ur_ta) / (2 * %pi * %i * t_var),
+                      concat("u(w+a)-u(w-b)->(e^{ibt}-e^{-iat})/(2pit), a=",
+                             string(_ur_a), ", b=", string(_ur_b))]
+            )
+        )
+    ),
+
     /* ── k/(iw) -> k*sgn(t)/2 ── */
     if is(res = false) then block(
         [coef_sgn],
@@ -2462,11 +2540,6 @@ FT(FUNC_INPUT, t_var, w_var) := block(
     declare(w_var, real),
     _ft_reserved: [t_var, w_var],
 
-    /* ── parsear expresiones de segmentos que lleguen como strings ── */
-    for i : 1 thru length(FUNC_INPUT) do
-        if stringp(FUNC_INPUT[i][1])
-        then FUNC_INPUT[i][1]: parse_string(FUNC_INPUT[i][1]),
-
     /* ── declarar parametros libres de todos los tramos ── */
     for i : 1 thru length(FUNC_INPUT) do
         FT_declare_params(FUNC_INPUT[i][1], _ft_reserved),
@@ -2784,11 +2857,6 @@ IFT(FUNC_INPUT, w_var, t_var) := block(
 
     declare(t_var, real),
     _ift_reserved: [w_var, t_var],
-
-    /* ── parsear expresiones de segmentos que lleguen como strings ── */
-    for i : 1 thru length(FUNC_INPUT) do
-        if stringp(FUNC_INPUT[i][1])
-        then FUNC_INPUT[i][1]: parse_string(FUNC_INPUT[i][1]),
 
     /* ── declarar parametros libres de todos los tramos ── */
     for i : 1 thru length(FUNC_INPUT) do

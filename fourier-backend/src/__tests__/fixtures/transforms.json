@@ -2431,6 +2431,49 @@
         }
     },
     {
+        "id": "V01",
+        "type": "ift",
+        "description": "IFT de u(w+2)-u(w-2) → sin(2t)/(πt)  (rect en frecuencia)",
+        "input": {
+            "segments": [{ "expression": "u(w+2)-u(w-2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sin(2*t)/(%pi*t)"
+        }
+    },
+    {
+        "id": "V02",
+        "type": "ift",
+        "description": "IFT de u(w+a)-u(w-a) → sin(at)/(πt)  (rect simbólico)",
+        "input": {
+            "segments": [{ "expression": "u(w+a)-u(w-a)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sin(a*t)/(%pi*t)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "V03",
+        "type": "ift",
+        "description": "IFT de 3*(u(w+5)-u(w-5)) → 3sin(5t)/(πt)",
+        "input": {
+            "segments": [{ "expression": "3*(u(w+5)-u(w-5))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(3*sin(5*t))/(%pi*t)"
+        }
+    },
+    {
         "id": "U01",
         "type": "ift",
         "description": "IFT de rect en ω: F=1 de -2 a 2 → sin(2t)/(πt)",
