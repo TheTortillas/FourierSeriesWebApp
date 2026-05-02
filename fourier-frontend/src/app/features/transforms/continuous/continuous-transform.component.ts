@@ -284,13 +284,27 @@ export class ContinuousTransformComponent implements OnInit {
   readonly ftResult = signal<FourierTransformResponse | null>(null);
   readonly iftResult = signal<InverseFourierTransformResponse | null>(null);
 
-  // ── Alt forms ─────────────────────────────────────────────────────────────
+  // ── Alt forms — main result ────────────────────────────────────────────────
   readonly altFormsFt = signal<AltForm[]>([]);
   readonly altFormsIft = signal<AltForm[]>([]);
   readonly altFormsLoadingFt = signal(false);
   readonly altFormsLoadingIft = signal(false);
   readonly altFormsOpenFt = signal(false);
   readonly altFormsOpenIft = signal(false);
+
+  // ── Alt forms — Re/Im cards ────────────────────────────────────────────────
+  readonly altFormsFtReal = signal<AltForm[]>([]);
+  readonly altFormsFtImag = signal<AltForm[]>([]);
+  readonly altFormsIftReal = signal<AltForm[]>([]);
+  readonly altFormsIftImag = signal<AltForm[]>([]);
+  readonly altFormsLoadingFtReal = signal(false);
+  readonly altFormsLoadingFtImag = signal(false);
+  readonly altFormsLoadingIftReal = signal(false);
+  readonly altFormsLoadingIftImag = signal(false);
+  readonly altFormsOpenFtReal = signal(false);
+  readonly altFormsOpenFtImag = signal(false);
+  readonly altFormsOpenIftReal = signal(false);
+  readonly altFormsOpenIftImag = signal(false);
 
   // ── Canvas layer toggles ─────────────────────────────────────────────────
   readonly showOriginalReal = signal(true);
@@ -1102,24 +1116,86 @@ export class ContinuousTransformComponent implements OnInit {
     }
   }
 
+  toggleAltFormsCard(
+    card: 'ft-real' | 'ft-imag' | 'ift-real' | 'ift-imag',
+  ): void {
+    const openSig = {
+      'ft-real': this.altFormsOpenFtReal,
+      'ft-imag': this.altFormsOpenFtImag,
+      'ift-real': this.altFormsOpenIftReal,
+      'ift-imag': this.altFormsOpenIftImag,
+    }[card];
+    const formsSig = {
+      'ft-real': this.altFormsFtReal,
+      'ft-imag': this.altFormsFtImag,
+      'ift-real': this.altFormsIftReal,
+      'ift-imag': this.altFormsIftImag,
+    }[card];
+    const nowOpen = !openSig();
+    openSig.set(nowOpen);
+    if (nowOpen && formsSig().length === 0) {
+      const sym = this.getCardSymbolic(card);
+      if (sym) this.loadAltFormsInto(sym, card);
+    }
+  }
+
+  private getCardSymbolic(
+    card: 'ft-real' | 'ft-imag' | 'ift-real' | 'ift-imag',
+  ): { maxima: string; tex: string } | undefined {
+    const ft = this.ftResult();
+    const ift = this.iftResult();
+    switch (card) {
+      case 'ft-real':  return ft?.realPart;
+      case 'ft-imag':  return ft?.imagPart;
+      case 'ift-real': return ift?.outputRealPart;
+      case 'ift-imag': return ift?.outputImagPart;
+    }
+  }
+
   private loadAltForms(mode: 'ft' | 'ift'): void {
     const res = mode === 'ft' ? this.ftResult() : this.iftResult();
     if (!res?.exists) return;
 
-    const mainExpr =
+    // Use the same priority as the template: fCombined → fOutUForm → fPositive
+    const mainSymbolic =
       mode === 'ft'
-        ? (res as FourierTransformResponse).F?.maxima
-        : ((res as InverseFourierTransformResponse).fCombined?.maxima ??
-          (res as InverseFourierTransformResponse).fPositive?.maxima);
+        ? (res as FourierTransformResponse).F
+        : ((res as InverseFourierTransformResponse).fCombined ??
+          (res as InverseFourierTransformResponse).fOutUForm ??
+          (res as InverseFourierTransformResponse).fPositive);
 
-    if (!mainExpr) return;
+    if (!mainSymbolic?.maxima) return;
+    if (mode === 'ft') this.altFormsLoadingFt.set(true);
+    else this.altFormsLoadingIft.set(true);
 
-    if (mode === 'ft') {
-      this.altFormsLoadingFt.set(true);
-    } else {
-      this.altFormsLoadingIft.set(true);
-    }
+    this.runAltForms(mainSymbolic, (forms) => {
+      if (mode === 'ft') { this.altFormsFt.set(forms); this.altFormsLoadingFt.set(false); }
+      else { this.altFormsIft.set(forms); this.altFormsLoadingIft.set(false); }
+    });
+  }
 
+  private loadAltFormsInto(
+    expr: { maxima: string; tex: string },
+    card: 'ft-real' | 'ft-imag' | 'ift-real' | 'ift-imag',
+  ): void {
+    const loadingSig = {
+      'ft-real': this.altFormsLoadingFtReal,
+      'ft-imag': this.altFormsLoadingFtImag,
+      'ift-real': this.altFormsLoadingIftReal,
+      'ift-imag': this.altFormsLoadingIftImag,
+    }[card];
+    const formsSig = {
+      'ft-real': this.altFormsFtReal,
+      'ft-imag': this.altFormsFtImag,
+      'ift-real': this.altFormsIftReal,
+      'ift-imag': this.altFormsIftImag,
+    }[card];
+    loadingSig.set(true);
+    this.runAltForms(expr, (forms) => { formsSig.set(forms); loadingSig.set(false); });
+  }
+
+  private runAltForms(main: { maxima: string; tex: string }, done: (forms: AltForm[]) => void): void {
+    const mainExpr = main.maxima;
     const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
       {
         labelKey: 'transforms.altFormFactor',
@@ -1131,56 +1207,39 @@ export class ContinuousTransformComponent implements OnInit {
       },
       {
         labelKey: 'transforms.altFormTrig',
-        req: {
-          expression: mainExpr,
-          profile: 'complete',
-          functions: ['trigreduce'],
-          displayFlags: { demoivre: true },
-        },
+        req: { expression: mainExpr, profile: 'complete', functions: ['trigreduce'], displayFlags: { demoivre: true } },
       },
       {
         labelKey: 'transforms.altFormRect',
-        req: {
-          expression: mainExpr,
-          profile: 'complete',
-          functions: ['rectform'],
-          displayFlags: { demoivre: true },
-        },
+        req: { expression: mainExpr, profile: 'complete', functions: ['rectform'] },
       },
       {
         labelKey: 'transforms.altFormExp',
-        req: {
-          expression: mainExpr,
-          profile: 'complete',
-          displayFlags: { exponentialize: true },
-        },
+        req: { expression: mainExpr, profile: 'complete', displayFlags: { exponentialize: true } },
       },
     ];
 
-    const requests = profiles.map(({ req }) =>
-      this.api.simplify(req).pipe(catchError(() => of(null))),
-    );
-
-    forkJoin(requests)
+    forkJoin(profiles.map(({ req }) => this.api.simplify(req).pipe(catchError(() => of(null)))))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((results) => {
-        const mainMaxima = mainExpr;
+        const normalize = (s: string) => s.replace(/\s+/g, '');
+        // Deduplicate by rendered tex only — the backend returns equivalent
+        // symbolic expressions that may have different maxima strings but look
+        // identical when rendered (e.g. "2+2" vs "6-2"). Comparing tex is the
+        // only reliable way to detect visual duplicates.
+        const seenTex = new Set<string>();
+        if (main.tex) seenTex.add(normalize(main.tex));
         const forms: AltForm[] = [];
         results.forEach((r: SimplifyResponse | null, i) => {
           if (!r) return;
-          const tex = r.simplified.tex;
-          const maxima = r.simplified.maxima;
-          if (tex && maxima && maxima !== mainMaxima) {
-            forms.push({ labelKey: profiles[i].labelKey, tex, maxima });
-          }
+          const { tex, maxima } = r.simplified;
+          if (!tex || !maxima) return;
+          const normTex = normalize(tex);
+          if (seenTex.has(normTex)) return;
+          seenTex.add(normTex);
+          forms.push({ labelKey: profiles[i].labelKey, tex, maxima });
         });
-        if (mode === 'ft') {
-          this.altFormsFt.set(forms);
-          this.altFormsLoadingFt.set(false);
-        } else {
-          this.altFormsIft.set(forms);
-          this.altFormsLoadingIft.set(false);
-        }
+        done(forms);
       });
   }
 
@@ -1208,6 +1267,14 @@ export class ContinuousTransformComponent implements OnInit {
     this.altFormsIft.set([]);
     this.altFormsOpenFt.set(false);
     this.altFormsOpenIft.set(false);
+    this.altFormsFtReal.set([]);
+    this.altFormsFtImag.set([]);
+    this.altFormsIftReal.set([]);
+    this.altFormsIftImag.set([]);
+    this.altFormsOpenFtReal.set(false);
+    this.altFormsOpenFtImag.set(false);
+    this.altFormsOpenIftReal.set(false);
+    this.altFormsOpenIftImag.set(false);
 
     const payload = { segments: segs, intVar, transVar };
     console.log('[transforms] payload →', JSON.stringify(payload, null, 2));
