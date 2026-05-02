@@ -506,25 +506,19 @@ IFT_simplify(expr) := block(
 )$
 
 /*
-  Choose a compact symbolic representation for UI display.
-  This does not alter the transform computation; it only post-processes
-  already computed expressions using multiple safe simplification passes.
-*/
-/*
-  Display normalization for frequency-domain expressions (F(w)).
-  Real expressions: ratsimp only. Complex: try ratsimp(rectform) first,
-  fall back to ratsimp. Avoids slength/string comparisons (SBCL JIT cost).
+  Display normalization for frequency-domain expressions F(w).
+
+  Rules:
+  - Never rectform: expands e^{iθ} → cos+i*sin, losing compact polar form.
+  - Never fullratsimp when delta is present: merges distributional and rational
+    terms over a common denominator, producing ugly combined fractions.
+  - Otherwise a light ratsimp pass to cancel obvious algebraic factors.
 */
 FT_pick_display_expr(expr) := block(
     [tmp],
     if expr = false then return(false),
-    if freeof(%i, expr) then (
-        tmp : errcatch(fullratsimp(expr)),
-        return(if tmp = [] then expr else first(tmp))
-    ),
-    tmp : errcatch(fullratsimp(rectform(expr))),
-    if tmp # [] then return(first(tmp)),
-    tmp : errcatch(fullratsimp(expr)),
+    if not freeof('delta, expr) then return(expr),
+    tmp : errcatch(ratsimp(expr)),
     if tmp # [] then return(first(tmp)),
     expr
 )$
