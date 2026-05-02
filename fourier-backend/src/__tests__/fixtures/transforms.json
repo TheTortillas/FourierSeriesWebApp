@@ -2551,5 +2551,138 @@
             "exists": true,
             "F": "-((cos(2*w)-1)/w^2)"
         }
+    },
+    {
+        "id": "W01",
+        "type": "ft",
+        "description": "FT de sgn(t-2) → -2i·e^{-2iw}/w  (sgn desplazado, t0=2)",
+        "input": {
+            "segments": [{ "expression": "sgn(t-2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((2*%i*%e^-(2*%i*w))/w)"
+        }
+    },
+    {
+        "id": "W02",
+        "type": "ft",
+        "description": "FT de 3·sgn(t-a) → -6i·e^{-iaw}/w  (sgn desplazado con escalar, t0=a simbólico)",
+        "input": {
+            "segments": [{ "expression": "3*sgn(t-a)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((6*%i*%e^-(%i*a*w))/w)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "W03",
+        "type": "ft",
+        "description": "FT de 5·sgn(t-a)/b → -10i·e^{-iaw}/(bw)  (sgn desplazado con escalar simbólico doble)",
+        "input": {
+            "segments": [{ "expression": "5*sgn(t-a)/b", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((10*%i*%e^-(%i*a*w))/(b*w))",
+            "params": ["a", "b"]
+        }
+    },
+    {
+        "id": "W04",
+        "type": "ft",
+        "description": "FT de k·u(t-a) → k·(π·δ(w) - i·e^{-iaw}/w)  (u desplazado con escalar simbólico doble)",
+        "input": {
+            "segments": [{ "expression": "k*u(t-a)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "k*(%pi*delta(w)-(%i*%e^-(%i*a*w))/w)",
+            "params": ["a", "k"]
+        }
+    },
+    {
+        "id": "W05",
+        "type": "ft",
+        "description": "FT de 5·u(t-a)/b → (5/b)·(π·δ(w) - i·e^{-iaw}/w)  (u desplazado escalado doble)",
+        "input": {
+            "segments": [{ "expression": "5*u(t-a)/b", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(5*(%pi*delta(w)-(%i*%e^-(%i*a*w))/w))/b",
+            "params": ["a", "b"]
+        }
+    },
+    {
+        "id": "W06",
+        "type": "ift",
+        "description": "IFT de 2·e^{-2iw}/(iw) → sgn(t-2)  (sgn desplazado t0=2)",
+        "input": {
+            "segments": [{ "expression": "2*exp(-2*%i*w)/(%i*w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sgn(t-2)"
+        }
+    },
+    {
+        "id": "W07",
+        "type": "ift",
+        "description": "IFT de 2·e^{-iaw}/(iw) → sgn(t-a)  (sgn desplazado simbólico)",
+        "input": {
+            "segments": [{ "expression": "2*exp(-%i*a*w)/(%i*w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sgn(t-a)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "W08",
+        "type": "ift",
+        "description": "IFT de 6·e^{-iaw}/(ibw) → 3·sgn(t-a)/b  (sgn desplazado, escalar simbólico doble)",
+        "input": {
+            "segments": [{ "expression": "6*exp(-%i*a*w)/(%i*b*w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(3*sgn(t-a))/b",
+            "params": ["a", "b"]
+        }
+    },
+    {
+        "id": "W09",
+        "type": "ift",
+        "description": "IFT de k·e^{-2iaw}/(iw) → k·sgn(t-2a)/2  (desplazamiento 2a, escalar k)",
+        "input": {
+            "segments": [{ "expression": "k*exp(-2*%i*a*w)/(%i*w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(k*sgn(t-2*a))/2",
+            "params": ["a", "k"]
+        }
     }
 ]
