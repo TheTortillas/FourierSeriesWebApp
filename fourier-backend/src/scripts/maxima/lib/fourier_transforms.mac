@@ -2462,6 +2462,11 @@ FT(FUNC_INPUT, t_var, w_var) := block(
     declare(w_var, real),
     _ft_reserved: [t_var, w_var],
 
+    /* ── parsear expresiones de segmentos que lleguen como strings ── */
+    for i : 1 thru length(FUNC_INPUT) do
+        if stringp(FUNC_INPUT[i][1])
+        then FUNC_INPUT[i][1]: parse_string(FUNC_INPUT[i][1]),
+
     /* ── declarar parametros libres de todos los tramos ── */
     for i : 1 thru length(FUNC_INPUT) do
         FT_declare_params(FUNC_INPUT[i][1], _ft_reserved),
@@ -2779,6 +2784,11 @@ IFT(FUNC_INPUT, w_var, t_var) := block(
 
     declare(t_var, real),
     _ift_reserved: [w_var, t_var],
+
+    /* ── parsear expresiones de segmentos que lleguen como strings ── */
+    for i : 1 thru length(FUNC_INPUT) do
+        if stringp(FUNC_INPUT[i][1])
+        then FUNC_INPUT[i][1]: parse_string(FUNC_INPUT[i][1]),
 
     /* ── declarar parametros libres de todos los tramos ── */
     for i : 1 thru length(FUNC_INPUT) do
