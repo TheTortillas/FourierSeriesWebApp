@@ -292,6 +292,17 @@ export class ContinuousTransformComponent implements OnInit {
   readonly altFormsOpenFt = signal(false);
   readonly altFormsOpenIft = signal(false);
 
+  // ── Alt forms — IFT piecewise segments ────────────────────────────────────
+  readonly altFormsIftUForm   = signal<AltForm[]>([]);
+  readonly altFormsIftPositive = signal<AltForm[]>([]);
+  readonly altFormsIftNegative = signal<AltForm[]>([]);
+  readonly altFormsLoadingIftUForm   = signal(false);
+  readonly altFormsLoadingIftPositive = signal(false);
+  readonly altFormsLoadingIftNegative = signal(false);
+  readonly altFormsOpenIftUForm   = signal(false);
+  readonly altFormsOpenIftPositive = signal(false);
+  readonly altFormsOpenIftNegative = signal(false);
+
   // ── Alt forms — Re/Im cards ────────────────────────────────────────────────
   readonly altFormsFtReal = signal<AltForm[]>([]);
   readonly altFormsFtImag = signal<AltForm[]>([]);
@@ -566,6 +577,7 @@ export class ContinuousTransformComponent implements OnInit {
         });
       }
     });
+
   }
 
   readonly currentColorPreset = computed(() =>
@@ -1104,6 +1116,30 @@ export class ContinuousTransformComponent implements OnInit {
 
   // ── Alt forms ─────────────────────────────────────────────────────────────
 
+  private readonly _iftNormMain = computed(() => {
+    const ift = this.iftResult();
+    const t = (ift?.fCombined ?? ift?.fOutUForm)?.tex ?? '';
+    return t.replace(/\s+/g, '');
+  });
+
+  readonly iftPosEqMain = computed(() => {
+    const seg = this.iftResult()?.fPositive?.tex ?? '';
+    const main = this._iftNormMain();
+    return !!seg && !!main && seg.replace(/\s+/g, '') === main;
+  });
+
+  readonly iftNegEqMain = computed(() => {
+    const seg = this.iftResult()?.fNegative?.tex ?? '';
+    const main = this._iftNormMain();
+    return !!seg && !!main && seg.replace(/\s+/g, '') === main;
+  });
+
+  readonly iftUFormEqMain = computed(() => {
+    const seg = this.iftResult()?.fOutUForm?.tex ?? '';
+    const main = this._iftNormMain();
+    return !!seg && !!main && seg.replace(/\s+/g, '') === main;
+  });
+
   toggleAltForms(mode: 'ft' | 'ift'): void {
     if (mode === 'ft') {
       const nowOpen = !this.altFormsOpenFt();
@@ -1113,6 +1149,38 @@ export class ContinuousTransformComponent implements OnInit {
       const nowOpen = !this.altFormsOpenIft();
       this.altFormsOpenIft.set(nowOpen);
       if (nowOpen && this.altFormsIft().length === 0) this.loadAltForms('ift');
+    }
+  }
+
+  toggleAltFormsIftSegment(seg: 'uForm' | 'positive' | 'negative'): void {
+    const openSig = {
+      uForm:    this.altFormsOpenIftUForm,
+      positive: this.altFormsOpenIftPositive,
+      negative: this.altFormsOpenIftNegative,
+    }[seg];
+    const formsSig = {
+      uForm:    this.altFormsIftUForm,
+      positive: this.altFormsIftPositive,
+      negative: this.altFormsIftNegative,
+    }[seg];
+    const nowOpen = !openSig();
+    openSig.set(nowOpen);
+    if (!nowOpen || formsSig().length > 0) return;
+    const ift = this.iftResult();
+    const symbolic = seg === 'uForm'    ? ift?.fOutUForm
+                   : seg === 'positive' ? ift?.fPositive
+                                        : ift?.fNegative;
+    if (symbolic?.maxima) {
+      const loadingSig = {
+        uForm:    this.altFormsLoadingIftUForm,
+        positive: this.altFormsLoadingIftPositive,
+        negative: this.altFormsLoadingIftNegative,
+      }[seg];
+      // Seed with the tex of the main IFT result so forms identical to the
+      // general result are not shown again inside a piecewise segment.
+      const mainTex = (ift?.fCombined ?? ift?.fOutUForm)?.tex ?? '';
+      loadingSig.set(true);
+      this.runAltForms(symbolic, (forms) => { formsSig.set(forms); loadingSig.set(false); }, [mainTex]);
     }
   }
 
@@ -1194,7 +1262,7 @@ export class ContinuousTransformComponent implements OnInit {
     this.runAltForms(expr, (forms) => { formsSig.set(forms); loadingSig.set(false); });
   }
 
-  private runAltForms(main: { maxima: string; tex: string }, done: (forms: AltForm[]) => void): void {
+  private runAltForms(main: { maxima: string; tex: string }, done: (forms: AltForm[]) => void, extraSeeds: string[] = []): void {
     const mainExpr = main.maxima;
     const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
       {
@@ -1229,6 +1297,7 @@ export class ContinuousTransformComponent implements OnInit {
         // only reliable way to detect visual duplicates.
         const seenTex = new Set<string>();
         if (main.tex) seenTex.add(normalize(main.tex));
+        for (const s of extraSeeds) if (s) seenTex.add(normalize(s));
         const forms: AltForm[] = [];
         results.forEach((r: SimplifyResponse | null, i) => {
           if (!r) return;
@@ -1275,6 +1344,12 @@ export class ContinuousTransformComponent implements OnInit {
     this.altFormsOpenFtImag.set(false);
     this.altFormsOpenIftReal.set(false);
     this.altFormsOpenIftImag.set(false);
+    this.altFormsIftUForm.set([]);
+    this.altFormsIftPositive.set([]);
+    this.altFormsIftNegative.set([]);
+    this.altFormsOpenIftUForm.set(false);
+    this.altFormsOpenIftPositive.set(false);
+    this.altFormsOpenIftNegative.set(false);
 
     const payload = { segments: segs, intVar, transVar };
     console.log('[transforms] payload →', JSON.stringify(payload, null, 2));
