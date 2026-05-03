@@ -6,9 +6,35 @@ import type {
   InverseFourierTransformInput,
   InverseFourierTransformRegionResult,
   InverseFourierTransformResult,
+  NormalizationConvention,
   PiecewiseSegment,
 } from "../../domain/types/fourier.types";
 import path from "path";
+
+/**
+ * Maxima-syntax scale factors for each normalization convention.
+ *
+ * FT side: the Maxima FT kernel has no prefactor, so ft_scale is applied
+ * directly to the raw result.
+ *
+ * IFT side: the Maxima IFT kernel already embeds 1/(2*%pi) (engineering).
+ * ift_scale is the ratio = desired_factor * 2*%pi, so that
+ *   result = ift_scale * (1/(2*%pi)) * integral = desired_factor * integral.
+ *
+ * | convention  | FT factor    | IFT factor  | ft_scale        | ift_scale    |
+ * |-------------|--------------|-------------|-----------------|--------------|
+ * | engineering | 1            | 1/(2*%pi)   | 1               | 1            |
+ * | physics     | 1/sqrt(2*%pi)| 1/sqrt(2*%pi)| 1/sqrt(2*%pi) | sqrt(2*%pi)  |
+ * | ordinary    | 1            | 1           | 1               | 2*%pi        |
+ */
+const CONVENTION_FACTORS: Record<
+  NormalizationConvention,
+  { ft: string; ift: string }
+> = {
+  engineering: { ft: "1",             ift: "1"           },
+  physics:     { ft: "1/sqrt(2*%pi)", ift: "sqrt(2*%pi)" },
+  ordinary:    { ft: "1",             ift: "2*%pi"        },
+};
 
 export class FourierTransformService {
   constructor(private readonly runner: MaximaRunner) {}
@@ -19,6 +45,8 @@ export class FourierTransformService {
     const startTime = Date.now();
     const intVar = input.intVar ?? "t";
     const transVar = input.transVar ?? "w";
+    const convention = input.convention ?? "engineering";
+    const ftScale = CONVENTION_FACTORS[convention].ft;
 
     const libPath = path.join(
       process.cwd(),
@@ -39,6 +67,7 @@ export class FourierTransformService {
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 TRANSVAR: ${transVar};
+FT_SCALE: ${ftScale};
 ${script}
 kill(all)$
 `;
@@ -166,6 +195,8 @@ kill(all)$
     const startTime = Date.now();
     const intVar = input.intVar ?? "w";
     const transVar = input.transVar ?? "t";
+    const convention = input.convention ?? "engineering";
+    const iftScale = CONVENTION_FACTORS[convention].ift;
 
     const libPath = path.join(
       process.cwd(),
@@ -190,6 +221,7 @@ kill(all)$
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 TRANSVAR: ${transVar};
+IFT_SCALE: ${iftScale};
 ${script}
 kill(all)$
 `;

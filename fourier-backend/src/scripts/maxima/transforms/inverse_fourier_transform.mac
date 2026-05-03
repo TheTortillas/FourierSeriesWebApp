@@ -12,11 +12,18 @@ display2d: false$
 load("CLEAN_INTEGRAL_PATH")$
 load("LIB_PATH")$
 
+/* IFT_SCALE is injected by the service.
+   The IFT kernel already embeds 1/(2*%pi), so IFT_SCALE is a ratio:
+     IFT_SCALE = desired_factor * 2*%pi
+   This yields: result = IFT_SCALE * (1/(2*%pi)) * integral = desired_factor * integral.
+   Default to engineering (IFT_SCALE = 1, keeps the embedded 1/(2*%pi)). */
+if not(boundp('IFT_SCALE)) then IFT_SCALE: 1$
+
 result : IFT_bilateral(FUNC_INPUT, INTVAR, TRANSVAR)$
 
-f_pos       : result[1]$
-f_neg       : result[2]$
-f_combined  : result[3]$
+f_pos       : if result[1] # false then ratsimp(IFT_SCALE * result[1]) else false$
+f_neg       : if result[2] # false then ratsimp(IFT_SCALE * result[2]) else false$
+f_combined  : if result[3] # false then ratsimp(IFT_SCALE * result[3]) else false$
 free_params : result[4]$
 
 has_combined : is(f_combined # false)$
