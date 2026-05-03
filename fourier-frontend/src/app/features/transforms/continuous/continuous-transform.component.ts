@@ -51,6 +51,7 @@ import { ExportButtonComponent } from '../../../shared/components/export-button/
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
+  NormalizationConvention,
   SimplifyRequest,
   SimplifyResponse,
 } from '../../../domain/types/transform.types';
@@ -258,6 +259,7 @@ export class ContinuousTransformComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly mode = signal<'ft' | 'ift'>('ft');
+  readonly convention = signal<NormalizationConvention>('engineering');
   readonly varPairId = signal<string>('t-w');
   readonly customTime = signal('t');
   readonly customFreq = signal('w');
@@ -600,6 +602,18 @@ export class ContinuousTransformComponent implements OnInit {
   readonly resultVarDisplay = computed(() => {
     const p = this.activePair();
     return this.mode() === 'ft' ? p.freqDisplay : p.timeDisplay;
+  });
+
+  /** Display factor string for the current convention and mode. */
+  readonly conventionFactor = computed(() => {
+    const c = this.convention();
+    if (this.mode() === 'ft') {
+      return c === 'physics' ? '1/√(2π)' : '1';
+    } else {
+      if (c === 'engineering') return '1/(2π)';
+      if (c === 'physics') return '1/√(2π)';
+      return '1';
+    }
   });
 
   readonly canCalculate = computed(
@@ -1366,7 +1380,7 @@ export class ContinuousTransformComponent implements OnInit {
     this.altFormsOpenIftPositive.set(false);
     this.altFormsOpenIftNegative.set(false);
 
-    const payload = { segments: segs, intVar, transVar };
+    const payload = { segments: segs, intVar, transVar, convention: this.convention() };
     console.log('[transforms] payload →', JSON.stringify(payload, null, 2));
 
     if (this.mode() === 'ft') {

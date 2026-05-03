@@ -242,6 +242,12 @@
     "altFormExp": "Exponencial",
     "altFormsLoading": "Calculando…",
     "altFormsEmpty": "No se encontraron formas alternativas distintas.",
+    "convention": "Convención",
+    "conventionEngineering": "Ingeniería (ω)",
+    "conventionPhysics": "Física (simétrica)",
+    "conventionOrdinary": "Frec. ordinaria (ν)",
+    "conventionFtLabel": "TF: {{ factor }} ∫ f({{ t }}) e^{−iωt} d{{ t }}",
+    "conventionIftLabel": "TFI: {{ factor }} ∫ F({{ w }}) e^{iωt} d{{ w }}",
     "dft": {
       "title": "Transformada Discreta de Fourier",
       "subtitle": "Analiza el espectro de frecuencias de una función muestreada o una señal discreta.",

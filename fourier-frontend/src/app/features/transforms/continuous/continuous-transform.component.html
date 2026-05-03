@@ -288,14 +288,7 @@
                 'transforms.direct' | transloco
               }}</span>
               <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
-                F({{ activePair().freqDisplay || activePair().freq }}) = ∫ f({{
-                  activePair().timeDisplay || activePair().time
-                }}) e<sup
-                  >−i·{{ activePair().freqDisplay || activePair().freq }}·{{
-                    activePair().timeDisplay || activePair().time
-                  }}</sup
-                >
-                d{{ activePair().timeDisplay || activePair().time }}
+                F = {{ convention() === 'physics' ? '1/√(2π)' : '1' }} · ∫ f e<sup>−iωt</sup> dt
               </span>
             </button>
             <button
@@ -311,16 +304,36 @@
                 'transforms.inverse' | transloco
               }}</span>
               <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
-                f({{ activePair().timeDisplay || activePair().time }}) = (1/2π) ∫ F({{
-                  activePair().freqDisplay || activePair().freq
-                }}) e<sup
-                  >i·{{ activePair().freqDisplay || activePair().freq }}·{{
-                    activePair().timeDisplay || activePair().time
-                  }}</sup
-                >
-                d{{ activePair().freqDisplay || activePair().freq }}
+                f = {{ conventionFactor() }} · ∫ F e<sup>iωt</sup> dω
               </span>
             </button>
+          </div>
+
+          <!-- Convention selector -->
+          <div class="flex flex-col gap-1.5">
+            <p class="text-xs text-muted font-mono">
+              {{ 'transforms.convention' | transloco }}
+            </p>
+            <select
+              [value]="convention()"
+              (change)="convention.set($any($event.target).value)"
+              class="w-full px-2 py-1.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface text-ink dark:text-dark-ink text-xs font-mono"
+            >
+              <option value="engineering">{{ 'transforms.conventionEngineering' | transloco }}</option>
+              <option value="physics">{{ 'transforms.conventionPhysics' | transloco }}</option>
+              <option value="ordinary">{{ 'transforms.conventionOrdinary' | transloco }}</option>
+            </select>
+            <p class="text-[10px] font-mono text-muted leading-snug">
+              @if (mode() === 'ft') {
+                {{ conventionFactor() }} · ∫ f({{ activePair().timeDisplay || activePair().time }})
+                e<sup>−i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup>
+                d{{ activePair().timeDisplay || activePair().time }}
+              } @else {
+                {{ conventionFactor() }} · ∫ F({{ activePair().freqDisplay || activePair().freq }})
+                e<sup>i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup>
+                d{{ activePair().freqDisplay || activePair().freq }}
+              }
+            </p>
           </div>
 
           <!-- Calculate -->

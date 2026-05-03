@@ -1,11 +1,25 @@
 import { Segment, SymbolicExpression } from './common.types';
 
+// ─── Normalization convention ─────────────────────────────────────────────────
+
+/**
+ * Normalization convention for the Fourier Transform pair.
+ *
+ * | id          | FT factor   | IFT factor  |
+ * |-------------|-------------|-------------|
+ * | engineering | 1           | 1/(2π)      |
+ * | physics     | 1/√(2π)     | 1/√(2π)    |
+ * | ordinary    | 1           | 1           |
+ */
+export type NormalizationConvention = 'engineering' | 'physics' | 'ordinary';
+
 // ─── Requests ────────────────────────────────────────────────────────────────
 
 export interface FourierTransformRequest {
   segments: Segment[];
   intVar?: string;
   transVar?: string;
+  convention?: NormalizationConvention;
 }
 
 export interface InverseFourierTransformRegion {
@@ -18,6 +32,7 @@ export interface InverseFourierTransformRequest {
   intVar?: string;
   transVar?: string;
   regions?: InverseFourierTransformRegion[];
+  convention?: NormalizationConvention;
 }
 
 // ─── Responses ───────────────────────────────────────────────────────────────
