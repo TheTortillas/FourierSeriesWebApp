@@ -6,6 +6,8 @@ export interface KeyBtn {
   typedText?: string;
   cmd?: string;
   write?: string;
+  /** Like write, but moves cursor one step left after inserting (places cursor inside the template). */
+  writeWithCursor?: string;
   keystroke?: string;
 }
 
@@ -80,37 +82,21 @@ export class MathquillService {
     const field = this._activeField;
     if (!field) return;
     field.focus();
-    if (btn.label === 'δ(·)') {
-      field.write('\\delta\\left(\\right)');
+    if (btn.writeWithCursor !== undefined) {
+      field.write(btn.writeWithCursor);
       field.keystroke('Left');
-      return;
-    }
-    if (btn.label === 'Γ(·)') {
-      field.write('\\Gamma\\left(\\right)');
-      field.keystroke('Left');
-      return;
-    }
-    if (btn.label === 'exp') {
-      field.write('\\operatorname{exp}\\left(\\right)');
-      field.keystroke('Left');
-      return;
-    }
-    if (btn.label === 'sgn') {
-      field.write('\\operatorname{sgn}\\left(\\right)');
-      field.keystroke('Left');
-      return;
-    }
-    if (btn.label === 'eˣ') {
+    } else if (btn.label === 'eˣ' || btn.label === 'e^□') {
       field.typedText('e');
       field.cmd('^');
-      return;
-    }
-    if (btn.label === '|·|') {
-      field.write('\\left|\\right|');
-      field.keystroke('Left');
-      return;
-    }
-    if (btn.typedText !== undefined) field.typedText(btn.typedText);
+    } else if (btn.label === '□²') {
+      field.cmd('^');
+      field.typedText('2');
+      field.keystroke('Right');
+    } else if (btn.label === '□^□') {
+      field.cmd('^');
+    } else if (btn.label === '□/□') {
+      field.cmd('/');
+    } else if (btn.typedText !== undefined) field.typedText(btn.typedText);
     else if (btn.cmd !== undefined) field.cmd(btn.cmd);
     else if (btn.write !== undefined) field.write(btn.write);
     else if (btn.keystroke !== undefined) field.keystroke(btn.keystroke);

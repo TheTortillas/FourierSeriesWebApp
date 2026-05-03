@@ -200,60 +200,46 @@ export class ContinuousTransformComponent implements OnInit {
 
   /** Extra buttons passed to the mobile keyboard (transforms-specific). */
   readonly mobileExtraGroup: KeyBtn[] = [
-    { label: 'δ(·)', typedText: 'delta(' },
-    { label: 'u(·)', typedText: 'u(' },
-    { label: 'sgn' },
+    { label: 'δ(□)', writeWithCursor: '\\delta\\left(\\right)' },
+    { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+    { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+    { label: 'abs(□)', writeWithCursor: '\\operatorname{abs}\\left(\\right)' },
+    { label: '|□|', writeWithCursor: '\\left|\\right|' },
     { label: 'i', typedText: 'i' },
     { label: '∞', write: '\\infty' },
     { label: '-∞', write: '-\\infty' },
   ];
 
   readonly keyGroups: KeyBtn[][] = [
-    // Transform-specific functions
+    // Row 1: Especiales
     [
-      { label: 'δ(·)', typedText: 'delta(' },
-      { label: 'u(·)', typedText: 'u(' },
-      { label: 'sgn' },
+      { label: 'δ(□)', writeWithCursor: '\\delta\\left(\\right)' },
+      { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+      { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+      { label: 'abs(□)', writeWithCursor: '\\operatorname{abs}\\left(\\right)' },
+      { label: '|□|', writeWithCursor: '\\left|\\right|' },
+    ],
+    // Row 2: Trig + hiperbólicas comunes + atan
+    [
+      { label: 'sin(□)', writeWithCursor: '\\sin\\left(\\right)' },
+      { label: 'cos(□)', writeWithCursor: '\\cos\\left(\\right)' },
+      { label: 'sinh(□)', writeWithCursor: '\\sinh\\left(\\right)' },
+      { label: 'cosh(□)', writeWithCursor: '\\cosh\\left(\\right)' },
+      { label: 'atan(□)', writeWithCursor: '\\operatorname{atan}\\left(\\right)' },
+    ],
+    // Row 3: Operadores y constantes
+    [
+      { label: 'e^□' },
+      { label: '□²' },
+      { label: '□^□' },
+      { label: '□/□' },
+      { label: '√□', cmd: '\\sqrt' },
+      { label: '(□)', writeWithCursor: '\\left(\\right)' },
+      { label: 'π', typedText: 'pi' },
       { label: 'i', typedText: 'i' },
       { label: '∞', write: '\\infty' },
       { label: '-∞', write: '-\\infty' },
-    ],
-    // Basic trig
-    [
-      { label: 'sin', typedText: 'sin(' },
-      { label: 'cos', typedText: 'cos(' },
-      { label: 'tan', typedText: 'tan(' },
-      { label: 'cot', typedText: 'cot(' },
-      { label: 'sec', typedText: 'sec(' },
-      { label: 'csc', typedText: 'csc(' },
-    ],
-    // Inverse trig (common in FT: arctan for signum derivations, arcsin/arccos in edge cases)
-    [
-      { label: 'asin', typedText: 'asin(' },
-      { label: 'acos', typedText: 'acos(' },
-      { label: 'atan', typedText: 'atan(' },
-    ],
-    // Hyperbolic (sech(t) and relatives have known FTs)
-    [
-      { label: 'sinh', typedText: 'sinh(' },
-      { label: 'cosh', typedText: 'cosh(' },
-      { label: 'tanh', typedText: 'tanh(' },
-    ],
-    // Misc
-    [
-      { label: 'log', typedText: 'log(' },
-      { label: 'ln', typedText: 'ln(' },
-      { label: 'exp', typedText: 'exp(' },
-      { label: '\\', typedText: '\\' },
-      { label: '√·', cmd: '\\sqrt' },
-      { label: '|·|' },
-      { label: 'π', typedText: 'pi' },
-      { label: 'eˣ' },
-      { label: 'xⁿ', cmd: '^' },
-      { label: '(', typedText: '(' },
-      { label: ')', typedText: ')' },
       { label: '−', write: '-' },
-      { label: '/', typedText: '/' },
       { label: '⌫', keystroke: 'Backspace' },
     ],
   ];
