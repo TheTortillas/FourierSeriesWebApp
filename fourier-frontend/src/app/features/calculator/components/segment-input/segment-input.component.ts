@@ -45,7 +45,7 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   fields: [MathField | null, MathField | null, MathField | null] = [null, null, null];
 
   private _syncingFromStore = false;
-  private readonly _specialCapture = this.mqs.createSpecialKeyCapture(
+  private readonly _caretCapture = this.mqs.createCaretCapture(
     () => this.fields[this.focusedFieldIdx],
   );
 
@@ -82,12 +82,7 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit(): Promise<void> {
-    this.elRef.nativeElement.addEventListener('keydown', this._specialCapture, true);
-    this.elRef.nativeElement.addEventListener(
-      'beforeinput',
-      this._specialCapture as EventListener,
-      true,
-    );
+    this.elRef.nativeElement.addEventListener('keydown', this._caretCapture, true);
     const keys: Array<
       [0 | 1 | 2, keyof Omit<SegmentDraft, 'id'>, keyof Omit<SegmentDraft, 'id'>, string]
     > = [
@@ -142,12 +137,7 @@ export class SegmentInputComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.elRef.nativeElement.removeEventListener('keydown', this._specialCapture, true);
-    this.elRef.nativeElement.removeEventListener(
-      'beforeinput',
-      this._specialCapture as EventListener,
-      true,
-    );
+    this.elRef.nativeElement.removeEventListener('keydown', this._caretCapture, true);
     this._subs.unsubscribe();
     for (const s of this.fieldSubjects) s.complete();
     for (const ref of [this.mqExprRef, this.mqFromRef, this.mqToRef]) {

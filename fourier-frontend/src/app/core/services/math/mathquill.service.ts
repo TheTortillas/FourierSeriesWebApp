@@ -106,7 +106,7 @@ export class MathquillService {
       return;
     }
     if (btn.label === '|·|') {
-      field.write('\\operatorname{abs}\\left(\\right)');
+      field.write('\\left|\\right|');
       field.keystroke('Left');
       return;
     }
@@ -158,50 +158,52 @@ export class MathquillService {
     return config;
   }
 
+
   /**
-   * Returns a capture-phase listener for keyboard and beforeinput events.
+   * Returns a capture-phase listener that fixes caret (^) input on keyboards
+   * where ^ is a dead key (e.g. Spanish/Latin layouts with AltGr).
    *
-   * Why both:
-   * - Linux/ES layouts may emit `Dead` + AltGraph for caret, so keypress can miss `^`.
-   * - beforeinput can still carry the final inserted character in tricky IME/dead-key flows.
+   * Without this, AltGr+^ emits a Dead keydown event followed by a ^ keydown.
+   * MathQuill doesn't see either as a caret command, so the superscript never opens.
+   * We intercept both and call field.cmd('^') once so MathQuill enters superscript mode.
+   *
+   * | (pipe / absolute value) is intentionally NOT intercepted here — MathQuill
+   * handles it natively and the backend normalizes the resulting LaTeX.
    */
-  createSpecialKeyCapture(getField: () => MathField | null): (e: Event) => void {
-    const insertAbsolute = (field: MathField) => {
-      field.write('\\operatorname{abs}\\left(\\right)');
-      field.keystroke('Left');
-    };
+  createCaretCapture(getField: () => MathField | null): (e: Event) => void {
+    let deadCaretPending = false;
 
     return (e: Event) => {
       const field = getField();
       if (!field) return;
 
       if (e instanceof KeyboardEvent) {
-        const isPipe = e.key === '|';
-        const isCaret = e.key === '^';
-        const isAltGraphDeadCaret =
+        const isDeadCaret =
           e.key === 'Dead' && (e.getModifierState?.('AltGraph') || (e.ctrlKey && e.altKey));
+        const isCaret = e.key === '^';
 
-        if (!isPipe && !isCaret && !isAltGraphDeadCaret) return;
-
-        e.stopPropagation();
-        e.preventDefault();
-        if (isPipe) {
-          insertAbsolute(field);
-        } else {
+        if (isDeadCaret) {
+          deadCaretPending = true;
+          e.stopPropagation();
+          e.preventDefault();
           field.cmd('^');
+          return;
         }
-        return;
-      }
 
-      if (typeof InputEvent !== 'undefined' && e instanceof InputEvent) {
-        if (e.data !== '|' && e.data !== '^') return;
-        e.stopPropagation();
-        e.preventDefault();
-        if (e.data === '|') {
-          insertAbsolute(field);
-        } else {
-          field.cmd('^');
+        if (isCaret && !deadCaretPending) {
+          // Regular ^ on US layout — let MathQuill handle it natively
+          return;
         }
+
+        if (isCaret && deadCaretPending) {
+          // Second event after AltGr dead key — suppress it, already handled
+          deadCaretPending = false;
+          e.stopPropagation();
+          e.preventDefault();
+          return;
+        }
+
+        deadCaretPending = false;
       }
     };
   }

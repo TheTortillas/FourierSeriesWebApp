@@ -60,8 +60,8 @@ export class LatexParserService {
 
   private preProcess(latex: string): string {
     let s = latex
-      .replace(/\\left/g, "")
-      .replace(/\\right/g, "")
+      // \cdot → space so tex2max's addTimesSign inserts * correctly
+      .replace(/\\cdot\s*/g, " ")
       .replace(/\\operatorname\{sen\}/g, "\\sin")
       .replace(/\\operatorname\{tg\}/g, "\\tan")
       .replace(/\\operatorname\{senh\}/g, "\\sinh")
@@ -74,6 +74,8 @@ export class LatexParserService {
       .replace(/\\operatorname\{arctan\}/g, "\\operatorname{atan}")
       .replace(/\\operatorname\{ln\}/g, "\\log")
       .replace(/\\ln\b/g, "\\log")
+      // Normalize exp — strip \left so substituteExp finds the marker
+      .replace(/\\operatorname\{exp\}\\left\(/g, "\\operatorname{exp}(")
       .replace(/\\exp\(/g, "\\operatorname{exp}(")
       .replace(/\\operatorname\{exp\}\(/g, "\\operatorname{exp}(")
       .replace(/\\operatorname\{sgn\}/g, "sgn")
@@ -86,8 +88,47 @@ export class LatexParserService {
       .replace(/-\s*\\infty/g, "TMMINF")
       .replace(/\\infty/g, "TMINF");
 
+    s = this.normalizePipes(s);
     s = this.substituteExp(s);
     return s;
+  }
+
+  /**
+   * Convert bare pipe pairs |...| to \left|...\right| so tex2max can parse them.
+   * MathQuill emits bare pipes when the user types | directly on the keyboard.
+   * Pipes already wrapped in \left|\right| (inserted programmatically) are left untouched.
+   */
+  private normalizePipes(s: string): string {
+    let result = "";
+    let i = 0;
+    while (i < s.length) {
+      if (s[i] === "|") {
+        // Skip if already preceded by \left or \right (already wrapped)
+        const before = result.slice(-5);
+        if (before.endsWith("\\left") || before.endsWith("right")) {
+          result += s[i++];
+          continue;
+        }
+        // Find matching closing pipe
+        let j = i + 1;
+        let depth = 0;
+        while (j < s.length) {
+          if (s[j] === "{") depth++;
+          else if (s[j] === "}") depth--;
+          else if (s[j] === "|" && depth === 0) break;
+          j++;
+        }
+        if (j < s.length) {
+          result += "\\left|" + s.slice(i + 1, j) + "\\right|";
+          i = j + 1;
+        } else {
+          result += s[i++]; // unmatched pipe — pass through, tex2max will error
+        }
+      } else {
+        result += s[i++];
+      }
+    }
+    return result;
   }
 
   private substituteExp(latex: string): string {
@@ -109,7 +150,10 @@ export class LatexParserService {
         else if (c === ")") {
           depth--;
           if (depth === 0) {
-            result += ")}";
+            // Strip a preceding \right that MathQuill inserts when exp was
+            // written as \operatorname{exp}\left(...\right)
+            const inner = result.replace(/\\right$/, "");
+            result = inner + ")}";
             i++;
             break;
           }

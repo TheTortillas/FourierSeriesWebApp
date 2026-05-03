@@ -132,44 +132,44 @@ interface TransformColorPreset {
 function getTransformColorPreset(isDark: boolean, isNeutral: boolean): TransformColorPreset {
   if (!isNeutral && !isDark) {
     return {
-      original: '#dc2626',    // red-600   — Re f(t)
+      original: '#dc2626', // red-600   — Re f(t)
       originalImag: '#9333ea', // purple-600 — Im f(t)
-      originalMag: '#0891b2',  // cyan-600   — |f(t)|
-      result: '#2563eb',       // blue-600   — Re F(w)
-      imag: '#d97706',         // amber-600  — Im F(w)
-      mag: '#16a34a',          // green-600  — |F(w)|
+      originalMag: '#0891b2', // cyan-600   — |f(t)|
+      result: '#2563eb', // blue-600   — Re F(w)
+      imag: '#d97706', // amber-600  — Im F(w)
+      mag: '#16a34a', // green-600  — |F(w)|
     };
   }
 
   if (!isNeutral && isDark) {
     return {
-      original: '#f87171',    // red-400
+      original: '#f87171', // red-400
       originalImag: '#c084fc', // purple-400
-      originalMag: '#22d3ee',  // cyan-400
-      result: '#60a5fa',       // blue-400
-      imag: '#fbbf24',         // amber-400
-      mag: '#4ade80',          // green-400
+      originalMag: '#22d3ee', // cyan-400
+      result: '#60a5fa', // blue-400
+      imag: '#fbbf24', // amber-400
+      mag: '#4ade80', // green-400
     };
   }
 
   if (isNeutral && !isDark) {
     return {
-      original: '#2563eb',    // blue-600
+      original: '#2563eb', // blue-600
       originalImag: '#7c3aed', // violet-600
-      originalMag: '#0891b2',  // cyan-600
-      result: '#0f766e',       // teal-700
-      imag: '#c2410c',         // orange-700
-      mag: '#4f46e5',          // indigo-600
+      originalMag: '#0891b2', // cyan-600
+      result: '#0f766e', // teal-700
+      imag: '#c2410c', // orange-700
+      mag: '#4f46e5', // indigo-600
     };
   }
 
   return {
-    original: '#60a5fa',    // blue-400
+    original: '#60a5fa', // blue-400
     originalImag: '#a78bfa', // violet-400
-    originalMag: '#22d3ee',  // cyan-400
-    result: '#2dd4bf',       // teal-400
-    imag: '#fb923c',         // orange-400
-    mag: '#818cf8',          // indigo-400
+    originalMag: '#22d3ee', // cyan-400
+    result: '#2dd4bf', // teal-400
+    imag: '#fb923c', // orange-400
+    mag: '#818cf8', // indigo-400
   };
 }
 
@@ -293,13 +293,13 @@ export class ContinuousTransformComponent implements OnInit {
   readonly altFormsOpenIft = signal(false);
 
   // ── Alt forms — IFT piecewise segments ────────────────────────────────────
-  readonly altFormsIftUForm   = signal<AltForm[]>([]);
+  readonly altFormsIftUForm = signal<AltForm[]>([]);
   readonly altFormsIftPositive = signal<AltForm[]>([]);
   readonly altFormsIftNegative = signal<AltForm[]>([]);
-  readonly altFormsLoadingIftUForm   = signal(false);
+  readonly altFormsLoadingIftUForm = signal(false);
   readonly altFormsLoadingIftPositive = signal(false);
   readonly altFormsLoadingIftNegative = signal(false);
-  readonly altFormsOpenIftUForm   = signal(false);
+  readonly altFormsOpenIftUForm = signal(false);
   readonly altFormsOpenIftPositive = signal(false);
   readonly altFormsOpenIftNegative = signal(false);
 
@@ -577,7 +577,6 @@ export class ContinuousTransformComponent implements OnInit {
         });
       }
     });
-
   }
 
   readonly currentColorPreset = computed(() =>
@@ -1154,12 +1153,12 @@ export class ContinuousTransformComponent implements OnInit {
 
   toggleAltFormsIftSegment(seg: 'uForm' | 'positive' | 'negative'): void {
     const openSig = {
-      uForm:    this.altFormsOpenIftUForm,
+      uForm: this.altFormsOpenIftUForm,
       positive: this.altFormsOpenIftPositive,
       negative: this.altFormsOpenIftNegative,
     }[seg];
     const formsSig = {
-      uForm:    this.altFormsIftUForm,
+      uForm: this.altFormsIftUForm,
       positive: this.altFormsIftPositive,
       negative: this.altFormsIftNegative,
     }[seg];
@@ -1167,12 +1166,11 @@ export class ContinuousTransformComponent implements OnInit {
     openSig.set(nowOpen);
     if (!nowOpen || formsSig().length > 0) return;
     const ift = this.iftResult();
-    const symbolic = seg === 'uForm'    ? ift?.fOutUForm
-                   : seg === 'positive' ? ift?.fPositive
-                                        : ift?.fNegative;
+    const symbolic =
+      seg === 'uForm' ? ift?.fOutUForm : seg === 'positive' ? ift?.fPositive : ift?.fNegative;
     if (symbolic?.maxima) {
       const loadingSig = {
-        uForm:    this.altFormsLoadingIftUForm,
+        uForm: this.altFormsLoadingIftUForm,
         positive: this.altFormsLoadingIftPositive,
         negative: this.altFormsLoadingIftNegative,
       }[seg];
@@ -1180,13 +1178,18 @@ export class ContinuousTransformComponent implements OnInit {
       // general result are not shown again inside a piecewise segment.
       const mainTex = (ift?.fCombined ?? ift?.fOutUForm)?.tex ?? '';
       loadingSig.set(true);
-      this.runAltForms(symbolic, (forms) => { formsSig.set(forms); loadingSig.set(false); }, [mainTex]);
+      this.runAltForms(
+        symbolic,
+        (forms) => {
+          formsSig.set(forms);
+          loadingSig.set(false);
+        },
+        [mainTex],
+      );
     }
   }
 
-  toggleAltFormsCard(
-    card: 'ft-real' | 'ft-imag' | 'ift-real' | 'ift-imag',
-  ): void {
+  toggleAltFormsCard(card: 'ft-real' | 'ft-imag' | 'ift-real' | 'ift-imag'): void {
     const openSig = {
       'ft-real': this.altFormsOpenFtReal,
       'ft-imag': this.altFormsOpenFtImag,
@@ -1213,10 +1216,14 @@ export class ContinuousTransformComponent implements OnInit {
     const ft = this.ftResult();
     const ift = this.iftResult();
     switch (card) {
-      case 'ft-real':  return ft?.realPart;
-      case 'ft-imag':  return ft?.imagPart;
-      case 'ift-real': return ift?.outputRealPart;
-      case 'ift-imag': return ift?.outputImagPart;
+      case 'ft-real':
+        return ft?.realPart;
+      case 'ft-imag':
+        return ft?.imagPart;
+      case 'ift-real':
+        return ift?.outputRealPart;
+      case 'ift-imag':
+        return ift?.outputImagPart;
     }
   }
 
@@ -1237,8 +1244,13 @@ export class ContinuousTransformComponent implements OnInit {
     else this.altFormsLoadingIft.set(true);
 
     this.runAltForms(mainSymbolic, (forms) => {
-      if (mode === 'ft') { this.altFormsFt.set(forms); this.altFormsLoadingFt.set(false); }
-      else { this.altFormsIft.set(forms); this.altFormsLoadingIft.set(false); }
+      if (mode === 'ft') {
+        this.altFormsFt.set(forms);
+        this.altFormsLoadingFt.set(false);
+      } else {
+        this.altFormsIft.set(forms);
+        this.altFormsLoadingIft.set(false);
+      }
     });
   }
 
@@ -1259,10 +1271,17 @@ export class ContinuousTransformComponent implements OnInit {
       'ift-imag': this.altFormsIftImag,
     }[card];
     loadingSig.set(true);
-    this.runAltForms(expr, (forms) => { formsSig.set(forms); loadingSig.set(false); });
+    this.runAltForms(expr, (forms) => {
+      formsSig.set(forms);
+      loadingSig.set(false);
+    });
   }
 
-  private runAltForms(main: { maxima: string; tex: string }, done: (forms: AltForm[]) => void, extraSeeds: string[] = []): void {
+  private runAltForms(
+    main: { maxima: string; tex: string },
+    done: (forms: AltForm[]) => void,
+    extraSeeds: string[] = [],
+  ): void {
     const mainExpr = main.maxima;
     const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
       {
@@ -1275,7 +1294,12 @@ export class ContinuousTransformComponent implements OnInit {
       },
       {
         labelKey: 'transforms.altFormTrig',
-        req: { expression: mainExpr, profile: 'complete', functions: ['trigreduce'], displayFlags: { demoivre: true } },
+        req: {
+          expression: mainExpr,
+          profile: 'complete',
+          functions: ['trigreduce'],
+          displayFlags: { demoivre: true },
+        },
       },
       {
         labelKey: 'transforms.altFormRect',
@@ -1283,7 +1307,12 @@ export class ContinuousTransformComponent implements OnInit {
       },
       {
         labelKey: 'transforms.altFormExp',
-        req: { expression: mainExpr, profile: 'complete', displayFlags: { exponentialize: true } },
+        req: {
+          expression: mainExpr,
+          profile: 'complete',
+          functions: ['radcan'],
+          displayFlags: { exponentialize: true },
+        },
       },
     ];
 
