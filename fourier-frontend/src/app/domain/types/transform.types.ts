@@ -1,11 +1,25 @@
 import { Segment, SymbolicExpression } from './common.types';
 
+// ─── Normalization convention ─────────────────────────────────────────────────
+
+/**
+ * Normalization convention for the Fourier Transform pair.
+ *
+ * | id          | FT factor   | IFT factor  |
+ * |-------------|-------------|-------------|
+ * | engineering | 1           | 1/(2π)      |
+ * | physics     | 1/√(2π)     | 1/√(2π)    |
+ * | ordinary    | 1           | 1           |
+ */
+export type NormalizationConvention = 'engineering' | 'physics' | 'ordinary';
+
 // ─── Requests ────────────────────────────────────────────────────────────────
 
 export interface FourierTransformRequest {
   segments: Segment[];
   intVar?: string;
   transVar?: string;
+  convention?: NormalizationConvention;
 }
 
 export interface InverseFourierTransformRegion {
@@ -18,6 +32,7 @@ export interface InverseFourierTransformRequest {
   intVar?: string;
   transVar?: string;
   regions?: InverseFourierTransformRegion[];
+  convention?: NormalizationConvention;
 }
 
 // ─── Responses ───────────────────────────────────────────────────────────────
@@ -45,14 +60,28 @@ export interface InverseFourierTransformResponse {
   fNegative?: SymbolicExpression;
   /** Combined/simplified form when both regions yield a clean expression */
   fCombined?: SymbolicExpression;
+  /** u(t) combined form: f_pos·u(t) + f_neg·u(−t) */
+  fOutUForm?: SymbolicExpression;
   /** Real part of the input F(ω) (for canvas plotting) */
   inputRealPart?: SymbolicExpression;
   /** Imaginary part of the input F(ω) (for canvas plotting) */
   inputImagPart?: SymbolicExpression;
-  /** Real part of reconstructed f(t) (for canvas plotting when output is complex). */
+  /** Real part of reconstructed f(t) — combined form (for canvas plotting) */
   outputRealPart?: SymbolicExpression;
-  /** Imaginary part of reconstructed f(t) (for canvas plotting when output is complex). */
+  /** Imaginary part of reconstructed f(t) — combined form (for canvas plotting) */
   outputImagPart?: SymbolicExpression;
+  /** Real part of f(t) for t > 0 */
+  outputRealPartPositive?: SymbolicExpression;
+  /** Real part of f(t) for t < 0 */
+  outputRealPartNegative?: SymbolicExpression;
+  /** Imaginary part of f(t) for t > 0 */
+  outputImagPartPositive?: SymbolicExpression;
+  /** Imaginary part of f(t) for t < 0 */
+  outputImagPartNegative?: SymbolicExpression;
+  /** Real part of f_out_u_form: Re(f_pos·u(t) + f_neg·u(−t)) */
+  outputRealUForm?: SymbolicExpression;
+  /** Imaginary part of f_out_u_form */
+  outputImagUForm?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }
@@ -83,6 +112,7 @@ export interface SimplifyRequest {
     demoivre?: boolean;
     erfRepresentation?: 'erf' | 'erfc' | 'erfi';
   };
+  convention?: NormalizationConvention;
 }
 
 export interface SimplifyResponse {

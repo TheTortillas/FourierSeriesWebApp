@@ -1,7 +1,10 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { simplifyService } from "../../infrastructure/container";
 import type { SimplifyInput } from "../../domain/types/fourier.types";
-import { sanitizeExpression } from "../middlewares/sanitize";
+import {
+  sanitizeConvention,
+  sanitizeExpression,
+} from "../middlewares/sanitize";
 
 export const simplifyRouter = Router();
 
@@ -65,6 +68,7 @@ simplifyRouter.post(
         return;
       }
 
+      input.convention = sanitizeConvention(input.convention);
       const result = await simplifyService.simplify(input);
       res.json(result);
     } catch (err) {

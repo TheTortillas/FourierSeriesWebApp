@@ -47,3 +47,8 @@ node_modules/
 
 # Local backend notes (non-versioned)
 /fourier-backend/.local/
+
+# Local working notes (non-versioned)
+PLOTTER_EVAL.md
+FOURIER_TABLES.md
+.claude/

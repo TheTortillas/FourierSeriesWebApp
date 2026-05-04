@@ -98,6 +98,17 @@ export interface ValidationResult {
   message?: string;
 }
 
+/**
+ * Normalization convention for the Fourier Transform pair.
+ *
+ * | id          | FT factor   | IFT factor  |
+ * |-------------|-------------|-------------|
+ * | engineering | 1           | 1/(2π)      |
+ * | physics     | 1/√(2π)     | 1/√(2π)    |
+ * | ordinary    | 1           | 1           |
+ */
+export type NormalizationConvention = "engineering" | "physics" | "ordinary";
+
 export type SimplificationProfile =
   | "raw"
   | "integer"
@@ -127,6 +138,7 @@ export interface SimplifyInput {
     demoivre?: boolean;
     erfRepresentation?: "erf" | "erfc" | "erfi";
   };
+  convention?: NormalizationConvention;
 }
 
 export interface SimplifyResult {
@@ -193,6 +205,7 @@ export interface FourierTransformInput {
   segments: PiecewiseSegment[];
   intVar?: string;
   transVar?: string;
+  convention?: NormalizationConvention;
 }
 
 export interface FourierTransformResult {
@@ -217,6 +230,7 @@ export interface InverseFourierTransformInput {
   intVar?: string;
   transVar?: string;
   regions?: TransformRegion[];
+  convention?: NormalizationConvention;
 }
 
 export interface InverseFourierTransformRegionResult {
@@ -230,10 +244,17 @@ export interface InverseFourierTransformResult {
   fPositive?: SymbolicExpression;
   fNegative?: SymbolicExpression;
   fCombined?: SymbolicExpression;
+  fOutUForm?: SymbolicExpression;
   inputRealPart?: SymbolicExpression;
   inputImagPart?: SymbolicExpression;
   outputRealPart?: SymbolicExpression;
   outputImagPart?: SymbolicExpression;
+  outputRealPartPositive?: SymbolicExpression;
+  outputRealPartNegative?: SymbolicExpression;
+  outputImagPartPositive?: SymbolicExpression;
+  outputImagPartNegative?: SymbolicExpression;
+  outputRealUForm?: SymbolicExpression;
+  outputImagUForm?: SymbolicExpression;
   params?: string[];
   executionTimeMs: number;
 }

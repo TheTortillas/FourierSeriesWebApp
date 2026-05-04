@@ -11,6 +11,7 @@ import type {
   DFTFunctionInput,
 } from "../../domain/types/fourier.types";
 import {
+  sanitizeConvention,
   sanitizeSegments,
   sanitizeVariableName,
 } from "../middlewares/sanitize";
@@ -98,6 +99,7 @@ transformsRouter.post(
         res.status(400).json({ error: sanitizeCheck.error });
         return;
       }
+      input.convention = sanitizeConvention(input.convention);
       const result = await fourierTransformService.transform(input);
       const shouldConsume = shouldConsumeTransformCalculation(result);
       const shouldPersistSideEffects = !client.isDisconnected();
@@ -202,6 +204,7 @@ transformsRouter.post(
         res.status(400).json({ error: sanitizeCheck.error });
         return;
       }
+      input.convention = sanitizeConvention(input.convention);
       const result = await fourierTransformService.inverseTransform(input);
       const shouldConsume = shouldConsumeTransformCalculation(result);
       const shouldPersistSideEffects = !client.isDisconnected();

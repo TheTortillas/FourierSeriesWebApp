@@ -17,6 +17,7 @@ import {
   catchError,
   debounceTime,
   filter,
+  forkJoin,
   map,
   of,
   pairwise,
@@ -50,8 +51,17 @@ import { ExportButtonComponent } from '../../../shared/components/export-button/
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
+  NormalizationConvention,
+  SimplifyRequest,
+  SimplifyResponse,
 } from '../../../domain/types/transform.types';
 import { HistoryEntry } from '../../../domain';
+
+export interface AltForm {
+  labelKey: string;
+  tex: string;
+  maxima: string;
+}
 
 let _nextId = 0;
 const mkId = () => `ts-${++_nextId}`;
@@ -113,6 +123,8 @@ const VAR_PAIRS: VarPair[] = [
 
 interface TransformColorPreset {
   original: string;
+  originalImag: string;
+  originalMag: string;
   result: string;
   imag: string;
   mag: string;
@@ -121,36 +133,44 @@ interface TransformColorPreset {
 function getTransformColorPreset(isDark: boolean, isNeutral: boolean): TransformColorPreset {
   if (!isNeutral && !isDark) {
     return {
-      original: '#c14030',
-      result: '#2563eb',
-      imag: '#d97706',
-      mag: '#16a34a',
+      original: '#dc2626', // red-600   — Re f(t)
+      originalImag: '#9333ea', // purple-600 — Im f(t)
+      originalMag: '#0891b2', // cyan-600   — |f(t)|
+      result: '#2563eb', // blue-600   — Re F(w)
+      imag: '#d97706', // amber-600  — Im F(w)
+      mag: '#16a34a', // green-600  — |F(w)|
     };
   }
 
   if (!isNeutral && isDark) {
     return {
-      original: '#e0ad74',
-      result: '#7db7e8',
-      imag: '#f6b26b',
-      mag: '#7dd3a0',
+      original: '#f87171', // red-400
+      originalImag: '#c084fc', // purple-400
+      originalMag: '#22d3ee', // cyan-400
+      result: '#60a5fa', // blue-400
+      imag: '#fbbf24', // amber-400
+      mag: '#4ade80', // green-400
     };
   }
 
   if (isNeutral && !isDark) {
     return {
-      original: '#2563eb',
-      result: '#0f766e',
-      imag: '#c2410c',
-      mag: '#4f46e5',
+      original: '#2563eb', // blue-600
+      originalImag: '#7c3aed', // violet-600
+      originalMag: '#0891b2', // cyan-600
+      result: '#0f766e', // teal-700
+      imag: '#c2410c', // orange-700
+      mag: '#4f46e5', // indigo-600
     };
   }
 
   return {
-    original: '#60a5fa',
-    result: '#2dd4bf',
-    imag: '#fb923c',
-    mag: '#a78bfa',
+    original: '#60a5fa', // blue-400
+    originalImag: '#a78bfa', // violet-400
+    originalMag: '#22d3ee', // cyan-400
+    result: '#2dd4bf', // teal-400
+    imag: '#fb923c', // orange-400
+    mag: '#818cf8', // indigo-400
   };
 }
 
@@ -181,60 +201,46 @@ export class ContinuousTransformComponent implements OnInit {
 
   /** Extra buttons passed to the mobile keyboard (transforms-specific). */
   readonly mobileExtraGroup: KeyBtn[] = [
-    { label: 'δ(·)', typedText: 'delta(' },
-    { label: 'u(·)', typedText: 'u(' },
-    { label: 'sgn' },
+    { label: 'δ(□)', writeWithCursor: '\\delta\\left(\\right)' },
+    { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+    { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+    { label: 'abs(□)', writeWithCursor: '\\operatorname{abs}\\left(\\right)' },
+    { label: '|□|', writeWithCursor: '\\left|\\right|' },
     { label: 'i', typedText: 'i' },
     { label: '∞', write: '\\infty' },
     { label: '-∞', write: '-\\infty' },
   ];
 
   readonly keyGroups: KeyBtn[][] = [
-    // Transform-specific functions
+    // Row 1: Especiales
     [
-      { label: 'δ(·)', typedText: 'delta(' },
-      { label: 'u(·)', typedText: 'u(' },
-      { label: 'sgn' },
+      { label: 'δ(□)', writeWithCursor: '\\delta\\left(\\right)' },
+      { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+      { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+      { label: 'abs(□)', writeWithCursor: '\\operatorname{abs}\\left(\\right)' },
+      { label: '|□|', writeWithCursor: '\\left|\\right|' },
+    ],
+    // Row 2: Trig + hiperbólicas comunes + atan
+    [
+      { label: 'sin(□)', writeWithCursor: '\\sin\\left(\\right)' },
+      { label: 'cos(□)', writeWithCursor: '\\cos\\left(\\right)' },
+      { label: 'sinh(□)', writeWithCursor: '\\sinh\\left(\\right)' },
+      { label: 'cosh(□)', writeWithCursor: '\\cosh\\left(\\right)' },
+      { label: 'atan(□)', writeWithCursor: '\\operatorname{atan}\\left(\\right)' },
+    ],
+    // Row 3: Operadores y constantes
+    [
+      { label: 'e^□' },
+      { label: '□²' },
+      { label: '□^□' },
+      { label: '□/□' },
+      { label: '√□', cmd: '\\sqrt' },
+      { label: '(□)', writeWithCursor: '\\left(\\right)' },
+      { label: 'π', typedText: 'pi' },
       { label: 'i', typedText: 'i' },
       { label: '∞', write: '\\infty' },
       { label: '-∞', write: '-\\infty' },
-    ],
-    // Basic trig
-    [
-      { label: 'sin', typedText: 'sin(' },
-      { label: 'cos', typedText: 'cos(' },
-      { label: 'tan', typedText: 'tan(' },
-      { label: 'cot', typedText: 'cot(' },
-      { label: 'sec', typedText: 'sec(' },
-      { label: 'csc', typedText: 'csc(' },
-    ],
-    // Inverse trig (common in FT: arctan for signum derivations, arcsin/arccos in edge cases)
-    [
-      { label: 'asin', typedText: 'asin(' },
-      { label: 'acos', typedText: 'acos(' },
-      { label: 'atan', typedText: 'atan(' },
-    ],
-    // Hyperbolic (sech(t) and relatives have known FTs)
-    [
-      { label: 'sinh', typedText: 'sinh(' },
-      { label: 'cosh', typedText: 'cosh(' },
-      { label: 'tanh', typedText: 'tanh(' },
-    ],
-    // Misc
-    [
-      { label: 'log', typedText: 'log(' },
-      { label: 'ln', typedText: 'ln(' },
-      { label: 'exp', typedText: 'exp(' },
-      { label: '\\', typedText: '\\' },
-      { label: '√·', cmd: '\\sqrt' },
-      { label: '|·|' },
-      { label: 'π', typedText: 'pi' },
-      { label: 'eˣ' },
-      { label: 'xⁿ', cmd: '^' },
-      { label: '(', typedText: '(' },
-      { label: ')', typedText: ')' },
       { label: '−', write: '-' },
-      { label: '/', typedText: '/' },
       { label: '⌫', keystroke: 'Backspace' },
     ],
   ];
@@ -253,6 +259,7 @@ export class ContinuousTransformComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly mode = signal<'ft' | 'ift'>('ft');
+  readonly convention = signal<NormalizationConvention>('engineering');
   readonly varPairId = signal<string>('t-w');
   readonly customTime = signal('t');
   readonly customFreq = signal('w');
@@ -265,6 +272,39 @@ export class ContinuousTransformComponent implements OnInit {
   readonly ftResult = signal<FourierTransformResponse | null>(null);
   readonly iftResult = signal<InverseFourierTransformResponse | null>(null);
 
+  // ── Alt forms — main result ────────────────────────────────────────────────
+  readonly altFormsFt = signal<AltForm[]>([]);
+  readonly altFormsIft = signal<AltForm[]>([]);
+  readonly altFormsLoadingFt = signal(false);
+  readonly altFormsLoadingIft = signal(false);
+  readonly altFormsOpenFt = signal(false);
+  readonly altFormsOpenIft = signal(false);
+
+  // ── Alt forms — IFT piecewise segments ────────────────────────────────────
+  readonly altFormsIftUForm = signal<AltForm[]>([]);
+  readonly altFormsIftPositive = signal<AltForm[]>([]);
+  readonly altFormsIftNegative = signal<AltForm[]>([]);
+  readonly altFormsLoadingIftUForm = signal(false);
+  readonly altFormsLoadingIftPositive = signal(false);
+  readonly altFormsLoadingIftNegative = signal(false);
+  readonly altFormsOpenIftUForm = signal(false);
+  readonly altFormsOpenIftPositive = signal(false);
+  readonly altFormsOpenIftNegative = signal(false);
+
+  // ── Alt forms — Re/Im cards ────────────────────────────────────────────────
+  readonly altFormsFtReal = signal<AltForm[]>([]);
+  readonly altFormsFtImag = signal<AltForm[]>([]);
+  readonly altFormsIftReal = signal<AltForm[]>([]);
+  readonly altFormsIftImag = signal<AltForm[]>([]);
+  readonly altFormsLoadingFtReal = signal(false);
+  readonly altFormsLoadingFtImag = signal(false);
+  readonly altFormsLoadingIftReal = signal(false);
+  readonly altFormsLoadingIftImag = signal(false);
+  readonly altFormsOpenFtReal = signal(false);
+  readonly altFormsOpenFtImag = signal(false);
+  readonly altFormsOpenIftReal = signal(false);
+  readonly altFormsOpenIftImag = signal(false);
+
   // ── Canvas layer toggles ─────────────────────────────────────────────────
   readonly showOriginalReal = signal(true);
   readonly showOriginalImag = signal(false);
@@ -275,9 +315,9 @@ export class ContinuousTransformComponent implements OnInit {
 
   // ── Canvas style settings ────────────────────────────────────────────────
   readonly xAxisFormat = signal<'integer' | 'pi' | 'e' | 'custom'>('integer');
-  readonly originalColor = signal('#c14030');
-  readonly originalImagColor = signal('#9b2c2c');
-  readonly originalMagColor = signal('#6d28d9');
+  readonly originalColor = signal('#dc2626');
+  readonly originalImagColor = signal('#9333ea');
+  readonly originalMagColor = signal('#0891b2');
   readonly resultColor = signal('#2563eb');
   readonly imagColor = signal('#d97706');
   readonly magColor = signal('#16a34a');
@@ -304,6 +344,19 @@ export class ContinuousTransformComponent implements OnInit {
     const ft = this.ftResult();
     const ift = this.iftResult();
     return (ft ?? ift)?.params ?? [];
+  });
+
+  /** TeX for the piecewise Re f(t) primary display — used in results section. */
+  readonly inputRealPiecewiseTex = computed<string>(() => {
+    const segs = this.segments();
+    const v = this.intVar();
+    if (segs.length === 0) return '';
+    if (segs.length === 1) return segs[0].expressionTex;
+    return (
+      '\\begin{cases}' +
+      segs.map((s) => s.expressionTex + ',&' + s.fromTex + '<' + v + '<' + s.toTex).join('\\\\') +
+      '\\end{cases}'
+    );
   });
 
   /** LaTeX preview of the piecewise input function, mirroring calculator's previewLatex. */
@@ -357,8 +410,8 @@ export class ContinuousTransformComponent implements OnInit {
       void this.theme.palette();
       const preset = this.currentColorPreset();
       if (!this.customOriginalColor()) this.originalColor.set(preset.original);
-      if (!this.customOriginalImagColor()) this.originalImagColor.set(preset.original);
-      if (!this.customOriginalMagColor()) this.originalMagColor.set('#6d28d9');
+      if (!this.customOriginalImagColor()) this.originalImagColor.set(preset.originalImag);
+      if (!this.customOriginalMagColor()) this.originalMagColor.set(preset.originalMag);
       if (!this.customResultColor()) this.resultColor.set(preset.result);
       if (!this.customImagColor()) this.imagColor.set(preset.imag);
       if (!this.customMagColor()) this.magColor.set(preset.mag);
@@ -551,6 +604,18 @@ export class ContinuousTransformComponent implements OnInit {
     return this.mode() === 'ft' ? p.freqDisplay : p.timeDisplay;
   });
 
+  /** Display factor string for the current convention and mode. */
+  readonly conventionFactor = computed(() => {
+    const c = this.convention();
+    if (this.mode() === 'ft') {
+      return c === 'physics' ? '1/√(2π)' : '1';
+    } else {
+      if (c === 'engineering') return '1/(2π)';
+      if (c === 'physics') return '1/√(2π)';
+      return '1';
+    }
+  });
+
   readonly canCalculate = computed(
     () =>
       this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()) &&
@@ -610,8 +675,12 @@ export class ContinuousTransformComponent implements OnInit {
           this.mode() === 'ft' &&
           !!ft?.exists &&
           (!!ft.inputRealPart?.maxima || !!ft.inputImagPart?.maxima);
+        // IFT: never draw a raw preview for complex inputs — the "imaginary values" warning
+        // already informs the user, and compile() would map %i→0 producing a wrong curve.
+        const iftInputIsComplex = this.mode() === 'ift' && this.hasComplexInputs();
         const shouldDrawInputPreview =
-          (this.mode() === 'ft' && !hasFtComputedInput) || (this.mode() === 'ift' && !ift?.exists);
+          (this.mode() === 'ft' && !hasFtComputedInput) ||
+          (this.mode() === 'ift' && !ift?.exists && !iftInputIsComplex);
         if ((showOrigRe || showOrigM) && shouldDrawInputPreview) {
           for (const seg of segs) {
             const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
@@ -681,7 +750,6 @@ export class ContinuousTransformComponent implements OnInit {
             plotter.plotFn(ctx, inputImFn, vp, {
               color: origImColor,
               lineWidth: Math.max(1, origLW - 0.25),
-              dashed: true,
             });
           }
 
@@ -795,7 +863,6 @@ export class ContinuousTransformComponent implements OnInit {
                 plotter.plotFn(ctx, outputImFn, vp, {
                   color: origImColor,
                   lineWidth: Math.max(1, origLW - 0.25),
-                  dashed: true,
                 });
               }
               if (outputMagFn) {
@@ -1046,6 +1113,237 @@ export class ContinuousTransformComponent implements OnInit {
     this.segments.update((list) => list.map((s) => (s.id === id ? { ...s, ...changes } : s)));
   }
 
+  // ── Alt forms ─────────────────────────────────────────────────────────────
+
+  private readonly _iftNormMain = computed(() => {
+    const ift = this.iftResult();
+    const t = (ift?.fCombined ?? ift?.fOutUForm)?.tex ?? '';
+    return t.replace(/\s+/g, '');
+  });
+
+  readonly iftPosEqMain = computed(() => {
+    const seg = this.iftResult()?.fPositive?.tex ?? '';
+    const main = this._iftNormMain();
+    return !!seg && !!main && seg.replace(/\s+/g, '') === main;
+  });
+
+  readonly iftNegEqMain = computed(() => {
+    const seg = this.iftResult()?.fNegative?.tex ?? '';
+    const main = this._iftNormMain();
+    return !!seg && !!main && seg.replace(/\s+/g, '') === main;
+  });
+
+  readonly iftUFormEqMain = computed(() => {
+    const seg = this.iftResult()?.fOutUForm?.tex ?? '';
+    const main = this._iftNormMain();
+    return !!seg && !!main && seg.replace(/\s+/g, '') === main;
+  });
+
+  toggleAltForms(mode: 'ft' | 'ift'): void {
+    if (mode === 'ft') {
+      const nowOpen = !this.altFormsOpenFt();
+      this.altFormsOpenFt.set(nowOpen);
+      if (nowOpen && this.altFormsFt().length === 0) this.loadAltForms('ft');
+    } else {
+      const nowOpen = !this.altFormsOpenIft();
+      this.altFormsOpenIft.set(nowOpen);
+      if (nowOpen && this.altFormsIft().length === 0) this.loadAltForms('ift');
+    }
+  }
+
+  toggleAltFormsIftSegment(seg: 'uForm' | 'positive' | 'negative'): void {
+    const openSig = {
+      uForm: this.altFormsOpenIftUForm,
+      positive: this.altFormsOpenIftPositive,
+      negative: this.altFormsOpenIftNegative,
+    }[seg];
+    const formsSig = {
+      uForm: this.altFormsIftUForm,
+      positive: this.altFormsIftPositive,
+      negative: this.altFormsIftNegative,
+    }[seg];
+    const nowOpen = !openSig();
+    openSig.set(nowOpen);
+    if (!nowOpen || formsSig().length > 0) return;
+    const ift = this.iftResult();
+    const symbolic =
+      seg === 'uForm' ? ift?.fOutUForm : seg === 'positive' ? ift?.fPositive : ift?.fNegative;
+    if (symbolic?.maxima) {
+      const loadingSig = {
+        uForm: this.altFormsLoadingIftUForm,
+        positive: this.altFormsLoadingIftPositive,
+        negative: this.altFormsLoadingIftNegative,
+      }[seg];
+      // Seed with the tex of the main IFT result so forms identical to the
+      // general result are not shown again inside a piecewise segment.
+      const mainTex = (ift?.fCombined ?? ift?.fOutUForm)?.tex ?? '';
+      loadingSig.set(true);
+      this.runAltForms(
+        symbolic,
+        (forms) => {
+          formsSig.set(forms);
+          loadingSig.set(false);
+        },
+        [mainTex],
+      );
+    }
+  }
+
+  toggleAltFormsCard(card: 'ft-real' | 'ft-imag' | 'ift-real' | 'ift-imag'): void {
+    const openSig = {
+      'ft-real': this.altFormsOpenFtReal,
+      'ft-imag': this.altFormsOpenFtImag,
+      'ift-real': this.altFormsOpenIftReal,
+      'ift-imag': this.altFormsOpenIftImag,
+    }[card];
+    const formsSig = {
+      'ft-real': this.altFormsFtReal,
+      'ft-imag': this.altFormsFtImag,
+      'ift-real': this.altFormsIftReal,
+      'ift-imag': this.altFormsIftImag,
+    }[card];
+    const nowOpen = !openSig();
+    openSig.set(nowOpen);
+    if (nowOpen && formsSig().length === 0) {
+      const sym = this.getCardSymbolic(card);
+      if (sym) this.loadAltFormsInto(sym, card);
+    }
+  }
+
+  private getCardSymbolic(
+    card: 'ft-real' | 'ft-imag' | 'ift-real' | 'ift-imag',
+  ): { maxima: string; tex: string } | undefined {
+    const ft = this.ftResult();
+    const ift = this.iftResult();
+    switch (card) {
+      case 'ft-real':
+        return ft?.realPart;
+      case 'ft-imag':
+        return ft?.imagPart;
+      case 'ift-real':
+        return ift?.outputRealPart;
+      case 'ift-imag':
+        return ift?.outputImagPart;
+    }
+  }
+
+  private loadAltForms(mode: 'ft' | 'ift'): void {
+    const res = mode === 'ft' ? this.ftResult() : this.iftResult();
+    if (!res?.exists) return;
+
+    // Use the same priority as the template: fCombined → fOutUForm → fPositive
+    const mainSymbolic =
+      mode === 'ft'
+        ? (res as FourierTransformResponse).F
+        : ((res as InverseFourierTransformResponse).fCombined ??
+          (res as InverseFourierTransformResponse).fOutUForm ??
+          (res as InverseFourierTransformResponse).fPositive);
+
+    if (!mainSymbolic?.maxima) return;
+    if (mode === 'ft') this.altFormsLoadingFt.set(true);
+    else this.altFormsLoadingIft.set(true);
+
+    this.runAltForms(mainSymbolic, (forms) => {
+      if (mode === 'ft') {
+        this.altFormsFt.set(forms);
+        this.altFormsLoadingFt.set(false);
+      } else {
+        this.altFormsIft.set(forms);
+        this.altFormsLoadingIft.set(false);
+      }
+    });
+  }
+
+  private loadAltFormsInto(
+    expr: { maxima: string; tex: string },
+    card: 'ft-real' | 'ft-imag' | 'ift-real' | 'ift-imag',
+  ): void {
+    const loadingSig = {
+      'ft-real': this.altFormsLoadingFtReal,
+      'ft-imag': this.altFormsLoadingFtImag,
+      'ift-real': this.altFormsLoadingIftReal,
+      'ift-imag': this.altFormsLoadingIftImag,
+    }[card];
+    const formsSig = {
+      'ft-real': this.altFormsFtReal,
+      'ft-imag': this.altFormsFtImag,
+      'ift-real': this.altFormsIftReal,
+      'ift-imag': this.altFormsIftImag,
+    }[card];
+    loadingSig.set(true);
+    this.runAltForms(expr, (forms) => {
+      formsSig.set(forms);
+      loadingSig.set(false);
+    });
+  }
+
+  private runAltForms(
+    main: { maxima: string; tex: string },
+    done: (forms: AltForm[]) => void,
+    extraSeeds: string[] = [],
+  ): void {
+    const mainExpr = main.maxima;
+    const convention = this.convention();
+    const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
+      {
+        labelKey: 'transforms.altFormFactor',
+        req: { expression: mainExpr, profile: 'complete', functions: ['factor'], convention },
+      },
+      {
+        labelKey: 'transforms.altFormExpand',
+        req: { expression: mainExpr, profile: 'complete', functions: ['expand'], convention },
+      },
+      {
+        labelKey: 'transforms.altFormTrig',
+        req: {
+          expression: mainExpr,
+          profile: 'complete',
+          functions: ['trigreduce'],
+          displayFlags: { demoivre: true },
+          convention,
+        },
+      },
+      {
+        labelKey: 'transforms.altFormRect',
+        req: { expression: mainExpr, profile: 'complete', functions: ['rectform'], convention },
+      },
+      {
+        labelKey: 'transforms.altFormExp',
+        req: {
+          expression: mainExpr,
+          profile: 'complete',
+          functions: ['radcan'],
+          displayFlags: { exponentialize: true },
+          convention,
+        },
+      },
+    ];
+
+    forkJoin(profiles.map(({ req }) => this.api.simplify(req).pipe(catchError(() => of(null)))))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((results) => {
+        const normalize = (s: string) => s.replace(/\s+/g, '');
+        // Deduplicate by rendered tex only — the backend returns equivalent
+        // symbolic expressions that may have different maxima strings but look
+        // identical when rendered (e.g. "2+2" vs "6-2"). Comparing tex is the
+        // only reliable way to detect visual duplicates.
+        const seenTex = new Set<string>();
+        if (main.tex) seenTex.add(normalize(main.tex));
+        for (const s of extraSeeds) if (s) seenTex.add(normalize(s));
+        const forms: AltForm[] = [];
+        results.forEach((r: SimplifyResponse | null, i) => {
+          if (!r) return;
+          const { tex, maxima } = r.simplified;
+          if (!tex || !maxima) return;
+          const normTex = normalize(tex);
+          if (seenTex.has(normTex)) return;
+          seenTex.add(normTex);
+          forms.push({ labelKey: profiles[i].labelKey, tex, maxima });
+        });
+        done(forms);
+      });
+  }
+
   // ── Calculate ─────────────────────────────────────────────────────────────
 
   calculate(): void {
@@ -1066,9 +1364,26 @@ export class ContinuousTransformComponent implements OnInit {
     this.errorMsg.set(null);
     this.ftResult.set(null);
     this.iftResult.set(null);
+    this.altFormsFt.set([]);
+    this.altFormsIft.set([]);
+    this.altFormsOpenFt.set(false);
+    this.altFormsOpenIft.set(false);
+    this.altFormsFtReal.set([]);
+    this.altFormsFtImag.set([]);
+    this.altFormsIftReal.set([]);
+    this.altFormsIftImag.set([]);
+    this.altFormsOpenFtReal.set(false);
+    this.altFormsOpenFtImag.set(false);
+    this.altFormsOpenIftReal.set(false);
+    this.altFormsOpenIftImag.set(false);
+    this.altFormsIftUForm.set([]);
+    this.altFormsIftPositive.set([]);
+    this.altFormsIftNegative.set([]);
+    this.altFormsOpenIftUForm.set(false);
+    this.altFormsOpenIftPositive.set(false);
+    this.altFormsOpenIftNegative.set(false);
 
-    const payload = { segments: segs, intVar, transVar };
-    console.log('[transforms] payload →', JSON.stringify(payload, null, 2));
+    const payload = { segments: segs, intVar, transVar, convention: this.convention() };
 
     if (this.mode() === 'ft') {
       this.api
@@ -1076,7 +1391,6 @@ export class ContinuousTransformComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
-            console.log('[transforms] FT result ←', res);
             this.ftResult.set(res);
             this.showCanvasSettings.set(true);
             this.loading.set(false);
@@ -1102,7 +1416,6 @@ export class ContinuousTransformComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
-            console.log('[transforms] IFT result ←', res);
             this.iftResult.set(res);
             this.showCanvasSettings.set(true);
             this.loading.set(false);
@@ -1267,8 +1580,8 @@ export class ContinuousTransformComponent implements OnInit {
     this.customImagColor.set(false);
     this.customMagColor.set(false);
     this.originalColor.set(preset.original);
-    this.originalImagColor.set(preset.original);
-    this.originalMagColor.set('#6d28d9');
+    this.originalImagColor.set(preset.originalImag);
+    this.originalMagColor.set(preset.originalMag);
     this.resultColor.set(preset.result);
     this.imagColor.set(preset.imag);
     this.magColor.set(preset.mag);

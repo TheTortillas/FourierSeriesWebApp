@@ -38,10 +38,17 @@ export class MathUtilsService {
       const js = this.maximaToJs(expr);
       // eslint-disable-next-line no-new-func
       const fn = new Function(variable, `"use strict"; ${this._helpers} return (${js});`) as JsFunction;
-      // Smoke-test: evaluate at 0 to catch obvious syntax errors
-      const test = fn(0);
-      if (typeof test !== 'number') return null;
-      return fn;
+      // Smoke-test: try several points to handle singularities at 0 (e.g. sin(x)/x = NaN at 0 but valid elsewhere)
+      const testPoints = [0, 1, -1, 0.5, Math.PI];
+      for (const pt of testPoints) {
+        try {
+          const test = fn(pt);
+          if (typeof test === 'number') return fn;
+        } catch {
+          // continue to next test point
+        }
+      }
+      return null;
     } catch {
       return null;
     }
@@ -95,12 +102,20 @@ export class MathUtilsService {
 
   private maximaToJs(expr: string): string {
     let s = expr
-      // Constants
+      // Constants — order matters: %pi before %i so %pi isn't consumed by %i
       .replace(/%pi\b/g, 'Math.PI')
       .replace(/%e\b/g, 'Math.E')
+      // Imaginary unit: treat as 0 for real-valued plotting (Re/Im already separated by backend)
+      .replace(/%i\b/g, '0')
       .replace(/\binf\b/g, 'Infinity')
       // Power operator: ^ → **
-      .replace(/\^/g, '**')
+      .replace(/\^/g, '**');
+
+    // JS forbids a unary '-' as the direct left operand of '**' (SyntaxError).
+    // Fix both -IDENTIFIER** and -(expr)** before any further substitutions touch them.
+    s = this._fixUnaryMinusPow(s);
+
+    s = s
       // Functions — order matters (longer names first to avoid partial matches)
       .replace(/\basinh\b/g, 'Math.asinh')
       .replace(/\bacosh\b/g, 'Math.acosh')
@@ -125,17 +140,27 @@ export class MathUtilsService {
       .replace(/\bcsc\b/g, '_csc')
       .replace(/\bsqrt\b/g, 'Math.sqrt')
       .replace(/\bexp\b/g, 'Math.exp')
+      .replace(/\blog2\b/g, 'Math.log2')
+      .replace(/\blog10\b/g, 'Math.log10')
       .replace(/\blog\b/g, 'Math.log')   // Maxima log = natural log
       .replace(/\babs\b/g, 'Math.abs')
       .replace(/\bfloor\b/g, 'Math.floor')
       .replace(/\bceiling\b/g, 'Math.ceil')
+      .replace(/\bround\b/g, 'Math.round')
+      .replace(/\btruncate\b/g, 'Math.trunc')
       .replace(/\bmax\b/g, 'Math.max')
       .replace(/\bmin\b/g, 'Math.min')
       .replace(/\bsign\b/g, 'Math.sign')
       .replace(/\bsgn\b\s*\(/g, 'Math.sign(')             // signum
       // Combinatorial / special functions
       .replace(/\bgamma\b/g, '_gamma')
-      .replace(/\bfactorial\b/g, '_factorial');
+      .replace(/\bfactorial\b/g, '_factorial')
+      // Error functions — approximate via Horner series
+      .replace(/\berfc\b/g, '_erfc')
+      .replace(/\berf\b/g, '_erf');
+
+    // Maxima if(cond, then, else) → JS ternary.  Must run before nested-fn replacements.
+    s = this._replaceMathIf(s);
 
     // Special functions that may contain nested parentheses in their arguments
     // (e.g. u(w+(2.4)) after param substitution).  A simple [^)]* regex would
@@ -144,14 +169,90 @@ export class MathUtilsService {
     s = this._replaceNestedFn(s, 'delta', (_arg) => '0');
     s = this._replaceNestedFn(s, 'u', (arg) => `(${arg} >= 0 ? 1 : 0)`);
 
-    // Fix JS SyntaxError: unary minus directly before ** is ambiguous.
-    // e.g. (-x**2) → (-(x**2))
-    // Apply twice to catch patterns after the first pass.
-    for (let i = 0; i < 2; i++) {
-      s = s.replace(/\(-([\w.]+)\*\*([\w.]+)\)/g, '(-(($1)**($2)))');
-    }
+    // Unrecognised Maxima names (e.g. besselj, polygamma) would produce
+    // ReferenceErrors at eval time.  Replace any remaining bare identifiers
+    // that look like function calls with NaN so the curve silently disappears
+    // instead of crashing compile().
+    s = this._stubUnknownFunctions(s);
+
+    // Math.E**(expr) is a JS SyntaxError when expr starts with a unary minus
+    // (e.g. Math.E**(-t**2+2*t-1)).  Convert all Math.E**(...) to Math.exp(...).
+    s = this._replaceMathEPow(s);
 
     return s;
+  }
+
+  /**
+   * Translates Maxima's `if(cond, then, else)` to a JS ternary `(cond ? then : else)`.
+   * Handles nested parens in all three arguments.
+   * Maxima also uses `=` for equality in conditions — rewritten to `===`.
+   */
+  private _replaceMathIf(expr: string): string {
+    const occs = this._findFunctionCalls(expr, 'if');
+    if (occs.length === 0) return expr;
+
+    // Process in reverse so character positions stay valid
+    let result = expr;
+    for (let i = occs.length - 1; i >= 0; i--) {
+      const { start, end, arg } = occs[i];
+      // Split arg on commas at depth 0 to get (cond, thenExpr, elseExpr)
+      const parts = this._splitAtDepth0(arg);
+      if (parts.length < 2) continue;
+      const [cond, thenExpr, elseExpr = 'NaN'] = parts;
+      // Maxima uses = for equality; rewrite to ===, but not >= <= !=
+      const jsCond = cond
+        .replace(/([^><!])=([^=])/g, '$1===$2')
+        .replace(/\bnot\b/g, '!')
+        .replace(/\band\b/g, '&&')
+        .replace(/\bor\b/g, '||');
+      const replacement = `((${jsCond}) ? (${thenExpr}) : (${elseExpr}))`;
+      result = result.slice(0, start) + replacement + result.slice(end);
+    }
+    return result;
+  }
+
+  /** Splits a string on commas that are at parenthesis depth 0. */
+  private _splitAtDepth0(s: string): string[] {
+    const parts: string[] = [];
+    let depth = 0;
+    let start = 0;
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === '(') depth++;
+      else if (s[i] === ')') depth--;
+      else if (s[i] === ',' && depth === 0) {
+        parts.push(s.slice(start, i).trim());
+        start = i + 1;
+      }
+    }
+    parts.push(s.slice(start).trim());
+    return parts;
+  }
+
+  /**
+   * Replaces any remaining `name(arg)` calls where `name` is a bare identifier
+   * not already translated to a known JS/helper function, with `NaN`.
+   * This prevents ReferenceErrors from unknown Maxima specials (besselj, polygamma…).
+   */
+  private _stubUnknownFunctions(expr: string): string {
+    const known = new Set([
+      'Math', 'function', 'return', 'NaN', 'Infinity',
+      '_cot', '_sec', '_csc', '_acot', '_asec', '_acsc',
+      '_gamma', '_factorial', '_erf', '_erfc',
+    ]);
+    // Collect unknown function calls using nested-paren-aware finder
+    const re = /(?<!\.)(\b[a-zA-Z_][a-zA-Z0-9_]*\b)\s*\(/g;
+    const stubs: string[] = [];
+    let m: RegExpExecArray | null;
+    re.lastIndex = 0;
+    while ((m = re.exec(expr)) !== null) {
+      const name = m[1];
+      if (!known.has(name)) stubs.push(name);
+    }
+    // Replace each unknown function's full call (with balanced parens) with NaN
+    for (const name of [...new Set(stubs)]) {
+      expr = this._replaceNestedFn(expr, name, () => 'NaN');
+    }
+    return expr;
   }
 
   // ── Nested-parenthesis helpers ─────────────────────────────────────────────
@@ -277,6 +378,105 @@ export class MathUtilsService {
     return results;
   }
 
+  /**
+   * Converts every `Math.E**(expr)` occurrence to `Math.exp(expr)`, correctly
+   * tracking nested parentheses.  Loops until stable to handle nested exponents.
+   *
+   * Also avoids the JS SyntaxError that occurs when `expr` starts with a unary
+   * minus directly before `**` (e.g. `-t**2+2*t-1`): in that case the argument
+   * is prefixed with `0` so `-t**2` becomes the binary-subtraction `0-t**2`.
+   */
+  private _replaceMathEPow(expr: string): string {
+    const token = 'Math.E**(';
+    while (expr.includes(token)) {
+      const idx = expr.indexOf(token);
+      const argStart = idx + token.length;
+      let depth = 1, j = argStart;
+      while (j < expr.length && depth > 0) {
+        if (expr[j] === '(') depth++;
+        else if (expr[j] === ')') depth--;
+        if (depth > 0) j++;
+      }
+      const arg = expr.slice(argStart, j);
+      expr = expr.slice(0, idx) + `Math.exp(${arg})` + expr.slice(j + 1);
+    }
+    return expr;
+  }
+
+  /**
+   * Fixes the JS SyntaxError: unary '-' cannot be the direct left operand of '**'.
+   * Mathematically -x**n = -(x**n), so we wrap the whole power:
+   *   -WORD**EXP    →  -(WORD**EXP)
+   *   -(EXPR)**EXP  →  -((EXPR)**EXP)
+   * Only fires when '-' is in a unary position (start, or after an operator / '(' / ',').
+   * Runs in a loop until no more substitutions are needed (handles nested cases).
+   */
+  private _fixUnaryMinusPow(s: string): string {
+    const isUnaryBefore = (str: string, pos: number): boolean => {
+      if (pos === 0) return true;
+      return /[(,=+\-*\/!&|~?:%\s]/.test(str[pos - 1]);
+    };
+
+    /** Collect a balanced-paren group starting at an open '(' at position `start`. */
+    const collectGroup = (str: string, start: number): number => {
+      let depth = 0, j = start;
+      while (j < str.length) {
+        if (str[j] === '(') depth++;
+        else if (str[j] === ')') { depth--; if (depth === 0) return j; }
+        j++;
+      }
+      return j - 1;
+    };
+
+    /** Collect a bare token (\w+ or \w+.\w+ for Math.X) starting at `start`. */
+    const collectToken = (str: string, start: number): number => {
+      let j = start;
+      while (j < str.length && /[\w.]/.test(str[j])) j++;
+      return j - 1;
+    };
+
+    for (let pass = 0; pass < 10; pass++) {
+      let i = 0, out = '', changed = false;
+      while (i < s.length) {
+        if (s[i] === '-' && isUnaryBefore(s, i)) {
+          const next = i + 1;
+          let baseStart: number, baseEnd: number;
+
+          if (s[next] === '(') {
+            // Grouped base: -(...)
+            baseStart = next;
+            baseEnd = collectGroup(s, next);
+          } else if (/[\w]/.test(s[next])) {
+            // Bare token base: -word or -number
+            baseStart = next;
+            baseEnd = collectToken(s, next);
+          } else {
+            out += s[i++]; continue;
+          }
+
+          const afterBase = baseEnd + 1;
+          if (s.slice(afterBase, afterBase + 2) === '**') {
+            // Collect the exponent (grouped or bare token)
+            const expStart = afterBase + 2;
+            let expEnd: number;
+            if (s[expStart] === '(') expEnd = collectGroup(s, expStart);
+            else expEnd = collectToken(s, expStart);
+
+            // Wrap: -(BASE**EXP)
+            out += '-(' + s.slice(baseStart, expEnd + 1) + ')';
+            i = expEnd + 1;
+            changed = true;
+            continue;
+          }
+        }
+        out += s[i++];
+      }
+      s = out;
+      if (!changed) break;
+    }
+    return s;
+  }
+
   // ── Reciprocal / inverse-reciprocal helpers (inlined at eval time) ──────────
 
   private readonly _helpers = `
@@ -299,5 +499,11 @@ export class MathUtilsService {
       return Math.sqrt(2 * Math.PI) * Math.pow(t, x + 0.5) * Math.exp(-t) * a;
     }
     function _factorial(n) { return _gamma(n + 1); }
+    function _erf(x) {
+      const t = 1 / (1 + 0.3275911 * Math.abs(x));
+      const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+      return x >= 0 ? y : -y;
+    }
+    function _erfc(x) { return 1 - _erf(x); }
   `;
 }

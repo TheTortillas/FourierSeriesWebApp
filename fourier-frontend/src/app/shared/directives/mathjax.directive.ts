@@ -20,10 +20,12 @@ export class MathjaxDirective implements OnChanges {
       return;
     }
     // Wrap in display-math delimiters if not already wrapped
-    const content =
+    const raw =
       this.tex.startsWith('\\(') || this.tex.startsWith('\\[') || this.tex.startsWith('$')
         ? this.tex
         : `\\(${this.tex}\\)`;
+    // Escape < and > so the browser doesn't parse them as HTML tags inside innerHTML
+    const content = raw.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     this.el.nativeElement.innerHTML = content;
     this.mj.render(this.el.nativeElement);
   }

@@ -34,8 +34,11 @@ export class SimplifyService {
 
     const simpFunctionsList = `[${functions.map((f) => `"${f}"`).join(", ")}]`;
 
+    const radexpandLine =
+      input.convention === "physics" ? "radexpand: false$\n" : "";
+
     const fullScript = `
-EXPR_INPUT: "${input.expression.replace(/"/g, '\\"')}"$
+${radexpandLine}EXPR_INPUT: "${input.expression.replace(/"/g, '\\"')}"$
 PROFILE: "${input.profile}"$
 SIMP_FUNCTIONS: ${simpFunctionsList}$
 FLAG_EDISPFLAG: ${flags.edispflag ? "true" : "false"}$

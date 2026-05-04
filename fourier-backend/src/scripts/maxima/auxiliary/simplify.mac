@@ -73,6 +73,13 @@ if PROFILE = "exponential" or PROFILE = "complete" then (
     tellsimpafter(exp(-(%i * %pi * n)/2), %i^(-n))
 )$
 
+/* Declarar funciones especiales como reales para que rectform/imagpart
+   no deje realpart(u(t)) o imagpart(delta(t)) sin evaluar */
+declare(u,     real)$
+declare(sgn,   real)$
+declare(delta, real)$
+declare(unit_step, real)$
+
 /* Parsear expresión */
 _input_expr: parse_string(EXPR_INPUT)$
 
@@ -84,7 +91,18 @@ for fn in SIMP_FUNCTIONS do (
     else if fn = "trigsimp"   then _result_expr: trigsimp(_result_expr)
     else if fn = "trigreduce" then _result_expr: trigreduce(_result_expr)
     else if fn = "trigexpand" then _result_expr: trigexpand(_result_expr)
-    else if fn = "factor"     then _result_expr: factor(_result_expr)
+    else if fn = "factor"     then block(
+        /* Try factor directly, and also fullratsimp→factor.
+           Keep whichever string representation is shorter. */
+        [_f1, _f2, _s1, _s2],
+        _f1: errcatch(factor(_result_expr)),
+        _f2: errcatch(factor(fullratsimp(_result_expr))),
+        _f1: if _f1 = [] then _result_expr else first(_f1),
+        _f2: if _f2 = [] then _result_expr else first(_f2),
+        _s1: slength(string(_f1)),
+        _s2: slength(string(_f2)),
+        _result_expr: if _s2 < _s1 then _f2 else _f1
+    )
     else if fn = "expand"     then _result_expr: expand(_result_expr)
     else if fn = "radcan"     then _result_expr: radcan(_result_expr)
     else if fn = "rectform"   then _result_expr: rectform(_result_expr)

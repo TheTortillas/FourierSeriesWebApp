@@ -1,0 +1,2688 @@
+[
+    {
+        "id": "A01",
+        "type": "ft",
+        "description": "FT de delta(t) → 1",
+        "input": {
+            "segments": [
+                {
+                    "expression": "delta(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1",
+            "exists": true
+        }
+    },
+    {
+        "id": "A02",
+        "type": "ft",
+        "description": "FT de delta(t-2) → e^{-2iw}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "delta(t-2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%e^-(2*%i*w)",
+            "exists": true
+        }
+    },
+    {
+        "id": "A03",
+        "type": "ft",
+        "description": "FT de 3*delta(t-1) → 3*e^{-iw}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "3*delta(t-1)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "3*%e^-(%i*w)",
+            "exists": true
+        }
+    },
+    {
+        "id": "A04",
+        "type": "ft",
+        "description": "FT de delta(2t) → 1/2",
+        "input": {
+            "segments": [
+                {
+                    "expression": "delta(2*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/2",
+            "exists": true
+        }
+    },
+    {
+        "id": "A05",
+        "type": "ft",
+        "description": "FT de delta(2t-1) → e^{-iw/2}/2",
+        "input": {
+            "segments": [
+                {
+                    "expression": "delta(2*t-1)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%e^(-(%i*w/2))/2",
+            "exists": true
+        }
+    },
+    {
+        "id": "B01",
+        "type": "ft",
+        "description": "FT de 1 → 2π·δ(w)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2*%pi*delta(w)",
+            "exists": true
+        }
+    },
+    {
+        "id": "B02",
+        "type": "ft",
+        "description": "FT de e^{2it} → 2π·δ(w-2)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%e^(2*%i*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2*%pi*delta(w-2)",
+            "exists": true
+        }
+    },
+    {
+        "id": "C01",
+        "type": "ft",
+        "description": "FT de cos(3t) → π[δ(w-3)+δ(w+3)]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "cos(3*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%pi*(delta(w-3)+delta(w+3))",
+            "exists": true
+        }
+    },
+    {
+        "id": "C02",
+        "type": "ft",
+        "description": "FT de sin(2t) → iπ[δ(w+2)-δ(w-2)]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(2*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%i*%pi*(delta(w+2)-delta(w-2))",
+            "exists": true
+        }
+    },
+    {
+        "id": "C03",
+        "type": "ft",
+        "description": "FT de cos(2t + π/4) con fase",
+        "input": {
+            "segments": [
+                {
+                    "expression": "cos(2*t + %pi/4)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%pi*(exp(%i*%pi/4)*delta(w-2)+exp(-%i*%pi/4)*delta(w+2))",
+            "exists": true
+        }
+    },
+    {
+        "id": "D01",
+        "type": "ft",
+        "description": "FT de u(t) → π·δ(w) + 1/(iw)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%pi*delta(w) + 1/(%i*w)",
+            "exists": true
+        }
+    },
+    {
+        "id": "D02",
+        "type": "ft",
+        "description": "FT de u(t-2) escalón desplazado",
+        "input": {
+            "segments": [
+                {
+                    "expression": "u(t-2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%pi*delta(w) + %e^(-2*%i*w)/(%i*w)",
+            "exists": true
+        }
+    },
+    {
+        "id": "D03",
+        "type": "ft",
+        "description": "FT de sgn(t) → 2/(iw)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sgn(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2/(%i*w)",
+            "exists": true
+        }
+    },
+    {
+        "id": "D04",
+        "type": "ft",
+        "description": "FT de sgn(t)/2 → 1/(iw)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sgn(t)/2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w)",
+            "exists": true
+        }
+    },
+    {
+        "id": "E01",
+        "type": "ft",
+        "description": "FT de pulso [-1,1] → 2·sin(w)/w",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1",
+                    "from": "-1",
+                    "to": "1"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2*sin(w)/w",
+            "exists": true
+        }
+    },
+    {
+        "id": "E02",
+        "type": "ft",
+        "description": "FT de u(t+1)-u(t-1) → 2·sin(w)/w",
+        "input": {
+            "segments": [
+                {
+                    "expression": "u(t+1)-u(t-1)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2*sin(w)/w",
+            "exists": true
+        }
+    },
+    {
+        "id": "E03",
+        "type": "ft",
+        "description": "FT de 3*(u(t+1)-u(t-1))/4 → 3·sin(w)/(2w)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "3*(u(t+1)-u(t-1))/4",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "3*sin(w)/(2*w)",
+            "exists": true
+        }
+    },
+    {
+        "id": "E04",
+        "type": "ft",
+        "description": "FT de pulso simbólico u(t+a)-u(t-a) → 2·sin(aw)/w",
+        "input": {
+            "segments": [
+                {
+                    "expression": "u(t+a)-u(t-a)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2*sin(a*w)/w",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "E05",
+        "type": "ft",
+        "description": "FT de sin(at)/(π·t) → u(w+a)-u(w-a)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(a*t)/(%pi*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "u(w+a)-u(w-a)",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "F01",
+        "type": "ft",
+        "description": "FT de e^{-2t}·u(t) → 1/(iw+2)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-2*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w+2)",
+            "exists": true
+        }
+    },
+    {
+        "id": "F02",
+        "type": "ft",
+        "description": "FT de e^{-at}·u(t) parámetro simbólico → 1/(iw+a)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-a*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w+a)",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "F03",
+        "type": "ft",
+        "description": "FT de e^{-at} desde [0,inf) → 1/(iw+a)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-a*t)",
+                    "from": "0",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w+a)",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "F04",
+        "type": "ft",
+        "description": "FT de t·e^{-at}·u(t) → 1/(iw+a)²",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t*exp(-a*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w+a)^2",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "F05",
+        "type": "ft",
+        "description": "FT de e^{-at}·cos(bt)·u(t) → (iw+a)/((iw+a)²+b²)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-a*t)*cos(b*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "(%i*w+a)/((%i*w+a)^2+b^2)",
+            "exists": true,
+            "params": [
+                "a",
+                "b"
+            ]
+        }
+    },
+    {
+        "id": "F06",
+        "type": "ft",
+        "description": "FT de e^{-at}·sin(bt)·u(t) → b/((iw+a)²+b²)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-a*t)*sin(b*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "b/((%i*w+a)^2+b^2)",
+            "exists": true,
+            "params": [
+                "a",
+                "b"
+            ]
+        }
+    },
+    {
+        "id": "G01",
+        "type": "ft",
+        "description": "FT de sin(w0·t)·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(w0*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "w0/(w0^2-w^2) + %pi/(2*%i)*(delta(w-w0)-delta(w+w0))",
+            "exists": true,
+            "params": [
+                "w0"
+            ]
+        }
+    },
+    {
+        "id": "G02",
+        "type": "ft",
+        "description": "FT de cos(w0·t)·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "cos(w0*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%i*w/(w0^2-w^2) + %pi/2*(delta(w-w0)+delta(w+w0))",
+            "exists": true,
+            "params": [
+                "w0"
+            ]
+        }
+    },
+    {
+        "id": "H01",
+        "type": "ft",
+        "description": "FT de 1/(1+t²) → π·e^{-|w|}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(1+t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%pi*%e^(-abs(w))",
+            "exists": true
+        }
+    },
+    {
+        "id": "H02",
+        "type": "ft",
+        "description": "FT de cos(2t)/(1+t²)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "cos(2*t)/(1+t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%pi/2*(%e^(-abs(w-2))+%e^(-abs(w+2)))",
+            "exists": true
+        }
+    },
+    {
+        "id": "I01",
+        "type": "ft",
+        "description": "FT de e^{-|t|} por tramos → 2/(1+w²)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(t)",
+                    "from": "minf",
+                    "to": "0"
+                },
+                {
+                    "expression": "exp(-t)",
+                    "from": "0",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2/(w^2+1)",
+            "exists": true
+        }
+    },
+    {
+        "id": "I02",
+        "type": "ft",
+        "description": "FT de gaussiana e^{-t²} → √π·e^{-w²/4}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "sqrt(%pi)*%e^(-(w^2/4))",
+            "exists": true
+        }
+    },
+    {
+        "id": "I03",
+        "type": "ft",
+        "description": "FT de función por tramos con límites simbólicos — solo verifica exists",
+        "input": {
+            "segments": [
+                {
+                    "expression": "0",
+                    "from": "minf",
+                    "to": "a/2"
+                },
+                {
+                    "expression": "1",
+                    "from": "a/2",
+                    "to": "b/2"
+                },
+                {
+                    "expression": "2",
+                    "from": "b/2",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "params": [
+                "a",
+                "b"
+            ]
+        }
+    },
+    {
+        "id": "I04",
+        "type": "ft",
+        "description": "FT de pulso modulado (u(t+½)-u(t-½))·sin(t) — solo verifica exists",
+        "input": {
+            "segments": [
+                {
+                    "expression": "(u(t+1/2)-u(t-1/2))*sin(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "J01",
+        "type": "ift",
+        "description": "IFT de e^{-w²}/(w²+1) — el backend no detecta 'sin forma cerrada', devuelve exists:true con integral sin evaluar",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%e^(-(w^2))/(w^2+1)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "K01",
+        "type": "ift",
+        "description": "IFT de 1 → δ(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "delta(t)",
+            "exists": true
+        }
+    },
+    {
+        "id": "K02",
+        "type": "ift",
+        "description": "IFT de δ(w-3) → e^{3it}/(2π)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "delta(w-3)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(3*%i*t)/(2*%pi)",
+            "exists": true
+        }
+    },
+    {
+        "id": "K03",
+        "type": "ift",
+        "description": "IFT de 2/(iw) → sgn(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "2/(%i*w)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "sgn(t)",
+            "exists": true
+        }
+    },
+    {
+        "id": "K04",
+        "type": "ift",
+        "description": "IFT de 1/(iw+2) → e^{-2t}·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(%i*w+2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(-2*t)*u(t)",
+            "exists": true
+        }
+    },
+    {
+        "id": "K05",
+        "type": "ift",
+        "description": "IFT de 1/(iw+a) parámetro simbólico → e^{-at}·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(%i*w+a)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(-a*t)*u(t)",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "K06",
+        "type": "ift",
+        "description": "IFT de b/((iw+a)²+b²) → e^{-at}·sin(bt)·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "b/((%i*w+a)^2+b^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(-a*t)*sin(b*t)*u(t)",
+            "exists": true,
+            "params": [
+                "a",
+                "b"
+            ]
+        }
+    },
+    {
+        "id": "K07",
+        "type": "ift",
+        "description": "IFT de (iw+a)/((iw+a)²+b²) → e^{-at}·cos(bt)·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "(%i*w+a)/((%i*w+a)^2+b^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(-a*t)*cos(b*t)*u(t)",
+            "exists": true,
+            "params": [
+                "a",
+                "b"
+            ]
+        }
+    },
+    {
+        "id": "K08",
+        "type": "ift",
+        "description": "IFT de (π/a)·e^{-a|w|} → 1/(a²+t²)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "(%pi/a)*%e^(-a*abs(w))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "1/(a^2+t^2)",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "L01",
+        "type": "ift",
+        "description": "IFT round-trip sin(2t)·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "2/(4-w^2)-(%i*%pi*(delta(w-2)-delta(w+2)))/2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "sin(2*t)*u(t)",
+            "exists": true
+        }
+    },
+    {
+        "id": "L02",
+        "type": "ift",
+        "description": "IFT round-trip cos(2t)·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "(%pi*(delta(w+2)+delta(w-2)))/2+(%i*w)/(4-w^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "cos(2*t)*u(t)",
+            "exists": true
+        }
+    },
+    {
+        "id": "L03",
+        "type": "ift",
+        "description": "IFT suma de deltas con fase → cos con fase — solo verifica exists",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%pi*(exp(%i*%pi/4)*delta(w-2)+exp(-%i*%pi/4)*delta(w+2))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "M01",
+        "type": "ift",
+        "description": "IFT bilateral de 2/(1+w²) → e^{-|t|}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "2/(w^2+1)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(-abs(t))",
+            "exists": true
+        }
+    },
+    {
+        "id": "M02",
+        "type": "ift",
+        "description": "IFT bilateral de 2a/(a²+w²) → e^{-a|t|}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "2*a/(a^2+w^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(-a*abs(t))",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "M03",
+        "type": "ift",
+        "description": "IFT bilateral de -(iw-2)/(w²+4) → e^{-2t}·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "-((%i*w-2)/(w^2+4))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(-2*t)*u(t)",
+            "exists": true
+        }
+    },
+    {
+        "id": "M04",
+        "type": "ift",
+        "description": "IFT bilateral de e^{-|w|} → 1/(π(1+t²))",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%e^(-abs(w))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "1/(%pi*(t^2+1))",
+            "exists": true
+        }
+    },
+    {
+        "id": "M05",
+        "type": "ift",
+        "description": "IFT bilateral de √π·e^{-w²/4} → e^{-t²} round-trip gaussiana",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sqrt(%pi)*%e^(-(w^2/4))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(-t^2)",
+            "exists": true
+        }
+    },
+    {
+        "id": "N01",
+        "type": "ft",
+        "description": "REGRESIÓN: exp(-2t)*u(t) desde [0,inf) no debe romper con u(t) explícito",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-2*t)*u(t)",
+                    "from": "0",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w+2)",
+            "exists": true
+        }
+    },
+    {
+        "id": "N02",
+        "type": "ft",
+        "description": "REGRESIÓN: e^{-|t|} por tramos no debe activar bloque semi-infinito incorrectamente",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(t)",
+                    "from": "minf",
+                    "to": "0"
+                },
+                {
+                    "expression": "exp(-t)",
+                    "from": "0",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2/(w^2+1)",
+            "exists": true
+        }
+    },
+    {
+        "id": "N03",
+        "type": "ift",
+        "description": "REGRESIÓN: delta(w-3) no debe confundirse con suma de deltas",
+        "input": {
+            "segments": [
+                {
+                    "expression": "delta(w-3)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^(3*%i*t)/(2*%pi)",
+            "exists": true
+        }
+    },
+    {
+        "id": "N04",
+        "type": "ft",
+        "description": "REGRESIÓN: sin(2t) puro no debe confundirse con sin(at)/(πt)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(2*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%i*%pi*(delta(w+2)-delta(w-2))",
+            "exists": true
+        }
+    },
+    {
+        "id": "N05",
+        "type": "ift",
+        "description": "REGRESIÓN: π·δ(w)+1/(iw) debe dar u(t), no sgn(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%pi*delta(w)+1/(%i*w)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "u(t)",
+            "exists": true
+        }
+    },
+    {
+        "id": "N06",
+        "type": "ft",
+        "description": "REGRESIÓN: FT de a-|t| en [-a,a] — abs() en tramo acotado debe expandirse antes de integrar",
+        "input": {
+            "segments": [
+                {
+                    "expression": "a-abs(t)",
+                    "from": "-a",
+                    "to": "a"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2*(1-cos(a*w))/w^2",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "N07",
+        "type": "ift",
+        "description": "REGRESIÓN: IFT de 1/((iw+1+ai)(iw+1-ai)) con a simbólico → sin(at)·e^{-t}·u(t)/a",
+        "input": {
+            "segments": [
+                {
+                    "expression": "((1)/((1+a*%i)+%i*w))*((1)/(%i*w+(1-a*%i)))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "fCombined": "%e^-t*sin(a*t)*u(t)/a",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "O01",
+        "type": "ft",
+        "description": "LINEALIDAD: FT(sin(t) + 3·sin(2t)) = FT(sin(t)) + 3·FT(sin(2t))",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(t) + 3*sin(2*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "-(3*%i*%pi*(delta(w-2)-delta(w+2)))-%i*%pi*(delta(w-1)-delta(w+1))",
+            "exists": true
+        }
+    },
+    {
+        "id": "O02",
+        "type": "ft",
+        "description": "LINEALIDAD: FT(cos(t) + 2·cos(3t)) = FT(cos(t)) + 2·FT(cos(3t))",
+        "input": {
+            "segments": [
+                {
+                    "expression": "cos(t) + 2*cos(3*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2*%pi*(delta(w+3)+delta(w-3))+%pi*(delta(w+1)+delta(w-1))",
+            "exists": true
+        }
+    },
+    {
+        "id": "O03",
+        "type": "ft",
+        "description": "SCALAR: FT(3·sin(2t)) = 3·FT(sin(2t))",
+        "input": {
+            "segments": [
+                {
+                    "expression": "3*sin(2*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "-(3*%i*%pi*(delta(w-2)-delta(w+2)))",
+            "exists": true
+        }
+    },
+    {
+        "id": "P01",
+        "type": "ft",
+        "description": "BUGFIX: FT(u(t-3)·exp(-2t)) — antes mezclaba t en el resultado",
+        "input": {
+            "segments": [
+                {
+                    "expression": "u(t-3)*exp(-2*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%e^(-(3*%i*w)-6)/(%i*w+2)",
+            "exists": true
+        }
+    },
+    {
+        "id": "P02",
+        "type": "ft",
+        "description": "NUEVO PATRÓN: FT(u(t-3)·exp(-4t)) = exp(-12)·e^{-3iw}/(iw+4)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "u(t-3)*exp(-4*t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%e^(-(3*%i*w)-12)/(%i*w+4)",
+            "exists": true
+        }
+    },
+    {
+        "id": "P03",
+        "type": "ft",
+        "description": "NUEVO PATRÓN: FT(t/(9+t²)) = -iπ·sgn(w)·e^{-3|w|}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t/(9+t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "P04",
+        "type": "ift",
+        "description": "NUEVO PATRÓN IFT: IFT(exp(-3|w+4|)) = (3/π)·e^{-4it}/(9+t²)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-3*abs(w+4))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "F": "(3*%e^-(4*%i*t))/(%pi*(t^2+9))",
+            "exists": true
+        }
+    },
+    {
+        "id": "P05",
+        "type": "ift",
+        "description": "NUEVO PATRÓN IFT + SCALAR: IFT(2·exp(-3|w-2|)) = (6/π)·e^{2it}/(9+t²)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "2*exp(-3*abs(w-2))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "F": "(6*%e^(2*%i*t))/(%pi*(t^2+9))",
+            "exists": true
+        }
+    },
+    {
+        "id": "P06",
+        "type": "ft",
+        "description": "REGRESIÓN: FT(u(t-2)) no afectado por corrección del bug k·u(t-t0)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "u(t-2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%pi*delta(w)-(%i*%e^-(2*%i*w))/w",
+            "exists": true
+        }
+    },
+    {
+        "id": "P07",
+        "type": "ft",
+        "description": "REGRESIÓN: FT(5·u(t-2)) — k constante sigue funcionando",
+        "input": {
+            "segments": [
+                {
+                    "expression": "5*u(t-2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "5*(%pi*delta(w)-(%i*%e^-(2*%i*w))/w)",
+            "exists": true
+        }
+    },
+    {
+        "id": "Q01",
+        "type": "ft",
+        "description": "FT(t·exp(-3t)·u(t)) = 1/(iw+3)^2  [n=1, t0=0]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t*%e^(-3*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w+3)^2",
+            "exists": true
+        }
+    },
+    {
+        "id": "Q02",
+        "type": "ft",
+        "description": "FT(t^2·exp(-t)·u(t)) = 2/(iw+1)^3  [n=2, t0=0]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t^2*%e^(-t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2/(%i*w+1)^3",
+            "exists": true
+        }
+    },
+    {
+        "id": "Q03",
+        "type": "ft",
+        "description": "FT(t·exp(-4t)·u(t-3)) = exp(-12)·exp(-3iw)·(3/(iw+4)+1/(iw+4)^2)  [n=1, t0=3]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t*%e^(-4*t)*u(t-3)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%e^(-(3*%i*w)-12)*(3/(%i*w+4)+1/(%i*w+4)^2)",
+            "exists": true
+        }
+    },
+    {
+        "id": "Q04",
+        "type": "ft",
+        "description": "FT((t-3)·exp(-4t)·u(t-3)) = exp(-12)·exp(-3iw)/(iw+4)^2  [via expand+linearity]",
+        "input": {
+            "segments": [
+                {
+                    "expression": "(t-3)*%e^(-4*t)*u(t-3)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%e^(-(3*%i*w)-12)/(%i*w+4)^2",
+            "exists": true
+        }
+    },
+    {
+        "id": "Q05",
+        "type": "ft",
+        "description": "REGRESIÓN: FT(t^2·exp(-2t)·u(t)) no es afectado por patrones anteriores",
+        "input": {
+            "segments": [
+                {
+                    "expression": "t^2*%e^(-2*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "2/(%i*w+2)^3",
+            "exists": true
+        }
+    },
+    {
+        "id": "R01",
+        "type": "ft",
+        "description": "LORENTZIANA DESPLAZADA: FT(1/(t²-4t+13)) — completa el cuadrado: (t-2)²+9",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(t^2-4*t+13)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "(%pi*%e^(-(3*abs(w))-2*%i*w))/3",
+            "exists": true
+        }
+    },
+    {
+        "id": "R02",
+        "type": "ft",
+        "description": "FREQ-SHIFT: FT(5·exp(3it)/(t²-4t+13)) = (5π/3)·e^{-3|w-3|}·e^{-2i(w-3)}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "5*%e^(3*%i*t)/(t^2-4*t+13)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "(5*%pi*%e^(-(2*%i*(w-3))-3*abs(w-3)))/3",
+            "exists": true
+        }
+    },
+    {
+        "id": "R03",
+        "type": "ft",
+        "description": "FREQ-SHIFT negativo: FT(exp(-2it)/(4+t²)) = (π/2)·e^{-2|w+2|}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%e^(-%i*2*t)/(4+t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "(%pi*%e^-(2*abs(w+2)))/2",
+            "exists": true
+        }
+    },
+    {
+        "id": "R04",
+        "type": "ft",
+        "description": "FREQ-SHIFT con escalar: FT(3·exp(it)/(9+t²)) = π·e^{-3|w-1|}",
+        "input": {
+            "segments": [
+                {
+                    "expression": "3*%e^(%i*t)/(9+t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "%pi*%e^-(3*abs(w-1))",
+            "exists": true
+        }
+    },
+    {
+        "id": "R05",
+        "type": "ft",
+        "description": "REGRESIÓN: FT(1/(a+t²)) sigue exacto con sqrt(a), sin decimales",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(a+t^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "(%pi*%e^-(sqrt(a)*abs(w)))/sqrt(a)",
+            "exists": true,
+            "params": [
+                "a"
+            ]
+        }
+    },
+    {
+        "id": "R06",
+        "type": "ft",
+        "description": "REGRESIÓN: freq-shift NO interfiere con exp(-2t)·u(t) — patrón causal sin cambios",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%e^(-2*t)*u(t)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "F": "1/(%i*w+2)",
+            "exists": true
+        }
+    },
+    {
+        "id": "S01",
+        "type": "ift",
+        "description": "IFT sin-modulación + time-shift: IFT(6·e^{4iw}·sin(2w)/(9+w²)) — resultado en t>0",
+        "input": {
+            "segments": [
+                {
+                    "expression": "6*%e^(4*%i*w)*sin(2*w)/(9+w^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-(%i*(%e^-(3*(t+6))-%e^-(3*(t+2))))/2"
+        }
+    },
+    {
+        "id": "S02",
+        "type": "ift",
+        "description": "IFT sin-modulación + 1/(w*(iw+a)): IFT(sin(3w)/(w*(2+iw)))",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(3*w)/(w*(2+%i*w))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(sgn(t+3)/2-sgn(t-3)/2-(%e^-(2*(t+3))*u(t+3)-u(t-3)*%e^-(2*(t-3))))/4"
+        }
+    },
+    {
+        "id": "C01",
+        "type": "ift",
+        "description": "IFT cos-modulación: IFT(cos(2w)/(9+w²)) = (e^{-3|t+2|}+e^{-3|t-2|})/12",
+        "input": {
+            "segments": [
+                {
+                    "expression": "cos(2*w)/(9+w^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^(-(3*abs(abs(t)-2))-3*abs(t)-6)*(%e^(3*abs(abs(t)-2))+%e^(3*abs(t)+6)))/12"
+        }
+    },
+    {
+        "id": "C02",
+        "type": "ift",
+        "description": "IFT cos-modulación escalada: IFT(6*cos(3w)/(4+w²))",
+        "input": {
+            "segments": [
+                {
+                    "expression": "6*cos(3*w)/(4+w^2)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^(-(2*abs(abs(t)-3))-2*abs(t)-6)*(3*%e^(2*abs(abs(t)-3))+3*%e^(2*abs(t)+6)))/4"
+        }
+    },
+    {
+        "id": "T01",
+        "type": "ft",
+        "description": "FT distribucional: FT(1/t) = -i·π·sgn(w) (valor principal de Cauchy, n=1)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/t",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%i*%pi*sgn(w))"
+        }
+    },
+    {
+        "id": "T02",
+        "type": "ft",
+        "description": "FT distribucional: FT(1/t²) = -π·w·sgn(w) (valor principal, n=2)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/t^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%pi*w*sgn(w))"
+        }
+    },
+    {
+        "id": "T03",
+        "type": "ft",
+        "description": "FT distribucional: FT(3/t³) = 3iπw²sgn(w)/2 (valor principal, n=3, k=3)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "3/t^3",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(3*%i*%pi*w^2*sgn(w))/2"
+        }
+    },
+    {
+        "id": "B01",
+        "type": "ft",
+        "description": "FT decaimiento bilateral: FT(exp(-3|t|)) = 6/(w²+9)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "exp(-3*abs(t))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "6/(w^2+9)"
+        }
+    },
+    {
+        "id": "M01",
+        "type": "ft",
+        "description": "FT modulación seno: FT(sin(2t)·exp(-3|t|)) = (G(w-2)-G(w+2))/(2i), G=6/(w²+9)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(2*t)*exp(-3*abs(t))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%i*(6/((w-2)^2+9)-6/((w+2)^2+9)))/2)"
+        }
+    },
+    {
+        "id": "M02",
+        "type": "ft",
+        "description": "FT modulación coseno: FT(cos(2t)·exp(-3|t|)) = (G(w-2)+G(w+2))/2, G=6/(w²+9)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "cos(2*t)*exp(-3*abs(t))",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(6/((w+2)^2+9)+6/((w-2)^2+9))/2"
+        }
+    },
+    {
+        "id": "L01",
+        "type": "ift",
+        "description": "IFT Lorentziana generalizada: IFT(1/(w²+4w+13)) = e^{-3|t|-2it}/6  (ω₀=-2, a=3)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(w^2+4*w+13)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-(3*abs(t))-2*%i*t)/6"
+        }
+    },
+    {
+        "id": "L02",
+        "type": "ift",
+        "description": "IFT Lorentziana generalizada escalada: IFT(6/(w²-2w+10)) = e^{it-3|t|}  (ω₀=1, a=3)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "6/(w^2-2*w+10)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(%i*t-3*abs(t))"
+        }
+    },
+    {
+        "id": "K09",
+        "type": "ift",
+        "description": "IFT de 1/(iw+1)^2 → t·e^{-t}·u(t)  (polo causal orden 2, a=1)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(%i*w+1)^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t*%e^(-t)*u(t)"
+        }
+    },
+    {
+        "id": "K10",
+        "type": "ift",
+        "description": "IFT de 3/(iw+2)^2 → 3t·e^{-2t}·u(t)  (polo causal orden 2 con escalar)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "3/(%i*w+2)^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "3*t*%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "K11",
+        "type": "ift",
+        "description": "IFT de 1/(iw+a)^2 parámetro simbólico → t·e^{-at}·u(t)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "1/(%i*w+a)^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t*%e^(-a*t)*u(t)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "P06",
+        "type": "ift",
+        "description": "IFT de e^{-2iw}/(iw+1)^2 → (t-2)·e^{-(t-2)}·u(t-2)  (polo causal orden 2 desplazado)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "%e^(-2*%i*w)/(%i*w+1)^2",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(t-2)*%e^(-(t-2))*u(t-2)"
+        }
+    },
+    {
+        "id": "P07",
+        "type": "ift",
+        "description": "IFT de sin(2*(w-3))/(w-3) → e^{+3it}·(u(t+2)-u(t-2))/2  (sinc desplazado en frecuencia)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(2*(w-3))/(w-3)",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(3*%i*t)*(u(t+2)-u(t-2))/2"
+        }
+    },
+    {
+        "id": "P08",
+        "type": "ift",
+        "description": "IFT de sin(2*w)/w → (sgn(t+2)-sgn(t-2))/4 ≡ (u(t+2)-u(t-2))/2  (sinc no desplazado, regresión)",
+        "input": {
+            "segments": [
+                {
+                    "expression": "sin(2*w)/w",
+                    "from": "minf",
+                    "to": "inf"
+                }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(sgn(t+2)-sgn(t-2))/4"
+        }
+    },
+
+    {
+        "id": "Q01",
+        "type": "ift",
+        "description": "IFT de 1/(iw+1)^3 → t²/2·e^{-t}·u(t)  (polo causal orden 3)",
+        "input": {
+            "segments": [{ "expression": "1/(%i*w+1)^3", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(t^2*%e^(-t)*u(t))/2"
+        }
+    },
+    {
+        "id": "Q02",
+        "type": "ift",
+        "description": "IFT de 6/(iw+2)^4 → t³·e^{-2t}·u(t)  (polo causal orden 4 con escalar)",
+        "input": {
+            "segments": [{ "expression": "6/(%i*w+2)^4", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t^3*%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "Q03",
+        "type": "ift",
+        "description": "IFT de 1/(iw+a)^3 parámetro simbólico → t²/2·e^{-at}·u(t)",
+        "input": {
+            "segments": [{ "expression": "1/(%i*w+a)^3", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(t^2*%e^(-a*t)*u(t))/2",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "Q04",
+        "type": "ift",
+        "description": "IFT de e^{-3iw}/(iw+1)^3 → (t-3)²/2·e^{-(t-3)}·u(t-3)  (polo orden 3 desplazado)",
+        "input": {
+            "segments": [{ "expression": "%e^(-3*%i*w)/(%i*w+1)^3", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(u(t-3)*(t-3)^2*%e^(-(t-3)))/2"
+        }
+    },
+    {
+        "id": "Q05",
+        "type": "ift",
+        "description": "IFT de 1/((iw+1)(iw+2)) → e^{-t}·u(t) - e^{-2t}·u(t)  (fracciones parciales 2 polos)",
+        "input": {
+            "segments": [{ "expression": "1/((%i*w+1)*(%i*w+2))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-t)*u(t)-%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "Q06",
+        "type": "ift",
+        "description": "IFT de (iw+3)/((iw+1)(iw+2)) → 2e^{-t}·u(t) - e^{-2t}·u(t)  (numerador no constante, fracciones parciales)",
+        "input": {
+            "segments": [{ "expression": "(%i*w+3)/((%i*w+1)*(%i*w+2))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "2*%e^(-t)*u(t)-%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "Q07",
+        "type": "ift",
+        "description": "IFT de (iw)/((iw+1)^2) → e^{-t}·u(t) - t·e^{-t}·u(t)  (numerador iw, fracciones parciales orden 2)",
+        "input": {
+            "segments": [{ "expression": "(%i*w)/(%i*w+1)^2", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-t)*u(t)-t*%e^(-t)*u(t)"
+        }
+    },
+    {
+        "id": "Q08",
+        "type": "ift",
+        "description": "IFT de 1/((iw+1)(iw+2)(iw+3)) → 3 polos distintos via fracciones parciales",
+        "input": {
+            "segments": [{ "expression": "1/((%i*w+1)*(%i*w+2)*(%i*w+3))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^(-t)*u(t))/2-%e^(-2*t)*u(t)+(%e^(-3*t)*u(t))/2"
+        }
+    },
+    {
+        "id": "Q09",
+        "type": "ift",
+        "description": "IFT de 1/((iw+1)^2*(iw+2)) → polo orden 2 + orden 1 via fracciones parciales",
+        "input": {
+            "segments": [{ "expression": "1/((%i*w+1)^2*(%i*w+2))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t*%e^(-t)*u(t)-%e^(-t)*u(t)+%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "R01",
+        "type": "ift",
+        "description": "IFT de 1/(i*(w-3)+5) → e^{+3it}·e^{-5t}·u(t)  (freq-shift simple, polo en w=3)",
+        "input": {
+            "segments": [{ "expression": "1/(%i*(w-3)+5)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(3*%i*t)*%e^(-5*t)*u(t)"
+        }
+    },
+    {
+        "id": "R02",
+        "type": "ift",
+        "description": "IFT de e^{-2i(w-3)}/(i(w-3)+5) → e^{3it}·e^{-5(t-2)}·u(t-2)  (freq-shift + time-shift)",
+        "input": {
+            "segments": [{ "expression": "%e^(-2*%i*(w-3))/(%i*(w-3)+5)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(3*%i*t)*%e^(-5*(t-2))*u(t-2)"
+        }
+    },
+    {
+        "id": "R03",
+        "type": "ift",
+        "description": "IFT de 1/((i*(w-2)+3)^2) → e^{2it}·t·e^{-3t}·u(t)  (freq-shift, polo doble)",
+        "input": {
+            "segments": [{ "expression": "1/((%i*(w-2)+3)^2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "t*%e^(2*%i*t-3*t)*u(t)"
+        }
+    },
+    {
+        "id": "R04",
+        "type": "ift",
+        "description": "IFT de 4/(i*(w-1)+2) → 4·e^{it}·e^{-2t}·u(t)  (freq-shift con ganancia k=4)",
+        "input": {
+            "segments": [{ "expression": "4/(%i*(w-1)+2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "4*%e^(%i*t)*%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "R05",
+        "type": "ift",
+        "description": "IFT de 2*sin(w-1)/(w-1) → e^{+it}·(u(t+1)-u(t-1))  (sinc desplazado, k=2)",
+        "input": {
+            "segments": [{ "expression": "2*sin(w-1)/(w-1)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(%i*t)*(u(t+1)-u(t-1))"
+        }
+    },
+    {
+        "id": "S01",
+        "type": "ift",
+        "description": "IFT de 1/sqrt(i*w+1) → e^{-t}/sqrt(pi*t)*u(t)  (polo de orden 1/2)",
+        "input": {
+            "segments": [{ "expression": "1/sqrt(%i*w+1)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^-t*u(t))/(sqrt(%pi)*sqrt(t))"
+        }
+    },
+    {
+        "id": "S02",
+        "type": "ift",
+        "description": "IFT de 1/sqrt(i*w+3) → e^{-3t}/sqrt(pi*t)*u(t)  (a=3)",
+        "input": {
+            "segments": [{ "expression": "1/sqrt(%i*w+3)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^-(3*t)*u(t))/(sqrt(%pi)*sqrt(t))"
+        }
+    },
+    {
+        "id": "S03",
+        "type": "ift",
+        "description": "IFT de 5/sqrt(i*w+2) → 5*e^{-2t}/sqrt(pi*t)*u(t)  (k=5)",
+        "input": {
+            "segments": [{ "expression": "5/sqrt(%i*w+2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(5*%e^-(2*t)*u(t))/(sqrt(%pi)*sqrt(t))"
+        }
+    },
+    {
+        "id": "S04",
+        "type": "ift",
+        "description": "IFT de 1/sqrt(2*(i*w+1)) → e^{-t}/sqrt(2*pi*t)*u(t)  (escalar en raíz)",
+        "input": {
+            "segments": [{ "expression": "1/sqrt(2*(%i*w+1))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%e^-t*u(t))/(sqrt(2)*sqrt(%pi)*sqrt(t))"
+        }
+    },
+    {
+        "id": "S05",
+        "type": "ift",
+        "description": "IFT de e^{-iw}/sqrt(i*w+1) → e^{-(t-1)}/sqrt(pi*(t-1))*u(t-1)  (time-shift + sqrt)",
+        "input": {
+            "segments": [{ "expression": "%e^(-%i*w)/sqrt(%i*w+1)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(u(t-1)*%e^(1-t))/(sqrt(%pi)*sqrt(t-1))"
+        }
+    },
+    {
+        "id": "T01",
+        "type": "ift",
+        "description": "IFT de w/(w²+4) → i/2·sgn(t)·e^{-2t}  (odd bilateral, fPositive)",
+        "input": {
+            "segments": [{ "expression": "w/(w^2+4)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%i*%e^-(2*t)*sgn(t))/2"
+        }
+    },
+    {
+        "id": "T02",
+        "type": "ift",
+        "description": "IFT de 3w/(w²+9) → 3i/2·sgn(t)·e^{-3t}  (odd bilateral, fPositive)",
+        "input": {
+            "segments": [{ "expression": "3*w/(w^2+9)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(3*%i*%e^-(3*t)*sgn(t))/2"
+        }
+    },
+    {
+        "id": "T03",
+        "type": "ift",
+        "description": "IFT de %i*w/(w²+4) → -1/2·sgn(t)·e^{-2t}  (odd bilateral, fPositive)",
+        "input": {
+            "segments": [{ "expression": "%i*w/(w^2+4)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-((%e^-(2*t)*sgn(t))/2)"
+        }
+    },
+    {
+        "id": "T04",
+        "type": "ift",
+        "description": "IFT de -(iw-2)/(w²+4) → e^{-2t}·u(t)  (regresión M03 fix)",
+        "input": {
+            "segments": [{ "expression": "-((%i*w-2)/(w^2+4))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-2*t)*u(t)"
+        }
+    },
+    {
+        "id": "T05",
+        "type": "ift",
+        "description": "IFT de (%i*w+3)/(w²+9) → -e^{-3t}·u(-t)  (anti-causal linear-over-quadratic)",
+        "input": {
+            "segments": [{ "expression": "(%i*w+3)/(w^2+9)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-(u(-t)*%e^-(3*t))"
+        }
+    },
+    {
+        "id": "T06",
+        "type": "ft",
+        "description": "FT de sin²(t) → π(2δ(w)-δ(w+2)-δ(w-2))/2  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "sin(t)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%pi*delta(w+2)-2*%pi*delta(w)+%pi*delta(w-2))/2)"
+        }
+    },
+    {
+        "id": "T07",
+        "type": "ft",
+        "description": "FT de cos²(t) → π(δ(w+2)+2δ(w)+δ(w-2))/2  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "cos(t)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi*(delta(w+2)+2*delta(w)+delta(w-2))/2"
+        }
+    },
+    {
+        "id": "T08",
+        "type": "ft",
+        "description": "FT de sin³(t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "sin(t)^3", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*%i*(3*delta(w+1)-delta(w+3)-3*delta(w-1)+delta(w-3)))/4"
+        }
+    },
+    {
+        "id": "T09",
+        "type": "ft",
+        "description": "FT de cos³(t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "cos(t)^3", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(3*delta(w+1)+delta(w+3)+3*delta(w-1)+delta(w-3)))/4"
+        }
+    },
+    {
+        "id": "T10",
+        "type": "ft",
+        "description": "FT de sin⁴(t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "sin(t)^4", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(6*delta(w)-4*delta(w+2)+delta(w+4)-4*delta(w-2)+delta(w-4)))/8"
+        }
+    },
+    {
+        "id": "T11",
+        "type": "ft",
+        "description": "FT de sin²(2t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "sin(2*t)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%pi*delta(w+4)-2*%pi*delta(w)+%pi*delta(w-4))/2)"
+        }
+    },
+    {
+        "id": "T12",
+        "type": "ft",
+        "description": "FT de cos²(3t)  via trigreduce",
+        "input": {
+            "segments": [{ "expression": "cos(3*t)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi*(delta(w+6)+2*delta(w)+delta(w-6))/2"
+        }
+    },
+    {
+        "id": "V01",
+        "type": "ift",
+        "description": "IFT de u(w+2)-u(w-2) → sin(2t)/(πt)  (rect en frecuencia)",
+        "input": {
+            "segments": [{ "expression": "u(w+2)-u(w-2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sin(2*t)/(%pi*t)"
+        }
+    },
+    {
+        "id": "V02",
+        "type": "ift",
+        "description": "IFT de u(w+a)-u(w-a) → sin(at)/(πt)  (rect simbólico)",
+        "input": {
+            "segments": [{ "expression": "u(w+a)-u(w-a)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sin(a*t)/(%pi*t)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "V03",
+        "type": "ift",
+        "description": "IFT de 3*(u(w+5)-u(w-5)) → 3sin(5t)/(πt)",
+        "input": {
+            "segments": [{ "expression": "3*(u(w+5)-u(w-5))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(3*sin(5*t))/(%pi*t)"
+        }
+    },
+    {
+        "id": "U01",
+        "type": "ift",
+        "description": "IFT de rect en ω: F=1 de -2 a 2 → sin(2t)/(πt)",
+        "input": {
+            "segments": [{ "expression": "1", "from": "-2", "to": "2" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sin(2*t)/(%pi*t)"
+        }
+    },
+    {
+        "id": "U02",
+        "type": "ift",
+        "description": "IFT de rect escalado: F=3 de -5 a 5 → 3sin(5t)/(πt)",
+        "input": {
+            "segments": [{ "expression": "3", "from": "-5", "to": "5" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(3*sin(5*t))/(%pi*t)"
+        }
+    },
+    {
+        "id": "U03",
+        "type": "ift",
+        "description": "IFT de triangular en ω: F=1-|ω|/2 de -2 a 2 → (1-cos(2t))/(2πt²)",
+        "input": {
+            "segments": [
+                { "expression": "1+w/2", "from": "-2", "to": "0" },
+                { "expression": "1-w/2", "from": "0", "to": "2" }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-((cos(2*t)-1)/(2*%pi*t^2))"
+        }
+    },
+    {
+        "id": "U04",
+        "type": "ift",
+        "description": "IFT paso-banda: F=1 en [-3,-1]∪[1,3] → (sin(3t)-sin(t))/(πt)",
+        "input": {
+            "segments": [
+                { "expression": "1", "from": "-3", "to": "-1" },
+                { "expression": "1", "from": "1", "to": "3" }
+            ],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(sin(3*t)-sin(t))/(%pi*t)"
+        }
+    },
+    {
+        "id": "U05",
+        "type": "ft",
+        "description": "FT de triangular en t: f=1-|t|/2 de -2 a 2 → (1-cos(2ω))/ω²  (sinc²)",
+        "input": {
+            "segments": [
+                { "expression": "1+t/2", "from": "-2", "to": "0" },
+                { "expression": "1-t/2", "from": "0", "to": "2" }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((cos(2*w)-1)/w^2)"
+        }
+    },
+    {
+        "id": "W01",
+        "type": "ft",
+        "description": "FT de sgn(t-2) → -2i·e^{-2iw}/w  (sgn desplazado, t0=2)",
+        "input": {
+            "segments": [{ "expression": "sgn(t-2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((2*%i*%e^-(2*%i*w))/w)"
+        }
+    },
+    {
+        "id": "W02",
+        "type": "ft",
+        "description": "FT de 3·sgn(t-a) → -6i·e^{-iaw}/w  (sgn desplazado con escalar, t0=a simbólico)",
+        "input": {
+            "segments": [{ "expression": "3*sgn(t-a)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((6*%i*%e^-(%i*a*w))/w)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "W03",
+        "type": "ft",
+        "description": "FT de 5·sgn(t-a)/b → -10i·e^{-iaw}/(bw)  (sgn desplazado con escalar simbólico doble)",
+        "input": {
+            "segments": [{ "expression": "5*sgn(t-a)/b", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((10*%i*%e^-(%i*a*w))/(b*w))",
+            "params": ["a", "b"]
+        }
+    },
+    {
+        "id": "W04",
+        "type": "ft",
+        "description": "FT de k·u(t-a) → k·(π·δ(w) - i·e^{-iaw}/w)  (u desplazado con escalar simbólico doble)",
+        "input": {
+            "segments": [{ "expression": "k*u(t-a)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "k*(%pi*delta(w)-(%i*%e^-(%i*a*w))/w)",
+            "params": ["a", "k"]
+        }
+    },
+    {
+        "id": "W05",
+        "type": "ft",
+        "description": "FT de 5·u(t-a)/b → (5/b)·(π·δ(w) - i·e^{-iaw}/w)  (u desplazado escalado doble)",
+        "input": {
+            "segments": [{ "expression": "5*u(t-a)/b", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(5*(%pi*delta(w)-(%i*%e^-(%i*a*w))/w))/b",
+            "params": ["a", "b"]
+        }
+    },
+    {
+        "id": "W06",
+        "type": "ift",
+        "description": "IFT de 2·e^{-2iw}/(iw) → sgn(t-2)  (sgn desplazado t0=2)",
+        "input": {
+            "segments": [{ "expression": "2*exp(-2*%i*w)/(%i*w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sgn(t-2)"
+        }
+    },
+    {
+        "id": "W07",
+        "type": "ift",
+        "description": "IFT de 2·e^{-iaw}/(iw) → sgn(t-a)  (sgn desplazado simbólico)",
+        "input": {
+            "segments": [{ "expression": "2*exp(-%i*a*w)/(%i*w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sgn(t-a)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "W08",
+        "type": "ift",
+        "description": "IFT de 6·e^{-iaw}/(ibw) → 3·sgn(t-a)/b  (sgn desplazado, escalar simbólico doble)",
+        "input": {
+            "segments": [{ "expression": "6*exp(-%i*a*w)/(%i*b*w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(3*sgn(t-a))/b",
+            "params": ["a", "b"]
+        }
+    },
+    {
+        "id": "W09",
+        "type": "ift",
+        "description": "IFT de k·e^{-2iaw}/(iw) → k·sgn(t-2a)/2  (desplazamiento 2a, escalar k)",
+        "input": {
+            "segments": [{ "expression": "k*exp(-2*%i*a*w)/(%i*w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(k*sgn(t-2*a))/2",
+            "params": ["a", "k"]
+        }
+    }
+]

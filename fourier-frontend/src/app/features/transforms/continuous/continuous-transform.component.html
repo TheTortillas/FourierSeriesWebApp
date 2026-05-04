@@ -288,14 +288,7 @@
                 'transforms.direct' | transloco
               }}</span>
               <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
-                F({{ activePair().freqDisplay || activePair().freq }}) = ∫ f({{
-                  activePair().timeDisplay || activePair().time
-                }}) e<sup
-                  >−i·{{ activePair().freqDisplay || activePair().freq }}·{{
-                    activePair().timeDisplay || activePair().time
-                  }}</sup
-                >
-                d{{ activePair().timeDisplay || activePair().time }}
+                F = {{ convention() === 'physics' ? '1/√(2π)' : '1' }} · ∫ f e<sup>−iωt</sup> dt
               </span>
             </button>
             <button
@@ -311,16 +304,36 @@
                 'transforms.inverse' | transloco
               }}</span>
               <span class="text-[10px] opacity-70 mt-0.5 block leading-tight font-mono">
-                f({{ activePair().timeDisplay || activePair().time }}) = (1/2π) ∫ F({{
-                  activePair().freqDisplay || activePair().freq
-                }}) e<sup
-                  >i·{{ activePair().freqDisplay || activePair().freq }}·{{
-                    activePair().timeDisplay || activePair().time
-                  }}</sup
-                >
-                d{{ activePair().freqDisplay || activePair().freq }}
+                f = {{ conventionFactor() }} · ∫ F e<sup>iωt</sup> dω
               </span>
             </button>
+          </div>
+
+          <!-- Convention selector -->
+          <div class="flex flex-col gap-1.5">
+            <p class="text-xs text-muted font-mono">
+              {{ 'transforms.convention' | transloco }}
+            </p>
+            <select
+              [value]="convention()"
+              (change)="convention.set($any($event.target).value)"
+              class="w-full px-2 py-1.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface text-ink dark:text-dark-ink text-xs font-mono"
+            >
+              <option value="engineering">{{ 'transforms.conventionEngineering' | transloco }}</option>
+              <option value="physics">{{ 'transforms.conventionPhysics' | transloco }}</option>
+              <option value="ordinary">{{ 'transforms.conventionOrdinary' | transloco }}</option>
+            </select>
+            <p class="text-[10px] font-mono text-muted leading-snug">
+              @if (mode() === 'ft') {
+                {{ conventionFactor() }} · ∫ f({{ activePair().timeDisplay || activePair().time }})
+                e<sup>−i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup>
+                d{{ activePair().timeDisplay || activePair().time }}
+              } @else {
+                {{ conventionFactor() }} · ∫ F({{ activePair().freqDisplay || activePair().freq }})
+                e<sup>i·{{ activePair().freqDisplay || activePair().freq }}·{{ activePair().timeDisplay || activePair().time }}</sup>
+                d{{ activePair().freqDisplay || activePair().freq }}
+              }
+            </p>
           </div>
 
           <!-- Calculate -->
@@ -1275,6 +1288,53 @@
                       [label]="'F(' + resultVarDisplay() + ')'"
                     />
                   </div>
+
+                  <!-- Otras formas -->
+                  <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                    <button
+                      type="button"
+                      (click)="toggleAltForms('ft')"
+                      class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1"
+                    >
+                      <span>{{ 'transforms.altForms' | transloco }}</span>
+                      <span class="text-[9px]">{{ altFormsOpenFt() ? '▲' : '▼' }}</span>
+                    </button>
+                    @if (altFormsOpenFt()) {
+                      @if (altFormsLoadingFt()) {
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">
+                          {{ 'transforms.altFormsLoading' | transloco }}
+                        </p>
+                      } @else if (altFormsFt().length === 0) {
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">
+                          {{ 'transforms.altFormsEmpty' | transloco }}
+                        </p>
+                      } @else {
+                        <div class="flex flex-col gap-2 mt-2">
+                          @for (form of altFormsFt(); track form.labelKey) {
+                            <div class="flex flex-col gap-0.5">
+                              <span class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                                {{ form.labelKey | transloco }}
+                              </span>
+                              <div class="flex items-center gap-2 flex-wrap">
+                                <span
+                                  #ftAltFormEl
+                                  [mathjax]="display(form.tex)"
+                                  class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                                ></span>
+                                <app-export-button
+                                  [tex]="form.tex"
+                                  [maxima]="form.maxima"
+                                  [mathEl]="ftAltFormEl"
+                                  filename="fourier-transform-alt"
+                                  [label]="'F(' + resultVarDisplay() + ') — ' + (form.labelKey | transloco)"
+                                />
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
                 </div>
               }
 
@@ -1284,10 +1344,11 @@
                     class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
                   >
                     <span
-                      class="text-[10px] font-mono text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5"
+                      class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                      [style.color]="resultColor()"
                     >
-                      <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-                      {{ 'transforms.realPart' | transloco }}
+                      <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="resultColor()"></span>
+                      {{ 'transforms.reFw' | transloco: { v: resultVarDisplay() } }}
                     </span>
                     <div class="flex items-center gap-2">
                       <span
@@ -1300,8 +1361,33 @@
                         [maxima]="res.realPart!.maxima"
                         [mathEl]="ftRealEl"
                         filename="fourier-transform-real"
-                        [label]="'Re{F(' + resultVarDisplay() + ')}'"
+                        [label]="'Re F(' + resultVarDisplay() + ')'"
                       />
+                    </div>
+                    <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                      <button type="button" (click)="toggleAltFormsCard('ft-real')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                        <span>{{ 'transforms.altForms' | transloco }}</span>
+                        <span class="text-[9px]">{{ altFormsOpenFtReal() ? '▲' : '▼' }}</span>
+                      </button>
+                      @if (altFormsOpenFtReal()) {
+                        @if (altFormsLoadingFtReal()) {
+                          <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                        } @else if (altFormsFtReal().length === 0) {
+                          <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                        } @else {
+                          <div class="flex flex-col gap-2 mt-2">
+                            @for (form of altFormsFtReal(); track form.labelKey) {
+                              <div class="flex flex-col gap-0.5">
+                                <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                  <span #ftRealAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                  <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="ftRealAltEl" filename="ft-real-alt" [label]="'Re F(' + resultVarDisplay() + ') — ' + (form.labelKey | transloco)" />
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      }
                     </div>
                   </div>
                 }
@@ -1310,10 +1396,11 @@
                     class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
                   >
                     <span
-                      class="text-[10px] font-mono text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5"
+                      class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
+                      [style.color]="imagColor()"
                     >
-                      <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
-                      {{ 'transforms.imagPart' | transloco }}
+                      <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="imagColor()"></span>
+                      {{ 'transforms.imFw' | transloco: { v: resultVarDisplay() } }}
                     </span>
                     <div class="flex items-center gap-2">
                       <span
@@ -1326,8 +1413,33 @@
                         [maxima]="res.imagPart!.maxima"
                         [mathEl]="ftImagEl"
                         filename="fourier-transform-imag"
-                        [label]="'Im{F(' + resultVarDisplay() + ')}'"
+                        [label]="'Im F(' + resultVarDisplay() + ')'"
                       />
+                    </div>
+                    <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                      <button type="button" (click)="toggleAltFormsCard('ft-imag')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                        <span>{{ 'transforms.altForms' | transloco }}</span>
+                        <span class="text-[9px]">{{ altFormsOpenFtImag() ? '▲' : '▼' }}</span>
+                      </button>
+                      @if (altFormsOpenFtImag()) {
+                        @if (altFormsLoadingFtImag()) {
+                          <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                        } @else if (altFormsFtImag().length === 0) {
+                          <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                        } @else {
+                          <div class="flex flex-col gap-2 mt-2">
+                            @for (form of altFormsFtImag(); track form.labelKey) {
+                              <div class="flex flex-col gap-0.5">
+                                <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                  <span #ftImagAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                  <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="ftImagAltEl" filename="ft-imag-alt" [label]="'Im F(' + resultVarDisplay() + ') — ' + (form.labelKey | transloco)" />
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      }
                     </div>
                   </div>
                 }
@@ -1343,26 +1455,20 @@
                         class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
                         [style.color]="originalColor()"
                       >
-                        <span
-                          class="w-2 h-2 rounded-full inline-block shrink-0"
-                          [style.backgroundColor]="originalColor()"
-                        ></span>
-                        Re {{ inputFnLabel() }}
+                        <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="originalColor()"></span>
+                        {{ 'transforms.reFt' | transloco: { v: intVar() } }}
                       </span>
                       <div class="flex items-center gap-2">
-                        <span
-                          #ftInputRealEl
-                          [mathjax]="display(res.inputRealPart!.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.inputRealPart!.tex"
-                          [maxima]="res.inputRealPart!.maxima"
-                          [mathEl]="ftInputRealEl"
-                          filename="ft-input-real"
-                          [label]="'Re ' + inputFnLabel()"
-                        />
+                        <span #ftInputRealPrimaryEl [mathjax]="display(inputRealPiecewiseTex())" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                        <app-export-button [tex]="inputRealPiecewiseTex()" [maxima]="res.inputRealPart!.maxima" [mathEl]="ftInputRealPrimaryEl" filename="ft-input-real" [label]="'Re f(' + intVar() + ')'" />
                       </div>
+                      <details class="mt-1">
+                        <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formGlobal' | transloco }}</summary>
+                        <div class="flex items-center gap-2 mt-1">
+                          <span #ftInputRealEl [mathjax]="display(res.inputRealPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                          <app-export-button [tex]="res.inputRealPart!.tex" [maxima]="res.inputRealPart!.maxima" [mathEl]="ftInputRealEl" filename="ft-input-real-global" [label]="'Re f(' + intVar() + ') — global'" />
+                        </div>
+                      </details>
                     </div>
                   }
                   @if (res.inputImagPart?.tex) {
@@ -1373,26 +1479,17 @@
                         class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
                         [style.color]="originalImagColor()"
                       >
-                        <span
-                          class="w-2 h-2 rounded-full inline-block shrink-0"
-                          [style.backgroundColor]="originalImagColor()"
-                        ></span>
-                        Im {{ inputFnLabel() }}
+                        <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="originalImagColor()"></span>
+                        {{ 'transforms.imFt' | transloco: { v: intVar() } }}
                       </span>
-                      <div class="flex items-center gap-2">
-                        <span
-                          #ftInputImagEl
-                          [mathjax]="display(res.inputImagPart!.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.inputImagPart!.tex"
-                          [maxima]="res.inputImagPart!.maxima"
-                          [mathEl]="ftInputImagEl"
-                          filename="ft-input-imag"
-                          [label]="'Im ' + inputFnLabel()"
-                        />
-                      </div>
+                      @if (res.inputImagPart!.maxima.trim() === '0') {
+                        <span [mathjax]="display('0')" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                      } @else {
+                        <div class="flex items-center gap-2">
+                          <span #ftInputImagEl [mathjax]="display(res.inputImagPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                          <app-export-button [tex]="res.inputImagPart!.tex" [maxima]="res.inputImagPart!.maxima" [mathEl]="ftInputImagEl" filename="ft-input-imag" [label]="'Im f(' + intVar() + ')'" />
+                        </div>
+                      }
                     </div>
                   }
                 </div>
@@ -1422,140 +1519,509 @@
                 </p>
               </div>
             } @else {
+              <!-- ── f(t) result card ── -->
               <div
                 class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-3"
               >
                 <span
-                  class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider flex items-center gap-1.5"
+                  class="text-[10px] font-mono tracking-wider flex items-center gap-1.5"
+                  [style.color]="resultColor()"
                 >
-                  <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                  <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="resultColor()"></span>
                   f({{ resultVarDisplay() }})
                 </span>
 
+                <!-- Principal: forma compacta si existe, si no forma u(t), si no tramos -->
                 @if (res.fCombined) {
-                  <div class="flex items-center gap-2">
-                    <span
-                      #iftCombinedEl
-                      [mathjax]="display(res.fCombined.tex)"
-                      class="text-ink dark:text-dark-ink overflow-x-auto"
-                    ></span>
-                    <app-export-button
-                      [tex]="res.fCombined.tex"
-                      [maxima]="res.fCombined.maxima"
-                      [mathEl]="iftCombinedEl"
-                      filename="inverse-fourier-transform"
-                      [label]="'f(' + resultVarDisplay() + ')'"
-                    />
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.formCompact' | transloco }}</span>
+                    <div class="flex items-center gap-2">
+                      <span #iftCombinedEl [mathjax]="display(res.fCombined.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                      <app-export-button [tex]="res.fCombined.tex" [maxima]="res.fCombined.maxima" [mathEl]="iftCombinedEl" filename="inverse-fourier-transform" [label]="'f(' + resultVarDisplay() + ')'" />
+                    </div>
                   </div>
-                } @else {
-                  @if (res.fPositive) {
-                    <div
-                      class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2 first:border-t-0 first:pt-0"
-                    >
-                      <span class="text-xs font-mono text-accent"
-                        >{{ resultVarDisplay() }} &gt; 0</span
-                      >
-                      <div class="flex items-center gap-2">
-                        <span
-                          #iftPosEl
-                          [mathjax]="display(res.fPositive.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.fPositive.tex"
-                          [maxima]="res.fPositive.maxima"
-                          [mathEl]="iftPosEl"
-                          filename="ift-positive"
-                          [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' > 0'"
-                        />
-                      </div>
+                } @else if (res.fOutUForm) {
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.formUt' | transloco }}</span>
+                    <div class="flex items-center gap-2">
+                      <span #iftUFormMainEl [mathjax]="display(res.fOutUForm.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                      <app-export-button [tex]="res.fOutUForm.tex" [maxima]="res.fOutUForm.maxima" [mathEl]="iftUFormMainEl" filename="ift-u-form" [label]="'f(' + resultVarDisplay() + ') — u(t)'" />
                     </div>
-                  }
-                  @if (res.fNegative) {
-                    <div
-                      class="flex flex-col gap-0.5 border-t border-border dark:border-dark-border pt-2"
-                    >
-                      <span class="text-xs font-mono text-accent"
-                        >{{ resultVarDisplay() }} &lt; 0</span
-                      >
-                      <div class="flex items-center gap-2">
-                        <span
-                          #iftNegEl
-                          [mathjax]="display(res.fNegative.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.fNegative.tex"
-                          [maxima]="res.fNegative.maxima"
-                          [mathEl]="iftNegEl"
-                          filename="ift-negative"
-                          [label]="'f(' + resultVarDisplay() + '), ' + resultVarDisplay() + ' < 0'"
-                        />
+                  </div>
+                } @else if (res.fPositive || res.fNegative) {
+                  <div class="flex flex-col gap-1">
+                    @if (res.fPositive) {
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
+                        <div class="flex items-center gap-2">
+                          <span #iftPosMainEl [mathjax]="display(res.fPositive.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                          <app-export-button [tex]="res.fPositive.tex" [maxima]="res.fPositive.maxima" [mathEl]="iftPosMainEl" filename="ift-positive" [label]="'f(' + resultVarDisplay() + '), t>0'" />
+                        </div>
                       </div>
+                    }
+                    @if (res.fNegative) {
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
+                        <div class="flex items-center gap-2">
+                          <span #iftNegMainEl [mathjax]="display(res.fNegative.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                          <app-export-button [tex]="res.fNegative.tex" [maxima]="res.fNegative.maxima" [mathEl]="iftNegMainEl" filename="ift-negative" [label]="'f(' + resultVarDisplay() + '), t<0'" />
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Formas colapsadas:
+                     - Si hay fCombined → desglosar en u(t) y/o tramos
+                     - Si hay fOutUForm pero no fCombined → mostrar tramos (t>0, t<0)
+                     - Si hay solo tramos pero también fOutUForm → mostrar forma u(t) -->
+                @if (res.fCombined && (res.fOutUForm || res.fPositive || res.fNegative)) {
+                  <details class="border-t border-border dark:border-dark-border pt-2">
+                    <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formPiecewise' | transloco }}</summary>
+                    <div class="flex flex-col gap-3 mt-2">
+                      @if (res.fOutUForm && !iftUFormEqMain()) {
+                        <div class="flex flex-col gap-0.5">
+                          <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.formUt' | transloco }}</span>
+                          <div class="flex items-center gap-2">
+                            <span #iftUFormEl [mathjax]="display(res.fOutUForm.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                            <app-export-button [tex]="res.fOutUForm.tex" [maxima]="res.fOutUForm.maxima" [mathEl]="iftUFormEl" filename="ift-u-form" [label]="'f(' + resultVarDisplay() + ') — u(t)'" />
+                          </div>
+                          <div class="mt-1">
+                            <button type="button" (click)="toggleAltFormsIftSegment('uForm')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                              <span>{{ 'transforms.altForms' | transloco }}</span>
+                              <span class="text-[9px]">{{ altFormsOpenIftUForm() ? '▲' : '▼' }}</span>
+                            </button>
+                            @if (altFormsOpenIftUForm()) {
+                              @if (altFormsLoadingIftUForm()) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                              } @else if (altFormsIftUForm().length === 0) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                              } @else {
+                                <div class="flex flex-col gap-1.5 mt-1">
+                                  @for (form of altFormsIftUForm(); track form.labelKey) {
+                                    <div class="flex flex-col gap-0.5">
+                                      <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                      <div class="flex items-center gap-2 flex-wrap">
+                                        <span #iftUFormAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                        <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="iftUFormAltEl" filename="ift-uform-alt" [label]="'f(' + resultVarDisplay() + ') u(t) — ' + (form.labelKey | transloco)" />
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            }
+                          </div>
+                        </div>
+                      }
+                      @if (res.fPositive && !iftPosEqMain()) {
+                        <div class="flex flex-col gap-0.5">
+                          <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
+                          <div class="flex items-center gap-2">
+                            <span #iftPosEl [mathjax]="display(res.fPositive.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                            <app-export-button [tex]="res.fPositive.tex" [maxima]="res.fPositive.maxima" [mathEl]="iftPosEl" filename="ift-positive" [label]="'f(' + resultVarDisplay() + '), t>0'" />
+                          </div>
+                          <div class="mt-1">
+                            <button type="button" (click)="toggleAltFormsIftSegment('positive')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                              <span>{{ 'transforms.altForms' | transloco }}</span>
+                              <span class="text-[9px]">{{ altFormsOpenIftPositive() ? '▲' : '▼' }}</span>
+                            </button>
+                            @if (altFormsOpenIftPositive()) {
+                              @if (altFormsLoadingIftPositive()) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                              } @else if (altFormsIftPositive().length === 0) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                              } @else {
+                                <div class="flex flex-col gap-1.5 mt-1">
+                                  @for (form of altFormsIftPositive(); track form.labelKey) {
+                                    <div class="flex flex-col gap-0.5">
+                                      <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                      <div class="flex items-center gap-2 flex-wrap">
+                                        <span #iftPosAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                        <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="iftPosAltEl" filename="ift-pos-alt" [label]="'f(' + resultVarDisplay() + ') t>0 — ' + (form.labelKey | transloco)" />
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            }
+                          </div>
+                        </div>
+                      }
+                      @if (res.fNegative && !iftNegEqMain()) {
+                        <div class="flex flex-col gap-0.5">
+                          <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
+                          <div class="flex items-center gap-2">
+                            <span #iftNegEl [mathjax]="display(res.fNegative.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                            <app-export-button [tex]="res.fNegative.tex" [maxima]="res.fNegative.maxima" [mathEl]="iftNegEl" filename="ift-negative" [label]="'f(' + resultVarDisplay() + '), t<0'" />
+                          </div>
+                          <div class="mt-1">
+                            <button type="button" (click)="toggleAltFormsIftSegment('negative')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                              <span>{{ 'transforms.altForms' | transloco }}</span>
+                              <span class="text-[9px]">{{ altFormsOpenIftNegative() ? '▲' : '▼' }}</span>
+                            </button>
+                            @if (altFormsOpenIftNegative()) {
+                              @if (altFormsLoadingIftNegative()) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                              } @else if (altFormsIftNegative().length === 0) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                              } @else {
+                                <div class="flex flex-col gap-1.5 mt-1">
+                                  @for (form of altFormsIftNegative(); track form.labelKey) {
+                                    <div class="flex flex-col gap-0.5">
+                                      <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                      <div class="flex items-center gap-2 flex-wrap">
+                                        <span #iftNegAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                        <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="iftNegAltEl" filename="ift-neg-alt" [label]="'f(' + resultVarDisplay() + ') t<0 — ' + (form.labelKey | transloco)" />
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            }
+                          </div>
+                        </div>
+                      }
                     </div>
-                  }
+                  </details>
+                } @else if (res.fOutUForm && (res.fPositive || res.fNegative)) {
+                  <details class="border-t border-border dark:border-dark-border pt-2">
+                    <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formPiecewise' | transloco }}</summary>
+                    <div class="flex flex-col gap-3 mt-2">
+                      @if (res.fPositive && !iftPosEqMain()) {
+                        <div class="flex flex-col gap-0.5">
+                          <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
+                          <div class="flex items-center gap-2">
+                            <span #iftPosEl2 [mathjax]="display(res.fPositive.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                            <app-export-button [tex]="res.fPositive.tex" [maxima]="res.fPositive.maxima" [mathEl]="iftPosEl2" filename="ift-positive" [label]="'f(' + resultVarDisplay() + '), t>0'" />
+                          </div>
+                          <div class="mt-1">
+                            <button type="button" (click)="toggleAltFormsIftSegment('positive')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                              <span>{{ 'transforms.altForms' | transloco }}</span>
+                              <span class="text-[9px]">{{ altFormsOpenIftPositive() ? '▲' : '▼' }}</span>
+                            </button>
+                            @if (altFormsOpenIftPositive()) {
+                              @if (altFormsLoadingIftPositive()) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                              } @else if (altFormsIftPositive().length === 0) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                              } @else {
+                                <div class="flex flex-col gap-1.5 mt-1">
+                                  @for (form of altFormsIftPositive(); track form.labelKey) {
+                                    <div class="flex flex-col gap-0.5">
+                                      <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                      <div class="flex items-center gap-2 flex-wrap">
+                                        <span #iftPosAltEl2 [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                        <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="iftPosAltEl2" filename="ift-pos-alt" [label]="'f(' + resultVarDisplay() + ') t>0 — ' + (form.labelKey | transloco)" />
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            }
+                          </div>
+                        </div>
+                      }
+                      @if (res.fNegative && !iftNegEqMain()) {
+                        <div class="flex flex-col gap-0.5">
+                          <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
+                          <div class="flex items-center gap-2">
+                            <span #iftNegEl2 [mathjax]="display(res.fNegative.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                            <app-export-button [tex]="res.fNegative.tex" [maxima]="res.fNegative.maxima" [mathEl]="iftNegEl2" filename="ift-negative" [label]="'f(' + resultVarDisplay() + '), t<0'" />
+                          </div>
+                          <div class="mt-1">
+                            <button type="button" (click)="toggleAltFormsIftSegment('negative')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                              <span>{{ 'transforms.altForms' | transloco }}</span>
+                              <span class="text-[9px]">{{ altFormsOpenIftNegative() ? '▲' : '▼' }}</span>
+                            </button>
+                            @if (altFormsOpenIftNegative()) {
+                              @if (altFormsLoadingIftNegative()) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                              } @else if (altFormsIftNegative().length === 0) {
+                                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                              } @else {
+                                <div class="flex flex-col gap-1.5 mt-1">
+                                  @for (form of altFormsIftNegative(); track form.labelKey) {
+                                    <div class="flex flex-col gap-0.5">
+                                      <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                      <div class="flex items-center gap-2 flex-wrap">
+                                        <span #iftNegAltEl2 [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                        <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="iftNegAltEl2" filename="ift-neg-alt" [label]="'f(' + resultVarDisplay() + ') t<0 — ' + (form.labelKey | transloco)" />
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </details>
+                } @else if (!res.fOutUForm && !res.fCombined && (res.fPositive || res.fNegative)) {
+                  <div class="border-t border-border dark:border-dark-border pt-2 flex flex-col gap-3">
+                    @if (res.fPositive && !iftPosEqMain()) {
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
+                        <div class="flex items-center gap-2">
+                          <span #iftPosEl3 [mathjax]="display(res.fPositive.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                          <app-export-button [tex]="res.fPositive.tex" [maxima]="res.fPositive.maxima" [mathEl]="iftPosEl3" filename="ift-positive" [label]="'f(' + resultVarDisplay() + '), t>0'" />
+                        </div>
+                        <div class="mt-1">
+                          <button type="button" (click)="toggleAltFormsIftSegment('positive')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                            <span>{{ 'transforms.altForms' | transloco }}</span>
+                            <span class="text-[9px]">{{ altFormsOpenIftPositive() ? '▲' : '▼' }}</span>
+                          </button>
+                          @if (altFormsOpenIftPositive()) {
+                            @if (altFormsLoadingIftPositive()) {
+                              <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                            } @else if (altFormsIftPositive().length === 0) {
+                              <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                            } @else {
+                              <div class="flex flex-col gap-1.5 mt-1">
+                                @for (form of altFormsIftPositive(); track form.labelKey) {
+                                  <div class="flex flex-col gap-0.5">
+                                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                      <span #iftPosAltEl3 [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                      <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="iftPosAltEl3" filename="ift-pos-alt" [label]="'f(' + resultVarDisplay() + ') t>0 — ' + (form.labelKey | transloco)" />
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (res.fNegative && !iftNegEqMain()) {
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-xs font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
+                        <div class="flex items-center gap-2">
+                          <span #iftNegEl3 [mathjax]="display(res.fNegative.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                          <app-export-button [tex]="res.fNegative.tex" [maxima]="res.fNegative.maxima" [mathEl]="iftNegEl3" filename="ift-negative" [label]="'f(' + resultVarDisplay() + '), t<0'" />
+                        </div>
+                        <div class="mt-1">
+                          <button type="button" (click)="toggleAltFormsIftSegment('negative')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                            <span>{{ 'transforms.altForms' | transloco }}</span>
+                            <span class="text-[9px]">{{ altFormsOpenIftNegative() ? '▲' : '▼' }}</span>
+                          </button>
+                          @if (altFormsOpenIftNegative()) {
+                            @if (altFormsLoadingIftNegative()) {
+                              <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                            } @else if (altFormsIftNegative().length === 0) {
+                              <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-1">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                            } @else {
+                              <div class="flex flex-col gap-1.5 mt-1">
+                                @for (form of altFormsIftNegative(); track form.labelKey) {
+                                  <div class="flex flex-col gap-0.5">
+                                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                      <span #iftNegAltEl3 [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                      <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="iftNegAltEl3" filename="ift-neg-alt" [label]="'f(' + resultVarDisplay() + ') t<0 — ' + (form.labelKey | transloco)" />
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Otras formas (IFT) — solo cuando hay forma compacta o u(t) como principal -->
+                @if (res.fCombined || res.fOutUForm) {
+                  <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                    <button
+                      type="button"
+                      (click)="toggleAltForms('ift')"
+                      class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1"
+                    >
+                      <span>{{ 'transforms.altForms' | transloco }}</span>
+                      <span class="text-[9px]">{{ altFormsOpenIft() ? '▲' : '▼' }}</span>
+                    </button>
+                    @if (altFormsOpenIft()) {
+                      @if (altFormsLoadingIft()) {
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">
+                          {{ 'transforms.altFormsLoading' | transloco }}
+                        </p>
+                      } @else if (altFormsIft().length === 0) {
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">
+                          {{ 'transforms.altFormsEmpty' | transloco }}
+                        </p>
+                      } @else {
+                        <div class="flex flex-col gap-2 mt-2">
+                          @for (form of altFormsIft(); track form.labelKey) {
+                            <div class="flex flex-col gap-0.5">
+                              <span class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                                {{ form.labelKey | transloco }}
+                              </span>
+                              <div class="flex items-center gap-2 flex-wrap">
+                                <span
+                                  #iftAltFormEl
+                                  [mathjax]="display(form.tex)"
+                                  class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
+                                ></span>
+                                <app-export-button
+                                  [tex]="form.tex"
+                                  [maxima]="form.maxima"
+                                  [mathEl]="iftAltFormEl"
+                                  filename="ift-alt"
+                                  [label]="'f(' + resultVarDisplay() + ') — ' + (form.labelKey | transloco)"
+                                />
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
                 }
               </div>
 
+              <!-- ── RE / IM de f(t) ── -->
               @if (res.outputRealPart?.tex || res.outputImagPart?.tex) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   @if (res.outputRealPart?.tex) {
-                    <div
-                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
-                    >
-                      <span
-                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
-                        [style.color]="originalColor()"
-                      >
-                        <span
-                          class="w-2 h-2 rounded-full inline-block shrink-0"
-                          [style.backgroundColor]="originalColor()"
-                        ></span>
-                        Re f({{ resultVarDisplay() }})
+                    <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-2">
+                      <span class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5" [style.color]="resultColor()">
+                        <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="resultColor()"></span>
+                        {{ 'transforms.reFt' | transloco: { v: resultVarDisplay() } }}
                       </span>
                       <div class="flex items-center gap-2">
-                        <span
-                          #iftOutputRealEl
-                          [mathjax]="display(res.outputRealPart!.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.outputRealPart!.tex"
-                          [maxima]="res.outputRealPart!.maxima"
-                          [mathEl]="iftOutputRealEl"
-                          filename="ift-output-real"
-                          [label]="'Re f(' + resultVarDisplay() + ')'"
-                        />
+                        <span #iftOutputRealEl [mathjax]="display(res.outputRealPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                        <app-export-button [tex]="res.outputRealPart!.tex" [maxima]="res.outputRealPart!.maxima" [mathEl]="iftOutputRealEl" filename="ift-output-real" [label]="'Re f(' + resultVarDisplay() + ')'" />
+                      </div>
+                      @if (res.outputRealUForm?.tex || res.outputRealPartPositive?.tex || res.outputRealPartNegative?.tex) {
+                        <details class="border-t border-border dark:border-dark-border pt-2">
+                          <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formPiecewise' | transloco }}</summary>
+                          <div class="flex flex-col gap-2 mt-2">
+                            @if (res.outputRealUForm?.tex) {
+                              <div class="flex flex-col gap-0.5">
+                                <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.formUt' | transloco }}</span>
+                                <div class="flex items-center gap-2">
+                                  <span #iftOutputRealUFormEl [mathjax]="display(res.outputRealUForm!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                  <app-export-button [tex]="res.outputRealUForm!.tex" [maxima]="res.outputRealUForm!.maxima" [mathEl]="iftOutputRealUFormEl" filename="ift-output-real-uform" [label]="'Re f(' + resultVarDisplay() + ') u(t)'" />
+                                </div>
+                              </div>
+                            }
+                            @if (res.outputRealPartPositive?.tex) {
+                              <div class="flex flex-col gap-0.5">
+                                <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
+                                <div class="flex items-center gap-2">
+                                  <span #iftOutputRealPosEl [mathjax]="display(res.outputRealPartPositive!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                  <app-export-button [tex]="res.outputRealPartPositive!.tex" [maxima]="res.outputRealPartPositive!.maxima" [mathEl]="iftOutputRealPosEl" filename="ift-output-real-pos" [label]="'Re f(' + resultVarDisplay() + '), t>0'" />
+                                </div>
+                              </div>
+                            }
+                            @if (res.outputRealPartNegative?.tex) {
+                              <div class="flex flex-col gap-0.5">
+                                <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
+                                <div class="flex items-center gap-2">
+                                  <span #iftOutputRealNegEl [mathjax]="display(res.outputRealPartNegative!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                  <app-export-button [tex]="res.outputRealPartNegative!.tex" [maxima]="res.outputRealPartNegative!.maxima" [mathEl]="iftOutputRealNegEl" filename="ift-output-real-neg" [label]="'Re f(' + resultVarDisplay() + '), t<0'" />
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        </details>
+                      }
+                      <div class="border-t border-border dark:border-dark-border pt-2">
+                        <button type="button" (click)="toggleAltFormsCard('ift-real')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                          <span>{{ 'transforms.altForms' | transloco }}</span>
+                          <span class="text-[9px]">{{ altFormsOpenIftReal() ? '▲' : '▼' }}</span>
+                        </button>
+                        @if (altFormsOpenIftReal()) {
+                          @if (altFormsLoadingIftReal()) {
+                            <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                          } @else if (altFormsIftReal().length === 0) {
+                            <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                          } @else {
+                            <div class="flex flex-col gap-2 mt-2">
+                              @for (form of altFormsIftReal(); track form.labelKey) {
+                                <div class="flex flex-col gap-0.5">
+                                  <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                  <div class="flex items-center gap-2 flex-wrap">
+                                    <span #iftRealAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                    <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="iftRealAltEl" filename="ift-real-alt" [label]="'Re f(' + resultVarDisplay() + ') — ' + (form.labelKey | transloco)" />
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                          }
+                        }
                       </div>
                     </div>
                   }
                   @if (res.outputImagPart?.tex) {
-                    <div
-                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
-                    >
-                      <span
-                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
-                        [style.color]="originalImagColor()"
-                      >
-                        <span
-                          class="w-2 h-2 rounded-full inline-block shrink-0"
-                          [style.backgroundColor]="originalImagColor()"
-                        ></span>
-                        Im f({{ resultVarDisplay() }})
+                    <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-2">
+                      <span class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5" [style.color]="imagColor()">
+                        <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="imagColor()"></span>
+                        {{ 'transforms.imFt' | transloco: { v: resultVarDisplay() } }}
                       </span>
                       <div class="flex items-center gap-2">
-                        <span
-                          #iftOutputImagEl
-                          [mathjax]="display(res.outputImagPart!.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.outputImagPart!.tex"
-                          [maxima]="res.outputImagPart!.maxima"
-                          [mathEl]="iftOutputImagEl"
-                          filename="ift-output-imag"
-                          [label]="'Im f(' + resultVarDisplay() + ')'"
-                        />
+                        <span #iftOutputImagEl [mathjax]="display(res.outputImagPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                        <app-export-button [tex]="res.outputImagPart!.tex" [maxima]="res.outputImagPart!.maxima" [mathEl]="iftOutputImagEl" filename="ift-output-imag" [label]="'Im f(' + resultVarDisplay() + ')'" />
+                      </div>
+                      @if (res.outputImagUForm?.tex || res.outputImagPartPositive?.tex || res.outputImagPartNegative?.tex) {
+                        <details class="border-t border-border dark:border-dark-border pt-2">
+                          <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formPiecewise' | transloco }}</summary>
+                          <div class="flex flex-col gap-2 mt-2">
+                            @if (res.outputImagUForm?.tex) {
+                              <div class="flex flex-col gap-0.5">
+                                <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.formUt' | transloco }}</span>
+                                <div class="flex items-center gap-2">
+                                  <span #iftOutputImagUFormEl [mathjax]="display(res.outputImagUForm!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                  <app-export-button [tex]="res.outputImagUForm!.tex" [maxima]="res.outputImagUForm!.maxima" [mathEl]="iftOutputImagUFormEl" filename="ift-output-imag-uform" [label]="'Im f(' + resultVarDisplay() + ') u(t)'" />
+                                </div>
+                              </div>
+                            }
+                            @if (res.outputImagPartPositive?.tex) {
+                              <div class="flex flex-col gap-0.5">
+                                <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
+                                <div class="flex items-center gap-2">
+                                  <span #iftOutputImagPosEl [mathjax]="display(res.outputImagPartPositive!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                  <app-export-button [tex]="res.outputImagPartPositive!.tex" [maxima]="res.outputImagPartPositive!.maxima" [mathEl]="iftOutputImagPosEl" filename="ift-output-imag-pos" [label]="'Im f(' + resultVarDisplay() + '), t>0'" />
+                                </div>
+                              </div>
+                            }
+                            @if (res.outputImagPartNegative?.tex) {
+                              <div class="flex flex-col gap-0.5">
+                                <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
+                                <div class="flex items-center gap-2">
+                                  <span #iftOutputImagNegEl [mathjax]="display(res.outputImagPartNegative!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                  <app-export-button [tex]="res.outputImagPartNegative!.tex" [maxima]="res.outputImagPartNegative!.maxima" [mathEl]="iftOutputImagNegEl" filename="ift-output-imag-neg" [label]="'Im f(' + resultVarDisplay() + '), t<0'" />
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        </details>
+                      }
+                      <div class="border-t border-border dark:border-dark-border pt-2">
+                        <button type="button" (click)="toggleAltFormsCard('ift-imag')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                          <span>{{ 'transforms.altForms' | transloco }}</span>
+                          <span class="text-[9px]">{{ altFormsOpenIftImag() ? '▲' : '▼' }}</span>
+                        </button>
+                        @if (altFormsOpenIftImag()) {
+                          @if (altFormsLoadingIftImag()) {
+                            <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                          } @else if (altFormsIftImag().length === 0) {
+                            <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                          } @else {
+                            <div class="flex flex-col gap-2 mt-2">
+                              @for (form of altFormsIftImag(); track form.labelKey) {
+                                <div class="flex flex-col gap-0.5">
+                                  <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                                  <div class="flex items-center gap-2 flex-wrap">
+                                    <span #iftImagAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                    <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="iftImagAltEl" filename="ift-imag-alt" [label]="'Im f(' + resultVarDisplay() + ') — ' + (form.labelKey | transloco)" />
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                          }
+                        }
                       </div>
                     </div>
                   }
@@ -1565,62 +2031,26 @@
               @if (res.inputRealPart?.tex || res.inputImagPart?.tex) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   @if (res.inputRealPart?.tex) {
-                    <div
-                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
-                    >
-                      <span
-                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
-                        [style.color]="resultColor()"
-                      >
-                        <span
-                          class="w-2 h-2 rounded-full inline-block shrink-0"
-                          [style.backgroundColor]="resultColor()"
-                        ></span>
-                        Re F({{ intVar() }})
+                    <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                      <span class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5" [style.color]="resultColor()">
+                        <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="resultColor()"></span>
+                        {{ 'transforms.reFw' | transloco: { v: intVar() } }}
                       </span>
                       <div class="flex items-center gap-2">
-                        <span
-                          #iftInputRealEl
-                          [mathjax]="display(res.inputRealPart!.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.inputRealPart!.tex"
-                          [maxima]="res.inputRealPart!.maxima"
-                          [mathEl]="iftInputRealEl"
-                          filename="ift-input-real"
-                          [label]="'Re F(' + intVar() + ')'"
-                        />
+                        <span #iftInputRealEl [mathjax]="display(res.inputRealPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                        <app-export-button [tex]="res.inputRealPart!.tex" [maxima]="res.inputRealPart!.maxima" [mathEl]="iftInputRealEl" filename="ift-input-real" [label]="'Re F(' + intVar() + ')'" />
                       </div>
                     </div>
                   }
                   @if (res.inputImagPart?.tex) {
-                    <div
-                      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1"
-                    >
-                      <span
-                        class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5"
-                        [style.color]="imagColor()"
-                      >
-                        <span
-                          class="w-2 h-2 rounded-full inline-block shrink-0"
-                          [style.backgroundColor]="imagColor()"
-                        ></span>
-                        Im F({{ intVar() }})
+                    <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                      <span class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5" [style.color]="imagColor()">
+                        <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="imagColor()"></span>
+                        {{ 'transforms.imFw' | transloco: { v: intVar() } }}
                       </span>
                       <div class="flex items-center gap-2">
-                        <span
-                          #iftInputImagEl
-                          [mathjax]="display(res.inputImagPart!.tex)"
-                          class="text-ink dark:text-dark-ink overflow-x-auto text-sm"
-                        ></span>
-                        <app-export-button
-                          [tex]="res.inputImagPart!.tex"
-                          [maxima]="res.inputImagPart!.maxima"
-                          [mathEl]="iftInputImagEl"
-                          filename="ift-input-imag"
-                          [label]="'Im F(' + intVar() + ')'"
-                        />
+                        <span #iftInputImagEl [mathjax]="display(res.inputImagPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                        <app-export-button [tex]="res.inputImagPart!.tex" [maxima]="res.inputImagPart!.maxima" [mathEl]="iftInputImagEl" filename="ift-input-imag" [label]="'Im F(' + intVar() + ')'" />
                       </div>
                     </div>
                   }
