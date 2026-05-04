@@ -9,25 +9,9 @@ import type {
   InverseFourierTransformInput,
   DFTInput,
   DFTFunctionInput,
-  NormalizationConvention,
 } from "../../domain/types/fourier.types";
-
-const VALID_CONVENTIONS: NormalizationConvention[] = [
-  "engineering",
-  "physics",
-  "ordinary",
-];
-
-function sanitizeConvention(
-  value: unknown,
-): NormalizationConvention | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === "string" && (VALID_CONVENTIONS as string[]).includes(value)) {
-    return value as NormalizationConvention;
-  }
-  return undefined; // silently fall back to default — not a security-sensitive field
-}
 import {
+  sanitizeConvention,
   sanitizeSegments,
   sanitizeVariableName,
 } from "../middlewares/sanitize";

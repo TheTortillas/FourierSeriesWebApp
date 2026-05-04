@@ -1,23 +1,10 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { simplifyService } from "../../infrastructure/container";
-import type { NormalizationConvention, SimplifyInput } from "../../domain/types/fourier.types";
-import { sanitizeExpression } from "../middlewares/sanitize";
-
-const VALID_CONVENTIONS: NormalizationConvention[] = [
-  "engineering",
-  "physics",
-  "ordinary",
-];
-
-function sanitizeConvention(
-  value: unknown,
-): NormalizationConvention | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === "string" && (VALID_CONVENTIONS as string[]).includes(value)) {
-    return value as NormalizationConvention;
-  }
-  return undefined;
-}
+import type { SimplifyInput } from "../../domain/types/fourier.types";
+import {
+  sanitizeConvention,
+  sanitizeExpression,
+} from "../middlewares/sanitize";
 
 export const simplifyRouter = Router();
 

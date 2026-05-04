@@ -111,6 +111,27 @@ export function sanitizeVariableName(
   return { valid: true };
 }
 
+import type { NormalizationConvention } from "../../domain/types/fourier.types";
+
+const VALID_CONVENTIONS: NormalizationConvention[] = [
+  "engineering",
+  "physics",
+  "ordinary",
+];
+
+export function sanitizeConvention(
+  value: unknown,
+): NormalizationConvention | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (
+    typeof value === "string" &&
+    (VALID_CONVENTIONS as string[]).includes(value)
+  ) {
+    return value as NormalizationConvention;
+  }
+  return undefined;
+}
+
 export function sanitizeSegments(
   segments: Array<{ expression: string; from: string; to: string }>,
 ): { valid: boolean; error?: string } {
