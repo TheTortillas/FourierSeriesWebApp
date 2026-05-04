@@ -1,7 +1,23 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { simplifyService } from "../../infrastructure/container";
-import type { SimplifyInput } from "../../domain/types/fourier.types";
+import type { NormalizationConvention, SimplifyInput } from "../../domain/types/fourier.types";
 import { sanitizeExpression } from "../middlewares/sanitize";
+
+const VALID_CONVENTIONS: NormalizationConvention[] = [
+  "engineering",
+  "physics",
+  "ordinary",
+];
+
+function sanitizeConvention(
+  value: unknown,
+): NormalizationConvention | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "string" && (VALID_CONVENTIONS as string[]).includes(value)) {
+    return value as NormalizationConvention;
+  }
+  return undefined;
+}
 
 export const simplifyRouter = Router();
 
@@ -65,6 +81,7 @@ simplifyRouter.post(
         return;
       }
 
+      input.convention = sanitizeConvention(input.convention);
       const result = await simplifyService.simplify(input);
       res.json(result);
     } catch (err) {

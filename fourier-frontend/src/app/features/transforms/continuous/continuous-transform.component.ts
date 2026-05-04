@@ -1384,7 +1384,6 @@ export class ContinuousTransformComponent implements OnInit {
     this.altFormsOpenIftNegative.set(false);
 
     const payload = { segments: segs, intVar, transVar, convention: this.convention() };
-    console.log('[transforms] payload →', JSON.stringify(payload, null, 2));
 
     if (this.mode() === 'ft') {
       this.api
@@ -1392,7 +1391,6 @@ export class ContinuousTransformComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
-            console.log('[transforms] FT result ←', res);
             this.ftResult.set(res);
             this.showCanvasSettings.set(true);
             this.loading.set(false);
@@ -1418,7 +1416,6 @@ export class ContinuousTransformComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {
-            console.log('[transforms] IFT result ←', res);
             this.iftResult.set(res);
             this.showCanvasSettings.set(true);
             this.loading.set(false);

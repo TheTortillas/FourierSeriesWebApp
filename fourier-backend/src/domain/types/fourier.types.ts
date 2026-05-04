@@ -98,6 +98,17 @@ export interface ValidationResult {
   message?: string;
 }
 
+/**
+ * Normalization convention for the Fourier Transform pair.
+ *
+ * | id          | FT factor   | IFT factor  |
+ * |-------------|-------------|-------------|
+ * | engineering | 1           | 1/(2π)      |
+ * | physics     | 1/√(2π)     | 1/√(2π)    |
+ * | ordinary    | 1           | 1           |
+ */
+export type NormalizationConvention = "engineering" | "physics" | "ordinary";
+
 export type SimplificationProfile =
   | "raw"
   | "integer"
@@ -189,17 +200,6 @@ export interface ComplexTermsResult {
   executionTimeMs: number;
   validation?: ValidationResult;
 }
-
-/**
- * Normalization convention for the Fourier Transform pair.
- *
- * | id          | FT factor   | IFT factor  |
- * |-------------|-------------|-------------|
- * | engineering | 1           | 1/(2π)      |
- * | physics     | 1/√(2π)     | 1/√(2π)    |
- * | ordinary    | 1           | 1           |
- */
-export type NormalizationConvention = "engineering" | "physics" | "ordinary";
 
 export interface FourierTransformInput {
   segments: PiecewiseSegment[];
