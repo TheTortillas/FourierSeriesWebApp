@@ -64,6 +64,7 @@ export class FourierTransformService {
     const funcInput = this.buildFuncInput(input.segments);
 
     const fullScript = `
+radexpand: false$
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 TRANSVAR: ${transVar};
@@ -218,6 +219,7 @@ kill(all)$
     const funcInput = this.buildFuncInput(input.segments);
 
     const fullScript = `
+radexpand: false$
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 TRANSVAR: ${transVar};

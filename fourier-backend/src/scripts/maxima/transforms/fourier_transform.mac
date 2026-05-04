@@ -8,6 +8,9 @@
 
 display2d: false$
 %iargs: false$
+/* Prevent Maxima from splitting sqrt(a*b) → sqrt(a)*sqrt(b).
+   Without this, sqrt(2*%pi) renders as \sqrt{2}\,\sqrt{\pi} in TeX. */
+radexpand: false$
 
 load("CLEAN_INTEGRAL_PATH")$
 load("LIB_PATH")$
