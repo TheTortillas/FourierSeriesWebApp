@@ -1283,14 +1283,15 @@ export class ContinuousTransformComponent implements OnInit {
     extraSeeds: string[] = [],
   ): void {
     const mainExpr = main.maxima;
+    const convention = this.convention();
     const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
       {
         labelKey: 'transforms.altFormFactor',
-        req: { expression: mainExpr, profile: 'complete', functions: ['factor'] },
+        req: { expression: mainExpr, profile: 'complete', functions: ['factor'], convention },
       },
       {
         labelKey: 'transforms.altFormExpand',
-        req: { expression: mainExpr, profile: 'complete', functions: ['expand'] },
+        req: { expression: mainExpr, profile: 'complete', functions: ['expand'], convention },
       },
       {
         labelKey: 'transforms.altFormTrig',
@@ -1299,11 +1300,12 @@ export class ContinuousTransformComponent implements OnInit {
           profile: 'complete',
           functions: ['trigreduce'],
           displayFlags: { demoivre: true },
+          convention,
         },
       },
       {
         labelKey: 'transforms.altFormRect',
-        req: { expression: mainExpr, profile: 'complete', functions: ['rectform'] },
+        req: { expression: mainExpr, profile: 'complete', functions: ['rectform'], convention },
       },
       {
         labelKey: 'transforms.altFormExp',
@@ -1312,6 +1314,7 @@ export class ContinuousTransformComponent implements OnInit {
           profile: 'complete',
           functions: ['radcan'],
           displayFlags: { exponentialize: true },
+          convention,
         },
       },
     ];

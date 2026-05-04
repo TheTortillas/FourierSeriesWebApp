@@ -127,6 +127,7 @@ export interface SimplifyInput {
     demoivre?: boolean;
     erfRepresentation?: "erf" | "erfc" | "erfi";
   };
+  convention?: NormalizationConvention;
 }
 
 export interface SimplifyResult {

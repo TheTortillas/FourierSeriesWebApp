@@ -112,6 +112,7 @@ export interface SimplifyRequest {
     demoivre?: boolean;
     erfRepresentation?: 'erf' | 'erfc' | 'erfi';
   };
+  convention?: NormalizationConvention;
 }
 
 export interface SimplifyResponse {
