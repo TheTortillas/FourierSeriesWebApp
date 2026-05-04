@@ -5,6 +5,7 @@ import {
   effect,
   ElementRef,
   inject,
+  OnDestroy,
   OnInit,
   signal,
   viewChild,
@@ -14,7 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, map, of, switchMap } from 'rxjs';
+import { catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { SeoService } from '../../../core/services/seo/seo.service';
@@ -42,14 +43,62 @@ import type {
   DftCoefficient,
   DftAlgorithm,
   DftInputMode,
+  DftPoint,
+  DftResponse,
   LocalDftResult,
 } from '../../../domain/types/dft.types';
 import type { DftSegment } from '../../../domain/types/dft.types';
-import type { CanvasViewport } from '../../../core/services/canvas/canvas.types';
+import type { CanvasViewport, Curve } from '../../../core/services/canvas/canvas.types';
 
 const N_OPTIONS = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
 const INT_VARS = ['x', 't', 'u', 's'];
 const TOP_LIMIT = 256;
+
+// ── Epicycles helpers ──────────────────────────────────────────────────────────
+
+const TAU = Math.PI * 2;
+
+interface EpicyclePreset { id: string; label: string; points: DftPoint[] }
+
+interface EpicycleState {
+  color: string;
+  selected: boolean;
+  centerX: number; centerY: number;
+  endX: number;    endY: number;
+  radius: number;
+}
+
+type EpicCoeffOrder = 'amplitude' | 'frequency';
+
+interface EpicRenderCoeff extends DftCoefficient {
+  kSigned: number;
+  amplitudeSafe: number;
+  amplitudePercentSafe: number;
+  phaseSafe: number;
+  phaseInPiSafe: string;
+}
+
+function epicCirclePreset(n = 180): DftPoint[] {
+  return Array.from({ length: n }, (_, i) => {
+    const t = (i / n) * TAU;
+    return { x: Math.cos(t), y: Math.sin(t) };
+  });
+}
+
+function epicStarPreset(n = 240): DftPoint[] {
+  return Array.from({ length: n }, (_, i) => {
+    const t = (i / n) * TAU;
+    const r = 1 + 0.35 * Math.cos(5 * t);
+    return { x: r * Math.cos(t), y: r * Math.sin(t) };
+  });
+}
+
+function epicLissajousPreset(n = 220): DftPoint[] {
+  return Array.from({ length: n }, (_, i) => {
+    const t = (i / n) * TAU;
+    return { x: 1.1 * Math.sin(3 * t + Math.PI / 2), y: 1.1 * Math.sin(2 * t) };
+  });
+}
 
 let _dftSegId = 0;
 const mkId = () => `dft-${++_dftSegId}`;
@@ -100,7 +149,7 @@ function makePreset(name: string, fn: (n: number, N: number) => number, N: numbe
     DecimalPipe,
   ],
 })
-export class DftComponent implements OnInit {
+export class DftComponent implements OnInit, OnDestroy {
   private readonly seo        = inject(SeoService);
   private readonly api        = inject(ApiService);
   private readonly theme      = inject(ThemeService);
@@ -119,6 +168,7 @@ export class DftComponent implements OnInit {
   readonly spectrumPlotRef  = viewChild<FunctionPlotComponent>('spectrumPlot');
   readonly specWrapperRef   = viewChild<ElementRef<HTMLDivElement>>('spectrumWrapper');
   readonly signalWrapperRef = viewChild<ElementRef<HTMLDivElement>>('signalWrapper');
+  readonly epicWrapperRef   = viewChild<ElementRef<HTMLDivElement>>('epicWrapper');
 
   // ── Mode / algorithm ────────────────────────────────────────────────────────
   readonly inputMode = signal<DftInputMode>('function');
@@ -245,6 +295,116 @@ export class DftComponent implements OnInit {
 
   // ── Signal canvas X-axis format ─────────────────────────────────────────────
   readonly signalXAxisFormat = signal<'integer' | 'pi' | 'e'>('integer');
+
+  // ── Epicycles mode ────────────────────────────────────────────────────────
+  private _epicTimerId: ReturnType<typeof setInterval> | null = null;
+
+  readonly epicPresets: EpicyclePreset[] = [
+    { id: 'circle',    label: 'dft.epicycles.presetCircle',    points: epicCirclePreset() },
+    { id: 'star',      label: 'dft.epicycles.presetStar',      points: epicStarPreset() },
+    { id: 'lissajous', label: 'dft.epicycles.presetLissajous', points: epicLissajousPreset() },
+  ];
+
+  readonly epicRawPoints      = signal('');
+  readonly epicLoading        = signal(false);
+  readonly epicError          = signal<string | null>(null);
+  readonly epicResult         = signal<DftResponse | null>(null);
+  readonly epicSourcePoints   = signal<DftPoint[]>([]);
+
+  readonly epicTopK           = signal(18);
+  readonly epicCoeffOrder     = signal<EpicCoeffOrder>('amplitude');
+  readonly epicSpeed          = signal(0.03);
+  readonly epicTime           = signal(0);
+  readonly epicFrameTick      = signal(0);
+  readonly epicIsAnimating    = signal(false);
+
+  readonly epicShowOriginal   = signal(true);
+  readonly epicShowApprox     = signal(true);
+  readonly epicShowTrace      = signal(true);
+  readonly epicShowSampled    = signal(false);
+  readonly epicShowChains     = signal(true);
+  readonly epicSelectedK      = signal<number | null>(null);
+
+  readonly epicAutoNormalize  = signal(true);
+  readonly epicCenterScale    = signal(true);
+  readonly epicNormInfo       = signal<{ applied: boolean; centered: boolean; centerX: number; centerY: number; scale: number } | null>(null);
+
+  readonly epicTrace          = signal<DftPoint[]>([]);
+
+  // Draw-mode: user draws on canvas with mouse
+  readonly epicDrawMode       = signal(false);
+  readonly epicDrawPoints     = signal<DftPoint[]>([]);
+  private _epicDrawing        = false;
+  private _epicPlotEl: HTMLElement | null = null;
+
+  readonly epicNormalizedCoeffs = computed<EpicRenderCoeff[]>(() => {
+    const res = this.epicResult();
+    if (!res || !Array.isArray(res.coefficients)) return [];
+    const n = Math.max(1, res.N || res.coefficients.length || 1);
+    const withAmp = res.coefficients.map((c) => {
+      const re = this._epicFinite(c.re);
+      const im = this._epicFinite(c.im);
+      const amp = Number.isFinite(c.amplitude) && c.amplitude > 0
+        ? this._epicFinite(c.amplitude) : Math.hypot(re, im);
+      const kSigned = c.k > n / 2 ? c.k - n : c.k;
+      const phase = amp < 1e-12 ? 0 : (this._epicFinite(c.phase) || Math.atan2(im, re));
+      return { ...c, re, im, kSigned, amplitudeSafe: amp, amplitudePercentSafe: 0, phaseSafe: phase, phaseInPiSafe: this._epicPiLabel(phase) };
+    });
+    const total = withAmp.reduce((s, c) => s + c.amplitudeSafe, 0);
+    return withAmp.map((c) => ({ ...c, amplitudePercentSafe: total > 0 ? (c.amplitudeSafe / total) * 100 : 0 }));
+  });
+
+  readonly epicOrderedCoeffs = computed<EpicRenderCoeff[]>(() => {
+    const c = this.epicNormalizedCoeffs();
+    if (this.epicCoeffOrder() === 'frequency') {
+      return [...c].sort((a, b) => { const d = Math.abs(a.kSigned) - Math.abs(b.kSigned); return d !== 0 ? d : a.kSigned - b.kSigned; });
+    }
+    return [...c].sort((a, b) => { const d = b.amplitudeSafe - a.amplitudeSafe; return d !== 0 ? d : Math.abs(a.kSigned) - Math.abs(b.kSigned); });
+  });
+
+  readonly epicMaxTopK     = computed(() => this.epicOrderedCoeffs().length);
+  readonly epicVisibleCoeffs = computed(() => this.epicOrderedCoeffs().slice(0, 240));
+  readonly epicSelectedCoeffs = computed(() => {
+    const c = this.epicOrderedCoeffs();
+    return c.slice(0, Math.max(1, Math.min(this.epicTopK(), c.length || 1)));
+  });
+  readonly epicCoverage    = computed(() => this.epicSelectedCoeffs().reduce((s, c) => s + c.amplitudePercentSafe, 0));
+  readonly epicEndpoint    = computed(() => {
+    const states = this.epicStates();
+    if (!states.length) return null;
+    const last = states[states.length - 1];
+    return { x: last.endX, y: last.endY };
+  });
+  readonly epicApproxCurve = computed<DftPoint[]>(() => {
+    const coeffs = this.epicSelectedCoeffs();
+    if (!coeffs.length) return [];
+    return Array.from({ length: 421 }, (_, i) => this._epicEvalPoint(coeffs, (i / 420) * TAU));
+  });
+  readonly epicStates      = computed<EpicycleState[]>(() => this._epicComputeStates(this.epicSelectedCoeffs(), this.epicTime()));
+
+  readonly epicPlotLayers  = computed<PlotLayer[]>(() => {
+    void this.epicFrameTick();
+    void this.epicStates();
+    const original   = this.epicSourcePoints();
+    const approx     = this.epicApproxCurve();
+    const trace      = this.epicTrace();
+    const drawPts    = this.epicDrawPoints();
+    const curves: Curve[] = [];
+
+    if (this.epicShowOriginal() && original.length > 1) {
+      curves.push({ points: this._epicClose(original), color: this.theme.isDark ? '#9ca3af' : '#6b7280', lineWidth: 1.2, dashed: true });
+    }
+    if (this.epicShowApprox() && approx.length > 1) {
+      curves.push({ points: approx, color: '#22c55e', lineWidth: 2 });
+    }
+    if (this.epicShowTrace() && trace.length > 1) {
+      curves.push({ points: trace, color: '#60a5fa', lineWidth: 2.1 });
+    }
+    if (this.epicDrawMode() && drawPts.length > 0) {
+      curves.push({ points: drawPts, color: '#f59e0b', lineWidth: 2 });
+    }
+    return [{ curves, onDraw: (ctx, vp) => this._epicDrawOverlay(ctx, vp) }];
+  });
 
   // ── LaTeX preview (function mode) ─────────────────────────────────────────
   readonly previewLatex = computed<string | null>(() => {
@@ -469,6 +629,7 @@ export class DftComponent implements OnInit {
 
   switchMode(mode: DftInputMode): void {
     if (this.inputsLocked()) return;
+    if (mode !== 'epicycles') this._epicStopAnimation();
     this.inputMode.set(mode);
     this.error.set(null);
   }
@@ -880,6 +1041,280 @@ export class DftComponent implements OnInit {
   }
 
   // ── Canvas drawing ─────────────────────────────────────────────────────────
+
+  ngOnDestroy(): void {
+    this._epicStopAnimation();
+  }
+
+  // ── Epicycles: public methods ──────────────────────────────────────────────
+
+  epicLoadPreset(id: string): void {
+    const preset = this.epicPresets.find((p) => p.id === id);
+    if (!preset) return;
+    this.epicRawPoints.set(this._epicFormatPoints(preset.points));
+    this.epicSourcePoints.set(preset.points);
+    this.epicResult.set(null);
+    this.epicError.set(null);
+    this.epicTrace.set([]);
+    this.epicTime.set(0);
+    this.epicSelectedK.set(null);
+    this.epicDrawMode.set(false);
+    this.epicDrawPoints.set([]);
+  }
+
+  async epicCalculate(): Promise<void> {
+    if (this.epicLoading()) return;
+    this.epicError.set(null);
+
+    let parsed: DftPoint[];
+    try {
+      parsed = this._epicParsePoints(this.epicRawPoints());
+    } catch (err) {
+      this.epicError.set(err instanceof Error ? err.message : 'Invalid input.');
+      return;
+    }
+
+    const prepared = this.epicAutoNormalize() ? this._epicNormalizePoints(parsed) : null;
+    const effectivePts = prepared?.points ?? parsed;
+    this.epicNormInfo.set(prepared?.info ?? null);
+
+    this.epicLoading.set(true);
+    try {
+      const res = await firstValueFrom(this.api.calculateDFT({ points: effectivePts, mode: 'epicycles' }));
+      this.epicSourcePoints.set(effectivePts);
+      this.epicResult.set(res);
+      this.epicTopK.set(Math.min(22, Math.max(1, res.coefficients.length)));
+      this.epicTime.set(0);
+      this.epicTrace.set([]);
+      this.epicSelectedK.set(null);
+      this.userStore.refreshQuota();
+    } catch (err) {
+      const e = err as { error?: { error?: string }; message?: string };
+      this.epicError.set(e?.error?.error ?? e?.message ?? 'Could not compute DFT.');
+      this.epicResult.set(null);
+    } finally {
+      this.epicLoading.set(false);
+    }
+  }
+
+  epicToggleAnimation(): void {
+    if (this.epicIsAnimating()) { this._epicStopAnimation(); return; }
+    if (typeof window === 'undefined' || !this.epicResult()) return;
+    this.epicIsAnimating.set(true);
+    this._epicTimerId = setInterval(() => {
+      this.epicTime.update((t) => { const n = t + this.epicSpeed(); return n >= TAU ? n - TAU : n; });
+      this.epicFrameTick.update((v) => v + 1);
+      const end = this.epicEndpoint();
+      if (end && this.epicShowTrace()) {
+        this.epicTrace.update((pts) => {
+          const next = [...pts, end];
+          return next.length > 1600 ? next.slice(next.length - 1600) : next;
+        });
+      }
+    }, 16);
+  }
+
+  epicResetAnimation(): void {
+    this.epicTime.set(0);
+    this.epicTrace.set([]);
+  }
+
+  epicToggleSelectedK(k: number): void {
+    this.epicSelectedK.update((cur) => (cur === k ? null : k));
+  }
+
+  epicToggleDrawMode(): void {
+    const entering = !this.epicDrawMode();
+    this.epicDrawMode.set(entering);
+    if (entering) {
+      this.epicDrawPoints.set([]);
+      this._epicStopAnimation();
+    }
+  }
+
+  epicConfirmDraw(): void {
+    const pts = this.epicDrawPoints();
+    if (pts.length < 3) { this.epicError.set('Draw at least 3 points.'); return; }
+    this.epicRawPoints.set(this._epicFormatPoints(pts));
+    this.epicSourcePoints.set(pts);
+    this.epicDrawMode.set(false);
+    void this.epicCalculate();
+  }
+
+  epicClearDraw(): void {
+    this.epicDrawPoints.set([]);
+    this.epicTrace.set([]);
+    this.epicResult.set(null);
+    this.epicError.set(null);
+  }
+
+  epicStopAnimation(): void {
+    this._epicStopAnimation();
+  }
+
+  epicOnCanvasMouseDown(event: MouseEvent, wrapperEl: HTMLElement | null): void {
+    if (!this.epicDrawMode() || !wrapperEl) return;
+    this._epicDrawing = true;
+    this._epicPlotEl = wrapperEl;
+    this._epicAddDrawPoint(event, wrapperEl);
+  }
+
+  epicOnCanvasMouseMove(event: MouseEvent, wrapperEl: HTMLElement | null): void {
+    if (!this._epicDrawing || !wrapperEl) return;
+    this._epicAddDrawPoint(event, wrapperEl);
+  }
+
+  epicOnCanvasMouseUp(): void {
+    this._epicDrawing = false;
+  }
+
+  epicOnCanvasTouchStart(event: TouchEvent, wrapperEl: HTMLElement | null): void {
+    if (!this.epicDrawMode() || !wrapperEl) return;
+    event.preventDefault();
+    this._epicDrawing = true;
+    const t = event.touches[0];
+    if (t) this._epicAddDrawPointCoords(t.clientX, t.clientY, wrapperEl);
+  }
+
+  epicOnCanvasTouchMove(event: TouchEvent, wrapperEl: HTMLElement | null): void {
+    if (!this._epicDrawing || !wrapperEl) return;
+    event.preventDefault();
+    const t = event.touches[0];
+    if (t) this._epicAddDrawPointCoords(t.clientX, t.clientY, wrapperEl);
+  }
+
+  epicOnCanvasTouchEnd(): void {
+    this._epicDrawing = false;
+  }
+
+  // ── Epicycles: private helpers ─────────────────────────────────────────────
+
+  private _epicStopAnimation(): void {
+    this.epicIsAnimating.set(false);
+    if (this._epicTimerId !== null) { clearInterval(this._epicTimerId); this._epicTimerId = null; }
+  }
+
+  private _epicAddDrawPoint(event: MouseEvent, wrapperEl: HTMLElement): void {
+    this._epicAddDrawPointCoords(event.clientX, event.clientY, wrapperEl);
+  }
+
+  private _epicAddDrawPointCoords(clientX: number, clientY: number, wrapperEl: HTMLElement): void {
+    const canvas = wrapperEl.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    // Map CSS pixels to [-1, 1] range (normalized, center = 0)
+    const nx = ((clientX - rect.left) / rect.width)  * 2 - 1;
+    const ny = (1 - (clientY - rect.top)  / rect.height) * 2 - 1;
+    this.epicDrawPoints.update((pts) => {
+      // Skip if very close to the last point (avoid dense duplicate samples)
+      const last = pts[pts.length - 1];
+      if (last && Math.hypot(nx - last.x, ny - last.y) < 0.015) return pts;
+      return [...pts, { x: nx, y: ny }];
+    });
+  }
+
+  private _epicParsePoints(raw: string): DftPoint[] {
+    const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length < 3) throw new Error('At least 3 x,y points required.');
+    return lines.map((line, i) => {
+      const parts = line.split(/[\s,;]+/).filter(Boolean);
+      if (parts.length < 2) throw new Error(`Line ${i + 1}: use x,y format.`);
+      const x = Number(parts[0]), y = Number(parts[1]);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) throw new Error(`Line ${i + 1}: invalid numbers.`);
+      return { x, y };
+    });
+  }
+
+  private _epicFormatPoints(pts: DftPoint[]): string {
+    return pts.map((p) => `${p.x.toFixed(6)}, ${p.y.toFixed(6)}`).join('\n');
+  }
+
+  private _epicEvalPoint(coeffs: EpicRenderCoeff[], time: number): DftPoint {
+    let x = 0, y = 0;
+    for (const c of coeffs) {
+      const a = c.kSigned * time;
+      x += c.re * Math.cos(a) - c.im * Math.sin(a);
+      y += c.re * Math.sin(a) + c.im * Math.cos(a);
+    }
+    return { x, y };
+  }
+
+  private _epicComputeStates(coeffs: EpicRenderCoeff[], time: number): EpicycleState[] {
+    const states: EpicycleState[] = [];
+    const selK = this.epicSelectedK();
+    const total = Math.max(1, coeffs.length);
+    let cx = 0, cy = 0;
+    for (let i = 0; i < coeffs.length; i++) {
+      const c = coeffs[i];
+      if (!c) continue;
+      const a = c.kSigned * time;
+      const vx = c.re * Math.cos(a) - c.im * Math.sin(a);
+      const vy = c.re * Math.sin(a) + c.im * Math.cos(a);
+      states.push({ color: this._epicHarmonicColor(i, total), selected: selK === c.k, centerX: cx, centerY: cy, endX: cx + vx, endY: cy + vy, radius: c.amplitudeSafe });
+      cx += vx; cy += vy;
+    }
+    return states;
+  }
+
+  private _epicDrawOverlay(ctx: CanvasRenderingContext2D, vp: CanvasViewport): void {
+    if (this.epicShowSampled()) {
+      this.du.drawPoints(ctx, vp, this.epicSourcePoints(), 'rgba(248,250,252,0.75)', 1.8);
+    }
+    if (!this.epicShowChains()) return;
+    const states = this.epicStates();
+    if (!states.length) return;
+    const toX = (x: number) => this.coords.mathToScreenX(x, vp) / vp.dpr;
+    const toY = (y: number) => this.coords.mathToScreenY(y, vp) / vp.dpr;
+    const pxPerUnit = vp.unit * ((vp.scaleX + vp.scaleY) / 2);
+    const hasSel = states.some((s) => s.selected);
+    for (const s of states) {
+      const cx = toX(s.centerX), cy = toY(s.centerY), ex = toX(s.endX), ey = toY(s.endY);
+      const dimmed = hasSel && !s.selected;
+      this.du.drawCircle(ctx, cx, cy, Math.max(1.5, s.radius * pxPerUnit), this.du.withAlpha(s.color, s.selected ? 0.42 : dimmed ? 0.12 : 0.28), 1);
+      this.du.drawLine(ctx, cx, cy, ex, ey, this.du.withAlpha(s.color, s.selected ? 1 : dimmed ? 0.22 : 0.88), s.selected ? 2.4 : 1.5);
+      this.du.drawArrowHead(ctx, cx, cy, ex, ey, this.du.withAlpha(s.color, s.selected ? 1 : dimmed ? 0.26 : 0.9), s.selected ? 8 : 6);
+    }
+    const last = states[states.length - 1];
+    if (last) this.du.drawCircle(ctx, toX(last.endX), toY(last.endY), 3.1, null, 1, hasSel ? this.du.withAlpha('#f8fafc', 0.95) : '#f59e0b');
+  }
+
+  private _epicNormalizePoints(pts: DftPoint[]): { points: DftPoint[]; info: { applied: boolean; centered: boolean; centerX: number; centerY: number; scale: number } } {
+    if (!pts.length) return { points: pts, info: { applied: false, centered: this.epicCenterScale(), centerX: 0, centerY: 0, scale: 1 } };
+    const centered = this.epicCenterScale();
+    let sumX = 0, sumY = 0;
+    for (const p of pts) { sumX += p.x; sumY += p.y; }
+    const cx = centered ? sumX / pts.length : 0;
+    const cy = centered ? sumY / pts.length : 0;
+    let maxR = 0;
+    for (const p of pts) { const r = Math.hypot(p.x - cx, p.y - cy); if (r > maxR) maxR = r; }
+    const scale = maxR > 0 ? 1 / maxR : 1;
+    return { points: pts.map((p) => ({ x: (p.x - cx) * scale, y: (p.y - cy) * scale })), info: { applied: true, centered, centerX: cx, centerY: cy, scale } };
+  }
+
+  private _epicClose(pts: DftPoint[]): DftPoint[] {
+    if (pts.length < 2) return pts;
+    const f = pts[0], l = pts[pts.length - 1];
+    return f.x === l.x && f.y === l.y ? pts : [...pts, f];
+  }
+
+  private _epicFinite(v: unknown): number {
+    if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+    if (typeof v === 'string') { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; }
+    return 0;
+  }
+
+  private _epicPiLabel(phase: number): string {
+    const r = phase / Math.PI;
+    if (!Number.isFinite(r)) return '0';
+    const table: [number, string][] = [[0,'0'],[1,'1'],[-1,'-1'],[0.5,'1/2'],[-0.5,'-1/2'],[1/3,'1/3'],[-1/3,'-1/3'],[2/3,'2/3'],[-2/3,'-2/3'],[1/4,'1/4'],[-1/4,'-1/4'],[3/4,'3/4'],[-3/4,'-3/4']];
+    for (const [t, l] of table) { if (Math.abs(r - t) < 1e-4) return l; }
+    return Number(r.toFixed(4)).toString();
+  }
+
+  private _epicHarmonicColor(index: number, total: number): string {
+    const hue = (200 + (total <= 1 ? 0 : index / (total - 1)) * 300) % 360;
+    return `hsl(${hue.toFixed(1)} 90% 62%)`;
+  }
 
   private _drawReconstruction(
     ctx: CanvasRenderingContext2D,
