@@ -337,6 +337,17 @@ export class DftComponent implements OnInit, OnDestroy {
 
   readonly showEpicSettings   = signal(false);
 
+  // ── Epicycles canvas colors ────────────────────────────────────────────────
+  readonly epicOriginalColor  = signal('#6b7280');
+  readonly epicApproxColor    = signal('#22c55e');
+  readonly epicTraceColor     = signal('#60a5fa');
+  readonly epicSampledColor   = signal('#f59e0b');
+
+  private _customEpicOriginalColor = false;
+  private _customEpicApproxColor   = false;
+  private _customEpicTraceColor    = false;
+  private _customEpicSampledColor  = false;
+
   // Draw dialog
   readonly epicDrawDialogOpen = signal(false);
   readonly epicDrawPoints     = signal<DftPoint[]>([]);
@@ -397,13 +408,13 @@ export class DftComponent implements OnInit, OnDestroy {
     const curves: Curve[] = [];
 
     if (this.epicShowOriginal() && original.length > 1) {
-      curves.push({ points: this._epicClose(original), color: this.theme.isDark ? '#9ca3af' : '#6b7280', lineWidth: 1.2, dashed: true });
+      curves.push({ points: this._epicClose(original), color: this.epicOriginalColor(), lineWidth: 1.2, dashed: true });
     }
     if (this.epicShowApprox() && approx.length > 1) {
-      curves.push({ points: approx, color: '#22c55e', lineWidth: 2 });
+      curves.push({ points: approx, color: this.epicApproxColor(), lineWidth: 2 });
     }
     if (this.epicShowTrace() && trace.length > 1) {
-      curves.push({ points: trace, color: '#60a5fa', lineWidth: 2.1 });
+      curves.push({ points: trace, color: this.epicTraceColor(), lineWidth: 2.1 });
     }
     return [{ curves, onDraw: (ctx, vp) => this._epicDrawOverlay(ctx, vp) }];
   });
@@ -596,6 +607,8 @@ export class DftComponent implements OnInit, OnDestroy {
       if (!this._customReconstructionColor) this.reconstructionColor.set(preset.reconstruction);
       if (!this._customSpecAmpColor)        this.specAmplitudeColor.set(preset.specAmplitude);
       if (!this._customSpecPhaseColor)      this.specPhaseColor.set(preset.specPhase);
+      if (!this._customEpicOriginalColor)   this.epicOriginalColor.set(this.theme.isDark ? '#9ca3af' : '#6b7280');
+      if (!this._customEpicSampledColor)    this.epicSampledColor.set(this.theme.isDark ? '#fbbf24' : '#d97706');
       this.signalPlotRef()?.redraw();
       this.spectrumPlotRef()?.redraw();
     });
@@ -853,6 +866,19 @@ export class DftComponent implements OnInit, OnDestroy {
     this._customSpecAmpColor = this._customSpecPhaseColor = false;
     this.specAmplitudeColor.set(p.specAmplitude);
     this.specPhaseColor.set(p.specPhase);
+  }
+
+  onEpicOriginalColorInput(v: string): void { this._customEpicOriginalColor = true; this.epicOriginalColor.set(v); }
+  onEpicApproxColorInput(v: string): void   { this._customEpicApproxColor   = true; this.epicApproxColor.set(v); }
+  onEpicTraceColorInput(v: string): void    { this._customEpicTraceColor    = true; this.epicTraceColor.set(v); }
+  onEpicSampledColorInput(v: string): void  { this._customEpicSampledColor  = true; this.epicSampledColor.set(v); }
+
+  resetEpicColors(): void {
+    this._customEpicOriginalColor = this._customEpicApproxColor = this._customEpicTraceColor = this._customEpicSampledColor = false;
+    this.epicOriginalColor.set(this.theme.isDark ? '#9ca3af' : '#6b7280');
+    this.epicApproxColor.set('#22c55e');
+    this.epicTraceColor.set('#60a5fa');
+    this.epicSampledColor.set(this.theme.isDark ? '#fbbf24' : '#d97706');
   }
 
   // ── Spectrum interaction ───────────────────────────────────────────────────
@@ -1304,7 +1330,7 @@ export class DftComponent implements OnInit, OnDestroy {
 
   private _epicDrawOverlay(ctx: CanvasRenderingContext2D, vp: CanvasViewport): void {
     if (this.epicShowSampled()) {
-      this.du.drawPoints(ctx, vp, this.epicSourcePoints(), 'rgba(248,250,252,0.75)', 1.8);
+      this.du.drawPoints(ctx, vp, this.epicSourcePoints(), this.epicSampledColor(), 1.8);
     }
     if (!this.epicShowChains()) return;
     const states = this.epicStates();
