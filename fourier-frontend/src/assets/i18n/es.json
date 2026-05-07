@@ -211,6 +211,7 @@
     "copy": "Copiar",
     "copied": "Copiada",
     "urlCopied": "URL copiada al portapapeles",
+    "epicUrlTooLarge": "El enlace no está disponible para más de {{ limit }} puntos. Descarga la imagen o guarda en favoritos.",
     "layersToShow": "Capas a mostrar",
     "axisAndUnits": "Eje y unidades",
     "axisX": "Eje X",

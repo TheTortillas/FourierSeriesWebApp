@@ -336,6 +336,7 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly epicTrace          = signal<DftPoint[]>([]);
 
   readonly showEpicSettings   = signal(false);
+  readonly epicUrlTooLarge    = signal(false);
 
   // ── Epicycles canvas colors ────────────────────────────────────────────────
   readonly epicOriginalColor  = signal('#6b7280');
@@ -619,14 +620,16 @@ export class DftComponent implements OnInit, OnDestroy {
       this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
     }
 
-    // Sync result → URL query param
+    // Sync result → URL query param (function/manual modes)
     effect(() => {
       if (this.result()) {
         this.urlPopulated = true;
-        void this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: { s: this._encodeState() },
-          replaceUrl: true,
+        void this._encodeState().then((s) => {
+          void this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: s ? { s } : {},
+            replaceUrl: true,
+          });
         });
       } else if (this.urlPopulated) {
         void this.router.navigate([], {
@@ -636,16 +639,36 @@ export class DftComponent implements OnInit, OnDestroy {
         });
       }
     });
+
+    // Sync epicResult → URL query param (epicycles mode)
+    effect(() => {
+      const res = this.epicResult();
+      if (!res) return;
+      const pts = this.epicSourcePoints();
+      this.epicUrlTooLarge.set(pts.length > DftComponent.EPIC_URL_LIMIT);
+      if (pts.length > DftComponent.EPIC_URL_LIMIT) return;
+      this.urlPopulated = true;
+      void this._encodeState().then((s) => {
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: s ? { s } : {},
+          replaceUrl: true,
+        });
+      });
+    });
   }
 
   ngOnInit(): void {
     this.seo.setPage('seo.dft.title', 'seo.dft.description');
     const encoded = this.route.snapshot.queryParamMap.get('s');
-    if (encoded && this._restoreState(encoded)) {
-      if (this.inputMode() !== 'epicycles') {
-        this.compute();
-      }
-      // Epicycles: state is pre-populated — user triggers compute manually to avoid re-saving to history
+    if (encoded) {
+      void this._restoreState(encoded).then((ok) => {
+        if (!ok) return;
+        if (this.inputMode() !== 'epicycles') {
+          this.compute();
+        }
+        // Epicycles: pre-populated, user triggers compute to avoid re-saving history
+      });
     }
   }
 
@@ -929,36 +952,80 @@ export class DftComponent implements OnInit, OnDestroy {
 
   // ── URL state ──────────────────────────────────────────────────────────────
 
-  private _encodeState(): string {
-    const state = {
-      mode: this.inputMode(),
-      alg:  this.algorithm(),
-      v:    this.intVar(),
-      N:    this.N(),
-      dN:   this.dftCustomN(),
-      seg:  this.segments().map((s) => ({
-        e: s.expression, et: s.expressionTex,
-        f: s.from, ft: s.fromTex,
-        t: s.to, tt: s.toTex,
-      })),
-      mr: this.inputMode() === 'manual' ? this.manualRaw() : undefined,
-      mN: this.inputMode() === 'manual' ? this.manualN()  : undefined,
-    };
+  // ── URL state — deflate-raw + base64url ───────────────────────────────────
+  // Points > EPIC_URL_LIMIT are too large for a URL; share button shows a
+  // "too large" notice instead of updating the query param.
+  private static readonly EPIC_URL_LIMIT = 400;
+
+  private async _encodeState(): Promise<string> {
+    const mode = this.inputMode();
+    let state: Record<string, unknown>;
+
+    if (mode === 'epicycles') {
+      const pts = this.epicSourcePoints();
+      if (!pts.length) return '';
+      if (pts.length > DftComponent.EPIC_URL_LIMIT) return '';
+      state = {
+        mode: 'epicycles',
+        pts: pts.map((p) => `${p.x},${p.y}`).join('\n'),
+      };
+    } else {
+      state = {
+        mode,
+        alg: this.algorithm(),
+        v:   this.intVar(),
+        N:   this.N(),
+        dN:  this.dftCustomN(),
+        seg: this.segments().map((s) => ({
+          e: s.expression, et: s.expressionTex,
+          f: s.from, ft: s.fromTex,
+          t: s.to, tt: s.toTex,
+        })),
+        mr: mode === 'manual' ? this.manualRaw() : undefined,
+        mN: mode === 'manual' ? this.manualN()   : undefined,
+      };
+    }
+
     try {
-      const json = JSON.stringify(state);
-      return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16))));
+      const json  = JSON.stringify(state);
+      const bytes = new TextEncoder().encode(json);
+      const cs    = new CompressionStream('deflate-raw');
+      const writer = cs.writable.getWriter();
+      void writer.write(bytes);
+      void writer.close();
+      const compressed = await new Response(cs.readable).arrayBuffer();
+      return btoa(String.fromCharCode(...new Uint8Array(compressed)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     } catch { return ''; }
   }
 
-  private _restoreState(encoded: string): boolean {
+  private async _restoreState(encoded: string): Promise<boolean> {
     try {
-      const json = decodeURIComponent(atob(encoded).split('').map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
+      // Support both legacy plain-base64 and new deflate-raw+base64url
+      const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+      const binary = atob(b64);
+      const bytes  = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+
+      let json: string;
+      try {
+        // Try deflate-raw first
+        const ds = new DecompressionStream('deflate-raw');
+        const writer = ds.writable.getWriter();
+        void writer.write(bytes);
+        void writer.close();
+        json = await new Response(ds.readable).text();
+      } catch {
+        // Fall back to legacy plain UTF-8 base64
+        json = decodeURIComponent(binary.split('').map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
+      }
+
       const s = JSON.parse(json) as {
         mode?: string; alg?: string; v?: string; N?: number; dN?: number;
         seg?: Array<{ e: string; et: string; f: string; ft: string; t: string; tt: string }>;
         mr?: string; mN?: number;
-        pts?: string; // epicycles raw textarea content
+        pts?: string;
       };
+
       if (s.mode === 'function' || s.mode === 'manual' || s.mode === 'epicycles') {
         this.inputMode.set(s.mode as DftInputMode);
       }
@@ -978,8 +1045,6 @@ export class DftComponent implements OnInit, OnDestroy {
       if (s.mN !== undefined) this.manualN.set(s.mN);
       if (s.pts !== undefined) {
         this.epicRawPoints.set(s.pts);
-        // Parse exact floats now and stash them so epicCalculate bypasses the
-        // lossy textarea round-trip, preserving the original SHA-256 hash.
         try {
           this._epicRestoredPoints = this._epicParsePoints(s.pts);
         } catch { this._epicRestoredPoints = null; }

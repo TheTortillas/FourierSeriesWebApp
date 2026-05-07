@@ -211,6 +211,7 @@
     "copy": "Copy",
     "copied": "Copied",
     "urlCopied": "URL copied to clipboard",
+    "epicUrlTooLarge": "URL sharing is not available for more than {{ limit }} points. Download the image or save to favorites instead.",
     "layersToShow": "Layers to show",
     "axisAndUnits": "Axis and units",
     "axisX": "X axis",
