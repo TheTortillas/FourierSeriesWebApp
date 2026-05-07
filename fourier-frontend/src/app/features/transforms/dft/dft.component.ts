@@ -15,7 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { SeoService } from '../../../core/services/seo/seo.service';
@@ -257,6 +257,7 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly showReconstruction  = signal(true);
   readonly showCanvasSettings  = signal(false);
   readonly showSpecSettings    = signal(false);
+  readonly isFullscreen        = signal(false);
 
   // ── Spectrum mode ──────────────────────────────────────────────────────────
   readonly specMode = signal<'amplitude' | 'phase'>('amplitude');
@@ -320,7 +321,7 @@ export class DftComponent implements OnInit, OnDestroy {
 
   readonly epicShowOriginal   = signal(true);
   readonly epicShowApprox     = signal(true);
-  readonly epicShowTrace      = signal(true);
+  readonly epicShowTrace      = signal(false);
   readonly epicShowSampled    = signal(false);
   readonly epicShowChains     = signal(true);
   readonly epicSelectedK      = signal<number | null>(null);
@@ -598,6 +599,12 @@ export class DftComponent implements OnInit, OnDestroy {
       this.signalPlotRef()?.redraw();
       this.spectrumPlotRef()?.redraw();
     });
+
+    if (typeof document !== 'undefined') {
+      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
+      document.addEventListener('fullscreenchange', handler);
+      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
+    }
 
     // Sync result → URL query param
     effect(() => {
@@ -972,6 +979,16 @@ export class DftComponent implements OnInit, OnDestroy {
     } catch { /* clipboard unavailable */ }
   }
 
+  // ── Fullscreen ─────────────────────────────────────────────────────────────
+
+  toggleFullscreen(wrapperRef: ElementRef<HTMLDivElement> | undefined): void {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void wrapperRef?.nativeElement?.requestFullscreen();
+    }
+  }
+
   // ── Download ───────────────────────────────────────────────────────────────
 
   downloadCanvas(wrapperRef: ElementRef<HTMLDivElement> | undefined, filename: string): void {
@@ -1020,25 +1037,10 @@ export class DftComponent implements OnInit, OnDestroy {
   private fetchLatestEntry(callback?: () => void): void {
     this.api
       .getHistory({ limit: 1 })
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        switchMap((res) => {
-          const latest = res.entries[0] ?? null;
-          if (!latest || latest.isFavorite) return of(latest);
-          return this.api.getHistory({ favorites: true, limit: 1 }).pipe(
-            map((favRes) => {
-              const fav = favRes.entries[0];
-              return fav && JSON.stringify(fav.input) === JSON.stringify(latest.input)
-                ? fav
-                : latest;
-            }),
-            catchError(() => of(latest)),
-          );
-        }),
-      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (entry) => {
-          this.latestHistoryEntry.set(entry);
+        next: (res) => {
+          this.latestHistoryEntry.set(res.entries[0] ?? null);
           callback?.();
         },
         error: () => callback?.(),
