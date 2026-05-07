@@ -15,6 +15,7 @@ const TYPE_KEY: Record<string, string> = {
   fourier_transform: 'history.types.fourierTransform',
   inverse_fourier_transform: 'history.types.inverseFourierTransform',
   dft_signal: 'history.types.dftSignal',
+  dft_function: 'history.types.dftFunction',
   dft_epicycles: 'history.types.dftEpicycles',
 };
 
@@ -134,9 +135,17 @@ export class HistoryComponent implements OnInit {
 
   reopenInCalculator(entry: HistoryEntry): void {
     const inp = entry.input;
+    const lang = this.transloco.getActiveLang();
+
+    if (entry.type === 'dft_signal' || entry.type === 'dft_epicycles') {
+      this.router.navigate(['/' + lang + '/transforms/dft'], {
+        state: { restoreInput: { ...inp, type: entry.type } },
+      });
+      return;
+    }
+
     if (!inp?.['segments']) return;
 
-    const lang = this.transloco.getActiveLang();
     const transformTypes = ['fourier_transform', 'inverse_fourier_transform'];
     if (transformTypes.includes(entry.type)) {
       this.router.navigate(['/' + lang + '/transforms/continuous'], {
@@ -241,6 +250,9 @@ export class HistoryComponent implements OnInit {
   }
 
   hasSegments(entry: HistoryEntry): boolean {
+    if (entry.type === 'dft_signal' || entry.type === 'dft_epicycles') {
+      return Array.isArray(entry.input?.['points']) || !!entry.input?.['segments'];
+    }
     return !!entry.input?.['segments'];
   }
 

@@ -300,9 +300,9 @@ export class DftComponent implements OnInit, OnDestroy {
   private _epicTimerId: ReturnType<typeof setInterval> | null = null;
 
   readonly epicPresets: EpicyclePreset[] = [
-    { id: 'circle',    label: 'dft.epicycles.presetCircle',    points: epicCirclePreset() },
-    { id: 'star',      label: 'dft.epicycles.presetStar',      points: epicStarPreset() },
-    { id: 'lissajous', label: 'dft.epicycles.presetLissajous', points: epicLissajousPreset() },
+    { id: 'circle',    label: 'transforms.dft.epicycles.presetCircle',    points: epicCirclePreset() },
+    { id: 'star',      label: 'transforms.dft.epicycles.presetStar',      points: epicStarPreset() },
+    { id: 'lissajous', label: 'transforms.dft.epicycles.presetLissajous', points: epicLissajousPreset() },
   ];
 
   readonly epicRawPoints      = signal('');
@@ -331,11 +331,13 @@ export class DftComponent implements OnInit, OnDestroy {
 
   readonly epicTrace          = signal<DftPoint[]>([]);
 
-  // Draw-mode: user draws on canvas with mouse
-  readonly epicDrawMode       = signal(false);
+  readonly showEpicSettings   = signal(false);
+
+  // Draw dialog
+  readonly epicDrawDialogOpen = signal(false);
   readonly epicDrawPoints     = signal<DftPoint[]>([]);
   private _epicDrawing        = false;
-  private _epicPlotEl: HTMLElement | null = null;
+  private _epicDrawCtx: CanvasRenderingContext2D | null = null;
 
   readonly epicNormalizedCoeffs = computed<EpicRenderCoeff[]>(() => {
     const res = this.epicResult();
@@ -385,10 +387,9 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly epicPlotLayers  = computed<PlotLayer[]>(() => {
     void this.epicFrameTick();
     void this.epicStates();
-    const original   = this.epicSourcePoints();
-    const approx     = this.epicApproxCurve();
-    const trace      = this.epicTrace();
-    const drawPts    = this.epicDrawPoints();
+    const original = this.epicSourcePoints();
+    const approx   = this.epicApproxCurve();
+    const trace    = this.epicTrace();
     const curves: Curve[] = [];
 
     if (this.epicShowOriginal() && original.length > 1) {
@@ -399,9 +400,6 @@ export class DftComponent implements OnInit, OnDestroy {
     }
     if (this.epicShowTrace() && trace.length > 1) {
       curves.push({ points: trace, color: '#60a5fa', lineWidth: 2.1 });
-    }
-    if (this.epicDrawMode() && drawPts.length > 0) {
-      curves.push({ points: drawPts, color: '#f59e0b', lineWidth: 2 });
     }
     return [{ curves, onDraw: (ctx, vp) => this._epicDrawOverlay(ctx, vp) }];
   });
@@ -697,6 +695,11 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   private _computeManual(): void {
+    if (this.userStore.isQuotaExceeded()) {
+      this.error.set('weekly_limit_reached');
+      return;
+    }
+
     const values = this.parsedManual();
     const N = this.manualN();
     if (values.length !== N) {
@@ -740,7 +743,14 @@ export class DftComponent implements OnInit, OnDestroy {
           this.userStore.refreshQuota();
           if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
         },
-        error: () => {},
+        error: (err) => {
+          // 429 = quota exhausted — roll back the result so it doesn't appear as "computed"
+          if (err?.status === 429) {
+            this.result.set(null);
+            this.error.set(err?.error?.error ?? 'Weekly calculation limit reached');
+            this.userStore.refreshQuota();
+          }
+        },
       });
   }
 
@@ -1058,7 +1068,6 @@ export class DftComponent implements OnInit, OnDestroy {
     this.epicTrace.set([]);
     this.epicTime.set(0);
     this.epicSelectedK.set(null);
-    this.epicDrawMode.set(false);
     this.epicDrawPoints.set([]);
   }
 
@@ -1123,67 +1132,76 @@ export class DftComponent implements OnInit, OnDestroy {
     this.epicSelectedK.update((cur) => (cur === k ? null : k));
   }
 
-  epicToggleDrawMode(): void {
-    const entering = !this.epicDrawMode();
-    this.epicDrawMode.set(entering);
-    if (entering) {
-      this.epicDrawPoints.set([]);
-      this._epicStopAnimation();
-    }
+  epicOpenDrawDialog(): void {
+    this.epicDrawPoints.set([]);
+    this._epicDrawCtx = null;
+    this._epicDrawing = false;
+    this.epicDrawDialogOpen.set(true);
+  }
+
+  epicCloseDrawDialog(): void {
+    this.epicDrawDialogOpen.set(false);
+    this._epicDrawCtx = null;
+    this._epicDrawing = false;
   }
 
   epicConfirmDraw(): void {
     const pts = this.epicDrawPoints();
-    if (pts.length < 3) { this.epicError.set('Draw at least 3 points.'); return; }
+    if (pts.length < 3) { this.epicError.set('At least 3 points required.'); return; }
     this.epicRawPoints.set(this._epicFormatPoints(pts));
-    this.epicSourcePoints.set(pts);
-    this.epicDrawMode.set(false);
+    this.epicDrawDialogOpen.set(false);
+    this._epicDrawCtx = null;
+    this._epicDrawing = false;
     void this.epicCalculate();
   }
 
-  epicClearDraw(): void {
+  epicClearDrawCanvas(canvas: HTMLCanvasElement): void {
     this.epicDrawPoints.set([]);
-    this.epicTrace.set([]);
-    this.epicResult.set(null);
-    this.epicError.set(null);
+    const ctx = canvas.getContext('2d');
+    if (ctx) { ctx.clearRect(0, 0, canvas.width, canvas.height); }
   }
 
   epicStopAnimation(): void {
     this._epicStopAnimation();
   }
 
-  epicOnCanvasMouseDown(event: MouseEvent, wrapperEl: HTMLElement | null): void {
-    if (!this.epicDrawMode() || !wrapperEl) return;
+  epicDialogMouseDown(event: MouseEvent, canvas: HTMLCanvasElement): void {
     this._epicDrawing = true;
-    this._epicPlotEl = wrapperEl;
-    this._epicAddDrawPoint(event, wrapperEl);
+    this._epicDrawCtx = canvas.getContext('2d');
+    this._epicDrawOnCanvas(event.offsetX, event.offsetY, canvas, true);
   }
 
-  epicOnCanvasMouseMove(event: MouseEvent, wrapperEl: HTMLElement | null): void {
-    if (!this._epicDrawing || !wrapperEl) return;
-    this._epicAddDrawPoint(event, wrapperEl);
+  epicDialogMouseMove(event: MouseEvent, canvas: HTMLCanvasElement): void {
+    if (!this._epicDrawing) return;
+    this._epicDrawOnCanvas(event.offsetX, event.offsetY, canvas, false);
   }
 
-  epicOnCanvasMouseUp(): void {
+  epicDialogMouseUp(): void {
     this._epicDrawing = false;
   }
 
-  epicOnCanvasTouchStart(event: TouchEvent, wrapperEl: HTMLElement | null): void {
-    if (!this.epicDrawMode() || !wrapperEl) return;
+  epicDialogTouchStart(event: TouchEvent, canvas: HTMLCanvasElement): void {
     event.preventDefault();
     this._epicDrawing = true;
+    this._epicDrawCtx = canvas.getContext('2d');
     const t = event.touches[0];
-    if (t) this._epicAddDrawPointCoords(t.clientX, t.clientY, wrapperEl);
+    if (t) {
+      const rect = canvas.getBoundingClientRect();
+      this._epicDrawOnCanvas(t.clientX - rect.left, t.clientY - rect.top, canvas, true);
+    }
   }
 
-  epicOnCanvasTouchMove(event: TouchEvent, wrapperEl: HTMLElement | null): void {
-    if (!this._epicDrawing || !wrapperEl) return;
+  epicDialogTouchMove(event: TouchEvent, canvas: HTMLCanvasElement): void {
     event.preventDefault();
+    if (!this._epicDrawing) return;
     const t = event.touches[0];
-    if (t) this._epicAddDrawPointCoords(t.clientX, t.clientY, wrapperEl);
+    if (t) {
+      const rect = canvas.getBoundingClientRect();
+      this._epicDrawOnCanvas(t.clientX - rect.left, t.clientY - rect.top, canvas, false);
+    }
   }
 
-  epicOnCanvasTouchEnd(): void {
+  epicDialogTouchEnd(): void {
     this._epicDrawing = false;
   }
 
@@ -1194,23 +1212,32 @@ export class DftComponent implements OnInit, OnDestroy {
     if (this._epicTimerId !== null) { clearInterval(this._epicTimerId); this._epicTimerId = null; }
   }
 
-  private _epicAddDrawPoint(event: MouseEvent, wrapperEl: HTMLElement): void {
-    this._epicAddDrawPointCoords(event.clientX, event.clientY, wrapperEl);
-  }
+  private _epicDrawOnCanvas(offsetX: number, offsetY: number, canvas: HTMLCanvasElement, isStart: boolean): void {
+    const ctx = this._epicDrawCtx ?? canvas.getContext('2d');
+    if (!ctx) return;
 
-  private _epicAddDrawPointCoords(clientX: number, clientY: number, wrapperEl: HTMLElement): void {
-    const canvas = wrapperEl.querySelector('canvas') as HTMLCanvasElement | null;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    // Map CSS pixels to [-1, 1] range (normalized, center = 0)
-    const nx = ((clientX - rect.left) / rect.width)  * 2 - 1;
-    const ny = (1 - (clientY - rect.top)  / rect.height) * 2 - 1;
+    // Normalize to [-1, 1] centered
+    const nx = (offsetX / canvas.width)  * 2 - 1;
+    const ny = (1 - offsetY / canvas.height) * 2 - 1;
+
     this.epicDrawPoints.update((pts) => {
-      // Skip if very close to the last point (avoid dense duplicate samples)
       const last = pts[pts.length - 1];
-      if (last && Math.hypot(nx - last.x, ny - last.y) < 0.015) return pts;
+      if (!isStart && last && Math.hypot(nx - last.x, ny - last.y) < 0.012) return pts;
       return [...pts, { x: nx, y: ny }];
     });
+
+    // Draw stroke on the canvas for immediate visual feedback
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = this.theme.isDark ? '#f59e0b' : '#d97706';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (isStart) {
+      ctx.beginPath();
+      ctx.moveTo(offsetX, offsetY);
+    } else {
+      ctx.lineTo(offsetX, offsetY);
+      ctx.stroke();
+    }
   }
 
   private _epicParsePoints(raw: string): DftPoint[] {

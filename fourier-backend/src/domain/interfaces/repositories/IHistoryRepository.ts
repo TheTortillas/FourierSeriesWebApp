@@ -5,6 +5,7 @@ export type CalculationType =
   | "fourier_transform"
   | "inverse_fourier_transform"
   | "dft_signal"
+  | "dft_function"
   | "dft_epicycles";
 
 /**

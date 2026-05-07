@@ -307,8 +307,10 @@
         <!-- ══ EPICYCLES MODE ════════════════════════════════════════════ -->
         @if (inputMode() === 'epicycles') {
 
-          <!-- Presets -->
-          <section class="flex flex-col gap-2">
+          <!-- Presets (disabled after compute) -->
+          <section class="flex flex-col gap-2"
+            [class.pointer-events-none]="!!epicResult()"
+            [class.opacity-60]="!!epicResult()">
             <p class="text-xs text-muted dark:text-dark-muted font-mono">{{ 'transforms.dft.epicycles.presetsLabel' | transloco }}</p>
             <div class="flex flex-wrap gap-1.5">
               @for (preset of epicPresets; track preset.id) {
@@ -320,76 +322,30 @@
             </div>
           </section>
 
-          <!-- Draw / textarea toggle -->
-          <section class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4">
+          <!-- Draw / textarea (disabled after compute) -->
+          <section class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4"
+            [class.pointer-events-none]="!!epicResult()"
+            [class.opacity-60]="!!epicResult()">
             <div class="flex items-center justify-between">
               <p class="text-xs text-muted dark:text-dark-muted font-mono">{{ 'transforms.dft.epicycles.inputLabel' | transloco }}</p>
-              <button type="button" (click)="epicToggleDrawMode()"
-                [class]="epicDrawMode()
-                  ? 'px-2.5 py-1 rounded text-[11px] font-mono border border-amber-400 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 cursor-pointer transition-colors'
-                  : 'px-2.5 py-1 rounded text-[11px] font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-                @if (epicDrawMode()) {
-                  ✎ {{ 'transforms.dft.epicycles.drawActive' | transloco }}
-                } @else {
-                  ✎ {{ 'transforms.dft.epicycles.drawBtn' | transloco }}
-                }
+              <button type="button" (click)="epicOpenDrawDialog()"
+                class="px-2.5 py-1 rounded text-[11px] font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer">
+                ✎ {{ 'transforms.dft.epicycles.drawBtn' | transloco }}
               </button>
             </div>
-
-            @if (epicDrawMode()) {
-              <p class="text-[11px] font-mono text-amber-600 dark:text-amber-400 rounded border border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/20 px-2.5 py-2">
-                {{ 'transforms.dft.epicycles.drawHint' | transloco }}
-              </p>
-              <p class="text-[11px] font-mono text-muted dark:text-dark-muted">
-                {{ 'transforms.dft.epicycles.drawPoints' | transloco: { count: epicDrawPoints().length } }}
-              </p>
-              <div class="flex gap-2">
-                <button type="button" (click)="epicConfirmDraw()"
-                  [disabled]="epicDrawPoints().length < 3"
-                  class="flex-1 py-1.5 rounded text-xs font-mono bg-accent text-white hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer">
-                  {{ 'transforms.dft.epicycles.drawConfirm' | transloco }}
-                </button>
-                <button type="button" (click)="epicClearDraw()"
-                  class="px-3 py-1.5 rounded text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer">
-                  {{ 'transforms.dft.epicycles.drawClear' | transloco }}
-                </button>
-              </div>
-            } @else {
-              <textarea
-                [ngModel]="epicRawPoints()"
-                (ngModelChange)="epicRawPoints.set($event)"
-                rows="8"
-                spellcheck="false"
-                [placeholder]="'transforms.dft.epicycles.textareaPlaceholder' | transloco"
-                class="w-full rounded border border-border dark:border-dark-border px-2.5 py-2 text-xs font-mono bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink resize-y focus:outline-none focus:border-accent">
-              </textarea>
-              <p class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.textareaHint' | transloco }}</p>
-            }
+            <textarea
+              [ngModel]="epicRawPoints()"
+              (ngModelChange)="epicRawPoints.set($event)"
+              rows="8"
+              spellcheck="false"
+              [placeholder]="'transforms.dft.epicycles.textareaPlaceholder' | transloco"
+              class="w-full rounded border border-border dark:border-dark-border px-2.5 py-2 text-xs font-mono bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink resize-y focus:outline-none focus:border-accent">
+            </textarea>
+            <p class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.textareaHint' | transloco }}</p>
           </section>
 
-          <!-- Normalization -->
-          <section class="flex flex-col gap-1.5 border-t border-border dark:border-dark-border pt-4">
-            <label class="flex items-center gap-2 cursor-pointer text-xs font-mono text-ink dark:text-dark-ink">
-              <input type="checkbox" [checked]="epicAutoNormalize()" (change)="epicAutoNormalize.set($any($event.target).checked)"
-                class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-              {{ 'transforms.dft.epicycles.autoNorm' | transloco }}
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer text-xs font-mono text-ink dark:text-dark-ink"
-              [class.opacity-40]="!epicAutoNormalize()">
-              <input type="checkbox" [checked]="epicCenterScale()" (change)="epicCenterScale.set($any($event.target).checked)"
-                [disabled]="!epicAutoNormalize()"
-                class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-              {{ 'transforms.dft.epicycles.center' | transloco }}
-            </label>
-            @if (epicNormInfo(); as info) {
-              <p class="text-[10px] font-mono text-accent">
-                {{ 'transforms.dft.epicycles.normApplied' | transloco: { scale: info.scale.toExponential(3) } }}
-              </p>
-            }
-          </section>
-
-          <!-- Compute button (epicycles) -->
-          @if (!epicDrawMode()) {
+          <!-- Compute / New calculation button (epicycles) -->
+          @if (!epicResult()) {
             <button type="button" (click)="epicCalculate()"
               [disabled]="epicLoading()"
               class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed">
@@ -402,8 +358,13 @@
                   {{ 'common.calculating' | transloco }}
                 </span>
               } @else {
-                {{ 'transforms.dft.epicycles.compute' | transloco }}
+                {{ 'transforms.dft.compute' | transloco }}
               }
+            </button>
+          } @else {
+            <button type="button" (click)="epicResult.set(null); epicTrace.set([]); epicStopAnimation()"
+              class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold">
+              {{ 'transforms.newCalculation' | transloco }}
             </button>
           }
 
@@ -414,156 +375,36 @@
             </div>
           }
 
-          <!-- Controls — only after a result -->
-          @if (epicResult()) {
-
-            <!-- Top-K + order -->
-            <section class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4">
-              <div class="flex items-center justify-between">
-                <p class="text-xs text-muted dark:text-dark-muted font-mono">
-                  {{ 'transforms.dft.epicycles.topK' | transloco: { k: epicTopK(), max: epicMaxTopK() } }}
-                </p>
-                <span class="text-[11px] font-mono text-accent">{{ epicCoverage().toFixed(1) }}%</span>
-              </div>
-              <input type="range" min="1" [max]="epicMaxTopK()"
-                [value]="epicTopK()" (input)="epicTopK.set(+$any($event.target).value)"
-                class="w-full accent-accent cursor-pointer"/>
-              <div class="flex gap-1.5">
-                <button type="button" (click)="epicCoeffOrder.set('amplitude')"
-                  [class]="epicCoeffOrder() === 'amplitude'
-                    ? 'flex-1 py-1 rounded-lg text-[11px] font-mono border border-accent bg-accent/10 dark:bg-accent/15 text-accent cursor-pointer'
-                    : 'flex-1 py-1 rounded-lg text-[11px] font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-                  {{ 'transforms.dft.epicycles.orderAmp' | transloco }}
-                </button>
-                <button type="button" (click)="epicCoeffOrder.set('frequency')"
-                  [class]="epicCoeffOrder() === 'frequency'
-                    ? 'flex-1 py-1 rounded-lg text-[11px] font-mono border border-accent bg-accent/10 dark:bg-accent/15 text-accent cursor-pointer'
-                    : 'flex-1 py-1 rounded-lg text-[11px] font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-                  {{ 'transforms.dft.epicycles.orderFreq' | transloco }}
-                </button>
-              </div>
-            </section>
-
-            <!-- Speed -->
-            <section class="flex flex-col gap-1.5 border-t border-border dark:border-dark-border pt-4">
-              <div class="flex items-center justify-between">
-                <p class="text-xs text-muted dark:text-dark-muted font-mono">{{ 'transforms.dft.epicycles.speed' | transloco }}</p>
-                <span class="text-xs font-mono text-ink dark:text-dark-ink">{{ epicSpeed().toFixed(3) }}</span>
-              </div>
-              <input type="range" min="0.005" max="0.14" step="0.001"
-                [value]="epicSpeed()" (input)="epicSpeed.set(+$any($event.target).value)"
-                class="w-full accent-accent cursor-pointer"/>
-            </section>
-
-            <!-- Animation controls -->
-            <section class="flex flex-wrap gap-2 border-t border-border dark:border-dark-border pt-4">
-              <button type="button" (click)="epicToggleAnimation()"
-                [class]="epicIsAnimating()
-                  ? 'px-3 py-1.5 rounded text-xs font-mono bg-indigo-100 dark:bg-indigo-950/40 border border-indigo-400 text-indigo-700 dark:text-indigo-300 cursor-pointer transition-colors'
-                  : 'px-3 py-1.5 rounded text-xs font-mono bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors'">
-                {{ epicIsAnimating() ? ('transforms.dft.epicycles.pause' | transloco) : ('transforms.dft.epicycles.animate' | transloco) }}
-              </button>
-              <button type="button" (click)="epicResetAnimation()"
-                class="px-3 py-1.5 rounded text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer">
-                {{ 'transforms.dft.epicycles.reset' | transloco }}
-              </button>
-              <button type="button" (click)="epicResult.set(null); epicTrace.set([]); epicStopAnimation()"
-                class="px-3 py-1.5 rounded text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer">
-                {{ 'transforms.newCalculation' | transloco }}
-              </button>
-            </section>
-
-            <!-- Layers visibility -->
-            <section class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4">
-              <p class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted font-mono">{{ 'transforms.dft.layersShow' | transloco }}</p>
-              <div class="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                <label class="flex items-center gap-2 cursor-pointer text-xs font-mono text-ink dark:text-dark-ink">
-                  <input type="checkbox" [checked]="epicShowOriginal()" (change)="epicShowOriginal.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-                  {{ 'transforms.dft.epicycles.layerOriginal' | transloco }}
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer text-xs font-mono text-ink dark:text-dark-ink">
-                  <input type="checkbox" [checked]="epicShowApprox()" (change)="epicShowApprox.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-                  {{ 'transforms.dft.epicycles.layerApprox' | transloco }}
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer text-xs font-mono text-ink dark:text-dark-ink">
-                  <input type="checkbox" [checked]="epicShowTrace()" (change)="epicShowTrace.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-                  {{ 'transforms.dft.epicycles.layerTrace' | transloco }}
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer text-xs font-mono text-ink dark:text-dark-ink">
-                  <input type="checkbox" [checked]="epicShowSampled()" (change)="epicShowSampled.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-                  {{ 'transforms.dft.epicycles.layerSampled' | transloco }}
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer text-xs font-mono text-ink dark:text-dark-ink">
-                  <input type="checkbox" [checked]="epicShowChains()" (change)="epicShowChains.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-                  {{ 'transforms.dft.epicycles.layerChains' | transloco }}
-                </label>
-              </div>
-            </section>
-
-            <!-- Coefficients inspector -->
-            <section class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4">
-              <p class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted font-mono">{{ 'transforms.dft.epicycles.coeffsTitle' | transloco }}</p>
-              <div class="overflow-auto max-h-64 rounded border border-border dark:border-dark-border">
-                <table class="w-full text-[11px] font-mono">
-                  <thead class="sticky top-0 bg-paper2 dark:bg-dark-surface">
-                    <tr class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted border-b border-border dark:border-dark-border">
-                      <th class="px-2 py-1.5 text-left">k</th>
-                      <th class="px-2 py-1.5 text-left">|C|</th>
-                      <th class="px-2 py-1.5 text-left">%</th>
-                      <th class="px-2 py-1.5 text-left">∠/π</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (c of epicVisibleCoeffs(); track $index; let i = $index) {
-                      <tr (click)="epicToggleSelectedK(c.k)"
-                        class="border-t border-border/50 dark:border-dark-border/50 cursor-pointer transition-colors"
-                        [class]="epicSelectedK() === c.k
-                          ? 'bg-accent/15'
-                          : i < epicTopK()
-                            ? 'bg-accent/5 hover:bg-accent/10'
-                            : 'hover:bg-paper dark:hover:bg-dark-bg'">
-                        <td class="px-2 py-1 font-semibold text-accent">{{ c.kSigned }}</td>
-                        <td class="px-2 py-1 text-ink dark:text-dark-ink">{{ c.amplitudeSafe.toFixed(5) }}</td>
-                        <td class="px-2 py-1 text-muted dark:text-dark-muted">{{ c.amplitudePercentSafe.toFixed(1) }}%</td>
-                        <td class="px-2 py-1 text-muted dark:text-dark-muted">{{ c.phaseInPiSafe }}π</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-              <p class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.coeffsHint' | transloco }}</p>
-            </section>
-
-          }<!-- /epicResult -->
-
         }
         <!-- ══ END EPICYCLES MODE ══════════════════════════════════════════ -->
 
-        <!-- Error -->
-        @if (error()) {
+        <!-- Error (function / manual modes) -->
+        @if (inputMode() !== 'epicycles' && error()) {
           <div class="rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2">
             <p class="text-xs font-mono text-red-600 dark:text-red-400">{{ error() }}</p>
           </div>
         }
 
-        <!-- Compute button -->
-        <button type="button" (click)="compute()"
-          [disabled]="loading() || !!result() || (inputMode() === 'manual' && !manualValid())"
-          class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed">
-          @if (loading()) {
-            <span class="flex items-center justify-center gap-2">
-              <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-              {{ 'common.calculating' | transloco }}
-            </span>
-          } @else {
-            {{ 'transforms.dft.compute' | transloco }}
-          }
-        </button>
+        <!-- Compute button (function / manual modes only) -->
+        @if (inputMode() !== 'epicycles') {
+          <button type="button" (click)="compute()"
+            [disabled]="loading() || !!result() || (inputMode() === 'manual' && !manualValid())"
+            class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed">
+            @if (loading()) {
+              <span class="flex items-center justify-center gap-2">
+                <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                {{ 'common.calculating' | transloco }}
+              </span>
+            } @else {
+              {{ 'transforms.dft.compute' | transloco }}
+            }
+          </button>
+        }
 
-        @if (result()) {
+        @if (inputMode() !== 'epicycles' && result()) {
           <button type="button" (click)="reset()"
             class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold">
             {{ 'transforms.newCalculation' | transloco }}
@@ -580,30 +421,39 @@
         <!-- ── Epicycles canvas (epicycles mode only) ───────────────────── -->
         @if (inputMode() === 'epicycles') {
           <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
-            <div class="relative h-[480px] lg:h-[560px]" #epicWrapper
-              [class.cursor-crosshair]="epicDrawMode()"
-              (mousedown)="epicOnCanvasMouseDown($event, epicWrapper)"
-              (mousemove)="epicOnCanvasMouseMove($event, epicWrapper)"
-              (mouseup)="epicOnCanvasMouseUp()"
-              (mouseleave)="epicOnCanvasMouseUp()"
-              (touchstart)="epicOnCanvasTouchStart($event, epicWrapper)"
-              (touchmove)="epicOnCanvasTouchMove($event, epicWrapper)"
-              (touchend)="epicOnCanvasTouchEnd()">
+            <div class="relative h-[480px] lg:h-[560px]" #epicWrapper>
               <app-function-plot [layers]="epicPlotLayers()" [initialUnit]="100" class="w-full h-full block"/>
 
-              <!-- Draw mode overlay banner -->
-              @if (epicDrawMode()) {
-                <div class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none z-10
-                  px-3 py-1.5 rounded-full border border-amber-400 bg-amber-50/95 dark:bg-amber-950/90 backdrop-blur-sm
-                  text-[11px] font-mono text-amber-700 dark:text-amber-300 whitespace-nowrap shadow">
-                  ✎ {{ 'transforms.dft.epicycles.drawMode' | transloco }}
-                  @if (epicDrawPoints().length > 0) { · {{ epicDrawPoints().length }} pts }
-                </div>
-              }
-
-              <!-- Action buttons top-right -->
-              <div class="absolute top-2 right-2 flex gap-1 pointer-events-none">
+              <!-- Overlay buttons top-left (favorites + settings + download) -->
+              <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
                 @if (epicResult()) {
+                  @if (userStore.isAuthenticated()) {
+                    <button type="button" (click)="openFavoriteDialog()"
+                      [title]="latestHistoryEntry()?.isFavorite ? ('results.removeFav' | transloco) : ('results.addFav' | transloco)"
+                      [class]="latestHistoryEntry()?.isFavorite
+                        ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center cursor-pointer'
+                        : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'">
+                      @if (favoriteLoading()) {
+                        <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                      } @else {
+                        <span class="text-sm leading-none">★</span>
+                      }
+                    </button>
+                  }
+                  <button type="button" (click)="showEpicSettings.set(!showEpicSettings())"
+                    [title]="'results.canvasSettings' | transloco"
+                    [class]="showEpicSettings()
+                      ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
+                      : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                  </button>
                   <button type="button" (click)="downloadCanvas(epicWrapperRef(), 'epicycles.png')"
                     [title]="'results.downloadImage' | transloco"
                     class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
@@ -617,9 +467,147 @@
                 }
               </div>
 
-              <!-- Legend top-left -->
+              <!-- Share button top-right -->
+              <div class="absolute top-2 right-2 flex gap-1 pointer-events-none">
+                @if (epicResult()) {
+                  <button type="button" (click)="openShareDialog()"
+                    [title]="'transforms.shareLink' | transloco"
+                    class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+
+              <!-- Settings panel overlay -->
+              @if (showEpicSettings() && epicResult()) {
+                <div class="absolute top-11 left-2 z-20 w-72 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow flex flex-col gap-3 text-[11px] font-mono max-h-[calc(100%-3.5rem)] overflow-y-auto">
+
+                  <!-- Animation controls -->
+                  <section class="flex flex-col gap-2">
+                    <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.animate' | transloco }}</h4>
+                    <div class="flex flex-wrap gap-1.5">
+                      @if (epicIsAnimating()) {
+                        <button type="button" (click)="epicToggleAnimation()"
+                          class="px-3 py-1.5 rounded text-xs font-mono bg-indigo-100 dark:bg-indigo-950/40 border border-indigo-400 text-indigo-700 dark:text-indigo-300 cursor-pointer transition-colors">
+                          {{ 'transforms.dft.epicycles.pause' | transloco }}
+                        </button>
+                      } @else {
+                        <button type="button" (click)="epicToggleAnimation()"
+                          class="px-3 py-1.5 rounded text-xs font-mono bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors">
+                          {{ 'transforms.dft.epicycles.animate' | transloco }}
+                        </button>
+                      }
+                      <button type="button" (click)="epicResetAnimation()"
+                        class="px-3 py-1.5 rounded text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer">
+                        {{ 'transforms.dft.epicycles.reset' | transloco }}
+                      </button>
+                    </div>
+                  </section>
+
+                  <div class="border-t border-border dark:border-dark-border"></div>
+
+                  <!-- Top-K -->
+                  <section class="flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                      <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                        {{ 'transforms.dft.epicycles.topK' | transloco: { k: epicTopK(), max: epicMaxTopK() } }}
+                      </h4>
+                      <span class="text-accent">{{ epicCoverage().toFixed(1) }}%</span>
+                    </div>
+                    <input type="range" min="1" [max]="epicMaxTopK()"
+                      [value]="epicTopK()" (input)="epicTopK.set(+$any($event.target).value)"
+                      class="w-full accent-accent cursor-pointer"/>
+                    <div class="flex gap-1.5">
+                      <button type="button" (click)="epicCoeffOrder.set('amplitude')"
+                        [class]="epicCoeffOrder() === 'amplitude'
+                          ? 'flex-1 py-1 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent cursor-pointer'
+                          : 'flex-1 py-1 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                        {{ 'transforms.dft.epicycles.orderAmp' | transloco }}
+                      </button>
+                      <button type="button" (click)="epicCoeffOrder.set('frequency')"
+                        [class]="epicCoeffOrder() === 'frequency'
+                          ? 'flex-1 py-1 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent cursor-pointer'
+                          : 'flex-1 py-1 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'">
+                        {{ 'transforms.dft.epicycles.orderFreq' | transloco }}
+                      </button>
+                    </div>
+                  </section>
+
+                  <div class="border-t border-border dark:border-dark-border"></div>
+
+                  <!-- Speed -->
+                  <section class="flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                      <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.speed' | transloco }}</h4>
+                      <span class="text-ink dark:text-dark-ink">{{ epicSpeed().toFixed(3) }}</span>
+                    </div>
+                    <input type="range" min="0.005" max="0.14" step="0.001"
+                      [value]="epicSpeed()" (input)="epicSpeed.set(+$any($event.target).value)"
+                      class="w-full accent-accent cursor-pointer"/>
+                  </section>
+
+                  <div class="border-t border-border dark:border-dark-border"></div>
+
+                  <!-- Layers -->
+                  <section class="flex flex-col gap-2">
+                    <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.layersShow' | transloco }}</h4>
+                    <div class="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                      <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink">
+                        <input type="checkbox" [checked]="epicShowOriginal()" (change)="epicShowOriginal.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                        {{ 'transforms.dft.epicycles.layerOriginal' | transloco }}
+                      </label>
+                      <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink">
+                        <input type="checkbox" [checked]="epicShowApprox()" (change)="epicShowApprox.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                        {{ 'transforms.dft.epicycles.layerApprox' | transloco }}
+                      </label>
+                      <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink">
+                        <input type="checkbox" [checked]="epicShowTrace()" (change)="epicShowTrace.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                        {{ 'transforms.dft.epicycles.layerTrace' | transloco }}
+                      </label>
+                      <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink">
+                        <input type="checkbox" [checked]="epicShowSampled()" (change)="epicShowSampled.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                        {{ 'transforms.dft.epicycles.layerSampled' | transloco }}
+                      </label>
+                      <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink">
+                        <input type="checkbox" [checked]="epicShowChains()" (change)="epicShowChains.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                        {{ 'transforms.dft.epicycles.layerChains' | transloco }}
+                      </label>
+                    </div>
+                  </section>
+
+                  <div class="border-t border-border dark:border-dark-border"></div>
+
+                  <!-- Normalization -->
+                  <section class="flex flex-col gap-1.5">
+                    <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.autoNorm' | transloco }}</h4>
+                    <label class="flex items-center gap-2 cursor-pointer text-ink dark:text-dark-ink">
+                      <input type="checkbox" [checked]="epicAutoNormalize()" (change)="epicAutoNormalize.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                      {{ 'transforms.dft.epicycles.autoNorm' | transloco }}
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-ink dark:text-dark-ink"
+                      [class.opacity-40]="!epicAutoNormalize()">
+                      <input type="checkbox" [checked]="epicCenterScale()" (change)="epicCenterScale.set($any($event.target).checked)"
+                        [disabled]="!epicAutoNormalize()" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                      {{ 'transforms.dft.epicycles.center' | transloco }}
+                    </label>
+                    @if (epicNormInfo(); as info) {
+                      <p class="text-[10px] text-accent">
+                        {{ 'transforms.dft.epicycles.normApplied' | transloco: { scale: info.scale.toExponential(3) } }}
+                      </p>
+                    }
+                  </section>
+
+                </div>
+              }
+
+              <!-- Legend top-right (only after compute, pushed down if share button present) -->
               @if (epicResult()) {
-                <div class="absolute top-2 left-2 flex flex-col gap-1 text-[10px] font-mono pointer-events-none
+                <div class="absolute bottom-2 left-2 flex flex-col gap-1 text-[10px] font-mono pointer-events-none
                   px-2 py-1.5 rounded border border-border/40 dark:border-dark-border/40
                   bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                   <span class="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
@@ -638,6 +626,44 @@
               }
             </div>
           </section>
+
+          <!-- Coefficients inspector (below canvas, like function/manual mode) -->
+          @if (epicResult()) {
+            <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
+              <div class="px-4 py-2.5 border-b border-border dark:border-dark-border flex items-center gap-2">
+                <span class="text-xs font-mono font-semibold text-ink dark:text-dark-ink">{{ 'transforms.dft.epicycles.coeffsTitle' | transloco }}</span>
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted ml-1">{{ 'transforms.dft.epicycles.coeffsHint' | transloco }}</span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-[11px] font-mono">
+                  <thead>
+                    <tr class="border-b border-border dark:border-dark-border text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                      <th class="px-3 py-2 text-left">k</th>
+                      <th class="px-3 py-2 text-left">|C|</th>
+                      <th class="px-3 py-2 text-left">%</th>
+                      <th class="px-3 py-2 text-left">∠/π</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (c of epicVisibleCoeffs(); track $index; let i = $index) {
+                      <tr (click)="epicToggleSelectedK(c.k)"
+                        class="border-b border-border/50 dark:border-dark-border/50 cursor-pointer transition-colors"
+                        [class]="epicSelectedK() === c.k
+                          ? 'bg-accent/10 dark:bg-accent/15'
+                          : i < epicTopK()
+                            ? 'bg-accent/5 hover:bg-accent/10'
+                            : 'hover:bg-paper dark:hover:bg-dark-bg'">
+                        <td class="px-3 py-1.5 font-semibold text-accent">{{ c.kSigned }}</td>
+                        <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ c.amplitudeSafe.toFixed(5) }}</td>
+                        <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.amplitudePercentSafe.toFixed(1) }}%</td>
+                        <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.phaseInPiSafe }}π</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
         }
 
         <!-- ── Signal chart — always visible (preview before compute, result after) ── -->
@@ -1018,6 +1044,61 @@
   <div class="lg:hidden">
     <app-mobile-math-keyboard [extraGroup]="mobileExtraGroup" />
   </div>
+
+  <!-- ── Draw dialog ────────────────────────────────────────────────────────── -->
+  @if (epicDrawDialogOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      role="dialog" aria-modal="true"
+      (click)="epicCloseDrawDialog()"
+      (keydown.escape)="epicCloseDrawDialog()">
+      <div class="bg-paper dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl shadow-2xl w-full max-w-lg flex flex-col gap-0 overflow-hidden"
+        (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border">
+          <span class="text-sm font-semibold font-body text-ink dark:text-dark-ink">
+            ✎ {{ 'transforms.dft.epicycles.drawBtn' | transloco }}
+          </span>
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] font-mono text-muted dark:text-dark-muted">
+              {{ 'transforms.dft.epicycles.drawPoints' | transloco: { count: epicDrawPoints().length } }}
+            </span>
+            <button type="button" (click)="epicCloseDrawDialog()"
+              class="w-7 h-7 flex items-center justify-center rounded text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 hover:text-ink dark:hover:text-dark-ink transition-colors text-lg leading-none cursor-pointer">
+              ×
+            </button>
+          </div>
+        </div>
+        <!-- Canvas -->
+        <canvas #drawCanvas
+          width="560" height="420"
+          class="block w-full touch-none bg-gray-50 dark:bg-gray-900 cursor-crosshair"
+          style="aspect-ratio: 4/3;"
+          (mousedown)="epicDialogMouseDown($event, drawCanvas)"
+          (mousemove)="epicDialogMouseMove($event, drawCanvas)"
+          (mouseup)="epicDialogMouseUp()"
+          (mouseleave)="epicDialogMouseUp()"
+          (touchstart)="epicDialogTouchStart($event, drawCanvas)"
+          (touchmove)="epicDialogTouchMove($event, drawCanvas)"
+          (touchend)="epicDialogTouchEnd()">
+        </canvas>
+        <!-- Footer -->
+        <div class="flex items-center gap-2 px-4 py-3 border-t border-border dark:border-dark-border">
+          <p class="text-[11px] font-mono text-muted dark:text-dark-muted flex-1">
+            {{ 'transforms.dft.epicycles.drawHint' | transloco }}
+          </p>
+          <button type="button" (click)="epicClearDrawCanvas(drawCanvas)"
+            class="px-3 py-1.5 rounded text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer">
+            {{ 'transforms.dft.epicycles.drawClear' | transloco }}
+          </button>
+          <button type="button" (click)="epicConfirmDraw()"
+            [disabled]="epicDrawPoints().length < 3"
+            class="px-4 py-1.5 rounded text-xs font-mono bg-accent text-white hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer">
+            {{ 'transforms.dft.epicycles.drawConfirm' | transloco }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- ── Share dialog ───────────────────────────────────────────────────────── -->
   @if (showShareDialog()) {

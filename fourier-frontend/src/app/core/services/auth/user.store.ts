@@ -26,6 +26,11 @@ export class UserStore {
   readonly isAdmin = computed(() => this._user()?.role === 'admin');
   readonly isPremium = computed(() => this._user()?.tier === 'premium');
   readonly isEmailVerified = computed(() => this._user()?.emailVerified ?? false);
+  readonly isQuotaExceeded = computed(() => {
+    const q = this._quota();
+    if (!q) return false;
+    return q.remaining !== null && q.remaining <= 0;
+  });
   readonly displayName = computed(() => {
     const u = this._user();
     return u ? `${u.firstName} ${u.lastName}` : null;
