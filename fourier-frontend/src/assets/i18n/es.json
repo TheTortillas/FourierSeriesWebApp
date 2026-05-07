@@ -92,6 +92,7 @@
       "fourierTransform": "Transformada",
       "inverseFourierTransform": "T. Inversa",
       "dftSignal": "DFT señal",
+      "dftFunction": "DFT función",
       "dftEpicycles": "DFT epiciclos"
     },
     "label": "Configura la función y presiona"
@@ -380,6 +381,7 @@
       "fourierTransform": "Transformada",
       "inverseFourierTransform": "T. Inversa",
       "dftSignal": "DFT señal",
+      "dftFunction": "DFT función",
       "dftEpicycles": "DFT epiciclos"
     }
   },

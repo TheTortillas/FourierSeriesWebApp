@@ -92,6 +92,7 @@
       "fourierTransform": "Transform",
       "inverseFourierTransform": "Inv. Transform",
       "dftSignal": "DFT signal",
+      "dftFunction": "DFT function",
       "dftEpicycles": "DFT epicycles"
     },
     "label": "Set up the function and press"
@@ -380,6 +381,7 @@
       "fourierTransform": "Transform",
       "inverseFourierTransform": "Inv. Transform",
       "dftSignal": "DFT signal",
+      "dftFunction": "DFT function",
       "dftEpicycles": "DFT epicycles"
     }
   },

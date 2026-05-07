@@ -401,7 +401,7 @@ transformsRouter.post(
           await incrementCalculationCount(req.user.id);
           await historyRepository.create({
             userId: req.user.id,
-            type: "dft_function",
+            type: "dft_signal",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.samplingTimeMs,
           });
@@ -409,7 +409,7 @@ transformsRouter.post(
           await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
           await historyRepository.create({
             ipAddress: req.ip ?? undefined,
-            type: "dft_function",
+            type: "dft_signal",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.samplingTimeMs,
           });
@@ -462,7 +462,7 @@ transformsRouter.post(
           await incrementCalculationCount(req.user.id);
           await historyRepository.create({
             userId: req.user.id,
-            type: "dft_function",
+            type: "dft_signal",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,
           });
@@ -470,7 +470,7 @@ transformsRouter.post(
           await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
           await historyRepository.create({
             ipAddress: req.ip ?? undefined,
-            type: "dft_function",
+            type: "dft_signal",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,
           });

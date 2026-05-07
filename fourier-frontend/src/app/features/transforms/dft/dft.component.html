@@ -666,6 +666,27 @@
           }
         }
 
+        <!-- ── Favorite name dialog (all modes) ───────────────────────────── -->
+        @if (showFavoriteDialog()) {
+          <div class="border border-amber-300 dark:border-amber-700 rounded-xl p-3 bg-amber-50/60 dark:bg-amber-950/20 flex items-center gap-2 flex-wrap text-xs font-mono">
+            <span class="text-amber-700 dark:text-amber-400 shrink-0">{{ 'history.favorite.nameLabel' | transloco }}</span>
+            <input type="text" [(ngModel)]="favoriteName"
+              [placeholder]="'history.favorite.namePlaceholder' | transloco"
+              (keydown.enter)="confirmFavorite()"
+              (keydown.escape)="cancelFavoriteDialog()"
+              autofocus
+              class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 text-ink dark:text-dark-ink outline-none focus:border-amber-500"/>
+            <button type="button" (click)="confirmFavorite()"
+              class="px-3 py-1 rounded bg-amber-400 hover:bg-amber-500 text-white transition-colors cursor-pointer">
+              {{ 'common.save' | transloco }}
+            </button>
+            <button type="button" (click)="cancelFavoriteDialog()"
+              class="px-3 py-1 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer">
+              {{ 'common.cancel' | transloco }}
+            </button>
+          </div>
+        }
+
         <!-- ── Signal chart — always visible (preview before compute, result after) ── -->
         @if (inputMode() !== 'epicycles') {
           <section class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
@@ -839,27 +860,6 @@
                   <span class="font-semibold text-ink dark:text-dark-ink">{{ s.samplingTimeMs }} ms</span>
                 </div>
               }
-            </div>
-          }
-
-          <!-- ── Favorite name dialog ──────────────────────────────────────── -->
-          @if (showFavoriteDialog()) {
-            <div class="border border-amber-300 dark:border-amber-700 rounded-xl p-3 bg-amber-50/60 dark:bg-amber-950/20 flex items-center gap-2 flex-wrap text-xs font-mono">
-              <span class="text-amber-700 dark:text-amber-400 shrink-0">{{ 'history.favorite.nameLabel' | transloco }}</span>
-              <input type="text" [(ngModel)]="favoriteName"
-                [placeholder]="'history.favorite.namePlaceholder' | transloco"
-                (keydown.enter)="confirmFavorite()"
-                (keydown.escape)="cancelFavoriteDialog()"
-                autofocus
-                class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 text-ink dark:text-dark-ink outline-none focus:border-amber-500"/>
-              <button type="button" (click)="confirmFavorite()"
-                class="px-3 py-1 rounded bg-amber-400 hover:bg-amber-500 text-white transition-colors cursor-pointer">
-                {{ 'common.save' | transloco }}
-              </button>
-              <button type="button" (click)="cancelFavoriteDialog()"
-                class="px-3 py-1 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer">
-                {{ 'common.cancel' | transloco }}
-              </button>
             </div>
           }
 

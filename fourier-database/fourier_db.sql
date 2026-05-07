@@ -44,6 +44,7 @@ CREATE TYPE calculation_type AS ENUM (
     'fourier_transform',
     'inverse_fourier_transform',
     'dft_signal',
+    'dft_function',
     'dft_epicycles'
 );
 

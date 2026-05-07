@@ -329,6 +329,9 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly epicCenterScale    = signal(true);
   readonly epicNormInfo       = signal<{ applied: boolean; centered: boolean; centerX: number; centerY: number; scale: number } | null>(null);
 
+  /** Exact points restored from history — bypass textarea parsing to preserve float precision for deduplication. Cleared after first use. */
+  private _epicRestoredPoints: DftPoint[] | null = null;
+
   readonly epicTrace          = signal<DftPoint[]>([]);
 
   readonly showEpicSettings   = signal(false);
@@ -619,7 +622,10 @@ export class DftComponent implements OnInit, OnDestroy {
     this.seo.setPage('seo.dft.title', 'seo.dft.description');
     const encoded = this.route.snapshot.queryParamMap.get('s');
     if (encoded && this._restoreState(encoded)) {
-      this.compute();
+      if (this.inputMode() !== 'epicycles') {
+        this.compute();
+      }
+      // Epicycles: state is pre-populated — user triggers compute manually to avoid re-saving to history
     }
   }
 
@@ -918,8 +924,11 @@ export class DftComponent implements OnInit, OnDestroy {
         mode?: string; alg?: string; v?: string; N?: number; dN?: number;
         seg?: Array<{ e: string; et: string; f: string; ft: string; t: string; tt: string }>;
         mr?: string; mN?: number;
+        pts?: string; // epicycles raw textarea content
       };
-      if (s.mode === 'function' || s.mode === 'manual') this.inputMode.set(s.mode);
+      if (s.mode === 'function' || s.mode === 'manual' || s.mode === 'epicycles') {
+        this.inputMode.set(s.mode as DftInputMode);
+      }
       if (s.alg === 'fft' || s.alg === 'dft') this.algorithm.set(s.alg);
       if (s.v && INT_VARS.includes(s.v)) this.intVar.set(s.v);
       if (s.N && N_OPTIONS.includes(s.N)) this.N.set(s.N);
@@ -934,6 +943,15 @@ export class DftComponent implements OnInit, OnDestroy {
       }
       if (s.mr !== undefined) this.manualRaw.set(s.mr);
       if (s.mN !== undefined) this.manualN.set(s.mN);
+      if (s.pts !== undefined) {
+        this.epicRawPoints.set(s.pts);
+        // Parse exact floats now and stash them so epicCalculate bypasses the
+        // lossy textarea round-trip, preserving the original SHA-256 hash.
+        try {
+          this._epicRestoredPoints = this._epicParsePoints(s.pts);
+        } catch { this._epicRestoredPoints = null; }
+        this.epicAutoNormalize.set(false);
+      }
       return true;
     } catch { return false; }
   }
@@ -968,17 +986,12 @@ export class DftComponent implements OnInit, OnDestroy {
   // ── Favorites ─────────────────────────────────────────────────────────────
 
   openFavoriteDialog(): void {
-    const entry = this.latestHistoryEntry();
-    if (entry) {
-      this.doToggle(entry);
-    } else {
-      this.favoriteLoading.set(true);
-      this.fetchLatestEntry(() => {
-        this.favoriteLoading.set(false);
-        const loaded = this.latestHistoryEntry();
-        if (loaded) this.doToggle(loaded);
-      });
-    }
+    this.favoriteLoading.set(true);
+    this.fetchLatestEntry(() => {
+      this.favoriteLoading.set(false);
+      const loaded = this.latestHistoryEntry();
+      if (loaded) this.doToggle(loaded);
+    });
   }
 
   confirmFavorite(): void {
@@ -1077,7 +1090,10 @@ export class DftComponent implements OnInit, OnDestroy {
 
     let parsed: DftPoint[];
     try {
-      parsed = this._epicParsePoints(this.epicRawPoints());
+      // Use stashed exact points when restoring from history to preserve float
+      // precision and match the original SHA-256 deduplication hash.
+      parsed = this._epicRestoredPoints ?? this._epicParsePoints(this.epicRawPoints());
+      this._epicRestoredPoints = null;
     } catch (err) {
       this.epicError.set(err instanceof Error ? err.message : 'Invalid input.');
       return;
@@ -1097,6 +1113,7 @@ export class DftComponent implements OnInit, OnDestroy {
       this.epicTrace.set([]);
       this.epicSelectedK.set(null);
       this.userStore.refreshQuota();
+      if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
     } catch (err) {
       const e = err as { error?: { error?: string }; message?: string };
       this.epicError.set(e?.error?.error ?? e?.message ?? 'Could not compute DFT.');
@@ -1253,7 +1270,7 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   private _epicFormatPoints(pts: DftPoint[]): string {
-    return pts.map((p) => `${p.x.toFixed(6)}, ${p.y.toFixed(6)}`).join('\n');
+    return pts.map((p) => `${p.x}, ${p.y}`).join('\n');
   }
 
   private _epicEvalPoint(coeffs: EpicRenderCoeff[], time: number): DftPoint {

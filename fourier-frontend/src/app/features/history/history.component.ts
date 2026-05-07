@@ -15,7 +15,6 @@ const TYPE_KEY: Record<string, string> = {
   fourier_transform: 'history.types.fourierTransform',
   inverse_fourier_transform: 'history.types.inverseFourierTransform',
   dft_signal: 'history.types.dftSignal',
-  dft_function: 'history.types.dftFunction',
   dft_epicycles: 'history.types.dftEpicycles',
 };
 
@@ -52,6 +51,20 @@ export class HistoryComponent implements OnInit {
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
 
   readonly typeKey = (t: string) => TYPE_KEY[t] ?? t;
+
+  entryTypeKey(entry: HistoryEntry): string {
+    if (entry.type === 'dft_signal' && Array.isArray(entry.input?.['segments'])) {
+      return 'history.types.dftFunction';
+    }
+    return TYPE_KEY[entry.type] ?? entry.type;
+  }
+
+  entryBadgeClass(entry: HistoryEntry): string {
+    if (entry.type === 'dft_signal' && Array.isArray(entry.input?.['segments'])) {
+      return 'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800';
+    }
+    return this.typeBadgeClass(entry.type);
+  }
 
   ngOnInit(): void {
     this.load();
@@ -138,9 +151,11 @@ export class HistoryComponent implements OnInit {
     const lang = this.transloco.getActiveLang();
 
     if (entry.type === 'dft_signal' || entry.type === 'dft_epicycles') {
-      this.router.navigate(['/' + lang + '/transforms/dft'], {
-        state: { restoreInput: { ...inp, type: entry.type } },
-      });
+      // Build the same encoded state the DFT component uses for its URL param
+      const encoded = this._encodeDftState(entry);
+      if (encoded) {
+        this.router.navigate(['/' + lang + '/transforms/dft'], { queryParams: { s: encoded } });
+      }
       return;
     }
 
@@ -154,6 +169,41 @@ export class HistoryComponent implements OnInit {
     } else {
       this.router.navigate(['/' + lang + '/calculator'], { state: { restoreInput: inp } });
     }
+  }
+
+  private _encodeDftState(entry: HistoryEntry): string {
+    const inp = entry.input;
+    try {
+      let state: Record<string, unknown>;
+      if (entry.type === 'dft_epicycles') {
+        // Points with mode=epicycles — use full precision to preserve SHA-256 dedup hash
+        const pts = inp['points'] as Array<{ x: number; y: number }> | undefined;
+        state = {
+          mode: 'epicycles',
+          pts: pts?.map((p) => `${p.x}, ${p.y}`).join('\n') ?? '',
+        };
+      } else if (Array.isArray(inp['segments'])) {
+        // dft_signal saved from function mode — has segments
+        state = {
+          mode: 'function',
+          alg: 'fft',
+          v: (inp['intVar'] as string | undefined) ?? 'x',
+          N: (inp['N'] as number | undefined) ?? 128,
+          seg: (inp['segments'] as Array<{ expression: string; from: string; to: string }>)
+            .map((s) => ({ e: s.expression, et: s.expression, f: s.from, ft: s.from, t: s.to, tt: s.to })),
+        };
+      } else {
+        // dft_signal with points — manual/discrete mode
+        const pts = inp['points'] as Array<{ x: number; y: number }> | undefined;
+        state = {
+          mode: 'manual',
+          mr: pts?.map((p) => p.y.toFixed(4)).join(', ') ?? '',
+          mN: pts?.length ?? 8,
+        };
+      }
+      const json = JSON.stringify(state);
+      return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16))));
+    } catch { return ''; }
   }
 
   // ── Expand input ─────────────────────────────────────────────────────────
@@ -251,9 +301,9 @@ export class HistoryComponent implements OnInit {
 
   hasSegments(entry: HistoryEntry): boolean {
     if (entry.type === 'dft_signal' || entry.type === 'dft_epicycles') {
-      return Array.isArray(entry.input?.['points']) || !!entry.input?.['segments'];
+      return Array.isArray(entry.input?.['points']) || Array.isArray(entry.input?.['segments']);
     }
-    return !!entry.input?.['segments'];
+    return Array.isArray(entry.input?.['segments']);
   }
 
   formatDate(iso: string): string {
