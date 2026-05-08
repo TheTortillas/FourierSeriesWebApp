@@ -322,6 +322,14 @@ export class ApiService {
     return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
   }
 
+  getFeedbackStats(): Observable<import('../../../domain').FeedbackStats> {
+    return this.http.get<import('../../../domain').FeedbackStats>(`${this.base}/admin/feedback/stats`);
+  }
+
+  getSurveyStats(): Observable<import('../../../domain').SurveyStats> {
+    return this.http.get<import('../../../domain').SurveyStats>(`${this.base}/admin/survey/stats`);
+  }
+
   // ─── Feedback ────────────────────────────────────────────────────────────
 
   submitFeedback(body: import('../../../domain').FeedbackRequest): Observable<{ message: string }> {
