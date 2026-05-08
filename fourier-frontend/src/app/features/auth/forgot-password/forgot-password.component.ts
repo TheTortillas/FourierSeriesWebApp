@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../core/services/api/api.service';
+import { SeoService } from '../../../core/services/seo/seo.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 
 @Component({
@@ -15,6 +16,9 @@ export class ForgotPasswordComponent {
   private readonly api      = inject(ApiService);
   private readonly fb       = inject(FormBuilder);
   private readonly transloco = inject(TranslocoService);
+  private readonly seo      = inject(SeoService);
+
+  constructor() { this.seo.setNoIndex(); }
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],

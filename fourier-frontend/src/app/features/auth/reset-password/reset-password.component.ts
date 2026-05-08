@@ -10,6 +10,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../core/services/api/api.service';
+import { SeoService } from '../../../core/services/seo/seo.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 
 function passwordsMatch(ctrl: AbstractControl): ValidationErrors | null {
@@ -28,6 +29,7 @@ export class ResetPasswordComponent implements OnInit {
   private readonly fb     = inject(FormBuilder);
   private readonly route  = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly seo    = inject(SeoService);
 
   private token = '';
 
@@ -49,6 +51,7 @@ export class ResetPasswordComponent implements OnInit {
   get mismatch()        { return this.form.hasError('passwordsMismatch') && this.confirmPassword.touched; }
 
   ngOnInit(): void {
+    this.seo.setNoIndex();
     const token = this.route.snapshot.queryParamMap.get('token');
     if (!token) {
       this.router.navigate(['/auth/forgot-password']);

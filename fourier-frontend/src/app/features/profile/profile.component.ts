@@ -7,6 +7,7 @@ import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../core/services/api/api.service';
 import { UserStore } from '../../core/services/auth/user.store';
 import { AuthService } from '../../core/services/auth/auth.service';
+import { SeoService } from '../../core/services/seo/seo.service';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 
@@ -25,12 +26,13 @@ export class ProfileComponent {
   readonly store    = inject(UserStore);
   private readonly api      = inject(ApiService);
   private readonly auth     = inject(AuthService);
+  private readonly seo      = inject(SeoService);
   private readonly fb       = inject(FormBuilder);
   private readonly transloco = inject(TranslocoService);
 
   constructor() {
-    // Ensure createdAt / lastLoginAt are fresh from the server
     this.auth.refreshUser();
+    this.seo.setNoIndex();
   }
 
   readonly lang = toSignal(this.transloco.langChanges$, {
