@@ -40,6 +40,16 @@ export const adminRoutes: Routes = [
         loadComponent: () =>
           import('./system/system-stats.component').then((m) => m.SystemStatsComponent),
       },
+      {
+        path: 'feedback',
+        loadComponent: () =>
+          import('./feedback-stats/feedback-stats.component').then((m) => m.FeedbackStatsComponent),
+      },
+      {
+        path: 'survey',
+        loadComponent: () =>
+          import('./survey-stats/survey-stats.component').then((m) => m.SurveyStatsComponent),
+      },
     ],
   },
 ];

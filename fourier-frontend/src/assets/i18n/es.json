@@ -45,6 +45,7 @@
     "paletteCoffee": "Coffee",
     "tagline": "Por Sebastián Morales Palacios",
     "footerText": "Herramienta de análisis matemático",
+    "more": "Más opciones",
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
@@ -532,5 +533,173 @@
     "title": "Dev Sandbox",
     "description": "Entorno de desarrollo para probar endpoints y componentes.",
     "selectPanel": "Selecciona un panel"
+  },
+  "survey": {
+    "nav": "Encuesta",
+    "title": "Encuesta de uso",
+    "subtitle": "Antes que nada, gracias por probar la aplicación. Todos los datos son con fines estadísticos.",
+    "step": "Paso {{ current }} de {{ total }}",
+    "back": "← Atrás",
+    "next": "Siguiente →",
+    "submit": "Enviar encuesta",
+    "submitting": "Enviando…",
+    "successTitle": "¡Muchas gracias!",
+    "successMessage": "Tu respuesta fue registrada. Nos ayuda mucho a entender quién usa la herramienta y cómo mejorarla.",
+    "goHome": "Volver al inicio",
+    "otherPlaceholder": "Especifica…",
+    "ratingHint15": "1 = Nada / 5 = Completamente",
+    "prompt": {
+      "title": "¿Tienes 3 minutos?",
+      "subtitle": "Responde una breve encuesta y ayúdanos a mejorar la aplicación.",
+      "start": "Responder ahora",
+      "later": "Quizás después"
+    },
+    "s1": {
+      "question": "¿Cuál de las siguientes opciones describe mejor tu situación actual?",
+      "roles": {
+        "student": "Estudiante",
+        "teacher": "Docente",
+        "graduate": "Egresado",
+        "other": "Otro"
+      }
+    },
+    "s2": {
+      "level": "Nivel académico",
+      "levels": {
+        "licenciatura": "Licenciatura / Ingeniería",
+        "maestria": "Maestría",
+        "doctorado": "Doctorado",
+        "other": "Otro"
+      },
+      "institutionPlaceholder": "Ej. ESCOM, ESIME Zacatenco, FES Acatlán…",
+      "careerPlaceholder": "Ej. Ing. en Sistemas Computacionales, Lic. en Física y Matemáticas…",
+      "country": "¿En qué país te encuentras?",
+      "countryPlaceholder": "Ej. México, Colombia, España…",
+      "student": {
+        "heading": "Cuéntanos sobre tus estudios",
+        "institution": "Institución en la que estudias",
+        "career": "Carrera que cursas"
+      },
+      "teacher": {
+        "heading": "Cuéntanos sobre tu actividad docente",
+        "institution": "Institución en la que impartes clases"
+      },
+      "graduate": {
+        "heading": "Cuéntanos sobre tu formación",
+        "institution": "Institución de la que egresaste",
+        "career": "Carrera de la que egresaste"
+      },
+      "other": {
+        "heading": "Cuéntanos sobre tu contexto",
+        "institution": "Institución u organización (si aplica)"
+      }
+    },
+    "s3": {
+      "howFoundLabel": "¿Cómo llegaste a la aplicación?",
+      "howFound": {
+        "search": "Búsqueda en Google / internet",
+        "recommendation_peer": "Recomendación de un compañero o colega",
+        "recommendation_teacher": "Recomendación de un docente",
+        "social": "Redes sociales",
+        "other": "Otro"
+      },
+      "purposeLabel": "¿Con qué propósito usaste la aplicación?",
+      "purposes": {
+        "problem": "Resolver un problema específico",
+        "learning": "Aprender o repasar teoría",
+        "teaching": "Enseñar en clase",
+        "exploration": "Exploración o curiosidad",
+        "other": "Otro"
+      },
+      "featuresLabel": "¿Qué funcionalidades probaste? (puedes seleccionar varias)",
+      "groupSeries": "Series de Fourier",
+      "groupContinuous": "Transformada continua",
+      "groupDft": "Transformada Discreta (DFT)",
+      "features": {
+        "trigonometric": "Serie trigonométrica",
+        "half_range": "Serie de medio rango",
+        "complex": "Serie exponencial compleja",
+        "fourier_transform": "Transformada de Fourier continua",
+        "inverse_fourier_transform": "Transformada inversa de Fourier",
+        "dft_signal": "DFT — señal discreta (puntos manuales)",
+        "dft_function": "DFT — función continua muestreada",
+        "dft_epicycles": "DFT — epiciclos animados",
+        "none": "Ninguna aún"
+      },
+      "deviceLabel": "¿En qué dispositivo usaste la aplicación?",
+      "devices": {
+        "phone": "Teléfono celular",
+        "computer": "Computadora / Laptop"
+      }
+    },
+    "s4": {
+      "heading": "¿Conociste la versión anterior?",
+      "imgAlt": "Captura de la versión anterior de Fourier Web Calculator",
+      "usedPreviousLabel": "¿Habías usado esta herramienta antes de esta versión?",
+      "usedPreviousYes": "Sí, usé la versión anterior",
+      "usedPreviousNo": "No, es la primera vez que la uso",
+      "improvementsLabel": "¿Qué mejoras notaste? (opcional)",
+      "regressionsLabel": "¿Algo empeoró o extrañas algo de la versión anterior? (opcional)",
+      "regressionsPlaceholder": "Cuéntanos qué extrañas o qué era mejor antes…",
+      "improvements": {
+        "ui": "Mejor interfaz visual",
+        "features": "Más funcionalidades",
+        "speed": "Mayor velocidad o respuesta",
+        "results_clarity": "Resultados más claros o completos",
+        "other": "Otra mejora"
+      }
+    },
+    "s5": {
+      "usefulnessLabel": "¿La aplicación fue útil para resolver tu problema o entender el tema?",
+      "usefulnessHint": "1 = No me ayudó · 5 = Sí, completamente",
+      "easeLabel": "¿Qué tan fácil de usar e intuitiva te resultó?",
+      "easeHint": "1 = No logré usarla · 5 = Muy intuitiva",
+      "vsOtherLabel": "¿Cómo calificarías esta aplicación frente a otras herramientas que conoces?",
+      "vsOtherHint": "1 = Muy inferior · 5 = Igual o mejor",
+      "recommendLabel": "¿Qué tan probable es que la sigas usando o la recomiendes?",
+      "recommendHint": "1 = Nada probable · 5 = Seguro"
+    },
+    "s6": {
+      "optional": "Estas preguntas son opcionales. Cualquier detalle es de gran ayuda.",
+      "bugLabel": "Describe cualquier error, bug o caso que no haya funcionado como esperabas",
+      "bugPlaceholder": "Describe el problema con el mayor detalle posible…",
+      "commentsLabel": "Comentarios, sugerencias o recomendaciones",
+      "commentsPlaceholder": "Cualquier cosa que te haya gustado, disgustado o que consideres que podría mejorar…"
+    }
+  },
+  "feedback": {
+    "nav": "Feedback",
+    "modal": {
+      "title": "¿Cómo estuvo tu cálculo?",
+      "subtitle": "Tu opinión nos ayuda a mejorar",
+      "ratingLabel": "Calificación de 1 a 5 estrellas",
+      "placeholder": "Comentario opcional…",
+      "submit": "Enviar",
+      "submitting": "Enviando…",
+      "askLater": "Preguntar después",
+      "successTitle": "¡Gracias!",
+      "successMessage": "Tu retroalimentación fue recibida."
+    },
+    "page": {
+      "title": "Retroalimentación",
+      "subtitle": "Cuéntanos tu experiencia, reporta un error o sugiere una mejora.",
+      "category": "Tipo de mensaje",
+      "categories": {
+        "bug": "Reporte de error",
+        "suggestion": "Sugerencia",
+        "question": "Pregunta",
+        "other": "Otro"
+      },
+      "rating": "Calificación (opcional)",
+      "message": "Mensaje",
+      "messagePlaceholder": "Describe el error, sugerencia o comentario…",
+      "email": "Email de contacto (opcional)",
+      "emailPlaceholder": "Para poder responderte",
+      "submit": "Enviar retroalimentación",
+      "submitting": "Enviando…",
+      "successTitle": "¡Gracias por tu mensaje!",
+      "successMessage": "Revisaremos tu retroalimentación pronto.",
+      "newFeedback": "Enviar otro mensaje"
+    }
   }
 }

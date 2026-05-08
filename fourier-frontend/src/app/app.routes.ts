@@ -88,6 +88,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'feedback',
+        loadComponent: () =>
+          import('./features/feedback/feedback.component').then(
+            (m) => m.FeedbackComponent,
+          ),
+      },
+      {
+        path: 'survey',
+        loadComponent: () =>
+          import('./features/survey/survey.component').then(
+            (m) => m.SurveyComponent,
+          ),
+      },
+      {
         path: 'admin',
         canActivate: [authGuard, adminGuard],
         loadChildren: () =>

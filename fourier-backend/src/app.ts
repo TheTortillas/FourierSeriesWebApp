@@ -18,6 +18,7 @@ import {
   parseBurstLimiter,
   parseSustainedLimiter,
   authLimiter,
+  feedbackLimiter,
   trackRateLimitRequests,
 } from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
@@ -27,6 +28,8 @@ import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 import { historyRouter } from "./api/routes/history.routes";
 import { parseRouter } from "./api/routes/parse.routes";
 import { adminRouter } from "./api/routes/admin.routes";
+import { feedbackRouter } from "./api/routes/feedback.routes";
+import { surveyRouter } from "./api/routes/survey.routes";
 import { config } from "./config/env";
 import { logger } from "./infrastructure/logging/logger";
 
@@ -119,6 +122,9 @@ export function createApp(): Application {
   app.use("/api/history", historyRouter);
 
   app.use("/api/admin", adminRouter);
+
+  app.use("/api/feedback", feedbackLimiter, feedbackRouter);
+  app.use("/api/survey", feedbackLimiter, surveyRouter);
 
   app.use(errorHandler);
 

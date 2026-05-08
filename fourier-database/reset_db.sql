@@ -4,8 +4,12 @@
 -- ============================================================
 TRUNCATE TABLE
   audit_log,
+  feedback,
+  survey_responses,
   user_calculation_counters,
-  calculation_history,
+  anonymous_calculation_counters,
+  calculation_events,
+  calculations,
   user_recovery_emails,
   user_password_resets,
   user_email_tokens,

@@ -109,6 +109,27 @@ export interface CacheStats {
   version: string;
 }
 
+export interface FeedbackStats {
+  total:      number;
+  byCategory: { category: string; count: number }[];
+  byRating:   { rating: number;   count: number }[];
+  byDay:      { day: string;      count: number }[];
+}
+
+export interface SurveyStats {
+  total:        number;
+  byRole:       { role: string;        count: number }[];
+  topCountries: { country: string;     count: number }[];
+  byHowFound:   { how_found: string;   count: number }[];
+  byPurpose:    { purpose: string;     count: number }[];
+  byFeature:    { feature: string;     count: number }[];
+  byDevice:     { device: string;      count: number }[];
+  usedPrevious: { used_previous: boolean; count: number }[];
+  improvements: { improvement: string; count: number }[];
+  avgRatings:   { usefulness: number; ease: number; vs_other: number; recommend: number };
+  byDay:        { day: string;         count: number }[];
+}
+
 export const CALC_TYPE_LABEL: Record<string, string> = {
   trigonometric: 'Trigonométrica',
   half_range: 'Medio rango',
