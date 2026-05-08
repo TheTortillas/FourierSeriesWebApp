@@ -492,11 +492,37 @@ export class DftComponent implements OnInit, OnDestroy {
     }];
   });
 
+  // ── Phase unit (shared toggle for function/manual table) ─────────────────
+  readonly dftPhaseUnit = signal<'pi' | 'deg'>('deg');
+
+  dftTogglePhaseUnit(): void {
+    this.dftPhaseUnit.update((u) => u === 'deg' ? 'pi' : 'deg');
+  }
+
+  dftPhaseDisplay(phase: number): string {
+    if (this.dftPhaseUnit() === 'pi') {
+      const r = phase / Math.PI;
+      if (!Number.isFinite(r)) return '0π';
+      const table: [number, string][] = [[0,'0'],[1,'1'],[-1,'-1'],[0.5,'1/2'],[-0.5,'-1/2'],[1/3,'1/3'],[-1/3,'-1/3'],[2/3,'2/3'],[-2/3,'-2/3'],[1/4,'1/4'],[-1/4,'-1/4'],[3/4,'3/4'],[-3/4,'-3/4']];
+      for (const [t, l] of table) { if (Math.abs(r - t) < 1e-4) return `${l}π`; }
+      return `${Number(r.toFixed(4))}π`;
+    }
+    return `${this.phaseInDeg(phase)}°`;
+  }
+
   // ── Derived values ─────────────────────────────────────────────────────────
 
-  readonly topCoeffs = computed(() => {
+  /** All coefficients in natural k order — shown in the table with scroll. */
+  readonly allCoeffs = computed(() => {
     const res = this.result();
-    return res ? [...res.topCoefficients].slice(0, 10) : [];
+    return res ? res.coefficients : [];
+  });
+
+  /** Set of k values that are in topCoefficients — used for row highlighting. */
+  readonly topCoeffSet = computed(() => {
+    const res = this.result();
+    if (!res) return new Set<number>();
+    return new Set(res.topCoefficients.map((c) => c.k));
   });
 
   readonly stats = computed(() => {

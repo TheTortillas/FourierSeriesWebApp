@@ -1074,29 +1074,35 @@
                 </button>
               }
             </div>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto overflow-y-auto max-h-64">
               <table class="w-full text-xs font-mono">
-                <thead>
+                <thead class="sticky top-0 bg-paper2 dark:bg-dark-surface z-10">
                   <tr class="border-b border-border dark:border-dark-border text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
                     <th class="px-3 py-2 text-left">k</th>
                     <th class="px-3 py-2 text-left">|X[k]|</th>
                     <th class="px-3 py-2 text-left" title="{{ 'transforms.dft.colWeightTitle' | transloco }}">{{ 'transforms.dft.colWeight' | transloco }}</th>
                     <th class="px-3 py-2 text-left">Re</th>
                     <th class="px-3 py-2 text-left">Im</th>
-                    <th class="px-3 py-2 text-left">∠ (°)</th>
+                    <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                      (click)="dftTogglePhaseUnit()"
+                      [title]="'transforms.dft.epicycles.phaseToggleHint' | transloco">
+                      @if (dftPhaseUnit() === 'deg') { ∠ (°) } @else { ∠/π }
+                      <span class="ml-0.5 opacity-50 text-[8px]">⇄</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (c of topCoeffs(); track c.k) {
+                  @for (c of allCoeffs(); track c.k) {
                     <tr (click)="selectCoeff(c)"
                       class="border-b border-border/50 dark:border-dark-border/50 cursor-pointer transition-colors"
                       [class]="selectedCoeff()?.k === c.k
                         ? 'bg-accent/10 dark:bg-accent/15'
-                        : 'hover:bg-paper dark:hover:bg-dark-bg'">
+                        : topCoeffSet().has(c.k)
+                          ? 'bg-accent/5 hover:bg-accent/10'
+                          : 'hover:bg-paper dark:hover:bg-dark-bg'">
                       <td class="px-3 py-1.5 font-semibold" [style.color]="specColor()">{{ kDisplay(c) }}</td>
                       <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ c.amplitude | number:'1.5-5' }}</td>
                       <td class="px-3 py-1.5">
-                        <!-- Visual weight bar + value -->
                         <div class="flex items-center gap-1.5">
                           <div class="w-12 h-1.5 rounded-full bg-border dark:bg-dark-border overflow-hidden">
                             <div class="h-full rounded-full"
@@ -1108,7 +1114,7 @@
                       </td>
                       <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.re | number:'1.4-4' }}</td>
                       <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.im | number:'1.4-4' }}</td>
-                      <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ phaseInDeg(c.phase) }}°</td>
+                      <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ dftPhaseDisplay(c.phase) }}</td>
                     </tr>
                   }
                 </tbody>
