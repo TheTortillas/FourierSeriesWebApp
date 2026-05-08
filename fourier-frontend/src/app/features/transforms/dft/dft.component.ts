@@ -330,6 +330,8 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly epicCenterScale    = signal(true);
   readonly epicNormInfo       = signal<{ applied: boolean; centered: boolean; centerX: number; centerY: number; scale: number } | null>(null);
 
+  readonly epicPhaseUnit      = signal<'pi' | 'deg'>('pi');
+
   /** Exact points restored from history — bypass textarea parsing to preserve float precision for deduplication. Cleared after first use. */
   private _epicRestoredPoints: DftPoint[] | null = null;
 
@@ -699,6 +701,16 @@ export class DftComponent implements OnInit, OnDestroy {
     return (phase * 180 / Math.PI).toFixed(1);
   }
 
+  epicPhaseDisplay(c: EpicRenderCoeff): string {
+    return this.epicPhaseUnit() === 'deg'
+      ? `${this.phaseInDeg(c.phaseSafe)}°`
+      : `${c.phaseInPiSafe}π`;
+  }
+
+  epicTogglePhaseUnit(): void {
+    this.epicPhaseUnit.update((u) => u === 'pi' ? 'deg' : 'pi');
+  }
+
   setDftCustomN(raw: number): void {
     const n = Math.max(4, Math.min(4096, raw || 4));
     this.dftCustomN.set(n);
@@ -968,6 +980,8 @@ export class DftComponent implements OnInit, OnDestroy {
       state = {
         mode: 'epicycles',
         pts: pts.map((p) => `${p.x},${p.y}`).join('\n'),
+        aN: this.epicAutoNormalize(),
+        cS: this.epicCenterScale(),
       };
     } else {
       state = {
@@ -1023,7 +1037,7 @@ export class DftComponent implements OnInit, OnDestroy {
         mode?: string; alg?: string; v?: string; N?: number; dN?: number;
         seg?: Array<{ e: string; et: string; f: string; ft: string; t: string; tt: string }>;
         mr?: string; mN?: number;
-        pts?: string;
+        pts?: string; aN?: boolean; cS?: boolean;
       };
 
       if (s.mode === 'function' || s.mode === 'manual' || s.mode === 'epicycles') {
@@ -1048,7 +1062,8 @@ export class DftComponent implements OnInit, OnDestroy {
         try {
           this._epicRestoredPoints = this._epicParsePoints(s.pts);
         } catch { this._epicRestoredPoints = null; }
-        this.epicAutoNormalize.set(false);
+        this.epicAutoNormalize.set(s.aN ?? false);
+        if (s.cS !== undefined) this.epicCenterScale.set(s.cS);
       }
       return true;
     } catch { return false; }

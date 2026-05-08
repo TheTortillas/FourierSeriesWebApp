@@ -344,6 +344,23 @@
             <p class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.textareaHint' | transloco }}</p>
           </section>
 
+          <!-- Normalization options (shown before compute only) -->
+          @if (!epicResult()) {
+            <section class="flex flex-col gap-1.5 border border-border dark:border-dark-border rounded p-3 bg-paper2 dark:bg-dark-bg text-xs font-mono">
+              <p class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.autoNorm' | transloco }}</p>
+              <label class="flex items-center gap-2 cursor-pointer text-ink dark:text-dark-ink">
+                <input type="checkbox" [checked]="epicAutoNormalize()" (change)="epicAutoNormalize.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                {{ 'transforms.dft.epicycles.autoNorm' | transloco }}
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-ink dark:text-dark-ink"
+                [class.opacity-40]="!epicAutoNormalize()">
+                <input type="checkbox" [checked]="epicCenterScale()" (change)="epicCenterScale.set($any($event.target).checked)"
+                  [disabled]="!epicAutoNormalize()" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
+                {{ 'transforms.dft.epicycles.center' | transloco }}
+              </label>
+            </section>
+          }
+
           <!-- Compute / New calculation button (epicycles) -->
           @if (!epicResult()) {
             <button type="button" (click)="epicCalculate()"
@@ -609,27 +626,17 @@
 
                   <div class="border-t border-border dark:border-dark-border"></div>
 
-                  <!-- Normalization -->
-                  <section class="flex flex-col gap-1.5">
-                    <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.autoNorm' | transloco }}</h4>
-                    <label class="flex items-center gap-2 cursor-pointer text-ink dark:text-dark-ink">
-                      <input type="checkbox" [checked]="epicAutoNormalize()" (change)="epicAutoNormalize.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-                      {{ 'transforms.dft.epicycles.autoNorm' | transloco }}
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer text-ink dark:text-dark-ink"
-                      [class.opacity-40]="!epicAutoNormalize()">
-                      <input type="checkbox" [checked]="epicCenterScale()" (change)="epicCenterScale.set($any($event.target).checked)"
-                        [disabled]="!epicAutoNormalize()" class="accent-accent w-3.5 h-3.5 cursor-pointer"/>
-                      {{ 'transforms.dft.epicycles.center' | transloco }}
-                    </label>
-                    @if (epicNormInfo(); as info) {
+                  <!-- Normalization info (read-only after compute) -->
+                  @if (epicNormInfo(); as info) {
+                    <section class="flex flex-col gap-1">
+                      <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">{{ 'transforms.dft.epicycles.autoNorm' | transloco }}</h4>
                       <p class="text-[10px] text-accent">
                         {{ 'transforms.dft.epicycles.normApplied' | transloco: { scale: info.scale.toExponential(3) } }}
                       </p>
-                    }
-                  </section>
+                    </section>
 
-                  <div class="border-t border-border dark:border-dark-border"></div>
+                    <div class="border-t border-border dark:border-dark-border"></div>
+                  }
 
                   <!-- Colors -->
                   <section class="flex flex-col gap-2">
@@ -723,8 +730,13 @@
                     <tr class="border-b border-border dark:border-dark-border text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
                       <th class="px-3 py-2 text-left">k</th>
                       <th class="px-3 py-2 text-left">|C|</th>
-                      <th class="px-3 py-2 text-left">%</th>
-                      <th class="px-3 py-2 text-left">∠/π</th>
+                      <th class="px-3 py-2 text-left">peso</th>
+                      <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                        (click)="epicTogglePhaseUnit()"
+                        [title]="'transforms.dft.epicycles.phaseToggleHint' | transloco">
+                        @if (epicPhaseUnit() === 'pi') { ∠/π } @else { ∠(°) }
+                        <span class="ml-0.5 opacity-50 text-[8px]">⇄</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -738,8 +750,16 @@
                             : 'hover:bg-paper dark:hover:bg-dark-bg'">
                         <td class="px-3 py-1.5 font-semibold text-accent">{{ c.kSigned }}</td>
                         <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ c.amplitudeSafe.toFixed(5) }}</td>
-                        <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.amplitudePercentSafe.toFixed(1) }}%</td>
-                        <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.phaseInPiSafe }}π</td>
+                        <td class="px-3 py-1.5">
+                          <div class="flex items-center gap-1.5">
+                            <div class="w-14 h-1.5 rounded-full bg-border dark:bg-dark-border overflow-hidden">
+                              <div class="h-full rounded-full bg-accent/60"
+                                [style.width.%]="c.amplitudePercentSafe"></div>
+                            </div>
+                            <span class="text-ink dark:text-dark-ink">{{ c.amplitudePercentSafe.toFixed(1) }}%</span>
+                          </div>
+                        </td>
+                        <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ epicPhaseDisplay(c) }}</td>
                       </tr>
                     }
                   </tbody>

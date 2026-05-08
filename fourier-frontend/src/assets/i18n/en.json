@@ -329,6 +329,7 @@
         "layerChains": "Epicycle chains",
         "coeffsTitle": "Coefficient inspector",
         "coeffsHint": "Highlighted rows = active top-K. Click to isolate.",
+        "phaseToggleHint": "Click to toggle between radians/π and degrees",
         "drawModeActive": "Drawing mode active"
       }
     }

@@ -329,6 +329,7 @@
         "layerChains": "Cadenas de epiciclos",
         "coeffsTitle": "Inspector de coeficientes",
         "coeffsHint": "Filas resaltadas = top-K activos. Clic para aislar.",
+        "phaseToggleHint": "Clic para alternar entre radianes/π y grados",
         "drawModeActive": "Modo dibujo activo"
       }
     }
