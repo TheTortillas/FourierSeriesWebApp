@@ -5,7 +5,10 @@
   <section
     class="relative flex flex-col items-center justify-center text-center px-6 pt-20 pb-16 flex-1 min-h-[58vh]"
   >
-    <canvas #heroCanvas class="absolute inset-0 w-full h-full pointer-events-none select-none"></canvas>
+    <canvas
+      #heroCanvas
+      class="absolute inset-0 w-full h-full pointer-events-none select-none"
+    ></canvas>
 
     <div class="relative z-10 flex flex-col items-center gap-4 max-w-2xl">
       <h1
@@ -32,7 +35,6 @@
   <!-- ── Cards ─────────────────────────────────────────────────────────────── -->
   <section class="relative z-10 px-6 pb-16 max-w-3xl mx-auto w-full">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
       <!-- Series de Fourier -->
       <a
         [routerLink]="'/' + lang() + '/calculator'"
@@ -41,7 +43,10 @@
         <div
           class="w-12 h-12 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors"
         >
-          <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">Σ</span>
+          <span
+            class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors"
+            >Σ</span
+          >
         </div>
 
         <div class="flex flex-col gap-2 flex-1">
@@ -53,11 +58,20 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all">
+        <div
+          class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all"
+        >
           <span>{{ 'common.explore' | transloco }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"
-               class="w-4 h-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.25"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-4 h-4"
+          >
             <line x1="5" y1="12" x2="19" y2="12" />
             <polyline points="12 5 19 12 12 19" />
           </svg>
@@ -73,13 +87,16 @@
           <div
             class="w-12 h-12 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors"
           >
-            <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">ℱ</span>
+            <span
+              class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors"
+              >ℱ</span
+            >
           </div>
-          <span
+          <!-- <span
             class="text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-muted dark:text-dark-muted"
           >
             {{ 'home.transforms.badge' | transloco }}
-          </span>
+          </span> -->
         </div>
 
         <div class="flex flex-col gap-2 flex-1">
@@ -91,17 +108,25 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all">
+        <div
+          class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all"
+        >
           <span>{{ 'common.explore' | transloco }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"
-               class="w-4 h-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.25"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-4 h-4"
+          >
             <line x1="5" y1="12" x2="19" y2="12" />
             <polyline points="12 5 19 12 12 19" />
           </svg>
         </div>
       </a>
-
     </div>
   </section>
 
