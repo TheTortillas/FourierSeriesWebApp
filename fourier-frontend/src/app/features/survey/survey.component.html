@@ -2,9 +2,7 @@
 
 <main class="min-h-[calc(100vh-3rem)] flex items-start justify-center px-4 py-10">
   <div class="w-full max-w-lg">
-
     @if (!surveySvc.submitted()) {
-
       <!-- Header -->
       <div class="mb-6">
         <h1 class="font-display text-2xl text-ink dark:text-dark-ink">
@@ -22,11 +20,14 @@
             {{ 'survey.step' | transloco: { current: step(), total: totalSteps } }}
           </span>
           <span class="text-[11px] font-mono text-muted dark:text-dark-muted">
-            {{ progress() | number:'1.0-0' }}%
+            {{ progress() | number: '1.0-0' }}%
           </span>
         </div>
         <div class="h-1 w-full rounded-full bg-paper2 dark:bg-dark-surface overflow-hidden">
-          <div class="h-full bg-accent rounded-full transition-all duration-300" [style.width.%]="progress()"></div>
+          <div
+            class="h-full bg-accent rounded-full transition-all duration-300"
+            [style.width.%]="progress()"
+          ></div>
         </div>
       </div>
 
@@ -38,15 +39,28 @@
           </legend>
           @for (r of roles; track r) {
             <label class="flex items-center gap-3 cursor-pointer group">
-              <input type="radio" name="role" [value]="r" [(ngModel)]="role" class="accent-accent w-4 h-4 shrink-0" />
-              <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+              <input
+                type="radio"
+                name="role"
+                [value]="r"
+                [(ngModel)]="role"
+                class="accent-accent w-4 h-4 shrink-0"
+              />
+              <span
+                class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+              >
                 {{ 'survey.s1.roles.' + r | transloco }}
               </span>
             </label>
           }
           @if (role === 'other') {
-            <input type="text" [(ngModel)]="roleOther" [placeholder]="'survey.otherPlaceholder' | transloco" maxlength="100"
-              class="mt-1 w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50" />
+            <input
+              type="text"
+              [(ngModel)]="roleOther"
+              [placeholder]="'survey.otherPlaceholder' | transloco"
+              maxlength="100"
+              class="mt-1 w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
+            />
           }
         </fieldset>
       }
@@ -66,15 +80,28 @@
             <div class="flex flex-col gap-2">
               @for (lvl of levels; track lvl) {
                 <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="radio" name="level" [value]="lvl" [(ngModel)]="academicLevel" class="accent-accent w-4 h-4 shrink-0" />
-                  <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                  <input
+                    type="radio"
+                    name="level"
+                    [value]="lvl"
+                    [(ngModel)]="academicLevel"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
                     {{ 'survey.s2.levels.' + lvl | transloco }}
                   </span>
                 </label>
               }
               @if (academicLevel === 'other') {
-                <input type="text" [(ngModel)]="academicLevelOther" [placeholder]="'survey.otherPlaceholder' | transloco" maxlength="100"
-                  class="mt-1 w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50" />
+                <input
+                  type="text"
+                  [(ngModel)]="academicLevelOther"
+                  [placeholder]="'survey.otherPlaceholder' | transloco"
+                  maxlength="100"
+                  class="mt-1 w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
+                />
               }
             </div>
           </fieldset>
@@ -84,8 +111,13 @@
             <label class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5 block">
               {{ 'survey.s2.' + role + '.institution' | transloco }}
             </label>
-            <input type="text" [(ngModel)]="institution" [placeholder]="'survey.s2.institutionPlaceholder' | transloco" maxlength="200"
-              class="w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50" />
+            <input
+              type="text"
+              [(ngModel)]="institution"
+              [placeholder]="'survey.s2.institutionPlaceholder' | transloco"
+              maxlength="200"
+              class="w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
+            />
           </div>
 
           <!-- Career (student & graduate) -->
@@ -94,8 +126,13 @@
               <label class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5 block">
                 {{ 'survey.s2.' + role + '.career' | transloco }}
               </label>
-              <input type="text" [(ngModel)]="career" [placeholder]="'survey.s2.careerPlaceholder' | transloco" maxlength="200"
-                class="w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50" />
+              <input
+                type="text"
+                [(ngModel)]="career"
+                [placeholder]="'survey.s2.careerPlaceholder' | transloco"
+                maxlength="200"
+                class="w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
+              />
             </div>
           }
 
@@ -104,8 +141,13 @@
             <label class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5 block">
               {{ 'survey.s2.country' | transloco }} <span class="text-red-500">*</span>
             </label>
-            <input type="text" [(ngModel)]="country" [placeholder]="'survey.s2.countryPlaceholder' | transloco" maxlength="100"
-              class="w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50" />
+            <input
+              type="text"
+              [(ngModel)]="country"
+              [placeholder]="'survey.s2.countryPlaceholder' | transloco"
+              maxlength="100"
+              class="w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
+            />
           </div>
         </div>
       }
@@ -113,7 +155,6 @@
       <!-- ─── Step 3: Experience ─────────────────────────────────────────── -->
       @if (step() === 3) {
         <div class="flex flex-col gap-6">
-
           <!-- How found -->
           <fieldset>
             <legend class="text-xs font-mono text-muted dark:text-dark-muted mb-2">
@@ -122,15 +163,28 @@
             <div class="flex flex-col gap-2">
               @for (h of howFoundOptions; track h) {
                 <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="radio" name="howFound" [value]="h" [(ngModel)]="howFound" class="accent-accent w-4 h-4 shrink-0" />
-                  <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                  <input
+                    type="radio"
+                    name="howFound"
+                    [value]="h"
+                    [(ngModel)]="howFound"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
                     {{ 'survey.s3.howFound.' + h | transloco }}
                   </span>
                 </label>
               }
               @if (howFound === 'other') {
-                <input type="text" [(ngModel)]="howFoundOther" [placeholder]="'survey.otherPlaceholder' | transloco" maxlength="200"
-                  class="mt-1 w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50" />
+                <input
+                  type="text"
+                  [(ngModel)]="howFoundOther"
+                  [placeholder]="'survey.otherPlaceholder' | transloco"
+                  maxlength="200"
+                  class="mt-1 w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
+                />
               }
             </div>
           </fieldset>
@@ -140,23 +194,44 @@
             <legend class="text-xs font-mono text-muted dark:text-dark-muted mb-2">
               {{ 'survey.s3.usedPreviousLabel' | transloco }} <span class="text-red-500">*</span>
             </legend>
+            <img
+              src="/images/prev-version.png"
+              alt="Versión anterior"
+              class="mb-3 w-full max-w-xs rounded border border-border dark:border-dark-border opacity-80"
+            />
             <div class="flex flex-col gap-2">
               <label class="flex items-center gap-3 cursor-pointer group">
-                <input type="radio" name="usedPrevious" [value]="true" [(ngModel)]="usedPrevious" class="accent-accent w-4 h-4 shrink-0" />
-                <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                <input
+                  type="radio"
+                  name="usedPrevious"
+                  [value]="true"
+                  [(ngModel)]="usedPrevious"
+                  class="accent-accent w-4 h-4 shrink-0"
+                />
+                <span
+                  class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                >
                   {{ 'survey.s3.usedPreviousYes' | transloco }}
                 </span>
               </label>
               <label class="flex items-center gap-3 cursor-pointer group">
-                <input type="radio" name="usedPrevious" [value]="false" [(ngModel)]="usedPrevious" class="accent-accent w-4 h-4 shrink-0" />
-                <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                <input
+                  type="radio"
+                  name="usedPrevious"
+                  [value]="false"
+                  [(ngModel)]="usedPrevious"
+                  class="accent-accent w-4 h-4 shrink-0"
+                />
+                <span
+                  class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                >
                   {{ 'survey.s3.usedPreviousNo' | transloco }}
                 </span>
               </label>
             </div>
           </fieldset>
 
-          <!-- Purpose -->
+          <!-- Purpose (multi-select) -->
           <fieldset>
             <legend class="text-xs font-mono text-muted dark:text-dark-muted mb-2">
               {{ 'survey.s3.purposeLabel' | transloco }} <span class="text-red-500">*</span>
@@ -164,15 +239,27 @@
             <div class="flex flex-col gap-2">
               @for (p of purposes; track p) {
                 <label class="flex items-center gap-3 cursor-pointer group">
-                  <input type="radio" name="purpose" [value]="p" [(ngModel)]="purpose" class="accent-accent w-4 h-4 shrink-0" />
-                  <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                  <input
+                    type="checkbox"
+                    [checked]="hasPurpose(p)"
+                    (change)="togglePurpose(p)"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
                     {{ 'survey.s3.purposes.' + p | transloco }}
                   </span>
                 </label>
               }
-              @if (purpose === 'other') {
-                <input type="text" [(ngModel)]="purposeOther" [placeholder]="'survey.otherPlaceholder' | transloco" maxlength="200"
-                  class="mt-1 w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50" />
+              @if (hasPurpose('other')) {
+                <input
+                  type="text"
+                  [(ngModel)]="purposeOther"
+                  [placeholder]="'survey.otherPlaceholder' | transloco"
+                  maxlength="200"
+                  class="mt-1 w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
+                />
               }
             </div>
           </fieldset>
@@ -183,35 +270,62 @@
               {{ 'survey.s3.featuresLabel' | transloco }} <span class="text-red-500">*</span>
             </legend>
             <div class="flex flex-col gap-1">
-              <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-1 mb-1">
+              <p
+                class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-1 mb-1"
+              >
                 {{ 'survey.s3.groupSeries' | transloco }}
               </p>
               @for (f of featuresSeries; track f) {
                 <label class="flex items-center gap-3 cursor-pointer group pl-1">
-                  <input type="checkbox" [checked]="hasFeature(f)" (change)="toggleFeature(f)" class="accent-accent w-4 h-4 shrink-0" />
-                  <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                  <input
+                    type="checkbox"
+                    [checked]="hasFeature(f)"
+                    (change)="toggleFeature(f)"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
                     {{ 'survey.s3.features.' + f | transloco }}
                   </span>
                 </label>
               }
-              <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-3 mb-1">
+              <p
+                class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-3 mb-1"
+              >
                 {{ 'survey.s3.groupContinuous' | transloco }}
               </p>
               @for (f of featuresCont; track f) {
                 <label class="flex items-center gap-3 cursor-pointer group pl-1">
-                  <input type="checkbox" [checked]="hasFeature(f)" (change)="toggleFeature(f)" class="accent-accent w-4 h-4 shrink-0" />
-                  <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                  <input
+                    type="checkbox"
+                    [checked]="hasFeature(f)"
+                    (change)="toggleFeature(f)"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
                     {{ 'survey.s3.features.' + f | transloco }}
                   </span>
                 </label>
               }
-              <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-3 mb-1">
+              <p
+                class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-3 mb-1"
+              >
                 {{ 'survey.s3.groupDft' | transloco }}
               </p>
               @for (f of featuresDft; track f) {
                 <label class="flex items-center gap-3 cursor-pointer group pl-1">
-                  <input type="checkbox" [checked]="hasFeature(f)" (change)="toggleFeature(f)" class="accent-accent w-4 h-4 shrink-0" />
-                  <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                  <input
+                    type="checkbox"
+                    [checked]="hasFeature(f)"
+                    (change)="toggleFeature(f)"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
                     {{ 'survey.s3.features.' + f | transloco }}
                   </span>
                 </label>
@@ -219,8 +333,15 @@
               <div class="border-t border-border dark:border-dark-border my-2"></div>
               @for (f of featuresNone; track f) {
                 <label class="flex items-center gap-3 cursor-pointer group pl-1">
-                  <input type="checkbox" [checked]="hasFeature(f)" (change)="toggleFeature(f)" class="accent-accent w-4 h-4 shrink-0" />
-                  <span class="text-sm font-mono text-muted dark:text-dark-muted group-hover:text-ink dark:group-hover:text-dark-ink transition-colors">
+                  <input
+                    type="checkbox"
+                    [checked]="hasFeature(f)"
+                    (change)="toggleFeature(f)"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-muted dark:text-dark-muted group-hover:text-ink dark:group-hover:text-dark-ink transition-colors"
+                  >
                     {{ 'survey.s3.features.' + f | transloco }}
                   </span>
                 </label>
@@ -228,7 +349,7 @@
             </div>
           </fieldset>
 
-          <!-- Device -->
+          <!-- Device (multi-select) -->
           <fieldset>
             <legend class="text-xs font-mono text-muted dark:text-dark-muted mb-2">
               {{ 'survey.s3.deviceLabel' | transloco }} <span class="text-red-500">*</span>
@@ -236,8 +357,15 @@
             <div class="flex gap-5">
               @for (d of devices; track d) {
                 <label class="flex items-center gap-2 cursor-pointer group">
-                  <input type="radio" name="device" [value]="d" [(ngModel)]="device" class="accent-accent w-4 h-4 shrink-0" />
-                  <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                  <input
+                    type="checkbox"
+                    [checked]="hasDevice(d)"
+                    (change)="toggleDevice(d)"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
                     {{ 'survey.s3.devices.' + d | transloco }}
                   </span>
                 </label>
@@ -268,7 +396,14 @@
                     class="text-2xl transition-transform hover:scale-110 cursor-pointer leading-none"
                     [attr.aria-label]="i + ' / 5'"
                   >
-                    <span [class]="(getHover(cfg.key) || getRating(cfg.key)) >= i ? 'text-yellow-400' : 'text-border dark:text-dark-border'">★</span>
+                    <span
+                      [class]="
+                        (getHover(cfg.key) || getRating(cfg.key)) >= i
+                          ? 'text-yellow-400'
+                          : 'text-border dark:text-dark-border'
+                      "
+                      >★</span
+                    >
                   </button>
                 }
               </div>
@@ -287,15 +422,25 @@
             <label class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5 block">
               {{ 'survey.s5.bugLabel' | transloco }}
             </label>
-            <textarea [(ngModel)]="bugDescription" [placeholder]="'survey.s5.bugPlaceholder' | transloco" rows="3" maxlength="2000"
-              class="w-full resize-none rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"></textarea>
+            <textarea
+              [(ngModel)]="bugDescription"
+              [placeholder]="'survey.s5.bugPlaceholder' | transloco"
+              rows="3"
+              maxlength="2000"
+              class="w-full resize-none rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
+            ></textarea>
           </div>
           <div>
             <label class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5 block">
               {{ 'survey.s5.commentsLabel' | transloco }}
             </label>
-            <textarea [(ngModel)]="generalComments" [placeholder]="'survey.s5.commentsPlaceholder' | transloco" rows="4" maxlength="2000"
-              class="w-full resize-none rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"></textarea>
+            <textarea
+              [(ngModel)]="generalComments"
+              [placeholder]="'survey.s5.commentsPlaceholder' | transloco"
+              rows="4"
+              maxlength="2000"
+              class="w-full resize-none rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
+            ></textarea>
           </div>
         </div>
       }
@@ -307,36 +452,58 @@
       <!-- Navigation -->
       <div class="mt-8 flex items-center justify-between">
         @if (step() > 1) {
-          <button type="button" (click)="back()"
-            class="px-4 py-2 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer">
+          <button
+            type="button"
+            (click)="back()"
+            class="px-4 py-2 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
+          >
             {{ 'survey.back' | transloco }}
           </button>
-        } @else { <div></div> }
+        } @else {
+          <div></div>
+        }
 
         @if (step() < totalSteps) {
-          <button type="button" (click)="next()" [disabled]="!canAdvance()"
-            class="px-5 py-2 rounded bg-accent text-white text-sm font-mono hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+          <button
+            type="button"
+            (click)="next()"
+            [disabled]="!canAdvance()"
+            class="px-5 py-2 rounded bg-accent text-white text-sm font-mono hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
             {{ 'survey.next' | transloco }}
           </button>
         } @else {
-          <button type="button" (click)="submit()" [disabled]="surveySvc.submitting()"
-            class="px-5 py-2 rounded bg-accent text-white text-sm font-mono hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
-            {{ surveySvc.submitting() ? ('survey.submitting' | transloco) : ('survey.submit' | transloco) }}
+          <button
+            type="button"
+            (click)="submit()"
+            [disabled]="surveySvc.submitting()"
+            class="px-5 py-2 rounded bg-accent text-white text-sm font-mono hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {{
+              surveySvc.submitting()
+                ? ('survey.submitting' | transloco)
+                : ('survey.submit' | transloco)
+            }}
           </button>
         }
       </div>
-
     } @else {
       <div class="flex flex-col items-center gap-4 py-20 text-center">
         <span class="text-5xl">✓</span>
-        <h2 class="font-display text-xl text-ink dark:text-dark-ink">{{ 'survey.successTitle' | transloco }}</h2>
-        <p class="text-sm font-mono text-muted dark:text-dark-muted max-w-xs">{{ 'survey.successMessage' | transloco }}</p>
-        <button type="button" (click)="goHome()"
-          class="mt-4 px-5 py-2 rounded bg-accent text-white text-sm font-mono hover:bg-accent/90 transition-colors cursor-pointer">
+        <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+          {{ 'survey.successTitle' | transloco }}
+        </h2>
+        <p class="text-sm font-mono text-muted dark:text-dark-muted max-w-xs">
+          {{ 'survey.successMessage' | transloco }}
+        </p>
+        <button
+          type="button"
+          (click)="goHome()"
+          class="mt-4 px-5 py-2 rounded bg-accent text-white text-sm font-mono hover:bg-accent/90 transition-colors cursor-pointer"
+        >
           {{ 'survey.goHome' | transloco }}
         </button>
       </div>
     }
-
   </div>
 </main>

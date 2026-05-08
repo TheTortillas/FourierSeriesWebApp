@@ -29,10 +29,10 @@ export interface SurveyRequest {
   howFound: HowFound;
   howFoundOther?: string;
   usedPrevious: boolean;
-  purpose: SurveyPurpose;
+  purpose: SurveyPurpose[];
   purposeOther?: string;
   featuresUsed: SurveyFeature[];
-  device: SurveyDevice;
+  device: SurveyDevice[];
 
   // Step 4 — Ratings
   usefulnessRating: number;

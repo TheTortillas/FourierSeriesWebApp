@@ -43,10 +43,10 @@ export class SurveyComponent {
   howFound: HowFound | '' = '';
   howFoundOther = '';
   usedPrevious: boolean | null = null;
-  purpose: SurveyPurpose | '' = '';
+  purposesUsed: SurveyPurpose[] = [];
   purposeOther = '';
   featuresUsed: SurveyFeature[] = [];
-  device: SurveyDevice | '' = '';
+  devicesUsed: SurveyDevice[] = [];
 
   // Step 4 — Ratings
   usefulnessRating  = 0; usefulnessHovered  = 0;
@@ -76,10 +76,10 @@ export class SurveyComponent {
         return this.howFound !== '' &&
           (this.howFound !== 'other' || this.howFoundOther.trim() !== '') &&
           this.usedPrevious !== null &&
-          this.purpose !== '' &&
-          (this.purpose !== 'other' || this.purposeOther.trim() !== '') &&
+          this.purposesUsed.length > 0 &&
+          (!this.purposesUsed.includes('other') || this.purposeOther.trim() !== '') &&
           this.featuresUsed.length > 0 &&
-          this.device !== '';
+          this.devicesUsed.length > 0;
       case 4:
         return this.getRating('usefulness') > 0 && this.getRating('ease') > 0 &&
           this.getRating('vsOther') > 0 && this.getRating('recommend') > 0;
@@ -114,6 +114,22 @@ export class SurveyComponent {
 
   hasFeature(f: SurveyFeature): boolean { return this.featuresUsed.includes(f); }
 
+  togglePurpose(p: SurveyPurpose): void {
+    const idx = this.purposesUsed.indexOf(p);
+    this.purposesUsed = idx === -1
+      ? [...this.purposesUsed, p]
+      : this.purposesUsed.filter((x) => x !== p);
+  }
+  hasPurpose(p: SurveyPurpose): boolean { return this.purposesUsed.includes(p); }
+
+  toggleDevice(d: SurveyDevice): void {
+    const idx = this.devicesUsed.indexOf(d);
+    this.devicesUsed = idx === -1
+      ? [...this.devicesUsed, d]
+      : this.devicesUsed.filter((x) => x !== d);
+  }
+  hasDevice(d: SurveyDevice): boolean { return this.devicesUsed.includes(d); }
+
   submit(): void {
     if (this.surveySvc.submitting()) return;
     this.error.set('');
@@ -132,10 +148,10 @@ export class SurveyComponent {
       howFound: this.howFound as HowFound,
       howFoundOther: this.howFound === 'other' ? this.howFoundOther.trim() : undefined,
       usedPrevious: this.usedPrevious as boolean,
-      purpose: this.purpose as SurveyPurpose,
-      purposeOther: this.purpose === 'other' ? this.purposeOther.trim() : undefined,
+      purpose: this.purposesUsed,
+      purposeOther: this.purposesUsed.includes('other') ? this.purposeOther.trim() : undefined,
       featuresUsed: this.featuresUsed,
-      device: this.device as SurveyDevice,
+      device: this.devicesUsed,
       usefulnessRating:   this.usefulnessRating,
       easeOfUseRating:    this.easeOfUseRating,
       vsOtherToolsRating: this.vsOtherToolsRating,

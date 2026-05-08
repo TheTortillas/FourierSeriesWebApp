@@ -81,13 +81,43 @@
       }
     </div>
 
-    <a
-      [routerLink]="'/' + lang() + '/feedback'"
-      routerLinkActive="!text-accent"
-      class="hidden sm:flex items-center gap-1 px-2 py-1.5 rounded text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
-    >
-      {{ 'feedback.nav' | transloco }}
-    </a>
+    <div class="relative hidden sm:block" (focusout)="onMoreMenuFocusOut($event)">
+      <button
+        type="button"
+        (click)="moreMenuOpen.set(!moreMenuOpen())"
+        [class]="
+          moreMenuOpen()
+            ? 'flex items-center px-2 py-1.5 rounded text-xs font-mono text-accent bg-paper2 dark:bg-dark-surface transition-colors cursor-pointer'
+            : 'flex items-center px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
+        "
+        [title]="'nav.more' | transloco"
+      >
+        ···
+      </button>
+
+      @if (moreMenuOpen()) {
+        <div
+          class="absolute left-0 top-full mt-1 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-36"
+        >
+          <a
+            [routerLink]="'/' + lang() + '/feedback'"
+            routerLinkActive="!text-accent bg-accent/5"
+            (click)="moreMenuOpen.set(false)"
+            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+          >
+            {{ 'feedback.nav' | transloco }}
+          </a>
+          <a
+            [routerLink]="'/' + lang() + '/survey'"
+            routerLinkActive="!text-accent bg-accent/5"
+            (click)="moreMenuOpen.set(false)"
+            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+          >
+            {{ 'survey.nav' | transloco }}
+          </a>
+        </div>
+      }
+    </div>
 
     <div class="w-px h-4 bg-border dark:bg-dark-border mx-1.5 shrink-0"></div>
 

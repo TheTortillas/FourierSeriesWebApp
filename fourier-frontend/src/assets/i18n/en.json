@@ -45,6 +45,7 @@
     "paletteCoffee": "Coffee",
     "tagline": "By Sebastián Morales Palacios",
     "footerText": "Mathematical analysis tool",
+    "more": "More options",
     "betaBanner": {
       "message": "You're using the free beta — there will always be a free version. Some advanced features may require an account in the future.",
       "dismiss": "Dismiss beta notice"
@@ -534,6 +535,7 @@
     "selectPanel": "Select a panel"
   },
   "survey": {
+    "nav": "Survey",
     "title": "Usage survey",
     "subtitle": "First of all, thank you for trying the app. All data is for statistical purposes only.",
     "step": "Step {{ current }} of {{ total }}",

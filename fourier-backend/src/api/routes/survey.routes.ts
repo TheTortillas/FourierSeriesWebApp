@@ -5,7 +5,11 @@ export const surveyRouter = Router();
 const VALID_ROLES = ["student", "teacher", "graduate", "other"];
 const VALID_LEVELS = ["licenciatura", "maestria", "doctorado", "other"];
 const VALID_PURPOSES = ["problem", "learning", "teaching", "exploration", "other"];
-const VALID_FEATURES = ["trigonometric", "half_range", "complex", "dft", "none"];
+const VALID_FEATURES = [
+  "trigonometric", "half_range", "complex",
+  "fourier_transform", "inverse_fourier_transform",
+  "dft_signal", "dft_function", "dft_epicycles", "none",
+];
 const VALID_DEVICES = ["phone", "computer"];
 
 surveyRouter.post("/", (req: Request, res: Response): void => {
@@ -16,15 +20,15 @@ surveyRouter.post("/", (req: Request, res: Response): void => {
     res.status(400).json({ error: "Invalid role" });
     return;
   }
-  if (!VALID_PURPOSES.includes(purpose as string)) {
+  if (!Array.isArray(purpose) || purpose.length === 0 || !purpose.every((p) => VALID_PURPOSES.includes(p as string))) {
     res.status(400).json({ error: "Invalid purpose" });
     return;
   }
-  if (!Array.isArray(featuresUsed) || !featuresUsed.every((f) => VALID_FEATURES.includes(f as string))) {
+  if (!Array.isArray(featuresUsed) || featuresUsed.length === 0 || !featuresUsed.every((f) => VALID_FEATURES.includes(f as string))) {
     res.status(400).json({ error: "Invalid featuresUsed" });
     return;
   }
-  if (!VALID_DEVICES.includes(device as string)) {
+  if (!Array.isArray(device) || device.length === 0 || !device.every((d) => VALID_DEVICES.includes(d as string))) {
     res.status(400).json({ error: "Invalid device" });
     return;
   }
