@@ -266,3 +266,16 @@ export const authRecoveryLimiter = rateLimit({
     "Too many recovery or verification requests, please try again later.",
   ),
 });
+
+// 10 submissions per hour per IP — strict because it's a public unauthenticated endpoint
+export const feedbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req: RequestLike, res: Response): void => {
+    res.status(429).json({
+      error: "Too many feedback submissions. Please try again later.",
+    });
+  },
+});

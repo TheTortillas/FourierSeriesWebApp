@@ -18,6 +18,7 @@ import {
   parseBurstLimiter,
   parseSustainedLimiter,
   authLimiter,
+  feedbackLimiter,
   trackRateLimitRequests,
 } from "./api/middlewares/rateLimiter";
 import { authRouter } from "./api/routes/auth.routes";
@@ -121,7 +122,7 @@ export function createApp(): Application {
 
   app.use("/api/admin", adminRouter);
 
-  app.use("/api/feedback", feedbackRouter);
+  app.use("/api/feedback", feedbackLimiter, feedbackRouter);
 
   app.use(errorHandler);
 
