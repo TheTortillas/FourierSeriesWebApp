@@ -1,0 +1,79 @@
+/* ═══════════════════════════════════════════════════════════════
+   Serie de Fourier Compleja
+   Input:  FUNC_INPUT  → matrix con tramos [expr, a, b]
+           INTVAR      → variable de integración (default x)
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+%iargs: false$
+
+/* Número de tramos */
+pieces: length(FUNC_INPUT);
+
+/* Intervalo y periodo */
+inicio: FUNC_INPUT[1][2];
+fin: FUNC_INPUT[pieces][3];
+PERIOD: ratsimp(fin - inicio);
+T: PERIOD;
+block([_all_limit_vars: listofvars(PERIOD)],
+    for _i: 1 thru length(FUNC_INPUT) do (
+        _all_limit_vars: append(_all_limit_vars,
+            listofvars(FUNC_INPUT[_i][1]),
+            listofvars(FUNC_INPUT[_i][2]),
+            listofvars(FUNC_INPUT[_i][3]))
+    ),
+    for sym in _all_limit_vars do (
+        if not numberp(sym) and sym # INTVAR and sym # n then (
+            if not featurep(sym, real) then declare(sym, real),
+            errcatch(assume(sym > 0))
+        )
+    )
+);
+w0: 2 * %pi / PERIOD;
+
+/* Acumuladores */
+cn_acum: 0;
+c0_acum: 0;
+
+/* Calcular c0 por integración directa */
+for i:1 thru pieces do (
+    trozo: FUNC_INPUT[i],
+    f_i: trozo[1],
+    a: trozo[2],
+    b: trozo[3],
+    c0_acum: c0_acum + (1/PERIOD) * integrate(f_i, INTVAR, a, b)
+)$
+
+/* Calcular cn */
+for i:1 thru pieces do (
+    trozo: FUNC_INPUT[i],
+    f_i: trozo[1],
+    a: trozo[2],
+    b: trozo[3],
+    cn_acum: cn_acum + (1/PERIOD) * integrate(f_i * exp(-%i * n * w0 * INTVAR), INTVAR, a, b)
+)$
+
+/* Coeficientes */
+Coeff_0: fullratsimp(c0_acum);
+Coeff_n: fullratsimp(cn_acum);
+
+/* Serie formal compleja */
+serie_compleja: 'sum(Coeff_n * exp(%i * n * w0 * INTVAR), n, minf, inf);
+
+/* Output estructurado */
+print("__C0_MAXIMA__")$             print(string(Coeff_0))$
+print("__C0_TEX__")$                tex(Coeff_0)$
+print("__CN_MAXIMA__")$             print(string(Coeff_n))$
+print("__CN_TEX__")$                tex(Coeff_n)$
+print("__SERIES_COMPLEX_MAXIMA__")$ print(string(serie_compleja))$
+print("__SERIES_COMPLEX_TEX__")$    tex(serie_compleja)$
+print("__W0_MAXIMA__")$             print(string(w0))$
+print("__W0_TEX__")$                tex(w0)$
+
+/* Parámetros libres en los coeficientes */
+free_params: []$
+for sym in listofvars(Coeff_n + Coeff_0) do (
+    if sym # INTVAR and sym # n then
+        free_params: append(free_params, [sym])
+)$
+print("__PARAMS__")$ print(string(free_params))$

@@ -1,0 +1,134 @@
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg overflow-hidden">
+  <app-nav />
+
+  <!-- ── Hero ──────────────────────────────────────────────────────────────── -->
+  <section
+    class="relative flex flex-col items-center justify-center text-center px-6 pt-20 pb-16 flex-1 min-h-[58vh]"
+  >
+    <canvas
+      #heroCanvas
+      class="absolute inset-0 w-full h-full pointer-events-none select-none"
+    ></canvas>
+
+    <div class="relative z-10 flex flex-col items-center gap-4 max-w-2xl">
+      <h1
+        class="font-display text-5xl md:text-6xl text-ink dark:text-dark-ink leading-tight tracking-tight"
+      >
+        Fourier<br />
+        <span class="text-accent">Web</span> Calculator
+      </h1>
+
+      <!-- TODO: link to /:lang/about once that page exists -->
+      <a
+        [routerLink]="'/' + lang() + '/about'"
+        class="font-bold text-[11px] font-mono text-muted dark:text-dark-muted hover:text-accent dark:hover:text-accent transition-colors underline-offset-2 hover:underline"
+      >
+        {{ 'nav.tagline' | transloco }}
+      </a>
+
+      <p class="font-body text-base text-muted dark:text-dark-muted max-w-md leading-relaxed">
+        {{ 'home.subtitle' | transloco }}
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Cards ─────────────────────────────────────────────────────────────── -->
+  <section class="relative z-10 px-6 pb-16 max-w-3xl mx-auto w-full">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <!-- Series de Fourier -->
+      <a
+        [routerLink]="'/' + lang() + '/calculator'"
+        class="group flex flex-col gap-5 p-6 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer"
+      >
+        <div
+          class="w-12 h-12 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors"
+        >
+          <span
+            class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors"
+            >Σ</span
+          >
+        </div>
+
+        <div class="flex flex-col gap-2 flex-1">
+          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+            {{ 'home.series.title' | transloco }}
+          </h2>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'home.series.description' | transloco }}
+          </p>
+        </div>
+
+        <div
+          class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all"
+        >
+          <span>{{ 'common.explore' | transloco }}</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.25"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-4 h-4"
+          >
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </div>
+      </a>
+
+      <!-- Transformadas de Fourier -->
+      <a
+        [routerLink]="'/' + lang() + '/transforms/continuous'"
+        class="group flex flex-col gap-5 p-6 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer"
+      >
+        <div class="flex items-center justify-between">
+          <div
+            class="w-12 h-12 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors"
+          >
+            <span
+              class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors"
+              >ℱ</span
+            >
+          </div>
+          <!-- <span
+            class="text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-muted dark:text-dark-muted"
+          >
+            {{ 'home.transforms.badge' | transloco }}
+          </span> -->
+        </div>
+
+        <div class="flex flex-col gap-2 flex-1">
+          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+            {{ 'home.transforms.title' | transloco }}
+          </h2>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'home.transforms.description' | transloco }}
+          </p>
+        </div>
+
+        <div
+          class="flex items-center gap-1.5 text-sm font-mono text-accent group-hover:gap-2.5 transition-all"
+        >
+          <span>{{ 'common.explore' | transloco }}</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.25"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-4 h-4"
+          >
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <app-footer />
+</div>

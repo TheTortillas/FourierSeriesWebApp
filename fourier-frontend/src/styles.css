@@ -1,0 +1,162 @@
+@import 'tailwindcss';
+
+/* ─── Dark mode: class-based (html.dark), NOT prefers-color-scheme ──────────
+   Tailwind v4 defaults to media query; override to use the .dark class.     */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Design System — Fourier Calculator ─────────────────────────────────────
+   Inspirado en funciones_integrales_especiales.html
+   Tipografía académica/editorial con paleta papel cálido
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Fuentes */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Source Serif 4', Georgia, serif;
+  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  /* Paleta Light (tema por defecto) */
+  --color-ink:      #1a1410;
+  --color-paper:    #f5f0e8;
+  --color-paper2:   #ede7d9;
+  --color-border:   #c8bca8;
+  --color-accent:   #8b2500;
+  --color-accent2:  #1a4a6b;
+  --color-accent3:  #2d5a27;
+  --color-gold:     #b8860b;
+  --color-muted:    #6b5e4e;
+
+  /* Paleta Dark (complementaria cálida) */
+  --color-dark-bg:      #1a1410;
+  --color-dark-surface: #2a2018;
+  --color-dark-surface2: #332a1e;
+  --color-dark-border:  #4a3d2e;
+  --color-dark-text:    #f5f0e8;
+  --color-dark-ink:     #f5f0e8;   /* alias usado en templates */
+  --color-dark-muted:   #a89880;
+  --color-dark-accent:  #c0402a;
+  --color-dark-accent2: #3a7ab0;
+  --color-dark-gold:    #d4a017;
+}
+
+/* ─── Estrategia de tema: clase 'dark' en <html> ────────────────────────── */
+@layer base {
+  :root {
+    color-scheme: light;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Neutral palette (light mode) */
+  :root[data-palette='neutral'] {
+    --color-ink: #1a1a1a;
+    --color-paper: #f5f5f5;
+    --color-paper2: #ffffff;
+    --color-border: #e5e5e5;
+    --color-accent: #3b82f6;
+    --color-accent2: #2563eb;
+    --color-accent3: #0f766e;
+    --color-gold: #3b82f6;
+    --color-muted: #6b6b6b;
+
+    --color-dark-bg: #1a1a1a;
+    --color-dark-surface: #2a2a2a;
+    --color-dark-surface2: #242424;
+    --color-dark-border: #3a3a3a;
+    --color-dark-text: #f5f5f5;
+    --color-dark-ink: #f5f5f5;
+    --color-dark-muted: #a0a0a0;
+    --color-dark-accent: #60a5fa;
+    --color-dark-accent2: #3b82f6;
+    --color-dark-gold: #60a5fa;
+  }
+
+  html.dark {
+    color-scheme: dark;
+    background-color: var(--color-dark-bg);
+    color: var(--color-dark-text);
+  }
+
+  /* Neutral palette (dark mode): brighter accent for contrast */
+  html.dark[data-palette='neutral'] {
+    --color-accent: #60a5fa;
+    --color-accent2: #3b82f6;
+    --color-muted: #a0a0a0;
+  }
+
+  /* Tipografía base */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    line-height: 1.2;
+  }
+
+  code, kbd, pre, samp {
+    font-family: var(--font-mono);
+  }
+
+  /* Scrollbar discreta */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+}
+
+/* ─── MathQuill integration ─────────────────────────────────────────────────
+   Strip MathQuill's own border/background so our wrapper div controls those.
+   Text color inherits from the parent (our ink / dark-ink tokens).
+
+   ALIGNMENT: MathQuill fields are centered horizontally and vertically.
+   To change alignment, edit the two properties below:
+     text-align  → controls horizontal position of the math expression
+     align-items → controls vertical position within the field height
+   Valid values: text-align: left | center | right
+                 align-items: flex-start | center | flex-end             */
+.mq-editable-field {
+  background: transparent !important;
+  color: var(--color-ink) !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 0.875rem;
+  min-height: 1.5rem;
+  /* Layout */
+  display: flex !important;
+  align-items: center;       /* vertical centering inside the field */
+  width: 100%;
+}
+
+/* The inner root span holds the actual math — inherit the flex alignment */
+.mq-editable-field .mq-root-block {
+  flex: 1;
+  text-align: center;        /* horizontal centering of the expression */
+}
+
+.mq-editable-field .mq-cursor {
+  border-color: var(--color-accent) !important;
+}
+
+html.dark .mq-editable-field {
+  color: var(--color-dark-ink) !important;
+}
+
+html.dark .mq-editable-field .mq-cursor {
+  border-color: var(--color-dark-accent) !important;
+}
+
+/* ─── MathJax preview container ─────────────────────────────────────────────
+   ALIGNMENT: controls how the rendered formula is positioned in the preview box.
+   To change, edit text-align on mjx-container[display="true"].
+   Valid values: left | center | right                                        */
+mjx-container[display="true"] {
+  text-align: center !important;
+  margin: 0 !important;
+}
+
+/* MathJax SVG inherits color for dark mode */
+.dark mjx-container svg {
+  fill: currentColor;
+}

@@ -1,0 +1,77 @@
+/* ═══════════════════════════════════════════════════════════════
+   Transformada Discreta de Fourier (FFT)
+   Input:  POINTS_RE   → lista de partes reales
+           POINTS_IM   → lista de partes imaginarias (zeros para señal real)
+           MODE        → "signal" o "epicycles"
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+load("fft")$
+
+N: length(POINTS_RE)$
+
+/* Construir señal compleja forzando float */
+signal: makelist(
+  float(POINTS_RE[k]) + %i * float(POINTS_IM[k]),
+  k, 1, N
+)$
+
+/* Coeficientes DFT manuales (normalizados) para N no-potencia de 2 */
+manual_coeffs(sig) := block([len : length(sig)],
+  makelist(
+    block([acc : 0.0 + 0.0*%i, kk : k - 1, nn, angle, out, re_val, im_val, amp_val, phase_val],
+      for nn : 1 thru len do (
+        angle : float(-2*%pi*kk*(nn-1)/len),
+        acc : acc + sig[nn] * (float(cos(angle)) + %i*float(sin(angle)))
+      ),
+      out : acc / len,
+      re_val : float(realpart(out)),
+      im_val : float(imagpart(out)),
+      amp_val : float(sqrt(re_val^2 + im_val^2)),
+      phase_val : if amp_val < 1.0e-12 then 0.0 else float(atan2(im_val, re_val)),
+      [kk, re_val, im_val, amp_val, phase_val]
+    ),
+    k, 1, len
+  )
+)$
+
+/* Inverse DFT compatible con manual_dft (sin dividir por N) */
+manual_idft(coeff) := block([len : length(coeff)],
+  makelist(
+    block([acc : 0.0 + 0.0*%i, kk, angle, out],
+      for kk : 1 thru len do (
+        angle : float(2*%pi*(kk-1)*(n-1)/len),
+        acc : acc + coeff[kk] * (float(cos(angle)) + %i*float(sin(angle)))
+      ),
+      out : acc,
+      float(realpart(out)) + %i*float(imagpart(out))
+    ),
+    n, 1, len
+  )
+)$
+
+coeffs : manual_coeffs(signal)$
+dft_result : makelist(coeffs[k][2] + %i*coeffs[k][3], k, 1, N)$
+reconstructed : manual_idft(dft_result)$
+
+/* Calcular RMS error */
+rms_error: float(sqrt(
+  sum((realpart(reconstructed[k]) - POINTS_RE[k])^2 +
+      (imagpart(reconstructed[k]) - POINTS_IM[k])^2, k, 1, N) / N
+))$
+
+/* Frecuencias dominantes */
+sorted_coeffs: sort(coeffs, lambda([a, b], a[4] > b[4]))$
+top_coeffs: makelist(sorted_coeffs[k], k, 1, min(10, N))$
+
+/* Output reconstruido */
+reconstructed_points: makelist(
+  [float(realpart(reconstructed[k])), float(imagpart(reconstructed[k]))],
+  k, 1, N
+)$
+
+print("__N__")$ print(string(N))$
+print("__COEFFS__")$ print(string(coeffs))$
+print("__RECONSTRUCTED__")$ print(string(reconstructed_points))$
+print("__TOP_COEFFS__")$ print(string(top_coeffs))$
+print("__RMS_ERROR__")$ print(string(rms_error))$

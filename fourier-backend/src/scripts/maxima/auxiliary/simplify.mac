@@ -1,0 +1,114 @@
+/* ═══════════════════════════════════════════════════════════════
+   Módulo de simplificación bajo demanda
+   Input:  EXPR_INPUT     → expresión a simplificar como string
+           PROFILE        → perfil de simplificación
+           SIMP_FUNCTIONS → lista de funciones a aplicar
+           FLAG_EDISPFLAG → flag para notación de exponenciales
+           FLAG_EXPONENT  → flag para convertir trig a exp
+           FLAG_DEMOIVRE  → flag para convertir exp a trig
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+
+/* ── Notación TeX para funciones especiales ── */
+
+/* Exponential integrals — un argumento */
+texput(expintegral_e1,  "\\operatorname{E_1}")$
+texput(expintegral_ei,  "\\operatorname{Ei}")$
+texput(expintegral_li,  "\\operatorname{li}")$
+texput(expintegral_si,  "\\operatorname{Si}")$
+texput(expintegral_ci,  "\\operatorname{Ci}")$
+texput(expintegral_shi, "\\operatorname{Shi}")$
+texput(expintegral_chi, "\\operatorname{Chi}")$
+
+/* Exponential integral — dos argumentos: E_v(z) con subíndice real */
+texput(expintegral_e,
+    lambda([v,z], sconcat("\\operatorname{E}_{", tex1(v), "}\\!\\left(", tex1(z), "\\right)")))$
+
+/* Gamma incompleta superior: Γ(a,z) */
+texput(gamma_incomplete,
+    lambda([a,z], sconcat("\\Gamma\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+
+/* Gamma incompleta inferior: γ(a,z) */
+texput(gamma_incomplete_lower,
+    lambda([a,z], sconcat("\\gamma\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+
+/* Gamma incompleta regularizada: Q(a,z) */
+texput(gamma_incomplete_regularized,
+    lambda([a,z], sconcat("Q\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+
+/* Gamma incompleta generalizada: Γ(a,z1,z2) */
+texput(gamma_incomplete_generalized,
+    lambda([a,z1,z2], sconcat("\\Gamma\\!\\left(", tex1(a), ",", tex1(z1), ",", tex1(z2), "\\right)")))$
+
+/* log-gamma */
+texput(log_gamma, "\\ln\\!\\Gamma")$
+
+/* Aplicar flags de display */
+if FLAG_EDISPFLAG then %edispflag: true$
+if FLAG_EXPONENT  then exponentialize: true$
+if FLAG_DEMOIVRE  then demoivre: true$
+/* Representación de la función error */
+if FLAG_ERF_REPR = "erf"  then erf_representation: erf$
+if FLAG_ERF_REPR = "erfc" then erf_representation: erfc$
+if FLAG_ERF_REPR = "erfi" then erf_representation: erfi$
+
+/* Aplicar perfil */
+if PROFILE = "integer" or PROFILE = "trigonometric" or
+   PROFILE = "exponential" or PROFILE = "complete" then
+    declare(n, integer)$
+
+if PROFILE = "trigonometric" or PROFILE = "complete" then (
+    matchdeclare(kk, lambda([kk], is(evenp(kk)))),
+    matchdeclare(jj, lambda([jj], is(evenp(jj) = false))),
+    tellsimpafter(sin(((2*n+kk)*%pi)/2), 0),
+    tellsimpafter(sin(((2*n+jj)*%pi)/2), if mod(jj,4)=1 then (-1)^n else -(-1)^n)
+)$
+
+if PROFILE = "exponential" or PROFILE = "complete" then (
+    lognegint: true,
+    tellsimpafter(exp(%i * %pi * n), (-1)^n),
+    tellsimpafter(exp(%i * 2 * %pi * n), 1),
+    tellsimpafter(exp((%i * %pi * n)/2), %i^n),
+    tellsimpafter(exp(-(%i * %pi * n)/2), %i^(-n))
+)$
+
+/* Declarar funciones especiales como reales para que rectform/imagpart
+   no deje realpart(u(t)) o imagpart(delta(t)) sin evaluar */
+declare(u,     real)$
+declare(sgn,   real)$
+declare(delta, real)$
+declare(unit_step, real)$
+
+/* Parsear expresión */
+_input_expr: parse_string(EXPR_INPUT)$
+
+/* Aplicar funciones en orden */
+_result_expr: _input_expr$
+for fn in SIMP_FUNCTIONS do (
+    if fn = "fullratsimp" then _result_expr: fullratsimp(_result_expr)
+    else if fn = "ratsimp"    then _result_expr: ratsimp(_result_expr)
+    else if fn = "trigsimp"   then _result_expr: trigsimp(_result_expr)
+    else if fn = "trigreduce" then _result_expr: trigreduce(_result_expr)
+    else if fn = "trigexpand" then _result_expr: trigexpand(_result_expr)
+    else if fn = "factor"     then block(
+        /* Try factor directly, and also fullratsimp→factor.
+           Keep whichever string representation is shorter. */
+        [_f1, _f2, _s1, _s2],
+        _f1: errcatch(factor(_result_expr)),
+        _f2: errcatch(factor(fullratsimp(_result_expr))),
+        _f1: if _f1 = [] then _result_expr else first(_f1),
+        _f2: if _f2 = [] then _result_expr else first(_f2),
+        _s1: slength(string(_f1)),
+        _s2: slength(string(_f2)),
+        _result_expr: if _s2 < _s1 then _f2 else _f1
+    )
+    else if fn = "expand"     then _result_expr: expand(_result_expr)
+    else if fn = "radcan"     then _result_expr: radcan(_result_expr)
+    else if fn = "rectform"   then _result_expr: rectform(_result_expr)
+    else if fn = "polarform"  then _result_expr: polarform(_result_expr)
+)$
+
+/* Output */
+print("__SIMPLIFIED_MAXIMA__")$ print(string(_result_expr))$
+print("__SIMPLIFIED_TEX__")$    tex(_result_expr)$

@@ -1,0 +1,210 @@
+/* ═══════════════════════════════════════════════════════════════════
+   MÓDULO: find_singularities
+   Detecta y clasifica singularidades de f(x) en [a, b]
+   Tipos: REMOVIBLE | SALTO | ASÍNTOTA VERTICAL | 
+          SINGULARIDAD ESENCIAL | FUERA DE DOMINIO
+
+   LIMITACIONES CONOCIDAS:
+   - floor, ceiling, round: no detectadas
+   - Funciones definidas por el usuario: no detectadas
+   - Funciones especiales no listadas explícitamente: no detectadas
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ────────────────────────────────────────────────────────────────
+   AUXILIARES
+   ──────────────────────────────────────────────────────────────── */
+in_interval(p, a, b) := block(
+    [pf: float(p), af: float(a), bf: float(b)],
+    is(af <= pf and pf <= bf)
+)$
+
+safe_limit(f, x, p, dir) := block(
+    [res: errcatch(limit(f, x, p, dir))],
+    if res = [] then 'failed else first(res)
+)$
+
+is_infinite(v) :=
+    v = inf or v = minf or v = infinity or
+    (not atom(v) and op(v) = "-" and first(args(v)) = inf)$
+
+integers_in(a, b, cond) := block(
+    [result: [], k: ceiling(float(a))],
+    while k <= floor(float(b)) do block(
+        if cond = false or apply(cond, [k])
+        then result: cons(k, result),
+        k: k + 1
+    ),
+    result
+)$
+
+has_fn(expr, fn) := not freeof(fn, expr)$
+
+/* ════════════════════════════════════════════════════════════════
+   GET_CANDIDATES — detección simbólica pura (sin muestreo)
+   Cubre:
+     1. Denominadores = 0
+     2. log(g(x)) = 0
+     3. sqrt(g(x)) = 0
+     4. tan, cot, sec, csc  (periódicas)
+     5. gamma, beta, psi    (polos en enteros ≤ 0)
+     6. zeta(x)             (polo en x = 1)
+   ════════════════════════════════════════════════════════════════ */
+get_candidates(f, x, a, b) := block(
+    [cands: [], sols, den, inner, term],
+
+    /* ── 1. Denominadores ── */
+    block([all_terms: if not atom(f) and op(f) = "+"
+                      then args(expand(f)) else [f]],
+        for term in all_terms do
+            if not atom(term) and op(term) = "/" then block(
+                den: part(term, 2),
+                sols: errcatch(solve(den = 0, x)),
+                if sols # [] then
+                    for s in first(sols) do block(
+                        [p: rhs(s)],
+                        if in_interval(p, a, b)
+                        then cands: cons(p, cands)
+                    )
+            )
+    ),
+    /* Caso f entera es fracción */
+    if not atom(f) and op(f) = "/" then block(
+        den: part(f, 2),
+        sols: errcatch(solve(den = 0, x)),
+        if sols # [] then
+            for s in first(sols) do block(
+                [p: rhs(s)],
+                if in_interval(p, a, b)
+                then cands: cons(p, cands)
+            )
+    ),
+
+    /* ── 2. log(g(x)) = 0 ── */
+    if has_fn(f, 'log) then block(
+        [all_terms: if not atom(f) and op(f) = "+"
+                    then args(expand(f)) else [f]],
+        for term in all_terms do block(
+            inner: false,
+            if not atom(term) and op(term) = 'log
+            then inner: part(term, 1),
+            if inner # false then block(
+                sols: errcatch(solve(inner = 0, x)),
+                if sols # [] then
+                    for s in first(sols) do block(
+                        [p: rhs(s)],
+                        if in_interval(p, a, b)
+                        then cands: cons(p, cands)
+                    )
+            )
+        )
+    ),
+
+    /* ── 3. sqrt(g(x)) = 0 ── */
+    if has_fn(f, 'sqrt) then block(
+        inner: false,
+        if not atom(f) and op(f) = 'sqrt
+        then inner: part(f, 1),
+        if inner # false then block(
+            sols: errcatch(solve(inner = 0, x)),
+            if sols # [] then
+                for s in first(sols) do block(
+                    [p: rhs(s)],
+                    if in_interval(p, a, b)
+                    then cands: cons(p, cands)
+                )
+        )
+    ),
+
+    /* ── 4. tan, cot, sec, csc ── */
+    block([trig_pairs: [['tan, 'cos], ['sec, 'cos],
+                        ['cot, 'sin], ['csc, 'sin]]],
+        for pair in trig_pairs do block(
+            [fn: first(pair), base_fn: second(pair)],
+            if has_fn(f, fn) then block(
+                [base: if base_fn = 'cos then %pi/2 else 0,
+                 n_lo: ceiling((float(a) - float(%pi)/2) / float(%pi)),
+                 n_hi: floor( (float(b) + float(%pi)/2) / float(%pi))],
+                for k: n_lo thru n_hi do block(
+                    [p: base + k * %pi],
+                    if in_interval(p, a, b)
+                    then cands: cons(p, cands)
+                )
+            )
+        )
+    ),
+
+    /* ── 5. gamma, beta, psi → enteros ≤ 0 ── */
+    for fn in ['gamma, 'beta, 'psi] do
+        if has_fn(f, fn) then
+            cands: append(integers_in(a, b, lambda([k], k <= 0)), cands),
+
+    /* ── 6. zeta → polo en x = 1 ── */
+    if has_fn(f, 'zeta) then
+        if in_interval(1, a, b) then cands: cons(1, cands),
+
+    unique(cands)
+)$
+
+/* ════════════════════════════════════════════════════════════════
+   CLASSIFY_POINT
+   ════════════════════════════════════════════════════════════════ */
+classify_point(f, x, p) := block(
+    [val, lim_p, lim_m],
+
+    /* ¿Evaluable y real finita? → regular */
+    val: errcatch(ev(f, x = p, nouns)),
+    if val # [] then block(
+        val: first(val),
+        if not is_infinite(val) and val # 'und and val # 'ind
+        and floatnump(float(val))
+        then return('regular)
+    ),
+
+    /* Límites laterales */
+    lim_p: safe_limit(f, x, p, 'plus),
+    lim_m: safe_limit(f, x, p, 'minus),
+
+    /* Alguno infinito → asíntota */
+    if is_infinite(lim_p) or is_infinite(lim_m)
+    then return('asintotica),
+
+    /* Ambos fallaron → fuera de dominio */
+    if lim_p = 'failed and lim_m = 'failed
+    then return('fuera_de_dominio),
+
+    /* ind en alguno → singularidad esencial */
+    if lim_p = 'ind or lim_m = 'ind
+    then return('esencial),
+
+    /* Iguales y finitos → removible */
+    if ratsimp(lim_p - lim_m) = 0 and not is_infinite(lim_p)
+    then return('removible),
+
+    /* Distintos → salto */
+    return('salto)
+)$
+
+/* ════════════════════════════════════════════════════════════════
+   FIND_SINGULARITIES — función principal
+   Uso: find_singularities(f, x, a, b)
+   ════════════════════════════════════════════════════════════════ */
+find_singularities(f, x, a, b) := block(
+    [cands, results: [], tipo],
+
+    cands: get_candidates(f, x, a, b),
+
+    if cands = [] then return("[]"),
+
+    for p in sort(cands) do block(
+        tipo: classify_point(f, x, p),
+        if tipo # 'regular then
+            results: cons(
+                concat("{\"point\":\"", string(p), "\",\"type\":\"", string(tipo), "\"}"),
+                results
+            )
+    ),
+
+    if results = [] then return("[]"),
+
+    concat("[", simplode(reverse(results), ","), "]")
+)$
