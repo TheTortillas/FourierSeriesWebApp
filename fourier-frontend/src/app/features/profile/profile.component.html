@@ -35,12 +35,12 @@
                 </button>
               </div>
             } @else {
-              <form (ngSubmit)="onSaveName()" class="flex flex-col gap-2">
+              <form [formGroup]="nameForm" (ngSubmit)="onSaveName()" class="flex flex-col gap-2">
                 <div class="flex gap-2">
-                  <input type="text" [formControl]="nameForm.controls.firstName"
+                  <input type="text" formControlName="firstName"
                     [placeholder]="'profile.firstName' | transloco"
                     class="flex-1 min-w-0 px-2 py-1.5 rounded text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
-                  <input type="text" [formControl]="nameForm.controls.lastName"
+                  <input type="text" formControlName="lastName"
                     [placeholder]="'profile.lastName' | transloco"
                     class="flex-1 min-w-0 px-2 py-1.5 rounded text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
                 </div>
