@@ -757,6 +757,33 @@
               </p>
             }
 
+            <div class="flex justify-end px-3 py-1.5 border-b border-border dark:border-dark-border">
+              @if (userStore.isAuthenticated()) {
+                <button type="button" (click)="exportTrigCsv()"
+                  [title]="'common.downloadCsv' | transloco"
+                  class="flex items-center gap-1 text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer px-2 py-0.5 rounded border border-border dark:border-dark-border hover:border-accent">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  CSV
+                </button>
+              } @else {
+                <span [title]="'common.loginToDownloadCsv' | transloco"
+                  class="flex items-center gap-1 text-[10px] font-mono text-muted/40 dark:text-dark-muted/40 cursor-not-allowed px-2 py-0.5 rounded border border-border/40 dark:border-dark-border/40">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  CSV
+                </span>
+              }
+            </div>
+
             <table class="w-full text-xs font-mono border-collapse">
               <thead class="sticky top-0 bg-paper dark:bg-dark-surface z-10">
                 <tr
@@ -897,6 +924,33 @@
                 {{ 'resultPanel.indeterminateCoeffLabel' | transloco }}
               </p>
             }
+
+            <div class="flex justify-end px-3 py-1.5 border-b border-border dark:border-dark-border">
+              @if (userStore.isAuthenticated()) {
+                <button type="button" (click)="exportComplexCsv()"
+                  [title]="'common.downloadCsv' | transloco"
+                  class="flex items-center gap-1 text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer px-2 py-0.5 rounded border border-border dark:border-dark-border hover:border-accent">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  CSV
+                </button>
+              } @else {
+                <span [title]="'common.loginToDownloadCsv' | transloco"
+                  class="flex items-center gap-1 text-[10px] font-mono text-muted/40 dark:text-dark-muted/40 cursor-not-allowed px-2 py-0.5 rounded border border-border/40 dark:border-dark-border/40">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  CSV
+                </span>
+              }
+            </div>
 
             <table class="w-full text-xs font-mono border-collapse">
               <thead class="sticky top-0 bg-paper dark:bg-dark-surface z-10">

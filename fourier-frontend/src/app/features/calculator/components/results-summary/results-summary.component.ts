@@ -34,6 +34,7 @@ import type { ParamValues } from '../../../../shared/components/param-sliders/pa
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
 import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button.component';
+import { CsvExportService } from '../../../../core/services/csv-export.service';
 
 /** Cycling hue palette for individual harmonics */
 interface SeriesColorPreset {
@@ -133,6 +134,7 @@ export class ResultsSummaryComponent {
   readonly userStore = inject(UserStore);
   readonly theme = inject(ThemeService);
   readonly destroyRef = inject(DestroyRef);
+  private readonly csvExport = inject(CsvExportService);
 
   // ── Free-parameter sliders ────────────────────────────────────────────────
   readonly paramValues = signal<ParamValues>({});
@@ -1037,6 +1039,28 @@ export class ResultsSummaryComponent {
     a.href = url;
     a.download = 'fourier-series.png';
     a.click();
+  }
+
+  exportTrigCsv(): void {
+    const terms = this.trigTerms();
+    if (!terms?.length) return;
+    const header = ['n', 'an_float', 'bn_float'];
+    const rows = terms.map((t) => [String(t.n), String(t.anFloat), String(t.bnFloat)]);
+    this.csvExport.download('fourier-trig-coefficients.csv', [header, ...rows]);
+  }
+
+  exportComplexCsv(): void {
+    const terms = this.complexTerms();
+    if (!terms?.length) return;
+    const header = ['n', 'amplitude', 'phase_rad', 'cos_coeff', 'sin_coeff'];
+    const rows = terms.map((t) => [
+      String(t.n),
+      String(t.amplitude),
+      String(t.phase),
+      String(t.cosFloat),
+      String(t.sinFloat),
+    ]);
+    this.csvExport.download('fourier-complex-coefficients.csv', [header, ...rows]);
   }
 
   get shareHref(): string {
