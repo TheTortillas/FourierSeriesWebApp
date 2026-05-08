@@ -533,6 +533,102 @@
     "description": "Development environment for testing endpoints and components.",
     "selectPanel": "Select a panel"
   },
+  "survey": {
+    "title": "Usage survey",
+    "subtitle": "First of all, thank you for trying the app. All data is for statistical purposes only.",
+    "step": "Step {{ current }} of {{ total }}",
+    "back": "← Back",
+    "next": "Next →",
+    "submit": "Submit survey",
+    "submitting": "Submitting…",
+    "successTitle": "Thank you so much!",
+    "successMessage": "Your response has been recorded. It helps us understand who uses the tool and how to improve it.",
+    "goHome": "Back to home",
+    "otherPlaceholder": "Please specify…",
+    "ratingHint15": "1 = Not at all / 5 = Completely",
+    "prompt": {
+      "title": "Got 3 minutes?",
+      "subtitle": "Answer a short survey and help us improve the app.",
+      "start": "Answer now",
+      "later": "Maybe later"
+    },
+    "s1": {
+      "question": "Which of the following best describes your current situation?",
+      "roles": {
+        "student": "Student",
+        "teacher": "Teacher",
+        "graduate": "Graduate",
+        "other": "Other"
+      }
+    },
+    "s2": {
+      "level": "Academic level",
+      "levels": {
+        "licenciatura": "Bachelor's / Engineering",
+        "maestria": "Master's",
+        "doctorado": "PhD",
+        "other": "Other"
+      },
+      "institutionPlaceholder": "e.g. MIT, Stanford, UNAM…",
+      "careerPlaceholder": "e.g. Electrical Engineering, Applied Mathematics…",
+      "student": {
+        "heading": "Tell us about your studies",
+        "institution": "Institution where you study",
+        "career": "Your degree program"
+      },
+      "teacher": {
+        "heading": "Tell us about your teaching",
+        "institution": "Institution where you teach"
+      },
+      "graduate": {
+        "heading": "Tell us about your background",
+        "institution": "Institution you graduated from",
+        "career": "Degree you graduated from"
+      },
+      "other": {
+        "heading": "Tell us about your context",
+        "institution": "Institution or organization (if applicable)"
+      }
+    },
+    "s3": {
+      "purposeLabel": "What was your purpose for using the app?",
+      "purposes": {
+        "problem": "Solve a specific problem",
+        "learning": "Learn or review theory",
+        "teaching": "Teach a class",
+        "exploration": "Exploration, recommendation, or curiosity",
+        "other": "Other"
+      },
+      "featuresLabel": "Which features did you try?",
+      "features": {
+        "trigonometric": "Trigonometric series",
+        "half_range": "Half-range extension",
+        "complex": "Complex exponential series",
+        "dft": "Discrete Fourier Transform (DFT)",
+        "none": "None yet"
+      },
+      "deviceLabel": "Which device did you use?",
+      "devices": {
+        "phone": "Mobile phone",
+        "computer": "Computer / Laptop"
+      },
+      "usefulnessLabel": "Was the app useful for solving your problem or understanding the topic?",
+      "easeLabel": "How easy and intuitive did you find the app?"
+    },
+    "s4": {
+      "vsOtherLabel": "How would you rate this app compared to other tools you know?",
+      "vsOtherHint": "1 = Much worse · 5 = Equal or better",
+      "recommendLabel": "How likely are you to keep using or recommend this app?",
+      "recommendHint": "1 = Not likely · 5 = Definitely"
+    },
+    "s5": {
+      "optional": "These questions are optional. Any detail is very helpful.",
+      "bugLabel": "Describe any error, bug, or case that didn't work as expected",
+      "bugPlaceholder": "Describe the issue in as much detail as possible…",
+      "commentsLabel": "Comments, suggestions, or recommendations",
+      "commentsPlaceholder": "Anything you liked, disliked, or think could be improved…"
+    }
+  },
   "feedback": {
     "nav": "Feedback",
     "modal": {
@@ -542,7 +638,7 @@
       "placeholder": "Optional comment…",
       "submit": "Submit",
       "submitting": "Submitting…",
-      "skip": "Not now",
+      "askLater": "Ask me later",
       "successTitle": "Thank you!",
       "successMessage": "Your feedback has been received."
     },

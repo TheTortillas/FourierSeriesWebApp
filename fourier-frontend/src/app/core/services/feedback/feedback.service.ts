@@ -31,16 +31,14 @@ export class FeedbackService {
     if (this.canShowModal()) this.modalOpen.set(true);
   }
 
-  closeModal(): void {
-    if (isPlatformBrowser(this.platform)) {
-      if (this.submitted()) {
-        // Submitted → permanent block, remove the temporary cooldown entry
-        localStorage.setItem(DONE_KEY, 'true');
-        localStorage.removeItem(COOLDOWN_KEY);
-      } else {
-        // Dismissed without submitting → 14-day cooldown
-        localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
-      }
+  /**
+   * 'x'     → user closed without intent to return; no cooldown, modal shows again next time
+   * 'later' → user wants to be asked again later; 14-day cooldown applied
+   * 'done'  → called after successful submit (DONE_KEY already set); no extra storage writes
+   */
+  closeModal(reason: 'x' | 'later' | 'done' = 'x'): void {
+    if (isPlatformBrowser(this.platform) && reason === 'later') {
+      localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
     }
     this.modalOpen.set(false);
     this.submitted.set(false);
@@ -50,6 +48,11 @@ export class FeedbackService {
     this.submitting.set(true);
     return this.api.submitFeedback(req).pipe(
       tap(() => {
+        // Mark permanently done immediately on success — not on close
+        if (isPlatformBrowser(this.platform)) {
+          localStorage.setItem(DONE_KEY, 'true');
+          localStorage.removeItem(COOLDOWN_KEY);
+        }
         this.submitted.set(true);
         this.submitting.set(false);
       }),

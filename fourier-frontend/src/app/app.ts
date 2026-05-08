@@ -6,14 +6,16 @@ import { HreflangService } from './core/services/seo/hreflang.service';
 import { NavigationScrollService } from './core/services/navigation/navigation-scroll.service';
 import { VerifyEmailBannerComponent } from './shared/components/verify-email-banner/verify-email-banner.component';
 import { FeedbackModalComponent } from './shared/components/feedback-modal/feedback-modal.component';
+import { SurveyPromptComponent } from './shared/components/survey-prompt/survey-prompt.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, VerifyEmailBannerComponent, FeedbackModalComponent],
+  imports: [RouterOutlet, VerifyEmailBannerComponent, FeedbackModalComponent, SurveyPromptComponent],
   template: `
     <app-verify-email-banner />
     <router-outlet />
     <app-feedback-modal />
+    <app-survey-prompt />
   `,
 })
 export class App {

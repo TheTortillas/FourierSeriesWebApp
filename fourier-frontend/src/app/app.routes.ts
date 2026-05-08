@@ -95,6 +95,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'survey',
+        loadComponent: () =>
+          import('./features/survey/survey.component').then(
+            (m) => m.SurveyComponent,
+          ),
+      },
+      {
         path: 'admin',
         canActivate: [authGuard, adminGuard],
         loadChildren: () =>

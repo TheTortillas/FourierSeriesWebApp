@@ -533,6 +533,102 @@
     "description": "Entorno de desarrollo para probar endpoints y componentes.",
     "selectPanel": "Selecciona un panel"
   },
+  "survey": {
+    "title": "Encuesta de uso",
+    "subtitle": "Antes que nada, gracias por probar la aplicación. Todos los datos son con fines estadísticos.",
+    "step": "Paso {{ current }} de {{ total }}",
+    "back": "← Atrás",
+    "next": "Siguiente →",
+    "submit": "Enviar encuesta",
+    "submitting": "Enviando…",
+    "successTitle": "¡Muchas gracias!",
+    "successMessage": "Tu respuesta fue registrada. Nos ayuda mucho a entender quién usa la herramienta y cómo mejorarla.",
+    "goHome": "Volver al inicio",
+    "otherPlaceholder": "Especifica…",
+    "ratingHint15": "1 = Nada / 5 = Completamente",
+    "prompt": {
+      "title": "¿Tienes 3 minutos?",
+      "subtitle": "Responde una breve encuesta y ayúdanos a mejorar la aplicación.",
+      "start": "Responder ahora",
+      "later": "Quizás después"
+    },
+    "s1": {
+      "question": "¿Cuál de las siguientes opciones describe mejor tu situación actual?",
+      "roles": {
+        "student": "Estudiante",
+        "teacher": "Docente",
+        "graduate": "Egresado",
+        "other": "Otro"
+      }
+    },
+    "s2": {
+      "level": "Nivel académico",
+      "levels": {
+        "licenciatura": "Licenciatura / Ingeniería",
+        "maestria": "Maestría",
+        "doctorado": "Doctorado",
+        "other": "Otro"
+      },
+      "institutionPlaceholder": "Ej. ESCOM, ESIME Zacatenco, FES Acatlán…",
+      "careerPlaceholder": "Ej. Ing. en Sistemas Computacionales, Lic. en Física…",
+      "student": {
+        "heading": "Cuéntanos sobre tus estudios",
+        "institution": "Institución en la que estudias",
+        "career": "Carrera que cursas"
+      },
+      "teacher": {
+        "heading": "Cuéntanos sobre tu actividad docente",
+        "institution": "Institución en la que impartes clases"
+      },
+      "graduate": {
+        "heading": "Cuéntanos sobre tu formación",
+        "institution": "Institución de la que egresaste",
+        "career": "Carrera de la que egresaste"
+      },
+      "other": {
+        "heading": "Cuéntanos sobre tu contexto",
+        "institution": "Institución u organización (si aplica)"
+      }
+    },
+    "s3": {
+      "purposeLabel": "¿Con qué propósito usaste la aplicación?",
+      "purposes": {
+        "problem": "Resolver un problema específico",
+        "learning": "Aprender o repasar teoría",
+        "teaching": "Enseñar en clase",
+        "exploration": "Exploración, recomendación o curiosidad",
+        "other": "Otro"
+      },
+      "featuresLabel": "¿Qué funcionalidades probaste?",
+      "features": {
+        "trigonometric": "Serie trigonométrica",
+        "half_range": "Extensión de medio rango",
+        "complex": "Serie exponencial compleja",
+        "dft": "Transformada Discreta de Fourier (DFT)",
+        "none": "Ninguna aún"
+      },
+      "deviceLabel": "¿En qué dispositivo usaste la aplicación?",
+      "devices": {
+        "phone": "Teléfono celular",
+        "computer": "Computadora / Laptop"
+      },
+      "usefulnessLabel": "¿La aplicación fue útil para resolver tu problema o entender el tema?",
+      "easeLabel": "¿Qué tan fácil de usar e intuitiva te resultó?"
+    },
+    "s4": {
+      "vsOtherLabel": "¿Cómo calificarías la aplicación frente a otras herramientas que conoces?",
+      "vsOtherHint": "1 = Muy inferior · 5 = Igual o mejor",
+      "recommendLabel": "¿Qué tan probable es que la sigas usando o la recomiendes?",
+      "recommendHint": "1 = Nada probable · 5 = Seguro"
+    },
+    "s5": {
+      "optional": "Estas preguntas son opcionales. Cualquier detalle es de gran ayuda.",
+      "bugLabel": "Describe cualquier error, bug o caso que no haya funcionado como esperabas",
+      "bugPlaceholder": "Describe el problema con el mayor detalle posible…",
+      "commentsLabel": "Comentarios, sugerencias o recomendaciones",
+      "commentsPlaceholder": "Cualquier cosa que te haya gustado, disgustado o que consideres que podría mejorar…"
+    }
+  },
   "feedback": {
     "nav": "Feedback",
     "modal": {
@@ -542,7 +638,7 @@
       "placeholder": "Comentario opcional…",
       "submit": "Enviar",
       "submitting": "Enviando…",
-      "skip": "Ahora no",
+      "askLater": "Preguntar después",
       "successTitle": "¡Gracias!",
       "successMessage": "Tu retroalimentación fue recibida."
     },

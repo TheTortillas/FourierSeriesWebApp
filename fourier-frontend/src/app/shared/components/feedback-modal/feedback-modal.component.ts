@@ -9,7 +9,9 @@ import { FeedbackService } from '../../../core/services/feedback/feedback.servic
   template: `
     @if (feedback.modalOpen()) {
       <div
-        class="fixed bottom-4 right-4 z-50 w-80 rounded-lg border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-xl animate-slide-up"
+        [class]="closing()
+          ? 'fixed bottom-4 right-4 z-50 w-80 rounded-lg border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-xl animate-slide-down'
+          : 'fixed bottom-4 right-4 z-50 w-80 rounded-lg border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-xl animate-slide-up'"
         role="dialog"
         [attr.aria-label]="'feedback.modal.title' | transloco"
       >
@@ -26,7 +28,7 @@ import { FeedbackService } from '../../../core/services/feedback/feedback.servic
               </div>
               <button
                 type="button"
-                (click)="feedback.closeModal()"
+                (click)="triggerClose('x')"
                 [attr.aria-label]="'common.close' | transloco"
                 class="shrink-0 p-1 rounded text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
               >
@@ -65,10 +67,10 @@ import { FeedbackService } from '../../../core/services/feedback/feedback.servic
             <div class="flex items-center justify-end gap-2">
               <button
                 type="button"
-                (click)="feedback.closeModal()"
+                (click)="triggerClose('later')"
                 class="px-2.5 py-1 rounded text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
               >
-                {{ 'feedback.modal.skip' | transloco }}
+                {{ 'feedback.modal.askLater' | transloco }}
               </button>
               <button
                 type="button"
@@ -91,7 +93,7 @@ import { FeedbackService } from '../../../core/services/feedback/feedback.servic
             </p>
             <button
               type="button"
-              (click)="feedback.closeModal()"
+              (click)="triggerClose('done')"
               class="mt-1 px-3 py-1 rounded bg-paper2 dark:bg-dark-surface text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer"
             >
               {{ 'common.close' | transloco }}
@@ -103,18 +105,33 @@ import { FeedbackService } from '../../../core/services/feedback/feedback.servic
   `,
   styles: [`
     @keyframes slide-up {
-      from { opacity: 0; transform: translateY(12px); }
+      from { opacity: 0; transform: translateY(14px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .animate-slide-up { animation: slide-up 0.2s ease-out; }
+    @keyframes slide-down {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(14px); }
+    }
+    .animate-slide-up   { animation: slide-up   0.2s ease-out forwards; }
+    .animate-slide-down { animation: slide-down 0.2s ease-in  forwards; }
   `],
 })
 export class FeedbackModalComponent {
   readonly feedback = inject(FeedbackService);
 
-  readonly rating = signal(0);
+  readonly rating  = signal(0);
   readonly hovered = signal(0);
+  readonly closing = signal(false);
   comment = '';
+
+  triggerClose(reason: 'x' | 'later' | 'done'): void {
+    if (this.closing()) return;
+    this.closing.set(true);
+    setTimeout(() => {
+      this.closing.set(false);
+      this.feedback.closeModal(reason);
+    }, 200);
+  }
 
   submit(): void {
     if (!this.rating()) return;
