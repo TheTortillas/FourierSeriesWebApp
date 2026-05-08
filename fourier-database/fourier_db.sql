@@ -1,5 +1,5 @@
 -- ============================================================
--- FOURIER CALCULATOR - SCHEMA v1
+-- FOURIER CALCULATOR - SCHEMA v2
 -- ============================================================
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
