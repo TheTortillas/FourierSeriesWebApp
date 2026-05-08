@@ -195,6 +195,28 @@ export class HistoryRepository implements IHistoryRepository {
     return result.rows[0]!;
   }
 
+  async renameFavorite(
+    id: string,
+    userId: string,
+    name: string | undefined,
+  ): Promise<HistoryRecord> {
+    const updated = await db.query<{ rowCount: number }>(
+      `UPDATE calculation_events
+       SET favorite_name = $3
+       WHERE id = $1 AND user_id = $2 AND is_favorite = TRUE`,
+      [id, userId, name ?? null],
+    );
+    if ((updated.rowCount ?? 0) === 0) throw new Error("History entry not found");
+
+    const result = await db.query(
+      `SELECT ${EVENT_COLS}
+       ${EVENT_JOIN}
+       WHERE ce.id = $1`,
+      [id],
+    );
+    return result.rows[0]!;
+  }
+
   async delete(id: string, userId: string): Promise<void> {
     const result = await db.query(
       `DELETE FROM calculation_events WHERE id = $1 AND user_id = $2`,

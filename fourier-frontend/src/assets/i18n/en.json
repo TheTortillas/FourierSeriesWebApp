@@ -25,7 +25,8 @@
     "downloadPng": "Download PNG",
     "latex": "LaTeX",
     "maxima": "Maxima",
-    "close": "Close"
+    "close": "Close",
+    "saving": "Saving…"
   },
   "nav": {
     "fourierAnalysis": "Fourier Analysis",
@@ -366,6 +367,7 @@
     "favorite": {
       "add": "Save as favorite",
       "remove": "Remove from favorites",
+      "rename": "Rename favorite",
       "nameLabel": "Favorite name:",
       "namePlaceholder": "e.g. Series of cos(x)"
     },
@@ -474,17 +476,27 @@
     "resendVerification": "Resend",
     "resendSent": "Sent ✓",
     "resendSending": "Sending…",
+    "authMethod": "Sign-in method",
+    "authEmail": "Email & password",
+    "memberSince": "Member since",
+    "lastLogin": "Last login",
+    "editName": "Edit name",
+    "firstName": "First name",
+    "lastName": "Last name",
     "calculationsThisWeek": "Calculations this week",
     "quotaUnlimited": "{{ used }} used · unlimited",
+    "quotaUnlimitedDesc": "You have unlimited calculations.",
     "quotaLimited": "{{ used }} / {{ limit }} · {{ remaining }} remaining",
     "myCalculations": "My calculations",
+    "myFavorites": "My favorites",
     "changePassword": "Change password",
     "passwordUpdated": "✓ Password updated successfully.",
     "currentPassword": "Current password",
     "newPassword": "New password",
     "confirmNewPassword": "Confirm new password",
     "savePassword": "Change password",
-    "savingPassword": "Saving…"
+    "savingPassword": "Saving…",
+    "googleNoPassword": "Your account uses Google sign-in — password change is not available."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

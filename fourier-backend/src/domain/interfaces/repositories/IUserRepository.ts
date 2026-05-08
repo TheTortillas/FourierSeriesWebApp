@@ -30,6 +30,7 @@ export interface IUserRepository {
   findByGoogleId(googleId: string): Promise<UserRecord | null>;
   create(input: CreateUserInput): Promise<UserRecord>;
   updateLastLogin(id: string): Promise<void>;
+  updateName(userId: string, firstName: string, lastName: string): Promise<void>;
   updateTier(id: string, tier: "free" | "premium"): Promise<void>;
   softDelete(id: string): Promise<void>;
   linkGoogleAccount(userId: string, googleId: string): Promise<void>;

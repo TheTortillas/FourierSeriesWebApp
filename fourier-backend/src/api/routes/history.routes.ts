@@ -149,6 +149,28 @@ historyRouter.patch(
   },
 );
 
+historyRouter.patch(
+  "/:id/favorite/name",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { name } = req.body as { name?: string };
+      const id = req.params["id"] as string;
+      const entry = await historyRepository.renameFavorite(
+        id,
+        req.user!.id,
+        name?.trim() || undefined,
+      );
+      res.json(entry);
+    } catch (err) {
+      if (err instanceof Error && err.message === "History entry not found") {
+        res.status(404).json({ error: err.message });
+        return;
+      }
+      next(err);
+    }
+  },
+);
+
 /**
  * @openapi
  * /api/history/{id}:

@@ -127,6 +127,10 @@ export class ApiService {
     });
   }
 
+  updateProfile(firstName: string, lastName: string): Observable<{ user: User }> {
+    return this.http.patch<{ user: User }>(`${this.base}/auth/profile`, { firstName, lastName });
+  }
+
   // ─── Fourier Series ──────────────────────────────────────────────────────
 
   calculateTrigonometric(body: FourierSeriesRequest): Observable<TrigonometricResponse> {
@@ -233,6 +237,10 @@ export class ApiService {
 
   toggleFavorite(id: string, name?: string): Observable<HistoryEntry> {
     return this.http.patch<HistoryEntry>(`${this.base}/history/${id}/favorite`, { name });
+  }
+
+  renameFavorite(id: string, name: string | undefined): Observable<HistoryEntry> {
+    return this.http.patch<HistoryEntry>(`${this.base}/history/${id}/favorite/name`, { name });
   }
 
   deleteHistoryEntry(id: string): Observable<{ message: string }> {

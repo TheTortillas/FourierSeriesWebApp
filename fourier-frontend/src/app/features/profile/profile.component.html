@@ -1,156 +1,241 @@
-<app-nav />
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
+  <app-nav />
 
-<main class="max-w-xl mx-auto px-4 py-10 flex flex-col gap-6">
+  <main class="flex-1 max-w-2xl mx-auto w-full px-4 py-10 flex flex-col gap-6">
 
-  <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'profile.title' | transloco }}</h1>
+    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'profile.title' | transloco }}</h1>
 
-  @if (store.user(); as user) {
+    @if (store.user(); as user) {
 
-    <!-- ── Info card ───────────────────────────────────────────────────── -->
-    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                    rounded-xl p-5 flex flex-col gap-4">
+      <!-- ── Identity card ──────────────────────────────────────────────── -->
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5 flex flex-col gap-5">
 
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-accent/10 dark:bg-accent/15 border border-accent/20
-                    flex items-center justify-center shrink-0">
-          <span class="font-display text-lg text-accent">
-            {{ user.firstName[0] }}{{ user.lastName[0] }}
-          </span>
-        </div>
+        <!-- Avatar + name + email -->
+        <div class="flex items-start gap-4">
+          <div class="w-14 h-14 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+            <span class="font-display text-xl text-accent select-none">
+              {{ user.firstName[0] }}{{ user.lastName[0] }}
+            </span>
+          </div>
 
-        <div class="flex-1 min-w-0">
-          <p class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
-            {{ user.firstName }} {{ user.lastName }}
-          </p>
-          <p class="font-mono text-xs text-muted dark:text-dark-muted truncate">
-            {{ user.email }}
-          </p>
-        </div>
-
-        <span [class]="user.tier === 'premium'
-          ? 'px-2 py-0.5 rounded-full text-xs font-mono border bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
-          : 'px-2 py-0.5 rounded-full text-xs font-mono border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'">
-          {{ user.tier }}
-        </span>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 text-xs font-mono
-                  border-t border-border dark:border-dark-border pt-4">
-        <div class="flex flex-col gap-0.5">
-          <span class="text-muted dark:text-dark-muted">{{ 'profile.role' | transloco }}</span>
-          <span [class]="user.role === 'admin' ? 'text-accent font-medium' : 'text-ink dark:text-dark-ink'">
-            {{ user.role }}
-          </span>
-        </div>
-
-        <div class="flex flex-col gap-0.5">
-          <span class="text-muted dark:text-dark-muted">{{ 'profile.email' | transloco }}</span>
-          @if (user.emailVerified) {
-            <span class="text-green-600 dark:text-green-400">{{ 'profile.emailVerified' | transloco }}</span>
-          } @else {
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-amber-600 dark:text-amber-400">{{ 'profile.emailNotVerified' | transloco }}</span>
-              @if (!resendSent()) {
-                <button type="button" (click)="onResendVerification()"
-                        [disabled]="resendLoading()"
-                        class="text-accent hover:underline cursor-pointer disabled:opacity-50">
-                  {{ resendLoading() ? ('profile.resendSending' | transloco) : ('profile.resendVerification' | transloco) }}
+          <div class="flex-1 min-w-0">
+            @if (!editingName()) {
+              <div class="flex items-center gap-2 flex-wrap">
+                <p class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+                  {{ user.firstName }} {{ user.lastName }}
+                </p>
+                <button type="button" (click)="startEditName()"
+                  [title]="'profile.editName' | transloco"
+                  class="p-1 rounded text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
                 </button>
-              } @else {
-                <span class="text-green-600 dark:text-green-400">{{ 'profile.resendSent' | transloco }}</span>
-              }
-            </div>
-          }
+              </div>
+            } @else {
+              <form [formGroup]="nameForm" (ngSubmit)="onSaveName()" class="flex flex-col gap-2">
+                <div class="flex gap-2">
+                  <input type="text" formControlName="firstName"
+                    [placeholder]="'profile.firstName' | transloco"
+                    class="flex-1 min-w-0 px-2 py-1.5 rounded text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+                  <input type="text" formControlName="lastName"
+                    [placeholder]="'profile.lastName' | transloco"
+                    class="flex-1 min-w-0 px-2 py-1.5 rounded text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+                </div>
+                @if (nameError()) {
+                  <p class="text-xs font-mono text-red-500">{{ nameError() }}</p>
+                }
+                <div class="flex gap-2">
+                  <button type="submit" [disabled]="nameForm.invalid || nameLoading()"
+                    class="px-3 py-1 rounded text-xs font-mono bg-accent text-white hover:bg-accent/90 transition-colors disabled:opacity-50 cursor-pointer">
+                    {{ nameLoading() ? ('common.saving' | transloco) : ('common.save' | transloco) }}
+                  </button>
+                  <button type="button" (click)="cancelEditName()"
+                    class="px-3 py-1 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink border border-border dark:border-dark-border transition-colors cursor-pointer">
+                    {{ 'common.cancel' | transloco }}
+                  </button>
+                </div>
+              </form>
+            }
+            <p class="font-mono text-xs text-muted dark:text-dark-muted truncate mt-0.5">{{ user.email }}</p>
+          </div>
+
+          <!-- Tier badge -->
+          <span [class]="user.tier === 'premium'
+            ? 'shrink-0 px-2 py-0.5 rounded-full text-xs font-mono border bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
+            : 'shrink-0 px-2 py-0.5 rounded-full text-xs font-mono border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'">
+            {{ user.tier }}
+          </span>
         </div>
 
-        @if (store.quota(); as quota) {
-          <div class="flex flex-col gap-0.5 col-span-2">
-            <span class="text-muted dark:text-dark-muted">{{ 'profile.calculationsThisWeek' | transloco }}</span>
-            <span class="text-ink dark:text-dark-ink">
+        <!-- Info grid -->
+        <div class="grid grid-cols-2 gap-x-6 gap-y-4 text-xs font-mono border-t border-border dark:border-dark-border pt-4">
+
+          <!-- Email verification -->
+          <div class="flex flex-col gap-1">
+            <span class="text-muted dark:text-dark-muted">{{ 'profile.email' | transloco }}</span>
+            @if (user.emailVerified) {
+              <span class="text-green-600 dark:text-green-400">{{ 'profile.emailVerified' | transloco }}</span>
+            } @else {
+              <div class="flex flex-col gap-1">
+                <span class="text-amber-600 dark:text-amber-400">{{ 'profile.emailNotVerified' | transloco }}</span>
+                @if (!resendSent()) {
+                  <button type="button" (click)="onResendVerification()" [disabled]="resendLoading()"
+                    class="text-accent hover:underline cursor-pointer disabled:opacity-50 text-left">
+                    {{ resendLoading() ? ('profile.resendSending' | transloco) : ('profile.resendVerification' | transloco) }}
+                  </button>
+                } @else {
+                  <span class="text-green-600 dark:text-green-400">{{ 'profile.resendSent' | transloco }}</span>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Auth method -->
+          <div class="flex flex-col gap-1">
+            <span class="text-muted dark:text-dark-muted">{{ 'profile.authMethod' | transloco }}</span>
+            @if (user.passwordHash === null) {
+              <span class="flex items-center gap-1 text-ink dark:text-dark-ink">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14l-4-4 1.41-1.41L11 13.17l6.59-6.59L19 8l-8 8z"/>
+                </svg>
+                Google
+              </span>
+            } @else {
+              <span class="text-ink dark:text-dark-ink">{{ 'profile.authEmail' | transloco }}</span>
+            }
+          </div>
+
+          <!-- Role -->
+          <div class="flex flex-col gap-1">
+            <span class="text-muted dark:text-dark-muted">{{ 'profile.role' | transloco }}</span>
+            <span [class]="user.role === 'admin' ? 'text-accent font-medium' : 'text-ink dark:text-dark-ink'">
+              {{ user.role }}
+            </span>
+          </div>
+
+          <!-- Member since -->
+          <div class="flex flex-col gap-1">
+            <span class="text-muted dark:text-dark-muted">{{ 'profile.memberSince' | transloco }}</span>
+            <span class="text-ink dark:text-dark-ink">{{ formatDate(user.createdAt) }}</span>
+          </div>
+
+          <!-- Last login -->
+          <div class="flex flex-col gap-1 col-span-2">
+            <span class="text-muted dark:text-dark-muted">{{ 'profile.lastLogin' | transloco }}</span>
+            <span class="text-ink dark:text-dark-ink">{{ formatDate(user.lastLoginAt) }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Quota card ─────────────────────────────────────────────────── -->
+      @if (store.quota(); as quota) {
+        <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <h2 class="font-mono text-sm text-ink dark:text-dark-ink">{{ 'profile.calculationsThisWeek' | transloco }}</h2>
+            <span class="font-mono text-xs text-muted dark:text-dark-muted">
               @if (quota.remaining === null) {
                 {{ 'profile.quotaUnlimited' | transloco: { used: quota.used } }}
               } @else {
-                {{ 'profile.quotaLimited' | transloco: { used: quota.used, limit: quota.limit, remaining: quota.remaining } }}
+                {{ quota.used }} / {{ quota.limit }}
               }
             </span>
           </div>
-        }
-      </div>
-    </section>
 
-    <!-- ── Quick links ────────────────────────────────────────────────── -->
-    <div class="flex gap-2 flex-wrap">
-      <a routerLink="../history"
-         class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border dark:border-dark-border
-                bg-paper2 dark:bg-dark-surface text-sm font-mono text-muted dark:text-dark-muted
-                hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
-             class="w-4 h-4 shrink-0">
-          <path d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/>
-        </svg>
-        {{ 'profile.myCalculations' | transloco }}
-      </a>
-    </div>
-
-    <!-- ── Change password ────────────────────────────────────────────── -->
-    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border
-                    rounded-xl p-5 flex flex-col gap-4">
-
-      <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'profile.changePassword' | transloco }}</h2>
-
-      @if (pwSuccess()) {
-        <p class="text-sm font-mono text-green-600 dark:text-green-400">
-          {{ 'profile.passwordUpdated' | transloco }}
-        </p>
-      } @else {
-        <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="flex flex-col gap-3">
-
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-mono text-muted dark:text-dark-muted">
-              {{ 'profile.currentPassword' | transloco }}
-            </label>
-            <input type="password" formControlName="currentPassword" autocomplete="current-password"
-                   class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent dark:focus:border-accent disabled:opacity-50"/>
-            @if (currentPassword.invalid && currentPassword.touched) {
-              <span class="text-xs text-red-500 font-mono">{{ 'common.required' | transloco }}</span>
-            }
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-mono text-muted dark:text-dark-muted">
-              {{ 'profile.newPassword' | transloco }}
-            </label>
-            <input type="password" formControlName="newPassword" autocomplete="new-password"
-                   class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent dark:focus:border-accent"/>
-            @if (newPassword.invalid && newPassword.touched) {
-              <span class="text-xs text-red-500 font-mono">{{ 'common.passwordMin8' | transloco }}</span>
-            }
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-mono text-muted dark:text-dark-muted">
-              {{ 'profile.confirmNewPassword' | transloco }}
-            </label>
-            <input type="password" formControlName="confirmPassword" autocomplete="new-password"
-                   class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent dark:focus:border-accent"/>
-            @if (passwordForm.hasError('mismatch') && confirmPassword.touched) {
-              <span class="text-xs text-red-500 font-mono">{{ 'common.passwordMismatch' | transloco }}</span>
-            }
-          </div>
-
-          @if (pwError()) {
-            <p class="text-sm font-mono text-red-500">{{ pwError() }}</p>
+          @if (quotaPct() !== null) {
+            <div class="w-full h-1.5 rounded-full bg-border dark:bg-dark-border overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all"
+                [class]="quotaPct()! >= 90 ? 'bg-red-500' : quotaPct()! >= 70 ? 'bg-amber-500' : 'bg-accent'"
+                [style.width.%]="quotaPct()">
+              </div>
+            </div>
+            <p class="text-xs font-mono text-muted dark:text-dark-muted">
+              {{ 'profile.quotaLimited' | transloco: { used: quota.used, limit: quota.limit, remaining: quota.remaining } }}
+            </p>
+          } @else {
+            <p class="text-xs font-mono text-muted dark:text-dark-muted">
+              {{ 'profile.quotaUnlimitedDesc' | transloco }}
+            </p>
           }
-
-          <button type="submit" [disabled]="passwordForm.invalid || pwLoading()"
-                  class="mt-1 px-4 py-2 rounded-lg text-sm font-mono bg-accent text-white border border-accent hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-            {{ pwLoading() ? ('profile.savingPassword' | transloco) : ('profile.savePassword' | transloco) }}
-          </button>
-
-        </form>
+        </section>
       }
-    </section>
 
-  }
-</main>
+      <!-- ── Quick links ────────────────────────────────────────────────── -->
+      <div class="flex gap-2 flex-wrap">
+        <a [routerLink]="'/' + lang() + '/history'"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+            class="w-4 h-4 shrink-0">
+            <path d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/>
+          </svg>
+          {{ 'profile.myCalculations' | transloco }}
+        </a>
+        <a [routerLink]="'/' + lang() + '/history'" [queryParams]="{ favorites: true }"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+            class="w-4 h-4 shrink-0">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          {{ 'profile.myFavorites' | transloco }}
+        </a>
+      </div>
+
+      <!-- ── Change password ────────────────────────────────────────────── -->
+      @if (user.passwordHash !== null) {
+        <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5 flex flex-col gap-4">
+          <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'profile.changePassword' | transloco }}</h2>
+
+          @if (pwSuccess()) {
+            <p class="text-sm font-mono text-green-600 dark:text-green-400">{{ 'profile.passwordUpdated' | transloco }}</p>
+          } @else {
+            <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="flex flex-col gap-3">
+              <div class="flex flex-col gap-1">
+                <label class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'profile.currentPassword' | transloco }}</label>
+                <input type="password" formControlName="currentPassword" autocomplete="current-password"
+                  class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent disabled:opacity-50"/>
+                @if (currentPassword.invalid && currentPassword.touched) {
+                  <span class="text-xs text-red-500 font-mono">{{ 'common.required' | transloco }}</span>
+                }
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'profile.newPassword' | transloco }}</label>
+                <input type="password" formControlName="newPassword" autocomplete="new-password"
+                  class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+                @if (newPassword.invalid && newPassword.touched) {
+                  <span class="text-xs text-red-500 font-mono">{{ 'common.passwordMin8' | transloco }}</span>
+                }
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'profile.confirmNewPassword' | transloco }}</label>
+                <input type="password" formControlName="confirmPassword" autocomplete="new-password"
+                  class="w-full px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+                @if (passwordForm.hasError('mismatch') && confirmPassword.touched) {
+                  <span class="text-xs text-red-500 font-mono">{{ 'common.passwordMismatch' | transloco }}</span>
+                }
+              </div>
+              @if (pwError()) {
+                <p class="text-sm font-mono text-red-500">{{ pwError() }}</p>
+              }
+              <button type="submit" [disabled]="passwordForm.invalid || pwLoading()"
+                class="mt-1 px-4 py-2 rounded-lg text-sm font-mono bg-accent text-white hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                {{ pwLoading() ? ('profile.savingPassword' | transloco) : ('profile.savePassword' | transloco) }}
+              </button>
+            </form>
+          }
+        </section>
+      } @else {
+        <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5">
+          <p class="text-sm font-mono text-muted dark:text-dark-muted">{{ 'profile.googleNoPassword' | transloco }}</p>
+        </section>
+      }
+
+    }
+  </main>
+
+  <app-footer />
+</div>

@@ -123,6 +123,14 @@ export class UserRepository implements IUserRepository {
     ]);
   }
 
+  async updateName(userId: string, firstName: string, lastName: string): Promise<void> {
+    await db.query(
+      `UPDATE persons SET first_name = $1, last_name = $2, updated_at = NOW()
+       WHERE id = (SELECT person_id FROM users WHERE id = $3)`,
+      [firstName, lastName, userId],
+    );
+  }
+
   async updateTier(id: string, tier: "free" | "premium"): Promise<void> {
     await db.query(`UPDATE users SET tier = $1 WHERE id = $2`, [tier, id]);
   }

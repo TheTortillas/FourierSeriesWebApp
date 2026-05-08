@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../core/services/api/api.service';
@@ -26,6 +26,7 @@ const TYPE_KEY: Record<string, string> = {
 export class HistoryComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly transloco = inject(TranslocoService);
 
   readonly loading = signal(false);
@@ -67,6 +68,10 @@ export class HistoryComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const favParam = this.route.snapshot.queryParamMap.get('favorites');
+    if (favParam === 'true' || favParam === '1') {
+      this.showFavoritesOnly = true;
+    }
     this.load();
   }
 
@@ -108,24 +113,39 @@ export class HistoryComponent implements OnInit {
   toggleFavorite(entry: HistoryEntry, event: Event): void {
     event.stopPropagation();
     if (entry.isFavorite) {
-      // Unmark — no name needed
       this.api.toggleFavorite(entry.id).subscribe({
         next: (updated) => this.patchEntry(updated),
       });
     } else {
-      // Mark — open inline rename dialog
       this.renamingId.set(entry.id);
       this.renameValue = '';
     }
   }
 
+  startRenameFavorite(entry: HistoryEntry, event: Event): void {
+    event.stopPropagation();
+    this.renamingId.set(entry.id);
+    this.renameValue = entry.favoriteName ?? '';
+  }
+
   confirmFavorite(entry: HistoryEntry): void {
-    this.api.toggleFavorite(entry.id, this.renameValue.trim() || undefined).subscribe({
-      next: (updated) => {
-        this.patchEntry(updated);
-        this.renamingId.set(null);
-      },
-    });
+    const name = this.renameValue.trim() || undefined;
+    if (entry.isFavorite) {
+      // Already a favorite — just update the name via a PATCH that keeps isFavorite=true
+      this.api.renameFavorite(entry.id, name).subscribe({
+        next: (updated) => {
+          this.patchEntry(updated);
+          this.renamingId.set(null);
+        },
+      });
+    } else {
+      this.api.toggleFavorite(entry.id, name).subscribe({
+        next: (updated) => {
+          this.patchEntry(updated);
+          this.renamingId.set(null);
+        },
+      });
+    }
   }
 
   cancelRename(): void {
