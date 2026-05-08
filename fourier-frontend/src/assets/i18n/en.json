@@ -571,6 +571,8 @@
       },
       "institutionPlaceholder": "e.g. MIT, Stanford, UNAM…",
       "careerPlaceholder": "e.g. Electrical Engineering, Applied Mathematics…",
+      "country": "What country are you in?",
+      "countryPlaceholder": "e.g. Mexico, USA, Spain…",
       "student": {
         "heading": "Tell us about your studies",
         "institution": "Institution where you study",
@@ -591,31 +593,51 @@
       }
     },
     "s3": {
+      "howFoundLabel": "How did you find the app?",
+      "howFound": {
+        "search": "Google / internet search",
+        "recommendation_peer": "Recommendation from a classmate or colleague",
+        "recommendation_teacher": "Recommendation from a teacher",
+        "social": "Social media",
+        "other": "Other"
+      },
+      "usedPreviousLabel": "Did you know or use a previous version of this app?",
+      "usedPreviousYes": "Yes, I used the previous version",
+      "usedPreviousNo": "No, this is my first time using it",
       "purposeLabel": "What was your purpose for using the app?",
       "purposes": {
         "problem": "Solve a specific problem",
         "learning": "Learn or review theory",
         "teaching": "Teach a class",
-        "exploration": "Exploration, recommendation, or curiosity",
+        "exploration": "Exploration or curiosity",
         "other": "Other"
       },
-      "featuresLabel": "Which features did you try?",
+      "featuresLabel": "Which features did you try? (select all that apply)",
+      "groupSeries": "Fourier Series",
+      "groupContinuous": "Continuous transform",
+      "groupDft": "Discrete Transform (DFT)",
       "features": {
         "trigonometric": "Trigonometric series",
-        "half_range": "Half-range extension",
+        "half_range": "Half-range series",
         "complex": "Complex exponential series",
-        "dft": "Discrete Fourier Transform (DFT)",
+        "fourier_transform": "Continuous Fourier Transform",
+        "inverse_fourier_transform": "Inverse Fourier Transform",
+        "dft_signal": "DFT — discrete signal (manual points)",
+        "dft_function": "DFT — sampled continuous function",
+        "dft_epicycles": "DFT — animated epicycles",
         "none": "None yet"
       },
       "deviceLabel": "Which device did you use?",
       "devices": {
         "phone": "Mobile phone",
         "computer": "Computer / Laptop"
-      },
-      "usefulnessLabel": "Was the app useful for solving your problem or understanding the topic?",
-      "easeLabel": "How easy and intuitive did you find the app?"
+      }
     },
     "s4": {
+      "usefulnessLabel": "Was the app useful for solving your problem or understanding the topic?",
+      "usefulnessHint": "1 = Not at all · 5 = Completely",
+      "easeLabel": "How easy and intuitive did you find the app?",
+      "easeHint": "1 = Couldn't use it · 5 = Very intuitive",
       "vsOtherLabel": "How would you rate this app compared to other tools you know?",
       "vsOtherHint": "1 = Much worse · 5 = Equal or better",
       "recommendLabel": "How likely are you to keep using or recommend this app?",

@@ -1,43 +1,46 @@
 export type SurveyRole = 'student' | 'teacher' | 'graduate' | 'other';
 export type AcademicLevel = 'licenciatura' | 'maestria' | 'doctorado' | 'other';
 export type SurveyPurpose = 'problem' | 'learning' | 'teaching' | 'exploration' | 'other';
-export type SurveyFeature = 'trigonometric' | 'half_range' | 'complex' | 'dft' | 'none';
+export type SurveyFeature =
+  | 'trigonometric'
+  | 'half_range'
+  | 'complex'
+  | 'fourier_transform'
+  | 'inverse_fourier_transform'
+  | 'dft_signal'
+  | 'dft_function'
+  | 'dft_epicycles'
+  | 'none';
 export type SurveyDevice = 'phone' | 'computer';
+export type HowFound = 'search' | 'recommendation_peer' | 'recommendation_teacher' | 'social' | 'other';
 
 export interface SurveyRequest {
   role: SurveyRole;
   roleOther?: string;
 
-  // Student
-  studentLevel?: AcademicLevel;
-  studentLevelOther?: string;
-  studentCareer?: string;
-  studentInstitution?: string;
+  // Step 2 — Academic details
+  academicLevel: AcademicLevel;
+  academicLevelOther?: string;
+  institution?: string;
+  career?: string;
+  country: string;
 
-  // Teacher
-  teacherLevel?: AcademicLevel;
-  teacherLevelOther?: string;
-  teacherInstitution?: string;
-
-  // Graduate
-  graduateLevel?: AcademicLevel;
-  graduateLevelOther?: string;
-  graduateInstitution?: string;
-  graduateCareer?: string;
-
-  // Experience
+  // Step 3 — Experience
+  howFound: HowFound;
+  howFoundOther?: string;
+  usedPrevious: boolean;
   purpose: SurveyPurpose;
   purposeOther?: string;
   featuresUsed: SurveyFeature[];
   device: SurveyDevice;
+
+  // Step 4 — Ratings
   usefulnessRating: number;
   easeOfUseRating: number;
-
-  // Comparison
   vsOtherToolsRating: number;
   recommendRating: number;
 
-  // Problems & comments
+  // Step 5 — Open
   bugDescription?: string;
   generalComments?: string;
 }

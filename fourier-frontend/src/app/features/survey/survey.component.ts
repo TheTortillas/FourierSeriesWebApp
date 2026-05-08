@@ -6,9 +6,8 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { SurveyService } from '../../core/services/survey/survey.service';
 import { SeoService } from '../../core/services/seo/seo.service';
-import { UserStore } from '../../core/services/auth/user.store';
 import {
-  SurveyRole, AcademicLevel, SurveyPurpose, SurveyFeature, SurveyDevice
+  SurveyRole, AcademicLevel, SurveyPurpose, SurveyFeature, SurveyDevice, HowFound
 } from '../../domain';
 
 const TOTAL_STEPS = 5;
@@ -23,64 +22,67 @@ export class SurveyComponent {
   private readonly router    = inject(Router);
   private readonly transloco = inject(TranslocoService);
   readonly surveySvc         = inject(SurveyService);
-  readonly userStore         = inject(UserStore);
 
-  readonly step      = signal(1);
+  readonly step       = signal(1);
   readonly totalSteps = TOTAL_STEPS;
-  readonly progress  = computed(() => (this.step() / TOTAL_STEPS) * 100);
-  readonly error     = signal('');
+  readonly progress   = computed(() => (this.step() / TOTAL_STEPS) * 100);
+  readonly error      = signal('');
 
   // Step 1 — Role
   role: SurveyRole | '' = '';
   roleOther = '';
 
-  // Step 2 — Role-specific fields (reused across roles)
+  // Step 2 — Academic details
   academicLevel: AcademicLevel | '' = '';
   academicLevelOther = '';
-  career = '';
   institution = '';
+  career = '';
+  country = '';
 
   // Step 3 — Experience
+  howFound: HowFound | '' = '';
+  howFoundOther = '';
+  usedPrevious: boolean | null = null;
   purpose: SurveyPurpose | '' = '';
   purposeOther = '';
   featuresUsed: SurveyFeature[] = [];
   device: SurveyDevice | '' = '';
-  usefulnessRating = 0;
-  usefulnessHovered = 0;
-  easeOfUseRating = 0;
-  easeHovered = 0;
 
-  // Step 4 — Comparison
-  vsOtherToolsRating = 0;
-  vsHovered = 0;
-  recommendRating = 0;
-  recommendHovered = 0;
+  // Step 4 — Ratings
+  usefulnessRating  = 0; usefulnessHovered  = 0;
+  easeOfUseRating   = 0; easeHovered        = 0;
+  vsOtherToolsRating = 0; vsHovered         = 0;
+  recommendRating   = 0; recommendHovered   = 0;
 
-  // Step 5 — Problems & comments
-  bugDescription = '';
+  // Step 5 — Open
+  bugDescription  = '';
   generalComments = '';
 
   constructor() {
     this.seo.setNoIndex();
   }
 
-  get lang(): string {
-    return this.transloco.getActiveLang();
-  }
+  get lang(): string { return this.transloco.getActiveLang(); }
 
   canAdvance(): boolean {
     switch (this.step()) {
-      case 1: return this.role !== '' && (this.role !== 'other' || this.roleOther.trim() !== '');
-      case 2: return this.academicLevel !== '' &&
-                     (this.academicLevel !== 'other' || this.academicLevelOther.trim() !== '') &&
-                     this.institution.trim() !== '';
-      case 3: return this.purpose !== '' &&
-                     (this.purpose !== 'other' || this.purposeOther.trim() !== '') &&
-                     this.featuresUsed.length > 0 &&
-                     this.device !== '' &&
-                     this.usefulnessRating > 0 &&
-                     this.easeOfUseRating > 0;
-      case 4: return this.vsOtherToolsRating > 0 && this.recommendRating > 0;
+      case 1:
+        return this.role !== '' && (this.role !== 'other' || this.roleOther.trim() !== '');
+      case 2:
+        return this.academicLevel !== '' &&
+          (this.academicLevel !== 'other' || this.academicLevelOther.trim() !== '') &&
+          this.country.trim() !== '';
+      case 3:
+        return this.howFound !== '' &&
+          (this.howFound !== 'other' || this.howFoundOther.trim() !== '') &&
+          this.usedPrevious !== null &&
+          this.purpose !== '' &&
+          (this.purpose !== 'other' || this.purposeOther.trim() !== '') &&
+          this.featuresUsed.length > 0 &&
+          this.device !== '';
+      case 4:
+        return this.getRating('usefulness') > 0 && this.getRating('ease') > 0 &&
+          this.getRating('vsOther') > 0 && this.getRating('recommend') > 0;
       default: return true;
     }
   }
@@ -110,53 +112,77 @@ export class SurveyComponent {
     }
   }
 
-  hasFeature(f: SurveyFeature): boolean {
-    return this.featuresUsed.includes(f);
-  }
+  hasFeature(f: SurveyFeature): boolean { return this.featuresUsed.includes(f); }
 
   submit(): void {
     if (this.surveySvc.submitting()) return;
     this.error.set('');
+    this.syncRatings();
 
-    const base = {
+    const levelOther = this.academicLevel === 'other' ? this.academicLevelOther.trim() : undefined;
+
+    this.surveySvc.submit({
       role: this.role as SurveyRole,
       roleOther: this.role === 'other' ? this.roleOther.trim() : undefined,
+      academicLevel: this.academicLevel as AcademicLevel,
+      academicLevelOther: levelOther,
+      institution: this.institution.trim() || undefined,
+      career: this.career.trim() || undefined,
+      country: this.country.trim(),
+      howFound: this.howFound as HowFound,
+      howFoundOther: this.howFound === 'other' ? this.howFoundOther.trim() : undefined,
+      usedPrevious: this.usedPrevious as boolean,
       purpose: this.purpose as SurveyPurpose,
       purposeOther: this.purpose === 'other' ? this.purposeOther.trim() : undefined,
       featuresUsed: this.featuresUsed,
       device: this.device as SurveyDevice,
-      usefulnessRating: this.usefulnessRating,
-      easeOfUseRating: this.easeOfUseRating,
+      usefulnessRating:   this.usefulnessRating,
+      easeOfUseRating:    this.easeOfUseRating,
       vsOtherToolsRating: this.vsOtherToolsRating,
-      recommendRating: this.recommendRating,
-      bugDescription: this.bugDescription.trim() || undefined,
-      generalComments: this.generalComments.trim() || undefined,
-    };
-
-    const level = this.academicLevel as AcademicLevel;
-    const levelOther = this.academicLevel === 'other' ? this.academicLevelOther.trim() : undefined;
-
-    const roleFields = this.role === 'student'
-      ? { studentLevel: level, studentLevelOther: levelOther, studentCareer: this.career.trim(), studentInstitution: this.institution.trim() }
-      : this.role === 'teacher'
-      ? { teacherLevel: level, teacherLevelOther: levelOther, teacherInstitution: this.institution.trim() }
-      : this.role === 'graduate'
-      ? { graduateLevel: level, graduateLevelOther: levelOther, graduateInstitution: this.institution.trim(), graduateCareer: this.career.trim() }
-      : {};
-
-    this.surveySvc.submit({ ...base, ...roleFields }).subscribe({
+      recommendRating:    this.recommendRating,
+      bugDescription:    this.bugDescription.trim() || undefined,
+      generalComments:   this.generalComments.trim() || undefined,
+    }).subscribe({
       error: () => this.error.set(this.transloco.translate('errors.generic')),
     });
   }
 
-  goHome(): void {
-    void this.router.navigate(['/', this.lang, 'home']);
-  }
+  goHome(): void { void this.router.navigate(['/', this.lang, 'home']); }
 
-  readonly roles: SurveyRole[] = ['student', 'teacher', 'graduate', 'other'];
-  readonly levels: AcademicLevel[] = ['licenciatura', 'maestria', 'doctorado', 'other'];
+  readonly roles: SurveyRole[]       = ['student', 'teacher', 'graduate', 'other'];
+  readonly levels: AcademicLevel[]   = ['licenciatura', 'maestria', 'doctorado', 'other'];
+  readonly howFoundOptions: HowFound[] = ['search', 'recommendation_peer', 'recommendation_teacher', 'social', 'other'];
   readonly purposes: SurveyPurpose[] = ['problem', 'learning', 'teaching', 'exploration', 'other'];
-  readonly features: SurveyFeature[] = ['trigonometric', 'half_range', 'complex', 'dft', 'none'];
+
+  // Grouped for clarity in the template
+  readonly featuresSeries: SurveyFeature[]    = ['trigonometric', 'half_range', 'complex'];
+  readonly featuresCont: SurveyFeature[]      = ['fourier_transform', 'inverse_fourier_transform'];
+  readonly featuresDft: SurveyFeature[]       = ['dft_signal', 'dft_function', 'dft_epicycles'];
+  readonly featuresNone: SurveyFeature[]      = ['none'];
+
   readonly devices: SurveyDevice[] = ['phone', 'computer'];
   readonly stars = [1, 2, 3, 4, 5];
+
+  readonly ratingConfigs = [
+    { key: 'usefulness',  label: 'survey.s4.usefulnessLabel',   hint: 'survey.s4.usefulnessHint' },
+    { key: 'ease',        label: 'survey.s4.easeLabel',         hint: 'survey.s4.easeHint' },
+    { key: 'vsOther',     label: 'survey.s4.vsOtherLabel',      hint: 'survey.s4.vsOtherHint' },
+    { key: 'recommend',   label: 'survey.s4.recommendLabel',    hint: 'survey.s4.recommendHint' },
+  ] as const;
+
+  private ratingValues: Record<string, number> = { usefulness: 0, ease: 0, vsOther: 0, recommend: 0 };
+  private hoverValues:  Record<string, number> = { usefulness: 0, ease: 0, vsOther: 0, recommend: 0 };
+
+  getRating(key: string): number  { return this.ratingValues[key] ?? 0; }
+  getHover(key: string): number   { return this.hoverValues[key] ?? 0; }
+  setRating(key: string, v: number): void { this.ratingValues[key] = v; }
+  setHover(key: string, v: number): void  { this.hoverValues[key] = v; }
+
+  // Sync rating maps back to typed fields before submit
+  private syncRatings(): void {
+    this.usefulnessRating   = this.ratingValues['usefulness'] ?? 0;
+    this.easeOfUseRating    = this.ratingValues['ease'] ?? 0;
+    this.vsOtherToolsRating = this.ratingValues['vsOther'] ?? 0;
+    this.recommendRating    = this.ratingValues['recommend'] ?? 0;
+  }
 }

@@ -570,7 +570,9 @@
         "other": "Otro"
       },
       "institutionPlaceholder": "Ej. ESCOM, ESIME Zacatenco, FES Acatlán…",
-      "careerPlaceholder": "Ej. Ing. en Sistemas Computacionales, Lic. en Física…",
+      "careerPlaceholder": "Ej. Ing. en Sistemas Computacionales, Lic. en Física y Matemáticas…",
+      "country": "¿En qué país te encuentras?",
+      "countryPlaceholder": "Ej. México, Colombia, España…",
       "student": {
         "heading": "Cuéntanos sobre tus estudios",
         "institution": "Institución en la que estudias",
@@ -591,32 +593,52 @@
       }
     },
     "s3": {
+      "howFoundLabel": "¿Cómo llegaste a la aplicación?",
+      "howFound": {
+        "search": "Búsqueda en Google / internet",
+        "recommendation_peer": "Recomendación de un compañero o colega",
+        "recommendation_teacher": "Recomendación de un docente",
+        "social": "Redes sociales",
+        "other": "Otro"
+      },
+      "usedPreviousLabel": "¿Conociste o usaste una versión anterior de esta aplicación?",
+      "usedPreviousYes": "Sí, usé la versión anterior",
+      "usedPreviousNo": "No, es la primera vez que la uso",
       "purposeLabel": "¿Con qué propósito usaste la aplicación?",
       "purposes": {
         "problem": "Resolver un problema específico",
         "learning": "Aprender o repasar teoría",
         "teaching": "Enseñar en clase",
-        "exploration": "Exploración, recomendación o curiosidad",
+        "exploration": "Exploración o curiosidad",
         "other": "Otro"
       },
-      "featuresLabel": "¿Qué funcionalidades probaste?",
+      "featuresLabel": "¿Qué funcionalidades probaste? (puedes seleccionar varias)",
+      "groupSeries": "Series de Fourier",
+      "groupContinuous": "Transformada continua",
+      "groupDft": "Transformada Discreta (DFT)",
       "features": {
         "trigonometric": "Serie trigonométrica",
-        "half_range": "Extensión de medio rango",
+        "half_range": "Serie de medio rango",
         "complex": "Serie exponencial compleja",
-        "dft": "Transformada Discreta de Fourier (DFT)",
+        "fourier_transform": "Transformada de Fourier continua",
+        "inverse_fourier_transform": "Transformada inversa de Fourier",
+        "dft_signal": "DFT — señal discreta (puntos manuales)",
+        "dft_function": "DFT — función continua muestreada",
+        "dft_epicycles": "DFT — epiciclos animados",
         "none": "Ninguna aún"
       },
       "deviceLabel": "¿En qué dispositivo usaste la aplicación?",
       "devices": {
         "phone": "Teléfono celular",
         "computer": "Computadora / Laptop"
-      },
-      "usefulnessLabel": "¿La aplicación fue útil para resolver tu problema o entender el tema?",
-      "easeLabel": "¿Qué tan fácil de usar e intuitiva te resultó?"
+      }
     },
     "s4": {
-      "vsOtherLabel": "¿Cómo calificarías la aplicación frente a otras herramientas que conoces?",
+      "usefulnessLabel": "¿La aplicación fue útil para resolver tu problema o entender el tema?",
+      "usefulnessHint": "1 = No me ayudó · 5 = Sí, completamente",
+      "easeLabel": "¿Qué tan fácil de usar e intuitiva te resultó?",
+      "easeHint": "1 = No logré usarla · 5 = Muy intuitiva",
+      "vsOtherLabel": "¿Cómo calificarías esta aplicación frente a otras herramientas que conoces?",
       "vsOtherHint": "1 = Muy inferior · 5 = Igual o mejor",
       "recommendLabel": "¿Qué tan probable es que la sigas usando o la recomiendes?",
       "recommendHint": "1 = Nada probable · 5 = Seguro"
