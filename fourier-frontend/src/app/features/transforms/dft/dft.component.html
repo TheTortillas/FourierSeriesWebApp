@@ -68,7 +68,9 @@
           }
 
           <!-- Algorithm toggle — below preview, above variable -->
-          <section class="flex flex-col gap-2">
+          <section class="flex flex-col gap-2"
+            [class.pointer-events-none]="inputsLocked()"
+            [class.opacity-70]="inputsLocked()">
             <p class="text-xs text-muted font-mono">{{ 'transforms.dft.algorithm' | transloco }}</p>
             <div class="flex gap-1.5">
               <button type="button" (click)="switchAlgorithm('fft')"
@@ -211,7 +213,9 @@
         @if (inputMode() === 'manual') {
 
           <!-- Algorithm toggle (manual mode) -->
-          <section class="flex flex-col gap-2">
+          <section class="flex flex-col gap-2"
+            [class.pointer-events-none]="inputsLocked()"
+            [class.opacity-70]="inputsLocked()">
             <p class="text-xs text-muted font-mono">{{ 'transforms.dft.algorithm' | transloco }}</p>
             <div class="flex gap-1.5">
               <button type="button" (click)="switchAlgorithm('fft')"
@@ -761,7 +765,7 @@
                             ? 'bg-accent/5 hover:bg-accent/10'
                             : 'hover:bg-paper dark:hover:bg-dark-bg'">
                         <td class="px-3 py-1.5 font-semibold text-accent">{{ c.kSigned }}</td>
-                        <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ c.amplitudeSafe.toFixed(5) }}</td>
+                        <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ fmt(c.amplitudeSafe) }}</td>
                         <td class="px-3 py-1.5">
                           <div class="flex items-center gap-1.5">
                             <div class="w-14 h-1.5 rounded-full bg-border dark:bg-dark-border overflow-hidden">
@@ -1130,7 +1134,7 @@
                           ? 'bg-accent/5 hover:bg-accent/10'
                           : 'hover:bg-paper dark:hover:bg-dark-bg'">
                       <td class="px-3 py-1.5 font-semibold" [style.color]="specColor()">{{ kDisplay(c) }}</td>
-                      <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ c.amplitude | number:'1.5-5' }}</td>
+                      <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ c.amplitude | number:'1.0-10' }}</td>
                       <td class="px-3 py-1.5">
                         <div class="flex items-center gap-1.5">
                           <div class="w-12 h-1.5 rounded-full bg-border dark:bg-dark-border overflow-hidden">
@@ -1141,8 +1145,8 @@
                           <span class="text-ink dark:text-dark-ink">{{ c.amplitudePercent | number:'1.1-1' }}%</span>
                         </div>
                       </td>
-                      <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.re | number:'1.4-4' }}</td>
-                      <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.im | number:'1.4-4' }}</td>
+                      <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.re | number:'1.0-10' }}</td>
+                      <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.im | number:'1.0-10' }}</td>
                       <td class="px-3 py-1.5 text-ink dark:text-dark-ink">{{ dftPhaseDisplay(c.phase) }}</td>
                     </tr>
                   }

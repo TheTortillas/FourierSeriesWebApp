@@ -350,8 +350,6 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly epicSampledColor   = signal('#f59e0b');
 
   private _customEpicOriginalColor = false;
-  private _customEpicApproxColor   = false;
-  private _customEpicTraceColor    = false;
   private _customEpicSampledColor  = false;
 
   // Draw dialog
@@ -740,6 +738,14 @@ export class DftComponent implements OnInit, OnDestroy {
     return (phase * 180 / Math.PI).toFixed(1);
   }
 
+  /** Format a decimal with up to 10 significant digits, trimming trailing zeros. */
+  fmt(n: number): string {
+    if (!Number.isFinite(n)) return '0';
+    if (n === 0) return '0';
+    const s = parseFloat(n.toPrecision(10)).toString();
+    return s;
+  }
+
   epicPhaseDisplay(c: EpicRenderCoeff): string {
     return this.epicPhaseUnit() === 'deg'
       ? `${this.phaseInDeg(c.phaseSafe)}°`
@@ -946,12 +952,12 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   onEpicOriginalColorInput(v: string): void { this._customEpicOriginalColor = true; this.epicOriginalColor.set(v); }
-  onEpicApproxColorInput(v: string): void   { this._customEpicApproxColor   = true; this.epicApproxColor.set(v); }
-  onEpicTraceColorInput(v: string): void    { this._customEpicTraceColor    = true; this.epicTraceColor.set(v); }
-  onEpicSampledColorInput(v: string): void  { this._customEpicSampledColor  = true; this.epicSampledColor.set(v); }
+  onEpicApproxColorInput(v: string): void   { this.epicApproxColor.set(v); }
+  onEpicTraceColorInput(v: string): void    { this.epicTraceColor.set(v); }
+  onEpicSampledColorInput(v: string): void  { this._customEpicSampledColor = true; this.epicSampledColor.set(v); }
 
   resetEpicColors(): void {
-    this._customEpicOriginalColor = this._customEpicApproxColor = this._customEpicTraceColor = this._customEpicSampledColor = false;
+    this._customEpicOriginalColor = this._customEpicSampledColor = false;
     this.epicOriginalColor.set(this.theme.isDark ? '#9ca3af' : '#6b7280');
     this.epicApproxColor.set('#22c55e');
     this.epicTraceColor.set('#60a5fa');
