@@ -383,7 +383,7 @@ export class DftComponent implements OnInit, OnDestroy {
   });
 
   readonly epicMaxTopK     = computed(() => this.epicOrderedCoeffs().length);
-  readonly epicVisibleCoeffs = computed(() => this.epicOrderedCoeffs().slice(0, 240));
+  readonly epicVisibleCoeffs = computed(() => this.epicOrderedCoeffs());
   readonly epicSelectedCoeffs = computed(() => {
     const c = this.epicOrderedCoeffs();
     return c.slice(0, Math.max(1, Math.min(this.epicTopK(), c.length || 1)));
@@ -512,10 +512,17 @@ export class DftComponent implements OnInit, OnDestroy {
 
   // ── Derived values ─────────────────────────────────────────────────────────
 
-  /** All coefficients in natural k order — shown in the table with scroll. */
+  /** All coefficients ordered by kDisplay — respects fftShift so negative freqs appear first. */
   readonly allCoeffs = computed(() => {
     const res = this.result();
-    return res ? res.coefficients : [];
+    if (!res) return [];
+    const N = res.N;
+    const shift = this.fftShift();
+    return [...res.coefficients].sort((a, b) => {
+      const ka = shift && a.k > N / 2 ? a.k - N : a.k;
+      const kb = shift && b.k > N / 2 ? b.k - N : b.k;
+      return ka - kb;
+    });
   });
 
   /** Set of k values that are in topCoefficients — used for row highlighting. */
