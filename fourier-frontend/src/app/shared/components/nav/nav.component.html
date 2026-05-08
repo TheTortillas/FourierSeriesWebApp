@@ -81,6 +81,14 @@
       }
     </div>
 
+    <a
+      [routerLink]="'/' + lang() + '/feedback'"
+      routerLinkActive="!text-accent"
+      class="hidden sm:flex items-center gap-1 px-2 py-1.5 rounded text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+    >
+      {{ 'feedback.nav' | transloco }}
+    </a>
+
     <div class="w-px h-4 bg-border dark:bg-dark-border mx-1.5 shrink-0"></div>
 
     <!-- Grupo 2: Cuota + cuenta -->

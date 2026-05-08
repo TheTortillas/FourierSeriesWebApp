@@ -5,13 +5,15 @@ import { AuthService } from './core/services/auth/auth.service';
 import { HreflangService } from './core/services/seo/hreflang.service';
 import { NavigationScrollService } from './core/services/navigation/navigation-scroll.service';
 import { VerifyEmailBannerComponent } from './shared/components/verify-email-banner/verify-email-banner.component';
+import { FeedbackModalComponent } from './shared/components/feedback-modal/feedback-modal.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, VerifyEmailBannerComponent],
+  imports: [RouterOutlet, VerifyEmailBannerComponent, FeedbackModalComponent],
   template: `
     <app-verify-email-banner />
     <router-outlet />
+    <app-feedback-modal />
   `,
 })
 export class App {

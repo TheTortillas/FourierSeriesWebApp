@@ -88,6 +88,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'feedback',
+        loadComponent: () =>
+          import('./features/feedback/feedback.component').then(
+            (m) => m.FeedbackComponent,
+          ),
+      },
+      {
         path: 'admin',
         canActivate: [authGuard, adminGuard],
         loadChildren: () =>

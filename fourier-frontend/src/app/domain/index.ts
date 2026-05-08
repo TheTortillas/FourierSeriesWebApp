@@ -5,3 +5,4 @@ export * from './types/dft.types';
 export * from './types/transform.types';
 export * from './types/history.types';
 export * from './types/admin.types';
+export * from './types/feedback.types';

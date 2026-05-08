@@ -27,6 +27,7 @@ import { requireTierLimit } from "./api/middlewares/requireTierLimit";
 import { historyRouter } from "./api/routes/history.routes";
 import { parseRouter } from "./api/routes/parse.routes";
 import { adminRouter } from "./api/routes/admin.routes";
+import { feedbackRouter } from "./api/routes/feedback.routes";
 import { config } from "./config/env";
 import { logger } from "./infrastructure/logging/logger";
 
@@ -119,6 +120,8 @@ export function createApp(): Application {
   app.use("/api/history", historyRouter);
 
   app.use("/api/admin", adminRouter);
+
+  app.use("/api/feedback", feedbackRouter);
 
   app.use(errorHandler);
 

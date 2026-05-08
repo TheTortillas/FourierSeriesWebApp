@@ -322,6 +322,12 @@ export class ApiService {
     return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
   }
 
+  // ─── Feedback ────────────────────────────────────────────────────────────
+
+  submitFeedback(body: import('../../../domain').FeedbackRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/feedback`, body);
+  }
+
   // ─── Cache ───────────────────────────────────────────────────────────────
 
   getCacheStats(): Observable<CacheStats> {

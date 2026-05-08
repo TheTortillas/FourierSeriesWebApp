@@ -532,5 +532,40 @@
     "title": "Dev Sandbox",
     "description": "Entorno de desarrollo para probar endpoints y componentes.",
     "selectPanel": "Selecciona un panel"
+  },
+  "feedback": {
+    "nav": "Feedback",
+    "modal": {
+      "title": "¿Cómo estuvo tu cálculo?",
+      "subtitle": "Tu opinión nos ayuda a mejorar",
+      "ratingLabel": "Calificación de 1 a 5 estrellas",
+      "placeholder": "Comentario opcional…",
+      "submit": "Enviar",
+      "submitting": "Enviando…",
+      "skip": "Ahora no",
+      "successTitle": "¡Gracias!",
+      "successMessage": "Tu retroalimentación fue recibida."
+    },
+    "page": {
+      "title": "Retroalimentación",
+      "subtitle": "Cuéntanos tu experiencia, reporta un error o sugiere una mejora.",
+      "category": "Tipo de mensaje",
+      "categories": {
+        "bug": "Reporte de error",
+        "suggestion": "Sugerencia",
+        "question": "Pregunta",
+        "other": "Otro"
+      },
+      "rating": "Calificación (opcional)",
+      "message": "Mensaje",
+      "messagePlaceholder": "Describe el error, sugerencia o comentario…",
+      "email": "Email de contacto (opcional)",
+      "emailPlaceholder": "Para poder responderte",
+      "submit": "Enviar retroalimentación",
+      "submitting": "Enviando…",
+      "successTitle": "¡Gracias por tu mensaje!",
+      "successMessage": "Revisaremos tu retroalimentación pronto.",
+      "newFeedback": "Enviar otro mensaje"
+    }
   }
 }
