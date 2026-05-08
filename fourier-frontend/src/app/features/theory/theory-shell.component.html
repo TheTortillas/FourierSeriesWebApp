@@ -1,0 +1,46 @@
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
+  <app-nav />
+
+  <div class="flex flex-1 max-w-6xl mx-auto w-full px-4 py-8 gap-8">
+    <!-- Sidebar -->
+    <aside class="hidden md:flex flex-col gap-1 w-48 shrink-0 pt-1">
+      <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted px-3 mb-2">
+        {{ 'theory.nav.title' | transloco }}
+      </p>
+
+      @for (s of sections; track s.key) {
+        <a
+          [routerLink]="'/' + lang() + '/theory/' + s.key"
+          routerLinkActive="bg-accent/8 text-accent"
+          class="px-3 py-2 rounded text-[13px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+        >
+          {{ s.labelKey | transloco }}
+        </a>
+      }
+    </aside>
+
+    <!-- Mobile tab strip -->
+    <div class="flex md:hidden gap-1 mb-6 absolute" style="display: contents">
+    </div>
+
+    <!-- Main content -->
+    <main class="flex-1 min-w-0">
+      <!-- Mobile nav pills -->
+      <div class="flex md:hidden gap-1 mb-6 overflow-x-auto pb-1">
+        @for (s of sections; track s.key) {
+          <a
+            [routerLink]="'/' + lang() + '/theory/' + s.key"
+            routerLinkActive="bg-accent text-white"
+            class="shrink-0 px-3 py-1.5 rounded text-[11px] font-mono text-muted dark:text-dark-muted bg-paper2 dark:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors"
+          >
+            {{ s.labelKey | transloco }}
+          </a>
+        }
+      </div>
+
+      <router-outlet />
+    </main>
+  </div>
+
+  <app-footer />
+</div>

@@ -1,0 +1,278 @@
+<article class="space-y-12 pb-16">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
+  <header class="space-y-3 border-b border-border dark:border-dark-border pb-8">
+    <div class="flex items-center gap-2">
+      <span class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+        {{ 'theory.series.breadcrumb' | transloco }}
+      </span>
+    </div>
+    <h1 class="font-display text-3xl md:text-4xl text-ink dark:text-dark-ink">
+      {{ 'theory.series.title' | transloco }}
+    </h1>
+    <p class="font-body text-base text-muted dark:text-dark-muted max-w-2xl leading-relaxed">
+      {{ 'theory.series.intro' | transloco }}
+    </p>
+    <a
+      [routerLink]="'/' + lang() + '/calculator'"
+      class="inline-flex items-center gap-1.5 mt-2 text-[12px] font-mono text-accent hover:underline underline-offset-2"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="13 17 18 12 13 7"/>
+        <polyline points="6 17 11 12 6 7"/>
+      </svg>
+      {{ 'theory.series.tryIt' | transloco }}
+    </a>
+  </header>
+
+  <!-- ── Idea central ────────────────────────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.series.idea.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.series.idea.body' | transloco }}
+    </p>
+
+    <!-- Key insight box -->
+    <div class="rounded-lg border border-accent/25 bg-accent/5 px-5 py-4 space-y-2">
+      <p class="text-[11px] font-mono uppercase tracking-widest text-accent">
+        {{ 'theory.series.idea.insight' | transloco }}
+      </p>
+      <p class="font-body text-sm text-ink dark:text-dark-ink leading-relaxed">
+        {{ 'theory.series.idea.insightBody' | transloco }}
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Series type tabs ─────────────────────────────────────────────────────── -->
+  <section class="space-y-6">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.series.forms.title' | transloco }}
+    </h2>
+
+    <!-- Tab bar -->
+    <div class="flex gap-1 border-b border-border dark:border-dark-border">
+      @for (tab of tabs; track tab.id) {
+        <button
+          type="button"
+          (click)="setTab(tab.id)"
+          [class]="activeTab() === tab.id
+            ? 'px-4 py-2 text-[12px] font-mono text-accent border-b-2 border-accent -mb-px bg-transparent cursor-pointer'
+            : 'px-4 py-2 text-[12px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink border-b-2 border-transparent -mb-px cursor-pointer transition-colors'"
+        >
+          {{ tab.label | transloco }}
+        </button>
+      }
+    </div>
+
+    <!-- ── Trigonometric tab ──────────────────────────────────────────────────── -->
+    @if (activeTab() === 'trig') {
+      <div class="space-y-5">
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+          {{ 'theory.series.forms.trig.desc' | transloco }}
+          <span [mathjax]="tex.periodDef"></span>
+          {{ 'theory.series.forms.trig.desc2' | transloco }}
+          <span [mathjax]="tex.omega0"></span>.
+        </p>
+
+        <!-- Main formula -->
+        <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+          <div [mathjax]="tex.trigSeries" class="text-ink dark:text-dark-ink text-center"></div>
+        </div>
+
+        <!-- Coefficients -->
+        <h3 class="font-mono text-[13px] font-semibold text-ink dark:text-dark-ink mt-2">
+          {{ 'theory.series.forms.trig.coeffs' | transloco }}
+        </h3>
+        <div class="grid md:grid-cols-3 gap-3">
+          <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-3 overflow-x-auto">
+            <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">DC term</p>
+            <div [mathjax]="tex.trigA0" class="text-ink dark:text-dark-ink"></div>
+          </div>
+          <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-3 overflow-x-auto">
+            <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">aₙ — cosine</p>
+            <div [mathjax]="tex.trigAn" class="text-ink dark:text-dark-ink"></div>
+          </div>
+          <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-3 overflow-x-auto">
+            <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">bₙ — sine</p>
+            <div [mathjax]="tex.trigBn" class="text-ink dark:text-dark-ink"></div>
+          </div>
+        </div>
+
+        <!-- Symmetry shortcut -->
+        <div class="rounded-lg border border-border dark:border-dark-border bg-paper dark:bg-dark-bg px-5 py-4 space-y-2">
+          <p class="text-[11px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+            {{ 'theory.series.forms.trig.symmetry.title' | transloco }}
+          </p>
+          <ul class="space-y-1 text-sm font-body text-muted dark:text-dark-muted leading-relaxed">
+            <li>{{ 'theory.series.forms.trig.symmetry.even' | transloco }}</li>
+            <li>{{ 'theory.series.forms.trig.symmetry.odd' | transloco }}</li>
+          </ul>
+        </div>
+      </div>
+    }
+
+    <!-- ── Complex tab ───────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'complex') {
+      <div class="space-y-5">
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+          {{ 'theory.series.forms.complex.desc' | transloco }}
+        </p>
+
+        <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+          <div [mathjax]="tex.complexSeries" class="text-ink dark:text-dark-ink text-center"></div>
+        </div>
+        <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+          <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">{{ 'theory.series.forms.complex.cnLabel' | transloco }}</p>
+          <div [mathjax]="tex.complexCn" class="text-ink dark:text-dark-ink"></div>
+        </div>
+
+        <div class="rounded-lg border border-border dark:border-dark-border px-5 py-4 space-y-3">
+          <p class="text-[11px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+            {{ 'theory.series.forms.complex.relation' | transloco }}
+          </p>
+          <div [mathjax]="tex.complexToTrig" class="text-ink dark:text-dark-ink overflow-x-auto"></div>
+          <div [mathjax]="tex.complexMag" class="text-ink dark:text-dark-ink overflow-x-auto"></div>
+          <p class="text-[12px] font-body text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'theory.series.forms.complex.spectrumNote' | transloco }}
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- ── Half-range tab ────────────────────────────────────────────────────── -->
+    @if (activeTab() === 'half') {
+      <div class="space-y-5">
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+          {{ 'theory.series.forms.half.desc' | transloco }}
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- Sine expansion -->
+          <div class="space-y-3">
+            <p class="text-[11px] font-mono uppercase tracking-widest text-accent">
+              {{ 'theory.series.forms.half.sine' | transloco }}
+            </p>
+            <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-3 overflow-x-auto">
+              <div [mathjax]="tex.halfSine" class="text-ink dark:text-dark-ink"></div>
+            </div>
+            <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-3 overflow-x-auto">
+              <div [mathjax]="tex.halfSineBn" class="text-ink dark:text-dark-ink"></div>
+            </div>
+          </div>
+
+          <!-- Cosine expansion -->
+          <div class="space-y-3">
+            <p class="text-[11px] font-mono uppercase tracking-widest text-accent">
+              {{ 'theory.series.forms.half.cosine' | transloco }}
+            </p>
+            <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-3 overflow-x-auto">
+              <div [mathjax]="tex.halfCosine" class="text-ink dark:text-dark-ink"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-3 overflow-x-auto">
+                <div [mathjax]="tex.halfCosineA0" class="text-ink dark:text-dark-ink"></div>
+              </div>
+              <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-3 overflow-x-auto">
+                <div [mathjax]="tex.halfCosineAn" class="text-ink dark:text-dark-ink"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-border dark:border-dark-border bg-paper dark:bg-dark-bg px-5 py-4">
+          <p class="text-[12px] font-body text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'theory.series.forms.half.note' | transloco }}
+          </p>
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- ── Convergence & Dirichlet ────────────────────────────────────────────── -->
+  <section class="space-y-5">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.series.convergence.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.series.convergence.dirichletBody' | transloco }}
+    </p>
+    <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+      <div [mathjax]="tex.dirichlet" class="text-ink dark:text-dark-ink"></div>
+    </div>
+
+    <!-- Gibbs callout -->
+    <div class="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-5 py-4 space-y-2">
+      <p class="text-[11px] font-mono uppercase tracking-widest text-amber-600 dark:text-amber-400">
+        {{ 'theory.series.convergence.gibbs.title' | transloco }}
+      </p>
+      <p class="font-body text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
+        {{ 'theory.series.convergence.gibbs.body1' | transloco }}
+        <span [mathjax]="tex.gibbsOvershoot" class="font-mono text-amber-700 dark:text-amber-300"></span>
+        {{ 'theory.series.convergence.gibbs.body2' | transloco }}
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Parseval's theorem ─────────────────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.series.parseval.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.series.parseval.body' | transloco }}
+    </p>
+    <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+      <div [mathjax]="tex.parseval" class="text-ink dark:text-dark-ink text-center"></div>
+    </div>
+    <p class="text-[12px] font-mono text-muted dark:text-dark-muted">
+      {{ 'theory.series.parseval.complex' | transloco }}
+    </p>
+    <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+      <div [mathjax]="tex.parsevalC" class="text-ink dark:text-dark-ink text-center"></div>
+    </div>
+  </section>
+
+  <!-- ── Worked example: square wave ───────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.series.example.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.series.example.body' | transloco }}
+    </p>
+    <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+      <div [mathjax]="tex.squareWave" class="text-ink dark:text-dark-ink text-center"></div>
+    </div>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.series.example.note' | transloco }}
+    </p>
+    <a
+      [routerLink]="'/' + lang() + '/calculator'"
+      class="inline-flex items-center gap-1.5 text-[12px] font-mono text-accent hover:underline underline-offset-2"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polygon points="10 8 16 12 10 16 10 8"/>
+      </svg>
+      {{ 'theory.series.example.cta' | transloco }}
+    </a>
+  </section>
+
+  <!-- ── Next section link ─────────────────────────────────────────────────── -->
+  <footer class="pt-6 border-t border-border dark:border-dark-border flex justify-end">
+    <a
+      [routerLink]="'/' + lang() + '/theory/continuous'"
+      class="flex items-center gap-2 text-[12px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors"
+    >
+      {{ 'theory.series.nextSection' | transloco }}
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </a>
+  </footer>
+</article>

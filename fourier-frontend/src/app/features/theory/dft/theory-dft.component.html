@@ -1,0 +1,175 @@
+<article class="space-y-12 pb-16">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
+  <header class="space-y-3 border-b border-border dark:border-dark-border pb-8">
+    <span class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+      {{ 'theory.dft.breadcrumb' | transloco }}
+    </span>
+    <h1 class="font-display text-3xl md:text-4xl text-ink dark:text-dark-ink">
+      {{ 'theory.dft.title' | transloco }}
+    </h1>
+    <p class="font-body text-base text-muted dark:text-dark-muted max-w-2xl leading-relaxed">
+      {{ 'theory.dft.intro' | transloco }}
+    </p>
+    <a
+      [routerLink]="'/' + lang() + '/transforms/dft'"
+      class="inline-flex items-center gap-1.5 mt-2 text-[12px] font-mono text-accent hover:underline underline-offset-2"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="13 17 18 12 13 7"/>
+        <polyline points="6 17 11 12 6 7"/>
+      </svg>
+      {{ 'theory.dft.tryIt' | transloco }}
+    </a>
+  </header>
+
+  <!-- ── Definition ──────────────────────────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.dft.def.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.dft.def.body' | transloco }}
+    </p>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">DFT</p>
+        <div [mathjax]="tex.dft" class="text-ink dark:text-dark-ink"></div>
+      </div>
+      <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">IDFT</p>
+        <div [mathjax]="tex.idft" class="text-ink dark:text-dark-ink"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FFT ─────────────────────────────────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.dft.fft.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.dft.fft.body' | transloco }}
+    </p>
+    <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+      <div [mathjax]="tex.fftComplexity" class="text-ink dark:text-dark-ink text-center"></div>
+    </div>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.dft.fft.note' | transloco }}
+    </p>
+  </section>
+
+  <!-- ── Sampling & frequency ─────────────────────────────────────────────── -->
+  <section class="space-y-5">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.dft.sampling.title' | transloco }}
+    </h2>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <!-- Nyquist -->
+      <div class="space-y-3">
+        <h3 class="font-mono text-[13px] font-semibold text-ink dark:text-dark-ink">
+          {{ 'theory.dft.sampling.nyquist.title' | transloco }}
+        </h3>
+        <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+          <div [mathjax]="tex.nyquist" class="text-ink dark:text-dark-ink text-center"></div>
+        </div>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          {{ 'theory.dft.sampling.nyquist.body' | transloco }}
+        </p>
+      </div>
+
+      <!-- Frequency resolution -->
+      <div class="space-y-3">
+        <h3 class="font-mono text-[13px] font-semibold text-ink dark:text-dark-ink">
+          {{ 'theory.dft.sampling.resolution.title' | transloco }}
+        </h3>
+        <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+          <div [mathjax]="tex.freqResol" class="text-ink dark:text-dark-ink text-center"></div>
+        </div>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          {{ 'theory.dft.sampling.resolution.body' | transloco }}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FFT-Shift & amplitude ─────────────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.dft.spectrum.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.dft.spectrum.body' | transloco }}
+    </p>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">fftshift mapping</p>
+        <div [mathjax]="tex.fftShift" class="text-ink dark:text-dark-ink"></div>
+      </div>
+      <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">
+          {{ 'theory.dft.spectrum.amplitudeLabel' | transloco }}
+        </p>
+        <div [mathjax]="tex.amplitude" class="text-ink dark:text-dark-ink"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Epicycles ──────────────────────────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.dft.epicycles.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.dft.epicycles.body' | transloco }}
+    </p>
+    <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+      <div [mathjax]="tex.epicycles" class="text-ink dark:text-dark-ink text-center"></div>
+    </div>
+    <div class="rounded-lg border border-accent/25 bg-accent/5 px-5 py-4">
+      <p class="font-body text-sm text-ink dark:text-dark-ink leading-relaxed">
+        {{ 'theory.dft.epicycles.insight' | transloco }}
+      </p>
+    </div>
+    <a
+      [routerLink]="'/' + lang() + '/transforms/dft'"
+      class="inline-flex items-center gap-1.5 text-[12px] font-mono text-accent hover:underline underline-offset-2"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polygon points="10 8 16 12 10 16 10 8"/>
+      </svg>
+      {{ 'theory.dft.epicycles.cta' | transloco }}
+    </a>
+  </section>
+
+  <!-- ── Parseval ──────────────────────────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.dft.parseval.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.dft.parseval.body' | transloco }}
+    </p>
+    <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+      <div [mathjax]="tex.parseval" class="text-ink dark:text-dark-ink text-center"></div>
+    </div>
+  </section>
+
+  <!-- ── Navigation ────────────────────────────────────────────────────────── -->
+  <footer class="pt-6 border-t border-border dark:border-dark-border flex justify-between">
+    <a
+      [routerLink]="'/' + lang() + '/theory/continuous'"
+      class="flex items-center gap-2 text-[12px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      {{ 'theory.dft.prevSection' | transloco }}
+    </a>
+  </footer>
+</article>

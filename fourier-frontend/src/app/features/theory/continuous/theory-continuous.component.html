@@ -1,0 +1,140 @@
+<article class="space-y-12 pb-16">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
+  <header class="space-y-3 border-b border-border dark:border-dark-border pb-8">
+    <div class="flex items-center gap-2">
+      <span class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+        {{ 'theory.continuous.breadcrumb' | transloco }}
+      </span>
+    </div>
+    <h1 class="font-display text-3xl md:text-4xl text-ink dark:text-dark-ink">
+      {{ 'theory.continuous.title' | transloco }}
+    </h1>
+    <p class="font-body text-base text-muted dark:text-dark-muted max-w-2xl leading-relaxed">
+      {{ 'theory.continuous.intro' | transloco }}
+    </p>
+    <a
+      [routerLink]="'/' + lang() + '/transforms/continuous'"
+      class="inline-flex items-center gap-1.5 mt-2 text-[12px] font-mono text-accent hover:underline underline-offset-2"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="13 17 18 12 13 7"/>
+        <polyline points="6 17 11 12 6 7"/>
+      </svg>
+      {{ 'theory.continuous.tryIt' | transloco }}
+    </a>
+  </header>
+
+  <!-- ── Definition ────────────────────────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.continuous.def.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.continuous.def.body' | transloco }}
+    </p>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">
+          {{ 'theory.continuous.def.forward' | transloco }}
+        </p>
+        <div [mathjax]="tex.forward" class="text-ink dark:text-dark-ink"></div>
+      </div>
+      <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">
+          {{ 'theory.continuous.def.inverse' | transloco }}
+        </p>
+        <div [mathjax]="tex.inverse" class="text-ink dark:text-dark-ink"></div>
+      </div>
+    </div>
+
+    <!-- Convention note -->
+    <div class="rounded-lg border border-border dark:border-dark-border bg-paper dark:bg-dark-bg px-5 py-4 space-y-3">
+      <p class="text-[11px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+        {{ 'theory.continuous.def.conventionTitle' | transloco }}
+      </p>
+      <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+        {{ 'theory.continuous.def.conventionBody' | transloco }}
+      </p>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="rounded bg-paper2 dark:bg-dark-surface p-3 overflow-x-auto">
+          <p class="text-[10px] font-mono text-muted dark:text-dark-muted mb-1">Angular frequency (ω)</p>
+          <div [mathjax]="tex.forwardW" class="text-ink dark:text-dark-ink"></div>
+        </div>
+        <div class="rounded bg-paper2 dark:bg-dark-surface p-3 overflow-x-auto">
+          <div [mathjax]="tex.inverseW" class="text-ink dark:text-dark-ink"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Properties ────────────────────────────────────────────────────────── -->
+  <section class="space-y-5">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.continuous.props.title' | transloco }}
+    </h2>
+
+    <div class="divide-y divide-border dark:divide-dark-border rounded-lg border border-border dark:border-dark-border overflow-hidden">
+      @for (prop of [
+        { labelKey: 'theory.continuous.props.linearity', tex: tex.linearity },
+        { labelKey: 'theory.continuous.props.shift',     tex: tex.shift },
+        { labelKey: 'theory.continuous.props.scaling',   tex: tex.scaling },
+        { labelKey: 'theory.continuous.props.conv',      tex: tex.convolution },
+        { labelKey: 'theory.continuous.props.parseval',  tex: tex.parseval }
+      ]; track prop.labelKey) {
+        <div class="grid md:grid-cols-[180px_1fr] items-center">
+          <span class="px-4 py-3 text-[11px] font-mono text-muted dark:text-dark-muted bg-paper2 dark:bg-dark-surface border-b md:border-b-0 md:border-r border-border dark:border-dark-border">
+            {{ prop.labelKey | transloco }}
+          </span>
+          <div [mathjax]="prop.tex" class="px-4 py-3 text-ink dark:text-dark-ink overflow-x-auto"></div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ── Classic pairs ─────────────────────────────────────────────────────── -->
+  <section class="space-y-4">
+    <h2 class="font-display text-xl text-ink dark:text-dark-ink">
+      {{ 'theory.continuous.pairs.title' | transloco }}
+    </h2>
+    <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+      {{ 'theory.continuous.pairs.body' | transloco }}
+    </p>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">Gaussian</p>
+        <div [mathjax]="tex.gaussian" class="text-ink dark:text-dark-ink"></div>
+      </div>
+      <div class="rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border p-4 overflow-x-auto">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">rect → sinc</p>
+        <div [mathjax]="tex.rect" class="text-ink dark:text-dark-ink"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Navigation ────────────────────────────────────────────────────────── -->
+  <footer class="pt-6 border-t border-border dark:border-dark-border flex justify-between">
+    <a
+      [routerLink]="'/' + lang() + '/theory/series'"
+      class="flex items-center gap-2 text-[12px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      {{ 'theory.continuous.prevSection' | transloco }}
+    </a>
+    <a
+      [routerLink]="'/' + lang() + '/theory/dft'"
+      class="flex items-center gap-2 text-[12px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors"
+    >
+      {{ 'theory.continuous.nextSection' | transloco }}
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </a>
+  </footer>
+</article>
