@@ -24,7 +24,7 @@ A full-stack web application for symbolic computation, visualization, and intera
   <a href="https://expressjs.com"><img src="https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white" alt="Express"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-20+-5FA04E?logo=nodedotjs&logoColor=white" alt="Node.js"></a>
   <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-14+-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
-  <img src="https://img.shields.io/badge/Maxima_CAS-5.47-0071C5" alt="Maxima CAS">
+  <a href="https://maxima.sourceforge.io/"><img src="https://img.shields.io/badge/Maxima_CAS-5.47-0071C5?logo=gnu&logoColor=white" alt="Maxima CAS"></a>
 </p>
 
 ---
@@ -48,6 +48,7 @@ A full-stack web application for symbolic computation, visualization, and intera
 ## Features
 
 **Mathematical computation**
+
 - Trigonometric Fourier series (symbolic coefficients, exact closed form)
 - Complex exponential Fourier series
 - Half-range series (sine and cosine expansions)
@@ -56,12 +57,14 @@ A full-stack web application for symbolic computation, visualization, and intera
 - Expression parsing (LaTeX → Maxima), simplification, and integrability checks
 
 **Visualization**
+
 - Real-time series reconstruction with adjustable harmonic count
 - Amplitude and phase spectrum
 - DFT epicycle animation
 - Coefficient tables with CSV export
 
 **User system**
+
 - Email/password registration with email verification
 - Google OAuth sign-in
 - Password reset via email
@@ -71,11 +74,13 @@ A full-stack web application for symbolic computation, visualization, and intera
 - User profile with name editing
 
 **Feedback & community**
+
 - Post-calculation feedback modal (rating + category + message)
 - One-time demographic survey wizard (role, country, usage patterns, device, ratings)
 - Survey prompt appears automatically after the user's first calculation
 
 **Admin dashboard**
+
 - User management (tier changes, activate/deactivate)
 - Calculation history browser with filters
 - Audit log with date/action/user filters
@@ -85,6 +90,7 @@ A full-stack web application for symbolic computation, visualization, and intera
 - Survey analytics charts (role, country, how found, purpose, features, device, avg ratings, 30-day trend)
 
 **Infrastructure**
+
 - Rate limiting per endpoint and per tier
 - LRU cache (in-memory) with optional Redis layer
 - Audit log (all auth events and calculations)
@@ -98,20 +104,20 @@ A full-stack web application for symbolic computation, visualization, and intera
 
 ## Tech Stack
 
-| Layer | Technology | Version |
-|---|---|---|
-| Frontend | Angular, TypeScript, Tailwind CSS | 21 / 5.9 / 4 |
-| Rendering | Angular SSR (Universal), MathJax, MathQuill | — |
-| Charts | Chart.js | 4 |
-| i18n | Transloco (ES / EN) | 8 |
-| Backend | Express, TypeScript, Node.js | 5 / 5.9 / 20+ |
-| Math engine | Maxima CAS (via shell subprocess) | 5.47 |
-| Database | PostgreSQL | 14+ |
-| ORM / Driver | pg (node-postgres) | 8 |
-| Cache | LRU-cache (always) + Redis (optional) | 11 / 5 |
-| Auth | JWT (access + refresh rotation), Google OAuth 2 | — |
-| Email | Nodemailer (SMTP) | 8 |
-| API docs | Swagger / OpenAPI (`/api-docs`) | — |
+| Layer        | Technology                                      | Version       |
+| ------------ | ----------------------------------------------- | ------------- |
+| Frontend     | Angular, TypeScript, Tailwind CSS               | 21 / 5.9 / 4  |
+| Rendering    | Angular SSR (Universal), MathJax, MathQuill     | —             |
+| Charts       | Chart.js                                        | 4             |
+| i18n         | Transloco (ES / EN)                             | 8             |
+| Backend      | Express, TypeScript, Node.js                    | 5 / 5.9 / 20+ |
+| Math engine  | Maxima CAS (via shell subprocess)               | 5.47          |
+| Database     | PostgreSQL                                      | 14+           |
+| ORM / Driver | pg (node-postgres)                              | 8             |
+| Cache        | LRU-cache (always) + Redis (optional)           | 11 / 5        |
+| Auth         | JWT (access + refresh rotation), Google OAuth 2 | —             |
+| Email        | Nodemailer (SMTP)                               | 8             |
+| API docs     | Swagger / OpenAPI (`/api-docs`)                 | —             |
 
 ---
 
@@ -181,7 +187,7 @@ Fourier-Web-Calculator/
 - **npm** 9+
 - **Angular CLI** 21+ — `npm install -g @angular/cli`
 - **PostgreSQL** 14+
-- **Maxima CAS** — *must run on Linux* (see note below)
+- **Maxima CAS** — _must run on Linux_ (see note below)
 - **Redis** (optional — falls back to in-memory LRU if unavailable)
 
 ### Why Linux for the backend
@@ -278,6 +284,7 @@ CACHE_TTL_DAYS=7
 ```
 
 Frontend environment is configured in `fourier-frontend/src/environments/`:
+
 - `environment.ts` — development (GA4 disabled: `ga4Id: ''`)
 - `environment.prod.ts` — production (`ga4Id` set, `googleClientId` injected by CI/CD)
 
@@ -294,6 +301,7 @@ psql -d fourier_db -f fourier-database/fourier_db.sql
 ```
 
 The schema includes:
+
 - `persons` + `users` — user accounts with soft-delete
 - `user_auth_providers` — Google OAuth linking
 - `user_refresh_tokens` — token rotation with family-based reuse detection
@@ -335,19 +343,19 @@ Swagger API docs: `http://localhost:3000/api-docs`
 
 All routes are prefixed with `/api`.
 
-| Group | Prefix | Description |
-|---|---|---|
-| Auth | `/api/auth` | Register, login, Google OAuth, token refresh, email verification, password reset, profile, quota |
-| Fourier series | `/api/fourier` | Trigonometric, complex, half-range — coefficients and first-N terms |
-| Transforms | `/api/transforms` | Continuous Fourier Transform, Inverse FT, DFT (points / samples / function) |
-| Parse | `/api/parse` | LaTeX → Maxima expression parsing |
-| Simplify | `/api/simplify` | Symbolic simplification |
-| History | `/api/history` | CRUD for calculation history and favorites (auth required) |
-| Feedback | `/api/feedback` | Submit user feedback (optional auth) |
-| Survey | `/api/survey` | Submit demographic survey response (optional auth, one-time) |
-| Admin | `/api/admin` | User management, audit log, system stats, feedback/survey analytics (admin role required) |
-| Cache | `/api/cache` | Cache inspection and invalidation |
-| Health | `/health` | Liveness check |
+| Group          | Prefix            | Description                                                                                      |
+| -------------- | ----------------- | ------------------------------------------------------------------------------------------------ |
+| Auth           | `/api/auth`       | Register, login, Google OAuth, token refresh, email verification, password reset, profile, quota |
+| Fourier series | `/api/fourier`    | Trigonometric, complex, half-range — coefficients and first-N terms                              |
+| Transforms     | `/api/transforms` | Continuous Fourier Transform, Inverse FT, DFT (points / samples / function)                      |
+| Parse          | `/api/parse`      | LaTeX → Maxima expression parsing                                                                |
+| Simplify       | `/api/simplify`   | Symbolic simplification                                                                          |
+| History        | `/api/history`    | CRUD for calculation history and favorites (auth required)                                       |
+| Feedback       | `/api/feedback`   | Submit user feedback (optional auth)                                                             |
+| Survey         | `/api/survey`     | Submit demographic survey response (optional auth, one-time)                                     |
+| Admin          | `/api/admin`      | User management, audit log, system stats, feedback/survey analytics (admin role required)        |
+| Cache          | `/api/cache`      | Cache inspection and invalidation                                                                |
+| Health         | `/health`         | Liveness check                                                                                   |
 
 Full interactive documentation: `http://localhost:3000/api-docs`
 
@@ -373,12 +381,12 @@ Full interactive documentation: `http://localhost:3000/api-docs`
 
 ## Branch Strategy
 
-| Branch | Purpose |
-|---|---|
-| `main` | Production-ready code. Tagged releases (`v0.9`, `v0.9.1`, …) |
-| `develop` | Integration branch — all feature branches merge here first |
-| `feat/theory-section` | Long-running branch for theory content and documentation pages |
-| `archive/v0-legacy` | Snapshot of the original v0 app (Angular 18 + plain JS backend, no auth) |
+| Branch                | Purpose                                                                  |
+| --------------------- | ------------------------------------------------------------------------ |
+| `main`                | Production-ready code. Tagged releases (`v0.9`, `v0.9.1`, …)             |
+| `develop`             | Integration branch — all feature branches merge here first               |
+| `feat/theory-section` | Long-running branch for theory content and documentation pages           |
+| `archive/v0-legacy`   | Snapshot of the original v0 app (Angular 18 + plain JS backend, no auth) |
 
 Feature branches: `feat/<name>`. Bug fixes: `fix/<name>`. Always branch from `develop`, merge back with `--no-ff`.
 
