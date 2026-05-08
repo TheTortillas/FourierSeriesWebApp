@@ -5,6 +5,7 @@ import {
   auditRepository,
   systemRepository,
 } from "../../infrastructure/container";
+import { db } from "../../infrastructure/database/db";
 import { authenticate, requireAdmin } from "../middlewares/authenticate";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
 import type {
@@ -595,3 +596,118 @@ adminRouter.get(
     }
   },
 );
+
+// ─── Feedback stats ──────────────────────────────────────────────────────────
+
+adminRouter.get("/feedback/stats", async (_req, res: Response, next: NextFunction) => {
+  try {
+    const [catRes, ratingRes, dayRes, totalRes] = await Promise.all([
+      db.query<{ category: string; count: number }>(
+        `SELECT category::text, COUNT(*)::int AS count
+         FROM feedback GROUP BY category ORDER BY count DESC`,
+      ),
+      db.query<{ rating: number; count: number }>(
+        `SELECT rating, COUNT(*)::int AS count
+         FROM feedback WHERE rating IS NOT NULL
+         GROUP BY rating ORDER BY rating`,
+      ),
+      db.query<{ day: string; count: number }>(
+        `SELECT to_char(DATE(created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
+         FROM feedback
+         WHERE created_at >= NOW() - INTERVAL '30 days'
+         GROUP BY DATE(created_at) ORDER BY DATE(created_at)`,
+      ),
+      db.query<{ total: number }>(
+        `SELECT COUNT(*)::int AS total FROM feedback`,
+      ),
+    ]);
+
+    res.json({
+      total:      totalRes.rows[0]?.total ?? 0,
+      byCategory: catRes.rows,
+      byRating:   ratingRes.rows,
+      byDay:      dayRes.rows,
+    });
+  } catch (err) { next(err); }
+});
+
+// ─── Survey stats ────────────────────────────────────────────────────────────
+
+adminRouter.get("/survey/stats", async (_req, res: Response, next: NextFunction) => {
+  try {
+    const [
+      totalRes, roleRes, countryRes, howFoundRes,
+      purposeRes, featureRes, deviceRes, prevRes,
+      improvRes, ratingsRes, dayRes,
+    ] = await Promise.all([
+      db.query<{ total: number }>(
+        `SELECT COUNT(*)::int AS total FROM survey_responses`,
+      ),
+      db.query<{ role: string; count: number }>(
+        `SELECT role::text, COUNT(*)::int AS count
+         FROM survey_responses GROUP BY role ORDER BY count DESC`,
+      ),
+      db.query<{ country: string; count: number }>(
+        `SELECT country, COUNT(*)::int AS count
+         FROM survey_responses GROUP BY country ORDER BY count DESC LIMIT 10`,
+      ),
+      db.query<{ how_found: string; count: number }>(
+        `SELECT how_found::text, COUNT(*)::int AS count
+         FROM survey_responses GROUP BY how_found ORDER BY count DESC`,
+      ),
+      db.query<{ purpose: string; count: number }>(
+        `SELECT p AS purpose, COUNT(*)::int AS count
+         FROM survey_responses, unnest(purpose) AS p
+         GROUP BY p ORDER BY count DESC`,
+      ),
+      db.query<{ feature: string; count: number }>(
+        `SELECT f AS feature, COUNT(*)::int AS count
+         FROM survey_responses, unnest(features_used) AS f
+         GROUP BY f ORDER BY count DESC`,
+      ),
+      db.query<{ device: string; count: number }>(
+        `SELECT d AS device, COUNT(*)::int AS count
+         FROM survey_responses, unnest(device) AS d
+         GROUP BY d ORDER BY count DESC`,
+      ),
+      db.query<{ used_previous: boolean; count: number }>(
+        `SELECT used_previous, COUNT(*)::int AS count
+         FROM survey_responses GROUP BY used_previous`,
+      ),
+      db.query<{ improvement: string; count: number }>(
+        `SELECT i AS improvement, COUNT(*)::int AS count
+         FROM survey_responses, unnest(improvements) AS i
+         WHERE used_previous = true
+         GROUP BY i ORDER BY count DESC`,
+      ),
+      db.query<{ usefulness: number; ease: number; vs_other: number; recommend: number }>(
+        `SELECT
+           ROUND(AVG(usefulness_rating)::numeric,    2)::float AS usefulness,
+           ROUND(AVG(ease_of_use_rating)::numeric,   2)::float AS ease,
+           ROUND(AVG(vs_other_tools_rating)::numeric,2)::float AS vs_other,
+           ROUND(AVG(recommend_rating)::numeric,     2)::float AS recommend
+         FROM survey_responses`,
+      ),
+      db.query<{ day: string; count: number }>(
+        `SELECT to_char(DATE(created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
+         FROM survey_responses
+         WHERE created_at >= NOW() - INTERVAL '30 days'
+         GROUP BY DATE(created_at) ORDER BY DATE(created_at)`,
+      ),
+    ]);
+
+    res.json({
+      total:        totalRes.rows[0]?.total ?? 0,
+      byRole:       roleRes.rows,
+      topCountries: countryRes.rows,
+      byHowFound:   howFoundRes.rows,
+      byPurpose:    purposeRes.rows,
+      byFeature:    featureRes.rows,
+      byDevice:     deviceRes.rows,
+      usedPrevious: prevRes.rows,
+      improvements: improvRes.rows,
+      avgRatings:   ratingsRes.rows[0] ?? { usefulness: 0, ease: 0, vs_other: 0, recommend: 0 },
+      byDay:        dayRes.rows,
+    });
+  } catch (err) { next(err); }
+});

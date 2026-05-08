@@ -9,6 +9,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { UserStore } from '../../core/services/auth/user.store';
 import { SeoService } from '../../core/services/seo/seo.service';
+import { FeedbackService } from '../../core/services/feedback/feedback.service';
+import { SurveyService } from '../../core/services/survey/survey.service';
 
 @Component({
   selector: 'app-calculator',
@@ -16,11 +18,13 @@ import { SeoService } from '../../core/services/seo/seo.service';
   templateUrl: './calculator.component.html',
 })
 export class CalculatorComponent implements OnInit {
-  private readonly store     = inject(CalculatorStore);
-  private readonly router    = inject(Router);
-  private readonly route     = inject(ActivatedRoute);
-  private readonly userStore = inject(UserStore);
-  private readonly seo       = inject(SeoService);
+  private readonly store      = inject(CalculatorStore);
+  private readonly router     = inject(Router);
+  private readonly route      = inject(ActivatedRoute);
+  private readonly userStore  = inject(UserStore);
+  private readonly seo        = inject(SeoService);
+  private readonly feedbackSvc  = inject(FeedbackService);
+  private readonly surveySvc    = inject(SurveyService);
 
   ngOnInit(): void {
     this.seo.setPage('seo.calculator.title', 'seo.calculator.description');
@@ -65,7 +69,7 @@ export class CalculatorComponent implements OnInit {
         });
     }
 
-    // ── 3. Sync result → URL ──────────────────────────────────────────────
+    // ── 3. Sync result → URL + feedback modal trigger ─────────────────────
     effect(() => {
       const result = this.store.result();
       if (result) {
@@ -75,6 +79,8 @@ export class CalculatorComponent implements OnInit {
           queryParams: { s: this.store.encodeState() },
           replaceUrl: true,
         });
+        setTimeout(() => this.feedbackSvc.tryOpenModal(), 4000);
+        setTimeout(() => this.surveySvc.tryPrompt(), 8000);
       } else if (this.urlPopulated) {
         // Form was reset — clear the URL param
         void this.router.navigate([], {

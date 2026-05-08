@@ -48,6 +48,9 @@ export class NavComponent {
   /** Controls the Fourier analysis dropdown visibility. */
   readonly fourierMenuOpen = signal(false);
 
+  /** Controls the community/meta dropdown (feedback + survey). */
+  readonly moreMenuOpen = signal(false);
+
   /** Regex to match the leading /:lang segment in the current URL. */
   private readonly langSegmentRe = new RegExp(
     `^\\/(${SUPPORTED_LANG_CODES.join('|')})(\\\/|$)`,
@@ -87,6 +90,13 @@ export class NavComponent {
     const wrapper = e.currentTarget as HTMLElement;
     if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
       this.fourierMenuOpen.set(false);
+    }
+  }
+
+  onMoreMenuFocusOut(e: FocusEvent): void {
+    const wrapper = e.currentTarget as HTMLElement;
+    if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
+      this.moreMenuOpen.set(false);
     }
   }
 }

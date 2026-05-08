@@ -1,0 +1,80 @@
+<div class="p-6 flex flex-col gap-6 max-w-5xl">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div>
+    <h1 class="font-display text-xl text-ink dark:text-dark-ink">Feedback</h1>
+    <p class="text-xs text-muted dark:text-dark-muted font-mono mt-0.5">
+      Estadísticas de los envíos de feedback
+    </p>
+  </div>
+
+  <!-- ── Error ────────────────────────────────────────────────────────────── -->
+  @if (error) {
+    <div class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono
+                bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400
+                border border-red-200 dark:border-red-800">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 shrink-0">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+      </svg>
+      No se pudieron cargar las estadísticas de feedback.
+    </div>
+  }
+
+  <!-- ── Skeleton ─────────────────────────────────────────────────────────── -->
+  @if (loading && !stats) {
+    <div class="flex flex-col gap-4 animate-pulse">
+      <div class="h-10 w-32 rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+        <div class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+      </div>
+      <div class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+    </div>
+  }
+
+  @if (stats) {
+
+    <!-- Total badge -->
+    <div class="flex items-center gap-2">
+      <span class="font-mono text-3xl font-bold text-ink dark:text-dark-ink">{{ stats.total }}</span>
+      <span class="text-sm text-muted dark:text-dark-muted font-mono">envíos en total</span>
+    </div>
+
+    <!-- ── Row 1: Category + Rating ────────────────────────────────────────── -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- By category -->
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Por categoría</span>
+        </div>
+        <div class="p-4" style="height: 220px; position: relative;">
+          <canvas id="fbCat"></canvas>
+        </div>
+      </section>
+
+      <!-- Rating distribution -->
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Distribución de calificaciones</span>
+        </div>
+        <div class="p-4" style="height: 220px; position: relative;">
+          <canvas id="fbRating"></canvas>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ── Trend ────────────────────────────────────────────────────────────── -->
+    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Envíos — últimos 30 días</span>
+      </div>
+      <div class="p-4" style="height: 220px; position: relative;">
+        <canvas id="fbDay"></canvas>
+      </div>
+    </section>
+
+  }
+
+</div>
