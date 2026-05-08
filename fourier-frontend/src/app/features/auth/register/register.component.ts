@@ -11,6 +11,7 @@ import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { SeoService } from '../../../core/services/seo/seo.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { GoogleSignInComponent } from '../../../shared/components/google-sign-in/google-sign-in.component';
 
@@ -30,6 +31,9 @@ export class RegisterComponent {
   private readonly auth      = inject(AuthService);
   private readonly router    = inject(Router);
   private readonly transloco = inject(TranslocoService);
+  private readonly seo       = inject(SeoService);
+
+  constructor() { this.seo.setNoIndex(); }
 
   readonly form = this.fb.nonNullable.group(
     {

@@ -3,6 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../core/services/api/api.service';
+import { SeoService } from '../../core/services/seo/seo.service';
 import { HistoryEntry } from '../../domain';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 
@@ -25,6 +26,7 @@ const TYPE_KEY: Record<string, string> = {
 })
 export class HistoryComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly seo = inject(SeoService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly transloco = inject(TranslocoService);
@@ -68,6 +70,7 @@ export class HistoryComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.seo.setNoIndex();
     const favParam = this.route.snapshot.queryParamMap.get('favorites');
     if (favParam === 'true' || favParam === '1') {
       this.showFavoritesOnly = true;

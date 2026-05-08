@@ -4,6 +4,7 @@ import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../core/services/api/api.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { SeoService } from '../../../core/services/seo/seo.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 
 type State = 'loading' | 'success' | 'error';
@@ -16,6 +17,7 @@ type State = 'loading' | 'success' | 'error';
 export class VerifyEmailComponent implements OnInit {
   private readonly api       = inject(ApiService);
   private readonly auth      = inject(AuthService);
+  private readonly seo       = inject(SeoService);
   private readonly route     = inject(ActivatedRoute);
   private readonly router    = inject(Router);
   private readonly transloco = inject(TranslocoService);
@@ -24,6 +26,7 @@ export class VerifyEmailComponent implements OnInit {
   readonly errorMsg = signal<string | null>(null);
 
   ngOnInit(): void {
+    this.seo.setNoIndex();
     const token = this.route.snapshot.queryParamMap.get('token');
     if (!token) {
       this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']);
