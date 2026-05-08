@@ -1,16 +1,15 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
+import { optionalAuth, type AuthenticatedRequest } from "../middlewares/authenticate";
+import { FeedbackRepository } from "../../infrastructure/persistence/FeedbackRepository";
 
 export const feedbackRouter = Router();
 
+const repo = new FeedbackRepository();
+
 const VALID_CATEGORIES = ["bug", "suggestion", "question", "other", "rating"];
 
-feedbackRouter.post("/", (req: Request, res: Response): void => {
-  const { category, rating, message, email } = req.body as {
-    category?: unknown;
-    rating?: unknown;
-    message?: unknown;
-    email?: unknown;
-  };
+feedbackRouter.post("/", optionalAuth, async (req: AuthenticatedRequest, res): Promise<void> => {
+  const { category, rating, message, email } = req.body as Record<string, unknown>;
 
   if (!category || !VALID_CATEGORIES.includes(category as string)) {
     res.status(400).json({ error: "Invalid category" });
@@ -24,7 +23,22 @@ feedbackRouter.post("/", (req: Request, res: Response): void => {
     res.status(400).json({ error: "Message too long" });
     return;
   }
+  if (email !== undefined && (typeof email !== "string" || email.length > 320)) {
+    res.status(400).json({ error: "Invalid email" });
+    return;
+  }
 
-  // DB persistence added in a later iteration
-  res.status(201).json({ message: "Feedback received" });
+  try {
+    await repo.create({
+      userId:    req.user?.id,
+      ipAddress: req.ip ?? undefined,
+      category:  category as string,
+      rating:    typeof rating === "number" ? rating : undefined,
+      message:   typeof message === "string" ? message.trim() || undefined : undefined,
+      email:     typeof email   === "string" ? email.trim()   || undefined : undefined,
+    });
+    res.status(201).json({ message: "Feedback received" });
+  } catch {
+    res.status(500).json({ error: "Failed to save feedback" });
+  }
 });
