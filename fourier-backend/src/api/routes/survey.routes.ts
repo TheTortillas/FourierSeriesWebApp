@@ -3,7 +3,6 @@ import { Router, Request, Response } from "express";
 export const surveyRouter = Router();
 
 const VALID_ROLES = ["student", "teacher", "graduate", "other"];
-const VALID_LEVELS = ["licenciatura", "maestria", "doctorado", "other"];
 const VALID_PURPOSES = ["problem", "learning", "teaching", "exploration", "other"];
 const VALID_FEATURES = [
   "trigonometric", "half_range", "complex",
@@ -11,10 +10,12 @@ const VALID_FEATURES = [
   "dft_signal", "dft_function", "dft_epicycles", "none",
 ];
 const VALID_DEVICES = ["phone", "computer"];
+const VALID_IMPROVEMENTS = ["ui", "features", "speed", "results_clarity", "other"];
 
 surveyRouter.post("/", (req: Request, res: Response): void => {
-  const { role, purpose, featuresUsed, device, usefulnessRating, easeOfUseRating,
-          vsOtherToolsRating, recommendRating } = req.body as Record<string, unknown>;
+  const { role, purpose, featuresUsed, device, usedPrevious, improvements,
+          usefulnessRating, easeOfUseRating, vsOtherToolsRating, recommendRating
+        } = req.body as Record<string, unknown>;
 
   if (!VALID_ROLES.includes(role as string)) {
     res.status(400).json({ error: "Invalid role" });
@@ -31,6 +32,16 @@ surveyRouter.post("/", (req: Request, res: Response): void => {
   if (!Array.isArray(device) || device.length === 0 || !device.every((d) => VALID_DEVICES.includes(d as string))) {
     res.status(400).json({ error: "Invalid device" });
     return;
+  }
+  if (typeof usedPrevious !== "boolean") {
+    res.status(400).json({ error: "Invalid usedPrevious" });
+    return;
+  }
+  if (improvements !== undefined) {
+    if (!Array.isArray(improvements) || !improvements.every((i) => VALID_IMPROVEMENTS.includes(i as string))) {
+      res.status(400).json({ error: "Invalid improvements" });
+      return;
+    }
   }
   for (const field of [usefulnessRating, easeOfUseRating, vsOtherToolsRating, recommendRating]) {
     if (typeof field !== "number" || field < 1 || field > 5) {

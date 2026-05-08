@@ -603,9 +603,6 @@
         "social": "Social media",
         "other": "Other"
       },
-      "usedPreviousLabel": "Did you know or use a previous version of this app?",
-      "usedPreviousYes": "Yes, I used the previous version",
-      "usedPreviousNo": "No, this is my first time using it",
       "purposeLabel": "What was your purpose for using the app?",
       "purposes": {
         "problem": "Solve a specific problem",
@@ -636,6 +633,23 @@
       }
     },
     "s4": {
+      "heading": "Did you know the previous version?",
+      "imgAlt": "Screenshot of the previous version of Fourier Web Calculator",
+      "usedPreviousLabel": "Had you used this tool before this version?",
+      "usedPreviousYes": "Yes, I used the previous version",
+      "usedPreviousNo": "No, this is my first time using it",
+      "improvementsLabel": "What improvements did you notice? (optional)",
+      "regressionsLabel": "Did anything get worse or do you miss something from the old version? (optional)",
+      "regressionsPlaceholder": "Tell us what you miss or what was better before…",
+      "improvements": {
+        "ui": "Better visual interface",
+        "features": "More features",
+        "speed": "Faster or more responsive",
+        "results_clarity": "Clearer or more complete results",
+        "other": "Other improvement"
+      }
+    },
+    "s5": {
       "usefulnessLabel": "Was the app useful for solving your problem or understanding the topic?",
       "usefulnessHint": "1 = Not at all · 5 = Completely",
       "easeLabel": "How easy and intuitive did you find the app?",
@@ -645,7 +659,7 @@
       "recommendLabel": "How likely are you to keep using or recommend this app?",
       "recommendHint": "1 = Not likely · 5 = Definitely"
     },
-    "s5": {
+    "s6": {
       "optional": "These questions are optional. Any detail is very helpful.",
       "bugLabel": "Describe any error, bug, or case that didn't work as expected",
       "bugPlaceholder": "Describe the issue in as much detail as possible…",

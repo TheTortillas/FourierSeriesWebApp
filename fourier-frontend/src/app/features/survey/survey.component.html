@@ -189,48 +189,6 @@
             </div>
           </fieldset>
 
-          <!-- Used previous version -->
-          <fieldset>
-            <legend class="text-xs font-mono text-muted dark:text-dark-muted mb-2">
-              {{ 'survey.s3.usedPreviousLabel' | transloco }} <span class="text-red-500">*</span>
-            </legend>
-            <img
-              src="/images/prev-version.png"
-              alt="Versión anterior"
-              class="mb-3 w-full max-w-xs rounded border border-border dark:border-dark-border opacity-80"
-            />
-            <div class="flex flex-col gap-2">
-              <label class="flex items-center gap-3 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="usedPrevious"
-                  [value]="true"
-                  [(ngModel)]="usedPrevious"
-                  class="accent-accent w-4 h-4 shrink-0"
-                />
-                <span
-                  class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
-                >
-                  {{ 'survey.s3.usedPreviousYes' | transloco }}
-                </span>
-              </label>
-              <label class="flex items-center gap-3 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="usedPrevious"
-                  [value]="false"
-                  [(ngModel)]="usedPrevious"
-                  class="accent-accent w-4 h-4 shrink-0"
-                />
-                <span
-                  class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
-                >
-                  {{ 'survey.s3.usedPreviousNo' | transloco }}
-                </span>
-              </label>
-            </div>
-          </fieldset>
-
           <!-- Purpose (multi-select) -->
           <fieldset>
             <legend class="text-xs font-mono text-muted dark:text-dark-muted mb-2">
@@ -375,8 +333,80 @@
         </div>
       }
 
-      <!-- ─── Step 4: Ratings ───────────────────────────────────────────── -->
+      <!-- ─── Step 4: Previous version ───────────────────────────────────── -->
       @if (step() === 4) {
+        <div class="flex flex-col gap-5">
+          <p class="text-sm font-mono font-medium text-ink dark:text-dark-ink">
+            {{ 'survey.s4.heading' | transloco }}
+          </p>
+
+          <img
+            src="/images/prev-version.png"
+            [attr.alt]="'survey.s4.imgAlt' | transloco"
+            class="w-full rounded-lg border border-border dark:border-dark-border"
+          />
+
+          <fieldset>
+            <legend class="text-xs font-mono text-muted dark:text-dark-muted mb-2">
+              {{ 'survey.s4.usedPreviousLabel' | transloco }} <span class="text-red-500">*</span>
+            </legend>
+            <div class="flex flex-col gap-2">
+              <label class="flex items-center gap-3 cursor-pointer group">
+                <input type="radio" name="usedPrevious" [value]="true" [(ngModel)]="usedPrevious" class="accent-accent w-4 h-4 shrink-0" />
+                <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                  {{ 'survey.s4.usedPreviousYes' | transloco }}
+                </span>
+              </label>
+              <label class="flex items-center gap-3 cursor-pointer group">
+                <input type="radio" name="usedPrevious" [value]="false" [(ngModel)]="usedPrevious" class="accent-accent w-4 h-4 shrink-0" />
+                <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                  {{ 'survey.s4.usedPreviousNo' | transloco }}
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          @if (usedPrevious === true) {
+            <div class="flex flex-col gap-5 border-t border-border dark:border-dark-border pt-5">
+
+              <!-- Improvements -->
+              <fieldset>
+                <legend class="text-xs font-mono text-muted dark:text-dark-muted mb-2">
+                  {{ 'survey.s4.improvementsLabel' | transloco }}
+                </legend>
+                <div class="flex flex-col gap-2">
+                  @for (imp of improvementOptions; track imp) {
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                      <input type="checkbox" [checked]="hasImprovement(imp)" (change)="toggleImprovement(imp)" class="accent-accent w-4 h-4 shrink-0" />
+                      <span class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors">
+                        {{ 'survey.s4.improvements.' + imp | transloco }}
+                      </span>
+                    </label>
+                  }
+                  @if (hasImprovement('other')) {
+                    <input type="text" [(ngModel)]="improvementsOther" [placeholder]="'survey.otherPlaceholder' | transloco" maxlength="200"
+                      class="mt-1 w-full rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50" />
+                  }
+                </div>
+              </fieldset>
+
+              <!-- Regressions -->
+              <div>
+                <label class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5 block">
+                  {{ 'survey.s4.regressionsLabel' | transloco }}
+                </label>
+                <textarea [(ngModel)]="regressions" [placeholder]="'survey.s4.regressionsPlaceholder' | transloco"
+                  rows="3" maxlength="2000"
+                  class="w-full resize-none rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"></textarea>
+              </div>
+
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ─── Step 5: Ratings ───────────────────────────────────────────── -->
+      @if (step() === 5) {
         <div class="flex flex-col gap-8">
           @for (cfg of ratingConfigs; track cfg.key) {
             <div>
@@ -412,19 +442,19 @@
         </div>
       }
 
-      <!-- ─── Step 5: Problems & comments ──────────────────────────────── -->
-      @if (step() === 5) {
+      <!-- ─── Step 6: Problems & comments ──────────────────────────────── -->
+      @if (step() === 6) {
         <div class="flex flex-col gap-5">
           <p class="text-xs font-mono text-muted dark:text-dark-muted">
-            {{ 'survey.s5.optional' | transloco }}
+            {{ 'survey.s6.optional' | transloco }}
           </p>
           <div>
             <label class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5 block">
-              {{ 'survey.s5.bugLabel' | transloco }}
+              {{ 'survey.s6.bugLabel' | transloco }}
             </label>
             <textarea
               [(ngModel)]="bugDescription"
-              [placeholder]="'survey.s5.bugPlaceholder' | transloco"
+              [placeholder]="'survey.s6.bugPlaceholder' | transloco"
               rows="3"
               maxlength="2000"
               class="w-full resize-none rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"
@@ -432,11 +462,11 @@
           </div>
           <div>
             <label class="text-xs font-mono text-muted dark:text-dark-muted mb-1.5 block">
-              {{ 'survey.s5.commentsLabel' | transloco }}
+              {{ 'survey.s6.commentsLabel' | transloco }}
             </label>
             <textarea
               [(ngModel)]="generalComments"
-              [placeholder]="'survey.s5.commentsPlaceholder' | transloco"
+              [placeholder]="'survey.s6.commentsPlaceholder' | transloco"
               rows="4"
               maxlength="2000"
               class="w-full resize-none rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-3 py-2 text-sm font-mono text-ink dark:text-dark-ink placeholder:text-muted dark:placeholder:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent/50"

@@ -7,10 +7,11 @@ import { NavComponent } from '../../shared/components/nav/nav.component';
 import { SurveyService } from '../../core/services/survey/survey.service';
 import { SeoService } from '../../core/services/seo/seo.service';
 import {
-  SurveyRole, AcademicLevel, SurveyPurpose, SurveyFeature, SurveyDevice, HowFound
+  SurveyRole, AcademicLevel, SurveyPurpose, SurveyFeature, SurveyDevice, HowFound,
+  SurveyImprovement,
 } from '../../domain';
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 @Component({
   selector: 'app-survey',
@@ -42,19 +43,24 @@ export class SurveyComponent {
   // Step 3 — Experience
   howFound: HowFound | '' = '';
   howFoundOther = '';
-  usedPrevious: boolean | null = null;
   purposesUsed: SurveyPurpose[] = [];
   purposeOther = '';
   featuresUsed: SurveyFeature[] = [];
   devicesUsed: SurveyDevice[] = [];
 
-  // Step 4 — Ratings
-  usefulnessRating  = 0; usefulnessHovered  = 0;
-  easeOfUseRating   = 0; easeHovered        = 0;
-  vsOtherToolsRating = 0; vsHovered         = 0;
-  recommendRating   = 0; recommendHovered   = 0;
+  // Step 4 — Previous version
+  usedPrevious: boolean | null = null;
+  improvements: SurveyImprovement[] = [];
+  improvementsOther = '';
+  regressions = '';
 
-  // Step 5 — Open
+  // Step 5 — Ratings
+  usefulnessRating  = 0;
+  easeOfUseRating   = 0;
+  vsOtherToolsRating = 0;
+  recommendRating   = 0;
+
+  // Step 6 — Open
   bugDescription  = '';
   generalComments = '';
 
@@ -75,12 +81,13 @@ export class SurveyComponent {
       case 3:
         return this.howFound !== '' &&
           (this.howFound !== 'other' || this.howFoundOther.trim() !== '') &&
-          this.usedPrevious !== null &&
           this.purposesUsed.length > 0 &&
           (!this.purposesUsed.includes('other') || this.purposeOther.trim() !== '') &&
           this.featuresUsed.length > 0 &&
           this.devicesUsed.length > 0;
       case 4:
+        return this.usedPrevious !== null;
+      case 5:
         return this.getRating('usefulness') > 0 && this.getRating('ease') > 0 &&
           this.getRating('vsOther') > 0 && this.getRating('recommend') > 0;
       default: return true;
@@ -130,6 +137,14 @@ export class SurveyComponent {
   }
   hasDevice(d: SurveyDevice): boolean { return this.devicesUsed.includes(d); }
 
+  toggleImprovement(i: SurveyImprovement): void {
+    const idx = this.improvements.indexOf(i);
+    this.improvements = idx === -1
+      ? [...this.improvements, i]
+      : this.improvements.filter((x) => x !== i);
+  }
+  hasImprovement(i: SurveyImprovement): boolean { return this.improvements.includes(i); }
+
   submit(): void {
     if (this.surveySvc.submitting()) return;
     this.error.set('');
@@ -147,11 +162,14 @@ export class SurveyComponent {
       country: this.country.trim(),
       howFound: this.howFound as HowFound,
       howFoundOther: this.howFound === 'other' ? this.howFoundOther.trim() : undefined,
-      usedPrevious: this.usedPrevious as boolean,
       purpose: this.purposesUsed,
       purposeOther: this.purposesUsed.includes('other') ? this.purposeOther.trim() : undefined,
       featuresUsed: this.featuresUsed,
       device: this.devicesUsed,
+      usedPrevious: this.usedPrevious as boolean,
+      improvements: this.usedPrevious && this.improvements.length > 0 ? this.improvements : undefined,
+      improvementsOther: this.usedPrevious && this.improvements.includes('other') ? this.improvementsOther.trim() || undefined : undefined,
+      regressions: this.usedPrevious && this.regressions.trim() ? this.regressions.trim() : undefined,
       usefulnessRating:   this.usefulnessRating,
       easeOfUseRating:    this.easeOfUseRating,
       vsOtherToolsRating: this.vsOtherToolsRating,
@@ -179,11 +197,13 @@ export class SurveyComponent {
   readonly devices: SurveyDevice[] = ['phone', 'computer'];
   readonly stars = [1, 2, 3, 4, 5];
 
+  readonly improvementOptions: SurveyImprovement[] = ['ui', 'features', 'speed', 'results_clarity', 'other'];
+
   readonly ratingConfigs = [
-    { key: 'usefulness',  label: 'survey.s4.usefulnessLabel',   hint: 'survey.s4.usefulnessHint' },
-    { key: 'ease',        label: 'survey.s4.easeLabel',         hint: 'survey.s4.easeHint' },
-    { key: 'vsOther',     label: 'survey.s4.vsOtherLabel',      hint: 'survey.s4.vsOtherHint' },
-    { key: 'recommend',   label: 'survey.s4.recommendLabel',    hint: 'survey.s4.recommendHint' },
+    { key: 'usefulness',  label: 'survey.s5.usefulnessLabel',   hint: 'survey.s5.usefulnessHint' },
+    { key: 'ease',        label: 'survey.s5.easeLabel',         hint: 'survey.s5.easeHint' },
+    { key: 'vsOther',     label: 'survey.s5.vsOtherLabel',      hint: 'survey.s5.vsOtherHint' },
+    { key: 'recommend',   label: 'survey.s5.recommendLabel',    hint: 'survey.s5.recommendHint' },
   ] as const;
 
   private ratingValues: Record<string, number> = { usefulness: 0, ease: 0, vsOther: 0, recommend: 0 };

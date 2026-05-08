@@ -603,9 +603,6 @@
         "social": "Redes sociales",
         "other": "Otro"
       },
-      "usedPreviousLabel": "¿Conociste o usaste una versión anterior de esta aplicación?",
-      "usedPreviousYes": "Sí, usé la versión anterior",
-      "usedPreviousNo": "No, es la primera vez que la uso",
       "purposeLabel": "¿Con qué propósito usaste la aplicación?",
       "purposes": {
         "problem": "Resolver un problema específico",
@@ -636,6 +633,23 @@
       }
     },
     "s4": {
+      "heading": "¿Conociste la versión anterior?",
+      "imgAlt": "Captura de la versión anterior de Fourier Web Calculator",
+      "usedPreviousLabel": "¿Habías usado esta herramienta antes de esta versión?",
+      "usedPreviousYes": "Sí, usé la versión anterior",
+      "usedPreviousNo": "No, es la primera vez que la uso",
+      "improvementsLabel": "¿Qué mejoras notaste? (opcional)",
+      "regressionsLabel": "¿Algo empeoró o extrañas algo de la versión anterior? (opcional)",
+      "regressionsPlaceholder": "Cuéntanos qué extrañas o qué era mejor antes…",
+      "improvements": {
+        "ui": "Mejor interfaz visual",
+        "features": "Más funcionalidades",
+        "speed": "Mayor velocidad o respuesta",
+        "results_clarity": "Resultados más claros o completos",
+        "other": "Otra mejora"
+      }
+    },
+    "s5": {
       "usefulnessLabel": "¿La aplicación fue útil para resolver tu problema o entender el tema?",
       "usefulnessHint": "1 = No me ayudó · 5 = Sí, completamente",
       "easeLabel": "¿Qué tan fácil de usar e intuitiva te resultó?",
@@ -645,7 +659,7 @@
       "recommendLabel": "¿Qué tan probable es que la sigas usando o la recomiendes?",
       "recommendHint": "1 = Nada probable · 5 = Seguro"
     },
-    "s5": {
+    "s6": {
       "optional": "Estas preguntas son opcionales. Cualquier detalle es de gran ayuda.",
       "bugLabel": "Describe cualquier error, bug o caso que no haya funcionado como esperabas",
       "bugPlaceholder": "Describe el problema con el mayor detalle posible…",

@@ -1,6 +1,7 @@
 export type SurveyRole = 'student' | 'teacher' | 'graduate' | 'other';
 export type AcademicLevel = 'licenciatura' | 'maestria' | 'doctorado' | 'other';
 export type SurveyPurpose = 'problem' | 'learning' | 'teaching' | 'exploration' | 'other';
+export type SurveyImprovement = 'ui' | 'features' | 'speed' | 'results_clarity' | 'other';
 export type SurveyFeature =
   | 'trigonometric'
   | 'half_range'
@@ -28,13 +29,18 @@ export interface SurveyRequest {
   // Step 3 — Experience
   howFound: HowFound;
   howFoundOther?: string;
-  usedPrevious: boolean;
   purpose: SurveyPurpose[];
   purposeOther?: string;
   featuresUsed: SurveyFeature[];
   device: SurveyDevice[];
 
-  // Step 4 — Ratings
+  // Step 4 — Previous version
+  usedPrevious: boolean;
+  improvements?: SurveyImprovement[];
+  improvementsOther?: string;
+  regressions?: string;
+
+  // Step 5 — Ratings
   usefulnessRating: number;
   easeOfUseRating: number;
   vsOtherToolsRating: number;
