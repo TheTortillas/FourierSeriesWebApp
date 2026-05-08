@@ -28,6 +28,7 @@ import { CoordinateTransformService } from '../../../core/services/canvas/coordi
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { DftComputeService } from '../../../core/services/dft/dft-compute.service';
+import { CsvExportService } from '../../../core/services/csv-export.service';
 import {
   FunctionPlotComponent,
   PlotLayer,
@@ -163,6 +164,7 @@ export class DftComponent implements OnInit, OnDestroy {
   private readonly destroyRef  = inject(DestroyRef);
   readonly mqs                 = inject(MathquillService);
   readonly userStore           = inject(UserStore);
+  private readonly csvExport   = inject(CsvExportService);
 
   readonly signalPlotRef    = viewChild<FunctionPlotComponent>('signalPlot');
   readonly spectrumPlotRef  = viewChild<FunctionPlotComponent>('spectrumPlot');
@@ -1157,6 +1159,22 @@ export class DftComponent implements OnInit, OnDestroy {
     a.href = canvas.toDataURL('image/png');
     a.download = filename;
     a.click();
+  }
+
+  exportCsv(): void {
+    const coeffs = this.allCoeffs();
+    if (!coeffs.length) return;
+    const phaseUnit = this.dftPhaseUnit();
+    const header = ['k', '|X[k]|', 'amplitude_%', 'Re', 'Im', phaseUnit === 'deg' ? 'phase_deg' : 'phase_pi'];
+    const rows = coeffs.map((c) => [
+      String(this.kDisplay(c)),
+      String(c.amplitude),
+      String(c.amplitudePercent),
+      String(c.re),
+      String(c.im),
+      phaseUnit === 'deg' ? String((c.phase * 180) / Math.PI) : c.phaseInPi,
+    ]);
+    this.csvExport.download('dft-coefficients.csv', [header, ...rows]);
   }
 
   // ── Favorites ─────────────────────────────────────────────────────────────
