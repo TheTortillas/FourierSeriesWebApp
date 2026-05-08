@@ -367,6 +367,7 @@
     "favorite": {
       "add": "Guardar como favorito",
       "remove": "Quitar de favoritos",
+      "rename": "Renombrar favorito",
       "nameLabel": "Nombre del favorito:",
       "namePlaceholder": "ej. Serie de cos(x)"
     },

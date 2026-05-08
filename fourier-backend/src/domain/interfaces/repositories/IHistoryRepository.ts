@@ -58,6 +58,12 @@ export interface IHistoryRepository {
     name?: string,
   ): Promise<HistoryRecord>;
 
+  renameFavorite(
+    id: string,
+    userId: string,
+    name: string | undefined,
+  ): Promise<HistoryRecord>;
+
   delete(id: string, userId: string): Promise<void>;
 
   countByUser(userId: string, favoritesOnly?: boolean): Promise<number>;

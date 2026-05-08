@@ -113,24 +113,39 @@ export class HistoryComponent implements OnInit {
   toggleFavorite(entry: HistoryEntry, event: Event): void {
     event.stopPropagation();
     if (entry.isFavorite) {
-      // Unmark — no name needed
       this.api.toggleFavorite(entry.id).subscribe({
         next: (updated) => this.patchEntry(updated),
       });
     } else {
-      // Mark — open inline rename dialog
       this.renamingId.set(entry.id);
       this.renameValue = '';
     }
   }
 
+  startRenameFavorite(entry: HistoryEntry, event: Event): void {
+    event.stopPropagation();
+    this.renamingId.set(entry.id);
+    this.renameValue = entry.favoriteName ?? '';
+  }
+
   confirmFavorite(entry: HistoryEntry): void {
-    this.api.toggleFavorite(entry.id, this.renameValue.trim() || undefined).subscribe({
-      next: (updated) => {
-        this.patchEntry(updated);
-        this.renamingId.set(null);
-      },
-    });
+    const name = this.renameValue.trim() || undefined;
+    if (entry.isFavorite) {
+      // Already a favorite — just update the name via a PATCH that keeps isFavorite=true
+      this.api.renameFavorite(entry.id, name).subscribe({
+        next: (updated) => {
+          this.patchEntry(updated);
+          this.renamingId.set(null);
+        },
+      });
+    } else {
+      this.api.toggleFavorite(entry.id, name).subscribe({
+        next: (updated) => {
+          this.patchEntry(updated);
+          this.renamingId.set(null);
+        },
+      });
+    }
   }
 
   cancelRename(): void {
