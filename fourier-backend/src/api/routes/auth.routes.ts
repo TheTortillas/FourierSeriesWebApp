@@ -582,6 +582,43 @@ authRouter.get(
  *       401:
  *         description: No autenticado
  */
+authRouter.patch(
+  "/profile",
+  authenticate,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { firstName, lastName } = req.body as {
+        firstName?: string;
+        lastName?: string;
+      };
+
+      const trimmedFirst = firstName?.trim();
+      const trimmedLast = lastName?.trim();
+
+      if (!trimmedFirst || !trimmedLast) {
+        res.status(400).json({ error: "firstName and lastName are required" });
+        return;
+      }
+      if (trimmedFirst.length > 100 || trimmedLast.length > 100) {
+        res.status(400).json({ error: "Name fields must be 100 characters or less" });
+        return;
+      }
+
+      await userRepository.updateName(req.user!.id, trimmedFirst, trimmedLast);
+
+      const user = await userRepository.findById(req.user!.id);
+      if (!user) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+      const { passwordHash: _, ...safeUser } = user;
+      res.json({ user: safeUser });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 authRouter.post(
   "/change-password",
   authenticate,

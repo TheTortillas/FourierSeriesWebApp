@@ -25,7 +25,8 @@
     "downloadPng": "Descargar PNG",
     "latex": "LaTeX",
     "maxima": "Maxima",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "saving": "Guardando…"
   },
   "nav": {
     "fourierAnalysis": "Análisis de Fourier",
@@ -474,17 +475,27 @@
     "resendVerification": "Reenviar",
     "resendSent": "Enviado ✓",
     "resendSending": "Enviando…",
+    "authMethod": "Método de acceso",
+    "authEmail": "Email y contraseña",
+    "memberSince": "Miembro desde",
+    "lastLogin": "Último acceso",
+    "editName": "Editar nombre",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
     "calculationsThisWeek": "Cálculos esta semana",
     "quotaUnlimited": "{{ used }} usados · ilimitados",
+    "quotaUnlimitedDesc": "Tienes cálculos ilimitados.",
     "quotaLimited": "{{ used }} / {{ limit }} · {{ remaining }} restantes",
     "myCalculations": "Mis cálculos",
+    "myFavorites": "Mis favoritos",
     "changePassword": "Cambiar contraseña",
     "passwordUpdated": "✓ Contraseña actualizada correctamente.",
     "currentPassword": "Contraseña actual",
     "newPassword": "Nueva contraseña",
     "confirmNewPassword": "Confirmar nueva contraseña",
     "savePassword": "Cambiar contraseña",
-    "savingPassword": "Guardando…"
+    "savingPassword": "Guardando…",
+    "googleNoPassword": "Tu cuenta usa Google — el cambio de contraseña no está disponible."
   },
   "errors": {
     "generic": "Ocurrió un error. Intenta de nuevo.",

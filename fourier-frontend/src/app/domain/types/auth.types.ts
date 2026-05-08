@@ -8,6 +8,10 @@ export interface User {
   role: UserRole;
   tier: UserTier;
   emailVerified: boolean;
+  /** null means the user only uses Google sign-in */
+  passwordHash: string | null;
+  createdAt: string;
+  lastLoginAt: string | null;
 }
 
 export interface AuthResponse {

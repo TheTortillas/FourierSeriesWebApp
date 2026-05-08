@@ -127,6 +127,10 @@ export class ApiService {
     });
   }
 
+  updateProfile(firstName: string, lastName: string): Observable<{ user: User }> {
+    return this.http.patch<{ user: User }>(`${this.base}/auth/profile`, { firstName, lastName });
+  }
+
   // ─── Fourier Series ──────────────────────────────────────────────────────
 
   calculateTrigonometric(body: FourierSeriesRequest): Observable<TrigonometricResponse> {
