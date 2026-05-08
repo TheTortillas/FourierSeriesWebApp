@@ -728,9 +728,21 @@
                 <table class="w-full text-[11px] font-mono">
                   <thead class="sticky top-0 bg-paper2 dark:bg-dark-surface z-10">
                     <tr class="border-b border-border dark:border-dark-border text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                      <th class="px-3 py-2 text-left">k</th>
-                      <th class="px-3 py-2 text-left">|C|</th>
-                      <th class="px-3 py-2 text-left">peso</th>
+                      <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                        (click)="epicCoeffOrder.update(o => o === 'amplitude' ? 'frequency' : 'amplitude')"
+                        [class.text-accent]="epicCoeffOrder() === 'amplitude'">
+                        k @if (epicCoeffOrder() === 'amplitude') { <span class="opacity-60">↑</span> }
+                      </th>
+                      <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                        (click)="epicCoeffOrder.update(o => o === 'amplitude' ? 'frequency' : 'amplitude')"
+                        [class.text-accent]="epicCoeffOrder() === 'amplitude'">
+                        |C| @if (epicCoeffOrder() !== 'amplitude') { <span class="opacity-60">↓</span> }
+                      </th>
+                      <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                        (click)="epicCoeffOrder.update(o => o === 'amplitude' ? 'frequency' : 'amplitude')"
+                        [class.text-accent]="epicCoeffOrder() === 'amplitude'">
+                        peso
+                      </th>
                       <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
                         (click)="epicTogglePhaseUnit()"
                         [title]="'transforms.dft.epicycles.phaseToggleHint' | transloco">
@@ -1078,11 +1090,28 @@
               <table class="w-full text-xs font-mono">
                 <thead class="sticky top-0 bg-paper2 dark:bg-dark-surface z-10">
                   <tr class="border-b border-border dark:border-dark-border text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
-                    <th class="px-3 py-2 text-left">k</th>
-                    <th class="px-3 py-2 text-left">|X[k]|</th>
-                    <th class="px-3 py-2 text-left" title="{{ 'transforms.dft.colWeightTitle' | transloco }}">{{ 'transforms.dft.colWeight' | transloco }}</th>
-                    <th class="px-3 py-2 text-left">Re</th>
-                    <th class="px-3 py-2 text-left">Im</th>
+                    <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                      (click)="dftSortByAmplitude.update(v => !v)"
+                      [class.text-accent]="dftSortByAmplitude()">
+                      k @if (dftSortByAmplitude()) { <span class="opacity-60">↑</span> }
+                    </th>
+                    <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                      (click)="dftSortByAmplitude.update(v => !v)"
+                      [class.text-accent]="dftSortByAmplitude()">
+                      |X[k]| @if (!dftSortByAmplitude()) { <span class="opacity-60">↓</span> }
+                    </th>
+                    <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                      (click)="dftSortByAmplitude.update(v => !v)"
+                      [class.text-accent]="dftSortByAmplitude()"
+                      title="{{ 'transforms.dft.colWeightTitle' | transloco }}">
+                      {{ 'transforms.dft.colWeight' | transloco }}
+                    </th>
+                    <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                      (click)="dftSortByAmplitude.update(v => !v)"
+                      [class.text-accent]="dftSortByAmplitude()">Re</th>
+                    <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
+                      (click)="dftSortByAmplitude.update(v => !v)"
+                      [class.text-accent]="dftSortByAmplitude()">Im</th>
                     <th class="px-3 py-2 text-left cursor-pointer select-none hover:text-accent transition-colors"
                       (click)="dftTogglePhaseUnit()"
                       [title]="'transforms.dft.epicycles.phaseToggleHint' | transloco">

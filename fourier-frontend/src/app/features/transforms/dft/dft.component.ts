@@ -263,6 +263,9 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly specMode = signal<'amplitude' | 'phase'>('amplitude');
   readonly fftShift = signal(true);
 
+  /** null = natural order (fftShift-aware); 'amplitude' = sorted desc by amplitude. */
+  readonly dftSortByAmplitude = signal(false);
+
   // ── Canvas colors ──────────────────────────────────────────────────────────
   readonly samplesColor            = signal('#ea580c');
   readonly reconstructionColor     = signal('#6366f1');
@@ -512,10 +515,13 @@ export class DftComponent implements OnInit, OnDestroy {
 
   // ── Derived values ─────────────────────────────────────────────────────────
 
-  /** All coefficients ordered by kDisplay — respects fftShift so negative freqs appear first. */
+  /** All coefficients — sorted by amplitude desc when dftSortByAmplitude, else fftShift-aware k order. */
   readonly allCoeffs = computed(() => {
     const res = this.result();
     if (!res) return [];
+    if (this.dftSortByAmplitude()) {
+      return [...res.coefficients].sort((a, b) => b.amplitude - a.amplitude);
+    }
     const N = res.N;
     const shift = this.fftShift();
     return [...res.coefficients].sort((a, b) => {
@@ -827,6 +833,7 @@ export class DftComponent implements OnInit, OnDestroy {
 
     this.selectedCoeff.set(null);
     this.hoveredCoeff.set(null);
+    this.dftSortByAmplitude.set(false);
     this.showCanvasSettings.set(true);
 
     // Track quota on backend (manual compute is client-side, so we fire a lightweight call)
@@ -893,6 +900,7 @@ export class DftComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         this.selectedCoeff.set(null);
         this.hoveredCoeff.set(null);
+        this.dftSortByAmplitude.set(false);
         this.showCanvasSettings.set(true);
         this.userStore.refreshQuota();
         if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
@@ -911,6 +919,7 @@ export class DftComponent implements OnInit, OnDestroy {
     this.showSpecSettings.set(false);
     this.selectedCoeff.set(null);
     this.hoveredCoeff.set(null);
+    this.dftSortByAmplitude.set(false);
     this.latestHistoryEntry.set(null);
     this.showFavoriteDialog.set(false);
   }
