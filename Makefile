@@ -1,90 +1,71 @@
 # Fourier Web Calculator - Makefile
-# Automatiza la instalación de dependencias para backend y frontend
 
-.PHONY: install install-backend install-frontend clean clean-backend clean-frontend help dev dev-backend dev-frontend start stop all
+.PHONY: install install-backend install-frontend clean clean-backend clean-frontend \
+        dev dev-backend dev-frontend start stop help all
 
-# Instalar dependencias en ambos proyectos
+# ── Install ──────────────────────────────────────────────────────────────────
+
 install: install-backend install-frontend
-	@echo "✅ Todas las dependencias instaladas correctamente"
+	@echo "All dependencies installed."
 
-# Instalar dependencias del backend
 install-backend:
-	@echo "📦 Instalando dependencias del backend..."
-	@(cd backend && npm install)
-	@echo "✅ Backend instalado"
+	@echo "Installing backend dependencies..."
+	@(cd fourier-backend && npm install)
 
-# Instalar dependencias del frontend
 install-frontend:
-	@echo "🎨 Instalando dependencias del frontend..."
-	@(cd frontend && npm install)
-	@echo "✅ Frontend instalado"
+	@echo "Installing frontend dependencies..."
+	@(cd fourier-frontend && npm install)
 
-# Limpiar node_modules
+# ── Clean ────────────────────────────────────────────────────────────────────
+
 clean: clean-backend clean-frontend
-	@echo "🧹 Limpieza completada"
+	@echo "Clean complete."
 
 clean-backend:
-	@echo "🧹 Limpiando node_modules del backend..."
-	@rm -rf backend/node_modules
-	@rm -f backend/package-lock.json
+	@rm -rf fourier-backend/node_modules fourier-backend/dist
 
 clean-frontend:
-	@echo "🧹 Limpiando node_modules del frontend..."
-	@rm -rf frontend/node_modules
-	@rm -f frontend/package-lock.json
+	@rm -rf fourier-frontend/node_modules fourier-frontend/dist
 
-# Ejecutar en modo desarrollo (ambos servicios)
+# ── Dev ──────────────────────────────────────────────────────────────────────
+
 dev:
-	@echo "🚀 Iniciando servicios en modo desarrollo..."
-	@echo "📡 Backend en puerto 3000 (con --watch)"
-	@echo "🎨 Frontend en puerto 4200"
-	@echo "💡 Usa Ctrl+C para detener ambos servicios"
-	@(cd backend/src && node --watch server.js) & (cd frontend && ng serve)
+	@echo "Starting backend (port 3000) and frontend (port 4200)..."
+	@(cd fourier-backend && npm run dev) & (cd fourier-frontend && ng serve)
 
-# Ejecutar solo el backend en modo desarrollo
 dev-backend:
-	@echo "📡 Iniciando backend en modo desarrollo..."
-	@echo "🔄 Servidor con auto-reload habilitado"
-	@echo "🌐 Disponible en http://localhost:3000"
-	@cd backend/src && node --watch server.js
+	@echo "Starting backend in dev mode..."
+	@cd fourier-backend && npm run dev
 
-# Ejecutar solo el frontend en modo desarrollo
 dev-frontend:
-	@echo "🎨 Iniciando frontend en modo desarrollo..."
-	@echo "🌐 Disponible en http://localhost:4200"
-	@cd frontend && ng serve
+	@echo "Starting frontend dev server..."
+	@cd fourier-frontend && ng serve
 
-# Alias para dev
 start: dev
 
-# Detener servicios (ayuda para recordar el comando)
 stop:
-	@echo "⚠️  Para detener los servicios usa Ctrl+C en la terminal correspondiente"
-	@echo "💡 O cierra las terminales donde están ejecutándose"
+	@echo "Use Ctrl+C in the terminal running the service, or: kill \$$(lsof -ti:3000) \$$(lsof -ti:4200)"
 
-# Mostrar ayuda
+# ── Help ─────────────────────────────────────────────────────────────────────
+
 help:
-	@echo "📖 Comandos disponibles:"
 	@echo ""
-	@echo "🔧 INSTALACIÓN:"
-	@echo "  make install          - Instalar dependencias de backend y frontend"
-	@echo "  make install-backend  - Instalar solo dependencias del backend"
-	@echo "  make install-frontend - Instalar solo dependencias del frontend"
+	@echo "Usage: make <target>"
 	@echo ""
-	@echo "🚀 DESARROLLO:"
-	@echo "  make dev              - Ejecutar ambos servicios en modo desarrollo"
-	@echo "  make dev-backend      - Ejecutar solo el backend (con --watch)"
-	@echo "  make dev-frontend     - Ejecutar solo el frontend (ng serve)"
-	@echo "  make start            - Alias para 'make dev'"
+	@echo "  install         Install all dependencies (backend + frontend)"
+	@echo "  install-backend Install backend deps only"
+	@echo "  install-frontend Install frontend deps only"
 	@echo ""
-	@echo "🧹 LIMPIEZA:"
-	@echo "  make clean            - Limpiar todos los node_modules"
-	@echo "  make clean-backend    - Limpiar node_modules del backend"
-	@echo "  make clean-frontend   - Limpiar node_modules del frontend"
+	@echo "  dev             Run backend + frontend simultaneously"
+	@echo "  dev-backend     Run backend only (tsx watch, port 3000)"
+	@echo "  dev-frontend    Run frontend only (ng serve, port 4200)"
 	@echo ""
-	@echo "ℹ️  AYUDA:"
-	@echo "  make help             - Mostrar esta ayuda"
-	@echo "  make stop             - Información sobre cómo detener servicios"
+	@echo "  clean           Remove node_modules and dist from both"
+	@echo "  clean-backend   Remove backend node_modules/dist"
+	@echo "  clean-frontend  Remove frontend node_modules/dist"
+	@echo ""
+	@echo "  stop            How to stop running services"
+	@echo "  help            Show this message"
+	@echo ""
 
-# Por defecto ejecutar install
 all: install
