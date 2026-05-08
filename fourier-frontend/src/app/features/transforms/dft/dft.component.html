@@ -772,7 +772,7 @@
                               <div class="h-full rounded-full bg-accent/60"
                                 [style.width.%]="c.amplitudePercentSafe"></div>
                             </div>
-                            <span class="text-ink dark:text-dark-ink">{{ c.amplitudePercentSafe.toFixed(1) }}%</span>
+                            <span class="text-ink dark:text-dark-ink">{{ fmtPct(c.amplitudePercentSafe) }}</span>
                           </div>
                         </td>
                         <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ epicPhaseDisplay(c) }}</td>
@@ -1142,7 +1142,7 @@
                               [style.width.%]="c.amplitudePercent"
                               [style.background]="specColor()"></div>
                           </div>
-                          <span class="text-ink dark:text-dark-ink">{{ c.amplitudePercent | number:'1.1-1' }}%</span>
+                          <span class="text-ink dark:text-dark-ink">{{ fmtPct(c.amplitudePercent) }}</span>
                         </div>
                       </td>
                       <td class="px-3 py-1.5 text-muted dark:text-dark-muted">{{ c.re | number:'1.0-10' }}</td>

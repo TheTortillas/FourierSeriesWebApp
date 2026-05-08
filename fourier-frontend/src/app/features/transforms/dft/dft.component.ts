@@ -742,8 +742,13 @@ export class DftComponent implements OnInit, OnDestroy {
   fmt(n: number): string {
     if (!Number.isFinite(n)) return '0';
     if (n === 0) return '0';
-    const s = parseFloat(n.toPrecision(10)).toString();
-    return s;
+    return parseFloat(n.toPrecision(10)).toString();
+  }
+
+  /** Format a percentage with up to 10 significant digits, trimming trailing zeros. */
+  fmtPct(n: number): string {
+    if (!Number.isFinite(n) || n === 0) return '0%';
+    return `${parseFloat(n.toPrecision(10))}%`;
   }
 
   epicPhaseDisplay(c: EpicRenderCoeff): string {
