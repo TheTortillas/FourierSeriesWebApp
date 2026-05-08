@@ -1,0 +1,37 @@
+@if (store.isAuthenticated() && !store.isEmailVerified()) {
+  <div class="w-full bg-amber-50 dark:bg-amber-950/40
+              border-b border-amber-200 dark:border-amber-800
+              px-4 py-2 flex items-center justify-center gap-3 flex-wrap">
+
+    <div class="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+           class="w-4 h-4 shrink-0">
+        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+      </svg>
+      <span class="text-xs font-body">
+        {{ 'auth.verifyBanner.message' | transloco: { email: store.user()?.email } }}
+      </span>
+    </div>
+
+    @if (sent()) {
+      <span class="text-xs font-mono text-amber-700 dark:text-amber-400">
+        {{ 'auth.verifyBanner.sent' | transloco }}
+      </span>
+    } @else {
+      <button
+        type="button"
+        (click)="resend()"
+        [disabled]="sending()"
+        class="text-xs font-mono px-2.5 py-1 rounded
+               bg-amber-100 dark:bg-amber-900/50
+               border border-amber-300 dark:border-amber-700
+               text-amber-800 dark:text-amber-300
+               hover:bg-amber-200 dark:hover:bg-amber-900
+               disabled:opacity-50 disabled:cursor-not-allowed
+               transition-colors cursor-pointer whitespace-nowrap">
+        {{ sending() ? ('auth.verifyBanner.resending' | transloco) : ('auth.verifyBanner.resend' | transloco) }}
+      </button>
+    }
+
+  </div>
+}

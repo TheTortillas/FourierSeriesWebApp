@@ -1,0 +1,440 @@
+<app-nav />
+
+<main class="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-5">
+  <!-- Header -->
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">
+        {{ 'history.title' | transloco }}
+      </h1>
+      <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">
+        {{ 'history.total' | transloco: { count: total() } }}
+      </p>
+    </div>
+
+    <!-- Favorites filter -->
+    <label class="flex items-center gap-2 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        [(ngModel)]="showFavoritesOnly"
+        (change)="toggleFilter()"
+        class="w-3.5 h-3.5 accent-accent cursor-pointer"
+      />
+      <span class="text-xs font-mono text-muted dark:text-dark-muted">{{
+        'history.favoritesOnly' | transloco
+      }}</span>
+    </label>
+  </div>
+
+  <!-- Free tier limit banner -->
+  @if (isLimited()) {
+    <div
+      class="flex items-start gap-3 px-4 py-3 rounded-xl border bg-paper2 dark:bg-dark-surface border-accent/30 dark:border-accent/20"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="w-4 h-4 mt-0.5 shrink-0 text-accent"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      <p class="text-xs font-mono text-muted dark:text-dark-muted leading-relaxed">
+        {{
+          'history.freeTierBanner'
+            | transloco
+              : { max: historyLimit()?.max ?? 5, favorites: historyLimit()?.favorites ?? 2 }
+        }}
+      </p>
+    </div>
+  }
+
+  <!-- Table -->
+  <div
+    class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+  >
+    @if (loading()) {
+      <div
+        class="flex items-center justify-center gap-2 py-12 text-muted dark:text-dark-muted text-sm font-mono"
+      >
+        <svg
+          class="w-4 h-4 animate-spin"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          />
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+        {{ 'history.loading' | transloco }}
+      </div>
+    } @else if (entries().length === 0) {
+      <div
+        class="flex flex-col items-center justify-center gap-3 py-16 text-muted dark:text-dark-muted"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          class="w-10 h-10 opacity-30"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"
+          />
+        </svg>
+        <p class="text-sm font-mono">
+          {{
+            showFavoritesOnly
+              ? ('history.emptyFavorites' | transloco)
+              : ('history.emptyAll' | transloco)
+          }}
+        </p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs font-mono">
+          <thead>
+            <tr
+              class="border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted text-left"
+            >
+              <th class="w-6 px-3 py-2.5"></th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.date' | transloco }}</th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.type' | transloco }}</th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.input' | transloco }}</th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.ms' | transloco }}</th>
+              <th class="px-4 py-2.5 font-medium text-center">★</th>
+              <th class="px-4 py-2.5 font-medium">{{ 'history.columns.actions' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border dark:divide-dark-border">
+            @for (entry of entries(); track entry.id) {
+              <!-- Main row -->
+              <tr
+                class="hover:bg-paper dark:hover:bg-dark-bg transition-colors cursor-pointer"
+                (click)="toggleExpand(entry.id, $event)"
+              >
+                <!-- Expand chevron -->
+                <td class="pl-3 py-3 text-muted dark:text-dark-muted">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    class="w-3 h-3 transition-transform"
+                    [class.rotate-90]="isExpanded(entry.id)"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M6.22 4.22a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06l-3.25 3.25a.75.75 0 0 1-1.06-1.06L9.19 8 6.22 5.03a.75.75 0 0 1 0-1.06Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </td>
+
+                <td class="px-4 py-3 whitespace-nowrap text-muted dark:text-dark-muted">
+                  <div class="flex items-center gap-1.5">
+                    {{ formatDate(entry.createdAt) }}
+                    @if (entry.count > 1) {
+                      <span
+                        class="px-1 py-0 rounded text-[9px] font-mono font-medium leading-4 bg-accent/10 text-accent border border-accent/20"
+                        [title]="
+                          'history.countTooltip'
+                            | transloco
+                              : { count: entry.count, date: formatDate(entry.firstCalculatedAt) }
+                        "
+                        >×{{ entry.count }}</span
+                      >
+                    }
+                  </div>
+                </td>
+
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <span
+                    [class]="
+                      'px-1.5 py-0.5 rounded border text-[10px] ' + entryBadgeClass(entry)
+                    "
+                  >
+                    {{ entryTypeKey(entry) | transloco }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3 max-w-60">
+                  @if (entry.isFavorite && entry.favoriteName) {
+                    <div class="flex items-center gap-1 min-w-0">
+                      <span
+                        class="text-amber-600 dark:text-amber-400 font-medium truncate"
+                        [title]="entry.favoriteName"
+                      >
+                        {{ entry.favoriteName }}
+                      </span>
+                      <button
+                        type="button"
+                        (click)="startRenameFavorite(entry, $event)"
+                        [title]="'history.favorite.rename' | transloco"
+                        class="shrink-0 p-0.5 rounded text-muted/50 hover:text-amber-500 transition-colors cursor-pointer"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" stroke-width="2.5"
+                          stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <span
+                      class="text-muted dark:text-dark-muted truncate block"
+                      [title]="inputPreview(entry)"
+                    >
+                      {{ inputPreview(entry) }}
+                    </span>
+                  } @else {
+                    <span
+                      class="text-ink dark:text-dark-ink truncate block"
+                      [title]="inputPreview(entry)"
+                    >
+                      {{ inputPreview(entry) }}
+                    </span>
+                  }
+                </td>
+
+                <td class="px-4 py-3 text-muted dark:text-dark-muted">
+                  {{ entry.executionMs || '—' }}
+                </td>
+
+                <!-- Star -->
+                <td class="px-4 py-3 text-center">
+                  @if (renamingId() === entry.id) {
+                    <!-- inline rename form -->
+                    <span class="text-amber-400 animate-pulse">★</span>
+                  } @else {
+                    <button
+                      type="button"
+                      (click)="toggleFavorite(entry, $event)"
+                      [title]="
+                        entry.isFavorite
+                          ? ('history.favorite.remove' | transloco)
+                          : ('history.favorite.add' | transloco)
+                      "
+                      class="cursor-pointer transition-colors"
+                      [class]="
+                        entry.isFavorite
+                          ? 'text-amber-500 hover:text-amber-600'
+                          : 'text-muted/30 dark:text-dark-muted/30 hover:text-amber-400'
+                      "
+                    >
+                      ★
+                    </button>
+                  }
+                </td>
+
+                <!-- Actions -->
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-1.5">
+                    @if (hasSegments(entry)) {
+                      <button
+                        type="button"
+                        (click)="reopenInCalculator(entry); $event.stopPropagation()"
+                        [title]="'history.actions.openTitle' | transloco"
+                        class="px-1.5 py-0.5 rounded border text-[10px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent"
+                      >
+                        {{ 'history.actions.open' | transloco }}
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      (click)="deleteEntry(entry.id, $event)"
+                      [title]="'history.actions.deleteTitle' | transloco"
+                      class="px-1.5 py-0.5 rounded border text-[10px] cursor-pointer transition-colors border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-red-400 hover:text-red-500"
+                    >
+                      {{ 'history.actions.delete' | transloco }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Inline rename row -->
+              @if (renamingId() === entry.id) {
+                <tr class="bg-amber-50/50 dark:bg-amber-950/10">
+                  <td colspan="7" class="px-4 py-2.5">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-[11px] font-mono text-amber-700 dark:text-amber-400">
+                        {{ 'history.favorite.nameLabel' | transloco }}
+                      </span>
+                      <input
+                        type="text"
+                        [(ngModel)]="renameValue"
+                        [placeholder]="'history.favorite.namePlaceholder' | transloco"
+                        (keydown.enter)="confirmFavorite(entry)"
+                        (keydown.escape)="cancelRename()"
+                        class="flex-1 min-w-0 px-2 py-1 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-amber-300 dark:border-amber-700 text-ink dark:text-dark-ink focus:outline-none focus:border-amber-500"
+                        autofocus
+                      />
+                      <button
+                        type="button"
+                        (click)="confirmFavorite(entry)"
+                        class="px-2 py-1 rounded text-[11px] font-mono cursor-pointer bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                      >
+                        {{ 'common.save' | transloco }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="cancelRename()"
+                        class="px-2 py-1 rounded text-[11px] font-mono cursor-pointer border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink transition-colors"
+                      >
+                        {{ 'common.cancel' | transloco }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+
+              <!-- Expanded input JSON -->
+              @if (isExpanded(entry.id)) {
+                <tr class="bg-paper dark:bg-dark-bg">
+                  <td colspan="7" class="px-4 py-3">
+                    <div class="flex flex-col gap-2">
+                      @if (hasDftPoints(entry) && !isRawJson(entry.id)) {
+                        @let dft = dftMeta(entry);
+                        <div class="flex flex-col gap-2">
+                          <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{
+                              'history.dft.inputLabel' | transloco
+                            }}</span>
+                            <span class="text-[10px] font-mono text-ink dark:text-dark-ink">
+                              <span class="font-semibold">{{ dft.count }}</span>
+                              {{ 'history.points' | transloco }}
+                              @if (dft.mode) {
+                                · <span class="text-accent2">mode: {{ dft.mode }}</span>
+                              }
+                            </span>
+                            <button
+                              type="button"
+                              (click)="toggleRawJson(entry.id, $event)"
+                              class="ml-auto text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+                            >
+                              {{ 'history.dft.viewJson' | transloco }}
+                            </button>
+                          </div>
+
+                          <div
+                            class="border border-border dark:border-dark-border rounded-lg overflow-hidden"
+                          >
+                            <table class="w-auto text-[10px] font-mono">
+                              <thead>
+                                <tr
+                                  class="bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted"
+                                >
+                                  <th class="px-3 py-1.5 text-right font-medium w-8">#</th>
+                                  <th class="px-3 py-1.5 text-right font-medium">x</th>
+                                  <th class="px-3 py-1.5 text-right font-medium">y</th>
+                                </tr>
+                              </thead>
+                              <tbody class="divide-y divide-border dark:divide-dark-border">
+                                @for (pt of dft.preview; track $index) {
+                                  <tr>
+                                    <td
+                                      class="px-3 py-1 text-right text-muted/50 dark:text-dark-muted/50"
+                                    >
+                                      {{ $index }}
+                                    </td>
+                                    <td
+                                      class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums"
+                                    >
+                                      {{ pt.x }}
+                                    </td>
+                                    <td
+                                      class="px-3 py-1 text-right text-ink dark:text-dark-ink tabular-nums"
+                                    >
+                                      {{ pt.y }}
+                                    </td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                            @if (dft.remaining > 0) {
+                              <p
+                                class="px-3 py-1.5 text-[10px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border"
+                              >
+                                {{
+                                  'history.dft.remainingPoints'
+                                    | transloco: { count: dft.remaining }
+                                }}
+                              </p>
+                            }
+                          </div>
+                        </div>
+                      } @else {
+                        <pre
+                          class="text-[10px] font-mono text-ink dark:text-dark-ink bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded p-2 overflow-x-auto whitespace-pre-wrap break-all"
+                          >{{ inputJson(entry) }}</pre
+                        >
+                        @if (hasDftPoints(entry) && isRawJson(entry.id)) {
+                          <button
+                            type="button"
+                            (click)="toggleRawJson(entry.id, $event)"
+                            class="mt-1.5 text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+                          >
+                            {{ 'history.dft.compactView' | transloco }}
+                          </button>
+                        }
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (total() > pageSize) {
+        <div
+          class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between"
+        >
+          <span class="text-xs font-mono text-muted dark:text-dark-muted">
+            {{
+              'history.pagination.page' | transloco: { current: currentPage(), total: totalPages() }
+            }}
+          </span>
+          <div class="flex gap-1.5">
+            <button
+              type="button"
+              (click)="prevPage()"
+              [disabled]="offset() === 0"
+              class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              {{ 'history.pagination.prev' | transloco }}
+            </button>
+            <button
+              type="button"
+              (click)="nextPage()"
+              [disabled]="offset() + pageSize >= total()"
+              class="px-2.5 py-1 rounded border text-xs font-mono cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              {{ 'history.pagination.next' | transloco }}
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</main>

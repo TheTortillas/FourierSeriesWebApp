@@ -1,0 +1,43 @@
+display2d: false$
+
+pieces: length(FUNC_INPUT);
+inicio: FUNC_INPUT[1][2];
+fin: FUNC_INPUT[pieces][3];
+PERIOD: ratsimp(fin - inicio);
+T: PERIOD;
+block([_all_limit_vars: listofvars(PERIOD)],
+    for _i: 1 thru length(FUNC_INPUT) do (
+        _all_limit_vars: append(_all_limit_vars,
+            listofvars(FUNC_INPUT[_i][1]),
+            listofvars(FUNC_INPUT[_i][2]),
+            listofvars(FUNC_INPUT[_i][3]))
+    ),
+    for sym in _all_limit_vars do (
+        if not numberp(sym) and sym # INTVAR and sym # n then (
+            if not featurep(sym, real) then declare(sym, real),
+            errcatch(assume(sym > 0))
+        )
+    )
+)$
+w0: %pi / PERIOD;
+
+cos_core: cos(n * w0 * INTVAR);
+sin_core: sin(n * w0 * INTVAR);
+
+a0_acum: 0;
+an_acum: 0;
+bn_acum: 0;
+
+for i:1 thru pieces do (
+    trozo: FUNC_INPUT[i],
+    f_i: trozo[1],
+    a: trozo[2],
+    b: trozo[3],
+    a0_acum: a0_acum + (2/PERIOD) * integrate(f_i, INTVAR, a, b),
+    an_acum: an_acum + (2/PERIOD) * integrate(f_i * cos_core, INTVAR, a, b),
+    bn_acum: bn_acum + (2/PERIOD) * integrate(f_i * sin_core, INTVAR, a, b)
+)$
+
+Coeff_A0: fullratsimp(a0_acum / 2)$
+Coeff_An: fullratsimp(an_acum)$
+Coeff_Bn: fullratsimp(bn_acum)$

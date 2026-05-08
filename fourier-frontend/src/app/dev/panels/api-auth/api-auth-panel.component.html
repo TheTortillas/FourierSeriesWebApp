@@ -1,0 +1,77 @@
+<div class="space-y-6">
+  <h2 class="text-yellow-400 font-bold text-lg border-b border-gray-700 pb-2">Auth Endpoints</h2>
+
+  <!-- Estado actual -->
+  <div class="bg-gray-800 rounded p-3 text-sm">
+    <p class="text-gray-400">Estado:
+      <span [class]="store.isAuthenticated() ? 'text-green-400' : 'text-red-400'">
+        {{ store.isAuthenticated() ? 'Autenticado — ' + store.displayName() : 'No autenticado' }}
+      </span>
+    </p>
+    @if (store.isAuthenticated()) {
+      <p class="text-gray-400 mt-1">
+        Rol: <span class="text-yellow-400">{{ store.user()?.role }}</span> |
+        Tier: <span class="text-yellow-400">{{ store.user()?.tier }}</span>
+      </p>
+    }
+  </div>
+
+  <!-- Register -->
+  <section class="border border-gray-700 rounded p-4 space-y-2">
+    <h3 class="text-gray-300 font-mono text-sm uppercase tracking-wider">POST /auth/register</h3>
+    <div class="grid grid-cols-2 gap-2">
+      <input [(ngModel)]="regFirstName" placeholder="firstName"
+        class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+      <input [(ngModel)]="regLastName" placeholder="lastName"
+        class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+      <input [(ngModel)]="regEmail" placeholder="email" type="email"
+        class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+      <input [(ngModel)]="regPassword" placeholder="password" type="password"
+        class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+    </div>
+    <button (click)="doRegister()"
+      class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-sm px-4 py-1.5 rounded transition-colors cursor-pointer">
+      Registrar
+    </button>
+  </section>
+
+  <!-- Login -->
+  <section class="border border-gray-700 rounded p-4 space-y-2">
+    <h3 class="text-gray-300 font-mono text-sm uppercase tracking-wider">POST /auth/login</h3>
+    <input [(ngModel)]="loginEmail" placeholder="email" type="email"
+      class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500" />
+    <input [(ngModel)]="loginPassword" placeholder="password" type="password"
+      class="bg-gray-800 border border-gray-600 rounded px-3 py-1.5 text-sm text-gray-100 w-full focus:outline-none focus:border-yellow-500 mt-2" />
+    <button (click)="doLogin()"
+      class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-sm px-4 py-1.5 rounded transition-colors cursor-pointer">
+      Login
+    </button>
+  </section>
+
+  <!-- Me / Refresh / Logout -->
+  <section class="border border-gray-700 rounded p-4 flex gap-3 flex-wrap">
+    <button (click)="doGetMe()"
+      class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-sm px-4 py-1.5 rounded transition-colors cursor-pointer">
+      GET /auth/me
+    </button>
+    <button (click)="doRefresh()"
+      class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-sm px-4 py-1.5 rounded transition-colors cursor-pointer">
+      POST /auth/refresh
+    </button>
+    <button (click)="doLogout()"
+      class="bg-red-900 hover:bg-red-700 text-gray-100 text-sm px-4 py-1.5 rounded transition-colors cursor-pointer">
+      Logout
+    </button>
+  </section>
+
+  <!-- Response -->
+  @if (loading()) {
+    <p class="text-yellow-400 font-mono text-sm animate-pulse">Cargando...</p>
+  }
+  @if (error()) {
+    <pre class="bg-red-950 text-red-300 rounded p-3 text-xs overflow-auto">{{ error() }}</pre>
+  }
+  @if (response()) {
+    <pre class="bg-gray-900 text-green-300 rounded p-3 text-xs overflow-auto max-h-80">{{ json(response()) }}</pre>
+  }
+</div>

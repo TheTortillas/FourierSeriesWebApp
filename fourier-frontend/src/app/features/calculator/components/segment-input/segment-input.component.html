@@ -1,0 +1,66 @@
+<div class="flex flex-col gap-1" (keydown)="onKeyDown($event)">
+  <div class="flex items-stretch gap-2">
+    <!-- Index badge -->
+    <div class="shrink-0 w-5 flex items-center justify-center text-xs text-muted font-mono">
+      {{ index() + 1 }}
+    </div>
+
+    <!-- Expression f(var) -->
+    <div class="flex-1 min-w-24 flex flex-col" (focusin)="onFocusIn(0)">
+      <label class="block text-[10px] text-muted font-mono mb-0.5">f({{ store.intVar() }})</label>
+      <div class="flex-1" [class]="wrapClass(hasExpressionError())" (click)="focusField(0)">
+        <div #mqExpr></div>
+      </div>
+      @if (hasExpressionError()) {
+        <p class="text-[10px] text-red-400 mt-0.5">{{ error() }}</p>
+      }
+      @if (conversionErrors[0]) {
+        <p class="text-[10px] text-amber-500 mt-0.5">{{ conversionErrors[0] }}</p>
+      }
+    </div>
+
+    <!-- From -->
+    <div class="w-24 shrink-0 flex flex-col" (focusin)="onFocusIn(1)">
+      <label class="block text-[10px] text-muted font-mono mb-0.5">{{
+        'calculator.segment.from' | transloco
+      }}</label>
+      <div
+        class="flex-1"
+        [class]="wrapClass(orderError(), !!prevContinuityError())"
+        (click)="focusField(1)"
+      >
+        <div #mqFrom></div>
+      </div>
+      @if (conversionErrors[1]) {
+        <p class="text-[10px] text-amber-500 mt-0.5">{{ conversionErrors[1] }}</p>
+      }
+    </div>
+
+    <!-- To -->
+    <div class="w-24 shrink-0 flex flex-col" (focusin)="onFocusIn(2)">
+      <label class="block text-[10px] text-muted font-mono mb-0.5">{{
+        'calculator.segment.to' | transloco
+      }}</label>
+      <div
+        class="flex-1"
+        [class]="wrapClass(orderError(), !!continuityError())"
+        (click)="focusField(2)"
+      >
+        <div #mqTo></div>
+      </div>
+      @if (conversionErrors[2]) {
+        <p class="text-[10px] text-amber-500 mt-0.5">{{ conversionErrors[2] }}</p>
+      }
+    </div>
+
+    <!-- Remove -->
+    <button
+      (click)="store.removeSegment(segment().id)"
+      [disabled]="isOnly()"
+      [title]="'calculator.segment.removeTitle' | transloco"
+      class="shrink-0 self-end w-7 h-7 flex items-center justify-center rounded text-muted hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer"
+    >
+      ×
+    </button>
+  </div>
+</div>

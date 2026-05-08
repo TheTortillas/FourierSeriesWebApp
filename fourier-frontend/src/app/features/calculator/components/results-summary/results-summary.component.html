@@ -1,0 +1,1310 @@
+<div class="flex flex-col gap-4 h-full">
+  <!-- ── Canvas ──────────────────────────────────────────────────────────── -->
+  <div
+    #canvasWrapper
+    class="relative h-64 sm:h-80 border border-border dark:border-dark-border rounded overflow-hidden bg-paper dark:bg-dark-bg shrink-0"
+  >
+    <app-function-plot
+      [layers]="layers()"
+      [initialUnit]="90"
+      [xAxisFormat]="xAxisFormat()"
+      [customConst]="customConst()"
+    />
+
+    <!-- Canvas overlay buttons (top-left) -->
+    <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
+      <!-- Fullscreen toggle -->
+      <button
+        type="button"
+        (click)="toggleFullscreen()"
+        [title]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
+        class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+      >
+        @if (isFullscreen()) {
+          <!-- compress icon -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="4 14 10 14 10 20" />
+            <polyline points="20 10 14 10 14 4" />
+            <line x1="10" y1="14" x2="3" y2="21" />
+            <line x1="21" y1="3" x2="14" y2="10" />
+          </svg>
+        } @else {
+          <!-- expand icon -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="15 3 21 3 21 9" />
+            <polyline points="9 21 3 21 3 15" />
+            <line x1="21" y1="3" x2="14" y2="10" />
+            <line x1="3" y1="21" x2="10" y2="14" />
+          </svg>
+        }
+      </button>
+
+      <!-- Settings toggle (only when result exists) -->
+      @if (store.hasResult()) {
+        <button
+          type="button"
+          (click)="showCanvasSettings.set(!showCanvasSettings())"
+          [title]="'results.canvasSettings' | transloco"
+          [class]="
+            showCanvasSettings()
+              ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent dark:text-accent transition-colors flex items-center justify-center'
+              : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center'
+          "
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
+                     1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06
+                     a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                     A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0
+                     0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33
+                     l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4
+                     h-.09a1.65 1.65 0 0 0-1.51 1z"
+            />
+          </svg>
+        </button>
+      }
+
+      <!-- Download canvas -->
+      <button
+        type="button"
+        (click)="downloadCanvas()"
+        [title]="'results.downloadImage' | transloco"
+        class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+      </button>
+
+      <!-- Share URL (only when result exists) -->
+      @if (store.hasResult()) {
+        <button
+          type="button"
+          (click)="openShareDialog()"
+          [title]="'results.shareUrl' | transloco"
+          class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
+        </button>
+
+        <!-- Save as favorite (authenticated users only) -->
+        @if (userStore.isAuthenticated()) {
+          <button
+            type="button"
+            (click)="openFavoriteDialog()"
+            [title]="
+              latestHistoryEntry()?.isFavorite
+                ? ('results.removeFav' | transloco)
+                : ('results.addFav' | transloco)
+            "
+            [class]="
+              latestHistoryEntry()?.isFavorite
+                ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center'
+                : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center'
+            "
+          >
+            @if (favoriteLoading()) {
+              <svg
+                class="w-3.5 h-3.5 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                />
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+            } @else {
+              <span class="text-sm leading-none">★</span>
+            }
+          </button>
+        }
+      }
+    </div>
+
+    @if (store.hasResult() && showCanvasSettings()) {
+      <div
+        class="absolute top-11 left-2 right-2 sm:right-auto sm:w-xl z-20 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow shrink-0 flex flex-col gap-3 text-[11px] font-mono max-h-[calc(100%-3.5rem)] overflow-y-auto"
+      >
+        <section class="flex flex-col gap-2">
+          <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+            {{ 'settingsCanvas.layersToShow' | transloco }}
+          </h4>
+          <div class="flex flex-wrap gap-3 items-center">
+            <div class="flex items-center gap-2 min-w-52 flex-1">
+              <span class="text-muted dark:text-dark-muted"
+                >{{ 'settingsCanvas.nTerms' | transloco }}
+              </span>
+              <input
+                type="range"
+                min="0"
+                [max]="maxCanvasTerms()"
+                step="1"
+                [value]="canvasNTerms()"
+                (input)="canvasNTerms.set(+$any($event.target).value)"
+                class="flex-1 accent-accent"
+              />
+              <span class="text-ink dark:text-dark-ink font-semibold w-8 text-right">{{
+                canvasNTerms()
+              }}</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="text-muted dark:text-dark-muted">{{
+                'settingsCanvas.armonics' | transloco
+              }}</span>
+              <button
+                type="button"
+                (click)="showHarmonics.set(!showHarmonics())"
+                [class]="
+                  showHarmonics()
+                    ? 'px-2 py-0.5 rounded border border-accent bg-accent/10 text-accent font-semibold'
+                    : 'px-2 py-0.5 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                "
+              >
+                {{
+                  showHarmonics()
+                    ? ('settingsCanvas.on' | transloco)
+                    : ('settingsCanvas.off' | transloco)
+                }}
+              </button>
+            </div>
+
+            @if (showHarmonics()) {
+              <label class="flex items-center gap-1.5 text-muted dark:text-dark-muted select-none">
+                <input
+                  type="checkbox"
+                  [checked]="showDcHarmonic()"
+                  (change)="showDcHarmonic.set(!!$any($event.target).checked)"
+                  class="accent-accent"
+                />
+                <span> {{ 'settingsCanvas.showDC' | transloco }}</span>
+              </label>
+            }
+
+            <div class="flex items-center gap-2">
+              <label
+                class="flex items-center gap-2 px-2 py-1 rounded border border-border dark:border-dark-border cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="controlHarmonics()"
+                  (change)="setHarmonicControl(!!$any($event.target).checked)"
+                  class="accent-accent"
+                />
+                <span class="text-muted dark:text-dark-muted">
+                  {{ 'settingsCanvas.editArmonicsTable' | transloco }}</span
+                >
+              </label>
+            </div>
+          </div>
+          @if (controlHarmonics()) {
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="text-[10px] text-muted dark:text-dark-muted">
+                {{ 'settingsCanvas.editLabel' | transloco }}
+              </p>
+            </div>
+          }
+        </section>
+
+        <div class="border-t border-border dark:border-dark-border"></div>
+
+        <section class="flex flex-col gap-2">
+          <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+            {{ 'settingsCanvas.axisAndUnits' | transloco }}
+          </h4>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-muted dark:text-dark-muted">
+              {{ 'settingsCanvas.axisX' | transloco }}
+            </span>
+            <div class="flex rounded border border-border dark:border-dark-border overflow-hidden">
+              <button
+                type="button"
+                (click)="xAxisFormat.set('pi')"
+                [class]="
+                  xAxisFormat() === 'pi'
+                    ? 'px-2 py-0.5 bg-accent text-white'
+                    : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                "
+              >
+                π
+              </button>
+              <button
+                type="button"
+                (click)="xAxisFormat.set('e')"
+                [class]="
+                  xAxisFormat() === 'e'
+                    ? 'px-2 py-0.5 bg-accent text-white'
+                    : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                "
+              >
+                e
+              </button>
+              <button
+                type="button"
+                (click)="xAxisFormat.set('integer')"
+                [class]="
+                  xAxisFormat() === 'integer'
+                    ? 'px-2 py-0.5 bg-accent text-white'
+                    : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                "
+              >
+                1,2
+              </button>
+              @for (p of activeParams(); track p) {
+                <button
+                  type="button"
+                  (click)="customConstName.set(p); xAxisFormat.set('custom')"
+                  [class]="
+                    xAxisFormat() === 'custom' && customConst().symbol === p
+                      ? 'px-2 py-0.5 bg-accent text-white font-mono'
+                      : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors font-mono'
+                  "
+                >
+                  {{ p }}
+                </button>
+              }
+            </div>
+          </div>
+        </section>
+
+        <div class="border-t border-border dark:border-dark-border"></div>
+
+        <section class="flex flex-col gap-2">
+          <div class="flex items-center justify-between gap-2">
+            <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+              {{ 'settingsCanvas.lineStyle' | transloco }}
+            </h4>
+            <button
+              type="button"
+              (click)="resetLineColorsToPreset()"
+              class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors"
+            >
+              {{ 'settingsCanvas.reset' | transloco }}
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-muted dark:text-dark-muted">{{
+                'settingsCanvas.original' | transloco
+              }}</span>
+              <input
+                type="color"
+                [value]="originalColor()"
+                (input)="onOriginalColorInput($any($event.target).value)"
+                class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+              />
+              <input
+                type="number"
+                [value]="originalLineWidth()"
+                min="0.5"
+                max="5"
+                step="0.5"
+                (input)="originalLineWidth.set(+$any($event.target).value)"
+                class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
+              />
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="text-muted dark:text-dark-muted">{{
+                'settingsCanvas.aprox' | transloco
+              }}</span>
+              <input
+                type="color"
+                [value]="approxColor()"
+                (input)="onApproxColorInput($any($event.target).value)"
+                class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
+              />
+              <input
+                type="number"
+                [value]="approxLineWidth()"
+                min="0.5"
+                max="5"
+                step="0.5"
+                (input)="approxLineWidth.set(+$any($event.target).value)"
+                class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
+              />
+            </div>
+          </div>
+        </section>
+
+        @if (activeParams().length) {
+          <div class="border-t border-border dark:border-dark-border"></div>
+
+          <section class="flex flex-col gap-2">
+            <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+              {{ 'settingsCanvas.freeParams' | transloco }}
+            </h4>
+            <app-param-sliders [params]="activeParams()" (valuesChange)="paramValues.set($event)" />
+          </section>
+        }
+
+        <div class="border-t border-border dark:border-dark-border"></div>
+
+        <section class="flex flex-col gap-2">
+          <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+            {{ 'settingsCanvas.linesLabel' | transloco }}
+          </h4>
+          <div class="flex gap-4 text-xs flex-wrap shrink-0">
+            <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
+              <span
+                class="inline-block w-4 h-0.5 rounded"
+                [style.backgroundColor]="originalColor()"
+              ></span>
+              {{ 'settingsCanvas.originalFunction' | transloco }}
+            </span>
+            <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
+              <span
+                class="inline-block w-4 h-0.5 rounded"
+                [style.backgroundColor]="approxColor()"
+              ></span>
+              {{ 'settingsCanvas.fourierAprox' | transloco }} (N={{ canvasNTerms() }})
+            </span>
+            @if (showHarmonics()) {
+              <span class="flex items-center gap-1.5 text-muted dark:text-dark-muted">
+                <span class="inline-flex gap-px">
+                  <span
+                    class="inline-block w-1.5 h-1.5 rounded-full"
+                    [style.backgroundColor]="harmonicColors()[0]"
+                  ></span>
+                  <span
+                    class="inline-block w-1.5 h-1.5 rounded-full"
+                    [style.backgroundColor]="harmonicColors()[1]"
+                  ></span>
+                  <span
+                    class="inline-block w-1.5 h-1.5 rounded-full"
+                    [style.backgroundColor]="harmonicColors()[2]"
+                  ></span>
+                </span>
+                {{ 'settingsCanvas.armonics' | transloco }}
+              </span>
+            }
+          </div>
+        </section>
+      </div>
+    }
+  </div>
+
+  <!-- ── Favorite name dialog ──────────────────────────────────────────────── -->
+  @if (showFavoriteDialog()) {
+    <div
+      class="border border-amber-300 dark:border-amber-700 rounded p-3 bg-amber-50/60 dark:bg-amber-950/20 shrink-0 flex items-center gap-2 flex-wrap text-xs font-mono"
+    >
+      <span class="text-amber-700 dark:text-amber-400 shrink-0">{{
+        'history.favorite.nameLabel' | transloco
+      }}</span>
+      <input
+        type="text"
+        [(ngModel)]="favoriteName"
+        [placeholder]="'history.favorite.namePlaceholder' | transloco"
+        (keydown.enter)="confirmFavorite()"
+        (keydown.escape)="cancelFavoriteDialog()"
+        autofocus
+        class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink focus:outline-none focus:border-amber-500"
+      />
+      <button
+        type="button"
+        (click)="confirmFavorite()"
+        class="px-2.5 py-1 rounded bg-amber-500 text-white hover:bg-amber-600 transition-colors cursor-pointer shrink-0"
+      >
+        {{ 'common.save' | transloco }}
+      </button>
+      <button
+        type="button"
+        (click)="cancelFavoriteDialog()"
+        class="px-2.5 py-1 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink transition-colors cursor-pointer shrink-0"
+      >
+        {{ 'common.cancel' | transloco }}
+      </button>
+    </div>
+  }
+
+  <!-- ── Tabbed result panel ──────────────────────────────────────────────── -->
+  @if (store.hasResult() && activeCoeffTex()) {
+    <div
+      class="border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface flex flex-col overflow-hidden"
+    >
+      <!-- Tab bar -->
+      <div class="flex shrink-0 border-b border-border dark:border-dark-border">
+        <!-- Half-range toggle (lives here when visible) -->
+        @if (store.result()?.type === 'halfRange') {
+          <div
+            class="flex items-center pl-3 pr-2 gap-1 border-r border-border dark:border-dark-border shrink-0"
+          >
+            <button
+              type="button"
+              (click)="setHalfRangeMode('cosine')"
+              [class]="
+                halfRangeMode() === 'cosine'
+                  ? 'px-2 py-0.5 rounded text-[10px] font-mono bg-accent text-white'
+                  : 'px-2 py-0.5 rounded text-[10px] font-mono text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+              "
+            >
+              {{ 'resultPanel.cosine' | transloco }}
+            </button>
+            <button
+              type="button"
+              (click)="setHalfRangeMode('sine')"
+              [class]="
+                halfRangeMode() === 'sine'
+                  ? 'px-2 py-0.5 rounded text-[10px] font-mono bg-accent text-white'
+                  : 'px-2 py-0.5 rounded text-[10px] font-mono text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+              "
+            >
+              {{ 'resultPanel.sine' | transloco }}
+            </button>
+          </div>
+        }
+
+        <!-- Tabs -->
+        @for (tab of tabs; track tab.id) {
+          <button
+            type="button"
+            (click)="setTab(tab.id)"
+            class="relative px-4 py-2.5 text-xs font-mono transition-colors shrink-0"
+            [class]="
+              activeTab() === tab.id
+                ? 'text-accent border-b-2 border-accent -mb-px'
+                : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'
+            "
+          >
+            {{ tab.labelKey | transloco }}
+            @if (tab.id === 'validation' && hasValidationWarning()) {
+              <span
+                class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-amber-500 align-middle"
+              ></span>
+            }
+          </button>
+        }
+
+        <!-- Spacer + exec time -->
+        <div class="flex-1"></div>
+        @if (execTime()) {
+          <span class="self-center pr-3 text-[10px] font-mono text-muted dark:text-dark-muted">
+            {{ execTime() }} ms
+          </span>
+        }
+      </div>
+
+      <!-- ── Tab: Coeficientes ──────────────────────────────────────────── -->
+      @if (activeTab() === 'coefficients') {
+        <div class="overflow-y-auto">
+          <!-- Series formula -->
+          @if (composedSeriesTex()) {
+            <div class="px-4 pt-4 pb-2">
+              <div class="flex items-center gap-2 mb-1.5">
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                  {{ 'resultPanel.fourierSeries' | transloco }}
+                </p>
+                <app-export-button
+                  [tex]="composedSeriesTex() ?? ''"
+                  [mathEl]="seriesFormulaEl"
+                  filename="fourier-series"
+                  [label]="seriesLabel()"
+                />
+              </div>
+              <div
+                #seriesFormulaEl
+                class="overflow-x-auto text-ink dark:text-dark-ink"
+                [mathjax]="'\\[' + composedSeriesTex() + '\\]'"
+              ></div>
+            </div>
+          }
+
+          <!-- Simplify controls -->
+          <div
+            class="px-4 py-3 flex items-center gap-2 flex-wrap border-t border-border dark:border-dark-border"
+          >
+            <div
+              class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+            >
+              @for (opt of profileOptions; track opt.value) {
+                <button
+                  type="button"
+                  (click)="setProfile(opt.value)"
+                  [class]="
+                    simplifyProfile() === opt.value
+                      ? 'px-2 py-1 bg-accent text-white font-semibold'
+                      : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                  "
+                >
+                  {{ opt.labelKey | transloco }}
+                </button>
+              }
+            </div>
+
+            @if (simplifyProfile() === 'exponential') {
+              <div
+                class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+              >
+                <button
+                  type="button"
+                  (click)="setExpFlag('exponentialize')"
+                  [class]="
+                    expFlag() === 'exponentialize'
+                      ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                      : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                  "
+                >
+                  e^ix
+                </button>
+                <button
+                  type="button"
+                  (click)="setExpFlag('demoivre')"
+                  [class]="
+                    expFlag() === 'demoivre'
+                      ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                      : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                  "
+                >
+                  De Moivre
+                </button>
+              </div>
+            }
+
+            @if (simplifyProfile() !== 'raw') {
+              <label
+                class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+              >
+                <input
+                  type="checkbox"
+                  class="accent-accent"
+                  [checked]="useEdispflag()"
+                  (change)="setEdispflag($any($event.target).checked)"
+                />
+                edispflag
+              </label>
+
+              <div
+                class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+              >
+                @for (repr of erfRepresentationOptions; track repr) {
+                  <button
+                    type="button"
+                    (click)="setErfRepresentation(repr)"
+                    [class]="
+                      erfRepresentation() === repr
+                        ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                        : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                    "
+                  >
+                    {{ repr }}
+                  </button>
+                }
+              </div>
+            }
+
+            @if (simplifying()) {
+              <span
+                class="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0"
+              ></span>
+            }
+          </div>
+
+          <!-- Coefficient values -->
+          <div
+            class="px-4 py-3 space-y-3 overflow-x-auto border-t border-border dark:border-dark-border"
+          >
+            @if (activeCoeffTex()!.w0) {
+              <div class="flex gap-3 items-center">
+                <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">ω₀ =</span>
+                <span
+                  #w0El
+                  class="text-ink dark:text-dark-ink text-sm"
+                  [mathjax]="activeCoeffTex()!.w0"
+                ></span>
+                <app-export-button [tex]="activeCoeffTex()!.w0" [maxima]="coeffMaxima()?.w0 ?? undefined" [mathEl]="w0El" filename="fourier-w0" label="ω₀" />
+              </div>
+            }
+            @if (a0DisplayTex(); as a0Tex) {
+              <div class="flex gap-3 items-center">
+                <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">a₀ =</span>
+                <span #a0El class="text-ink dark:text-dark-ink text-sm" [mathjax]="a0Tex"></span>
+                <app-export-button [tex]="a0Tex" [maxima]="coeffMaxima()?.a0 ?? undefined" [mathEl]="a0El" filename="fourier-a0" label="a₀" />
+              </div>
+            }
+            @if (activeCoeffTex()!.an) {
+              <div class="flex gap-3 items-center">
+                <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">aₙ =</span>
+                <span
+                  #anEl
+                  class="text-ink dark:text-dark-ink text-sm"
+                  [mathjax]="activeCoeffTex()!.an"
+                ></span>
+                <app-export-button [tex]="activeCoeffTex()!.an ?? ''" [maxima]="coeffMaxima()?.an ?? undefined" [mathEl]="anEl" filename="fourier-an" label="aₙ" />
+              </div>
+            }
+            @if (activeCoeffTex()!.bn) {
+              <div class="flex gap-3 items-center">
+                <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">bₙ =</span>
+                <span
+                  #bnEl
+                  class="text-ink dark:text-dark-ink text-sm"
+                  [mathjax]="activeCoeffTex()!.bn"
+                ></span>
+                <app-export-button [tex]="activeCoeffTex()!.bn ?? ''" [maxima]="coeffMaxima()?.bn ?? undefined" [mathEl]="bnEl" filename="fourier-bn" label="bₙ" />
+              </div>
+            }
+            @if (activeCoeffTex()!.c0) {
+              <div class="flex gap-3 items-center">
+                <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">c₀ =</span>
+                <span
+                  #c0El
+                  class="text-ink dark:text-dark-ink text-sm"
+                  [mathjax]="activeCoeffTex()!.c0"
+                ></span>
+                <app-export-button [tex]="activeCoeffTex()!.c0 ?? ''" [maxima]="coeffMaxima()?.c0 ?? undefined" [mathEl]="c0El" filename="fourier-c0" label="c₀" />
+              </div>
+            }
+            @if (activeCoeffTex()!.cn) {
+              <div class="flex gap-3 items-center">
+                <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">cₙ =</span>
+                <span
+                  #cnEl
+                  class="text-ink dark:text-dark-ink text-sm"
+                  [mathjax]="activeCoeffTex()!.cn"
+                ></span>
+                <app-export-button [tex]="activeCoeffTex()!.cn ?? ''" [maxima]="coeffMaxima()?.cn ?? undefined" [mathEl]="cnEl" filename="fourier-cn" label="cₙ" />
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ── Tab: Términos ──────────────────────────────────────────────── -->
+      @if (showTermsTab()) {
+        <div
+          class="overflow-auto"
+          style="max-height: min(62vh, 36rem)"
+          [class.hidden]="activeTab() !== 'terms'"
+        >
+          <!-- Trigonometric / Half-range terms -->
+          @if (trigTerms(); as terms) {
+            @let isSine = store.result()?.type === 'halfRange' && halfRangeMode() === 'sine';
+            @let isTrig = store.result()?.type === 'trigonometric';
+            @let trigCtx = termsTrigCtx();
+
+            @if (terms.some(t => t.anUsedLimit || t.bnUsedLimit)) {
+              <p
+                class="px-3 py-2 text-[10px] text-amber-500 font-mono border-b border-border dark:border-dark-border"
+              >
+                {{ 'resultPanel.indeterminateCoeffLabel' | transloco }}
+              </p>
+            }
+
+            <div class="flex justify-end px-3 py-1.5 border-b border-border dark:border-dark-border">
+              @if (userStore.isAuthenticated()) {
+                <button type="button" (click)="exportTrigCsv()"
+                  [title]="'common.downloadCsv' | transloco"
+                  class="flex items-center gap-1 text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer px-2 py-0.5 rounded border border-border dark:border-dark-border hover:border-accent">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  CSV
+                </button>
+              } @else {
+                <span [title]="'common.loginToDownloadCsv' | transloco"
+                  class="flex items-center gap-1 text-[10px] font-mono text-muted/40 dark:text-dark-muted/40 cursor-not-allowed px-2 py-0.5 rounded border border-border/40 dark:border-dark-border/40">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  CSV
+                </span>
+              }
+            </div>
+
+            <table class="w-full text-xs font-mono border-collapse">
+              <thead class="sticky top-0 bg-paper dark:bg-dark-surface z-10">
+                <tr
+                  class="text-muted dark:text-dark-muted border-b border-border dark:border-dark-border"
+                >
+                  @if (controlHarmonics()) {
+                    <th class="px-2 py-2 text-center font-medium w-8">
+                      <input
+                        type="checkbox"
+                        [checked]="allVisibleHarmonicsChecked()"
+                        (change)="toggleAllVisibleHarmonics(!!$any($event.target).checked)"
+                        [title]="'resultPanel.selectAllHarmonics' | transloco"
+                        class="accent-accent"
+                      />
+                    </th>
+                  }
+                  <th class="px-3 py-2 text-left font-medium w-8">n</th>
+                  @if (!isSine) {
+                    <th class="px-3 py-2 text-left font-medium max-w-48">
+                      {{ 'resultPanel.anExpression' | transloco }}
+                    </th>
+                    <th class="px-3 py-2 text-right font-medium w-28">
+                      {{ 'resultPanel.anValue' | transloco }}
+                    </th>
+                  }
+                  @if (isSine || isTrig) {
+                    <th
+                      class="px-3 py-2 text-left font-medium max-w-48 border-l border-border dark:border-dark-border"
+                    >
+                      {{ 'resultPanel.bnExpression' | transloco }}
+                    </th>
+                    <th class="px-3 py-2 text-right font-medium w-28">
+                      {{ 'resultPanel.bnValue' | transloco }}
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody
+                class="text-ink dark:text-dark-ink divide-y divide-border/40 dark:divide-dark-border/40"
+              >
+                <!-- n=0 row (only for cosine and trig modes) -->
+                @if (!isSine && trigCtx?.a0Float !== undefined) {
+                  <tr
+                    class="hover:bg-paper2 dark:hover:bg-dark-surface2 bg-paper2/40 dark:bg-dark-surface2/40"
+                  >
+                    @if (controlHarmonics()) {
+                      <td class="px-2 py-2 text-center text-muted dark:text-dark-muted">—</td>
+                    }
+                    <td class="px-3 py-2 text-muted dark:text-dark-muted">0</td>
+                    <td class="px-3 py-2 max-w-48 truncate" [mathjax]="trigCtx?.a0Tex ?? ''"></td>
+                    <td class="px-3 py-2 text-right tabular-nums">
+                      {{ (trigCtx?.a0Half ?? 0).toFixed(6) }}
+                    </td>
+                    @if (isTrig) {
+                      <td
+                        class="px-3 py-2 text-muted dark:text-dark-muted border-l border-border dark:border-dark-border"
+                      >
+                        —
+                      </td>
+                      <td class="px-3 py-2 text-right text-muted dark:text-dark-muted">—</td>
+                    }
+                  </tr>
+                }
+
+                <!-- n ≥ 1 rows -->
+                @for (term of terms; track term.n) {
+                  <tr
+                    class="hover:bg-paper2 dark:hover:bg-dark-surface2 cursor-pointer transition-colors"
+                    [class.opacity-45]="controlHarmonics() && !isHarmonicEnabled(term.n)"
+                    [class.opacity-60]="!controlHarmonics() && !isHarmonicInCanvasRange(term.n)"
+                    [class.ring-1]="isHarmonicSelected(term.n)"
+                    [class.ring-accent]="isHarmonicSelected(term.n)"
+                    [class.font-semibold]="isHarmonicInCanvasRange(term.n)"
+                    [style.backgroundColor]="rowHarmonicBackground(term.n)"
+                    (click)="focusHarmonic(term.n)"
+                  >
+                    @if (controlHarmonics()) {
+                      <td class="px-2 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          [checked]="isHarmonicEnabled(term.n)"
+                          (change)="setHarmonicEnabled(term.n, !!$any($event.target).checked)"
+                          (click)="$event.stopPropagation()"
+                          class="accent-accent"
+                          [title]="'resultPanel.includeHarmonic' | transloco: { n: term.n }"
+                        />
+                      </td>
+                    }
+                    <td class="px-3 py-2 text-muted dark:text-dark-muted">{{ term.n }}</td>
+                    @if (!isSine) {
+                      <td class="px-3 py-2 max-w-48">
+                        <span class="inline-flex items-start gap-1">
+                          <span [mathjax]="term.an.tex"></span>
+                          @if (term.anUsedLimit) {
+                            <span
+                              class="inline-flex items-center justify-center text-[10px] leading-none px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0"
+                              [title]="'resultPanel.indeterminateCoeffTooltip' | transloco"
+                              >*</span
+                            >
+                          }
+                        </span>
+                      </td>
+                      <td class="px-3 py-2 text-right tabular-nums">
+                        {{ term.anFloat.toFixed(6) }}
+                      </td>
+                    }
+                    @if (isSine || isTrig) {
+                      <td class="px-3 py-2 max-w-48 border-l border-border dark:border-dark-border">
+                        <span class="inline-flex items-start gap-1">
+                          <span [mathjax]="term.bn.tex"></span>
+                          @if (term.bnUsedLimit) {
+                            <span
+                              class="inline-flex items-center justify-center text-[10px] leading-none px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0"
+                              [title]="'resultPanel.indeterminateCoeffTooltip' | transloco"
+                              >*</span
+                            >
+                          }
+                        </span>
+                      </td>
+                      <td class="px-3 py-2 text-right tabular-nums">
+                        {{ term.bnFloat.toFixed(6) }}
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+
+          <!-- Complex terms -->
+          @if (complexTerms(); as terms) {
+            @let complexCtx = termsComplexCtx();
+
+            @if (terms.some(t => t.cnUsedLimit || t.cnNegUsedLimit)) {
+              <p
+                class="px-3 py-2 text-[10px] text-amber-500 font-mono border-b border-border dark:border-dark-border"
+              >
+                {{ 'resultPanel.indeterminateCoeffLabel' | transloco }}
+              </p>
+            }
+
+            <div class="flex justify-end px-3 py-1.5 border-b border-border dark:border-dark-border">
+              @if (userStore.isAuthenticated()) {
+                <button type="button" (click)="exportComplexCsv()"
+                  [title]="'common.downloadCsv' | transloco"
+                  class="flex items-center gap-1 text-[10px] font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer px-2 py-0.5 rounded border border-border dark:border-dark-border hover:border-accent">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  CSV
+                </button>
+              } @else {
+                <span [title]="'common.loginToDownloadCsv' | transloco"
+                  class="flex items-center gap-1 text-[10px] font-mono text-muted/40 dark:text-dark-muted/40 cursor-not-allowed px-2 py-0.5 rounded border border-border/40 dark:border-dark-border/40">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  CSV
+                </span>
+              }
+            </div>
+
+            <table class="w-full text-xs font-mono border-collapse">
+              <thead class="sticky top-0 bg-paper dark:bg-dark-surface z-10">
+                <tr
+                  class="text-muted dark:text-dark-muted border-b border-border dark:border-dark-border"
+                >
+                  @if (controlHarmonics()) {
+                    <th class="px-2 py-2 text-center font-medium w-8">
+                      <input
+                        type="checkbox"
+                        [checked]="allVisibleHarmonicsChecked()"
+                        (change)="toggleAllVisibleHarmonics(!!$any($event.target).checked)"
+                        [title]="'resultPanel.selectAllHarmonics' | transloco"
+                        class="accent-accent"
+                      />
+                    </th>
+                  }
+                  <th class="px-3 py-2 text-left font-medium w-8">n</th>
+                  <th class="px-3 py-2 text-left font-medium">
+                    {{ 'resultPanel.cnExpression' | transloco }}
+                  </th>
+                  <th class="px-3 py-2 text-left font-medium">
+                    {{ 'resultPanel.cMnExpression' | transloco }}
+                  </th>
+                  <th class="px-3 py-2 text-right font-medium w-24">|cₙ|</th>
+                  <th class="px-3 py-2 text-right font-medium w-24">∠cₙ (rad)</th>
+                </tr>
+              </thead>
+              <tbody
+                class="text-ink dark:text-dark-ink divide-y divide-border/40 dark:divide-dark-border/40"
+              >
+                <!-- n=0 row -->
+                @if (complexCtx?.c0Float !== undefined) {
+                  <tr
+                    class="hover:bg-paper2 dark:hover:bg-dark-surface2 bg-paper2/40 dark:bg-dark-surface2/40"
+                  >
+                    @if (controlHarmonics()) {
+                      <td class="px-2 py-2 text-center text-muted dark:text-dark-muted">—</td>
+                    }
+                    <td class="px-3 py-2 text-muted dark:text-dark-muted">0</td>
+                    <td class="px-3 py-2" [mathjax]="complexCtx?.c0Tex ?? ''"></td>
+                    <td class="px-3 py-2 text-muted dark:text-dark-muted">—</td>
+                    <td class="px-3 py-2 text-right tabular-nums">
+                      {{ (complexCtx?.c0FloatAbs ?? 0).toFixed(6) }}
+                    </td>
+                    <td class="px-3 py-2 text-right tabular-nums">0.000000</td>
+                  </tr>
+                }
+
+                <!-- n ≥ 1 rows -->
+                @for (term of terms; track term.n) {
+                  <tr
+                    class="hover:bg-paper2 dark:hover:bg-dark-surface2 cursor-pointer transition-colors"
+                    [class.opacity-45]="controlHarmonics() && !isHarmonicEnabled(term.n)"
+                    [class.opacity-60]="!controlHarmonics() && !isHarmonicInCanvasRange(term.n)"
+                    [class.ring-1]="isHarmonicSelected(term.n)"
+                    [class.ring-accent]="isHarmonicSelected(term.n)"
+                    [class.font-semibold]="isHarmonicInCanvasRange(term.n)"
+                    [style.backgroundColor]="rowHarmonicBackground(term.n)"
+                    (click)="focusHarmonic(term.n)"
+                  >
+                    @if (controlHarmonics()) {
+                      <td class="px-2 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          [checked]="isHarmonicEnabled(term.n)"
+                          (change)="setHarmonicEnabled(term.n, !!$any($event.target).checked)"
+                          (click)="$event.stopPropagation()"
+                          class="accent-accent"
+                          [title]="'resultPanel.includeHarmonic' | transloco: { n: term.n }"
+                        />
+                      </td>
+                    }
+                    <td class="px-3 py-2 text-muted dark:text-dark-muted">{{ term.n }}</td>
+                    <td class="px-3 py-2">
+                      <span class="inline-flex items-start gap-1">
+                        <span [mathjax]="term.cn.tex"></span>
+                        @if (term.cnUsedLimit) {
+                          <span
+                            class="inline-flex items-center justify-center text-[10px] leading-none px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0"
+                            [title]="'resultPanel.computedByLimit' | transloco"
+                            >*</span
+                          >
+                        }
+                      </span>
+                    </td>
+                    <td class="px-3 py-2">
+                      <span class="inline-flex items-start gap-1">
+                        <span [mathjax]="term.cnNeg.tex"></span>
+                        @if (term.cnNegUsedLimit) {
+                          <span
+                            class="inline-flex items-center justify-center text-[10px] leading-none px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0"
+                            [title]="'resultPanel.computedByLimit' | transloco"
+                            >*</span
+                          >
+                        }
+                      </span>
+                    </td>
+                    <td class="px-3 py-2 text-right tabular-nums">
+                      {{ term.amplitude.toFixed(6) }}
+                    </td>
+                    <td class="px-3 py-2 text-right tabular-nums">{{ term.phase.toFixed(6) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      }
+
+      <!-- ── Tab: Espectro ───────────────────────────────────────────────── -->
+      @if (activeTab() === 'spectrum') {
+        <div class="p-4 overflow-y-auto">
+          @if (hasSpectrumData()) {
+            @let type = store.result()?.type;
+            @let trigCtx = termsTrigCtx();
+            @let complexCtx = termsComplexCtx();
+            <app-spectrum-chart
+              [seriesType]="
+                type === 'complex'
+                  ? 'complex'
+                  : type === 'halfRange'
+                    ? 'halfRange'
+                    : 'trigonometric'
+              "
+              [trigTerms]="
+                type === 'trigonometric' || type === 'halfRange' ? spectrumTrigTerms() : null
+              "
+              [complexTerms]="type === 'complex' ? spectrumComplexTerms() : null"
+              [trigZero]="
+                type === 'trigonometric' || (type === 'halfRange' && halfRangeMode() === 'cosine')
+                  ? (trigCtx?.a0Half ?? null)
+                  : null
+              "
+              [complexZero]="type === 'complex' ? (complexCtx?.c0Float ?? null) : null"
+              [halfRangeMode]="halfRangeMode()"
+            />
+          } @else {
+            <div
+              class="flex items-center justify-center h-48 text-muted dark:text-dark-muted text-sm"
+            >
+              {{ 'common.loading' | transloco }}
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Tab: Validación ────────────────────────────────────────────── -->
+      @if (activeTab() === 'validation') {
+        <div class="p-4 space-y-4 overflow-y-auto">
+          @if (validation(); as v) {
+            <!-- Decision badge -->
+            <div class="flex items-center gap-2">
+              @if (v.decision === 'proceed') {
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[11px] font-mono"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  {{ 'resultPanel.noSingularities' | transloco }}
+                </span>
+              } @else if (v.decision === 'warn') {
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[11px] font-mono"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  {{ 'common.warning' | transloco }}
+                </span>
+              } @else {
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[11px] font-mono"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                  {{ 'common.rejected' | transloco }}
+                </span>
+              }
+              @if (v.message) {
+                <span class="text-xs text-muted dark:text-dark-muted font-body">{{
+                  v.message
+                }}</span>
+              }
+            </div>
+
+            <!-- Singularities table -->
+            @if (v.singularities.length > 0) {
+              <div class="overflow-x-auto">
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted mb-2">
+                  {{ 'resultPanel.singularitiesDetected' | transloco }}
+                </p>
+                <table class="w-full text-xs font-mono min-w-max">
+                  <thead>
+                    <tr
+                      class="text-muted dark:text-dark-muted text-left border-b border-border dark:border-dark-border"
+                    >
+                      <th class="pb-1.5 pr-8 font-medium whitespace-nowrap">
+                        {{ 'resultPanel.point' | transloco }}
+                      </th>
+                      <th class="pb-1.5 font-medium whitespace-nowrap">
+                        {{ 'resultPanel.type' | transloco }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    class="text-ink dark:text-dark-ink divide-y divide-border/40 dark:divide-dark-border/40"
+                  >
+                    @for (s of v.singularities; track s.point) {
+                      <tr class="hover:bg-paper2 dark:hover:bg-dark-surface2">
+                        <td
+                          class="py-2 pr-8 font-mono break-all max-w-xs"
+                          [mathjax]="s.pointTex ?? s.point"
+                        ></td>
+                        <td class="py-2 whitespace-nowrap">
+                          <span
+                            class="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                          >
+                            {{ singularityLabel(s.type) }}
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="text-sm font-body text-muted dark:text-dark-muted">
+                {{ 'resultPanel.noSingularitiesInDomain' | transloco }}
+              </p>
+            }
+          } @else {
+            <p class="text-sm font-body text-muted dark:text-dark-muted">
+              {{ 'resultPanel.noInfoAvailable' | transloco }}
+            </p>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!store.hasResult() && !store.loading()) {
+    <div class="text-center py-6 text-muted dark:text-dark-muted text-sm font-body">
+      {{ 'calculator.label' | transloco }}
+      <strong class="text-ink dark:text-dark-ink">{{ 'calculator.calculate' | transloco }}</strong
+      >.
+    </div>
+  }
+</div>
+
+<!-- ── Share dialog ──────────────────────────────────────────────────────────── -->
+@if (showShareDialog()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+    role="dialog"
+    aria-modal="true"
+    (click)="showShareDialog.set(false)"
+    (keydown.escape)="showShareDialog.set(false)"
+  >
+    <div
+      class="bg-paper dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl shadow-2xl w-full max-w-sm p-5"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4 text-accent"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
+          <h3 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+            {{ 'share.title' | transloco }}
+          </h3>
+        </div>
+        <button
+          type="button"
+          (click)="showShareDialog.set(false)"
+          class="w-7 h-7 flex items-center justify-center rounded text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 hover:text-ink dark:hover:text-dark-ink transition-colors text-lg leading-none"
+        >
+          ×
+        </button>
+      </div>
+
+      <!-- Description -->
+      <p class="text-xs text-muted dark:text-dark-muted font-body mb-3">
+        {{ 'share.description' | transloco }}
+      </p>
+
+      <!-- URL row -->
+      <div class="flex gap-2">
+        <input
+          type="text"
+          readonly
+          [value]="shareHref"
+          (click)="$any($event.target).select()"
+          class="flex-1 min-w-0 px-2.5 py-2 text-[11px] font-mono bg-paper2 dark:bg-dark-bg border border-border dark:border-dark-border rounded text-ink dark:text-dark-ink outline-none focus:border-accent dark:focus:border-accent cursor-text select-all"
+        />
+        <button
+          type="button"
+          (click)="copyShareUrl()"
+          [class]="
+            urlCopied()
+              ? 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 transition-colors flex items-center gap-1.5'
+              : 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-accent text-white hover:bg-accent/90 transition-colors flex items-center gap-1.5'
+          "
+        >
+          @if (urlCopied()) {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            {{ 'common.copied' | transloco }}
+          } @else {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+            {{ 'common.copy' | transloco }}
+          }
+        </button>
+      </div>
+
+      <!-- Confirmation toast -->
+      @if (urlCopied()) {
+        <p class="mt-2.5 text-[11px] font-mono text-green-600 dark:text-green-400 text-center">
+          {{ 'common.copiedMessage' | transloco }}
+        </p>
+      }
+    </div>
+  </div>
+}
