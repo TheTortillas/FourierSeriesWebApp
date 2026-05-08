@@ -88,7 +88,7 @@ export const config = {
   },
   calcLimits: {
     anonymous: parseInt(optionalEnv("CALC_LIMIT_ANONYMOUS", "10")),
-    free: parseInt(optionalEnv("CALC_LIMIT_FREE", "50")),
+    free: parseInt(optionalEnv("CALC_LIMIT_FREE", "100")),
     premium: parseInt(optionalEnv("CALC_LIMIT_PREMIUM", "-1")),
   },
   email: {

@@ -6,7 +6,10 @@ import { filter, map, startWith } from 'rxjs';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { UserStore } from '../../../core/services/auth/user.store';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { PlatformService } from '../../../core/services/platform/platform.service';
 import { LANGUAGES, SUPPORTED_LANG_CODES, saveLang } from '../../../core/config/languages';
+
+const BETA_BANNER_KEY = 'fwc_beta_banner_dismissed';
 
 @Component({
   selector: 'app-nav',
@@ -20,6 +23,16 @@ export class NavComponent {
 
   private readonly transloco = inject(TranslocoService);
   private readonly router    = inject(Router);
+  private readonly platform  = inject(PlatformService);
+
+  readonly betaBannerVisible = signal(
+    this.platform.getLocalStorageItem(BETA_BANNER_KEY) !== 'true',
+  );
+
+  dismissBetaBanner(): void {
+    this.platform.setLocalStorageItem(BETA_BANNER_KEY, 'true');
+    this.betaBannerVisible.set(false);
+  }
 
   /** Active language as a reactive signal. */
   readonly lang = toSignal(this.transloco.langChanges$, {
