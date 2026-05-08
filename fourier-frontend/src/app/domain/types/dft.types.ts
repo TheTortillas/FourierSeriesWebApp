@@ -1,6 +1,6 @@
 export type DftMode = 'signal' | 'epicycles';
 export type DftAlgorithm = 'fft' | 'dft';
-export type DftInputMode = 'function' | 'manual';
+export type DftInputMode = 'function' | 'manual' | 'epicycles';
 
 export interface DftPoint {
   x: number;

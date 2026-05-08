@@ -335,12 +335,13 @@ transformsRouter.post(
       const result = await dftService.compute(input);
       const shouldPersistSideEffects = !client.isDisconnected();
 
+      const historyType = input.mode === "epicycles" ? "dft_epicycles" : "dft_signal";
       if (shouldPersistSideEffects) {
         if (req.user) {
           await incrementCalculationCount(req.user.id);
           await historyRepository.create({
             userId: req.user.id,
-            type: "dft_signal",
+            type: historyType,
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,
           });
@@ -348,7 +349,7 @@ transformsRouter.post(
           await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
           await historyRepository.create({
             ipAddress: req.ip ?? undefined,
-            type: "dft_signal",
+            type: historyType,
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,
           });

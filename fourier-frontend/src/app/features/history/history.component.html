@@ -169,10 +169,10 @@
                 <td class="px-4 py-3 whitespace-nowrap">
                   <span
                     [class]="
-                      'px-1.5 py-0.5 rounded border text-[10px] ' + typeBadgeClass(entry.type)
+                      'px-1.5 py-0.5 rounded border text-[10px] ' + entryBadgeClass(entry)
                     "
                   >
-                    {{ typeKey(entry.type) | transloco }}
+                    {{ entryTypeKey(entry) | transloco }}
                   </span>
                 </td>
 
