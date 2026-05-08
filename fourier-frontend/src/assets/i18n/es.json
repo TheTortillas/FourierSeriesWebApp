@@ -41,7 +41,11 @@
     "paletteNeutral": "Neutral",
     "paletteCoffee": "Coffee",
     "tagline": "Por Sebastián Morales Palacios",
-    "footerText": "Herramienta de análisis matemático"
+    "footerText": "Herramienta de análisis matemático",
+    "betaBanner": {
+      "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
+      "dismiss": "Cerrar aviso beta"
+    }
   },
   "home": {
     "subtitle": "Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",

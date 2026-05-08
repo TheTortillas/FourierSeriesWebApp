@@ -451,6 +451,7 @@
                   @if (userStore.isAuthenticated()) {
                     <button type="button" (click)="openFavoriteDialog()"
                       [title]="latestHistoryEntry()?.isFavorite ? ('results.removeFav' | transloco) : ('results.addFav' | transloco)"
+                    [attr.aria-label]="latestHistoryEntry()?.isFavorite ? ('results.removeFav' | transloco) : ('results.addFav' | transloco)"
                       [class]="latestHistoryEntry()?.isFavorite
                         ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center cursor-pointer'
                         : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'">
@@ -465,7 +466,7 @@
                     </button>
                   }
                   <button type="button" (click)="showEpicSettings.set(!showEpicSettings())"
-                    [title]="'results.canvasSettings' | transloco"
+                    [title]="'results.canvasSettings' | transloco" [attr.aria-label]="'results.canvasSettings' | transloco"
                     [class]="showEpicSettings()
                       ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
                       : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer'">
@@ -476,7 +477,7 @@
                     </svg>
                   </button>
                   <button type="button" (click)="downloadCanvas(epicWrapperRef(), 'epicycles.png')"
-                    [title]="'results.downloadImage' | transloco"
+                    [title]="'results.downloadImage' | transloco" [attr.aria-label]="'results.downloadImage' | transloco"
                     class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -487,6 +488,7 @@
                   </button>
                   <button type="button" (click)="toggleFullscreen(epicWrapperRef())"
                     [title]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
+                    [attr.aria-label]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
                     class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
                     @if (isFullscreen()) {
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
@@ -513,7 +515,7 @@
               <div class="absolute top-2 right-2 flex gap-1 pointer-events-none">
                 @if (epicResult()) {
                   <button type="button" (click)="openShareDialog()"
-                    [title]="'transforms.shareLink' | transloco"
+                    [title]="'transforms.shareLink' | transloco" [attr.aria-label]="'transforms.shareLink' | transloco"
                     class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -798,6 +800,7 @@
                   @if (userStore.isAuthenticated()) {
                     <button type="button" (click)="openFavoriteDialog()"
                       [title]="latestHistoryEntry()?.isFavorite ? ('results.removeFav' | transloco) : ('results.addFav' | transloco)"
+                    [attr.aria-label]="latestHistoryEntry()?.isFavorite ? ('results.removeFav' | transloco) : ('results.addFav' | transloco)"
                       [class]="latestHistoryEntry()?.isFavorite
                         ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center cursor-pointer'
                         : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'">
@@ -812,7 +815,7 @@
                     </button>
                   }
                   <button type="button" (click)="showCanvasSettings.set(!showCanvasSettings())"
-                    [title]="'results.canvasSettings' | transloco"
+                    [title]="'results.canvasSettings' | transloco" [attr.aria-label]="'results.canvasSettings' | transloco"
                     [class]="showCanvasSettings()
                       ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
                       : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer'">
@@ -823,7 +826,7 @@
                     </svg>
                   </button>
                   <button type="button" (click)="downloadCanvas(signalWrapperRef(), 'dft-signal.png')"
-                    [title]="'results.downloadImage' | transloco"
+                    [title]="'results.downloadImage' | transloco" [attr.aria-label]="'results.downloadImage' | transloco"
                     class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -988,7 +991,7 @@
               <!-- Action buttons overlay top-right -->
               <div class="absolute top-2 right-2 flex gap-1 pointer-events-none">
                 <button type="button" (click)="openShareDialog()"
-                  [title]="'transforms.shareLink' | transloco"
+                  [title]="'transforms.shareLink' | transloco" [attr.aria-label]="'transforms.shareLink' | transloco"
                   class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -998,7 +1001,7 @@
                   </svg>
                 </button>
                 <button type="button" (click)="downloadCanvas(specWrapperRef(), 'dft-spectrum.png')"
-                  [title]="'results.downloadImage' | transloco"
+                  [title]="'results.downloadImage' | transloco" [attr.aria-label]="'results.downloadImage' | transloco"
                   class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1008,7 +1011,7 @@
                   </svg>
                 </button>
                 <button type="button" (click)="showSpecSettings.set(!showSpecSettings())"
-                  [title]="'results.canvasSettings' | transloco"
+                  [title]="'results.canvasSettings' | transloco" [attr.aria-label]="'results.canvasSettings' | transloco"
                   [class]="showSpecSettings()
                     ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
                     : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer'">

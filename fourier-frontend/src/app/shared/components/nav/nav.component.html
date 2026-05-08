@@ -24,7 +24,7 @@
     </svg>
     <span class="hidden lg:flex flex-col items-start leading-none gap-0.5">
       <span class="font-display text-base leading-none">Fourier Web Calculator</span>
-      <!-- <span class="text-[9px] font-mono text-muted dark:text-dark-muted tracking-wide">{{ 'nav.tagline' | transloco }}</span> -->
+      <span class="text-[9px] font-mono text-muted dark:text-dark-muted tracking-wide select-none">Beta · v0.9</span>
     </span>
   </a>
 
@@ -268,3 +268,19 @@
     </button>
   </div>
 </nav>
+
+@if (betaBannerVisible()) {
+  <div class="w-full bg-indigo-50 dark:bg-indigo-950/40 border-b border-indigo-200 dark:border-indigo-800 px-4 py-2 flex items-center justify-center gap-3">
+    <span class="text-xs font-body text-indigo-800 dark:text-indigo-300">
+      {{ 'nav.betaBanner.message' | transloco }}
+    </span>
+    <button type="button" (click)="dismissBetaBanner()"
+      [attr.aria-label]="'nav.betaBanner.dismiss' | transloco"
+      class="ml-auto shrink-0 p-1 rounded text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors cursor-pointer">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+}
