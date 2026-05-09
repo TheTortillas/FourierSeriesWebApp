@@ -36,6 +36,10 @@ import { logger } from "./infrastructure/logging/logger";
 export function createApp(): Application {
   const app = express();
 
+  // Trust reverse proxy (nginx) so req.ip reflects the client IP from
+  // X-Forwarded-For / X-Real-IP headers set by the proxy.
+  app.set("trust proxy", true);
+
   app.disable("x-powered-by");
   app.use(helmet());
 

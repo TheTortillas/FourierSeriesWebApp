@@ -72,6 +72,7 @@ export class UserRepository implements IUserRepository {
 
   async create(input: CreateUserInput): Promise<UserRecord> {
     const client = await db.connect();
+    let newUserId: string;
     try {
       await client.query("BEGIN");
 
@@ -84,7 +85,7 @@ export class UserRepository implements IUserRepository {
 
       const userResult = await client.query(
         `INSERT INTO users (person_id, email, email_verified, password_hash)
-         VALUES ($1, $2, $3, $4) RETURNING *`,
+         VALUES ($1, $2, $3, $4) RETURNING id`,
         [
           personId,
           input.email,
@@ -92,29 +93,28 @@ export class UserRepository implements IUserRepository {
           input.passwordHash ?? null,
         ],
       );
-      const user = userResult.rows[0];
+      newUserId = userResult.rows[0].id;
 
       if (input.provider) {
         await client.query(
           `INSERT INTO user_auth_providers (user_id, provider, provider_id)
            VALUES ($1, $2, $3)`,
-          [user.id, input.provider, input.providerId ?? null],
+          [newUserId, input.provider, input.providerId ?? null],
         );
       }
 
       await client.query("COMMIT");
-
-      return {
-        ...user,
-        firstName: input.firstName,
-        lastName: input.lastName,
-      };
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
     } finally {
       client.release();
     }
+
+    // Re-query via findById so column aliases (emailVerified, isActive, firstName…)
+    // match what all other methods return. RETURNING * gives raw snake_case names
+    // which caused `!user.isActive` to be truthy for newly created users.
+    return (await this.findById(newUserId!))!;
   }
 
   async updateLastLogin(id: string): Promise<void> {

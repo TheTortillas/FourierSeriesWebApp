@@ -101,7 +101,10 @@ export const config = {
   },
   app: {
     url: optionalEnv("APP_URL", "http://localhost:3000"),
-    frontendUrl: optionalEnv("FRONTEND_URL", "http://localhost:4200"),
+    frontendUrl: optionalEnv(
+      "FRONTEND_URL",
+      optionalEnv("APP_URL", "http://localhost:4200"),
+    ),
     frontendDefaultLang: optionalEnv("FRONTEND_DEFAULT_LANG", "es"),
   },
   cors: {
