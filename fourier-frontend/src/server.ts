@@ -48,8 +48,17 @@ app.use(
 
 /**
  * Handle all other requests by rendering the Angular application.
+ *
+ * We override the Host header to 'localhost:4000' before handing the request
+ * to Angular SSR. Angular resolves relative URLs (e.g. /api/auth/quota) against
+ * the Host header. Without this, it would resolve them against the public domain
+ * (fouriersolver.com), which Angular's SSRF protection then blocks. Localhost is
+ * always allowed by SSRF, so the proxy above can forward the request normally.
+ * SEO tags (canonical, hreflang) are built from environment.baseUrl, not from
+ * the Host header, so they remain correct.
  */
 app.use((req, res, next) => {
+  req.headers['host'] = 'localhost:4000';
   angularApp
     .handle(req)
     .then((response) =>
