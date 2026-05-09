@@ -6,6 +6,7 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
+import { request as httpRequest } from 'node:http';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -13,16 +14,26 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Proxy /api requests to the backend (needed for SSR-side HttpClient calls).
+ * Express strips the /api prefix in req.url, so we re-add it when forwarding.
  */
+app.use('/api', (req, res) => {
+  const backendReq = httpRequest(
+    {
+      hostname: 'localhost',
+      port: 3000,
+      path: '/api' + (req.url ?? ''),
+      method: req.method,
+      headers: { ...req.headers, host: 'localhost:3000' },
+    },
+    (backendRes) => {
+      res.writeHead(backendRes.statusCode ?? 502, backendRes.headers);
+      backendRes.pipe(res, { end: true });
+    },
+  );
+  backendReq.on('error', () => res.status(502).end());
+  req.pipe(backendReq, { end: true });
+});
 
 /**
  * Serve static files from /browser
