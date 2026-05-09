@@ -25,13 +25,7 @@ export class AnalyticsService {
 
     const id = environment.ga4Id;
 
-    // Inject gtag script
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
-    document.head.appendChild(script);
-
-    // Bootstrap dataLayer + gtag function
+    // Bootstrap dataLayer + gtag function FIRST (before script loads)
     window.dataLayer = window.dataLayer || [];
     window.gtag = function (...args: unknown[]) {
       window.dataLayer.push(args);
@@ -39,12 +33,28 @@ export class AnalyticsService {
     window.gtag('js', new Date());
     window.gtag('config', id, { send_page_view: false });
 
+    // Inject gtag script
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+    script.onload = () => {
+      // Send initial page_view after script loads
+      window.gtag('event', 'page_view', {
+        page_path: window.location.pathname + window.location.search,
+        page_location: window.location.href,
+        page_title: document.title,
+      });
+    };
+    document.head.appendChild(script);
+
     // Track SPA navigation as page_view events
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
         window.gtag('event', 'page_view', {
           page_path: e.urlAfterRedirects,
+          page_location: window.location.origin + e.urlAfterRedirects,
+          page_title: document.title,
         });
       });
   }
