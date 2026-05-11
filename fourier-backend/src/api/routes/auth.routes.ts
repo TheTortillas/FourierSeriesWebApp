@@ -343,6 +343,40 @@ authRouter.get(
 
 /**
  * @openapi
+ * /api/auth/me:
+ *   delete:
+ *     summary: Eliminar la cuenta autenticada de forma permanente
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cuenta eliminada correctamente
+ *       401:
+ *         description: No autenticado
+ *       404:
+ *         description: Usuario no encontrado
+ */
+authRouter.delete(
+  "/me",
+  authenticate,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      await authService.deleteAccount(req.user!.id);
+      clearRefreshCookie(res);
+      res.json({ message: "Account deleted successfully" });
+    } catch (err) {
+      if (err instanceof Error && err.message === "User not found") {
+        res.status(404).json({ error: err.message });
+        return;
+      }
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
  * /api/auth/verify-email:
  *   get:
  *     summary: Verificar correo electrónico con token
@@ -600,7 +634,9 @@ authRouter.patch(
         return;
       }
       if (trimmedFirst.length > 100 || trimmedLast.length > 100) {
-        res.status(400).json({ error: "Name fields must be 100 characters or less" });
+        res
+          .status(400)
+          .json({ error: "Name fields must be 100 characters or less" });
         return;
       }
 

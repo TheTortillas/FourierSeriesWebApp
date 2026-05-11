@@ -92,7 +92,12 @@ export class AuthService {
       purpose: "email_verification",
       expiresAt: emailToken.expiresAt,
     });
-    await sendVerificationEmail(user.email, user.firstName, emailToken.token, input.lang);
+    await sendVerificationEmail(
+      user.email,
+      user.firstName,
+      emailToken.token,
+      input.lang,
+    );
 
     await this.auditRepo.log({
       userId: user.id,
@@ -102,6 +107,15 @@ export class AuthService {
     });
 
     return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+  }
+
+  async deleteAccount(userId: string): Promise<void> {
+    const user = await this.userRepo.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await this.userRepo.hardDelete(userId);
   }
 
   async login(input: {
@@ -327,7 +341,11 @@ export class AuthService {
     ]);
   }
 
-  async forgotPassword(email: string, ipAddress?: string, lang?: string): Promise<void> {
+  async forgotPassword(
+    email: string,
+    ipAddress?: string,
+    lang?: string,
+  ): Promise<void> {
     const user = await this.userRepo.findByEmail(email);
     if (!user) return; // No revelar si el email existe
 
@@ -338,7 +356,12 @@ export class AuthService {
       expiresAt: resetToken.expiresAt,
     });
 
-    await sendPasswordResetEmail(user.email, user.firstName, resetToken.token, lang);
+    await sendPasswordResetEmail(
+      user.email,
+      user.firstName,
+      resetToken.token,
+      lang,
+    );
 
     await this.auditRepo.log({
       userId: user.id,
@@ -386,14 +409,22 @@ export class AuthService {
     if (!user) throw new Error("User not found");
 
     if (!user.passwordHash) {
-      throw new Error("Account uses Google sign-in. Use forgot password to set a password.");
+      throw new Error(
+        "Account uses Google sign-in. Use forgot password to set a password.",
+      );
     }
 
-    const valid = await bcrypt.compare(input.currentPassword, user.passwordHash);
+    const valid = await bcrypt.compare(
+      input.currentPassword,
+      user.passwordHash,
+    );
     if (!valid) throw new Error("Current password is incorrect");
 
     const newHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
-    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, input.userId]);
+    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [
+      newHash,
+      input.userId,
+    ]);
 
     await this.auditRepo.log({
       userId: input.userId,
@@ -402,7 +433,11 @@ export class AuthService {
     });
   }
 
-  async resendVerification(email: string, ipAddress?: string, lang?: string): Promise<void> {
+  async resendVerification(
+    email: string,
+    ipAddress?: string,
+    lang?: string,
+  ): Promise<void> {
     const user = await this.userRepo.findByEmail(email);
     if (!user || user.emailVerified) return;
 
@@ -414,6 +449,11 @@ export class AuthService {
       expiresAt: emailToken.expiresAt,
     });
 
-    await sendVerificationEmail(user.email, user.firstName, emailToken.token, lang);
+    await sendVerificationEmail(
+      user.email,
+      user.firstName,
+      emailToken.token,
+      lang,
+    );
   }
 }

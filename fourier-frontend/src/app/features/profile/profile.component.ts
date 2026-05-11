@@ -1,6 +1,12 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
@@ -12,7 +18,7 @@ import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
-  const pw  = control.get('newPassword')?.value;
+  const pw = control.get('newPassword')?.value;
   const cpw = control.get('confirmPassword')?.value;
   return pw && cpw && pw !== cpw ? { mismatch: true } : null;
 }
@@ -23,11 +29,11 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   imports: [ReactiveFormsModule, NavComponent, FooterComponent, RouterLink, TranslocoPipe],
 })
 export class ProfileComponent {
-  readonly store    = inject(UserStore);
-  private readonly api      = inject(ApiService);
-  private readonly auth     = inject(AuthService);
-  private readonly seo      = inject(SeoService);
-  private readonly fb       = inject(FormBuilder);
+  readonly store = inject(UserStore);
+  private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly fb = inject(FormBuilder);
   private readonly transloco = inject(TranslocoService);
 
   constructor() {
@@ -47,13 +53,13 @@ export class ProfileComponent {
   });
 
   // ── Edit name ──────────────────────────────────────────────────────────────
-  readonly editingName  = signal(false);
-  readonly nameLoading  = signal(false);
-  readonly nameError    = signal<string | null>(null);
+  readonly editingName = signal(false);
+  readonly nameLoading = signal(false);
+  readonly nameError = signal<string | null>(null);
 
   readonly nameForm = this.fb.nonNullable.group({
     firstName: ['', [Validators.required, Validators.maxLength(100)]],
-    lastName:  ['', [Validators.required, Validators.maxLength(100)]],
+    lastName: ['', [Validators.required, Validators.maxLength(100)]],
   });
 
   startEditName(): void {
@@ -88,23 +94,60 @@ export class ProfileComponent {
     });
   }
 
+  // ── Delete account ───────────────────────────────────────────────────────
+  readonly deleteConfirmation = signal('');
+  readonly deleteLoading = signal(false);
+  readonly deleteError = signal<string | null>(null);
+
+  readonly deleteConfirmationMatches = computed(() => {
+    const user = this.store.user();
+    if (!user) return false;
+    return this.deleteConfirmation().trim().toLowerCase() === user.email.toLowerCase();
+  });
+
+  onDeleteConfirmationInput(event: Event): void {
+    this.deleteConfirmation.set((event.target as HTMLInputElement).value);
+    this.deleteError.set(null);
+  }
+
+  onDeleteAccount(): void {
+    if (this.deleteLoading() || !this.deleteConfirmationMatches()) return;
+
+    this.deleteError.set(null);
+    this.deleteLoading.set(true);
+
+    this.auth.deleteAccount().subscribe({
+      next: () => this.deleteLoading.set(false),
+      error: (err) => {
+        this.deleteError.set(err?.error?.error ?? 'No se pudo eliminar la cuenta');
+        this.deleteLoading.set(false);
+      },
+    });
+  }
+
   // ── Change password ────────────────────────────────────────────────────────
   readonly passwordForm = this.fb.nonNullable.group(
     {
-      currentPassword:  ['', [Validators.required]],
-      newPassword:      ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword:  ['', [Validators.required]],
+      currentPassword: ['', [Validators.required]],
+      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', [Validators.required]],
     },
     { validators: passwordsMatch },
   );
 
   readonly pwLoading = signal(false);
   readonly pwSuccess = signal(false);
-  readonly pwError   = signal<string | null>(null);
+  readonly pwError = signal<string | null>(null);
 
-  get currentPassword() { return this.passwordForm.controls.currentPassword; }
-  get newPassword()     { return this.passwordForm.controls.newPassword; }
-  get confirmPassword() { return this.passwordForm.controls.confirmPassword; }
+  get currentPassword() {
+    return this.passwordForm.controls.currentPassword;
+  }
+  get newPassword() {
+    return this.passwordForm.controls.newPassword;
+  }
+  get confirmPassword() {
+    return this.passwordForm.controls.confirmPassword;
+  }
 
   onChangePassword(): void {
     if (this.passwordForm.invalid || this.pwLoading()) return;
@@ -127,24 +170,31 @@ export class ProfileComponent {
 
   // ── Resend verification ────────────────────────────────────────────────────
   readonly resendLoading = signal(false);
-  readonly resendSent    = signal(false);
+  readonly resendSent = signal(false);
 
   onResendVerification(): void {
     const email = this.store.user()?.email;
     if (!email || this.resendLoading()) return;
     this.resendLoading.set(true);
     this.api.resendVerification(email, this.transloco.getActiveLang()).subscribe({
-      next:  () => { this.resendSent.set(true); this.resendLoading.set(false); },
-      error: () => { this.resendSent.set(true); this.resendLoading.set(false); },
+      next: () => {
+        this.resendSent.set(true);
+        this.resendLoading.set(false);
+      },
+      error: () => {
+        this.resendSent.set(true);
+        this.resendLoading.set(false);
+      },
     });
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   formatDate(iso: string | null | undefined): string {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString(
-      this.lang() === 'es' ? 'es-MX' : 'en-US',
-      { year: 'numeric', month: 'long', day: 'numeric' },
-    );
+    return new Date(iso).toLocaleDateString(this.lang() === 'es' ? 'es-MX' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   }
 }

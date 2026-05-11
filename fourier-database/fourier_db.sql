@@ -397,3 +397,50 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_reset_weekly_counter
     BEFORE UPDATE ON user_calculation_counters
     FOR EACH ROW EXECUTE FUNCTION reset_weekly_counter();
+
+CREATE OR REPLACE FUNCTION hard_delete_account_by_email(p_email TEXT)
+RETURNS TABLE (
+    deleted_user_id TEXT,
+    deleted_person_id TEXT
+) AS $$
+DECLARE
+    v_user_id   TEXT;
+    v_person_id TEXT;
+BEGIN
+    -- 1) Buscar y bloquear el usuario objetivo
+    SELECT u.id, u.person_id
+      INTO v_user_id, v_person_id
+      FROM users u
+     WHERE lower(u.email) = lower(p_email)
+     LIMIT 1
+     FOR UPDATE;
+
+    IF v_user_id IS NULL THEN
+        RAISE EXCEPTION 'No existe usuario con email: %', p_email;
+    END IF;
+
+    -- 2) Borrado de huellas directas no-cascade o que quieres eliminar del todo
+    DELETE FROM audit_log
+     WHERE user_id = v_user_id
+        OR (target_type = 'user' AND target_id = v_user_id);
+
+    DELETE FROM feedback
+     WHERE user_id = v_user_id;
+
+    DELETE FROM survey_responses
+     WHERE user_id = v_user_id;
+
+    -- 3) Borrar usuario (dispara cascades en:
+    -- user_auth_providers, user_refresh_tokens, user_email_tokens,
+    -- user_password_resets, user_recovery_emails,
+    -- calculation_events, user_calculation_counters, etc.)
+    DELETE FROM users
+     WHERE id = v_user_id;
+
+    -- 4) Borrar persona asociada
+    DELETE FROM persons
+     WHERE id = v_person_id;
+
+    RETURN QUERY SELECT v_user_id, v_person_id;
+END;
+$$ LANGUAGE plpgsql;

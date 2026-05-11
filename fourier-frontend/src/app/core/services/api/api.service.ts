@@ -131,6 +131,12 @@ export class ApiService {
     return this.http.patch<{ user: User }>(`${this.base}/auth/profile`, { firstName, lastName });
   }
 
+  deleteAccount(): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.base}/auth/me`, {
+      withCredentials: true,
+    });
+  }
+
   // ─── Fourier Series ──────────────────────────────────────────────────────
 
   calculateTrigonometric(body: FourierSeriesRequest): Observable<TrigonometricResponse> {
@@ -323,7 +329,9 @@ export class ApiService {
   }
 
   getFeedbackStats(): Observable<import('../../../domain').FeedbackStats> {
-    return this.http.get<import('../../../domain').FeedbackStats>(`${this.base}/admin/feedback/stats`);
+    return this.http.get<import('../../../domain').FeedbackStats>(
+      `${this.base}/admin/feedback/stats`,
+    );
   }
 
   getSurveyStats(): Observable<import('../../../domain').SurveyStats> {

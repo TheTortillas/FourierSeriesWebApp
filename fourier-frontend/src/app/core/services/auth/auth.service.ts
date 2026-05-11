@@ -5,18 +5,13 @@ import { TranslocoService } from '@jsverse/transloco';
 
 import { ApiService } from '../api/api.service';
 import { UserStore } from './user.store';
-import {
-  AuthResponse,
-  RegisterRequest,
-  LoginRequest,
-  GoogleLoginRequest,
-} from '../../../domain';
+import { AuthResponse, RegisterRequest, LoginRequest, GoogleLoginRequest } from '../../../domain';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly api      = inject(ApiService);
-  private readonly store    = inject(UserStore);
-  private readonly router   = inject(Router);
+  private readonly api = inject(ApiService);
+  private readonly store = inject(UserStore);
+  private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
 
   /** Access token lives only in memory — lost on page refresh, recovered via cookie. */
@@ -76,6 +71,16 @@ export class AuthService {
     });
   }
 
+  deleteAccount(): Observable<{ message: string }> {
+    return this.api.deleteAccount().pipe(
+      tap(() => {
+        this.clearTokens();
+        const lang = this.transloco.getActiveLang();
+        this.router.navigate([`/${lang}/home`]);
+      }),
+    );
+  }
+
   /**
    * Intenta un silent refresh al iniciar la app.
    * Si hay una cookie httpOnly válida, recupera el access token en memoria.
@@ -90,7 +95,7 @@ export class AuthService {
         // refreshQuota ya fue llamado por saveTokens vía refresh()
       },
       error: () => {
-        this.clearTokens();          // llama refreshQuota → cuota anónima
+        this.clearTokens(); // llama refreshQuota → cuota anónima
         this.store.setLoading(false);
         this.store.setInitialized();
       },

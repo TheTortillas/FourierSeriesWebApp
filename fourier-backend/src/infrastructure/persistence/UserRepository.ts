@@ -123,7 +123,11 @@ export class UserRepository implements IUserRepository {
     ]);
   }
 
-  async updateName(userId: string, firstName: string, lastName: string): Promise<void> {
+  async updateName(
+    userId: string,
+    firstName: string,
+    lastName: string,
+  ): Promise<void> {
     await db.query(
       `UPDATE persons SET first_name = $1, last_name = $2, updated_at = NOW()
        WHERE id = (SELECT person_id FROM users WHERE id = $3)`,
@@ -140,6 +144,48 @@ export class UserRepository implements IUserRepository {
       `UPDATE users SET deleted_at = NOW(), is_active = FALSE WHERE id = $1`,
       [id],
     );
+  }
+
+  async hardDelete(id: string): Promise<void> {
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      const userResult = await client.query<{ person_id: string }>(
+        `SELECT person_id
+         FROM users
+         WHERE id = $1
+         FOR UPDATE`,
+        [id],
+      );
+
+      const personId = userResult.rows[0]?.person_id;
+      if (!personId) {
+        throw new Error("User not found");
+      }
+
+      await client.query(
+        `DELETE FROM audit_log
+         WHERE user_id = $1
+            OR (target_type = 'user' AND target_id = $1)`,
+        [id],
+      );
+
+      await client.query(`DELETE FROM feedback WHERE user_id = $1`, [id]);
+      await client.query(`DELETE FROM survey_responses WHERE user_id = $1`, [
+        id,
+      ]);
+
+      await client.query(`DELETE FROM users WHERE id = $1`, [id]);
+      await client.query(`DELETE FROM persons WHERE id = $1`, [personId]);
+
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   async linkGoogleAccount(userId: string, googleId: string): Promise<void> {
@@ -164,35 +210,7 @@ export class UserRepository implements IUserRepository {
   }
 
   async hardDeleteUnverified(id: string): Promise<void> {
-    const client = await db.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query(`DELETE FROM user_email_tokens WHERE user_id = $1`, [
-        id,
-      ]);
-      await client.query(`DELETE FROM user_refresh_tokens WHERE user_id = $1`, [
-        id,
-      ]);
-      await client.query(`DELETE FROM user_auth_providers WHERE user_id = $1`, [
-        id,
-      ]);
-      const personResult = await client.query(
-        `SELECT person_id FROM users WHERE id = $1`,
-        [id],
-      );
-      await client.query(`DELETE FROM users WHERE id = $1`, [id]);
-      if (personResult.rows[0]) {
-        await client.query(`DELETE FROM persons WHERE id = $1`, [
-          personResult.rows[0].person_id,
-        ]);
-      }
-      await client.query("COMMIT");
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
-    }
+    await this.hardDelete(id);
   }
 
   async getWeeklyCount(userId: string): Promise<number> {
@@ -365,7 +383,12 @@ export class UserRepository implements IUserRepository {
     );
   }
 
-  async getAdminStats(): Promise<{ total: number; premium: number; free: number; inactive: number }> {
+  async getAdminStats(): Promise<{
+    total: number;
+    premium: number;
+    free: number;
+    inactive: number;
+  }> {
     const result = await db.query<{
       total: string;
       premium: string;
@@ -382,9 +405,9 @@ export class UserRepository implements IUserRepository {
     `);
     const row = result.rows[0]!;
     return {
-      total:    parseInt(row.total),
-      premium:  parseInt(row.premium),
-      free:     parseInt(row.free),
+      total: parseInt(row.total),
+      premium: parseInt(row.premium),
+      free: parseInt(row.free),
       inactive: parseInt(row.inactive),
     };
   }

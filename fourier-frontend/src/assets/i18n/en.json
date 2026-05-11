@@ -27,6 +27,7 @@
     "maxima": "Maxima",
     "close": "Close",
     "saving": "Saving…",
+    "deleting": "Deleting…",
     "downloadCsv": "Download CSV",
     "loginToDownloadCsv": "Log in to download CSV"
   },
@@ -499,7 +500,13 @@
     "confirmNewPassword": "Confirm new password",
     "savePassword": "Change password",
     "savingPassword": "Saving…",
-    "googleNoPassword": "Your account uses Google sign-in — password change is not available."
+    "googleNoPassword": "Your account uses Google sign-in — password change is not available.",
+    "dangerZone": "Danger zone",
+    "deleteAccountWarning": "This will permanently delete your account. You won't be able to recover your history, favorites, surveys or related data.",
+    "deleteAccountConfirmLabel": "Type your email to confirm: {{ email }}",
+    "deleteAccountConfirmPlaceholder": "Type your email",
+    "deleteAccountHint": "Once confirmed, you can register again as a new user with the same email.",
+    "deleteAccount": "Delete my account"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
