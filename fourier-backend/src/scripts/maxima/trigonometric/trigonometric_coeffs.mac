@@ -21,6 +21,9 @@ block([_all_limit_vars: listofvars(PERIOD)],
 )$
 w0: 2 * %pi / PERIOD;
 
+/* Asegurar que n se trate como entero positivo para evitar prompts interactivos */
+errcatch(assume(n > 0));
+
 cos_core: cos(n * w0 * INTVAR);
 sin_core: sin(n * w0 * INTVAR);
 
