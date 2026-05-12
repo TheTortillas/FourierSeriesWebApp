@@ -72,6 +72,7 @@ export class HalfRangeService {
 
     const script = await loadScript("halfRange", "halfRange.mac");
     const funcInput = this.buildFuncInput(input.segments);
+    const intervalStart = this.getIntervalStart(input.segments);
 
     const quadIntegralA0 = buildQuadWithSingularities(
       input.segments,
@@ -161,13 +162,14 @@ kill(all)$
 
     const script = await loadScript("halfRange", "halfRange_coeffs.mac");
     const funcInput = this.buildFuncInput(input.segments);
+    const intervalStart = this.getIntervalStart(input.segments);
 
     const quadIntegralAn = buildQuadWithSingularities(
       input.segments,
       intVar,
       removableSingularities,
       "(2/T)",
-      ` * cos(i * w0 * ${intVar})`,
+      ` * cos(i * w0 * (${intVar} - (${intervalStart})))`,
     );
 
     const quadIntegralBn = buildQuadWithSingularities(
@@ -175,7 +177,7 @@ kill(all)$
       intVar,
       removableSingularities,
       "(2/T)",
-      ` * sin(i * w0 * ${intVar})`,
+      ` * sin(i * w0 * (${intVar} - (${intervalStart})))`,
     );
 
     const termsScript = `
@@ -386,5 +388,9 @@ kill(all)$
       .map((s) => `[${s.expression}, ${s.from}, ${s.to}]`)
       .join(", ");
     return `matrix(${rows})`;
+  }
+
+  private getIntervalStart(segments: PiecewiseSegment[]): string {
+    return segments[0]?.from ?? "0";
   }
 }

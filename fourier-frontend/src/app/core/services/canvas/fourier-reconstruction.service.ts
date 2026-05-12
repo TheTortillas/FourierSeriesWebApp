@@ -71,8 +71,10 @@ export class FourierReconstructionService {
     a0: number,
     terms: TrigNumericTerm[],
     w0: number,
-    nMax?: number,
+    options: { originX?: number; nMax?: number } = {},
   ): (x: number) => number {
+    const originX = options.originX ?? 0;
+    const nMax = options.nMax;
     const limit = nMax !== undefined ? Math.min(nMax, terms.length) : terms.length;
     const slice = terms.slice(0, limit);
     const dc = a0 / 2;
@@ -80,7 +82,7 @@ export class FourierReconstructionService {
     return (x: number): number => {
       let sum = dc;
       for (const { n, anFloat } of slice) {
-        sum += anFloat * Math.cos(n * w0 * x);
+        sum += anFloat * Math.cos(n * w0 * (x - originX));
       }
       return sum;
     };
@@ -90,14 +92,20 @@ export class FourierReconstructionService {
    * Builds the half-range sine expansion:
    *   f_N(x) = Σ_{n=1}^{N} bₙ·sin(n·w0·x)
    */
-  buildSineOnly(terms: TrigNumericTerm[], w0: number, nMax?: number): (x: number) => number {
+  buildSineOnly(
+    terms: TrigNumericTerm[],
+    w0: number,
+    options: { originX?: number; nMax?: number } = {},
+  ): (x: number) => number {
+    const originX = options.originX ?? 0;
+    const nMax = options.nMax;
     const limit = nMax !== undefined ? Math.min(nMax, terms.length) : terms.length;
     const slice = terms.slice(0, limit);
 
     return (x: number): number => {
       let sum = 0;
       for (const { n, bnFloat } of slice) {
-        sum += bnFloat * Math.sin(n * w0 * x);
+        sum += bnFloat * Math.sin(n * w0 * (x - originX));
       }
       return sum;
     };
