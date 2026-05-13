@@ -12,9 +12,6 @@
   
   <hr>
 </div>
-
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/TheTortillas/FourierSeriesWebApp)
-
 <!--deepwiki-title: Fourier Web Calculator-->
 <!--deepwiki-description: Una aplicación web completa para el cálculo, visualización y exploración interactiva de Series de Fourier y la Transformada Discreta de Fourier (DFT). Combina un potente motor matemático basado en Maxima con una interfaz visual moderna desarrollada en Angular.-->
 <!--deepwiki-stack: Angular 18, Node.js, Express, Maxima CAS, TypeScript, TailwindCSS, MathJax, MathQuill-->
