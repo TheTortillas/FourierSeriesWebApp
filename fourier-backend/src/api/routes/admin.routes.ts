@@ -599,115 +599,299 @@ adminRouter.get(
 
 // ─── Feedback stats ──────────────────────────────────────────────────────────
 
-adminRouter.get("/feedback/stats", async (_req, res: Response, next: NextFunction) => {
-  try {
-    const [catRes, ratingRes, dayRes, totalRes] = await Promise.all([
-      db.query<{ category: string; count: number }>(
-        `SELECT category::text, COUNT(*)::int AS count
+adminRouter.get(
+  "/feedback/stats",
+  async (_req, res: Response, next: NextFunction) => {
+    try {
+      const [catRes, ratingRes, dayRes, totalRes] = await Promise.all([
+        db.query<{ category: string; count: number }>(
+          `SELECT category::text, COUNT(*)::int AS count
          FROM feedback GROUP BY category ORDER BY count DESC`,
-      ),
-      db.query<{ rating: number; count: number }>(
-        `SELECT rating, COUNT(*)::int AS count
+        ),
+        db.query<{ rating: number; count: number }>(
+          `SELECT rating, COUNT(*)::int AS count
          FROM feedback WHERE rating IS NOT NULL
          GROUP BY rating ORDER BY rating`,
-      ),
-      db.query<{ day: string; count: number }>(
-        `SELECT to_char(DATE(created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
+        ),
+        db.query<{ day: string; count: number }>(
+          `SELECT to_char(DATE(created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
          FROM feedback
          WHERE created_at >= NOW() - INTERVAL '30 days'
          GROUP BY DATE(created_at) ORDER BY DATE(created_at)`,
-      ),
-      db.query<{ total: number }>(
-        `SELECT COUNT(*)::int AS total FROM feedback`,
-      ),
-    ]);
+        ),
+        db.query<{ total: number }>(
+          `SELECT COUNT(*)::int AS total FROM feedback`,
+        ),
+      ]);
 
-    res.json({
-      total:      totalRes.rows[0]?.total ?? 0,
-      byCategory: catRes.rows,
-      byRating:   ratingRes.rows,
-      byDay:      dayRes.rows,
-    });
-  } catch (err) { next(err); }
-});
+      res.json({
+        total: totalRes.rows[0]?.total ?? 0,
+        byCategory: catRes.rows,
+        byRating: ratingRes.rows,
+        byDay: dayRes.rows,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+adminRouter.get(
+  "/feedback/list",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
+      const offset = parseInt(req.query.offset as string) || 0;
+      const category = req.query.category as string | undefined;
+
+      let query = `
+        SELECT
+          id,
+          user_id,
+          email,
+          category::text,
+          rating,
+          message,
+          created_at,
+          (SELECT COUNT(*) FROM feedback f2 WHERE f2.category = feedback.category)::int AS category_total
+        FROM feedback
+      `;
+      const params: (string | number)[] = [];
+
+      if (
+        category &&
+        ["bug", "suggestion", "question", "other", "rating"].includes(category)
+      ) {
+        query += ` WHERE category = $${params.length + 1}`;
+        params.push(category);
+      }
+
+      query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+      params.push(limit, offset);
+
+      const countQuery = `SELECT COUNT(*)::int AS total FROM feedback${category && ["bug", "suggestion", "question", "other", "rating"].includes(category) ? ` WHERE category = $1` : ""}`;
+      const countParams =
+        category &&
+        ["bug", "suggestion", "question", "other", "rating"].includes(category)
+          ? [category]
+          : [];
+
+      const [feedbackRes, countRes] = await Promise.all([
+        db.query<{
+          id: string;
+          user_id: string | null;
+          email: string | null;
+          category: string;
+          rating: number | null;
+          message: string | null;
+          created_at: string;
+          category_total: number;
+        }>(query, params),
+        db.query<{ total: number }>(countQuery, countParams),
+      ]);
+
+      res.json({
+        total: countRes.rows[0]?.total ?? 0,
+        limit,
+        offset,
+        data: feedbackRes.rows,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+adminRouter.get(
+  "/comments/all",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const query = `
+        WITH all_comments AS (
+          SELECT
+            'feedback' AS source,
+            id,
+            user_id,
+            email,
+            category::text AS type,
+            message AS content,
+            created_at,
+            rating
+          FROM feedback
+          WHERE message IS NOT NULL AND message <> ''
+          UNION ALL
+          SELECT
+            'survey' AS source,
+            id,
+            user_id,
+            NULL::VARCHAR AS email,
+            'bug' AS type,
+            bug_description AS content,
+            created_at,
+            NULL::SMALLINT AS rating
+          FROM survey_responses
+          WHERE bug_description IS NOT NULL AND bug_description <> ''
+          UNION ALL
+          SELECT
+            'survey' AS source,
+            id,
+            user_id,
+            NULL::VARCHAR AS email,
+            'comment' AS type,
+            general_comments AS content,
+            created_at,
+            NULL::SMALLINT AS rating
+          FROM survey_responses
+          WHERE general_comments IS NOT NULL AND general_comments <> ''
+        )
+        SELECT source, id, user_id, email, type, content, created_at, rating
+        FROM all_comments
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+      `;
+
+      const countQuery = `
+        SELECT COUNT(*)::int AS total
+        FROM (
+          SELECT id FROM feedback WHERE message IS NOT NULL AND message <> ''
+          UNION ALL
+          SELECT id FROM survey_responses WHERE bug_description IS NOT NULL AND bug_description <> ''
+          UNION ALL
+          SELECT id FROM survey_responses WHERE general_comments IS NOT NULL AND general_comments <> ''
+        ) AS c
+      `;
+
+      interface CommentRow {
+        source: "feedback" | "survey";
+        id: string;
+        user_id: string | null;
+        email: string | null;
+        type: string;
+        content: string | null;
+        created_at: string;
+        rating: number | null;
+      }
+
+      const [commentsRes, countRes] = await Promise.all([
+        db.query<CommentRow>(query, [limit, offset]),
+        db.query<{ total: number }>(countQuery),
+      ]);
+
+      res.json({
+        total: countRes.rows[0]?.total ?? 0,
+        limit,
+        offset,
+        data: commentsRes.rows,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // ─── Survey stats ────────────────────────────────────────────────────────────
 
-adminRouter.get("/survey/stats", async (_req, res: Response, next: NextFunction) => {
-  try {
-    const [
-      totalRes, roleRes, countryRes, howFoundRes,
-      purposeRes, featureRes, deviceRes, prevRes,
-      improvRes, ratingsRes, dayRes,
-    ] = await Promise.all([
-      db.query<{ total: number }>(
-        `SELECT COUNT(*)::int AS total FROM survey_responses`,
-      ),
-      db.query<{ role: string; count: number }>(
-        `SELECT role::text, COUNT(*)::int AS count
+adminRouter.get(
+  "/survey/stats",
+  async (_req, res: Response, next: NextFunction) => {
+    try {
+      const [
+        totalRes,
+        roleRes,
+        countryRes,
+        howFoundRes,
+        purposeRes,
+        featureRes,
+        deviceRes,
+        prevRes,
+        improvRes,
+        ratingsRes,
+        dayRes,
+      ] = await Promise.all([
+        db.query<{ total: number }>(
+          `SELECT COUNT(*)::int AS total FROM survey_responses`,
+        ),
+        db.query<{ role: string; count: number }>(
+          `SELECT role::text, COUNT(*)::int AS count
          FROM survey_responses GROUP BY role ORDER BY count DESC`,
-      ),
-      db.query<{ country: string; count: number }>(
-        `SELECT country, COUNT(*)::int AS count
+        ),
+        db.query<{ country: string; count: number }>(
+          `SELECT country, COUNT(*)::int AS count
          FROM survey_responses GROUP BY country ORDER BY count DESC LIMIT 10`,
-      ),
-      db.query<{ how_found: string; count: number }>(
-        `SELECT how_found::text, COUNT(*)::int AS count
+        ),
+        db.query<{ how_found: string; count: number }>(
+          `SELECT how_found::text, COUNT(*)::int AS count
          FROM survey_responses GROUP BY how_found ORDER BY count DESC`,
-      ),
-      db.query<{ purpose: string; count: number }>(
-        `SELECT p AS purpose, COUNT(*)::int AS count
+        ),
+        db.query<{ purpose: string; count: number }>(
+          `SELECT p AS purpose, COUNT(*)::int AS count
          FROM survey_responses, unnest(purpose) AS p
          GROUP BY p ORDER BY count DESC`,
-      ),
-      db.query<{ feature: string; count: number }>(
-        `SELECT f AS feature, COUNT(*)::int AS count
+        ),
+        db.query<{ feature: string; count: number }>(
+          `SELECT f AS feature, COUNT(*)::int AS count
          FROM survey_responses, unnest(features_used) AS f
          GROUP BY f ORDER BY count DESC`,
-      ),
-      db.query<{ device: string; count: number }>(
-        `SELECT d AS device, COUNT(*)::int AS count
+        ),
+        db.query<{ device: string; count: number }>(
+          `SELECT d AS device, COUNT(*)::int AS count
          FROM survey_responses, unnest(device) AS d
          GROUP BY d ORDER BY count DESC`,
-      ),
-      db.query<{ used_previous: boolean; count: number }>(
-        `SELECT used_previous, COUNT(*)::int AS count
+        ),
+        db.query<{ used_previous: boolean; count: number }>(
+          `SELECT used_previous, COUNT(*)::int AS count
          FROM survey_responses GROUP BY used_previous`,
-      ),
-      db.query<{ improvement: string; count: number }>(
-        `SELECT i AS improvement, COUNT(*)::int AS count
+        ),
+        db.query<{ improvement: string; count: number }>(
+          `SELECT i AS improvement, COUNT(*)::int AS count
          FROM survey_responses, unnest(improvements) AS i
          WHERE used_previous = true
          GROUP BY i ORDER BY count DESC`,
-      ),
-      db.query<{ usefulness: number; ease: number; vs_other: number; recommend: number }>(
-        `SELECT
+        ),
+        db.query<{
+          usefulness: number;
+          ease: number;
+          vs_other: number;
+          recommend: number;
+        }>(
+          `SELECT
            ROUND(AVG(usefulness_rating)::numeric,    2)::float AS usefulness,
            ROUND(AVG(ease_of_use_rating)::numeric,   2)::float AS ease,
            ROUND(AVG(vs_other_tools_rating)::numeric,2)::float AS vs_other,
            ROUND(AVG(recommend_rating)::numeric,     2)::float AS recommend
          FROM survey_responses`,
-      ),
-      db.query<{ day: string; count: number }>(
-        `SELECT to_char(DATE(created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
+        ),
+        db.query<{ day: string; count: number }>(
+          `SELECT to_char(DATE(created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
          FROM survey_responses
          WHERE created_at >= NOW() - INTERVAL '30 days'
          GROUP BY DATE(created_at) ORDER BY DATE(created_at)`,
-      ),
-    ]);
+        ),
+      ]);
 
-    res.json({
-      total:        totalRes.rows[0]?.total ?? 0,
-      byRole:       roleRes.rows,
-      topCountries: countryRes.rows,
-      byHowFound:   howFoundRes.rows,
-      byPurpose:    purposeRes.rows,
-      byFeature:    featureRes.rows,
-      byDevice:     deviceRes.rows,
-      usedPrevious: prevRes.rows,
-      improvements: improvRes.rows,
-      avgRatings:   ratingsRes.rows[0] ?? { usefulness: 0, ease: 0, vs_other: 0, recommend: 0 },
-      byDay:        dayRes.rows,
-    });
-  } catch (err) { next(err); }
-});
+      res.json({
+        total: totalRes.rows[0]?.total ?? 0,
+        byRole: roleRes.rows,
+        topCountries: countryRes.rows,
+        byHowFound: howFoundRes.rows,
+        byPurpose: purposeRes.rows,
+        byFeature: featureRes.rows,
+        byDevice: deviceRes.rows,
+        usedPrevious: prevRes.rows,
+        improvements: improvRes.rows,
+        avgRatings: ratingsRes.rows[0] ?? {
+          usefulness: 0,
+          ease: 0,
+          vs_other: 0,
+          recommend: 0,
+        },
+        byDay: dayRes.rows,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);

@@ -323,7 +323,28 @@ export class ApiService {
   }
 
   getFeedbackStats(): Observable<import('../../../domain').FeedbackStats> {
-    return this.http.get<import('../../../domain').FeedbackStats>(`${this.base}/admin/feedback/stats`);
+    return this.http.get<import('../../../domain').FeedbackStats>(
+      `${this.base}/admin/feedback/stats`,
+    );
+  }
+
+  getFeedbackList(
+    limit: number = 50,
+    offset: number = 0,
+    category?: string,
+  ): Observable<import('../../../domain').FeedbackListResponse> {
+    let url = `${this.base}/admin/feedback/list?limit=${limit}&offset=${offset}`;
+    if (category) url += `&category=${category}`;
+    return this.http.get<import('../../../domain').FeedbackListResponse>(url);
+  }
+
+  getAllComments(
+    limit: number = 50,
+    offset: number = 0,
+  ): Observable<import('../../../domain').UnifiedCommentsResponse> {
+    return this.http.get<import('../../../domain').UnifiedCommentsResponse>(
+      `${this.base}/admin/comments/all?limit=${limit}&offset=${offset}`,
+    );
   }
 
   getSurveyStats(): Observable<import('../../../domain').SurveyStats> {
