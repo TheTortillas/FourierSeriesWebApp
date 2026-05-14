@@ -35,6 +35,30 @@
     </div>
 
     <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Período rápido</label>
+      <div class="flex gap-1">
+        @for (p of quickPeriods; track p.days) {
+          <button
+            type="button"
+            (click)="setQuickPeriod(p.days)"
+            [ngClass]="activeQuickDays() === p.days
+              ? 'bg-accent text-white border-accent'
+              : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+            class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer border transition-colors"
+          >{{ p.label }}</button>
+        }
+        <button
+          type="button"
+          (click)="clearDateFilters()"
+          [ngClass]="!filterDateFrom && !filterDateTo
+            ? 'bg-accent text-white border-accent'
+            : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+          class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer border transition-colors"
+        >Todo</button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Desde</label>
       <input
         type="date"

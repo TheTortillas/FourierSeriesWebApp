@@ -131,11 +131,42 @@ export interface SurveyStats {
 }
 
 export const CALC_TYPE_LABEL: Record<string, string> = {
-  trigonometric: 'Trigonométrica',
-  half_range: 'Medio rango',
-  complex: 'Compleja',
-  fourier_transform: 'Transformada',
+  trigonometric:             'Trigonométrica',
+  half_range:                'Medio rango',
+  complex:                   'Compleja',
+  fourier_transform:         'Transformada',
   inverse_fourier_transform: 'T. Inversa',
-  dft_signal: 'DFT señal',
-  dft_epicycles: 'DFT epiciclos',
+  dft_signal:                'DFT señal',
+  dft_function:              'DFT función',
+  dft_epicycles:             'DFT epiciclos',
 };
+
+export interface CalcTypeStat {
+  type: string;
+  total_executions: number;
+  unique_calcs: number;
+  unique_users: number;
+  avg_execution_ms: number | null;
+}
+
+export interface CalcTopEntry {
+  id: string;
+  type: string;
+  input: Record<string, unknown>;
+  created_at: string;
+  total_executions: number;
+  unique_users: number;
+}
+
+export interface CalcStats {
+  summary: {
+    total_executions: number;
+    unique_calcs: number;
+    unique_users: number;
+    avg_execution_ms: number | null;
+  };
+  byType: CalcTypeStat[];
+  daily: { day: string; executions: number; unique_calcs: number }[];
+  authSplit: { is_authenticated: boolean; executions: number; unique_actors: number }[];
+  topCalcs: CalcTopEntry[];
+}

@@ -792,6 +792,146 @@ adminRouter.get(
   },
 );
 
+// ─── Calculation stats ───────────────────────────────────────────────────────
+
+adminRouter.get(
+  "/calculations/stats",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const dateFrom = req.query["dateFrom"]
+        ? new Date(req.query["dateFrom"] as string)
+        : null;
+      const dateTo = req.query["dateTo"]
+        ? new Date(req.query["dateTo"] as string)
+        : null;
+      const topN = Math.min(
+        Math.max(1, parseInt((req.query["topN"] as string) || "10") || 10),
+        100,
+      );
+
+      const params: (Date | null)[] = [dateFrom, dateTo];
+
+      const dateFilter = `
+        ($1::timestamptz IS NULL OR c.created_at >= $1)
+        AND ($2::timestamptz IS NULL OR c.created_at <= $2)
+      `;
+
+      const [summaryRes, byTypeRes, dailyRes, authSplitRes, topCalcsRes] =
+        await Promise.all([
+          db.query<{
+            total_executions: number;
+            unique_calcs: number;
+            unique_users: number;
+            avg_execution_ms: number | null;
+          }>(
+            `SELECT
+              COALESCE(SUM(ce.count), 0)::int       AS total_executions,
+              COUNT(DISTINCT c.id)::int             AS unique_calcs,
+              COUNT(DISTINCT ce.user_id)::int       AS unique_users,
+              ROUND(AVG(ce.execution_ms))::int      AS avg_execution_ms
+            FROM calculations c
+            JOIN calculation_events ce ON ce.calculation_id = c.id
+            WHERE ${dateFilter}`,
+            params,
+          ),
+
+          db.query<{
+            type: string;
+            total_executions: number;
+            unique_calcs: number;
+            unique_users: number;
+            avg_execution_ms: number | null;
+          }>(
+            `SELECT
+              c.type::text,
+              COALESCE(SUM(ce.count), 0)::int  AS total_executions,
+              COUNT(DISTINCT c.id)::int        AS unique_calcs,
+              COUNT(DISTINCT ce.user_id)::int  AS unique_users,
+              ROUND(AVG(ce.execution_ms))::int AS avg_execution_ms
+            FROM calculations c
+            JOIN calculation_events ce ON ce.calculation_id = c.id
+            WHERE ${dateFilter}
+            GROUP BY c.type
+            ORDER BY total_executions DESC`,
+            params,
+          ),
+
+          db.query<{ day: string; executions: number; unique_calcs: number }>(
+            `SELECT
+              to_char(DATE(ce.last_calculated_at), 'YYYY-MM-DD') AS day,
+              COALESCE(SUM(ce.count), 0)::int     AS executions,
+              COUNT(DISTINCT c.id)::int           AS unique_calcs
+            FROM calculation_events ce
+            JOIN calculations c ON c.id = ce.calculation_id
+            WHERE
+              ce.last_calculated_at >= COALESCE($1, NOW() - INTERVAL '30 days')
+              AND ($2::timestamptz IS NULL OR ce.last_calculated_at <= $2)
+            GROUP BY DATE(ce.last_calculated_at)
+            ORDER BY DATE(ce.last_calculated_at)`,
+            params,
+          ),
+
+          db.query<{
+            is_authenticated: boolean;
+            executions: number;
+            unique_actors: number;
+          }>(
+            `SELECT
+              (ce.user_id IS NOT NULL)                              AS is_authenticated,
+              COALESCE(SUM(ce.count), 0)::int                       AS executions,
+              COUNT(DISTINCT COALESCE(ce.user_id, ce.ip_address::text))::int AS unique_actors
+            FROM calculation_events ce
+            JOIN calculations c ON c.id = ce.calculation_id
+            WHERE ${dateFilter}
+            GROUP BY (ce.user_id IS NOT NULL)`,
+            params,
+          ),
+
+          db.query<{
+            id: string;
+            type: string;
+            input: Record<string, unknown>;
+            created_at: string;
+            total_executions: number;
+            unique_users: number;
+          }>(
+            `SELECT
+              c.id,
+              c.type::text,
+              c.input,
+              c.created_at,
+              COALESCE(SUM(ce.count), 0)::int        AS total_executions,
+              COUNT(DISTINCT ce.user_id)::int        AS unique_users
+            FROM calculations c
+            JOIN calculation_events ce ON ce.calculation_id = c.id
+            WHERE ${dateFilter}
+            GROUP BY c.id, c.type, c.input, c.created_at
+            ORDER BY total_executions DESC
+            LIMIT $3`,
+            [...params, topN],
+          ),
+        ]);
+
+      const summary = summaryRes.rows[0] ?? {
+        total_executions: 0,
+        unique_calcs: 0,
+        unique_users: 0,
+        avg_execution_ms: null,
+      };
+
+      res.json({
+        summary,
+        byType: byTypeRes.rows,
+        daily: dailyRes.rows,
+        authSplit: authSplitRes.rows,
+        topCalcs: topCalcsRes.rows,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // ─── Survey stats ────────────────────────────────────────────────────────────
 
 adminRouter.get(
