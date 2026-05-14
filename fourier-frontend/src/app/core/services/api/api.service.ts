@@ -322,6 +322,18 @@ export class ApiService {
     return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
   }
 
+  getRateLimitHistory(params: { limit?: number; offset?: number; ip?: string; limiter?: string } = {}):
+    Observable<import('../../../domain').RateLimitHistoryResponse> {
+    let p = new HttpParams();
+    if (params.limit)   p = p.set('limit',   params.limit);
+    if (params.offset)  p = p.set('offset',  params.offset);
+    if (params.ip)      p = p.set('ip',      params.ip);
+    if (params.limiter) p = p.set('limiter', params.limiter);
+    return this.http.get<import('../../../domain').RateLimitHistoryResponse>(
+      `${this.base}/admin/rate-limit/history`, { params: p },
+    );
+  }
+
   getFeedbackStats(): Observable<import('../../../domain').FeedbackStats> {
     return this.http.get<import('../../../domain').FeedbackStats>(
       `${this.base}/admin/feedback/stats`,

@@ -79,24 +79,31 @@ export interface SystemStats {
 
 export interface RateLimitMetricsSnapshot {
   startedAt: string;
-  requestsByBucket: {
-    compute: number;
-    parse: number;
-    auth: number;
-  };
-  blockedByBucket: {
-    compute: number;
-    parse: number;
-    auth: number;
-  };
+  requestsByBucket: { compute: number; parse: number; auth: number };
+  blockedByBucket:  { compute: number; parse: number; auth: number };
   requestsByEndpoint: Record<string, number>;
-  blockedByEndpoint: Record<string, number>;
-  blockedByLimiter: Record<string, number>;
-  ratios: {
-    compute: number;
-    parse: number;
-    auth: number;
+  blockedByEndpoint:  Record<string, number>;
+  blockedByLimiter:   Record<string, number>;
+  blockedByIp:        Record<string, number>;
+  ratios: { compute: number; parse: number; auth: number };
+}
+
+export interface RateLimitBlockedEvent {
+  id: string;
+  user_id: string | null;
+  ip_address: string | null;
+  metadata: {
+    bucket:   string;
+    limiter:  string;
+    endpoint: string;
+    method:   string;
   };
+  created_at: string;
+}
+
+export interface RateLimitHistoryResponse {
+  total:   number;
+  entries: RateLimitBlockedEvent[];
 }
 
 export interface CacheStats {

@@ -111,6 +111,55 @@ adminRouter.get(
 );
 
 adminRouter.get(
+  "/rate-limit/history",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const limit  = Math.min(parseInt(String(req.query["limit"]  ?? "50")), 200);
+      const offset = parseInt(String(req.query["offset"] ?? "0"));
+      const ip     = req.query["ip"]     ? String(req.query["ip"])     : null;
+      const limiter= req.query["limiter"]? String(req.query["limiter"]): null;
+
+      const conditions: string[] = ["action = 'rate_limit_blocked'"];
+      const params: unknown[]    = [];
+      let   p = 1;
+
+      if (ip) {
+        conditions.push(`ip_address = $${p++}::inet`);
+        params.push(ip);
+      }
+      if (limiter) {
+        conditions.push(`metadata->>'limiter' = $${p++}`);
+        params.push(limiter);
+      }
+
+      const where = conditions.join(" AND ");
+
+      const [dataResult, countResult] = await Promise.all([
+        db.query(
+          `SELECT id, user_id, ip_address, metadata, created_at
+           FROM audit_log
+           WHERE ${where}
+           ORDER BY created_at DESC
+           LIMIT $${p} OFFSET $${p + 1}`,
+          [...params, limit, offset],
+        ),
+        db.query(
+          `SELECT COUNT(*)::int AS total FROM audit_log WHERE ${where}`,
+          params,
+        ),
+      ]);
+
+      res.json({
+        total:   countResult.rows[0].total,
+        entries: dataResult.rows,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+adminRouter.get(
   "/system/stats",
   async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {

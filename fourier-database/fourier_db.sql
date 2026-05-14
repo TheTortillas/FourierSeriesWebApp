@@ -72,7 +72,8 @@ CREATE TYPE audit_action AS ENUM (
     'user_deactivated',
     'user_activated',
     'tier_changed',
-    'audit_log_cleared'
+    'audit_log_cleared',
+    'rate_limit_blocked'
 );
 
 -- -------------------------------------------------------
