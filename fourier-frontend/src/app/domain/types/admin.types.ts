@@ -38,6 +38,7 @@ export interface AuditQuery {
   offset?: number;
   action?: string;
   userId?: string;
+  ip?: string;
   dateFrom?: string;
   dateTo?: string;
   anonymousOnly?: boolean;
@@ -47,6 +48,7 @@ export interface AdminHistoryQuery {
   limit?: number;
   offset?: number;
   userId?: string;
+  ip?: string;
   type?: string;
   dateFrom?: string;
   dateTo?: string;

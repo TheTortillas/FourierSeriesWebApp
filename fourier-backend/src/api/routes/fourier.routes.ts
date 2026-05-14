@@ -109,6 +109,7 @@ fourierRouter.post(
           }
           await historyRepository.create({
             userId: req.user.id,
+            ipAddress: req.ip ?? undefined,
             type: "trigonometric",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,
@@ -228,6 +229,7 @@ fourierRouter.post(
           }
           await historyRepository.create({
             userId: req.user.id,
+            ipAddress: req.ip ?? undefined,
             type: "half_range",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,
@@ -348,6 +350,7 @@ fourierRouter.post(
           }
           await historyRepository.create({
             userId: req.user.id,
+            ipAddress: req.ip ?? undefined,
             type: "complex",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,

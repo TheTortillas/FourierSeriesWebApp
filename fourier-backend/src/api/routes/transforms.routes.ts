@@ -111,6 +111,7 @@ transformsRouter.post(
           }
           await historyRepository.create({
             userId: req.user.id,
+            ipAddress: req.ip ?? undefined,
             type: "fourier_transform",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,
@@ -216,6 +217,7 @@ transformsRouter.post(
           }
           await historyRepository.create({
             userId: req.user.id,
+            ipAddress: req.ip ?? undefined,
             type: "inverse_fourier_transform",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,
@@ -341,6 +343,7 @@ transformsRouter.post(
           await incrementCalculationCount(req.user.id);
           await historyRepository.create({
             userId: req.user.id,
+            ipAddress: req.ip ?? undefined,
             type: historyType,
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,
@@ -401,6 +404,7 @@ transformsRouter.post(
           await incrementCalculationCount(req.user.id);
           await historyRepository.create({
             userId: req.user.id,
+            ipAddress: req.ip ?? undefined,
             type: "dft_signal",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.samplingTimeMs,
@@ -462,6 +466,7 @@ transformsRouter.post(
           await incrementCalculationCount(req.user.id);
           await historyRepository.create({
             userId: req.user.id,
+            ipAddress: req.ip ?? undefined,
             type: "dft_signal",
             input: input as unknown as Record<string, unknown>,
             executionMs: result.executionTimeMs,

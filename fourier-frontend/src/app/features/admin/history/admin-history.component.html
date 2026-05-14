@@ -35,6 +35,17 @@
     </div>
 
     <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">IP</label>
+      <input
+        type="text"
+        [(ngModel)]="filterIp"
+        placeholder="192.168.1.1"
+        (keydown.enter)="applyFilters()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono w-36 bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink placeholder:text-muted/50 focus:outline-none focus:border-accent"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Período rápido</label>
       <div class="flex gap-1">
         @for (p of quickPeriods; track p.days) {
@@ -251,6 +262,9 @@
                     </button>
                   } @else {
                     <span class="text-muted/60 dark:text-dark-muted/60 italic">anónimo</span>
+                  }
+                  @if (entry.ipAddress) {
+                    <span class="text-[10px] font-mono text-muted/50 dark:text-dark-muted/50 block leading-tight mt-0.5">{{ entry.ipAddress }}</span>
                   }
                 </td>
 

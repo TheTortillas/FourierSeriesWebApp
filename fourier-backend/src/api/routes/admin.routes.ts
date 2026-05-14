@@ -483,6 +483,7 @@ adminRouter.get(
       if (req.query["action"])
         filters.action = req.query["action"] as AuditAction;
       if (req.query["userId"]) filters.userId = req.query["userId"] as string;
+      if (req.query["ip"])     filters.ip     = req.query["ip"]     as string;
       if (req.query["dateFrom"])
         filters.dateFrom = new Date(req.query["dateFrom"] as string);
       if (req.query["dateTo"])
@@ -614,6 +615,7 @@ adminRouter.get(
 
       const filters: {
         userId?: string;
+        ip?: string;
         type?: string;
         anonymousOnly?: boolean;
         favoritesOnly?: boolean;
@@ -622,6 +624,7 @@ adminRouter.get(
         minExecutionMs?: number;
       } = {};
       if (req.query["userId"]) filters.userId = req.query["userId"] as string;
+      if (req.query["ip"])     filters.ip     = req.query["ip"]     as string;
       if (req.query["type"]) filters.type = req.query["type"] as string;
       if (req.query["anonymousOnly"] === "true") filters.anonymousOnly = true;
       if (req.query["favoritesOnly"] === "true") filters.favoritesOnly = true;

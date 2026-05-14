@@ -32,6 +32,7 @@ export class AuditComponent implements OnInit {
   // Filters
   filterAction      = '';
   filterUserId      = '';
+  filterIp          = '';
   filterDateFrom    = '';
   filterDateTo      = '';
   filterAnonymous   = false;
@@ -45,7 +46,7 @@ export class AuditComponent implements OnInit {
   readonly totalPages  = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
   readonly hasFilters  = computed(() =>
-    !!(this.filterAction || this.filterUserId || this.filterDateFrom || this.filterDateTo || this.filterAnonymous)
+    !!(this.filterAction || this.filterUserId || this.filterIp || this.filterDateFrom || this.filterDateTo || this.filterAnonymous)
   );
 
   readonly quickPeriods = [{ label: '7d', days: 7 }, { label: '30d', days: 30 }, { label: '90d', days: 90 }];
@@ -80,6 +81,7 @@ export class AuditComponent implements OnInit {
     'transform_performed', 'transform_failed',
     'user_deactivated', 'user_activated',
     'tier_changed', 'audit_log_cleared',
+    'rate_limit_blocked',
   ];
 
   ngOnInit(): void { this.load(); }
@@ -89,6 +91,7 @@ export class AuditComponent implements OnInit {
     const query: AuditQuery = { limit: this.pageSize, offset: this.offset() };
     if (this.filterAction)    query.action        = this.filterAction;
     if (this.filterUserId)    query.userId        = this.filterUserId.trim();
+    if (this.filterIp)        query.ip            = this.filterIp.trim();
     if (this.filterDateFrom)  query.dateFrom      = this.filterDateFrom;
     if (this.filterDateTo)    query.dateTo        = this.filterDateTo;
     if (this.filterAnonymous) query.anonymousOnly = true;
@@ -104,6 +107,7 @@ export class AuditComponent implements OnInit {
   clearFilters(): void {
     this.filterAction    = '';
     this.filterUserId    = '';
+    this.filterIp        = '';
     this.filterDateFrom  = '';
     this.filterDateTo    = '';
     this.filterAnonymous = false;

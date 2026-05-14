@@ -33,6 +33,7 @@ export class AdminHistoryComponent implements OnInit {
   // Filters
   filterType         = '';
   filterUserId       = '';
+  filterIp           = '';
   filterDateFrom     = '';
   filterDateTo       = '';
   filterFavorites    = false;
@@ -66,7 +67,7 @@ export class AdminHistoryComponent implements OnInit {
   readonly totalPages  = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
   readonly hasFilters  = computed(() =>
-    !!(this.filterType || this.filterUserId || this.filterDateFrom ||
+    !!(this.filterType || this.filterUserId || this.filterIp || this.filterDateFrom ||
        this.filterDateTo || this.filterFavorites || this.filterAnonymous || this.filterMinExecMs)
   );
 
@@ -77,6 +78,7 @@ export class AdminHistoryComponent implements OnInit {
     const query: AdminHistoryQuery = { limit: this.pageSize, offset: this.offset() };
     if (this.filterType)      query.type          = this.filterType;
     if (this.filterUserId)    query.userId        = this.filterUserId.trim();
+    if (this.filterIp)        query.ip            = this.filterIp.trim();
     if (this.filterDateFrom)  query.dateFrom      = this.filterDateFrom;
     if (this.filterDateTo)    query.dateTo        = this.filterDateTo;
     if (this.filterFavorites) query.favoritesOnly = true;
@@ -94,6 +96,7 @@ export class AdminHistoryComponent implements OnInit {
   clearFilters(): void {
     this.filterType      = '';
     this.filterUserId    = '';
+    this.filterIp        = '';
     this.filterDateFrom  = '';
     this.filterDateTo    = '';
     this.filterFavorites = false;

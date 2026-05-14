@@ -281,6 +281,7 @@ export class ApiService {
     if (query?.offset !== undefined) params = params.set('offset', query.offset);
     if (query?.action) params = params.set('action', query.action);
     if (query?.userId) params = params.set('userId', query.userId);
+    if (query?.ip)     params = params.set('ip',     query.ip);
     if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
     if (query?.dateTo) params = params.set('dateTo', query.dateTo);
     if (query?.anonymousOnly) params = params.set('anonymousOnly', query.anonymousOnly);
@@ -292,6 +293,7 @@ export class ApiService {
     if (query?.limit !== undefined) params = params.set('limit', query.limit);
     if (query?.offset !== undefined) params = params.set('offset', query.offset);
     if (query?.userId) params = params.set('userId', query.userId);
+    if (query?.ip)     params = params.set('ip',     query.ip);
     if (query?.type) params = params.set('type', query.type);
     if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
     if (query?.dateTo) params = params.set('dateTo', query.dateTo);
