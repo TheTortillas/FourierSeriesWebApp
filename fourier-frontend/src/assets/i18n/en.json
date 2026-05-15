@@ -46,6 +46,7 @@
     "tagline": "By Sebastián Morales Palacios",
     "footerText": "Mathematical analysis tool",
     "more": "More options",
+    "about": "About",
     "betaBanner": {
       "message": "You're using the free beta — there will always be a free version. Some advanced features may require an account in the future.",
       "dismiss": "Dismiss beta notice"
@@ -53,6 +54,7 @@
   },
   "home": {
     "subtitle": "Calculate, visualize and analyze Fourier Series and Transforms with exact symbolic expressions and real-time graphical reconstruction.",
+    "learnMore": "Learn more about the tool →",
     "series": {
       "title": "Fourier Series",
       "description": "Periodic decomposition of piecewise functions into trigonometric, complex and half-range series, with exact symbolic coefficients."
@@ -528,6 +530,10 @@
     "dft": {
       "title": "DFT — Discrete Fourier Transform Calculator",
       "description": "Calculate the DFT with amplitude and phase spectrum visualization and signal reconstruction via epicycles."
+    },
+    "about": {
+      "title": "About",
+      "description": "Discover everything Fourier Web Calculator can do: Fourier series, continuous and discrete transforms, epicycles, math keyboard and more."
     }
   },
   "dev": {
@@ -702,5 +708,74 @@
       "successMessage": "We will review your feedback soon.",
       "newFeedback": "Send another message"
     }
+  },
+  "about": {
+    "hero": {
+      "title": "About Fourier Web Calculator",
+      "intro": "A free, open-access web tool for computing, visualizing and sharing Fourier analysis — designed for students, engineers and scientists."
+    },
+    "series": {
+      "title": "Fourier Series",
+      "desc": "Decompose any piecewise function into a Fourier series and get the exact symbolic coefficients with an interactive graph.",
+      "f1": "Trigonometric, complex exponential and half-range (sine / cosine) series",
+      "f2": "Multi-segment piecewise functions with continuity validation between pieces",
+      "f3": "Exact symbolic coefficients computed by the Maxima CAS engine",
+      "f4": "Configurable number of terms: 25, 50, 75 or 100",
+      "f5": "Interactive plot with real-time partial-sum reconstruction",
+      "f6": "Coefficient table with LaTeX and Maxima expressions",
+      "f7": "Export results as image, LaTeX code, CSV or Maxima script",
+      "f8": "Share your result with a unique permanent link",
+      "f9": "Apply symbolic simplifications to the resulting series expressions",
+      "f10": "Supports free parameters (e.g. a·x, sin(n·t)) — vary them with interactive sliders after computing"
+    },
+    "transforms": {
+      "title": "Continuous Transforms",
+      "desc": "Compute exact symbolic transforms of piecewise signals, including special functions.",
+      "f1": "Bilateral continuous Fourier transform (ℱ) and its inverse (ℱ⁻¹)",
+      "f3": "Piecewise input supporting u(·), sgn(·), rect(·), δ(·)",
+      "f4": "Exact symbolic results via Maxima CAS",
+      "f5": "Interactive graphs of the original function and its transform",
+      "f6": "Export and share results",
+      "f7": "Plot the real part, imaginary part and absolute value of both the function and its transform independently",
+      "f8": "View results in multiple forms: magnitude, phase, real/imaginary component expressions",
+      "f9": "Supports free parameters (e.g. a·t, sin(ω·t)) — vary them with interactive sliders after computing"
+    },
+    "dft": {
+      "title": "Discrete Fourier Transform (DFT)",
+      "desc": "Analyze signals numerically with the DFT, visualize the spectrum and watch the epicycles animation.",
+      "f1": "Three input modes: function sampling, manual data entry and epicycles",
+      "f2": "Function mode: numeric sampling of piecewise functions (u, sgn, rect supported)",
+      "f3": "Manual mode: enter any number of samples by hand",
+      "f4": "Epicycles: animated DFT visualized as rotating complex vectors",
+      "f5": "Spectrum: amplitude |X[k]| and phase ∠X[k] charts",
+      "f6": "fftShift to center negative frequencies",
+      "f7": "IDFT signal reconstruction from DFT coefficients",
+      "f8": "Export each chart independently and share results"
+    },
+    "input": {
+      "title": "Math Input",
+      "desc": "Enter expressions in LaTeX with a full-featured keyboard on any device.",
+      "f1": "Interactive LaTeX editor powered by MathQuill",
+      "f2": "Desktop toolbar with operators, functions, Greek letters and constants",
+      "f3": "Mobile touchscreen keyboard: numeric, trig, f(x), full QWERTY + shift, Greek letters",
+      "f4": "Supported functions: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), n!, Γ(·)"
+    },
+    "account": {
+      "title": "Accounts & History",
+      "desc": "Create a free account to save and revisit your calculations at any time.",
+      "f1": "Calculation history with full result recovery",
+      "f2": "Mark favorites for quick access",
+      "f3": "Weekly quota system with a generous free tier",
+      "f4": "Export your calculation history as CSV"
+    },
+    "ux": {
+      "title": "Design & Usability",
+      "desc": "A focused, distraction-free interface that adapts to your device and preferences.",
+      "f1": "Light and dark mode",
+      "f2": "Two color palettes: Neutral and Coffee",
+      "f3": "Fully bilingual: Spanish and English",
+      "f4": "Responsive design — works on desktop and mobile"
+    },
+    "cta": "Start exploring"
   }
 }

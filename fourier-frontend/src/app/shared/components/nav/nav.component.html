@@ -87,18 +87,30 @@
         (click)="moreMenuOpen.set(!moreMenuOpen())"
         [class]="
           moreMenuOpen()
-            ? 'flex items-center px-2 py-1.5 rounded text-xs font-mono text-accent bg-paper2 dark:bg-dark-surface transition-colors cursor-pointer'
-            : 'flex items-center px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
+            ? 'relative flex items-center px-2 py-1.5 rounded text-xs font-mono text-accent bg-paper2 dark:bg-dark-surface transition-colors cursor-pointer'
+            : 'relative flex items-center px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
         "
         [title]="'nav.more' | transloco"
       >
         ···
+        @if (hasEngagementPending()) {
+          <span class="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+        }
       </button>
 
       @if (moreMenuOpen()) {
         <div
           class="absolute left-0 top-full mt-1 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-36"
         >
+          <a
+            [routerLink]="'/' + lang() + '/about'"
+            routerLinkActive="!text-accent bg-accent/5"
+            (click)="moreMenuOpen.set(false)"
+            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+          >
+            {{ 'nav.about' | transloco }}
+          </a>
+          <div class="mx-3 my-0.5 border-t border-border dark:border-dark-border"></div>
           <a
             [routerLink]="'/' + lang() + '/feedback'"
             routerLinkActive="!text-accent bg-accent/5"

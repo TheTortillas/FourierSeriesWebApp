@@ -46,6 +46,7 @@
     "tagline": "Por Sebastián Morales Palacios",
     "footerText": "Herramienta de análisis matemático",
     "more": "Más opciones",
+    "about": "Acerca de",
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
@@ -53,6 +54,7 @@
   },
   "home": {
     "subtitle": "Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
+    "learnMore": "Conoce más sobre la herramienta →",
     "series": {
       "title": "Series de Fourier",
       "description": "Descomposición periódica de funciones a trozos en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos exactos."
@@ -528,6 +530,10 @@
     "dft": {
       "title": "Calculadora de DFT — Transformada Discreta de Fourier",
       "description": "Calcula la DFT con visualización de espectro de amplitud, fase y reconstrucción de señales mediante epiciclos."
+    },
+    "about": {
+      "title": "Acerca de",
+      "description": "Descubre todo lo que puedes hacer con Fourier Web Calculator: series de Fourier, transformadas continuas y discretas, epicíclos, teclado matemático y más."
     }
   },
   "dev": {
@@ -702,5 +708,74 @@
       "successMessage": "Revisaremos tu retroalimentación pronto.",
       "newFeedback": "Enviar otro mensaje"
     }
+  },
+  "about": {
+    "hero": {
+      "title": "Acerca de Fourier Web Calculator",
+      "intro": "Una herramienta web gratuita y de acceso abierto para calcular, visualizar y compartir análisis de Fourier — diseñada para estudiantes, ingenieros y científicos."
+    },
+    "series": {
+      "title": "Series de Fourier",
+      "desc": "Descompone cualquier función a trozos en una serie de Fourier y obtén los coeficientes simbólicos exactos con una gráfica interactiva.",
+      "f1": "Series trigonométricas, exponencial compleja y de medio rango (seno / coseno)",
+      "f2": "Funciones a trozos con múltiples segmentos y validación de continuidad entre tramos",
+      "f3": "Coeficientes simbólicos exactos calculados por el motor Maxima CAS",
+      "f4": "Número de términos configurable: 25, 50, 75 o 100",
+      "f5": "Gráfica interactiva con reconstrucción de sumas parciales en tiempo real",
+      "f6": "Tabla de coeficientes con expresiones en LaTeX y Maxima",
+      "f7": "Exportar resultados como imagen, código LaTeX, CSV o script Maxima",
+      "f8": "Compartir el resultado con un enlace permanente único",
+      "f9": "Aplicar simplificaciones simbólicas a las expresiones resultantes de la serie",
+      "f10": "Acepta parámetros libres (p. ej. a·x, sin(n·t)) — varíalos con sliders interactivos después de calcular"
+    },
+    "transforms": {
+      "title": "Transformadas Continuas",
+      "desc": "Calcula transformadas simbólicas exactas de señales a trozos, incluyendo funciones especiales.",
+      "f1": "Transformada de Fourier continua bilateral (ℱ) y su inversa (ℱ⁻¹)",
+      "f3": "Entrada a trozos con soporte para u(·), sgn(·), rect(·), δ(·)",
+      "f4": "Resultados simbólicos exactos mediante Maxima CAS",
+      "f5": "Gráficas interactivas de la función original y su transformada",
+      "f6": "Exportar y compartir resultados",
+      "f7": "Graficar la parte real, imaginaria y valor absoluto de la función y su transformada de forma independiente",
+      "f8": "Ver resultados en múltiples formas: expresiones de magnitud, fase, y partes real e imaginaria",
+      "f9": "Acepta parámetros libres (p. ej. a·t, sin(ω·t)) — varíalos con sliders interactivos después de calcular"
+    },
+    "dft": {
+      "title": "Transformada Discreta de Fourier (DFT)",
+      "desc": "Analiza señales numéricamente con la DFT, visualiza el espectro y observa la animación de epiciclos.",
+      "f1": "Tres modos de entrada: muestreo de función, datos manuales y epiciclos",
+      "f2": "Modo función: muestreo numérico de funciones a trozos (soporta u, sgn, rect)",
+      "f3": "Modo manual: introduce cualquier cantidad de muestras a mano",
+      "f4": "Epiciclos: DFT animada como vectores complejos giratorios",
+      "f5": "Espectro: gráficas de amplitud |X[k]| y fase ∠X[k]",
+      "f6": "fftShift para centrar las frecuencias negativas",
+      "f7": "Reconstrucción de la señal mediante IDFT a partir de los coeficientes",
+      "f8": "Exportar cada gráfica de forma independiente y compartir resultados"
+    },
+    "input": {
+      "title": "Entrada matemática",
+      "desc": "Introduce expresiones en LaTeX con un teclado completo en cualquier dispositivo.",
+      "f1": "Editor LaTeX interactivo con MathQuill",
+      "f2": "Barra de escritorio con operadores, funciones, letras griegas y constantes",
+      "f3": "Teclado táctil para móvil: numérico, trig, f(x), QWERTY completo + mayúsculas, letras griegas",
+      "f4": "Funciones disponibles: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), n!, Γ(·)"
+    },
+    "account": {
+      "title": "Cuentas e Historial",
+      "desc": "Crea una cuenta gratuita para guardar y recuperar tus cálculos en cualquier momento.",
+      "f1": "Historial de cálculos con recuperación completa del resultado",
+      "f2": "Marca favoritos para acceso rápido",
+      "f3": "Sistema de cuotas semanal con un nivel gratuito generoso",
+      "f4": "Exportar tu historial de cálculos como CSV"
+    },
+    "ux": {
+      "title": "Diseño y Usabilidad",
+      "desc": "Una interfaz enfocada y sin distracciones que se adapta a tu dispositivo y preferencias.",
+      "f1": "Modo claro y oscuro",
+      "f2": "Dos paletas de color: Neutral y Coffee",
+      "f3": "Completamente bilingüe: español e inglés",
+      "f4": "Diseño responsive — funciona en escritorio y móvil"
+    },
+    "cta": "Empezar a explorar"
   }
 }
