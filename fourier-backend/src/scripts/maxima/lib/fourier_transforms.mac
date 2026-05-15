@@ -765,16 +765,82 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k/(t-a)^n -> e^{-iwa}*k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w))  (a ≠ 0) ──
+       Time-shift property: FT[f(t-a)](w) = e^{-iwa} * FT[f(t)](w).
+       Combined with FT[1/t^n] = (-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w)).
+       Also handles k/(c*(t-a)^n) — constant c folded into k.
+       A denominator const_part = 0 (i.e. no shift) is left to k/t^n below. */
+    if is(res = false) then block(
+        [_ts_num, _ts_den, _ts_inner, _ts_c, _ts_n, _ts_a, _ts_k,
+         _ts_lc, _ts_la, _facs_ts, _tdep_ts, _ok_ts, _f_ts],
+        _ts_n: false, _ts_k: false, _ts_a: false,
+        if not atom(e) and is(op(e) = "/") then (
+            _ts_num: part(e, 1),
+            _ts_den: part(e, 2),
+            /* Try to factor the denominator: expand() may have opened (t-a)^n
+               into a polynomial (e.g. 1/(t-2)^2 → 1/(t^2-4t+4)).
+               factor() recovers the compact form when possible. */
+            block([_ts_fac],
+                _ts_fac: errcatch(factor(_ts_den)),
+                if _ts_fac # [] and string(first(_ts_fac)) # string(_ts_den)
+                then _ts_den: first(_ts_fac)
+            ),
+            _ts_inner: _ts_den,
+            _ts_c: 1,
+            /* Step 1: extract constant coefficient if denominator is a product */
+            if not atom(_ts_den) and is(op(_ts_den) = "*") then (
+                _facs_ts: args(_ts_den),
+                _tdep_ts: false, _ok_ts: true,
+                for _f_ts in _facs_ts while _ok_ts do (
+                    if freeof(t_var, _f_ts) then _ts_c: _ts_c * _f_ts
+                    else if is(_tdep_ts = false) then _tdep_ts: _f_ts
+                    else _ok_ts: false    /* >1 t-dependent factor — bail */
+                ),
+                if _ok_ts and is(_tdep_ts # false) then _ts_inner: _tdep_ts
+                else _ts_c: false         /* couldn't factor cleanly */
+            ),
+            if is(_ts_c # false) then (
+                /* Step 2: _ts_inner is (t-a) or (t-a)^n */
+                if not atom(_ts_inner) and is(op(_ts_inner) = "^")
+                   and integerp(part(_ts_inner, 2)) and is(part(_ts_inner, 2) >= 2) then (
+                    _ts_n: part(_ts_inner, 2),
+                    _ts_inner: part(_ts_inner, 1)
+                ) else _ts_n: 1,
+                /* Step 3: _ts_inner must be linear in t_var with nonzero constant term.
+                   coef_t = derivative; const_term = value at t=0.
+                   const_term = 0 means denominator is plain t^n — skip (handled below). */
+                _ts_lc: errcatch(ratsimp(diff(_ts_inner, t_var))),
+                _ts_la: errcatch(ratsimp(subst(t_var = 0, _ts_inner))),
+                if _ts_lc # [] and _ts_la # []
+                   and freeof(t_var, first(_ts_lc)) and not equal(first(_ts_lc), 0)
+                   and freeof(t_var, first(_ts_la)) and not equal(first(_ts_la), 0)
+                   and ratsimp(_ts_inner - first(_ts_lc)*t_var - first(_ts_la)) = 0 then (
+                    /* _ts_inner = coef_t*(t - a),  a = -const/coef_t */
+                    _ts_a: ratsimp(-first(_ts_la) / first(_ts_lc)),
+                    _ts_k: ratsimp(_ts_num / (_ts_c * first(_ts_lc)^_ts_n)),
+                    if freeof(t_var, _ts_k) and freeof(t_var, _ts_a) then
+                        res: [_ts_k * exp(-%i*w_var*_ts_a)
+                                   * (-%i*w_var)^(_ts_n-1) / factorial(_ts_n-1)
+                                   * (-%i*%pi*sgn(w_var)),
+                              concat("k/(t-a)^n->e^{-iwa}*k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w)), n=",
+                                     string(_ts_n), ", a=", string(_ts_a), ", k=", string(_ts_k))]
+                )
+            )
+        )
+    ),
+
     /* ── k/t^n -> k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w))  (n >= 1, entero) ──
        Transformada distribucional (valor principal de Cauchy).
        n=1: k/t -> -i*pi*k*sgn(w)
-       n≥2: FT[k/t^n] = k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w)) */
+       n≥2: FT[k/t^n] = k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w))
+       Extended to handle k/(c*t^n) — constant c extracted from product denominator. */
     if is(res = false) then block(
-        [_tn_num, _tn_den, _tn_k, _tn_n],
+        [_tn_num, _tn_den, _tn_k, _tn_n, _facs_d, _c_part, _t_dep, _ok_d, _f_d],
         _tn_n: false, _tn_k: false,
         if not atom(e) and is(op(e) = "/") then (
             _tn_num: part(e, 1),
             _tn_den: part(e, 2),
+            /* Case A: denominator is exactly t_var or t_var^n */
             if is(_tn_den = t_var) then (
                 _tn_n: 1, _tn_k: _tn_num
             ) else if not atom(_tn_den) and is(op(_tn_den) = "^")
@@ -782,6 +848,24 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                       and integerp(part(_tn_den, 2))
                       and is(part(_tn_den, 2) >= 2) then (
                 _tn_n: part(_tn_den, 2), _tn_k: _tn_num
+            ),
+            /* Case B: denominator is c*t_var^n — extract constant coefficient */
+            if is(_tn_n = false) and not atom(_tn_den) and is(op(_tn_den) = "*") then (
+                _facs_d: args(_tn_den), _c_part: 1, _t_dep: false, _ok_d: true,
+                for _f_d in _facs_d while _ok_d do (
+                    if freeof(t_var, _f_d) then _c_part: _c_part * _f_d
+                    else if is(_t_dep = false) then (
+                        if _f_d = t_var then (_t_dep: _f_d, _tn_n: 1)
+                        else if not atom(_f_d) and is(op(_f_d) = "^")
+                                and is(part(_f_d, 1) = t_var)
+                                and integerp(part(_f_d, 2)) and is(part(_f_d, 2) >= 2)
+                        then (_t_dep: _f_d, _tn_n: part(_f_d, 2))
+                        else _ok_d: false
+                    ) else _ok_d: false    /* >1 t-dependent factor */
+                ),
+                if _ok_d and is(_t_dep # false) and freeof(t_var, _c_part)
+                then _tn_k: ratsimp(_tn_num / _c_part)
+                else _tn_n: false
             ),
             if is(_tn_n # false) and freeof(t_var, _tn_k) then
                 res: [_tn_k * (-%i*w_var)^(_tn_n-1) / factorial(_tn_n-1)
