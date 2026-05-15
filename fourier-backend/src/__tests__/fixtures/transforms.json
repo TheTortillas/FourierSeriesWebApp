@@ -3400,5 +3400,289 @@
             "exists": true,
             "params": ["a"]
         }
+    },
+
+    {
+        "id": "GA01",
+        "type": "ft",
+        "description": "FT gaussiana sigma=1: FT(e^{-t²/2}) = √(2π)·e^{-ω²/2}",
+        "input": {
+            "segments": [{ "expression": "exp(-t^2/2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "sqrt(2)*sqrt(%pi)*%e^-(w^2/2)"
+        }
+    },
+    {
+        "id": "GA02",
+        "type": "ft",
+        "description": "FT gaussiana: FT(e^{-2t²}) = (√π/√2)·e^{-ω²/8}",
+        "input": {
+            "segments": [{ "expression": "exp(-2*t^2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(sqrt(%pi)*%e^-(w^2/8))/sqrt(2)"
+        }
+    },
+    {
+        "id": "GA03",
+        "type": "ft",
+        "description": "FT gaussiana simbólica: FT(e^{-at²}) = (√π/√a)·e^{-ω²/(4a)}, a>0",
+        "input": {
+            "segments": [{ "expression": "exp(-a*t^2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(sqrt(%pi)*%e^-(w^2/(4*a)))/sqrt(a)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "GA04",
+        "type": "ft",
+        "description": "FT gaussiana simbólica sigma: FT(e^{-t²/(2σ²)}) = σ√(2π)·e^{-σ²ω²/2}",
+        "input": {
+            "segments": [{ "expression": "exp(-t^2/(2*sigma^2))", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "sqrt(2)*sqrt(%pi)*sigma*%e^-((sigma^2*w^2)/2)",
+            "params": ["sigma"]
+        }
+    },
+    {
+        "id": "GA05",
+        "type": "ift",
+        "description": "IFT gaussiana round-trip: IFT(√(2π)·e^{-ω²/2}) = e^{-t²/2}",
+        "input": {
+            "segments": [{ "expression": "sqrt(2*%pi)*exp(-w^2/2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^-(t^2/2)"
+        }
+    },
+    {
+        "id": "GA06",
+        "type": "ift",
+        "description": "IFT gaussiana simbólica: IFT((√π/√a)·e^{-ω²/(4a)}) = e^{-at²}",
+        "input": {
+            "segments": [{ "expression": "(sqrt(%pi)/sqrt(a))*exp(-w^2/(4*a))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^-(a*t^2)",
+            "params": ["a"]
+        }
+    },
+
+    {
+        "id": "BL01",
+        "type": "ft",
+        "description": "FT bilateral impar: FT(t/(1+t²)) = -iπ·sgn(ω)·e^{-|ω|}",
+        "input": {
+            "segments": [{ "expression": "t/(1+t^2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%i*%pi*%e^-abs(w)*sgn(w))"
+        }
+    },
+    {
+        "id": "BL02",
+        "type": "ft",
+        "description": "FT bilateral impar: FT(t/(4+t²)) = -iπ·sgn(ω)·e^{-2|ω|}",
+        "input": {
+            "segments": [{ "expression": "t/(4+t^2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%i*%pi*%e^-(2*abs(w))*sgn(w))"
+        }
+    },
+    {
+        "id": "BL03",
+        "type": "ft",
+        "description": "FT bilateral impar simbólica: FT(t/(a²+t²)) = -iπ·sgn(ω)·e^{-a|ω|}",
+        "input": {
+            "segments": [{ "expression": "t/(a^2+t^2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%i*%pi*%e^-(a*abs(w))*sgn(w))",
+            "params": ["a"]
+        }
+    },
+
+    {
+        "id": "SY01",
+        "type": "ift",
+        "description": "IFT bilateral impar: IFT(ω/(1+ω²)) = (i/2)·sgn(t)·e^{-|t|}",
+        "input": {
+            "segments": [{ "expression": "w/(1+w^2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%i*%e^-t*sgn(t))/2"
+        }
+    },
+    {
+        "id": "SY02",
+        "type": "ift",
+        "description": "IFT bilateral impar simbólica: IFT(ω/(a²+ω²)) = (i/2)·sgn(t)·e^{-a|t|}",
+        "input": {
+            "segments": [{ "expression": "w/(a^2+w^2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%i*%e^-(a*t)*sgn(t))/2",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "SY03",
+        "type": "ift",
+        "description": "IFT bilateral impar: IFT(iω/(1+ω²)) = -(1/2)·sgn(t)·e^{-|t|}",
+        "input": {
+            "segments": [{ "expression": "%i*w/(1+w^2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-((%e^-t*sgn(t))/2)"
+        }
+    },
+    {
+        "id": "SY04",
+        "type": "ift",
+        "description": "IFT bilateral par #27c simbólica: IFT(iω/(a²+ω²)) = -(1/2)·sgn(t)·e^{-a|t|}",
+        "input": {
+            "segments": [{ "expression": "%i*w/(a^2+w^2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-((%e^-(a*t)*sgn(t))/2)",
+            "params": ["a"]
+        }
+    },
+
+    {
+        "id": "PW03",
+        "type": "ft",
+        "description": "FT potencia trigonométrica simbólica: FT(sin²(ω₀t))",
+        "input": {
+            "segments": [{ "expression": "sin(w0*t)^2", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%pi*delta(2*w0+w)+%pi*delta(w-2*w0)-2*%pi*delta(w))/2)",
+            "params": ["w0"]
+        }
+    },
+    {
+        "id": "PW04",
+        "type": "ft",
+        "description": "FT potencia trigonométrica simbólica: FT(cos²(ω₀t))",
+        "input": {
+            "segments": [{ "expression": "cos(w0*t)^2", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*delta(2*w0+w)+%pi*delta(w-2*w0)+2*%pi*delta(w))/2",
+            "params": ["w0"]
+        }
+    },
+
+    {
+        "id": "BS01",
+        "type": "ft",
+        "description": "FT bilateral simbólica: FT(e^{-a|t|}) = 2a/(a²+ω²), a>0",
+        "input": {
+            "segments": [{ "expression": "exp(-a*abs(t))", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(2*a)/(w^2+a^2)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "BS02",
+        "type": "ift",
+        "description": "IFT bilateral par #46: IFT(k/(a²+ω²)) = (k/2a)·e^{-a|t|}, k y a simbólicos",
+        "input": {
+            "segments": [{ "expression": "k/(a^2+w^2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(k*%e^-(a*abs(t)))/(2*a)",
+            "params": ["a", "k"]
+        }
+    },
+
+    {
+        "id": "SS01",
+        "type": "ft",
+        "description": "FT Lorentziana·cos simbólica: FT(cos(bt)/(a²+t²)) = (π/2a)·(e^{-a|ω-b|}+e^{-a|ω+b|})",
+        "input": {
+            "segments": [{ "expression": "cos(b*t)/(a^2+t^2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(%e^-(a*abs(w-b))+%e^-(a*abs(w+b))))/(2*a)",
+            "params": ["a", "b"]
+        }
+    },
+    {
+        "id": "SS02",
+        "type": "ft",
+        "description": "FT Lorentziana·sin simbólica: FT(sin(bt)/(a²+t²)) = (π/2ai)·(e^{-a|ω-b|}-e^{-a|ω+b|})",
+        "input": {
+            "segments": [{ "expression": "sin(b*t)/(a^2+t^2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%i*%pi*(%e^-(a*abs(w-b))-%e^-(a*abs(w+b))))/(2*a))",
+            "params": ["a", "b"]
+        }
     }
 ]
