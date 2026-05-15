@@ -2684,5 +2684,721 @@
             "fCombined": "(k*sgn(t-2*a))/2",
             "params": ["a", "k"]
         }
+    },
+
+    {
+        "id": "X01",
+        "type": "ft",
+        "description": "FT de 1/(t²+2t+2) → π·e^{iw-|w|}  (Lorentziana desplazada, polo en t=-1+i)",
+        "input": {
+            "segments": [{ "expression": "1/(t^2+2*t+2)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi*%e^(%i*w-abs(w))"
+        }
+    },
+    {
+        "id": "X02",
+        "type": "ft",
+        "description": "FT de 1/(t²+4t+5) → π·e^{2iw-|w|}  (polo en t=-2+i)",
+        "input": {
+            "segments": [{ "expression": "1/(t^2+4*t+5)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi*%e^(2*%i*w-abs(w))"
+        }
+    },
+    {
+        "id": "X03",
+        "type": "ft",
+        "description": "FT de 4/(t²+6t+25) → π·e^{3iw-4|w|}  (polo en t=-3+4i, escalar 4)",
+        "input": {
+            "segments": [{ "expression": "4/(t^2+6*t+25)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi*%e^(3*%i*w-4*abs(w))"
+        }
+    },
+    {
+        "id": "X04",
+        "type": "ft",
+        "description": "FT de 1/(t²-2t+5) → (π/2)·e^{-2|w|-iw}  (polo en t=1+2i)",
+        "input": {
+            "segments": [{ "expression": "1/(t^2-2*t+5)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*%e^-(2*abs(w)+%i*w))/2"
+        }
+    },
+    {
+        "id": "X05",
+        "type": "ft",
+        "description": "FT de 2/(t²+2t+10) → (2π/3)·e^{iw-3|w|}  (polo en t=-1+3i)",
+        "input": {
+            "segments": [{ "expression": "2/(t^2+2*t+10)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(2*%pi*%e^(%i*w-3*abs(w)))/3"
+        }
+    },
+
+    {
+        "id": "TX01",
+        "type": "ft",
+        "description": "FT de 1/(t-2) → -iπ·e^{-2iw}·sgn(w)  (polo desplazado n=1)",
+        "input": {
+            "segments": [{ "expression": "1/(t-2)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%i*%pi*%e^-(2*%i*w)*sgn(w))"
+        }
+    },
+    {
+        "id": "TX02",
+        "type": "ft",
+        "description": "FT de 1/(t-1)² → -π·w·e^{-iw}·sgn(w)  (polo desplazado n=2)",
+        "input": {
+            "segments": [{ "expression": "1/(t-1)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%pi*w*%e^-(%i*w)*sgn(w))"
+        }
+    },
+    {
+        "id": "TX03",
+        "type": "ft",
+        "description": "FT de 3/(t+1) → -3iπ·e^{iw}·sgn(w)  (polo en t=-1, escalar 3)",
+        "input": {
+            "segments": [{ "expression": "3/(t+1)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(3*%i*%pi*%e^(%i*w)*sgn(w))"
+        }
+    },
+    {
+        "id": "TX04",
+        "type": "ft",
+        "description": "FT de 1/(t-3)³ → -iπ/2·w²·e^{-3iw}·sgn(w)  (polo desplazado n=3)",
+        "input": {
+            "segments": [{ "expression": "1/(t-3)^3", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%i*%pi*w^2*%e^-(3*%i*w)*sgn(w))/2"
+        }
+    },
+    {
+        "id": "TX05",
+        "type": "ft",
+        "description": "FT de 1/(2t) → -iπ/2·sgn(w)  (escalar 1/2, polo en origen)",
+        "input": {
+            "segments": [{ "expression": "1/(2*t)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%i*%pi*sgn(w))/2)"
+        }
+    },
+
+    {
+        "id": "YS01",
+        "type": "ft",
+        "description": "FT de sgn(t)·e^{-2|t|} → -2iw/(w²+4)",
+        "input": {
+            "segments": [{ "expression": "sgn(t)*exp(-2*abs(t))", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(2*%i*w)/(w^2+4)"
+        }
+    },
+    {
+        "id": "YS02",
+        "type": "ft",
+        "description": "FT de sgn(t)·e^{-|t|} → -2iw/(w²+1)",
+        "input": {
+            "segments": [{ "expression": "sgn(t)*exp(-abs(t))", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(2*%i*w)/(w^2+1)"
+        }
+    },
+    {
+        "id": "YS03",
+        "type": "ft",
+        "description": "FT de sgn(t)·e^{-3|t|} → -2iw/(w²+9)",
+        "input": {
+            "segments": [{ "expression": "sgn(t)*exp(-3*abs(t))", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(2*%i*w)/(w^2+9)"
+        }
+    },
+    {
+        "id": "YS04",
+        "type": "ft",
+        "description": "FT de (i/2)·sgn(t)·e^{-2|t|} → w/(w²+4)",
+        "input": {
+            "segments": [{ "expression": "(%i/2)*sgn(t)*exp(-2*abs(t))", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "w/(w^2+4)"
+        }
+    },
+    {
+        "id": "YS05",
+        "type": "ft",
+        "description": "FT de 2·sgn(t)·e^{-4|t|} → -4iw/(w²+16)",
+        "input": {
+            "segments": [{ "expression": "2*sgn(t)*exp(-4*abs(t))", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(4*%i*w)/(w^2+16)"
+        }
+    },
+
+    {
+        "id": "WF01",
+        "type": "ft",
+        "description": "FT de sin(t)/(1+t²) → -iπ/2·(e^{-|w-1|}-e^{-|w+1|})",
+        "input": {
+            "segments": [{ "expression": "sin(t)/(1+t^2)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%i*%pi*(%e^-abs(w-1)-%e^-abs(w+1)))/2)"
+        }
+    },
+    {
+        "id": "WF02",
+        "type": "ft",
+        "description": "FT de sin(2t)/(9+t²) → -iπ/6·(e^{-3|w-2|}-e^{-3|w+2|})  [puede fallar]",
+        "input": {
+            "segments": [{ "expression": "sin(2*t)/(9+t^2)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%i*%pi*(%e^-(3*abs(w-2))-%e^-(3*abs(w+2))))/6)"
+        }
+    },
+    {
+        "id": "WF03",
+        "type": "ft",
+        "description": "FT de cos(t)/(1+t²) → π/2·(e^{-|w-1|}+e^{-|w+1|})",
+        "input": {
+            "segments": [{ "expression": "cos(t)/(1+t^2)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(%e^-abs(w-1)+%e^-abs(w+1)))/2"
+        }
+    },
+    {
+        "id": "WF04",
+        "type": "ft",
+        "description": "FT de sin(t)/(4+t²) → -iπ/4·(e^{-2|w-1|}-e^{-2|w+1|})",
+        "input": {
+            "segments": [{ "expression": "sin(t)/(4+t^2)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((%i*%pi*(%e^-(2*abs(w-1))-%e^-(2*abs(w+1))))/4)"
+        }
+    },
+    {
+        "id": "WF05",
+        "type": "ft",
+        "description": "FT de t·cos(t)/(1+t²)² → (iπ/4)·(|w-1|·e^{-|w-1|}+|w+1|·e^{-|w+1|})",
+        "input": {
+            "segments": [{ "expression": "t*cos(t)/(1+t^2)^2", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+
+    {
+        "id": "AB01",
+        "type": "ft",
+        "description": "FT de |sin(t)| en (-π,π) → -2(cos(πw)+1)/((w-1)(w+1))",
+        "input": {
+            "segments": [{ "expression": "abs(sin(t))", "from": "-%pi", "to": "%pi" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((2*(cos(%pi*w)+1))/((w-1)*(w+1)))"
+        }
+    },
+    {
+        "id": "AB02",
+        "type": "ft",
+        "description": "FT de |cos(t)| en (-π/2,π/2) → existe",
+        "input": {
+            "segments": [{ "expression": "abs(cos(t))", "from": "-%pi/2", "to": "%pi/2" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "AB03",
+        "type": "ft",
+        "description": "FT de |t-1| en (-2,3) → existe",
+        "input": {
+            "segments": [{ "expression": "abs(t-1)", "from": "-2", "to": "3" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "AB04",
+        "type": "ft",
+        "description": "FT de |t²-1| en (-2,2) → existe (ceros en ±1)",
+        "input": {
+            "segments": [{ "expression": "abs(t^2-1)", "from": "-2", "to": "2" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "AB05",
+        "type": "ft",
+        "description": "FT de e^{-|t-1|} en ℝ → 2e^{-iw}/(1+w²)  (abs(t-1) en todo ℝ)",
+        "input": {
+            "segments": [{ "expression": "exp(-abs(t-1))", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((2*%i*sin(w)-2*cos(w))/(w^2+1))"
+        }
+    },
+
+    {
+        "id": "ZD01",
+        "type": "ift",
+        "description": "IFT de -iπ·sgn(w) → 1/t",
+        "input": {
+            "segments": [{ "expression": "-%i*%pi*sgn(w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "1/t"
+        }
+    },
+    {
+        "id": "ZD02",
+        "type": "ift",
+        "description": "IFT de -π·w·sgn(w) → 1/t²",
+        "input": {
+            "segments": [{ "expression": "-%pi*w*sgn(w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "1/t^2"
+        }
+    },
+    {
+        "id": "ZD03",
+        "type": "ift",
+        "description": "IFT de -iπ/2·w²·sgn(w) → 1/t³",
+        "input": {
+            "segments": [{ "expression": "-((%i*%pi)/2)*w^2*sgn(w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-(1/t^3)"
+        }
+    },
+    {
+        "id": "ZD04",
+        "type": "ift",
+        "description": "IFT de -iπ·e^{2iw}·sgn(w) → 1/(t-2)",
+        "input": {
+            "segments": [{ "expression": "-%i*%pi*%e^(2*%i*w)*sgn(w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "1/(t-2)"
+        }
+    },
+    {
+        "id": "ZD05",
+        "type": "ift",
+        "description": "IFT de -2iπ·e^{-iw}·sgn(w) → 2/(t+1)",
+        "input": {
+            "segments": [{ "expression": "-2*%i*%pi*%e^-(%i*w)*sgn(w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "2/(t+1)"
+        }
+    },
+    {
+        "id": "ZD06",
+        "type": "ift",
+        "description": "IFT de -π·w·e^{-3iw}·sgn(w) → 1/(t+3)²",
+        "input": {
+            "segments": [{ "expression": "-%pi*w*%e^-(3*%i*w)*sgn(w)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "1/(t+3)^2"
+        }
+    },
+
+    {
+        "id": "LG01",
+        "type": "ift",
+        "description": "IFT de 1/(w²+2w+2) → e^{-|t|-it}/2",
+        "input": {
+            "segments": [{ "expression": "1/(w^2+2*w+2)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-abs(t)-%i*t)/2"
+        }
+    },
+    {
+        "id": "LG02",
+        "type": "ift",
+        "description": "IFT de 1/(w²+4w+5) → e^{-2it-|t|}/2  (polo en w=-2+i)",
+        "input": {
+            "segments": [{ "expression": "1/(w^2+4*w+5)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-(2*%i*t)-abs(t))/2"
+        }
+    },
+    {
+        "id": "LG03",
+        "type": "ift",
+        "description": "IFT de 1/(w²-2w+5) → existe  (polo en w=1+2i)",
+        "input": {
+            "segments": [{ "expression": "1/(w^2-2*w+5)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "LG04",
+        "type": "ift",
+        "description": "IFT de 4/(w²+6w+25) → e^{-3it-4|t|}/2  (polo en w=-3+4i, escalar 4)",
+        "input": {
+            "segments": [{ "expression": "4/(w^2+6*w+25)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-(3*%i*t)-4*abs(t))/2"
+        }
+    },
+    {
+        "id": "LG05",
+        "type": "ift",
+        "description": "IFT de 2/(w²+2w+10) → (2/3)·e^{-it-3|t|}  (polo en w=-1+3i)",
+        "input": {
+            "segments": [{ "expression": "2/(w^2+2*w+10)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%e^(-(3*abs(t))-%i*t)/3"
+        }
+    },
+
+    {
+        "id": "KX01",
+        "type": "ift",
+        "description": "IFT de 1/(w·(iw+1)) → i·(sgn(t)/2 - e^{-t}·u(t))",
+        "input": {
+            "segments": [{ "expression": "1/(w*(%i*w+1))", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "KX02",
+        "type": "ift",
+        "description": "IFT de 1/(w·(iw+2)) → existe",
+        "input": {
+            "segments": [{ "expression": "1/(w*(%i*w+2))", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "KX03",
+        "type": "ift",
+        "description": "IFT de 2/(w·(iw+3)) → existe",
+        "input": {
+            "segments": [{ "expression": "2/(w*(%i*w+3))", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "KX04",
+        "type": "ift",
+        "description": "IFT de 1/(w²·(iw+1)) → existe (doble polo en origen)",
+        "input": {
+            "segments": [{ "expression": "1/(w^2*(%i*w+1))", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+    {
+        "id": "KX05",
+        "type": "ift",
+        "description": "IFT de 1/((iw+1)·(iw+2)) → existe  (fracciones parciales sin polo en origen)",
+        "input": {
+            "segments": [{ "expression": "1/((%i*w+1)*(%i*w+2))", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true
+        }
+    },
+
+    {
+        "id": "XS01",
+        "type": "ft",
+        "description": "FT de k/(A·t²+B·t+C) con constantes simbólicas → (kπ/(A·a))·e^{-a|w|}·e^{-iwt0}",
+        "input": {
+            "segments": [{ "expression": "k/(A*t^2+B*t+C)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "params": ["A", "B", "C", "k"]
+        }
+    },
+    {
+        "id": "XS02",
+        "type": "ft",
+        "description": "FT de 1/(A·t²+C) con B=0 simbólico → (π/a)·e^{-a|w|}  donde a=sqrt(C/A)",
+        "input": {
+            "segments": [{ "expression": "1/(A*t^2+C)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "params": ["A", "C"]
+        }
+    },
+    {
+        "id": "XS03",
+        "type": "ft",
+        "description": "FT de k/(t²+b·t+c) con b,c simbólicos (A=1) → existe con t0=-b/2",
+        "input": {
+            "segments": [{ "expression": "k/(t^2+b*t+c)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "params": ["b", "c", "k"]
+        }
+    },
+    {
+        "id": "XS04",
+        "type": "ft",
+        "description": "FT de 1/(a·t²+1) con a simbólico → (π/sqrt(a))·e^{-|w|/sqrt(a)}",
+        "input": {
+            "segments": [{ "expression": "1/(a*t^2+1)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "XS05",
+        "type": "ft",
+        "description": "FT de k/(A·t²+B·t+C) — resultado equivale a (kπ/(A·a))·e^{-a|w|-iwt0} con a=sqrt((4AC-B²)/(4A²)), t0=-B/(2A)",
+        "input": {
+            "segments": [{ "expression": "k/(A*t^2+B*t+C)", "from": "minf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*k*%e^(-sqrt((4*A*C-B^2)/(4*A))*abs(w)-%i*w*(-B/(2*A))))/(A*sqrt((4*A*C-B^2)/(4*A)))",
+            "params": ["A", "B", "C", "k"]
+        }
+    },
+
+    {
+        "id": "LGS01",
+        "type": "ift",
+        "description": "IFT de 1/(A·w²+B·w+C) con constantes simbólicas → existe",
+        "input": {
+            "segments": [{ "expression": "1/(A*w^2+B*w+C)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "params": ["A", "B", "C"]
+        }
+    },
+    {
+        "id": "LGS02",
+        "type": "ift",
+        "description": "IFT de k/(w²+b·w+c) con b,c simbólicos (A=1) → existe",
+        "input": {
+            "segments": [{ "expression": "k/(w^2+b*w+c)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "params": ["b", "c", "k"]
+        }
+    },
+    {
+        "id": "LGS03",
+        "type": "ift",
+        "description": "IFT de 1/(A·w²+C) con B=0 simbólico → existe con ω₀=0",
+        "input": {
+            "segments": [{ "expression": "1/(A*w^2+C)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "params": ["A", "C"]
+        }
+    },
+    {
+        "id": "LGS04",
+        "type": "ift",
+        "description": "IFT de k/(A·w²+B·w+C) — resultado k/(2Aa)·e^{-a|t|}·e^{iω₀t} simbólico",
+        "input": {
+            "segments": [{ "expression": "k/(A*w^2+B*w+C)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(k*%e^(-sqrt((4*A*C-B^2)/(4*A^2))*abs(t)+%i*(-B/(2*A))*t))/(2*A*sqrt((4*A*C-B^2)/(4*A^2)))",
+            "params": ["A", "B", "C", "k"]
+        }
+    },
+    {
+        "id": "LGS05",
+        "type": "ift",
+        "description": "IFT de 1/(a·w²+1) con a simbólico → existe",
+        "input": {
+            "segments": [{ "expression": "1/(a*w^2+1)", "from": "-inf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "params": ["a"]
+        }
     }
 ]
