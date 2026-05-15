@@ -1985,6 +1985,52 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── cos(b*w + theta) -> (e^{itheta}*delta(t+b) + e^{-itheta}*delta(t-b))/2 ──
+       IFT analog of FT(cos(w0*t+theta)) = pi*[e^{itheta}*delta(w-w0)+...].
+       b = rate of change of argument w.r.t. w_var; theta = phase at w=0.
+       Simple case theta=0: IFT(cos(b*w)) = (delta(t+b) + delta(t-b))/2.         */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = 'cos) then block(
+            [_ict_arg, _ict_b, _ict_theta],
+            _ict_arg: part(e, 1),
+            _ict_b: ratsimp(diff(_ict_arg, w_var)),
+            _ict_theta: ratsimp(subst(w_var=0, _ict_arg)),
+            if freeof(w_var, _ict_b) and freeof(w_var, _ict_theta)
+            and not equal(_ict_b, 0) then (
+                if _ict_theta = 0
+                then res: [(delta(t_var + _ict_b) + delta(t_var - _ict_b))/2,
+                           concat("cos(bw)->(delta(t+b)+delta(t-b))/2, b=",
+                                  string(_ict_b))]
+                else res: [(exp(%i*_ict_theta)*delta(t_var + _ict_b)
+                           + exp(-%i*_ict_theta)*delta(t_var - _ict_b))/2,
+                           concat("cos(bw+theta)->(e^{itheta}*delta(t+b)+e^{-itheta}*delta(t-b))/2, b=",
+                                  string(_ict_b), ", theta=", string(_ict_theta))]
+            )
+        )
+    ),
+
+    /* ── sin(b*w + theta) -> (e^{itheta}*delta(t+b) - e^{-itheta}*delta(t-b))/(2i) ──
+       Simple case theta=0: IFT(sin(b*w)) = (i/2)*(delta(t-b) - delta(t+b)).    */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = 'sin) then block(
+            [_ist_arg, _ist_b, _ist_theta],
+            _ist_arg: part(e, 1),
+            _ist_b: ratsimp(diff(_ist_arg, w_var)),
+            _ist_theta: ratsimp(subst(w_var=0, _ist_arg)),
+            if freeof(w_var, _ist_b) and freeof(w_var, _ist_theta)
+            and not equal(_ist_b, 0) then (
+                if _ist_theta = 0
+                then res: [(%i/2)*(delta(t_var - _ist_b) - delta(t_var + _ist_b)),
+                           concat("sin(bw)->(i/2)*(delta(t-b)-delta(t+b)), b=",
+                                  string(_ist_b))]
+                else res: [(exp(%i*_ist_theta)*delta(t_var + _ist_b)
+                           - exp(-%i*_ist_theta)*delta(t_var - _ist_b))/(2*%i),
+                           concat("sin(bw+theta)->(e^{itheta}*delta(t+b)-e^{-itheta}*delta(t-b))/(2i), b=",
+                                  string(_ist_b), ", theta=", string(_ist_theta))]
+            )
+        )
+    ),
+
     /* ── pi*delta(w) + 1/(iw) -> u(t) ── */
     if is(res = false) then (
         if not freeof('delta, e) and not freeof(w_var, e) then (
