@@ -252,7 +252,7 @@ FT_match_sgn(expr, t_var) := block(
                 )
                 else coef: coef * s
             ),
-            if is(sgn_part # false) then res: [coef]
+            if is(sgn_part # false) and freeof(t_var, coef) then res: [coef]
         )
         else if is(op(e) = "/") then (
             if not atom(part(e,1)) and is(op(part(e,1)) = 'sgn) then (
@@ -276,7 +276,7 @@ FT_match_sgn(expr, t_var) := block(
                     )
                     else coef: coef * s
                 ),
-                if is(sgn_part # false) then res: [coef/part(e,2)]
+                if is(sgn_part # false) and freeof(t_var, coef) then res: [coef/part(e,2)]
             )
         )
     ),
@@ -366,9 +366,154 @@ FT_expand_abs(trozo, t_var) := block(
             f_neg: ratsimp(subst(abs(t_var) = -t_var, f_i)),
             f_pos: ratsimp(subst(abs(t_var) =  t_var, f_i)),
             res: [[f_neg, ai, 0], [f_pos, 0, bi]]
+        ),
+        /* Second pass: abs(g) with g ≠ t_var (e.g. abs(sin(t))) still remains */
+        block([_still],
+            _still: false,
+            for _p in res while not _still do
+                if not freeof('abs, _p[1]) then _still: true,
+            if _still then res: FT_expand_abs_inner(res, t_var)
         )
     ),
+    /* Third pass: substitute sgn(g) = ±1 on each piece based on its sign
+       at the interval's sample point (works after abs splits at zero) */
+    block([_has_sgn],
+        _has_sgn: false,
+        for _p in res while not _has_sgn do
+            if not freeof('sgn, _p[1]) then _has_sgn: true,
+        if _has_sgn then res: FT_subst_sgn_per_piece(res, t_var)
+    ),
     res
+)$
+
+/* ── Helpers for general abs(g(t)) expansion ──────────────────────────── */
+
+/* Recursively find the argument of the first abs() node in expr */
+FT_first_abs_arg(expr) := block(
+    [_res],
+    _res: false,
+    if not atom(expr) then (
+        if is(op(expr) = 'abs) then _res: first(args(expr))
+        else (
+            for _fa in args(expr) while is(_res = false) do
+                _res: FT_first_abs_arg(_fa)
+        )
+    ),
+    _res
+)$
+
+/* Return a finite sample point inside (ai, bi) */
+FT_abs_sample_point(ai, bi) := (
+    if FT_is_minf(ai) and FT_is_inf(bi) then 0
+    else if FT_is_minf(ai) then bi - 1
+    else if FT_is_inf(bi)  then ai + 1
+    else (ai + bi) / 2
+)$
+
+/* Second-pass abs expansion for compound abs(g(intvar)).
+   Finds zeros of g in each piece's interval, splits there, sign-fixes.
+   Used as a fallback after the abs(intvar) direct substitution. */
+FT_expand_abs_inner(pieces, intvar) := block(
+    [_res, _pc, _f, _a, _b, _g, _rzs, _zs, _pts, _n, _j,
+     _lo, _hi, _tp, _gv, _sv, _fn, _z, _zv, _ir],
+    _res: [],
+    for _pc in pieces do (
+        _f: _pc[1], _a: _pc[2], _b: _pc[3],
+        if freeof('abs, _f) then (
+            _res: append(_res, [_pc])
+        ) else (
+            _g: FT_first_abs_arg(_f),
+            if _g = false then (
+                _res: append(_res, [_pc])
+            ) else (
+                _rzs: errcatch(solve(_g = 0, intvar)),
+                if _rzs = [] then (
+                    _res: append(_res, [_pc])
+                ) else (
+                    _rzs: first(_rzs),
+                    _zs: [],
+                    for _z in _rzs do (
+                        _zv: errcatch(rhs(_z)),
+                        if _zv # [] then (
+                            _zv: first(_zv),
+                            if freeof(intvar, _zv) and freeof(%i, _zv) then (
+                                _ir: errcatch(is(_zv > _a) and is(_zv < _b)),
+                                if _ir # [] and first(_ir) = true then
+                                    _zs: append(_zs, [_zv])
+                            )
+                        )
+                    ),
+                    _pts: append([_a], _zs, [_b]),
+                    _n: length(_pts) - 1,
+                    for _j: 1 thru _n do (
+                        _lo: _pts[_j], _hi: _pts[_j + 1],
+                        _tp: FT_abs_sample_point(_lo, _hi),
+                        _gv: errcatch(ratsimp(subst(intvar = _tp, _g))),
+                        if _gv = [] then (
+                            _res: append(_res, [[_f, _lo, _hi]])
+                        ) else (
+                            _gv: first(_gv),
+                            if is(_gv > 0) then _sv: 1
+                            else if is(_gv < 0) then _sv: -1
+                            else _sv: 0,
+                            if _sv # 0 then (
+                                _fn: ratsimp(subst(abs(_g) = _sv * _g, _f)),
+                                _res: append(_res, [[_fn, _lo, _hi]])
+                            ) else (
+                                _res: append(_res, [[_f, _lo, _hi]])
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+    _res
+)$
+
+/* Recursively collect the arguments of every sgn() node in expr */
+FT_collect_sgn_args(expr) := block(
+    [_res],
+    _res: [],
+    if not atom(expr) then (
+        if is(op(expr) = 'sgn) then
+            _res: [first(args(expr))]
+        else (
+            for _ca in args(expr) do
+                _res: append(_res, FT_collect_sgn_args(_ca))
+        )
+    ),
+    _res
+)$
+
+/* On each piece, evaluate sgn(g) at a sample point and substitute ±1.
+   Handles sgn(t), sgn(k*t), sgn(t-a), etc. without modifying interval bounds. */
+FT_subst_sgn_per_piece(pieces, intvar) := block(
+    [_res, _pc, _f, _a, _b, _tp, _e, _gargs, _g, _gval, _sv],
+    _res: [],
+    for _pc in pieces do (
+        _f: _pc[1], _a: _pc[2], _b: _pc[3],
+        if freeof('sgn, _f) then (
+            _res: append(_res, [_pc])
+        ) else (
+            _tp: FT_abs_sample_point(_a, _b),
+            _e: _f,
+            _gargs: FT_collect_sgn_args(_e),
+            for _g in _gargs do (
+                _gval: errcatch(ratsimp(subst(intvar = _tp, _g))),
+                if _gval # [] then (
+                    _gval: first(_gval),
+                    if is(_gval > 0) then _sv: 1
+                    else if is(_gval < 0) then _sv: -1
+                    else _sv: false,
+                    if _sv # false then
+                        _e: ratsimp(subst(sgn(_g) = _sv, _e))
+                )
+            ),
+            _res: append(_res, [[_e, _a, _b]])
+        )
+    ),
+    _res
 )$
 
 FT_raw(f_expr, t_var, w_var, a, b) := block(
@@ -506,7 +651,21 @@ IFT_expand_abs(trozo, w_var) := block(
             F_neg: ratsimp(subst(abs(w_var) = -w_var, F_i)),
             F_pos: ratsimp(subst(abs(w_var) =  w_var, F_i)),
             res: [[F_neg, ai, 0], [F_pos, 0, bi]]
+        ),
+        /* Second pass: abs(g) with g ≠ w_var still remains */
+        block([_still],
+            _still: false,
+            for _p in res while not _still do
+                if not freeof('abs, _p[1]) then _still: true,
+            if _still then res: FT_expand_abs_inner(res, w_var)
         )
+    ),
+    /* Third pass: substitute sgn(g) = ±1 per piece */
+    block([_has_sgn],
+        _has_sgn: false,
+        for _p in res while not _has_sgn do
+            if not freeof('sgn, _p[1]) then _has_sgn: true,
+        if _has_sgn then res: FT_subst_sgn_per_piece(res, w_var)
     ),
     res
 )$
