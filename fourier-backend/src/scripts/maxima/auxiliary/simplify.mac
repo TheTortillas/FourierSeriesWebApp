@@ -75,10 +75,11 @@ if PROFILE = "exponential" or PROFILE = "complete" then (
 
 /* Declarar funciones especiales como reales para que rectform/imagpart
    no deje realpart(u(t)) o imagpart(delta(t)) sin evaluar */
-declare(u,     real)$
-declare(sgn,   real)$
-declare(delta, real)$
+declare(u,         real)$
+declare(sgn,       real)$
+declare(delta,     real)$
 declare(unit_step, real)$
+declare(rect,      real)$
 
 /* Parsear expresión */
 _input_expr: parse_string(EXPR_INPUT)$

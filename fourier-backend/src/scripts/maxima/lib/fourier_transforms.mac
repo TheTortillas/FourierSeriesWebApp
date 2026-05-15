@@ -52,8 +52,10 @@ ratprint  : false$
 declare(delta, real)$
 declare(u,     real)$
 declare(sgn,   real)$
+declare(rect,  real)$
 
-texput(sgn, "\\operatorname{sgn}")$
+texput(sgn,  "\\operatorname{sgn}")$
+texput(rect, "\\operatorname{rect}")$
 
 /* ════════════════════════════════════════════════════════════════════
    BLOQUE 2 — Auxiliares de reconocimiento
@@ -275,6 +277,42 @@ FT_match_sgn(expr, t_var) := block(
                     else coef: coef * s
                 ),
                 if is(sgn_part # false) then res: [coef/part(e,2)]
+            )
+        )
+    ),
+    res
+)$
+
+/* Detecta k*rect(a*t+b) con k,a,b constantes en t_var.
+   rect(a*t+b) es 1 cuando |a*t+b| < 1/2, es decir, pulso de ancho 1/|a|
+   centrado en t0 = -b/a.
+   Devuelve [k, a, b] o false. */
+FT_match_rect(expr, t_var) := block(
+    [e, rect_part, coef, res, rect_arg, aa, bb],
+    e: expand(expr),
+    res: false,
+    if not atom(e) then (
+        if is(op(e) = 'rect) then (
+            rect_arg: part(e, 1),
+            aa: ratsimp(diff(rect_arg, t_var)),
+            bb: ratsimp(subst(t_var=0, rect_arg)),
+            if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                res: [1, aa, bb]
+        )
+        else if is(op(e) = "*") then (
+            rect_part: false,
+            coef: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'rect)
+                then rect_part: s
+                else coef: coef * s
+            ),
+            if is(rect_part # false) and freeof(t_var, coef) then (
+                rect_arg: part(rect_part, 1),
+                aa: ratsimp(diff(rect_arg, t_var)),
+                bb: ratsimp(subst(t_var=0, rect_arg)),
+                if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                    res: [coef, aa, bb]
             )
         )
     ),
@@ -704,6 +742,26 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                         concat("k*sgn(t-t0) -> 2k*exp(-iwt0)/(iw), k=", string(_sg_coef),
                                ", t0=", string(_sg_t0))]
             )
+        )
+    ),
+
+    /* ── k*rect(a*t+b) -> k*2*sin(w*T/2)/w * exp(-i*w*t0)  (t0=-b/a, T=1/|a|) ──
+       FT[rect((t-t0)/T)](w) = integral_{t0-T/2}^{t0+T/2} e^{-iwt} dt
+                             = (2/w)*sin(w*T/2)*exp(-i*w*t0).
+       rect se trata como función simbólica (no expandida con if/else) para que
+       el pattern matcher pueda detectarla antes de intentar la integración. */
+    if is(res = false) then block(
+        [_rm, _rk, _ra, _rb, _rt0, _rT],
+        _rm: FT_match_rect(e, t_var),
+        if is(_rm # false) then (
+            _rk: _rm[1],
+            _ra: _rm[2],
+            _rb: _rm[3],
+            _rt0: ratsimp(-_rb / _ra),
+            _rT:  ratsimp(1 / abs(_ra)),
+            res: [_rk * 2 * sin(w_var * _rT / 2) / w_var * exp(-%i * w_var * _rt0),
+                  concat("k*rect(a*t+b)->2k*sin(wT/2)/w*exp(-iwt0), T=", string(_rT),
+                         ", t0=", string(_rt0))]
         )
     ),
 
@@ -2537,6 +2595,30 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                     )
                 )
             )
+        )
+    ),
+
+    /* ── k*rect(a*w+b) -> k*sin(W*t/2)/(pi*t) * exp(i*w0*t)  (W=1/|a|, w0=-b/a) ──
+       IFT[rect(a*(w-w0))](t) = (1/2pi)*integral_{w0-W/2}^{w0+W/2} e^{iwt} dw
+                               = sin(W*t/2)/(pi*t) * exp(i*w0*t).
+       rect se trata simbólicamente — el mismo FT_match_rect sirve aquí
+       con el rol de variable intercambiado (w en lugar de t). */
+    if is(res = false) then block(
+        [_rm, _rk, _ra, _rb, _rw0, _rW, _raw_res],
+        _rm: FT_match_rect(e, w_var),
+        if is(_rm # false) then (
+            _rk: _rm[1],
+            _ra: _rm[2],
+            _rb: _rm[3],
+            _rw0: ratsimp(-_rb / _ra),
+            _rW:  ratsimp(1 / abs(_ra)),
+            _raw_res: _rk * sin(_rW * t_var / 2) / (%pi * t_var) * exp(%i * _rw0 * t_var),
+            /* si no hay desplazamiento, el resultado es real — simplificar */
+            if ratsimp(_rw0) = 0 then
+                _raw_res: _rk * sin(_rW * t_var / 2) / (%pi * t_var),
+            res: [_raw_res,
+                  concat("k*rect(a*w+b)->k*sin(Wt/2)/(pi*t)*exp(iw0t), W=", string(_rW),
+                         ", w0=", string(_rw0))]
         )
     ),
 

@@ -7,6 +7,8 @@
 display2d: false$
 %iargs: false$
 
+rect(x) := if abs(x) < 1/2 then 1 elseif abs(x) = 1/2 then 1/2 else 0$
+
 /* Número de tramos */
 pieces: length(FUNC_INPUT);
 
