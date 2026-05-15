@@ -9,6 +9,7 @@ Servidor limpio (Ubuntu/Debian) → sitio en producción.
 1. [Base del sistema](#1-base-del-sistema)
 2. [Node.js con nvm](#2-nodejs-con-nvm)
 3. [PostgreSQL](#3-postgresql)
+   3b. [Redis](#3b-redis)
 4. [Nginx](#4-nginx)
 5. [Estructura de directorios](#5-estructura-de-directorios)
 6. [Certificados SSL](#6-certificados-ssl)
@@ -54,6 +55,7 @@ cd ~ && rm -rf maxima-5.47.0 maxima-5.47.0.tar.gz
 > El `export MAXIMA_IMAGESDIR` que aparece en algunos tutoriales **no es necesario** — `sudo make install` instala en las rutas estándar del sistema.
 
 Verificar:
+
 ```bash
 maxima --version
 # Maxima 5.47.0
@@ -84,6 +86,7 @@ systemctl enable --now postgresql
 ```
 
 Crear usuario y base de datos:
+
 ```bash
 sudo -u postgres psql <<SQL
 CREATE USER fourier_user WITH PASSWORD 'CAMBIA_ESTA_PASSWORD';
@@ -95,6 +98,33 @@ SQL
 > **Importante:** `GRANT ALL PRIVILEGES ON DATABASE` solo da permisos de conexión,
 > **no** de tablas. Los permisos a nivel de tabla se otorgan en el [paso 9](#9-esquema-de-base-de-datos)
 > una vez que el schema está creado.
+
+---
+
+## 3b. Redis
+
+Redis es opcional, pero si quieres activar `REDIS_ENABLED=true` en el backend necesitas que el servidor Redis exista y esté en ejecución. Si no está disponible, el backend no se cae: usa la caché LRU local como respaldo.
+
+### Redis en el mismo servidor
+
+```bash
+apt install -y redis-server
+systemctl enable --now redis-server
+```
+
+Verificar:
+
+```bash
+redis-cli ping
+# PONG
+
+curl http://localhost:3000/api/cache/stats
+# debe mostrar backend: "redis" y connected: true
+```
+
+### Redis en un servidor externo
+
+Si usas un Redis gestionado o una máquina aparte, no instales `redis-server` aquí. Solo cambia `REDIS_URL` en el `.env` para apuntar al host correcto y verifica que el puerto esté accesible desde el backend.
 
 ---
 
@@ -131,6 +161,7 @@ rsync tu_key.key \
 ```
 
 En el servidor:
+
 ```bash
 chmod 600 /etc/nginx/ssl/fouriersolver/*
 chown root:root /etc/nginx/ssl/fouriersolver/*
@@ -228,7 +259,7 @@ MAXIMA_SCRIPTS_PATH=/root/fourierWebApp/backend/src/scripts/maxima
 CACHE_MAX_SIZE=500
 CACHE_TTL_DAYS=7
 
-# Redis (desactivado — cambiar a true si se instala Redis)
+# Redis (actívalo solo si redis-server está instalado y accesible)
 REDIS_ENABLED=false
 REDIS_URL=redis://localhost:6379
 
@@ -282,6 +313,7 @@ ALLOWED_ORIGINS=https://fouriersolver.com,https://www.fouriersolver.com
 ```
 
 Para generar los JWT secrets (ejecuta dos veces):
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
 ```
@@ -291,17 +323,20 @@ node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
 ## 9. Esquema de base de datos
 
 Desde tu máquina local, **parado en la raíz del proyecto**:
+
 ```bash
 rsync fourier-database/fourier_db.sql root@fouriersolver.com:/tmp/
 ssh root@fouriersolver.com "sudo -u postgres psql -d fourier_db -f /tmp/fourier_db.sql"
 ```
 
 Verificar que las tablas se crearon:
+
 ```bash
 ssh root@fouriersolver.com "sudo -u postgres psql -d fourier_db -c '\dt'"
 ```
 
 **Después de cargar el schema**, otorga permisos de tabla a `fourier_user`:
+
 ```bash
 ssh root@fouriersolver.com "sudo -u postgres psql -d fourier_db <<SQL
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO fourier_user;
@@ -321,6 +356,7 @@ SQL"
 `rsync` transfiere archivos desde tu máquina local al servidor **solo los que cambiaron**, lo que lo hace mucho más rápido que SFTP en actualizaciones futuras.
 
 **Sintaxis:**
+
 ```
 rsync -az  <origen_local>  <usuario@servidor:destino_remoto>
            ^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -455,6 +491,7 @@ pm2 startup
 ```
 
 Verificar que todo funciona:
+
 ```bash
 pm2 status
 curl http://localhost:3000/health
@@ -464,6 +501,7 @@ curl http://localhost:4000
 > **Si el backend muere con** `unable to determine transport target for "pino-pretty"`:
 > el proceso se lanzó sin `NODE_ENV=production`. El logger intenta usar pino-pretty
 > (modo dev), pero no está instalado (`--omit=dev`). Solución:
+>
 > ```bash
 > pm2 delete backend
 > NODE_ENV=production pm2 start /root/fourierWebApp/backend/dist/server.js \
@@ -506,6 +544,7 @@ echo "✓ Deploy completado"
 ```
 
 Uso:
+
 ```bash
 bash deploy.sh
 ```
@@ -525,6 +564,7 @@ URL with hostname "fouriersolver.com" is not allowed.
 **La solución ya está aplicada en el código** (desde v0.9.1). Consiste en dos cambios:
 
 ### a) `fourier-frontend/src/environments/environment.prod.ts`
+
 ```typescript
 // ✗ absoluta — bloqueada por SSRF
 apiUrl: 'https://fouriersolver.com/api',
@@ -534,29 +574,30 @@ apiUrl: '/api',
 ```
 
 ### b) `fourier-frontend/src/server.ts` — proxy inverso
+
 El SSR server escucha en el puerto 4000. Cuando un componente hace `GET /api/...`
 durante el SSR, la petición llega al propio servidor Express. Un proxy
 la reenvía al backend real (puerto 3000):
 
 ```typescript
-import { request as httpRequest } from 'node:http';
+import { request as httpRequest } from "node:http";
 
 // Antes del bloque de archivos estáticos:
-app.use('/api', (req, res) => {
+app.use("/api", (req, res) => {
   const backendReq = httpRequest(
     {
-      hostname: 'localhost',
+      hostname: "localhost",
       port: 3000,
-      path: '/api' + (req.url ?? ''),
+      path: "/api" + (req.url ?? ""),
       method: req.method,
-      headers: { ...req.headers, host: 'localhost:3000' },
+      headers: { ...req.headers, host: "localhost:3000" },
     },
     (backendRes) => {
       res.writeHead(backendRes.statusCode ?? 502, backendRes.headers);
       backendRes.pipe(res, { end: true });
     },
   );
-  backendReq.on('error', () => res.status(502).end());
+  backendReq.on("error", () => res.status(502).end());
   req.pipe(backendReq, { end: true });
 });
 ```
@@ -596,11 +637,39 @@ _"no cumple con la política OAuth 2.0 de Google"_.
 
 ---
 
+## 18. Migraciones de base de datos
+
+### 2025-05 — Trazabilidad de bloqueos por rate limit
+
+Añade el valor `rate_limit_blocked` al enum `audit_action` para registrar cada
+solicitud bloqueada por el rate limiter directamente en `audit_log`.
+
+**Ejecutar una sola vez en producción (no destructivo, no requiere lock de tabla):**
+
+```sql
+ALTER TYPE audit_action ADD VALUE IF NOT EXISTS 'rate_limit_blocked';
+```
+
+**Cómo aplicarlo:**
+
+```bash
+ssh root@fouriersolver.com
+psql -U fourier_user -d fourier_db -c "ALTER TYPE audit_action ADD VALUE IF NOT EXISTS 'rate_limit_blocked';"
+# No hace falta reiniciar el backend — el tipo se recarga automáticamente.
+```
+
+> `IF NOT EXISTS` hace el comando idempotente: seguro de re-ejecutar.
+> Tras esto, el backend empezará a insertar filas en `audit_log` con
+> `action = 'rate_limit_blocked'` en cada 429, incluyendo la IP, el
+> endpoint, el limiter y el método HTTP en la columna `metadata`.
+
+---
+
 ## 17. Reglas del .env
 
-| | Tu máquina | Servidor |
-|---|---|---|
-| `.env` (valores reales) | ✗ nunca | ✓ solo aquí |
-| `.env.example` (sin valores) | ✓ en git | ✗ no necesario |
-| Actualizar una variable | Editar `.env` local | `ssh` → `nano /root/fourierWebApp/backend/.env` → `pm2 restart backend` |
-| Añadir nueva variable | Añadir al `.env.example` en git (sin valor) | SSH al servidor y añadir el valor real al `.env` |
+|                              | Tu máquina                                  | Servidor                                                                |
+| ---------------------------- | ------------------------------------------- | ----------------------------------------------------------------------- |
+| `.env` (valores reales)      | ✗ nunca                                     | ✓ solo aquí                                                             |
+| `.env.example` (sin valores) | ✓ en git                                    | ✗ no necesario                                                          |
+| Actualizar una variable      | Editar `.env` local                         | `ssh` → `nano /root/fourierWebApp/backend/.env` → `pm2 restart backend` |
+| Añadir nueva variable        | Añadir al `.env.example` en git (sin valor) | SSH al servidor y añadir el valor real al `.env`                        |

@@ -746,11 +746,12 @@
       "f1": "Tres modos de entrada: muestreo de función, datos manuales y epiciclos",
       "f2": "Modo función: muestreo numérico de funciones a trozos (soporta u, sgn, rect)",
       "f3": "Modo manual: introduce cualquier cantidad de muestras a mano",
-      "f4": "Epiciclos: DFT animada como vectores complejos giratorios",
+      "f4": "Modo epiciclos: la DFT cobra vida como vectores complejos giratorios que trazan cualquier figura cerrada",
       "f5": "Espectro: gráficas de amplitud |X[k]| y fase ∠X[k]",
       "f6": "fftShift para centrar las frecuencias negativas",
       "f7": "Reconstrucción de la señal mediante IDFT a partir de los coeficientes",
-      "f8": "Exportar cada gráfica de forma independiente y compartir resultados"
+      "f8": "Exportar cada gráfica de forma independiente y compartir resultados",
+      "f9": "Dibuja cualquier figura a mano sobre el lienzo y observa cómo se reconstruye como animación de epiciclos de Fourier en tiempo real"
     },
     "input": {
       "title": "Entrada matemática",

@@ -746,11 +746,12 @@
       "f1": "Three input modes: function sampling, manual data entry and epicycles",
       "f2": "Function mode: numeric sampling of piecewise functions (u, sgn, rect supported)",
       "f3": "Manual mode: enter any number of samples by hand",
-      "f4": "Epicycles: animated DFT visualized as rotating complex vectors",
+      "f4": "Epicycles mode: watch the DFT come to life as rotating complex vectors that trace any closed figure",
       "f5": "Spectrum: amplitude |X[k]| and phase ∠X[k] charts",
       "f6": "fftShift to center negative frequencies",
       "f7": "IDFT signal reconstruction from DFT coefficients",
-      "f8": "Export each chart independently and share results"
+      "f8": "Export each chart independently and share results",
+      "f9": "Draw any shape by hand on the canvas and see it reconstructed as a Fourier epicycle animation in real time"
     },
     "input": {
       "title": "Math Input",
