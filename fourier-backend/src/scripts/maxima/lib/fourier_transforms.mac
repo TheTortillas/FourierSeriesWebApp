@@ -2344,6 +2344,86 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── [e^{it0w}] * c * w^m * sgn(w) -> k/(t-t0)^n  (distribucional, V.P.) ──
+       Inversa del par FT[k/t^n](w) = k*(-i)^n*pi/((n-1)!) * w^(n-1) * sgn(w).
+       Despejando k: k = c * m! * i^(m+1) / pi  (debe ser real).
+       También acepta una variante desplazada con factor e^{it0*w} opcional.
+       Maneja unary minus: -(A*B) tiene op="-" después de expand(), se normaliza. ── */
+    if is(res = false) then block(
+        [_ds_facs, _ds_has_sgn, _ds_m, _ds_rest, _ds_n, _ds_k,
+         _ds_exp, _ds_t0, _ds_ok, _ds_f, _ds_e],
+        _ds_has_sgn: false, _ds_m: 0, _ds_rest: 1, _ds_exp: false, _ds_ok: true,
+        /* Step 1: normalize — expand() may produce -(A) with op="-"
+           or (A)/c with op="/" when a constant denominator is present.
+           Strip both, folding the factors into _ds_rest.                */
+        _ds_e: e,
+        if not atom(_ds_e) and is(op(_ds_e) = "-") then (
+            _ds_rest: -1, _ds_e: first(args(_ds_e))
+        ),
+        if not atom(_ds_e) and is(op(_ds_e) = "/")
+           and freeof(w_var, part(_ds_e, 2)) then (
+            _ds_rest: _ds_rest / part(_ds_e, 2),
+            _ds_e: part(_ds_e, 1),
+            if not atom(_ds_e) and is(op(_ds_e) = "-") then (
+                _ds_rest: -_ds_rest, _ds_e: first(args(_ds_e))
+            )
+        ),
+        /* Step 2: walk factors, classify each one */
+        if not atom(_ds_e) and is(op(_ds_e) = "*") then (
+            _ds_facs: args(_ds_e),
+            for _ds_f in _ds_facs while _ds_ok do (
+                if not atom(_ds_f) and is(op(_ds_f) = 'sgn)
+                   and ratsimp(_ds_f - sgn(w_var)) = 0 then (
+                    /* sgn(w) */
+                    if is(_ds_has_sgn = false) then _ds_has_sgn: true
+                    else _ds_ok: false
+                ) else if is(_ds_f = w_var) then (
+                    /* w^1 */
+                    _ds_m: _ds_m + 1
+                ) else if not atom(_ds_f) and is(op(_ds_f) = "^")
+                          and is(part(_ds_f, 1) = w_var)
+                          and integerp(part(_ds_f, 2)) and is(part(_ds_f, 2) >= 2) then (
+                    /* w^m, m>=2 */
+                    _ds_m: _ds_m + part(_ds_f, 2)
+                ) else if not atom(_ds_f) and is(op(_ds_f) = "^")
+                          and not freeof(%i, _ds_f) and not freeof(w_var, _ds_f) then (
+                    /* e^{i*theta*w} — optional time-shift factor */
+                    if is(_ds_exp = false) then _ds_exp: _ds_f
+                    else _ds_ok: false
+                ) else if freeof(w_var, _ds_f) then (
+                    /* constant coefficient */
+                    _ds_rest: _ds_rest * _ds_f
+                ) else _ds_ok: false
+            ),
+            if _ds_ok and _ds_has_sgn then (
+                _ds_n: _ds_m + 1,
+                /* k = c * m! * i^(m+1) / pi */
+                _ds_k: errcatch(ratsimp(_ds_rest * factorial(_ds_m) * %i^(_ds_m+1) / %pi)),
+                if _ds_k # [] then (
+                    _ds_k: first(_ds_k),
+                    if freeof(w_var, _ds_k) and freeof(%i, _ds_k) then (
+                        if is(_ds_exp = false) then
+                            /* base case: k/t^n */
+                            res: [_ds_k / t_var^_ds_n,
+                                  concat("c*w^m*sgn(w)->k/t^n, n=", string(_ds_n),
+                                         ", k=", string(_ds_k))]
+                        else (
+                            /* time-shifted: e^{it0w} → shift t→t+t0, giving k/(t-(-t0))^n */
+                            _ds_t0: errcatch(ratsimp(part(_ds_exp, 2) / (%i * w_var))),
+                            if _ds_t0 # [] and freeof(w_var, first(_ds_t0)) then (
+                                _ds_t0: first(_ds_t0),
+                                res: [_ds_k / (t_var - _ds_t0)^_ds_n,
+                                      concat("e^{it0w}*c*w^m*sgn(w)->k/(t-t0)^n, n=",
+                                             string(_ds_n), ", t0=", string(_ds_t0),
+                                             ", k=", string(_ds_k))]
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── time-shift: e^{it0*w}*G(w) -> IFT[G](t+t0) ──
        Simétrico al freq-shift de FT. Usa F_expr (no expand) para que
        el exponente no sea absorbido al denominador. */
