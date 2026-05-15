@@ -47,11 +47,15 @@
             <button
               type="button"
               (mousedown)="stopDefault($event)"
-              (click)="mqs.insertKey(btn)"
+              (click)="handleKey(btn)"
               class="flex-1 h-11 rounded border text-sm font-mono transition-colors cursor-pointer select-none active:scale-95"
               [class]="btn.label === '⌫'
                 ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40'
-                : 'bg-paper dark:bg-dark-bg border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent'"
+                : btn.label === '⇧'
+                  ? (abcShift()
+                      ? 'bg-accent text-paper border-accent hover:bg-accent/90'
+                      : 'bg-paper2 dark:bg-dark-surface border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent hover:text-accent')
+                  : 'bg-paper dark:bg-dark-bg border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent'"
             >
               {{ btn.label }}
             </button>
