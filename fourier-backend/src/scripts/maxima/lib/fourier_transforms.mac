@@ -3470,7 +3470,26 @@ IFT(FUNC_INPUT, w_var, t_var) := block(
 IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
     [rp, rn, f_pos, f_neg, f_combined, fn_flip, dcheck, same_branch,
      eq_pos, eq_neg,
-     free_params, _ift_reserved, _ift_ref],
+     free_params, _ift_reserved, _ift_ref,
+     _pre_pat],
+
+    /* ── Pre-check: pattern lookup without any assumptions ──────────────────
+       Handlers that embed abs(t) or sgn(t) in their result already encode
+       the full bilateral form.  Calling them under assume(t>0/t<0) partially
+       evaluates abs() but leaves sgn() unresolved, making the merge below
+       fail.  We detect this early and return the bilateral formula directly,
+       e.g. IFT(ω/(a²+ω²)) = (i/2)·sgn(t)·e^{-a|t|}.                      */
+    _pre_pat: if length(FUNC_INPUT) = 1
+                 and FT_is_minf(FUNC_INPUT[1][2])
+                 and FT_is_inf(FUNC_INPUT[1][3])
+              then IFT_pattern_lookup(FUNC_INPUT[1][1], w_var, t_var)
+              else false,
+    if is(_pre_pat # false)
+       and (not freeof('abs, _pre_pat[1]) or not freeof('sgn, _pre_pat[1])) then (
+        _ift_reserved: [t_var, w_var, 'u, 'delta, 'sgn],
+        free_params: FT_free_params(_pre_pat[1], _ift_reserved),
+        return([_pre_pat[1], _pre_pat[1], _pre_pat[1], free_params])
+    ),
 
     assume(t_var > 0),
     rp    : IFT(FUNC_INPUT, w_var, t_var),
@@ -3507,6 +3526,10 @@ IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
                 then ratsimp(subst(t_var = abs(t_var), f_pos))
         else if dcheck = 0
         then ratsimp(subst(t_var = abs(t_var), f_pos))
+        /* ── odd-function case: f_pos(t) = -f_neg(-t)  =>  fn_flip + f_pos = 0
+           Combined form: sgn(t) * f_pos(|t|), e.g. IFT(ω/(a²+ω²)) = (i/2)·sgn(t)·e^{-a|t|} */
+        else if ratsimp(fn_flip + f_pos) = 0
+        then ratsimp(sgn(t_var) * subst(t_var = abs(t_var), f_pos))
         else if ratsimp(f_neg) = 0 then f_pos * u(t_var)
         else if ratsimp(f_pos) = 0 then f_neg * u(t_var)
         else false,
