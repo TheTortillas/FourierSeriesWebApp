@@ -6,8 +6,10 @@
 
 display2d: false$
 
-/* rect: pulso rectangular unitario, ancho 1 centrado en 0 */
+/* Funciones especiales para integración simbólica en series */
 rect(x) := if abs(x) < 1/2 then 1 elseif abs(x) = 1/2 then 1/2 else 0$
+u(x)    := if x >= 0 then 1 else 0$
+sgn(x)  := if x > 0 then 1 elseif x = 0 then 0 else -1$
 
 /* Número de tramos */
 pieces: length(FUNC_INPUT);

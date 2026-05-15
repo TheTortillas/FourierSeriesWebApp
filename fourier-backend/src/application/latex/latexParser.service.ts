@@ -187,7 +187,7 @@ export class LatexParserService {
       .replace(/\bTMDELTA\b/g, "delta")
       .replace(/\bTMGAMMA\b/g, "gamma")
       .replace(/\bTMFACTORIAL\b/g, "factorial")
-      .replace(/\b(rect|gamma|factorial|exp)\s*\*\s*\(/g, "$1(");
+      .replace(/\b(u|sgn|delta|rect|gamma|factorial|exp)\s*\*\s*\(/g, "$1(");
 
     return this.normalizePostfixFactorial(normalized);
   }
