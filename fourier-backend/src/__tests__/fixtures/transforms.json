@@ -1650,7 +1650,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "-(%i*(%e^-(3*(t+6))-%e^-(3*(t+2))))/2"
+            "fCombined": "(%i/2)*(%e^-(3*abs(t+2))-%e^-(3*abs(t+6)))"
         }
     },
     {
@@ -1690,7 +1690,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "(%e^(-(3*abs(abs(t)-2))-3*abs(t)-6)*(%e^(3*abs(abs(t)-2))+%e^(3*abs(t)+6)))/12"
+            "fCombined": "(%e^-(3*abs(t+2))+%e^-(3*abs(t-2)))/12"
         }
     },
     {
@@ -1710,7 +1710,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "(%e^(-(2*abs(abs(t)-3))-2*abs(t)-6)*(3*%e^(2*abs(abs(t)-3))+3*%e^(2*abs(t)+6)))/4"
+            "fCombined": "(3*%e^-(2*abs(t+3))+3*%e^-(2*abs(t-3)))/4"
         }
     },
     {
@@ -2273,7 +2273,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "(%i*%e^-(2*t)*sgn(t))/2"
+            "fCombined": "(%i*%e^-(2*abs(t))*sgn(t))/2"
         }
     },
     {
@@ -2287,7 +2287,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "(3*%i*%e^-(3*t)*sgn(t))/2"
+            "fCombined": "(3*%i*%e^-(3*abs(t))*sgn(t))/2"
         }
     },
     {
@@ -2301,7 +2301,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "-((%e^-(2*t)*sgn(t))/2)"
+            "fCombined": "-((%e^-(2*abs(t))*sgn(t))/2)"
         }
     },
     {
@@ -3545,7 +3545,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "(%i*%e^-t*sgn(t))/2"
+            "fCombined": "(%i*%e^-abs(t)*sgn(t))/2"
         }
     },
     {
@@ -3559,7 +3559,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "(%i*%e^-(a*t)*sgn(t))/2",
+            "fCombined": "(%i*%e^-(a*abs(t))*sgn(t))/2",
             "params": ["a"]
         }
     },
@@ -3574,7 +3574,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "-((%e^-t*sgn(t))/2)"
+            "fCombined": "-((%e^-abs(t)*sgn(t))/2)"
         }
     },
     {
@@ -3588,7 +3588,7 @@
         },
         "expected": {
             "exists": true,
-            "fCombined": "-((%e^-(a*t)*sgn(t))/2)",
+            "fCombined": "-((%e^-(a*abs(t))*sgn(t))/2)",
             "params": ["a"]
         }
     },
@@ -3740,6 +3740,78 @@
             "exists": true,
             "fCombined": "(%i*A*(delta(t-b)-delta(t+b)))/2",
             "params": ["A", "b"]
+        }
+    },
+    {
+        "id": "CS05",
+        "type": "ift",
+        "description": "IFT distribucional: IFT(2·sin(3ω)) = i·(δ(t-3)-δ(t+3))",
+        "input": {
+            "segments": [{ "expression": "2*sin(3*w)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%i*(delta(t-3)-delta(t+3))"
+        }
+    },
+    {
+        "id": "CS06",
+        "type": "ift",
+        "description": "IFT distribucional simbólica: IFT(cos(b·ω)) = (δ(t+b)+δ(t-b))/2, b>0",
+        "input": {
+            "segments": [{ "expression": "cos(b*w)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(delta(t+b)+delta(t-b))/2",
+            "params": ["b"]
+        }
+    },
+    {
+        "id": "CS07",
+        "type": "ift",
+        "description": "IFT distribucional con fase: IFT(cos(2ω+π/3)) = (e^{iπ/3}·δ(t+2)+e^{-iπ/3}·δ(t-2))/2",
+        "input": {
+            "segments": [{ "expression": "cos(2*w+%pi/3)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(((sqrt(3)*%i)/2+1/2)*delta(t+2)+(1/2-(sqrt(3)*%i)/2)*delta(t-2))/2"
+        }
+    },
+    {
+        "id": "CS08",
+        "type": "ift",
+        "description": "IFT distribucional con fase: IFT(sin(ω+π/4)) = (e^{iπ/4}·δ(t+1)-e^{-iπ/4}·δ(t-1))/(2i)",
+        "input": {
+            "segments": [{ "expression": "sin(w+%pi/4)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "-((%i*((%i/sqrt(2)+1/sqrt(2))*delta(t+1)-(1/sqrt(2)-%i/sqrt(2))*delta(t-1)))/2)"
+        }
+    },
+    {
+        "id": "CS09",
+        "type": "ift",
+        "description": "IFT distribucional simbólica con fase: IFT(k·cos(b·ω+θ)) = (k/2)·(e^{iθ}·δ(t+b)+e^{-iθ}·δ(t-b))",
+        "input": {
+            "segments": [{ "expression": "k*cos(b*w+theta)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(k*(delta(t+b)*%e^(%i*theta)+delta(t-b)*%e^-(%i*theta)))/2",
+            "params": ["k", "b", "theta"]
         }
     }
 ]
