@@ -303,6 +303,7 @@
       "placeholderDft": "Coefficients X[k]",
       "placeholderIdft": "Exact reconstruction",
       "goToContinuous": "Go to continuous transform",
+      "freeSymbolsWarning": "DFT requires numeric expressions. Remove free symbols: {{ symbols }}",
       "modeEpicycles": "Epicycles",
       "epicycles": {
         "presetsLabel": "Shape presets",

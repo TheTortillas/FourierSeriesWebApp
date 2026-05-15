@@ -399,6 +399,15 @@
         }
         <!-- ══ END EPICYCLES MODE ══════════════════════════════════════════ -->
 
+        <!-- Free symbols warning (function mode only) -->
+        @if (inputMode() === 'function' && freeSymbolsInDft().length > 0) {
+          <div class="rounded border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+            <p class="text-xs font-mono text-amber-700 dark:text-amber-400">
+              {{ 'transforms.dft.freeSymbolsWarning' | transloco : { symbols: freeSymbolsInDft().join(', ') } }}
+            </p>
+          </div>
+        }
+
         <!-- Error (function / manual modes) -->
         @if (inputMode() !== 'epicycles' && error()) {
           <div class="rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2">
@@ -409,7 +418,7 @@
         <!-- Compute button (function / manual modes only) -->
         @if (inputMode() !== 'epicycles') {
           <button type="button" (click)="compute()"
-            [disabled]="loading() || !!result() || (inputMode() === 'manual' && !manualValid())"
+            [disabled]="loading() || !!result() || (inputMode() === 'manual' && !manualValid()) || (inputMode() === 'function' && freeSymbolsInDft().length > 0)"
             class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed">
             @if (loading()) {
               <span class="flex items-center justify-center gap-2">

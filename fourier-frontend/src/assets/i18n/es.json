@@ -303,6 +303,7 @@
       "placeholderDft": "Coeficientes X[k]",
       "placeholderIdft": "Reconstrucción exacta",
       "goToContinuous": "Ir a transformada continua",
+      "freeSymbolsWarning": "La DFT requiere expresiones numéricas. Elimina los símbolos libres: {{ symbols }}",
       "modeEpicycles": "Epiciclos",
       "epicycles": {
         "presetsLabel": "Figuras predefinidas",
