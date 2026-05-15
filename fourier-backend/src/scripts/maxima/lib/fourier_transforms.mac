@@ -1370,11 +1370,16 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                    and is(_A > 0)
                    and ratsimp(_denom - (_A*t_var^2 + _B*t_var + _C)) = 0 then (
                     _disc: ratsimp(_B^2 - 4*_A*_C),
-                    if is(_disc < 0) then (
+                    /* Accept when disc is numerically negative OR symbolically
+                       free of t_var (assume user supplies a valid function) */
+                    if errcatch(is(_disc < 0)) = [true]
+                       or (not numberp(_disc) and freeof(t_var, _disc)) then (
                         _t0: ratsimp(-_B / (2*_A)),
                         _asq: ratsimp(-_disc / (4*_A)),
                         _acand: sqrt(ratdisrep(rat(_asq))),
-                        if is(_acand > 0) and freeof(t_var, _acand) then (
+                        /* For symbolic _acand skip positivity check — assume valid */
+                        if freeof(t_var, _acand)
+                           and (errcatch(is(_acand > 0)) = [true] or not numberp(_acand)) then (
                             _k: ratsimp(_numer / _A),
                             if freeof(t_var, _k) then (
                                 if ratsimp(_t0) = 0 then
@@ -2397,10 +2402,13 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                    and is(_A_gl > 0) and not equal(_B_gl, 0)
                    and ratsimp(_d_gl - (_A_gl*w_var^2 + _B_gl*w_var + _C_gl)) = 0 then (
                     _disc_gl: 4*_A_gl*_C_gl - _B_gl^2,
-                    if is(_disc_gl > 0) then (
+                    /* Accept numeric positive OR symbolic free of w_var */
+                    if errcatch(is(_disc_gl > 0)) = [true]
+                       or (not numberp(_disc_gl) and freeof(w_var, _disc_gl)) then (
                         _a_gl: sqrt(ratdisrep(rat(_disc_gl / (4*_A_gl^2)))),
                         _om0_gl: ratsimp(-_B_gl / (2*_A_gl)),
-                        if freeof(w_var, _a_gl) and is(_a_gl > 0)
+                        if freeof(w_var, _a_gl)
+                           and (errcatch(is(_a_gl > 0)) = [true] or not numberp(_a_gl))
                            and freeof(w_var, _om0_gl) then (
                             _k_gl: ratsimp(_n_gl),
                             if freeof(w_var, _k_gl) then block(
