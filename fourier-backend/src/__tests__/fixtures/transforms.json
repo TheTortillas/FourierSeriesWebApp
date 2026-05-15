@@ -3684,5 +3684,62 @@
             "F": "-((%i*%pi*(%e^-(a*abs(w-b))-%e^-(a*abs(w+b))))/(2*a))",
             "params": ["a", "b"]
         }
+    },
+    {
+        "id": "CS01",
+        "type": "ift",
+        "description": "IFT distribucional: IFT(cos(ω)) = (δ(t+1)+δ(t-1))/2",
+        "input": {
+            "segments": [{ "expression": "cos(w)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(delta(t+1)+delta(t-1))/2"
+        }
+    },
+    {
+        "id": "CS02",
+        "type": "ift",
+        "description": "IFT distribucional: IFT(sin(ω)) = (i/2)·(δ(t-1)-δ(t+1))",
+        "input": {
+            "segments": [{ "expression": "sin(w)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%i*(delta(t-1)-delta(t+1)))/2"
+        }
+    },
+    {
+        "id": "CS03",
+        "type": "ift",
+        "description": "IFT distribucional escalar: IFT(3·cos(2ω)) = (3/2)·(δ(t+2)+δ(t-2))",
+        "input": {
+            "segments": [{ "expression": "3*cos(2*w)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(3*(delta(t+2)+delta(t-2)))/2"
+        }
+    },
+    {
+        "id": "CS04",
+        "type": "ift",
+        "description": "IFT distribucional simbólica: IFT(A·sin(b·ω)) = (i·A/2)·(δ(t-b)-δ(t+b)), A,b>0",
+        "input": {
+            "segments": [{ "expression": "A*sin(b*w)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(%i*A*(delta(t-b)-delta(t+b)))/2",
+            "params": ["A", "b"]
+        }
     }
 ]
