@@ -365,6 +365,47 @@ transformsRouter.post(
   },
 );
 
+/**
+ * @openapi
+ * /api/transforms/dft/sample:
+ *   post:
+ *     summary: Muestrea una función definida por tramos para usarla como entrada de la DFT
+ *     tags: [Transforms]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [segments, N]
+ *             properties:
+ *               segments:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/PiecewiseSegment'
+ *               N:
+ *                 type: integer
+ *                 minimum: 4
+ *                 maximum: 4096
+ *                 description: Número de muestras
+ *               intVar:
+ *                 type: string
+ *                 example: "t"
+ *           example:
+ *             segments:
+ *               - expression: "sin(t)"
+ *                 from: "0"
+ *                 to: "2*%pi"
+ *             N: 64
+ *             intVar: "t"
+ *     responses:
+ *       200:
+ *         description: Muestras obtenidas exitosamente
+ *       400:
+ *         description: Input inválido
+ *       500:
+ *         description: Error de cálculo
+ */
 transformsRouter.post(
   "/dft/sample",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -427,6 +468,47 @@ transformsRouter.post(
   },
 );
 
+/**
+ * @openapi
+ * /api/transforms/dft/function:
+ *   post:
+ *     summary: Calcula la DFT/FFT a partir de una función definida por tramos
+ *     tags: [Transforms]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [segments, N]
+ *             properties:
+ *               segments:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/PiecewiseSegment'
+ *               N:
+ *                 type: integer
+ *                 minimum: 4
+ *                 maximum: 4096
+ *                 description: Número de muestras a tomar de la función
+ *               intVar:
+ *                 type: string
+ *                 example: "t"
+ *           example:
+ *             segments:
+ *               - expression: "sin(t)"
+ *                 from: "0"
+ *                 to: "2*%pi"
+ *             N: 64
+ *             intVar: "t"
+ *     responses:
+ *       200:
+ *         description: DFT calculada exitosamente
+ *       400:
+ *         description: Input inválido
+ *       500:
+ *         description: Error de cálculo
+ */
 transformsRouter.post(
   "/dft/function",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
