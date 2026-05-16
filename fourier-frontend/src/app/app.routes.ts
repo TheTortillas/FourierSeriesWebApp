@@ -93,6 +93,16 @@ export const routes: Routes = [
           import('./features/about/about.component').then((m) => m.AboutComponent),
       },
       {
+        path: 'legal/privacy',
+        loadComponent: () =>
+          import('./features/legal/privacy/privacy.component').then((m) => m.PrivacyComponent),
+      },
+      {
+        path: 'legal/terms',
+        loadComponent: () =>
+          import('./features/legal/terms/terms.component').then((m) => m.TermsComponent),
+      },
+      {
         path: 'feedback',
         loadComponent: () =>
           import('./features/feedback/feedback.component').then(

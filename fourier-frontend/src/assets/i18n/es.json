@@ -47,6 +47,8 @@
     "footerText": "Herramienta de análisis matemático",
     "more": "Más opciones",
     "about": "Acerca de",
+    "privacy": "Privacidad",
+    "terms": "Términos de Uso",
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
