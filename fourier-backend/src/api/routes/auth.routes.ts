@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { authService, userRepository } from "../../infrastructure/container";
+import { authService, userRepository, tokenRepository } from "../../infrastructure/container";
 import { authenticate, optionalAuth } from "../middlewares/authenticate";
 import type { AuthenticatedRequest } from "../middlewares/authenticate";
 import { config } from "../../config/env";
@@ -90,6 +90,10 @@ authRouter.post(
     } catch (err) {
       if (err instanceof Error && err.message === "Email already registered") {
         res.status(400).json({ error: err.message });
+        return;
+      }
+      if ((err as { code?: string }).code === "EMAIL_RECENTLY_DELETED") {
+        res.status(409).json({ error: "EMAIL_RECENTLY_DELETED" });
         return;
       }
       next(err);
@@ -201,6 +205,10 @@ authRouter.post(
     } catch (err) {
       if (err instanceof Error && err.message === "Invalid Google token") {
         res.status(401).json({ error: err.message });
+        return;
+      }
+      if ((err as { code?: string }).code === "EMAIL_RECENTLY_DELETED") {
+        res.status(409).json({ error: "EMAIL_RECENTLY_DELETED" });
         return;
       }
       next(err);
@@ -656,6 +664,35 @@ authRouter.post(
         res.status(400).json({ error: err.message });
         return;
       }
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/auth/me:
+ *   delete:
+ *     summary: Eliminar cuenta propia (soft delete)
+ *     tags: [Auth]
+ *     security: [{ cookieAuth: [] }]
+ *     responses:
+ *       204:
+ *         description: Cuenta eliminada correctamente
+ *       401:
+ *         description: No autenticado
+ */
+authRouter.delete(
+  "/me",
+  authenticate,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.id;
+      await tokenRepository.revokeAllUserTokens(userId);
+      await userRepository.softDelete(userId);
+      clearRefreshCookie(res);
+      res.status(204).send();
+    } catch (err) {
       next(err);
     }
   },

@@ -504,7 +504,14 @@
     "confirmNewPassword": "Confirmar nueva contraseña",
     "savePassword": "Cambiar contraseña",
     "savingPassword": "Guardando…",
-    "googleNoPassword": "Tu cuenta usa Google — el cambio de contraseña no está disponible."
+    "googleNoPassword": "Tu cuenta usa Google — el cambio de contraseña no está disponible.",
+    "dangerZone": "Zona de peligro",
+    "deleteAccount": "Eliminar cuenta",
+    "deleteAccountDesc": "Esta acción es permanente. Tu cuenta, historial y favoritos serán eliminados.",
+    "deleteAccountBtn": "Eliminar cuenta",
+    "deleteAccountConfirm": "¿Estás seguro? Esta acción no se puede deshacer. Tu cuenta y todos tus datos serán eliminados de forma permanente.",
+    "deleting": "Eliminando…",
+    "confirmDelete": "Sí, eliminar mi cuenta"
   },
   "errors": {
     "generic": "Ocurrió un error. Intenta de nuevo.",
@@ -514,7 +521,8 @@
     "emailNotVerified": "Debes verificar tu correo antes de hacer cálculos.",
     "weeklyLimitReached": "Límite semanal alcanzado. Tu cuota se renueva el {{ date }}.",
     "tooManyRequests": "Demasiadas solicitudes. Intenta de nuevo en un momento.",
-    "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos."
+    "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos.",
+    "emailRecentlyDeleted": "Esta dirección fue usada en una cuenta eliminada esta semana. Puedes volver a registrarte cuando inicie la nueva semana."
   },
   "seo": {
     "home": {

@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { db } from "../database/db";
 import type {
   IUserRepository,
@@ -71,6 +72,20 @@ export class UserRepository implements IUserRepository {
   }
 
   async create(input: CreateUserInput): Promise<UserRecord> {
+    const emailHash = createHash("sha256").update(input.email.toLowerCase()).digest("hex");
+    const currentWeekStart = this._currentWeekStart();
+
+    const blocked = await db.query(
+      `SELECT 1 FROM users
+       WHERE deleted_email_hash = $1
+         AND deleted_at >= $2
+       LIMIT 1`,
+      [emailHash, currentWeekStart],
+    );
+    if (blocked.rows.length > 0) {
+      throw Object.assign(new Error("EMAIL_RECENTLY_DELETED"), { code: "EMAIL_RECENTLY_DELETED" });
+    }
+
     const client = await db.connect();
     let newUserId: string;
     try {
@@ -136,10 +151,38 @@ export class UserRepository implements IUserRepository {
   }
 
   async softDelete(id: string): Promise<void> {
-    await db.query(
-      `UPDATE users SET deleted_at = NOW(), is_active = FALSE WHERE id = $1`,
-      [id],
-    );
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      const emailRow = await client.query<{ email: string }>(
+        `SELECT email FROM users WHERE id = $1`,
+        [id],
+      );
+      const emailHash = emailRow.rows[0]
+        ? createHash("sha256").update(emailRow.rows[0].email.toLowerCase()).digest("hex")
+        : null;
+
+      await client.query(
+        `DELETE FROM user_auth_providers WHERE user_id = $1`,
+        [id],
+      );
+      await client.query(
+        `UPDATE users
+         SET deleted_at         = NOW(),
+             is_active          = FALSE,
+             deleted_email_hash = $2,
+             email              = 'deleted_' || id || '@deleted.invalid'
+         WHERE id = $1`,
+        [id, emailHash],
+      );
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   async linkGoogleAccount(userId: string, googleId: string): Promise<void> {
@@ -387,5 +430,13 @@ export class UserRepository implements IUserRepository {
       free:     parseInt(row.free),
       inactive: parseInt(row.inactive),
     };
+  }
+
+  private _currentWeekStart(): Date {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    // Roll back to the most recent Sunday (matches nextWeekStart() in requireTierLimit)
+    d.setDate(d.getDate() - d.getDay());
+    return d;
   }
 }

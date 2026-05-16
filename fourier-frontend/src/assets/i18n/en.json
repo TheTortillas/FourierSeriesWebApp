@@ -504,7 +504,14 @@
     "confirmNewPassword": "Confirm new password",
     "savePassword": "Change password",
     "savingPassword": "Saving…",
-    "googleNoPassword": "Your account uses Google sign-in — password change is not available."
+    "googleNoPassword": "Your account uses Google sign-in — password change is not available.",
+    "dangerZone": "Danger zone",
+    "deleteAccount": "Delete account",
+    "deleteAccountDesc": "This action is permanent. Your account, history, and favorites will be deleted.",
+    "deleteAccountBtn": "Delete account",
+    "deleteAccountConfirm": "Are you sure? This action cannot be undone. Your account and all your data will be permanently deleted.",
+    "deleting": "Deleting…",
+    "confirmDelete": "Yes, delete my account"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -514,7 +521,8 @@
     "emailNotVerified": "Please verify your email before making calculations.",
     "weeklyLimitReached": "Weekly limit reached. Your quota resets on {{ date }}.",
     "tooManyRequests": "Too many requests. Please try again in a moment.",
-    "tooManyRequestsMinutes": "Too many requests. Please try again in {{ minutes }} minutes."
+    "tooManyRequestsMinutes": "Too many requests. Please try again in {{ minutes }} minutes.",
+    "emailRecentlyDeleted": "This address was used in an account deleted this week. You can register again when the new week begins."
   },
   "seo": {
     "home": {

@@ -131,6 +131,10 @@ export class ApiService {
     return this.http.patch<{ user: User }>(`${this.base}/auth/profile`, { firstName, lastName });
   }
 
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/auth/me`);
+  }
+
   // ─── Fourier Series ──────────────────────────────────────────────────────
 
   calculateTrigonometric(body: FourierSeriesRequest): Observable<TrigonometricResponse> {
