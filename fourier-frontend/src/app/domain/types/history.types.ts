@@ -1,6 +1,7 @@
 export interface HistoryEntry {
   id: string;
   userId: string;
+  ipAddress?: string | null;
   type: string;
   input: Record<string, unknown>;
   executionMs: number;

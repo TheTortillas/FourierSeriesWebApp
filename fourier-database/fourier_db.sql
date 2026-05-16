@@ -72,7 +72,8 @@ CREATE TYPE audit_action AS ENUM (
     'user_deactivated',
     'user_activated',
     'tier_changed',
-    'audit_log_cleared'
+    'audit_log_cleared',
+    'rate_limit_blocked'
 );
 
 -- -------------------------------------------------------
@@ -101,15 +102,17 @@ CREATE TABLE users (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_login_at   TIMESTAMPTZ,
-    deleted_at      TIMESTAMPTZ,
+    deleted_at          TIMESTAMPTZ,
+    deleted_email_hash  TEXT,
     CONSTRAINT users_email_unique  UNIQUE (email),
     CONSTRAINT users_person_unique UNIQUE (person_id)
 );
 
-CREATE INDEX idx_users_email  ON users (email);
-CREATE INDEX idx_users_active ON users (is_active) WHERE deleted_at IS NULL;
-CREATE INDEX idx_users_role   ON users (role);
-CREATE INDEX idx_users_tier   ON users (tier);
+CREATE INDEX idx_users_email               ON users (email);
+CREATE INDEX idx_users_active              ON users (is_active) WHERE deleted_at IS NULL;
+CREATE INDEX idx_users_role                ON users (role);
+CREATE INDEX idx_users_tier                ON users (tier);
+CREATE INDEX idx_users_deleted_email_hash  ON users (deleted_email_hash) WHERE deleted_email_hash IS NOT NULL;
 
 -- -------------------------------------------------------
 -- USER AUTH PROVIDERS

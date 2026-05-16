@@ -51,4 +51,5 @@ node_modules/
 # Local working notes (non-versioned)
 PLOTTER_EVAL.md
 FOURIER_TABLES.md
+deploy.sh
 .claude/

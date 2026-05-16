@@ -1,6 +1,7 @@
 import rateLimit from "express-rate-limit";
 import { config } from "../../config/env";
 import { logger } from "../../infrastructure/logging/logger";
+import { db } from "../../infrastructure/database/db";
 import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest } from "./authenticate";
 
@@ -22,24 +23,18 @@ type RateLimitMetricsSnapshot = {
   requestsByEndpoint: Record<string, number>;
   blockedByEndpoint: Record<string, number>;
   blockedByLimiter: Record<string, number>;
+  blockedByIp: Record<string, number>;
   ratios: Record<RateLimitBucket, number>;
 };
 
 const metrics: Omit<RateLimitMetricsSnapshot, "ratios"> = {
   startedAt: new Date().toISOString(),
-  requestsByBucket: {
-    compute: 0,
-    parse: 0,
-    auth: 0,
-  },
-  blockedByBucket: {
-    compute: 0,
-    parse: 0,
-    auth: 0,
-  },
+  requestsByBucket: { compute: 0, parse: 0, auth: 0 },
+  blockedByBucket:  { compute: 0, parse: 0, auth: 0 },
   requestsByEndpoint: {},
-  blockedByEndpoint: {},
-  blockedByLimiter: {},
+  blockedByEndpoint:  {},
+  blockedByLimiter:   {},
+  blockedByIp:        {},
 };
 
 function incrementCounter(store: Record<string, number>, key: string): void {
@@ -65,6 +60,8 @@ function recordBlocked(
   metrics.blockedByBucket[bucket] += 1;
   incrementCounter(metrics.blockedByLimiter, limiter);
   incrementCounter(metrics.blockedByEndpoint, normalizeEndpoint(req));
+  const ip = req.ip ?? "unknown";
+  incrementCounter(metrics.blockedByIp, ip);
 }
 
 function logRateLimitEvent(
@@ -91,6 +88,31 @@ function logRateLimitEvent(
   );
 }
 
+// Fire-and-forget: persists the block event to audit_log without blocking
+// the 429 response. Errors are logged but never propagate.
+function persistBlockEvent(
+  bucket: RateLimitBucket,
+  limiter: string,
+  req: RequestLike,
+): void {
+  const ip       = req.ip ?? null;
+  const userId   = req.user?.id ?? null;
+  const endpoint = normalizeEndpoint(req);
+  const method   = req.method ?? "UNKNOWN";
+
+  db.query(
+    `INSERT INTO audit_log (user_id, action, ip_address, metadata)
+     VALUES ($1, 'rate_limit_blocked', $2, $3)`,
+    [
+      userId,
+      ip,
+      JSON.stringify({ bucket, limiter, endpoint, method }),
+    ],
+  ).catch((err: unknown) => {
+    logger.error({ err }, "Failed to persist rate_limit_blocked event");
+  });
+}
+
 function rateLimitHandler(
   bucket: RateLimitBucket,
   limiter: string,
@@ -100,6 +122,7 @@ function rateLimitHandler(
     const seconds = retryAfterSeconds(res);
     recordBlocked(bucket, limiter, req);
     logRateLimitEvent(bucket, limiter, req, seconds);
+    persistBlockEvent(bucket, limiter, req);
     res.status(429).json({
       error: message,
       retryAfterSeconds: seconds,
@@ -121,9 +144,12 @@ export function trackRateLimitRequests(bucket: RateLimitBucket) {
 
 export function getRateLimitMetricsSnapshot(): RateLimitMetricsSnapshot {
   const requestsByBucket = { ...metrics.requestsByBucket };
-  const blockedByBucket = { ...metrics.blockedByBucket };
+  const blockedByBucket  = { ...metrics.blockedByBucket };
 
-  const ratio = (blocked: number, total: number): number => {
+  // Ratio = blocked / (blocked + allowed) so it can never exceed 100%.
+  // The previous formula (blocked / allowed) was incorrect when blocked > allowed.
+  const ratio = (blocked: number, allowed: number): number => {
+    const total = blocked + allowed;
     if (total <= 0) return 0;
     return Number(((blocked / total) * 100).toFixed(3));
   };
@@ -133,12 +159,13 @@ export function getRateLimitMetricsSnapshot(): RateLimitMetricsSnapshot {
     requestsByBucket,
     blockedByBucket,
     requestsByEndpoint: { ...metrics.requestsByEndpoint },
-    blockedByEndpoint: { ...metrics.blockedByEndpoint },
-    blockedByLimiter: { ...metrics.blockedByLimiter },
+    blockedByEndpoint:  { ...metrics.blockedByEndpoint },
+    blockedByLimiter:   { ...metrics.blockedByLimiter },
+    blockedByIp:        { ...metrics.blockedByIp },
     ratios: {
       compute: ratio(blockedByBucket.compute, requestsByBucket.compute),
-      parse: ratio(blockedByBucket.parse, requestsByBucket.parse),
-      auth: ratio(blockedByBucket.auth, requestsByBucket.auth),
+      parse:   ratio(blockedByBucket.parse,   requestsByBucket.parse),
+      auth:    ratio(blockedByBucket.auth,     requestsByBucket.auth),
     },
   };
 }
@@ -149,11 +176,11 @@ function isAuthenticated(req: RequestLike): boolean {
 
 function hasDedicatedLimiter(path: string): boolean {
   return (
-    path.startsWith("/api/fourier") ||
-    path.startsWith("/api/simplify") ||
-    path.startsWith("/api/transforms") ||
-    path.startsWith("/api/dft") ||
-    path.startsWith("/api/parse") ||
+    path.startsWith("/api/fourier")   ||
+    path.startsWith("/api/simplify")  ||
+    path.startsWith("/api/transforms")||
+    path.startsWith("/api/dft")       ||
+    path.startsWith("/api/parse")     ||
     path.startsWith("/api/auth")
   );
 }

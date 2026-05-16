@@ -15,42 +15,58 @@ declare global {
 export class AnalyticsService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
+  private initialized = false;
 
   private get isBrowser(): boolean {
     return isPlatformBrowser(this.platformId);
   }
 
+  private get hasGtag(): boolean {
+    return typeof window.gtag === 'function';
+  }
+
+  private withDebugMode(params?: Record<string, unknown>): Record<string, unknown> | undefined {
+    if (!this.isBrowser) return params;
+
+    const debugEnabled = new URLSearchParams(window.location.search).get('ga_debug') === '1';
+    if (!debugEnabled) return params;
+
+    return { ...(params ?? {}), debug_mode: true };
+  }
+
   init(): void {
-    if (!this.isBrowser || !environment.ga4Id) return;
+    if (!this.isBrowser || !environment.ga4Id || !this.hasGtag || this.initialized) return;
 
-    const id = environment.ga4Id;
+    this.initialized = true;
 
-    // Inject gtag script
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
-    document.head.appendChild(script);
-
-    // Bootstrap dataLayer + gtag function
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function (...args: unknown[]) {
-      window.dataLayer.push(args);
-    };
-    window.gtag('js', new Date());
-    window.gtag('config', id, { send_page_view: false });
+    window.gtag(
+      'event',
+      'page_view',
+      this.withDebugMode({
+        page_path: window.location.pathname + window.location.search,
+        page_location: window.location.href,
+        page_title: document.title,
+      }),
+    );
 
     // Track SPA navigation as page_view events
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
-        window.gtag('event', 'page_view', {
-          page_path: e.urlAfterRedirects,
-        });
+        window.gtag(
+          'event',
+          'page_view',
+          this.withDebugMode({
+            page_path: e.urlAfterRedirects,
+            page_location: window.location.origin + e.urlAfterRedirects,
+            page_title: document.title,
+          }),
+        );
       });
   }
 
   trackEvent(eventName: string, params?: Record<string, unknown>): void {
-    if (!this.isBrowser || !environment.ga4Id) return;
-    window.gtag?.('event', eventName, params);
+    if (!this.isBrowser || !environment.ga4Id || !this.hasGtag) return;
+    window.gtag('event', eventName, this.withDebugMode(params));
   }
 }

@@ -261,6 +261,31 @@ export class ResultsSummaryComponent {
     return fallback !== undefined && isFinite(fallback) ? fallback : undefined;
   }
 
+  private maximaExprToTex(expr: string): string {
+    const trimmed = expr.trim();
+    if (!trimmed) return '0';
+
+    return trimmed
+      .replace(/%pi\b/g, '\\pi')
+      .replace(/%e\b/g, 'e')
+      .replace(/\*/g, '\\,')
+      .replace(/\s+/g, '')
+      .replace(/\(/g, '\\left(')
+      .replace(/\)/g, '\\right)');
+  }
+
+  private formatHalfRangeShiftTex(intVar: string, from: string): string {
+    const raw = from.trim();
+    if (!raw || raw === '0') return intVar;
+
+    const normalized = raw.replace(/^\(+|\)+$/g, '');
+    const negative = normalized.startsWith('-');
+    const core = negative ? normalized.slice(1).trim() : normalized;
+    const rendered = this.maximaExprToTex(core);
+
+    return negative ? `${intVar} + ${rendered}` : `${intVar} - ${rendered}`;
+  }
+
   /** Canvas layers: original function + harmonics + Fourier approximation */
   readonly layers = computed<PlotLayer[]>(() => {
     const result = this.store.result();
@@ -365,6 +390,7 @@ export class ResultsSummaryComponent {
     } else if (result.type === 'halfRange') {
       const rawTerms = result.terms.terms as TrigNumericTerm[];
       const c = result.data.coefficients;
+      const originX = this.evalScalar(result.data.input.segments[0]?.from, undefined) ?? 0;
       let terms = rawTerms;
       if (hasPv) {
         const anFn = c.an?.maxima ? math.compile(c.an.maxima, 'n', pv) : null;
@@ -387,19 +413,25 @@ export class ResultsSummaryComponent {
           this.evalScalar(result.data.a0Raw?.maxima, c.a0Float) ??
           (this.evalScalar(c.a0?.maxima, undefined) ?? 0) * 2;
         dcHarmonicValue = a0Raw / 2;
-        approxFn = rec.buildCosineOnly(a0Raw, activeTerms, w0, activeTerms.length);
+        approxFn = rec.buildCosineOnly(a0Raw, activeTerms, w0, {
+          originX,
+          nMax: activeTerms.length,
+        });
         if (showHarmonics) {
           harmonicFns = activeTerms.map((t) => {
             const { n, anFloat } = t;
-            return { n, fn: (x: number) => anFloat * Math.cos(n * w0 * x) };
+            return { n, fn: (x: number) => anFloat * Math.cos(n * w0 * (x - originX)) };
           });
         }
       } else {
-        approxFn = rec.buildSineOnly(activeTerms, w0, activeTerms.length);
+        approxFn = rec.buildSineOnly(activeTerms, w0, {
+          originX,
+          nMax: activeTerms.length,
+        });
         if (showHarmonics) {
           harmonicFns = activeTerms.map((t) => {
             const { n, bnFloat } = t;
-            return { n, fn: (x: number) => bnFloat * Math.sin(n * w0 * x) };
+            return { n, fn: (x: number) => bnFloat * Math.sin(n * w0 * (x - originX)) };
           });
         }
       }
@@ -585,7 +617,6 @@ export class ResultsSummaryComponent {
   /** Label for the series export modal: "f(x)", "f(t)", etc. */
   readonly seriesLabel = computed(() => `f(${this.store.intVar()})`);
 
-
   // ── Tab state ─────────────────────────────────────────────────────────────
   readonly activeTab = signal<'coefficients' | 'terms' | 'spectrum' | 'validation'>('coefficients');
   readonly termsTabInitialized = signal(false);
@@ -645,6 +676,11 @@ export class ResultsSummaryComponent {
     if (r.type === 'halfRange') {
       const hrMode = this.halfRangeMode();
       const { a0, an, bn } = coeffs;
+      const originFrom = r.data.input.segments[0]?.from ?? '0';
+      const shiftedVar = this.formatHalfRangeShiftTex(intVar, originFrom);
+      const shiftedOmega = w0IsOne
+        ? `n\\,${shiftedVar}`
+        : `n\\,${w0Tex}\\,\\left(${shiftedVar}\\right)`;
       if (hrMode === 'cosine') {
         const a0IsZero =
           (r.data.a0Raw?.maxima ?? r.data.coefficients.a0?.maxima ?? '').trim() === '0';
@@ -652,7 +688,7 @@ export class ResultsSummaryComponent {
 
         if (anIsZero) return a0IsZero ? '0' : (a0 ?? '0');
 
-        const body = `\\sum_{n=1}^{\\infty}${an}\\cos\\!\\left(${omega}\\right)`;
+        const body = `\\sum_{n=1}^{\\infty}${an}\\cos\\!\\left(${shiftedOmega}\\right)`;
         if (!a0IsZero && a0) {
           const sep = body.startsWith('-') ? ' ' : ' + ';
           return `${a0}${sep}${body}`;
@@ -661,7 +697,7 @@ export class ResultsSummaryComponent {
       }
       const bnIsZero = !bn || bn === '0';
       if (bnIsZero) return '0';
-      return `\\sum_{n=1}^{\\infty}${bn}\\sin\\!\\left(${omega}\\right)`;
+      return `\\sum_{n=1}^{\\infty}${bn}\\sin\\!\\left(${shiftedOmega}\\right)`;
     }
 
     if (r.type === 'complex') {
@@ -753,12 +789,13 @@ export class ResultsSummaryComponent {
   });
 
   /** Typed tabs array so the template gets literal types */
-  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; labelKey: string }[] = [
-    { id: 'coefficients', labelKey: 'settingsCanvas.tabCoefficients' },
-    { id: 'terms',        labelKey: 'settingsCanvas.tabTerms' },
-    { id: 'spectrum',     labelKey: 'settingsCanvas.tabSpectrum' },
-    { id: 'validation',   labelKey: 'settingsCanvas.tabValidation' },
-  ];
+  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; labelKey: string }[] =
+    [
+      { id: 'coefficients', labelKey: 'settingsCanvas.tabCoefficients' },
+      { id: 'terms', labelKey: 'settingsCanvas.tabTerms' },
+      { id: 'spectrum', labelKey: 'settingsCanvas.tabSpectrum' },
+      { id: 'validation', labelKey: 'settingsCanvas.tabValidation' },
+    ];
 
   /** Context for the terms tab — trig / half-range branch */
   readonly termsTrigCtx = computed(() => {
@@ -789,11 +826,11 @@ export class ResultsSummaryComponent {
   });
 
   private readonly singularityKeyMap: Record<string, string> = {
-    removible:       'resultPanel.singularity.removible',
-    salto:           'resultPanel.singularity.salto',
-    asintotica:      'resultPanel.singularity.asintotica',
-    esencial:        'resultPanel.singularity.esencial',
-    fuera_de_dominio:'resultPanel.singularity.fuera_de_dominio',
+    removible: 'resultPanel.singularity.removible',
+    salto: 'resultPanel.singularity.salto',
+    asintotica: 'resultPanel.singularity.asintotica',
+    esencial: 'resultPanel.singularity.esencial',
+    fuera_de_dominio: 'resultPanel.singularity.fuera_de_dominio',
   };
 
   singularityLabel(type: string): string {
@@ -803,11 +840,11 @@ export class ResultsSummaryComponent {
 
   // ── Profile selector options ────────────────────────────────────────────────
   readonly profileOptions: { value: SimplifyProfile; labelKey: string }[] = [
-    { value: 'raw',          labelKey: 'settingsCanvas.profileRaw' },
-    { value: 'integer',      labelKey: 'settingsCanvas.profileInteger' },
-    { value: 'trigonometric',labelKey: 'settingsCanvas.profileTrig' },
-    { value: 'exponential',  labelKey: 'settingsCanvas.profileExp' },
-    { value: 'complete',     labelKey: 'settingsCanvas.profileComplete' },
+    { value: 'raw', labelKey: 'settingsCanvas.profileRaw' },
+    { value: 'integer', labelKey: 'settingsCanvas.profileInteger' },
+    { value: 'trigonometric', labelKey: 'settingsCanvas.profileTrig' },
+    { value: 'exponential', labelKey: 'settingsCanvas.profileExp' },
+    { value: 'complete', labelKey: 'settingsCanvas.profileComplete' },
   ];
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────

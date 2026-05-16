@@ -194,12 +194,25 @@ Fourier-Web-Calculator/
 
 The backend calls Maxima as a shell subprocess. The invocation syntax and how Node.js pipes stdin/stdout differ between Linux and Windows in ways that break Maxima's output parsing. The application is designed and tested exclusively on Linux (Ubuntu/Debian). The frontend can be developed on any OS.
 
-### Installing Maxima
+### Installing Maxima 5.47
+
+Ubuntu/Debian package managers ship **5.46**. The application targets **5.47**, which must be compiled from source:
 
 ```bash
-# Ubuntu / Debian
-sudo apt-get install maxima
+# Dependencies
+sudo apt install -y sbcl texinfo autoconf automake build-essential
 
+# Download and compile
+cd ~
+wget https://sourceforge.net/projects/maxima/files/Maxima-source/5.47.0-source/maxima-5.47.0.tar.gz
+tar -xzf maxima-5.47.0.tar.gz
+cd maxima-5.47.0
+./configure --with-sbcl
+make -j$(nproc)    # takes ~10-20 min on a small VM
+sudo make install
+```
+
+```bash
 # Arch Linux
 sudo pacman -S maxima
 

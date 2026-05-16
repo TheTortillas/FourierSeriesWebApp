@@ -79,6 +79,7 @@ export class LatexParserService {
       .replace(/\\exp\(/g, "\\operatorname{exp}(")
       .replace(/\\operatorname\{exp\}\(/g, "\\operatorname{exp}(")
       .replace(/\\operatorname\{sgn\}/g, "sgn")
+      .replace(/\\operatorname\{rect\}/g, "rect")
       .replace(/\\operatorname\{delta\}/g, " TMDELTA")
       .replace(/\\delta\b/g, " TMDELTA")
       .replace(/\\operatorname\{gamma\}/g, "TMGAMMA")
@@ -186,7 +187,7 @@ export class LatexParserService {
       .replace(/\bTMDELTA\b/g, "delta")
       .replace(/\bTMGAMMA\b/g, "gamma")
       .replace(/\bTMFACTORIAL\b/g, "factorial")
-      .replace(/\b(gamma|factorial|exp)\s*\*\s*\(/g, "$1(");
+      .replace(/\b(u|sgn|delta|rect|gamma|factorial|exp)\s*\*\s*\(/g, "$1(");
 
     return this.normalizePostfixFactorial(normalized);
   }

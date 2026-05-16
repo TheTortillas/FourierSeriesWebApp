@@ -32,6 +32,7 @@ const EVENT_JOIN = `
 
 function buildHistoryConditions(filters?: {
   userId?: string;
+  ip?: string;
   type?: string;
   anonymousOnly?: boolean;
   favoritesOnly?: boolean;
@@ -43,13 +44,14 @@ function buildHistoryConditions(filters?: {
   const params: unknown[] = [];
   let p = 1;
 
-  if (filters?.userId)        { conditions.push(`ce.user_id = $${p++}`);                                    params.push(filters.userId); }
-  if (filters?.type)          { conditions.push(`c.type = $${p++}`);                                        params.push(filters.type); }
+  if (filters?.userId)        { conditions.push(`ce.user_id = $${p++}`);                                       params.push(filters.userId); }
+  if (filters?.ip)            { conditions.push(`ce.ip_address = $${p++}::inet`);                              params.push(filters.ip); }
+  if (filters?.type)          { conditions.push(`c.type = $${p++}`);                                           params.push(filters.type); }
   if (filters?.anonymousOnly) { conditions.push(`ce.user_id IS NULL`); }
   if (filters?.favoritesOnly) { conditions.push(`ce.is_favorite = TRUE`); }
-  if (filters?.dateFrom)      { conditions.push(`ce.last_calculated_at >= $${p++}`);                        params.push(filters.dateFrom); }
-  if (filters?.dateTo)        { conditions.push(`ce.last_calculated_at < $${p++}::date + '1 day'::interval`); params.push(filters.dateTo); }
-  if (filters?.minExecutionMs !== undefined) { conditions.push(`ce.execution_ms >= $${p++}`);               params.push(filters.minExecutionMs); }
+  if (filters?.dateFrom)      { conditions.push(`ce.last_calculated_at >= $${p++}`);                           params.push(filters.dateFrom); }
+  if (filters?.dateTo)        { conditions.push(`ce.last_calculated_at < $${p++}::date + '1 day'::interval`);  params.push(filters.dateTo); }
+  if (filters?.minExecutionMs !== undefined) { conditions.push(`ce.execution_ms >= $${p++}`);                  params.push(filters.minExecutionMs); }
 
   return { conditions, params };
 }
@@ -107,15 +109,16 @@ export class HistoryRepository implements IHistoryRepository {
 
     if (input.userId) {
       const r = await db.query(
-        `INSERT INTO calculation_events (calculation_id, user_id, execution_ms)
-         VALUES ($1, $2, $3)
+        `INSERT INTO calculation_events (calculation_id, user_id, ip_address, execution_ms)
+         VALUES ($1, $2, $3, $4)
          ON CONFLICT (calculation_id, user_id) WHERE user_id IS NOT NULL
          DO UPDATE SET
            count              = calculation_events.count + 1,
            last_calculated_at = NOW(),
-           execution_ms       = EXCLUDED.execution_ms
+           execution_ms       = EXCLUDED.execution_ms,
+           ip_address         = EXCLUDED.ip_address
          ${EVENT_RETURNING}`,
-        [calcId, input.userId, input.executionMs ?? null],
+        [calcId, input.userId, input.ipAddress ?? null, input.executionMs ?? null],
       );
       eventRow = r.rows[0]!;
     } else {
@@ -243,6 +246,7 @@ export class HistoryRepository implements IHistoryRepository {
     offset: number,
     filters?: {
       userId?: string;
+      ip?: string;
       type?: string;
       anonymousOnly?: boolean;
       favoritesOnly?: boolean;
@@ -269,6 +273,7 @@ export class HistoryRepository implements IHistoryRepository {
 
   async countAll(filters?: {
     userId?: string;
+    ip?: string;
     type?: string;
     anonymousOnly?: boolean;
     favoritesOnly?: boolean;

@@ -131,6 +131,10 @@ export class ApiService {
     return this.http.patch<{ user: User }>(`${this.base}/auth/profile`, { firstName, lastName });
   }
 
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/auth/me`);
+  }
+
   // ─── Fourier Series ──────────────────────────────────────────────────────
 
   calculateTrigonometric(body: FourierSeriesRequest): Observable<TrigonometricResponse> {
@@ -281,6 +285,7 @@ export class ApiService {
     if (query?.offset !== undefined) params = params.set('offset', query.offset);
     if (query?.action) params = params.set('action', query.action);
     if (query?.userId) params = params.set('userId', query.userId);
+    if (query?.ip)     params = params.set('ip',     query.ip);
     if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
     if (query?.dateTo) params = params.set('dateTo', query.dateTo);
     if (query?.anonymousOnly) params = params.set('anonymousOnly', query.anonymousOnly);
@@ -292,6 +297,7 @@ export class ApiService {
     if (query?.limit !== undefined) params = params.set('limit', query.limit);
     if (query?.offset !== undefined) params = params.set('offset', query.offset);
     if (query?.userId) params = params.set('userId', query.userId);
+    if (query?.ip)     params = params.set('ip',     query.ip);
     if (query?.type) params = params.set('type', query.type);
     if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
     if (query?.dateTo) params = params.set('dateTo', query.dateTo);
@@ -322,12 +328,53 @@ export class ApiService {
     return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
   }
 
+  getRateLimitHistory(params: { limit?: number; offset?: number; ip?: string; limiter?: string } = {}):
+    Observable<import('../../../domain').RateLimitHistoryResponse> {
+    let p = new HttpParams();
+    if (params.limit)   p = p.set('limit',   params.limit);
+    if (params.offset)  p = p.set('offset',  params.offset);
+    if (params.ip)      p = p.set('ip',      params.ip);
+    if (params.limiter) p = p.set('limiter', params.limiter);
+    return this.http.get<import('../../../domain').RateLimitHistoryResponse>(
+      `${this.base}/admin/rate-limit/history`, { params: p },
+    );
+  }
+
   getFeedbackStats(): Observable<import('../../../domain').FeedbackStats> {
-    return this.http.get<import('../../../domain').FeedbackStats>(`${this.base}/admin/feedback/stats`);
+    return this.http.get<import('../../../domain').FeedbackStats>(
+      `${this.base}/admin/feedback/stats`,
+    );
+  }
+
+  getFeedbackList(
+    limit: number = 50,
+    offset: number = 0,
+    category?: string,
+  ): Observable<import('../../../domain').FeedbackListResponse> {
+    let url = `${this.base}/admin/feedback/list?limit=${limit}&offset=${offset}`;
+    if (category) url += `&category=${category}`;
+    return this.http.get<import('../../../domain').FeedbackListResponse>(url);
+  }
+
+  getAllComments(
+    limit: number = 50,
+    offset: number = 0,
+  ): Observable<import('../../../domain').UnifiedCommentsResponse> {
+    return this.http.get<import('../../../domain').UnifiedCommentsResponse>(
+      `${this.base}/admin/comments/all?limit=${limit}&offset=${offset}`,
+    );
   }
 
   getSurveyStats(): Observable<import('../../../domain').SurveyStats> {
     return this.http.get<import('../../../domain').SurveyStats>(`${this.base}/admin/survey/stats`);
+  }
+
+  getCalcStats(query?: { dateFrom?: string; dateTo?: string; topN?: number }): Observable<import('../../../domain').CalcStats> {
+    let params = new HttpParams();
+    if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
+    if (query?.dateTo)   params = params.set('dateTo',   query.dateTo);
+    if (query?.topN)     params = params.set('topN',     query.topN);
+    return this.http.get<import('../../../domain').CalcStats>(`${this.base}/admin/calculations/stats`, { params });
   }
 
   // ─── Feedback ────────────────────────────────────────────────────────────

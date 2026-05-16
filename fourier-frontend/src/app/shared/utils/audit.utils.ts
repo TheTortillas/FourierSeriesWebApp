@@ -2,6 +2,8 @@
 export function auditBadgeClass(action: string): string {
   if (action.includes('login') || action.includes('register'))
     return 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800';
+  if (action.includes('rate_limit'))
+    return 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800';
   if (action.includes('deactivat') || action.includes('fail') || action.includes('clear'))
     return 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800';
   if (action.includes('tier') || action.includes('activat'))

@@ -67,13 +67,21 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
 
-    const user = await this.userRepo.create({
-      firstName: input.firstName,
-      lastName: input.lastName,
-      email: input.email,
-      passwordHash,
-      provider: "email",
-    });
+    let user;
+    try {
+      user = await this.userRepo.create({
+        firstName: input.firstName,
+        lastName: input.lastName,
+        email: input.email,
+        passwordHash,
+        provider: "email",
+      });
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code === "EMAIL_RECENTLY_DELETED") {
+        throw Object.assign(new Error("EMAIL_RECENTLY_DELETED"), { code: "EMAIL_RECENTLY_DELETED" });
+      }
+      throw err;
+    }
 
     const tokens = this.tokenService.generateTokenPair(user);
 
@@ -175,13 +183,20 @@ export class AuthService {
           ipAddress: input.ipAddress,
         });
       } else {
-        user = await this.userRepo.create({
-          firstName: payload.given_name ?? "User",
-          lastName: payload.family_name ?? "",
-          email: payload.email,
-          provider: "google",
-          providerId: payload.sub,
-        });
+        try {
+          user = await this.userRepo.create({
+            firstName: payload.given_name ?? "User",
+            lastName: payload.family_name ?? "",
+            email: payload.email,
+            provider: "google",
+            providerId: payload.sub,
+          });
+        } catch (err: unknown) {
+          if ((err as { code?: string }).code === "EMAIL_RECENTLY_DELETED") {
+            throw Object.assign(new Error("EMAIL_RECENTLY_DELETED"), { code: "EMAIL_RECENTLY_DELETED" });
+          }
+          throw err;
+        }
 
         await this.auditRepo.log({
           userId: user.id,

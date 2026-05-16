@@ -29,8 +29,6 @@ export class CalculatorFormComponent {
     { label: 'Γ(□)', writeWithCursor: '\\Gamma\\left(\\right)' },
     { label: 'n!', writeWithCursor: '\\operatorname{factorial}\\left(\\right)' },
     { label: 'π', typedText: 'pi' },
-    { label: '∞', write: '\\infty' },
-    { label: '-∞', write: '-\\infty' },
   ];
 
   readonly keyGroups: KeyBtn[][] = [
@@ -67,8 +65,6 @@ export class CalculatorFormComponent {
       { label: '√□', cmd: '\\sqrt' },
       { label: '(□)', writeWithCursor: '\\left(\\right)' },
       { label: 'π', typedText: 'pi' },
-      { label: '∞', write: '\\infty' },
-      { label: '-∞', write: '-\\infty' },
       { label: '−', write: '-' },
       { label: '⌫', keystroke: 'Backspace' },
     ],

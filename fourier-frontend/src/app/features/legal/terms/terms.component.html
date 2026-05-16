@@ -1,0 +1,514 @@
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
+  <app-nav />
+
+  <main class="flex-1 w-full max-w-3xl mx-auto px-5 py-12 flex flex-col gap-10">
+    <!-- ── Encabezado ── -->
+    <header class="flex flex-col gap-3 pb-6 border-b border-border dark:border-dark-border">
+      <p class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-widest">
+        fouriersolver.com
+      </p>
+      @if (lang() === 'es') {
+        <h1 class="font-display text-4xl text-ink dark:text-dark-ink leading-tight">
+          Términos de Uso
+        </h1>
+        <p class="font-body text-sm text-muted dark:text-dark-muted">
+          Última actualización: {{ updated }}
+        </p>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+          Bienvenido a <strong class="text-ink dark:text-dark-ink">fouriersolver.com</strong>. Al
+          acceder o usar este servicio, aceptas los presentes Términos de Uso. Si no estás de
+          acuerdo, no utilices el servicio.
+        </p>
+      } @else {
+        <h1 class="font-display text-4xl text-ink dark:text-dark-ink leading-tight">
+          Terms of Use
+        </h1>
+        <p class="font-body text-sm text-muted dark:text-dark-muted">
+          Last updated: {{ updatedEn }}
+        </p>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+          Welcome to <strong class="text-ink dark:text-dark-ink">fouriersolver.com</strong>. By
+          accessing or using this service, you agree to these Terms of Use. If you do not agree, do
+          not use the service.
+        </p>
+      }
+    </header>
+
+    @if (lang() === 'es') {
+      <!-- 1. Descripción -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          1. Descripción del servicio
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          <strong class="text-ink dark:text-dark-ink">fouriersolver.com</strong> es una herramienta
+          web de cálculo matemático que permite calcular, visualizar y analizar series y
+          transformadas de Fourier. El servicio se encuentra actualmente en
+          <strong class="text-ink dark:text-dark-ink">fase Beta</strong> y es operado por Sebastián
+          Morales Palacios.
+        </p>
+      </section>
+
+      <!-- 2. Beta -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">2. Estado Beta</h2>
+        <div
+          class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+        >
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed mb-3">
+            El servicio está en desarrollo activo. Esto implica que:
+          </p>
+          <ul class="flex flex-col gap-2">
+            @for (
+              item of [
+                'Pueden existir errores o imprecisiones en los resultados matemáticos.',
+                'Las funcionalidades pueden cambiar o eliminarse sin previo aviso.',
+                'Los datos de usuario (historial, favoritos) pueden verse afectados durante actualizaciones mayores, aunque nos esforzamos por preservarlos.',
+              ];
+              track $index
+            ) {
+              <li class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted">
+                <span class="text-accent mt-0.5 shrink-0">·</span>
+                {{ item }}
+              </li>
+            }
+          </ul>
+          <p class="font-body text-sm text-ink dark:text-dark-ink leading-relaxed mt-3 font-medium">
+            No uses este servicio como única fuente de verificación en aplicaciones críticas de
+            ingeniería, medicina o seguridad.
+          </p>
+        </div>
+      </section>
+
+      <!-- 3. Uso aceptable -->
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">3. Uso aceptable</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <p class="font-mono text-xs text-accent mb-3 uppercase tracking-wide">Permitido</p>
+            <ul class="flex flex-col gap-2">
+              @for (
+                item of [
+                  'Cálculos académicos, educativos y de investigación.',
+                  'Uso personal y profesional en análisis matemático.',
+                  'Compartir resultados con fines académicos o divulgativos.',
+                ];
+                track $index
+              ) {
+                <li
+                  class="flex items-start gap-2 font-body text-sm text-muted dark:text-dark-muted"
+                >
+                  <span class="text-accent mt-0.5 shrink-0">✓</span>{{ item }}
+                </li>
+              }
+            </ul>
+          </div>
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <p
+              class="font-mono text-xs text-muted dark:text-dark-muted mb-3 uppercase tracking-wide"
+            >
+              No permitido
+            </p>
+            <ul class="flex flex-col gap-2">
+              @for (
+                item of [
+                  'Acceder a cuentas o datos que no te pertenezcan.',
+                  'Actividades ilegales de cualquier tipo.',
+                  'Scraping automatizado masivo o ataques de denegación de servicio.',
+                  'Revertir, descompilar o copiar el software del servicio.',
+                ];
+                track $index
+              ) {
+                <li
+                  class="flex items-start gap-2 font-body text-sm text-muted dark:text-dark-muted"
+                >
+                  <span class="text-muted dark:text-dark-muted mt-0.5 shrink-0">✗</span>{{ item }}
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Cuentas -->
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">4. Cuentas de usuario</h2>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              'Eres responsable de mantener la confidencialidad de tu contraseña.',
+              'Eres responsable de todas las actividades realizadas desde tu cuenta.',
+              'Puedes eliminar tu cuenta en cualquier momento desde Ajustes → Perfil.',
+              'Nos reservamos el derecho de suspender cuentas que violen estos Términos.',
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-accent mt-0.5 shrink-0">→</span>{{ item }}
+            </li>
+          }
+        </ul>
+      </section>
+
+      <!-- 5. Modelo de acceso -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">5. Modelo de acceso</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          El servicio ofrece actualmente acceso
+          <strong class="text-ink dark:text-dark-ink">gratuito</strong> a todas sus funciones. En el
+          futuro, algunas funciones avanzadas podrán requerir una cuenta o un plan de pago.
+        </p>
+        <p class="font-body text-sm text-ink dark:text-dark-ink leading-relaxed font-medium">
+          Siempre existirá un nivel de acceso gratuito.
+        </p>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          Cualquier cambio en el modelo de acceso será comunicado con al menos
+          <strong class="text-ink dark:text-dark-ink">30 días de anticipación</strong> a los
+          usuarios registrados.
+        </p>
+      </section>
+
+      <!-- 6. Propiedad intelectual -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">6. Propiedad intelectual</h2>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              'El código, diseño, logotipos y contenidos del servicio son propiedad de Sebastián Morales Palacios.',
+              'Los resultados matemáticos generados (transformadas, series, gráficas) son tuyos y puedes usarlos libremente.',
+              'No puedes reproducir o distribuir el software del servicio sin autorización escrita.',
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-accent mt-0.5 shrink-0">→</span>{{ item }}
+            </li>
+          }
+        </ul>
+      </section>
+
+      <!-- 7. Limitación de responsabilidad -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          7. Limitación de responsabilidad
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          El servicio se proporciona
+          <strong class="text-ink dark:text-dark-ink">"tal como está"</strong> y
+          <strong class="text-ink dark:text-dark-ink">"según disponibilidad"</strong>. En la medida
+          que permita la ley aplicable:
+        </p>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              'No garantizamos la exactitud, completitud o idoneidad de los resultados matemáticos para ningún fin particular.',
+              'No somos responsables de pérdidas o daños derivados del uso de los resultados del servicio.',
+              'No garantizamos disponibilidad continua del servicio.',
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-muted dark:text-dark-muted mt-0.5 shrink-0">·</span>{{ item }}
+            </li>
+          }
+        </ul>
+      </section>
+
+      <!-- 8. Privacidad -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">8. Privacidad</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          El uso del servicio está sujeto a nuestra
+          <a
+            [routerLink]="'/' + lang() + '/legal/privacy'"
+            class="text-accent hover:underline underline-offset-2"
+            >Política de Privacidad</a
+          >, que forma parte integral de estos Términos.
+        </p>
+      </section>
+
+      <!-- 9. Modificaciones -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">9. Modificaciones</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          Podemos modificar estos Términos en cualquier momento. Los cambios serán efectivos al
+          publicarse en esta página. El uso continuado del servicio tras la publicación de cambios
+          implica aceptación.
+        </p>
+      </section>
+
+      <!-- 10. Ley aplicable -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">10. Ley aplicable</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          Estos Términos se rigen por las leyes de México. Cualquier disputa se resolverá en los
+          tribunales competentes de México.
+        </p>
+      </section>
+
+      <!-- Contacto -->
+      <section class="pt-6 border-t border-border dark:border-dark-border flex flex-col gap-2">
+        <h2 class="font-display text-xl text-ink dark:text-dark-ink">Contacto</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted">
+          <span class="font-mono">fouriersolver.com</span> · Desarrollado por Sebastián Morales
+          Palacios
+        </p>
+        <a
+          href="mailto:contact@fouriersolver.com"
+          class="font-mono text-sm text-accent hover:underline underline-offset-2"
+        >
+          contact&#64;fouriersolver.com
+        </a>
+        <div class="flex gap-4 mt-2">
+          <a
+            [routerLink]="'/' + lang() + '/legal/privacy'"
+            class="font-mono text-xs text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:underline underline-offset-2 transition-colors"
+          >
+            ← Política de Privacidad
+          </a>
+        </div>
+      </section>
+    } @else {
+      <!-- ── ENGLISH VERSION ── -->
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          1. Description of the Service
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          <strong class="text-ink dark:text-dark-ink">fouriersolver.com</strong> is a web-based
+          mathematical tool for computing, visualizing, and analyzing Fourier series and transforms.
+          The service is currently in <strong class="text-ink dark:text-dark-ink">Beta</strong> and
+          is operated by Sebastián Morales Palacios.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">2. Beta Status</h2>
+        <div
+          class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+        >
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed mb-3">
+            The service is in active development. This means:
+          </p>
+          <ul class="flex flex-col gap-2">
+            @for (
+              item of [
+                'Mathematical results may contain errors or inaccuracies.',
+                'Features may change or be removed without prior notice.',
+                'User data (history, favorites) may be affected during major updates, though we strive to preserve it.',
+              ];
+              track $index
+            ) {
+              <li class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted">
+                <span class="text-accent mt-0.5 shrink-0">·</span>{{ item }}
+              </li>
+            }
+          </ul>
+          <p class="font-body text-sm text-ink dark:text-dark-ink leading-relaxed mt-3 font-medium">
+            Do not use this service as your only source of verification in critical engineering,
+            medical, or safety applications.
+          </p>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">3. Acceptable Use</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <p class="font-mono text-xs text-accent mb-3 uppercase tracking-wide">Allowed</p>
+            <ul class="flex flex-col gap-2">
+              @for (
+                item of [
+                  'Academic, educational, and research calculations.',
+                  'Personal and professional use in mathematical analysis.',
+                  'Sharing results for academic or educational purposes.',
+                ];
+                track $index
+              ) {
+                <li
+                  class="flex items-start gap-2 font-body text-sm text-muted dark:text-dark-muted"
+                >
+                  <span class="text-accent mt-0.5 shrink-0">✓</span>{{ item }}
+                </li>
+              }
+            </ul>
+          </div>
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <p
+              class="font-mono text-xs text-muted dark:text-dark-muted mb-3 uppercase tracking-wide"
+            >
+              Not allowed
+            </p>
+            <ul class="flex flex-col gap-2">
+              @for (
+                item of [
+                  'Accessing accounts or data that do not belong to you.',
+                  'Any illegal activities.',
+                  'Mass automated scraping or denial-of-service attacks.',
+                  'Reverse engineering, decompiling, or copying the service software.',
+                ];
+                track $index
+              ) {
+                <li
+                  class="flex items-start gap-2 font-body text-sm text-muted dark:text-dark-muted"
+                >
+                  <span class="text-muted dark:text-dark-muted mt-0.5 shrink-0">✗</span>{{ item }}
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">4. User Accounts</h2>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              'You are responsible for maintaining the confidentiality of your password.',
+              'You are responsible for all activities performed from your account.',
+              'You may delete your account at any time via Settings → Profile.',
+              'We reserve the right to suspend accounts that violate these Terms.',
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-accent mt-0.5 shrink-0">→</span>{{ item }}
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">5. Access Model</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          The service currently offers
+          <strong class="text-ink dark:text-dark-ink">free access</strong> to all features. In the
+          future, some advanced features may require an account or a paid plan.
+        </p>
+        <p class="font-body text-sm text-ink dark:text-dark-ink leading-relaxed font-medium">
+          There will always be a free tier.
+        </p>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          Any changes to the access model will be communicated to registered users at least
+          <strong class="text-ink dark:text-dark-ink">30 days in advance</strong>.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">6. Intellectual Property</h2>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              'The code, design, logos, and content of the service are the property of Sebastián Morales Palacios.',
+              'Mathematical results generated (transforms, series, graphs) are yours to use freely.',
+              'You may not reproduce or distribute the service software without written authorization.',
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-accent mt-0.5 shrink-0">→</span>{{ item }}
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          7. Limitation of Liability
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          The service is provided <strong class="text-ink dark:text-dark-ink">"as is"</strong> and
+          <strong class="text-ink dark:text-dark-ink">"as available"</strong>. To the extent
+          permitted by applicable law:
+        </p>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              'We do not guarantee the accuracy, completeness, or fitness of mathematical results for any particular purpose.',
+              'We are not liable for any losses or damages arising from the use of the service results.',
+              'We do not guarantee continuous availability of the service.',
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-muted dark:text-dark-muted mt-0.5 shrink-0">·</span>{{ item }}
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">8. Privacy</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          Use of the service is subject to our
+          <a
+            [routerLink]="'/' + lang() + '/legal/privacy'"
+            class="text-accent hover:underline underline-offset-2"
+            >Privacy Policy</a
+          >, which forms an integral part of these Terms.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">9. Modifications</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          We may modify these Terms at any time. Changes take effect upon publication on this page.
+          Continued use of the service after changes implies acceptance.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">10. Governing Law</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          These Terms are governed by the laws of Mexico. Any disputes shall be resolved in the
+          competent courts of Mexico.
+        </p>
+      </section>
+
+      <section class="pt-6 border-t border-border dark:border-dark-border flex flex-col gap-2">
+        <h2 class="font-display text-xl text-ink dark:text-dark-ink">Contact</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted">
+          <span class="font-mono">fouriersolver.com</span> · Developed by Sebastián Morales Palacios
+        </p>
+        <a
+          href="mailto:contact@fouriersolver.com"
+          class="font-mono text-sm text-accent hover:underline underline-offset-2"
+        >
+          contact&#64;fouriersolver.com
+        </a>
+        <div class="flex gap-4 mt-2">
+          <a
+            [routerLink]="'/' + lang() + '/legal/privacy'"
+            class="font-mono text-xs text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:underline underline-offset-2 transition-colors"
+          >
+            ← Privacy Policy
+          </a>
+        </div>
+      </section>
+    }
+  </main>
+
+  <app-footer />
+</div>
