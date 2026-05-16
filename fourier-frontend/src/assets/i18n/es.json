@@ -433,7 +433,9 @@
       "submitting": "Creando cuenta...",
       "successTitle": "¡Cuenta creada!",
       "successMessage": "Te enviamos un correo de verificación. Revisa tu bandeja de entrada y confirma tu email para comenzar.",
-      "goToLogin": "Ir a iniciar sesión"
+      "goToLogin": "Ir a iniciar sesión",
+      "legalNotice": "Al registrarte aceptas nuestros",
+      "legalAnd": "y nuestra"
     },
     "forgotPassword": {
       "title": "Recuperar contraseña",

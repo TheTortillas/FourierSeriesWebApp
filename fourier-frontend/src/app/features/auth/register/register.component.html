@@ -159,6 +159,13 @@
               {{ loading() ? ('auth.register.submitting' | transloco) : ('auth.register.submit' | transloco) }}
             </button>
 
+            <p class="text-center text-[10px] font-mono text-muted dark:text-dark-muted leading-relaxed">
+              {{ 'auth.register.legalNotice' | transloco }}
+              <a [routerLink]="'/' + lang() + '/legal/terms'" class="underline hover:text-ink dark:hover:text-dark-ink transition-colors">{{ 'nav.terms' | transloco }}</a>
+              {{ 'auth.register.legalAnd' | transloco }}
+              <a [routerLink]="'/' + lang() + '/legal/privacy'" class="underline hover:text-ink dark:hover:text-dark-ink transition-colors">{{ 'nav.privacy' | transloco }}</a>.
+            </p>
+
           </form>
         </div>
       }

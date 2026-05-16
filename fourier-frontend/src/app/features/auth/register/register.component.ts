@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -34,6 +35,10 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly seo = inject(SeoService);
+
+  readonly lang = toSignal(this.transloco.langChanges$, {
+    initialValue: this.transloco.getActiveLang(),
+  });
 
   constructor() {
     this.seo.setNoIndex();

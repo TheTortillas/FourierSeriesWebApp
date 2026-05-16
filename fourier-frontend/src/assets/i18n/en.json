@@ -433,7 +433,9 @@
       "submitting": "Creating account...",
       "successTitle": "Account created!",
       "successMessage": "We sent you a verification email. Check your inbox and confirm your email to get started.",
-      "goToLogin": "Go to log in"
+      "goToLogin": "Go to log in",
+      "legalNotice": "By signing up you agree to our",
+      "legalAnd": "and our"
     },
     "forgotPassword": {
       "title": "Reset password",
