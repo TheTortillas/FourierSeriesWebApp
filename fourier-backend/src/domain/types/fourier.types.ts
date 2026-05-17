@@ -55,6 +55,8 @@ export interface ParsevalTrig {
   k: SymbolicExpression;
   summand: SymbolicExpression;
   lhsFinal: SymbolicExpression;
+  sumStart: number;
+  hasSingular: boolean;
 }
 
 export interface ParsevalHalfRange {
@@ -64,11 +66,15 @@ export interface ParsevalHalfRange {
     k: SymbolicExpression;
     summand: SymbolicExpression;
     lhsFinal: SymbolicExpression;
+    sumStart: number;
+    hasSingular: boolean;
   };
   sine: {
     k: SymbolicExpression;
     summand: SymbolicExpression;
     lhsFinal: SymbolicExpression;
+    sumStart: number;
+    hasSingular: boolean;
   };
 }
 
@@ -78,6 +84,8 @@ export interface ParsevalComplex {
   k: SymbolicExpression;
   summand: SymbolicExpression;
   lhsFinal: SymbolicExpression;
+  sumStart: number;
+  hasSingular: boolean;
 }
 
 export interface HalfRangeResult {

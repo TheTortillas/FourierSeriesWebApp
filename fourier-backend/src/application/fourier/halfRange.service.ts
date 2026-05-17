@@ -157,11 +157,23 @@ kill(all)$
               k: parsed["parseval_cos_k"],
               summand: parsed["parseval_cos_summand"] ?? { tex: "", maxima: "1" },
               lhsFinal: parsed["parseval_cos_lhs_final"] ?? parsed["parseval_lhs"],
+              sumStart: parseInt(
+                this.extractBetween(result.raw, "__PARSEVAL_COS_SUM_START__", "__PARSEVAL_COS_HAS_SINGULAR__")
+                  .replace(/false/g, "").trim().split(/[\s\n]/)[0] ?? "1"
+              ) || 1,
+              hasSingular: this.extractBetween(result.raw, "__PARSEVAL_COS_HAS_SINGULAR__", "__PARSEVAL_SIN_K_MAXIMA__")
+                .includes("true"),
             },
             sine: {
               k: parsed["parseval_sin_k"],
               summand: parsed["parseval_sin_summand"] ?? { tex: "", maxima: "1" },
               lhsFinal: parsed["parseval_sin_lhs_final"] ?? parsed["parseval_lhs"],
+              sumStart: parseInt(
+                this.extractBetween(result.raw, "__PARSEVAL_SIN_SUM_START__", "__PARSEVAL_SIN_HAS_SINGULAR__")
+                  .replace(/false/g, "").trim().split(/[\s\n]/)[0] ?? "1"
+              ) || 1,
+              hasSingular: this.extractBetween(result.raw, "__PARSEVAL_SIN_HAS_SINGULAR__", "__A0_FLOAT__")
+                .includes("true"),
             },
           }
         : undefined;

@@ -1,10 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    Parseval – Serie Trigonométrica
    Requiere: FUNC_INPUT, INTVAR, PERIOD, Coeff_A0, Coeff_An, Coeff_Bn, const_factor
-   Salida:
-     Forma completa:   LHS = a0Term + K·Σ(summand)
-     Forma despejada:  LHS_final = Σ(summand)
-       donde LHS_final = (LHS - a0Term) / K
    ═══════════════════════════════════════════════════════════════ */
 
 declare(n, integer)$
@@ -31,8 +27,41 @@ block(
 
 Parseval_A0_term: factor(Coeff_A0^2)$
 
-/* Forma despejada: (LHS - a0Term) / K = Σ(summand) */
-Parseval_LHS_final: fullratsimp((Parseval_LHS - Parseval_A0_term) / fullratsimp(Parseval_K))$
+/* Singularity detection.
+   Singular n values: positive integers where denom(Summand)=0.
+   Singular term contribution: (a_k² + b_k²)/2  using LIMITS of the original
+   coefficient formulas (not limit of Summand, which diverges). */
+block(
+    [_denom, _roots_wrap, _roots_raw, _sing_vals, _sing_sum],
+    _denom: denom(factor(Parseval_Summand)),
+    _roots_wrap: errcatch(solve(_denom = 0, n)),
+    _roots_raw: if _roots_wrap = [] then []
+                else block([_r: first(_roots_wrap)],
+                    if listp(_r) then _r else []),
+    _sing_vals: map(rhs,
+        sublist(_roots_raw,
+            lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    if _sing_vals = [] then (
+        Parseval_has_singular: false,
+        Parseval_sum_start: 1,
+        Parseval_LHS_final: fullratsimp(
+            (Parseval_LHS - Parseval_A0_term) / fullratsimp(Parseval_K))
+    ) else (
+        Parseval_has_singular: true,
+        Parseval_sum_start: lmax(_sing_vals) + 1,
+        _sing_sum: factor(apply("+",
+            map(lambda([k],
+                block([_alim: errcatch(limit(Coeff_An, n, k)),
+                       _blim: errcatch(limit(Coeff_Bn, n, k)),
+                       _ak, _bk],
+                    _ak: if _alim = [] then 0 else factor(first(_alim)),
+                    _bk: if _blim = [] then 0 else factor(first(_blim)),
+                    factor(ratsimp((_ak^2 + _bk^2) / 2)))),
+                _sing_vals))),
+        Parseval_LHS_final: fullratsimp(
+            (Parseval_LHS - Parseval_A0_term - _sing_sum) / fullratsimp(Parseval_K))
+    )
+)$
 
 print("__PARSEVAL_LHS_MAXIMA__")$          print(string(Parseval_LHS))$
 print("__PARSEVAL_LHS_TEX__")$             tex(Parseval_LHS)$
@@ -44,3 +73,5 @@ print("__PARSEVAL_SUMMAND_MAXIMA__")$      print(string(Parseval_Summand))$
 print("__PARSEVAL_SUMMAND_TEX__")$         tex(Parseval_Summand)$
 print("__PARSEVAL_LHS_FINAL_MAXIMA__")$    print(string(Parseval_LHS_final))$
 print("__PARSEVAL_LHS_FINAL_TEX__")$       tex(Parseval_LHS_final)$
+print("__PARSEVAL_SUM_START__")$           print(string(Parseval_sum_start))$
+print("__PARSEVAL_HAS_SINGULAR__")$        print(string(Parseval_has_singular))$

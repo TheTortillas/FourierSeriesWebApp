@@ -644,18 +644,18 @@ export class ResultsSummaryComponent {
     return null;
   });
 
-  /** Parseval identity LaTeX — forma despejada: lhsFinal = Σ(summand). */
+  /** Parseval identity LaTeX — forma despejada: lhsFinal = Σ(summand, n=sumStart..∞). */
   readonly parsevalTex = computed(() => {
     const result = this.store.result();
     if (!result) return null;
 
-    const fmt = (lhsFinal: string, s: string): string =>
-      `${lhsFinal}=\\sum_{n=1}^{\\infty}\\left(${s}\\right)`;
+    const fmt = (lhsFinal: string, s: string, start: number = 1): string =>
+      `${lhsFinal}=\\sum_{n=${start}}^{\\infty}\\left(${s}\\right)`;
 
     if (result.type === 'trigonometric') {
       const p = result.data.parseval;
       if (!p) return null;
-      return fmt(p.lhsFinal.tex, p.summand.tex);
+      return fmt(p.lhsFinal.tex, p.summand.tex, p.sumStart ?? 1);
     }
 
     if (result.type === 'halfRange') {
@@ -663,16 +663,16 @@ export class ResultsSummaryComponent {
       if (!p) return null;
       const hrMode = this.halfRangeMode();
       if (hrMode === 'cosine') {
-        return fmt(p.cosine.lhsFinal.tex, p.cosine.summand.tex);
+        return fmt(p.cosine.lhsFinal.tex, p.cosine.summand.tex, p.cosine.sumStart ?? 1);
       } else {
-        return fmt(p.sine.lhsFinal.tex, p.sine.summand.tex);
+        return fmt(p.sine.lhsFinal.tex, p.sine.summand.tex, p.sine.sumStart ?? 1);
       }
     }
 
     if (result.type === 'complex') {
       const p = result.data.parseval;
       if (!p) return null;
-      return fmt(p.lhsFinal.tex, p.summand.tex);
+      return fmt(p.lhsFinal.tex, p.summand.tex, p.sumStart ?? 1);
     }
 
     return null;

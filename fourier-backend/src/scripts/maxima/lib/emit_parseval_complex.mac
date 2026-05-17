@@ -2,7 +2,6 @@
    Parseval – Serie Compleja
    Requiere: FUNC_INPUT, INTVAR, PERIOD, Coeff_0, Coeff_n, const_factor
    Identidad: (1/T)∫|f|²dx = |c₀|² + 2·Σ|cₙ|²
-   Despejada: (LHS - c0Term) / K = Σ(summand)
    ═══════════════════════════════════════════════════════════════ */
 
 declare(n, integer)$
@@ -31,7 +30,39 @@ block(
 
 Parseval_C0_term: factor(ratsimp(Coeff_0^2))$
 
-Parseval_LHS_final: fullratsimp((Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_K))$
+/* Singularity detection.
+   Singular term contribution: 2·|c_k|²  using LIMIT of original Coeff_n. */
+block(
+    [_denom, _roots_wrap, _roots_raw, _sing_vals, _sing_sum],
+    _denom: denom(factor(Parseval_Summand)),
+    _roots_wrap: errcatch(solve(_denom = 0, n)),
+    _roots_raw: if _roots_wrap = [] then []
+                else block([_r: first(_roots_wrap)],
+                    if listp(_r) then _r else []),
+    _sing_vals: map(rhs,
+        sublist(_roots_raw,
+            lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    if _sing_vals = [] then (
+        Parseval_has_singular: false,
+        Parseval_sum_start: 1,
+        Parseval_LHS_final: fullratsimp(
+            (Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_K))
+    ) else (
+        Parseval_has_singular: true,
+        Parseval_sum_start: lmax(_sing_vals) + 1,
+        _sing_sum: factor(apply("+",
+            map(lambda([k],
+                block([_clim: errcatch(limit(Coeff_n, n, k)), _ck_re, _ck_im],
+                    if _clim = [] then 0
+                    else block([_ck: factor(first(_clim))],
+                        _ck_re: realpart(rectform(_ck)),
+                        _ck_im: imagpart(rectform(_ck)),
+                        factor(ratsimp(2 * (_ck_re^2 + _ck_im^2)))))),
+                _sing_vals))),
+        Parseval_LHS_final: fullratsimp(
+            (Parseval_LHS - Parseval_C0_term - _sing_sum) / fullratsimp(Parseval_K))
+    )
+)$
 
 print("__PARSEVAL_LHS_MAXIMA__")$          print(string(Parseval_LHS))$
 print("__PARSEVAL_LHS_TEX__")$             tex(Parseval_LHS)$
@@ -43,3 +74,5 @@ print("__PARSEVAL_SUMMAND_MAXIMA__")$      print(string(Parseval_Summand))$
 print("__PARSEVAL_SUMMAND_TEX__")$         tex(Parseval_Summand)$
 print("__PARSEVAL_LHS_FINAL_MAXIMA__")$    print(string(Parseval_LHS_final))$
 print("__PARSEVAL_LHS_FINAL_TEX__")$       tex(Parseval_LHS_final)$
+print("__PARSEVAL_SUM_START__")$           print(string(Parseval_sum_start))$
+print("__PARSEVAL_HAS_SINGULAR__")$        print(string(Parseval_has_singular))$

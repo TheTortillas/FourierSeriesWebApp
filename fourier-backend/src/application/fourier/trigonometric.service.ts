@@ -146,6 +146,12 @@ kill(all)$
             k: parsed["parseval_k"],
             summand: parsed["parseval_summand"],
             lhsFinal: parsed["parseval_lhs_final"] ?? parsed["parseval_lhs"],
+            sumStart: parseInt(
+              this.extractBetween(result.raw, "__PARSEVAL_SUM_START__", "__PARSEVAL_HAS_SINGULAR__")
+                .replace(/false/g, "").trim().split(/[\s\n]/)[0] ?? "1"
+            ) || 1,
+            hasSingular: this.extractBetween(result.raw, "__PARSEVAL_HAS_SINGULAR__", "__A0_FLOAT__")
+              .includes("true"),
           }
         : undefined;
 
