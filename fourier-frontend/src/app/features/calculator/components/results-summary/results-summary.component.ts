@@ -916,6 +916,18 @@ export class ResultsSummaryComponent {
     return !!v && v.decision !== 'proceed';
   });
 
+  readonly indeterminateTrigTerms = computed(() =>
+    (this.trigTerms() ?? []).filter(t => t.anUsedLimit || t.bnUsedLimit),
+  );
+
+  readonly indeterminateComplexTerms = computed(() =>
+    (this.complexTerms() ?? []).filter(t => t.cnUsedLimit || t.cnNegUsedLimit),
+  );
+
+  readonly hasIndeterminateTerms = computed(() =>
+    this.indeterminateTrigTerms().length > 0 || this.indeterminateComplexTerms().length > 0,
+  );
+
   // ── Typed term arrays for the terms tab ────────────────────────────────────
   readonly trigTerms = computed<TrigonometricTerm[] | null>(() => {
     const r = this.store.result();
