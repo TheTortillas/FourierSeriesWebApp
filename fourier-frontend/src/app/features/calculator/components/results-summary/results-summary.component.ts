@@ -644,19 +644,33 @@ export class ResultsSummaryComponent {
     return null;
   });
 
-  /** Parseval identity LaTeX — forma despejada: lhsFinal = Σ(summand, n=sumStart..∞). */
+  private buildExclusionSumTex(singVals: number[]): string {
+    if (!singVals.length) return '\\sum_{n=1}^{\\infty}';
+    const excl = singVals.join(',\\,');
+    return `\\sum_{\\substack{n=1\\\\n\\neq ${excl}}}^{\\infty}`;
+  }
+
+  /** Parseval identity LaTeX — two views: formal (sum from 1) or simplified (exclusion notation). */
   readonly parsevalTex = computed(() => {
     const result = this.store.result();
     if (!result) return null;
 
+    const view = this.parsevalView();
     const override = this.parsevalSimplifiedLhsFinal();
-    const fmt = (lhsFinal: string, s: string, start: number = 1): string =>
-      `${override ?? lhsFinal}=\\sum_{n=${start}}^{\\infty}\\left(${s}\\right)`;
+
+    const fmtSimplified = (lhsFinal: string, s: string, singVals: number[]): string => {
+      const sumTex = this.buildExclusionSumTex(singVals);
+      return `${override ?? lhsFinal}=${sumTex}\\left(${s}\\right)`;
+    };
+
+    const fmtFormal = (lhsFinal: string, s: string): string =>
+      `${lhsFinal}=\\sum_{n=1}^{\\infty}\\left(${s}\\right)`;
 
     if (result.type === 'trigonometric') {
       const p = result.data.parseval;
       if (!p) return null;
-      return fmt(p.lhsFinal.tex, p.summand.tex, p.sumStart ?? 1);
+      if (view === 'formal' && p.formal) return fmtFormal(p.formal.lhsFinal.tex, p.formal.summand.tex);
+      return fmtSimplified(p.lhsFinal.tex, p.summand.tex, p.singVals ?? []);
     }
 
     if (result.type === 'halfRange') {
@@ -664,19 +678,57 @@ export class ResultsSummaryComponent {
       if (!p) return null;
       const hrMode = this.halfRangeMode();
       if (hrMode === 'cosine') {
-        return fmt(p.cosine.lhsFinal.tex, p.cosine.summand.tex, p.cosine.sumStart ?? 1);
+        if (view === 'formal' && p.cosine.formal) return fmtFormal(p.cosine.formal.lhsFinal.tex, p.cosine.formal.summand.tex);
+        return fmtSimplified(p.cosine.lhsFinal.tex, p.cosine.summand.tex, p.cosine.singVals ?? []);
       } else {
-        return fmt(p.sine.lhsFinal.tex, p.sine.summand.tex, p.sine.sumStart ?? 1);
+        if (view === 'formal' && p.sine.formal) return fmtFormal(p.sine.formal.lhsFinal.tex, p.sine.formal.summand.tex);
+        return fmtSimplified(p.sine.lhsFinal.tex, p.sine.summand.tex, p.sine.singVals ?? []);
       }
     }
 
     if (result.type === 'complex') {
       const p = result.data.parseval;
       if (!p) return null;
-      return fmt(p.lhsFinal.tex, p.summand.tex, p.sumStart ?? 1);
+      if (view === 'formal' && p.formal) return fmtFormal(p.formal.lhsFinal.tex, p.formal.summand.tex);
+      return fmtSimplified(p.lhsFinal.tex, p.summand.tex, p.singVals ?? []);
     }
 
     return null;
+  });
+
+  readonly parsevalSingValsLabel = computed(() => {
+    const vals = this.parsevalSingVals();
+    if (!vals.length) return '';
+    if (vals.length === 1) return `n=${vals[0]}`;
+    return `n∈{${vals.join(', ')}}`;
+  });
+
+  readonly parsevalHasFormal = computed(() => {
+    const result = this.store.result();
+    if (!result) return false;
+    if (result.type === 'trigonometric' || result.type === 'complex') {
+      return !!result.data.parseval?.formal;
+    }
+    if (result.type === 'halfRange') {
+      const p = result.data.parseval;
+      const hrMode = this.halfRangeMode();
+      return hrMode === 'cosine' ? !!p?.cosine.formal : !!p?.sine.formal;
+    }
+    return false;
+  });
+
+  readonly parsevalSingVals = computed((): number[] => {
+    const result = this.store.result();
+    if (!result) return [];
+    if (result.type === 'trigonometric' || result.type === 'complex') {
+      return result.data.parseval?.singVals ?? [];
+    }
+    if (result.type === 'halfRange') {
+      const p = result.data.parseval;
+      const hrMode = this.halfRangeMode();
+      return (hrMode === 'cosine' ? p?.cosine.singVals : p?.sine.singVals) ?? [];
+    }
+    return [];
   });
 
   /** Whether the current Parseval identity has singular terms (sum starts at n > 1). */
@@ -821,6 +873,7 @@ export class ResultsSummaryComponent {
   readonly parsevalSimplifyProfile = signal<SimplifyProfile>('raw');
   readonly parsevalSimplifying = signal(false);
   readonly parsevalSimplifiedLhsFinal = signal<string | null>(null);
+  readonly parsevalView = signal<'simplified' | 'formal'>('simplified');
 
   /**
    * Series LaTeX composed from active coefficient values.
@@ -1085,6 +1138,7 @@ export class ResultsSummaryComponent {
         this.halfRangeMode.set('cosine');
         this.parsevalSimplifiedLhsFinal.set(null);
         this.parsevalSimplifyProfile.set('raw');
+        this.parsevalView.set('simplified');
         this.controlHarmonics.set(false);
         this.enabledHarmonics.set(new Set(result.terms.terms.map((t) => t.n)));
         this.selectedHarmonicN.set(null);
@@ -1184,6 +1238,7 @@ export class ResultsSummaryComponent {
     this.simplifyProfile.set('raw');
     this.parsevalSimplifiedLhsFinal.set(null);
     this.parsevalSimplifyProfile.set('raw');
+    this.parsevalView.set('simplified');
   }
 
   setHarmonicControl(enabled: boolean): void {

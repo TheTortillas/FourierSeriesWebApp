@@ -59,6 +59,18 @@ const HALF_RANGE_MARKERS = [
   "__PARSEVAL_SIN_SUMMAND_TEX__",
   "__PARSEVAL_SIN_LHS_FINAL_MAXIMA__",
   "__PARSEVAL_SIN_LHS_FINAL_TEX__",
+  "__PARSEVAL_COS_FORMAL_K_MAXIMA__",
+  "__PARSEVAL_COS_FORMAL_K_TEX__",
+  "__PARSEVAL_COS_FORMAL_SUMMAND_MAXIMA__",
+  "__PARSEVAL_COS_FORMAL_SUMMAND_TEX__",
+  "__PARSEVAL_COS_FORMAL_LHS_FINAL_MAXIMA__",
+  "__PARSEVAL_COS_FORMAL_LHS_FINAL_TEX__",
+  "__PARSEVAL_SIN_FORMAL_K_MAXIMA__",
+  "__PARSEVAL_SIN_FORMAL_K_TEX__",
+  "__PARSEVAL_SIN_FORMAL_SUMMAND_MAXIMA__",
+  "__PARSEVAL_SIN_FORMAL_SUMMAND_TEX__",
+  "__PARSEVAL_SIN_FORMAL_LHS_FINAL_MAXIMA__",
+  "__PARSEVAL_SIN_FORMAL_LHS_FINAL_TEX__",
   "__A0_FLOAT__",
 ];
 
@@ -161,8 +173,16 @@ kill(all)$
                 this.extractBetween(result.raw, "__PARSEVAL_COS_SUM_START__", "__PARSEVAL_COS_HAS_SINGULAR__")
                   .replace(/false/g, "").trim().split(/[\s\n]/)[0] ?? "1"
               ) || 1,
-              hasSingular: this.extractBetween(result.raw, "__PARSEVAL_COS_HAS_SINGULAR__", "__PARSEVAL_SIN_K_MAXIMA__")
+              hasSingular: this.extractBetween(result.raw, "__PARSEVAL_COS_HAS_SINGULAR__", "__PARSEVAL_COS_SING_VALS__")
                 .includes("true"),
+              singVals: this.parseSingVals(this.extractBetween(result.raw, "__PARSEVAL_COS_SING_VALS__", "__PARSEVAL_SIN_K_MAXIMA__")),
+              formal: parsed["parseval_cos_formal_k"] && parsed["parseval_cos_formal_summand"]
+                ? {
+                    k: parsed["parseval_cos_formal_k"],
+                    summand: parsed["parseval_cos_formal_summand"],
+                    lhsFinal: parsed["parseval_cos_formal_lhs_final"] ?? parsed["parseval_lhs"],
+                  }
+                : undefined,
             },
             sine: {
               k: parsed["parseval_sin_k"],
@@ -172,8 +192,16 @@ kill(all)$
                 this.extractBetween(result.raw, "__PARSEVAL_SIN_SUM_START__", "__PARSEVAL_SIN_HAS_SINGULAR__")
                   .replace(/false/g, "").trim().split(/[\s\n]/)[0] ?? "1"
               ) || 1,
-              hasSingular: this.extractBetween(result.raw, "__PARSEVAL_SIN_HAS_SINGULAR__", "__A0_FLOAT__")
+              hasSingular: this.extractBetween(result.raw, "__PARSEVAL_SIN_HAS_SINGULAR__", "__PARSEVAL_SIN_SING_VALS__")
                 .includes("true"),
+              singVals: this.parseSingVals(this.extractBetween(result.raw, "__PARSEVAL_SIN_SING_VALS__", "__PARSEVAL_COS_FORMAL_K_MAXIMA__")),
+              formal: parsed["parseval_sin_formal_k"] && parsed["parseval_sin_formal_summand"]
+                ? {
+                    k: parsed["parseval_sin_formal_k"],
+                    summand: parsed["parseval_sin_formal_summand"],
+                    lhsFinal: parsed["parseval_sin_formal_lhs_final"] ?? parsed["parseval_lhs"],
+                  }
+                : undefined,
             },
           }
         : undefined;
@@ -424,6 +452,12 @@ kill(all)$
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
+  }
+
+  private parseSingVals(raw: string): number[] {
+    const cleaned = raw.replace(/[\[\]\s]/g, "");
+    if (!cleaned) return [];
+    return cleaned.split(",").map(Number).filter((n) => Number.isFinite(n) && n > 0);
   }
 
   private extractBetween(

@@ -49,6 +49,12 @@ export interface FourierResult {
   executionTimeMs: number;
 }
 
+export interface ParsevalFormal {
+  k: SymbolicExpression;
+  summand: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
+}
+
 export interface ParsevalTrig {
   lhs: SymbolicExpression;
   a0Term: SymbolicExpression;
@@ -57,6 +63,8 @@ export interface ParsevalTrig {
   lhsFinal: SymbolicExpression;
   sumStart: number;
   hasSingular: boolean;
+  singVals: number[];
+  formal?: ParsevalFormal;
 }
 
 export interface ParsevalHalfRange {
@@ -68,6 +76,8 @@ export interface ParsevalHalfRange {
     lhsFinal: SymbolicExpression;
     sumStart: number;
     hasSingular: boolean;
+    singVals: number[];
+    formal?: ParsevalFormal;
   };
   sine: {
     k: SymbolicExpression;
@@ -75,6 +85,8 @@ export interface ParsevalHalfRange {
     lhsFinal: SymbolicExpression;
     sumStart: number;
     hasSingular: boolean;
+    singVals: number[];
+    formal?: ParsevalFormal;
   };
 }
 
@@ -86,6 +98,8 @@ export interface ParsevalComplex {
   lhsFinal: SymbolicExpression;
   sumStart: number;
   hasSingular: boolean;
+  singVals: number[];
+  formal?: ParsevalFormal;
 }
 
 export interface HalfRangeResult {

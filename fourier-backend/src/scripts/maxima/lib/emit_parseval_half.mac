@@ -3,12 +3,7 @@
    Requiere: FUNC_INPUT, INTVAR, PERIOD, Coeff_A0, Coeff_An, Coeff_Bn, const_factor
    ═══════════════════════════════════════════════════════════════ */
 
-declare(n, integer)$
-errcatch(assume(n > 0))$
-
-_An: factor(fullratsimp(Coeff_An))$
-_Bn: factor(fullratsimp(Coeff_Bn))$
-
+/* ── LHS (no depende de n) ── */
 block(
     [_f2_acum: 0],
     for _i:1 thru length(FUNC_INPUT) do (
@@ -18,6 +13,39 @@ block(
     Parseval_LHS: factor(ratsimp(_f2_acum / PERIOD))
 )$
 
+Parseval_Cos_A0_term: factor(Coeff_A0^2)$
+
+/* ── Versiones formales (sin declare(n, integer)) ── */
+errcatch(assume(n > 0))$
+
+/* Coseno formal */
+block(
+    [_an2_f: factor(ratsimp(Coeff_An^2)), _cf_f],
+    _cf_f: const_factor(_an2_f, n),
+    Parseval_Cos_Formal_K:       factor(_cf_f[1] / 2),
+    Parseval_Cos_Formal_Summand: _cf_f[2]
+)$
+
+Parseval_Cos_Formal_LHS_final: fullratsimp(
+    (Parseval_LHS - Parseval_Cos_A0_term) / fullratsimp(Parseval_Cos_Formal_K))$
+
+/* Seno formal */
+block(
+    [_bn2_f: factor(ratsimp(Coeff_Bn^2)), _cf_f],
+    _cf_f: const_factor(_bn2_f, n),
+    Parseval_Sin_Formal_K:       factor(_cf_f[1] / 2),
+    Parseval_Sin_Formal_Summand: _cf_f[2]
+)$
+
+Parseval_Sin_Formal_LHS_final: fullratsimp(
+    Parseval_LHS / fullratsimp(Parseval_Sin_Formal_K))$
+
+/* ── Versiones simplificadas (con declare(n, integer)) ── */
+declare(n, integer)$
+
+_An: factor(fullratsimp(Coeff_An))$
+_Bn: factor(fullratsimp(Coeff_Bn))$
+
 /* Serie coseno */
 block(
     [_an2: factor(ratsimp(_An^2)), _cf],
@@ -25,7 +53,6 @@ block(
     Parseval_Cos_K:       factor(_cf[1] / 2),
     Parseval_Cos_Summand: _cf[2]
 )$
-Parseval_Cos_A0_term: factor(Coeff_A0^2)$
 
 block(
     [_denom, _roots_wrap, _roots_raw, _sing_vals, _sing_sum],
@@ -37,6 +64,7 @@ block(
     _sing_vals: map(rhs,
         sublist(_roots_raw,
             lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    Parseval_Cos_sing_vals: _sing_vals,
     if _sing_vals = [] then (
         Parseval_Cos_has_singular: false,
         Parseval_Cos_sum_start: 1,
@@ -74,6 +102,7 @@ block(
     _sing_vals: map(rhs,
         sublist(_roots_raw,
             lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    Parseval_Sin_sing_vals: _sing_vals,
     if _sing_vals = [] then (
         Parseval_Sin_has_singular: false,
         Parseval_Sin_sum_start: 1,
@@ -104,6 +133,7 @@ print("__PARSEVAL_COS_LHS_FINAL_MAXIMA__")$        print(string(Parseval_Cos_LHS
 print("__PARSEVAL_COS_LHS_FINAL_TEX__")$           tex(Parseval_Cos_LHS_final)$
 print("__PARSEVAL_COS_SUM_START__")$               print(string(Parseval_Cos_sum_start))$
 print("__PARSEVAL_COS_HAS_SINGULAR__")$            print(string(Parseval_Cos_has_singular))$
+print("__PARSEVAL_COS_SING_VALS__")$               print(string(Parseval_Cos_sing_vals))$
 print("__PARSEVAL_SIN_K_MAXIMA__")$                print(string(Parseval_Sin_K))$
 print("__PARSEVAL_SIN_K_TEX__")$                   tex(Parseval_Sin_K)$
 print("__PARSEVAL_SIN_SUMMAND_MAXIMA__")$          print(string(Parseval_Sin_Summand))$
@@ -112,3 +142,16 @@ print("__PARSEVAL_SIN_LHS_FINAL_MAXIMA__")$        print(string(Parseval_Sin_LHS
 print("__PARSEVAL_SIN_LHS_FINAL_TEX__")$           tex(Parseval_Sin_LHS_final)$
 print("__PARSEVAL_SIN_SUM_START__")$               print(string(Parseval_Sin_sum_start))$
 print("__PARSEVAL_SIN_HAS_SINGULAR__")$            print(string(Parseval_Sin_has_singular))$
+print("__PARSEVAL_SIN_SING_VALS__")$               print(string(Parseval_Sin_sing_vals))$
+print("__PARSEVAL_COS_FORMAL_K_MAXIMA__")$         print(string(Parseval_Cos_Formal_K))$
+print("__PARSEVAL_COS_FORMAL_K_TEX__")$            tex(Parseval_Cos_Formal_K)$
+print("__PARSEVAL_COS_FORMAL_SUMMAND_MAXIMA__")$   print(string(Parseval_Cos_Formal_Summand))$
+print("__PARSEVAL_COS_FORMAL_SUMMAND_TEX__")$      tex(Parseval_Cos_Formal_Summand)$
+print("__PARSEVAL_COS_FORMAL_LHS_FINAL_MAXIMA__")$ print(string(Parseval_Cos_Formal_LHS_final))$
+print("__PARSEVAL_COS_FORMAL_LHS_FINAL_TEX__")$    tex(Parseval_Cos_Formal_LHS_final)$
+print("__PARSEVAL_SIN_FORMAL_K_MAXIMA__")$         print(string(Parseval_Sin_Formal_K))$
+print("__PARSEVAL_SIN_FORMAL_K_TEX__")$            tex(Parseval_Sin_Formal_K)$
+print("__PARSEVAL_SIN_FORMAL_SUMMAND_MAXIMA__")$   print(string(Parseval_Sin_Formal_Summand))$
+print("__PARSEVAL_SIN_FORMAL_SUMMAND_TEX__")$      tex(Parseval_Sin_Formal_Summand)$
+print("__PARSEVAL_SIN_FORMAL_LHS_FINAL_MAXIMA__")$ print(string(Parseval_Sin_Formal_LHS_final))$
+print("__PARSEVAL_SIN_FORMAL_LHS_FINAL_TEX__")$    tex(Parseval_Sin_Formal_LHS_final)$

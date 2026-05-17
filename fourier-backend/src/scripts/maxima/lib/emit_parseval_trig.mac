@@ -1,14 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════
    Parseval – Serie Trigonométrica
    Requiere: FUNC_INPUT, INTVAR, PERIOD, Coeff_A0, Coeff_An, Coeff_Bn, const_factor
+   Identidad: (1/T)∫|f|²dx = (a₀/2)² + (1/2)·Σ(aₙ²+bₙ²)
    ═══════════════════════════════════════════════════════════════ */
 
-declare(n, integer)$
-errcatch(assume(n > 0))$
-
-_An: factor(fullratsimp(Coeff_An))$
-_Bn: factor(fullratsimp(Coeff_Bn))$
-
+/* ── LHS y término de a₀ (no dependen de n) ── */
 block(
     [_f2_acum: 0],
     for _i:1 thru length(FUNC_INPUT) do (
@@ -18,6 +14,31 @@ block(
     Parseval_LHS: factor(ratsimp(_f2_acum / PERIOD))
 )$
 
+Parseval_A0_term: factor(Coeff_A0^2)$
+
+/* ── Versión formal (sin declare(n, integer)) ──────────────────
+   El summando conserva cos(nπ)/sin(nπ) como expresiones analíticas;
+   las singularidades son removibles en esta forma, la suma empieza en n=1. */
+errcatch(assume(n > 0))$
+
+block(
+    [_an2bn2_f: factor(trigsimp(ratsimp(Coeff_An^2 + Coeff_Bn^2))), _cf_f],
+    _cf_f: const_factor(_an2bn2_f, n),
+    Parseval_Formal_K:       factor(_cf_f[1] / 2),
+    Parseval_Formal_Summand: _cf_f[2]
+)$
+
+Parseval_Formal_LHS_final: fullratsimp(
+    (Parseval_LHS - Parseval_A0_term) / fullratsimp(Parseval_Formal_K))$
+
+/* ── Versión simplificada (con declare(n, integer)) ────────────
+   cos(nπ)→(-1)ⁿ, sin(nπ)→0 permiten simplificación algebraica completa.
+   Se detectan y manejan singularidades removibles del summando. */
+declare(n, integer)$
+
+_An: factor(fullratsimp(Coeff_An))$
+_Bn: factor(fullratsimp(Coeff_Bn))$
+
 block(
     [_an2bn2: factor(trigsimp(ratsimp(_An^2 + _Bn^2))), _cf],
     _cf: const_factor(_an2bn2, n),
@@ -25,12 +46,8 @@ block(
     Parseval_Summand: _cf[2]
 )$
 
-Parseval_A0_term: factor(Coeff_A0^2)$
-
 /* Singularity detection.
-   Singular n values: positive integers where denom(Summand)=0.
-   Singular term contribution: (a_k² + b_k²)/2  using LIMITS of the original
-   coefficient formulas (not limit of Summand, which diverges). */
+   Singular term contribution: (a_k² + b_k²)/2  via LIMIT of original coefficients. */
 block(
     [_denom, _roots_wrap, _roots_raw, _sing_vals, _sing_sum],
     _denom: denom(factor(Parseval_Summand)),
@@ -41,6 +58,7 @@ block(
     _sing_vals: map(rhs,
         sublist(_roots_raw,
             lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    Parseval_sing_vals: _sing_vals,
     if _sing_vals = [] then (
         Parseval_has_singular: false,
         Parseval_sum_start: 1,
@@ -68,10 +86,17 @@ print("__PARSEVAL_LHS_TEX__")$             tex(Parseval_LHS)$
 print("__PARSEVAL_A0_TERM_MAXIMA__")$      print(string(Parseval_A0_term))$
 print("__PARSEVAL_A0_TERM_TEX__")$         tex(Parseval_A0_term)$
 print("__PARSEVAL_K_MAXIMA__")$            print(string(Parseval_K))$
-print("__PARSEVAL_K_TEX__")$               tex(Parseval_K)$
+print("__PARSEVAL_K_TEX__")$              tex(Parseval_K)$
 print("__PARSEVAL_SUMMAND_MAXIMA__")$      print(string(Parseval_Summand))$
 print("__PARSEVAL_SUMMAND_TEX__")$         tex(Parseval_Summand)$
 print("__PARSEVAL_LHS_FINAL_MAXIMA__")$    print(string(Parseval_LHS_final))$
 print("__PARSEVAL_LHS_FINAL_TEX__")$       tex(Parseval_LHS_final)$
 print("__PARSEVAL_SUM_START__")$           print(string(Parseval_sum_start))$
 print("__PARSEVAL_HAS_SINGULAR__")$        print(string(Parseval_has_singular))$
+print("__PARSEVAL_SING_VALS__")$           print(string(Parseval_sing_vals))$
+print("__PARSEVAL_FORMAL_K_MAXIMA__")$     print(string(Parseval_Formal_K))$
+print("__PARSEVAL_FORMAL_K_TEX__")$        tex(Parseval_Formal_K)$
+print("__PARSEVAL_FORMAL_SUMMAND_MAXIMA__")$ print(string(Parseval_Formal_Summand))$
+print("__PARSEVAL_FORMAL_SUMMAND_TEX__")$   tex(Parseval_Formal_Summand)$
+print("__PARSEVAL_FORMAL_LHS_FINAL_MAXIMA__")$ print(string(Parseval_Formal_LHS_final))$
+print("__PARSEVAL_FORMAL_LHS_FINAL_TEX__")$   tex(Parseval_Formal_LHS_final)$

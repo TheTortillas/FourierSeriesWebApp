@@ -4,11 +4,7 @@
    Identidad: (1/T)∫|f|²dx = |c₀|² + 2·Σ|cₙ|²
    ═══════════════════════════════════════════════════════════════ */
 
-declare(n, integer)$
-errcatch(assume(n > 0))$
-
-_Cn: factor(fullratsimp(Coeff_n))$
-
+/* ── LHS y término de c₀ (no dependen de n) ── */
 block(
     [_f2_acum: 0],
     for _i:1 thru length(FUNC_INPUT) do (
@@ -17,6 +13,30 @@ block(
     ),
     Parseval_LHS: factor(ratsimp(_f2_acum / PERIOD))
 )$
+
+Parseval_C0_term: factor(ratsimp(Coeff_0^2))$
+
+/* ── Versión formal (sin declare(n, integer)) ── */
+errcatch(assume(n > 0))$
+
+block(
+    [_cn_re_f: realpart(rectform(Coeff_n)),
+     _cn_im_f: imagpart(rectform(Coeff_n)),
+     _cn_mod2_f, _cf_f],
+    _cn_mod2_f: factor(trigsimp(ratsimp(_cn_re_f^2 + _cn_im_f^2))),
+    _cf_f: const_factor(_cn_mod2_f, n),
+    Parseval_Formal_K:       factor(2 * _cf_f[1]),
+    Parseval_Formal_Summand: _cf_f[2]
+)$
+
+Parseval_Formal_LHS_final: fullratsimp(
+    (Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_Formal_K))$
+
+/* ── Versión simplificada (con declare(n, integer)) ── */
+declare(n, integer)$
+errcatch(assume(n > 0))$
+
+_Cn: factor(fullratsimp(Coeff_n))$
 
 block(
     [_cn_re: realpart(rectform(_Cn)),
@@ -28,10 +48,7 @@ block(
     Parseval_Summand: _cf[2]
 )$
 
-Parseval_C0_term: factor(ratsimp(Coeff_0^2))$
-
-/* Singularity detection.
-   Singular term contribution: 2·|c_k|²  using LIMIT of original Coeff_n. */
+/* Singularity detection. */
 block(
     [_denom, _roots_wrap, _roots_raw, _sing_vals, _sing_sum],
     _denom: denom(factor(Parseval_Summand)),
@@ -42,6 +59,7 @@ block(
     _sing_vals: map(rhs,
         sublist(_roots_raw,
             lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    Parseval_sing_vals: _sing_vals,
     if _sing_vals = [] then (
         Parseval_has_singular: false,
         Parseval_sum_start: 1,
@@ -76,3 +94,10 @@ print("__PARSEVAL_LHS_FINAL_MAXIMA__")$    print(string(Parseval_LHS_final))$
 print("__PARSEVAL_LHS_FINAL_TEX__")$       tex(Parseval_LHS_final)$
 print("__PARSEVAL_SUM_START__")$           print(string(Parseval_sum_start))$
 print("__PARSEVAL_HAS_SINGULAR__")$        print(string(Parseval_has_singular))$
+print("__PARSEVAL_SING_VALS__")$           print(string(Parseval_sing_vals))$
+print("__PARSEVAL_FORMAL_K_MAXIMA__")$     print(string(Parseval_Formal_K))$
+print("__PARSEVAL_FORMAL_K_TEX__")$        tex(Parseval_Formal_K)$
+print("__PARSEVAL_FORMAL_SUMMAND_MAXIMA__")$ print(string(Parseval_Formal_Summand))$
+print("__PARSEVAL_FORMAL_SUMMAND_TEX__")$   tex(Parseval_Formal_Summand)$
+print("__PARSEVAL_FORMAL_LHS_FINAL_MAXIMA__")$ print(string(Parseval_Formal_LHS_final))$
+print("__PARSEVAL_FORMAL_LHS_FINAL_TEX__")$   tex(Parseval_Formal_LHS_final)$
