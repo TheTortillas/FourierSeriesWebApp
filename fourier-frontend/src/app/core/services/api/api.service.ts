@@ -19,6 +19,7 @@ import {
   HalfRangeResponse,
   ComplexResponse,
   ComplexTermsResponse,
+  ParsevalResponse,
   // DFT
   DftRequest,
   DftResponse,
@@ -165,6 +166,10 @@ export class ApiService {
 
   calculateComplexTerms(body: FourierTermsRequest): Observable<ComplexTermsResponse> {
     return this.http.post<ComplexTermsResponse>(`${this.base}/fourier/complex/terms`, body);
+  }
+
+  calculateParseval(body: FourierSeriesRequest): Observable<ParsevalResponse> {
+    return this.http.post<ParsevalResponse>(`${this.base}/fourier/parseval`, body);
   }
 
   // ─── Transforms ──────────────────────────────────────────────────────────

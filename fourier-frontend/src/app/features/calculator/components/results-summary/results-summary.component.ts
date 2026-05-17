@@ -32,7 +32,13 @@ import { ParamSlidersComponent } from '../../../../shared/components/param-slide
 import { SpectrumChartComponent } from '../../../../shared/components/spectrum-chart/spectrum-chart.component';
 import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
-import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
+import {
+  TrigonometricTerm,
+  ComplexTerm,
+  ParsevalTrig,
+  ParsevalHalfRange,
+  ParsevalComplex,
+} from '../../../../domain/types/fourier.types';
 import type { SymbolicExpression } from '../../../../domain/types/common.types';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button.component';
 import { CsvExportService } from '../../../../core/services/csv-export.service';
@@ -653,7 +659,8 @@ export class ResultsSummaryComponent {
   /** Parseval identity LaTeX — two views: formal (sum from 1) or simplified (exclusion notation). */
   readonly parsevalTex = computed(() => {
     const result = this.store.result();
-    if (!result) return null;
+    const p = this.parsevalData();
+    if (!result || !p) return null;
 
     const view = this.parsevalView();
     const override = this.parsevalSimplifiedLhsFinal();
@@ -667,30 +674,27 @@ export class ResultsSummaryComponent {
       `${lhsFinal}=\\sum_{n=1}^{\\infty}\\left(${s}\\right)`;
 
     if (result.type === 'trigonometric') {
-      const p = result.data.parseval;
-      if (!p) return null;
-      if (view === 'formal' && p.formal) return fmtFormal(p.formal.lhsFinal.tex, p.formal.summand.tex);
-      return fmtSimplified(p.lhsFinal.tex, p.summand.tex, p.singVals ?? []);
+      const pt = p as ParsevalTrig;
+      if (view === 'formal' && pt.formal) return fmtFormal(pt.formal.lhsFinal.tex, pt.formal.summand.tex);
+      return fmtSimplified(pt.lhsFinal.tex, pt.summand.tex, pt.singVals ?? []);
     }
 
     if (result.type === 'halfRange') {
-      const p = result.data.parseval;
-      if (!p) return null;
+      const ph = p as ParsevalHalfRange;
       const hrMode = this.halfRangeMode();
       if (hrMode === 'cosine') {
-        if (view === 'formal' && p.cosine.formal) return fmtFormal(p.cosine.formal.lhsFinal.tex, p.cosine.formal.summand.tex);
-        return fmtSimplified(p.cosine.lhsFinal.tex, p.cosine.summand.tex, p.cosine.singVals ?? []);
+        if (view === 'formal' && ph.cosine.formal) return fmtFormal(ph.cosine.formal.lhsFinal.tex, ph.cosine.formal.summand.tex);
+        return fmtSimplified(ph.cosine.lhsFinal.tex, ph.cosine.summand.tex, ph.cosine.singVals ?? []);
       } else {
-        if (view === 'formal' && p.sine.formal) return fmtFormal(p.sine.formal.lhsFinal.tex, p.sine.formal.summand.tex);
-        return fmtSimplified(p.sine.lhsFinal.tex, p.sine.summand.tex, p.sine.singVals ?? []);
+        if (view === 'formal' && ph.sine.formal) return fmtFormal(ph.sine.formal.lhsFinal.tex, ph.sine.formal.summand.tex);
+        return fmtSimplified(ph.sine.lhsFinal.tex, ph.sine.summand.tex, ph.sine.singVals ?? []);
       }
     }
 
     if (result.type === 'complex') {
-      const p = result.data.parseval;
-      if (!p) return null;
-      if (view === 'formal' && p.formal) return fmtFormal(p.formal.lhsFinal.tex, p.formal.summand.tex);
-      return fmtSimplified(p.lhsFinal.tex, p.summand.tex, p.singVals ?? []);
+      const pc = p as ParsevalComplex;
+      if (view === 'formal' && pc.formal) return fmtFormal(pc.formal.lhsFinal.tex, pc.formal.summand.tex);
+      return fmtSimplified(pc.lhsFinal.tex, pc.summand.tex, pc.singVals ?? []);
     }
 
     return null;
@@ -705,28 +709,26 @@ export class ResultsSummaryComponent {
 
   readonly parsevalHasFormal = computed(() => {
     const result = this.store.result();
-    if (!result) return false;
-    if (result.type === 'trigonometric' || result.type === 'complex') {
-      return !!result.data.parseval?.formal;
-    }
+    const p = this.parsevalData();
+    if (!result || !p) return false;
+    if (result.type === 'trigonometric') return !!(p as ParsevalTrig).formal;
+    if (result.type === 'complex') return !!(p as ParsevalComplex).formal;
     if (result.type === 'halfRange') {
-      const p = result.data.parseval;
-      const hrMode = this.halfRangeMode();
-      return hrMode === 'cosine' ? !!p?.cosine.formal : !!p?.sine.formal;
+      const ph = p as ParsevalHalfRange;
+      return this.halfRangeMode() === 'cosine' ? !!ph.cosine.formal : !!ph.sine.formal;
     }
     return false;
   });
 
   readonly parsevalSingVals = computed((): number[] => {
     const result = this.store.result();
-    if (!result) return [];
-    if (result.type === 'trigonometric' || result.type === 'complex') {
-      return result.data.parseval?.singVals ?? [];
-    }
+    const p = this.parsevalData();
+    if (!result || !p) return [];
+    if (result.type === 'trigonometric') return (p as ParsevalTrig).singVals ?? [];
+    if (result.type === 'complex') return (p as ParsevalComplex).singVals ?? [];
     if (result.type === 'halfRange') {
-      const p = result.data.parseval;
-      const hrMode = this.halfRangeMode();
-      return (hrMode === 'cosine' ? p?.cosine.singVals : p?.sine.singVals) ?? [];
+      const ph = p as ParsevalHalfRange;
+      return (this.halfRangeMode() === 'cosine' ? ph.cosine.singVals : ph.sine.singVals) ?? [];
     }
     return [];
   });
@@ -734,14 +736,13 @@ export class ResultsSummaryComponent {
   /** Whether the current Parseval identity has singular terms (sum starts at n > 1). */
   readonly parsevalHasSingular = computed(() => {
     const result = this.store.result();
-    if (!result) return false;
-    if (result.type === 'trigonometric' || result.type === 'complex') {
-      return result.data.parseval?.hasSingular ?? false;
-    }
+    const p = this.parsevalData();
+    if (!result || !p) return false;
+    if (result.type === 'trigonometric') return (p as ParsevalTrig).hasSingular ?? false;
+    if (result.type === 'complex') return (p as ParsevalComplex).hasSingular ?? false;
     if (result.type === 'halfRange') {
-      const p = result.data.parseval;
-      const hrMode = this.halfRangeMode();
-      return hrMode === 'cosine' ? (p?.cosine.hasSingular ?? false) : (p?.sine.hasSingular ?? false);
+      const ph = p as ParsevalHalfRange;
+      return this.halfRangeMode() === 'cosine' ? (ph.cosine.hasSingular ?? false) : (ph.sine.hasSingular ?? false);
     }
     return false;
   });
@@ -749,14 +750,13 @@ export class ResultsSummaryComponent {
   /** The n value at which the Parseval sum starts (1 = normal, k > 1 = singular terms excluded). */
   readonly parsevalSumStart = computed(() => {
     const result = this.store.result();
-    if (!result) return 1;
-    if (result.type === 'trigonometric' || result.type === 'complex') {
-      return result.data.parseval?.sumStart ?? 1;
-    }
+    const p = this.parsevalData();
+    if (!result || !p) return 1;
+    if (result.type === 'trigonometric') return (p as ParsevalTrig).sumStart ?? 1;
+    if (result.type === 'complex') return (p as ParsevalComplex).sumStart ?? 1;
     if (result.type === 'halfRange') {
-      const p = result.data.parseval;
-      const hrMode = this.halfRangeMode();
-      return hrMode === 'cosine' ? (p?.cosine.sumStart ?? 1) : (p?.sine.sumStart ?? 1);
+      const ph = p as ParsevalHalfRange;
+      return this.halfRangeMode() === 'cosine' ? (ph.cosine.sumStart ?? 1) : (ph.sine.sumStart ?? 1);
     }
     return 1;
   });
@@ -870,6 +870,8 @@ export class ResultsSummaryComponent {
   );
 
   // ── Parseval tab state ───────────────────────────────────────────────────
+  readonly parsevalData = signal<ParsevalTrig | ParsevalHalfRange | ParsevalComplex | null>(null);
+  readonly parsevalLoading = signal(false);
   readonly parsevalSimplifyProfile = signal<SimplifyProfile>('raw');
   readonly parsevalSimplifying = signal(false);
   readonly parsevalSimplifiedLhsFinal = signal<string | null>(null);
@@ -1136,6 +1138,7 @@ export class ResultsSummaryComponent {
         this.simplifiedFactored.set(null);
         this.simplifyProfile.set('raw');
         this.halfRangeMode.set('cosine');
+        this.parsevalData.set(null);
         this.parsevalSimplifiedLhsFinal.set(null);
         this.parsevalSimplifyProfile.set('raw');
         this.parsevalView.set('simplified');
@@ -1197,7 +1200,30 @@ export class ResultsSummaryComponent {
     if (tab === 'terms' && !this.termsTabInitialized()) {
       this.termsTabInitialized.set(true);
     }
+    if (tab === 'parseval' && !this.parsevalData() && !this.parsevalLoading()) {
+      this.fetchParseval();
+    }
     this.activeTab.set(tab);
+  }
+
+  private fetchParseval(): void {
+    const result = this.store.result();
+    if (!result) return;
+    this.parsevalLoading.set(true);
+    this.api
+      .calculateParseval(result.data.input)
+      .pipe(
+        finalize(() => this.parsevalLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (res) => {
+          this.parsevalData.set(res.parseval ?? null);
+        },
+        error: () => {
+          this.parsevalData.set(null);
+        },
+      });
   }
 
   simplifyParseval(profile: SimplifyProfile): void {
@@ -1208,17 +1234,17 @@ export class ResultsSummaryComponent {
     }
 
     const result = this.store.result();
-    if (!result) return;
+    const p = this.parsevalData();
+    if (!result || !p) return;
 
     let lhsFinalMaxima: string | undefined;
     if (result.type === 'trigonometric') {
-      lhsFinalMaxima = result.data.parseval?.lhsFinal.maxima;
+      lhsFinalMaxima = (p as ParsevalTrig).lhsFinal.maxima;
     } else if (result.type === 'complex') {
-      lhsFinalMaxima = result.data.parseval?.lhsFinal.maxima;
+      lhsFinalMaxima = (p as ParsevalComplex).lhsFinal.maxima;
     } else if (result.type === 'halfRange') {
-      const p = result.data.parseval;
-      const hrMode = this.halfRangeMode();
-      lhsFinalMaxima = hrMode === 'cosine' ? p?.cosine.lhsFinal.maxima : p?.sine.lhsFinal.maxima;
+      const ph = p as ParsevalHalfRange;
+      lhsFinalMaxima = this.halfRangeMode() === 'cosine' ? ph.cosine.lhsFinal.maxima : ph.sine.lhsFinal.maxima;
     }
 
     if (!lhsFinalMaxima) return;

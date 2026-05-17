@@ -4,13 +4,14 @@ import type {
   FourierResult,
   HalfRangeResult,
   ComplexFourierResult,
+  ParsevalApiResult,
   PiecewiseFourierInput,
 } from "../../domain/types/fourier.types";
 import { config } from "../../config/env";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type CacheValue = FourierResult | HalfRangeResult | ComplexFourierResult;
+type CacheValue = FourierResult | HalfRangeResult | ComplexFourierResult | ParsevalApiResult;
 
 export interface CacheStats {
   backend: "redis" | "lru";
@@ -25,7 +26,7 @@ export interface CacheStats {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 /** Bump this whenever the Maxima scripts change to invalidate stale entries. */
-const CACHE_VERSION = "6";
+const CACHE_VERSION = "7";
 
 const KEY_PREFIX = `fourier:v${CACHE_VERSION}`;
 const TTL_SECONDS = config.cache.ttlDays * 86_400;

@@ -102,6 +102,11 @@ export interface ParsevalComplex {
   formal?: ParsevalFormal;
 }
 
+export interface ParsevalResponse {
+  parseval: ParsevalTrig | ParsevalHalfRange | ParsevalComplex | undefined;
+  executionTimeMs: number;
+}
+
 export interface TrigonometricResponse {
   input: FourierSeriesRequest;
   coefficients: TrigonometricCoefficients;

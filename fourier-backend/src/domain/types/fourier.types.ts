@@ -102,6 +102,11 @@ export interface ParsevalComplex {
   formal?: ParsevalFormal;
 }
 
+export interface ParsevalApiResult {
+  parseval: ParsevalTrig | ParsevalHalfRange | ParsevalComplex | undefined;
+  executionTimeMs: number;
+}
+
 export interface HalfRangeResult {
   input: PiecewiseFourierInput;
   coefficients: FourierCoefficients;

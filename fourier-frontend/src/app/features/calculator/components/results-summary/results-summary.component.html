@@ -1286,7 +1286,11 @@
       <!-- ── Tab: Parseval ─────────────────────────────────────────────── -->
       @if (activeTab() === 'parseval') {
         <div class="overflow-y-auto">
-          @if (parsevalTex()) {
+          @if (parsevalLoading()) {
+            <div class="p-4 flex items-center gap-2 text-[11px] font-mono text-muted dark:text-dark-muted animate-pulse">
+              <span>{{ 'common.loading' | transloco }}</span>
+            </div>
+          } @else if (parsevalTex()) {
 
             <!-- Header -->
             <div class="px-4 pt-4 pb-2">

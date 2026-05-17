@@ -41,22 +41,6 @@ const TRIG_MARKERS = [
   "__BN_K_TEX__",
   "__BN_SUMMAND_MAXIMA__",
   "__BN_SUMMAND_TEX__",
-  "__PARSEVAL_LHS_MAXIMA__",
-  "__PARSEVAL_LHS_TEX__",
-  "__PARSEVAL_A0_TERM_MAXIMA__",
-  "__PARSEVAL_A0_TERM_TEX__",
-  "__PARSEVAL_K_MAXIMA__",
-  "__PARSEVAL_K_TEX__",
-  "__PARSEVAL_SUMMAND_MAXIMA__",
-  "__PARSEVAL_SUMMAND_TEX__",
-  "__PARSEVAL_LHS_FINAL_MAXIMA__",
-  "__PARSEVAL_LHS_FINAL_TEX__",
-  "__PARSEVAL_FORMAL_K_MAXIMA__",
-  "__PARSEVAL_FORMAL_K_TEX__",
-  "__PARSEVAL_FORMAL_SUMMAND_MAXIMA__",
-  "__PARSEVAL_FORMAL_SUMMAND_TEX__",
-  "__PARSEVAL_FORMAL_LHS_FINAL_MAXIMA__",
-  "__PARSEVAL_FORMAL_LHS_FINAL_TEX__",
   "__A0_FLOAT__",
 ];
 
@@ -107,7 +91,6 @@ INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
 load("${process.cwd()}/src/scripts/maxima/lib/emit_factored_trig.mac")$
-load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_trig.mac")$
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
 __A0_CLEAN__: if not freeof(gamma_incomplete, Coeff_A0_Raw)
   then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_A0_Raw, ${intVar})))],
@@ -144,31 +127,6 @@ kill(all)$
 
     const params = this.extractParams(result.raw);
 
-    const parseval =
-      parsed["parseval_lhs"] && parsed["parseval_k"] && parsed["parseval_summand"]
-        ? {
-            lhs: parsed["parseval_lhs"],
-            a0Term: parsed["parseval_a0_term"] ?? { tex: "", maxima: "0" },
-            k: parsed["parseval_k"],
-            summand: parsed["parseval_summand"],
-            lhsFinal: parsed["parseval_lhs_final"] ?? parsed["parseval_lhs"],
-            sumStart: parseInt(
-              this.extractBetween(result.raw, "__PARSEVAL_SUM_START__", "__PARSEVAL_HAS_SINGULAR__")
-                .replace(/false/g, "").trim().split(/[\s\n]/)[0] ?? "1"
-            ) || 1,
-            hasSingular: this.extractBetween(result.raw, "__PARSEVAL_HAS_SINGULAR__", "__PARSEVAL_SING_VALS__")
-              .includes("true"),
-            singVals: this.parseSingVals(this.extractBetween(result.raw, "__PARSEVAL_SING_VALS__", "__PARSEVAL_FORMAL_K_MAXIMA__")),
-            formal: parsed["parseval_formal_k"] && parsed["parseval_formal_summand"]
-              ? {
-                  k: parsed["parseval_formal_k"],
-                  summand: parsed["parseval_formal_summand"],
-                  lhsFinal: parsed["parseval_formal_lhs_final"] ?? parsed["parseval_lhs"],
-                }
-              : undefined,
-          }
-        : undefined;
-
     const fourierResult: FourierResult = {
       input,
       coefficients: {
@@ -184,7 +142,6 @@ kill(all)$
       series: parsed["series"] ?? { tex: "", maxima: "" },
       w0: parsed["w0"] ?? { tex: "", maxima: "" },
       a0Raw: parsed["a0raw"],
-      parseval,
       validation,
       params,
       executionTimeMs: Date.now() - startTime,
@@ -439,12 +396,6 @@ kill(all)$
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-  }
-
-  private parseSingVals(raw: string): number[] {
-    const cleaned = raw.replace(/[\[\]\s]/g, "");
-    if (!cleaned) return [];
-    return cleaned.split(",").map(Number).filter((n) => Number.isFinite(n) && n > 0);
   }
 
   private extractBetween(
