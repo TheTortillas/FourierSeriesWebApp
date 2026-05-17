@@ -43,6 +43,22 @@ const HALF_RANGE_MARKERS = [
   "__BN_K_TEX__",
   "__BN_SUMMAND_MAXIMA__",
   "__BN_SUMMAND_TEX__",
+  "__PARSEVAL_LHS_MAXIMA__",
+  "__PARSEVAL_LHS_TEX__",
+  "__PARSEVAL_COS_A0_TERM_MAXIMA__",
+  "__PARSEVAL_COS_A0_TERM_TEX__",
+  "__PARSEVAL_COS_K_MAXIMA__",
+  "__PARSEVAL_COS_K_TEX__",
+  "__PARSEVAL_COS_SUMMAND_MAXIMA__",
+  "__PARSEVAL_COS_SUMMAND_TEX__",
+  "__PARSEVAL_COS_LHS_FINAL_MAXIMA__",
+  "__PARSEVAL_COS_LHS_FINAL_TEX__",
+  "__PARSEVAL_SIN_K_MAXIMA__",
+  "__PARSEVAL_SIN_K_TEX__",
+  "__PARSEVAL_SIN_SUMMAND_MAXIMA__",
+  "__PARSEVAL_SIN_SUMMAND_TEX__",
+  "__PARSEVAL_SIN_LHS_FINAL_MAXIMA__",
+  "__PARSEVAL_SIN_LHS_FINAL_TEX__",
   "__A0_FLOAT__",
 ];
 
@@ -96,6 +112,7 @@ INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
 load("${process.cwd()}/src/scripts/maxima/lib/emit_factored_trig.mac")$
+load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_half.mac")$
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
 __A0_CLEAN__: if not freeof(gamma_incomplete, Coeff_A0_Raw)
   then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_A0_Raw, ${intVar})))],
@@ -131,6 +148,24 @@ kill(all)$
 
     const params = this.extractParams(result.raw);
 
+    const parseval =
+      parsed["parseval_lhs"] && parsed["parseval_cos_k"] && parsed["parseval_sin_k"]
+        ? {
+            lhs: parsed["parseval_lhs"],
+            cosine: {
+              a0Term: parsed["parseval_cos_a0_term"] ?? { tex: "", maxima: "0" },
+              k: parsed["parseval_cos_k"],
+              summand: parsed["parseval_cos_summand"] ?? { tex: "", maxima: "1" },
+              lhsFinal: parsed["parseval_cos_lhs_final"] ?? parsed["parseval_lhs"],
+            },
+            sine: {
+              k: parsed["parseval_sin_k"],
+              summand: parsed["parseval_sin_summand"] ?? { tex: "", maxima: "1" },
+              lhsFinal: parsed["parseval_sin_lhs_final"] ?? parsed["parseval_lhs"],
+            },
+          }
+        : undefined;
+
     const halfRangeResult: HalfRangeResult = {
       input,
       coefficients: {
@@ -147,6 +182,7 @@ kill(all)$
       seriesSine: parsed["series_seno"] ?? { tex: "", maxima: "" },
       w0: parsed["w0"] ?? { tex: "", maxima: "" },
       a0Raw: parsed["a0raw"],
+      parseval,
       validation,
       params,
       executionTimeMs: Date.now() - startTime,

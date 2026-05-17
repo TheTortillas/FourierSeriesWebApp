@@ -41,6 +41,16 @@ const TRIG_MARKERS = [
   "__BN_K_TEX__",
   "__BN_SUMMAND_MAXIMA__",
   "__BN_SUMMAND_TEX__",
+  "__PARSEVAL_LHS_MAXIMA__",
+  "__PARSEVAL_LHS_TEX__",
+  "__PARSEVAL_A0_TERM_MAXIMA__",
+  "__PARSEVAL_A0_TERM_TEX__",
+  "__PARSEVAL_K_MAXIMA__",
+  "__PARSEVAL_K_TEX__",
+  "__PARSEVAL_SUMMAND_MAXIMA__",
+  "__PARSEVAL_SUMMAND_TEX__",
+  "__PARSEVAL_LHS_FINAL_MAXIMA__",
+  "__PARSEVAL_LHS_FINAL_TEX__",
   "__A0_FLOAT__",
 ];
 
@@ -91,6 +101,7 @@ INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
 load("${process.cwd()}/src/scripts/maxima/lib/emit_factored_trig.mac")$
+load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_trig.mac")$
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
 __A0_CLEAN__: if not freeof(gamma_incomplete, Coeff_A0_Raw)
   then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_A0_Raw, ${intVar})))],
@@ -127,6 +138,17 @@ kill(all)$
 
     const params = this.extractParams(result.raw);
 
+    const parseval =
+      parsed["parseval_lhs"] && parsed["parseval_k"] && parsed["parseval_summand"]
+        ? {
+            lhs: parsed["parseval_lhs"],
+            a0Term: parsed["parseval_a0_term"] ?? { tex: "", maxima: "0" },
+            k: parsed["parseval_k"],
+            summand: parsed["parseval_summand"],
+            lhsFinal: parsed["parseval_lhs_final"] ?? parsed["parseval_lhs"],
+          }
+        : undefined;
+
     const fourierResult: FourierResult = {
       input,
       coefficients: {
@@ -142,6 +164,7 @@ kill(all)$
       series: parsed["series"] ?? { tex: "", maxima: "" },
       w0: parsed["w0"] ?? { tex: "", maxima: "" },
       a0Raw: parsed["a0raw"],
+      parseval,
       validation,
       params,
       executionTimeMs: Date.now() - startTime,

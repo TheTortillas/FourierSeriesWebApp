@@ -33,6 +33,16 @@ const COMPLEX_MARKERS = [
   "__CN_K_TEX__",
   "__CN_SUMMAND_MAXIMA__",
   "__CN_SUMMAND_TEX__",
+  "__PARSEVAL_LHS_MAXIMA__",
+  "__PARSEVAL_LHS_TEX__",
+  "__PARSEVAL_C0_TERM_MAXIMA__",
+  "__PARSEVAL_C0_TERM_TEX__",
+  "__PARSEVAL_K_MAXIMA__",
+  "__PARSEVAL_K_TEX__",
+  "__PARSEVAL_SUMMAND_MAXIMA__",
+  "__PARSEVAL_SUMMAND_TEX__",
+  "__PARSEVAL_LHS_FINAL_MAXIMA__",
+  "__PARSEVAL_LHS_FINAL_TEX__",
   "__C0_FLOAT__",
 ];
 
@@ -85,6 +95,7 @@ FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
+load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_complex.mac")$
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
 __C0_CLEAN__: if not freeof(gamma_incomplete, Coeff_0)
   then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_0, ${intVar})))],
@@ -121,6 +132,17 @@ kill(all)$
 
     const params = this.extractParams(result.raw);
 
+    const parseval =
+      parsed["parseval_lhs"] && parsed["parseval_k"] && parsed["parseval_summand"]
+        ? {
+            lhs: parsed["parseval_lhs"],
+            c0Term: parsed["parseval_c0_term"] ?? { tex: "", maxima: "0" },
+            k: parsed["parseval_k"],
+            summand: parsed["parseval_summand"],
+            lhsFinal: parsed["parseval_lhs_final"] ?? parsed["parseval_lhs"],
+          }
+        : undefined;
+
     const complexResult: ComplexFourierResult = {
       input,
       coefficients: {
@@ -132,6 +154,7 @@ kill(all)$
       },
       seriesComplex: parsed["series_complex"] ?? { tex: "", maxima: "" },
       w0: parsed["w0"] ?? { tex: "", maxima: "" },
+      parseval,
       validation,
       params,
       executionTimeMs: Date.now() - startTime,

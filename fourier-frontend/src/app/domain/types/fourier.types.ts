@@ -49,12 +49,44 @@ export interface TrigonometricCoefficients {
   bnSummand?: SymbolicExpression;
 }
 
+export interface ParsevalTrig {
+  lhs: SymbolicExpression;
+  a0Term: SymbolicExpression;
+  k: SymbolicExpression;
+  summand: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
+}
+
+export interface ParsevalHalfRange {
+  lhs: SymbolicExpression;
+  cosine: {
+    a0Term: SymbolicExpression;
+    k: SymbolicExpression;
+    summand: SymbolicExpression;
+    lhsFinal: SymbolicExpression;
+  };
+  sine: {
+    k: SymbolicExpression;
+    summand: SymbolicExpression;
+    lhsFinal: SymbolicExpression;
+  };
+}
+
+export interface ParsevalComplex {
+  lhs: SymbolicExpression;
+  c0Term: SymbolicExpression;
+  k: SymbolicExpression;
+  summand: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
+}
+
 export interface TrigonometricResponse {
   input: FourierSeriesRequest;
   coefficients: TrigonometricCoefficients;
   series: SymbolicExpression;
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
+  parseval?: ParsevalTrig;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
@@ -83,6 +115,7 @@ export interface HalfRangeResponse {
   seriesSine: SymbolicExpression;
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
+  parseval?: ParsevalHalfRange;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
@@ -101,6 +134,7 @@ export interface ComplexResponse {
   coefficients: ComplexCoefficients;
   seriesComplex: SymbolicExpression;
   w0: SymbolicExpression;
+  parseval?: ParsevalComplex;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;

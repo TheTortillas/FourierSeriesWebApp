@@ -644,6 +644,40 @@ export class ResultsSummaryComponent {
     return null;
   });
 
+  /** Parseval identity LaTeX — forma despejada: lhsFinal = Σ(summand). */
+  readonly parsevalTex = computed(() => {
+    const result = this.store.result();
+    if (!result) return null;
+
+    const fmt = (lhsFinal: string, s: string): string =>
+      `${lhsFinal}=\\sum_{n=1}^{\\infty}\\left(${s}\\right)`;
+
+    if (result.type === 'trigonometric') {
+      const p = result.data.parseval;
+      if (!p) return null;
+      return fmt(p.lhsFinal.tex, p.summand.tex);
+    }
+
+    if (result.type === 'halfRange') {
+      const p = result.data.parseval;
+      if (!p) return null;
+      const hrMode = this.halfRangeMode();
+      if (hrMode === 'cosine') {
+        return fmt(p.cosine.lhsFinal.tex, p.cosine.summand.tex);
+      } else {
+        return fmt(p.sine.lhsFinal.tex, p.sine.summand.tex);
+      }
+    }
+
+    if (result.type === 'complex') {
+      const p = result.data.parseval;
+      if (!p) return null;
+      return fmt(p.lhsFinal.tex, p.summand.tex);
+    }
+
+    return null;
+  });
+
   /** Factored coefficient LaTeX: K · summandₙ form when non-trivial (K ≠ 1). */
   readonly coeffFactoredTex = computed(() => {
     const result = this.store.result();

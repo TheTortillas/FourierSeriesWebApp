@@ -1,0 +1,45 @@
+/* ═══════════════════════════════════════════════════════════════
+   Parseval – Serie Compleja
+   Requiere: FUNC_INPUT, INTVAR, PERIOD, Coeff_0, Coeff_n, const_factor
+   Identidad: (1/T)∫|f|²dx = |c₀|² + 2·Σ|cₙ|²
+   Despejada: (LHS - c0Term) / K = Σ(summand)
+   ═══════════════════════════════════════════════════════════════ */
+
+declare(n, integer)$
+errcatch(assume(n > 0))$
+
+_Cn: factor(fullratsimp(Coeff_n))$
+
+block(
+    [_f2_acum: 0],
+    for _i:1 thru length(FUNC_INPUT) do (
+        _f2_acum: _f2_acum + integrate(FUNC_INPUT[_i][1]^2, INTVAR,
+                                       FUNC_INPUT[_i][2], FUNC_INPUT[_i][3])
+    ),
+    Parseval_LHS: factor(ratsimp(_f2_acum / PERIOD))
+)$
+
+block(
+    [_cn_re: realpart(rectform(_Cn)),
+     _cn_im: imagpart(rectform(_Cn)),
+     _cn_mod2, _cf],
+    _cn_mod2: factor(trigsimp(ratsimp(_cn_re^2 + _cn_im^2))),
+    _cf: const_factor(_cn_mod2, n),
+    Parseval_K:       factor(2 * _cf[1]),
+    Parseval_Summand: _cf[2]
+)$
+
+Parseval_C0_term: factor(ratsimp(Coeff_0^2))$
+
+Parseval_LHS_final: fullratsimp((Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_K))$
+
+print("__PARSEVAL_LHS_MAXIMA__")$          print(string(Parseval_LHS))$
+print("__PARSEVAL_LHS_TEX__")$             tex(Parseval_LHS)$
+print("__PARSEVAL_C0_TERM_MAXIMA__")$      print(string(Parseval_C0_term))$
+print("__PARSEVAL_C0_TERM_TEX__")$         tex(Parseval_C0_term)$
+print("__PARSEVAL_K_MAXIMA__")$            print(string(Parseval_K))$
+print("__PARSEVAL_K_TEX__")$               tex(Parseval_K)$
+print("__PARSEVAL_SUMMAND_MAXIMA__")$      print(string(Parseval_Summand))$
+print("__PARSEVAL_SUMMAND_TEX__")$         tex(Parseval_Summand)$
+print("__PARSEVAL_LHS_FINAL_MAXIMA__")$    print(string(Parseval_LHS_final))$
+print("__PARSEVAL_LHS_FINAL_TEX__")$       tex(Parseval_LHS_final)$

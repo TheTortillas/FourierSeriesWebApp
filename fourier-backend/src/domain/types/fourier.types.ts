@@ -42,10 +42,42 @@ export interface FourierResult {
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
   a0Float?: number;
+  parseval?: ParsevalTrig;
   simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
+}
+
+export interface ParsevalTrig {
+  lhs: SymbolicExpression;
+  a0Term: SymbolicExpression;
+  k: SymbolicExpression;
+  summand: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
+}
+
+export interface ParsevalHalfRange {
+  lhs: SymbolicExpression;
+  cosine: {
+    a0Term: SymbolicExpression;
+    k: SymbolicExpression;
+    summand: SymbolicExpression;
+    lhsFinal: SymbolicExpression;
+  };
+  sine: {
+    k: SymbolicExpression;
+    summand: SymbolicExpression;
+    lhsFinal: SymbolicExpression;
+  };
+}
+
+export interface ParsevalComplex {
+  lhs: SymbolicExpression;
+  c0Term: SymbolicExpression;
+  k: SymbolicExpression;
+  summand: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
 }
 
 export interface HalfRangeResult {
@@ -56,6 +88,7 @@ export interface HalfRangeResult {
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
   a0Float?: number;
+  parseval?: ParsevalHalfRange;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
@@ -72,6 +105,7 @@ export interface ComplexFourierResult {
   };
   seriesComplex: SymbolicExpression;
   w0: SymbolicExpression;
+  parseval?: ParsevalComplex;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
