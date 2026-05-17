@@ -649,8 +649,9 @@ export class ResultsSummaryComponent {
     const result = this.store.result();
     if (!result) return null;
 
+    const override = this.parsevalSimplifiedLhsFinal();
     const fmt = (lhsFinal: string, s: string, start: number = 1): string =>
-      `${lhsFinal}=\\sum_{n=${start}}^{\\infty}\\left(${s}\\right)`;
+      `${override ?? lhsFinal}=\\sum_{n=${start}}^{\\infty}\\left(${s}\\right)`;
 
     if (result.type === 'trigonometric') {
       const p = result.data.parseval;
@@ -676,6 +677,36 @@ export class ResultsSummaryComponent {
     }
 
     return null;
+  });
+
+  /** Whether the current Parseval identity has singular terms (sum starts at n > 1). */
+  readonly parsevalHasSingular = computed(() => {
+    const result = this.store.result();
+    if (!result) return false;
+    if (result.type === 'trigonometric' || result.type === 'complex') {
+      return result.data.parseval?.hasSingular ?? false;
+    }
+    if (result.type === 'halfRange') {
+      const p = result.data.parseval;
+      const hrMode = this.halfRangeMode();
+      return hrMode === 'cosine' ? (p?.cosine.hasSingular ?? false) : (p?.sine.hasSingular ?? false);
+    }
+    return false;
+  });
+
+  /** The n value at which the Parseval sum starts (1 = normal, k > 1 = singular terms excluded). */
+  readonly parsevalSumStart = computed(() => {
+    const result = this.store.result();
+    if (!result) return 1;
+    if (result.type === 'trigonometric' || result.type === 'complex') {
+      return result.data.parseval?.sumStart ?? 1;
+    }
+    if (result.type === 'halfRange') {
+      const p = result.data.parseval;
+      const hrMode = this.halfRangeMode();
+      return hrMode === 'cosine' ? (p?.cosine.sumStart ?? 1) : (p?.sine.sumStart ?? 1);
+    }
+    return 1;
   });
 
   /** Factored coefficient LaTeX: K · summandₙ form when non-trivial (K ≠ 1). */
@@ -780,11 +811,16 @@ export class ResultsSummaryComponent {
   readonly seriesLabel = computed(() => `f(${this.store.intVar()})`);
 
   // ── Tab state ─────────────────────────────────────────────────────────────
-  readonly activeTab = signal<'coefficients' | 'terms' | 'spectrum' | 'validation'>('coefficients');
+  readonly activeTab = signal<'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval'>('coefficients');
   readonly termsTabInitialized = signal(false);
   readonly showTermsTab = computed(
     () => this.termsTabInitialized() || this.activeTab() === 'terms',
   );
+
+  // ── Parseval tab state ───────────────────────────────────────────────────
+  readonly parsevalSimplifyProfile = signal<SimplifyProfile>('raw');
+  readonly parsevalSimplifying = signal(false);
+  readonly parsevalSimplifiedLhsFinal = signal<string | null>(null);
 
   /**
    * Series LaTeX composed from active coefficient values.
@@ -951,12 +987,13 @@ export class ResultsSummaryComponent {
   });
 
   /** Typed tabs array so the template gets literal types */
-  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; labelKey: string }[] =
+  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval'; labelKey: string }[] =
     [
       { id: 'coefficients', labelKey: 'settingsCanvas.tabCoefficients' },
       { id: 'terms', labelKey: 'settingsCanvas.tabTerms' },
       { id: 'spectrum', labelKey: 'settingsCanvas.tabSpectrum' },
       { id: 'validation', labelKey: 'settingsCanvas.tabValidation' },
+      { id: 'parseval', labelKey: 'settingsCanvas.tabParseval' },
     ];
 
   /** Context for the terms tab — trig / half-range branch */
@@ -1034,6 +1071,8 @@ export class ResultsSummaryComponent {
         this.simplifiedFactored.set(null);
         this.simplifyProfile.set('raw');
         this.halfRangeMode.set('cosine');
+        this.parsevalSimplifiedLhsFinal.set(null);
+        this.parsevalSimplifyProfile.set('raw');
         this.controlHarmonics.set(false);
         this.enabledHarmonics.set(new Set(result.terms.terms.map((t) => t.n)));
         this.selectedHarmonicN.set(null);
@@ -1088,17 +1127,51 @@ export class ResultsSummaryComponent {
 
   // ── Tab & mode actions ────────────────────────────────────────────────────
 
-  setTab(tab: 'coefficients' | 'terms' | 'spectrum' | 'validation'): void {
+  setTab(tab: 'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval'): void {
     if (tab === 'terms' && !this.termsTabInitialized()) {
       this.termsTabInitialized.set(true);
     }
     this.activeTab.set(tab);
   }
 
+  simplifyParseval(profile: SimplifyProfile): void {
+    this.parsevalSimplifyProfile.set(profile);
+    if (profile === 'raw') {
+      this.parsevalSimplifiedLhsFinal.set(null);
+      return;
+    }
+
+    const result = this.store.result();
+    if (!result) return;
+
+    let lhsFinalMaxima: string | undefined;
+    if (result.type === 'trigonometric') {
+      lhsFinalMaxima = result.data.parseval?.lhsFinal.maxima;
+    } else if (result.type === 'complex') {
+      lhsFinalMaxima = result.data.parseval?.lhsFinal.maxima;
+    } else if (result.type === 'halfRange') {
+      const p = result.data.parseval;
+      const hrMode = this.halfRangeMode();
+      lhsFinalMaxima = hrMode === 'cosine' ? p?.cosine.lhsFinal.maxima : p?.sine.lhsFinal.maxima;
+    }
+
+    if (!lhsFinalMaxima) return;
+
+    this.parsevalSimplifying.set(true);
+    this.api
+      .simplify({ expression: lhsFinalMaxima, profile })
+      .pipe(finalize(() => this.parsevalSimplifying.set(false)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((res) => {
+        this.parsevalSimplifiedLhsFinal.set(res.simplified.tex);
+      });
+  }
+
   setHalfRangeMode(mode: 'cosine' | 'sine'): void {
     this.halfRangeMode.set(mode);
     this.simplifiedCoeffs.set(null);
     this.simplifyProfile.set('raw');
+    this.parsevalSimplifiedLhsFinal.set(null);
+    this.parsevalSimplifyProfile.set('raw');
   }
 
   setHarmonicControl(enabled: boolean): void {

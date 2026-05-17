@@ -539,6 +539,11 @@
                 class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-amber-500 align-middle"
               ></span>
             }
+            @if (tab.id === 'parseval' && parsevalHasSingular()) {
+              <span
+                class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-sky-500 align-middle"
+              ></span>
+            }
           </button>
         }
 
@@ -577,15 +582,6 @@
                 <div
                   class="overflow-x-auto text-muted dark:text-dark-muted"
                   [mathjax]="'\\[=\\,' + factoredSeriesTex() + '\\]'"
-                ></div>
-              }
-              @if (parsevalTex()) {
-                <div class="flex items-center gap-2 mt-3 mb-1">
-                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">Parseval</p>
-                </div>
-                <div
-                  class="overflow-x-auto text-ink dark:text-dark-ink"
-                  [mathjax]="'\\[' + parsevalTex() + '\\]'"
                 ></div>
               }
             </div>
@@ -1197,6 +1193,105 @@
             <p class="text-sm font-body text-muted dark:text-dark-muted">
               {{ 'resultPanel.noInfoAvailable' | transloco }}
             </p>
+          }
+        </div>
+      }
+
+      <!-- ── Tab: Parseval ─────────────────────────────────────────────── -->
+      @if (activeTab() === 'parseval') {
+        <div class="overflow-y-auto">
+          @if (parsevalTex()) {
+
+            <!-- Header -->
+            <div class="px-4 pt-4 pb-2">
+              <p class="text-[10px] font-mono text-muted dark:text-dark-muted mb-3">
+                {{ 'settingsCanvas.tabParseval' | transloco }} &mdash;
+                Identidad de Parseval asociada a esta serie de Fourier
+              </p>
+
+              <!-- halfRange mode toggle -->
+              @if (store.result()?.type === 'halfRange') {
+                <div
+                  class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0 mb-3 w-fit"
+                >
+                  <button
+                    type="button"
+                    class="px-2.5 py-1 transition-colors"
+                    [class]="halfRangeMode() === 'cosine'
+                      ? 'bg-accent text-paper dark:text-dark-paper'
+                      : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                    (click)="setHalfRangeMode('cosine')"
+                  >{{ 'resultPanel.cosine' | transloco }}</button>
+                  <button
+                    type="button"
+                    class="px-2.5 py-1 transition-colors border-l border-border dark:border-dark-border"
+                    [class]="halfRangeMode() === 'sine'
+                      ? 'bg-accent text-paper dark:text-dark-paper'
+                      : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                    (click)="setHalfRangeMode('sine')"
+                  >{{ 'resultPanel.sine' | transloco }}</button>
+                </div>
+              }
+
+              <!-- Identity formula -->
+              <div
+                class="overflow-x-auto text-ink dark:text-dark-ink"
+                [mathjax]="'\\[' + parsevalTex() + '\\]'"
+              ></div>
+
+              <!-- Singular note -->
+              @if (parsevalHasSingular()) {
+                <div
+                  class="mt-2 flex items-start gap-2 text-[10px] font-mono text-sky-600 dark:text-sky-400"
+                >
+                  <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+                  <span>
+                    La suma comienza en n={{ parsevalSumStart() }}.
+                    Los términos anteriores tienen coeficientes indeterminados evaluados por límite
+                    y se han restado explícitamente del lado izquierdo.
+                  </span>
+                </div>
+              }
+            </div>
+
+            <!-- Simplify controls -->
+            <div
+              class="px-4 py-3 flex items-center gap-2 flex-wrap border-t border-border dark:border-dark-border"
+            >
+              <div
+                class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+              >
+                @for (opt of profileOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="px-2.5 py-1 transition-colors"
+                    [class]="
+                      parsevalSimplifyProfile() === opt.value
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'
+                    "
+                    [class.border-l]="!$first"
+                    [class.border-border]="!$first"
+                    [class.dark:border-dark-border]="!$first"
+                    (click)="simplifyParseval(opt.value)"
+                  >
+                    {{ opt.labelKey | transloco }}
+                  </button>
+                }
+              </div>
+              @if (parsevalSimplifying()) {
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted animate-pulse">
+                  {{ 'common.loading' | transloco }}
+                </span>
+              }
+            </div>
+
+          } @else {
+            <div class="p-4">
+              <p class="text-sm font-body text-muted dark:text-dark-muted">
+                No hay identidad de Parseval disponible para esta función.
+              </p>
+            </div>
           }
         </div>
       }

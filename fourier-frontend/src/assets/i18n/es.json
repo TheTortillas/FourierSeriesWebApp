@@ -165,7 +165,8 @@
     "tabCoefficients": "Coeficientes",
     "tabTerms": "Términos",
     "tabSpectrum": "Espectro",
-    "tabValidation": "Validación"
+    "tabValidation": "Validación",
+    "tabParseval": "Parseval"
   },
   "resultPanel": {
     "sine": "Seno",

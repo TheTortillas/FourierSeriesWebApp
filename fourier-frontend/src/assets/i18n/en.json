@@ -136,7 +136,8 @@
     "tabCoefficients": "Coefficients",
     "tabTerms": "Terms",
     "tabSpectrum": "Spectrum",
-    "tabValidation": "Validation"
+    "tabValidation": "Validation",
+    "tabParseval": "Parseval"
   },
   "resultPanel": {
     "sine": "Sine",
