@@ -42,7 +42,11 @@ export interface TrigonometricCoefficients {
   a0?: SymbolicExpression;
   a0Float?: number;
   an?: SymbolicExpression;
+  anK?: SymbolicExpression;
+  anSummand?: SymbolicExpression;
   bn?: SymbolicExpression;
+  bnK?: SymbolicExpression;
+  bnSummand?: SymbolicExpression;
 }
 
 export interface TrigonometricResponse {
@@ -88,6 +92,8 @@ export interface ComplexCoefficients {
   c0: SymbolicExpression;
   c0Float?: number;
   cn: SymbolicExpression;
+  cnK?: SymbolicExpression;
+  cnSummand?: SymbolicExpression;
 }
 
 export interface ComplexResponse {
@@ -157,6 +163,8 @@ export interface SimplifyInput {
 export interface SimplifyResult {
   original: SymbolicExpression;
   simplified: SymbolicExpression;
+  simplifiedK?: SymbolicExpression;
+  simplifiedSummand?: SymbolicExpression;
   profile: SimplificationProfile;
   functionsApplied: SimplificationFunction[];
 }

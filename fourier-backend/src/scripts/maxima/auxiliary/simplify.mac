@@ -113,3 +113,15 @@ for fn in SIMP_FUNCTIONS do (
 /* Output */
 print("__SIMPLIFIED_MAXIMA__")$ print(string(_result_expr))$
 print("__SIMPLIFIED_TEX__")$    tex(_result_expr)$
+
+/* Factored form: K · summand where K is free of n.
+   factor() ensures the denominator is in product form before splitting. */
+block(
+    [_cf: const_factor(factor(_result_expr), n)],
+    _K_simp: _cf[1],
+    _S_simp: _cf[2]
+)$
+print("__SIMPLIFIED_K_MAXIMA__")$       print(string(_K_simp))$
+print("__SIMPLIFIED_K_TEX__")$          tex(_K_simp)$
+print("__SIMPLIFIED_SUMMAND_MAXIMA__")$ print(string(_S_simp))$
+print("__SIMPLIFIED_SUMMAND_TEX__")$    tex(_S_simp)$

@@ -33,6 +33,14 @@ const TRIG_MARKERS = [
   "__W0_TEX__",
   "__SERIES_MAXIMA__",
   "__SERIES_TEX__",
+  "__AN_K_MAXIMA__",
+  "__AN_K_TEX__",
+  "__AN_SUMMAND_MAXIMA__",
+  "__AN_SUMMAND_TEX__",
+  "__BN_K_MAXIMA__",
+  "__BN_K_TEX__",
+  "__BN_SUMMAND_MAXIMA__",
+  "__BN_SUMMAND_TEX__",
   "__A0_FLOAT__",
 ];
 
@@ -80,7 +88,9 @@ export class TrigonometricService {
     const fullScript = `
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
+load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
+load("${process.cwd()}/src/scripts/maxima/lib/emit_factored_trig.mac")$
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
 __A0_CLEAN__: if not freeof(gamma_incomplete, Coeff_A0_Raw)
   then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_A0_Raw, ${intVar})))],
@@ -123,7 +133,11 @@ kill(all)$
         a0: parsed["a0"],
         a0Float: isNaN(a0Float) ? undefined : a0Float,
         an: parsed["an"],
+        anK: parsed["an_k"],
+        anSummand: parsed["an_summand"],
         bn: parsed["bn"],
+        bnK: parsed["bn_k"],
+        bnSummand: parsed["bn_summand"],
       },
       series: parsed["series"] ?? { tex: "", maxima: "" },
       w0: parsed["w0"] ?? { tex: "", maxima: "" },

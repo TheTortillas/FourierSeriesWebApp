@@ -23,8 +23,14 @@ export interface FourierCoefficients {
   a0Raw?: SymbolicExpression;
   a0Float?: number;
   an?: SymbolicExpression;
+  anK?: SymbolicExpression;
+  anSummand?: SymbolicExpression;
   bn?: SymbolicExpression;
+  bnK?: SymbolicExpression;
+  bnSummand?: SymbolicExpression;
   cn?: SymbolicExpression;
+  cnK?: SymbolicExpression;
+  cnSummand?: SymbolicExpression;
   c0?: SymbolicExpression;
   c0Float?: number;
 }
@@ -61,6 +67,8 @@ export interface ComplexFourierResult {
     c0: SymbolicExpression;
     c0Float?: number;
     cn: SymbolicExpression;
+    cnK?: SymbolicExpression;
+    cnSummand?: SymbolicExpression;
   };
   seriesComplex: SymbolicExpression;
   w0: SymbolicExpression;
@@ -144,6 +152,8 @@ export interface SimplifyInput {
 export interface SimplifyResult {
   original: SymbolicExpression;
   simplified: SymbolicExpression;
+  simplifiedK?: SymbolicExpression;
+  simplifiedSummand?: SymbolicExpression;
   profile: SimplificationProfile;
   functionsApplied: SimplificationFunction[];
 }

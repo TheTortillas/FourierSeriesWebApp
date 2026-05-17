@@ -33,6 +33,7 @@ import { SpectrumChartComponent } from '../../../../shared/components/spectrum-c
 import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
 import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
+import type { SymbolicExpression } from '../../../../domain/types/common.types';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button.component';
 import { CsvExportService } from '../../../../core/services/csv-export.service';
 
@@ -197,6 +198,9 @@ export class ResultsSummaryComponent {
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
   readonly simplifying = signal(false);
   readonly simplifiedCoeffs = signal<Record<string, string> | null>(null);
+  readonly simplifiedFactored = signal<Record<string, { k: string; s: string } | null> | null>(
+    null,
+  );
 
   // exponential sub-flags (only relevant when profile === 'exponential')
   readonly expFlag = signal<'exponentialize' | 'demoivre'>('exponentialize');
@@ -547,6 +551,130 @@ export class ResultsSummaryComponent {
     return null;
   });
 
+  /**
+   * Factored series LaTeX: K · Σ(summand · sin/cos/exp).
+   * Only shown in raw profile (K is always from the raw computation).
+   * Only shown when one coefficient dominates (an=0 or bn=0 for trig).
+   */
+  readonly factoredSeriesTex = computed(() => {
+    const result = this.store.result();
+    if (!result) return null;
+
+    type FEntry = { k: string; s: string } | null;
+
+    // simplifiedFactored has priority; fall back to raw coeffFactoredTex
+    const simplFact = this.simplifiedFactored();
+    const rawFact = this.coeffFactoredTex();
+
+    const pick = (key: string): FEntry => {
+      if (simplFact && key in simplFact) return simplFact[key];
+      if (rawFact) return (rawFact as unknown as Record<string, FEntry>)[key] ?? null;
+      return null;
+    };
+
+    const intVar = result.data.input.intVar ?? 'x';
+    const w0Tex = result.data.w0.tex;
+    const w0IsOne = w0Tex === '1';
+
+    const withA0Prefix = (a0Tex: string | undefined, sumTex: string): string => {
+      const a0IsZero = !a0Tex || a0Tex.trim() === '0';
+      return a0IsZero ? sumTex : `${a0Tex}+${sumTex}`;
+    };
+
+    if (result.type === 'trigonometric') {
+      const c = result.data.coefficients;
+      const anIsZero = (c.an?.maxima ?? '').trim() === '0';
+      const bnIsZero = (c.bn?.maxima ?? '').trim() === '0';
+      const om = w0IsOne ? `n\\,${intVar}` : `n\\,${w0Tex}\\,${intVar}`;
+
+      if (anIsZero) {
+        const f = pick('bn');
+        if (f)
+          return `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\sin\\!\\left(${om}\\right)`;
+      } else if (bnIsZero) {
+        const f = pick('an');
+        if (f) {
+          const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\cos\\!\\left(${om}\\right)`;
+          return withA0Prefix(c.a0?.tex, sumTex);
+        }
+      }
+      return null;
+    }
+
+    if (result.type === 'halfRange') {
+      const hrMode = this.halfRangeMode();
+      const c = result.data.coefficients;
+      const originFrom = result.data.input.segments[0]?.from ?? '0';
+      const shiftedVar = this.formatHalfRangeShiftTex(intVar, originFrom);
+      const shiftedOmega = w0IsOne
+        ? `n\\,${shiftedVar}`
+        : `n\\,${w0Tex}\\,\\left(${shiftedVar}\\right)`;
+
+      if (hrMode === 'cosine') {
+        const anIsZero = (c.an?.maxima ?? '').trim() === '0';
+        if (!anIsZero) {
+          const f = pick('an');
+          if (f) {
+            const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\cos\\!\\left(${shiftedOmega}\\right)`;
+            return withA0Prefix(c.a0?.tex, sumTex);
+          }
+        }
+      } else {
+        const bnIsZero = (c.bn?.maxima ?? '').trim() === '0';
+        if (!bnIsZero) {
+          const f = pick('bn');
+          if (f)
+            return `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\sin\\!\\left(${shiftedOmega}\\right)`;
+        }
+      }
+      return null;
+    }
+
+    if (result.type === 'complex') {
+      const c = result.data.coefficients;
+      const cnIsZero = (c.cn?.maxima ?? '').trim() === '0';
+      if (!cnIsZero) {
+        const f = pick('cn');
+        const om = w0IsOne ? `n\\,${intVar}` : `n\\,${w0Tex}\\,${intVar}`;
+        if (f) return `${f.k}\\cdot\\sum_{n=-\\infty}^{\\infty}\\left(${f.s}\\right)e^{i${om}}`;
+      }
+      return null;
+    }
+
+    return null;
+  });
+
+  /** Factored coefficient LaTeX: K · summandₙ form when non-trivial (K ≠ 1). */
+  readonly coeffFactoredTex = computed(() => {
+    const result = this.store.result();
+    const hrMode = this.halfRangeMode();
+    if (!result) return null;
+
+    const isTrivial = (k?: SymbolicExpression, s?: SymbolicExpression) =>
+      !k || !s || k.maxima.trim() === '1' || s.maxima.trim() === '1';
+
+    if (result.type === 'trigonometric') {
+      const c = result.data.coefficients;
+      return {
+        an: isTrivial(c.anK, c.anSummand) ? null : { k: c.anK!.tex, s: c.anSummand!.tex },
+        bn: isTrivial(c.bnK, c.bnSummand) ? null : { k: c.bnK!.tex, s: c.bnSummand!.tex },
+      };
+    }
+    if (result.type === 'halfRange') {
+      const c = result.data.coefficients;
+      return hrMode === 'cosine'
+        ? { an: isTrivial(c.anK, c.anSummand) ? null : { k: c.anK!.tex, s: c.anSummand!.tex } }
+        : { bn: isTrivial(c.bnK, c.bnSummand) ? null : { k: c.bnK!.tex, s: c.bnSummand!.tex } };
+    }
+    if (result.type === 'complex') {
+      const c = result.data.coefficients;
+      return {
+        cn: isTrivial(c.cnK, c.cnSummand) ? null : { k: c.cnK!.tex, s: c.cnSummand!.tex },
+      };
+    }
+    return null;
+  });
+
   /** Raw Maxima strings for each coefficient (always unsimplified, for copy-to-Maxima). */
   readonly coeffMaxima = computed(() => {
     const result = this.store.result();
@@ -869,6 +997,7 @@ export class ResultsSummaryComponent {
           Math.max(0, Math.min(this.store.nTerms(), result.terms.terms.length)),
         );
         this.simplifiedCoeffs.set(null);
+        this.simplifiedFactored.set(null);
         this.simplifyProfile.set('raw');
         this.halfRangeMode.set('cosine');
         this.controlHarmonics.set(false);
@@ -1210,6 +1339,7 @@ export class ResultsSummaryComponent {
     this.simplifyProfile.set(profile);
     if (profile === 'raw') {
       this.simplifiedCoeffs.set(null);
+      this.simplifiedFactored.set(null);
     } else {
       this.simplifyAll(profile);
     }
@@ -1300,10 +1430,16 @@ export class ResultsSummaryComponent {
       )
       .subscribe((responses) => {
         const simplified: Record<string, string> = {};
+        const factored: Record<string, { k: string; s: string } | null> = {};
         for (const [key, res] of Object.entries(responses)) {
           simplified[key] = res.simplified.tex;
+          factored[key] =
+            res.simplifiedK && res.simplifiedSummand
+              ? { k: res.simplifiedK.tex, s: res.simplifiedSummand.tex }
+              : null;
         }
         this.simplifiedCoeffs.set(simplified);
+        this.simplifiedFactored.set(factored);
       });
   }
 }

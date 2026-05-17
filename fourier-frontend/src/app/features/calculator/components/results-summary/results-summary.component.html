@@ -573,6 +573,12 @@
                 class="overflow-x-auto text-ink dark:text-dark-ink"
                 [mathjax]="'\\[' + composedSeriesTex() + '\\]'"
               ></div>
+              @if (factoredSeriesTex()) {
+                <div
+                  class="overflow-x-auto text-muted dark:text-dark-muted"
+                  [mathjax]="'\\[=\\,' + factoredSeriesTex() + '\\]'"
+                ></div>
+              }
             </div>
           }
 

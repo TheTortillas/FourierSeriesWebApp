@@ -45,6 +45,7 @@ FLAG_EDISPFLAG: ${flags.edispflag ? "true" : "false"}$
 FLAG_EXPONENT:  ${flags.exponentialize ? "true" : "false"}$
 FLAG_DEMOIVRE:  ${flags.demoivre ? "true" : "false"}$
 FLAG_ERF_REPR:  "${erfRepresentation}"$
+load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
 kill(all)$
 `;
@@ -67,12 +68,44 @@ kill(all)$
       .trim();
 
     const simplifiedTex = this.extractTex(
-      this.extractBetween(result.raw, "__SIMPLIFIED_TEX__", null),
+      this.extractBetween(result.raw, "__SIMPLIFIED_TEX__", "__SIMPLIFIED_K_MAXIMA__"),
     );
+
+    const kMaxima = this.extractBetween(
+      result.raw,
+      "__SIMPLIFIED_K_MAXIMA__",
+      "__SIMPLIFIED_K_TEX__",
+    )
+      .replace(/false/g, "")
+      .trim();
+
+    const kTex = this.extractTex(
+      this.extractBetween(result.raw, "__SIMPLIFIED_K_TEX__", "__SIMPLIFIED_SUMMAND_MAXIMA__"),
+    );
+
+    const summandMaxima = this.extractBetween(
+      result.raw,
+      "__SIMPLIFIED_SUMMAND_MAXIMA__",
+      "__SIMPLIFIED_SUMMAND_TEX__",
+    )
+      .replace(/false/g, "")
+      .trim();
+
+    const summandTex = this.extractTex(
+      this.extractBetween(result.raw, "__SIMPLIFIED_SUMMAND_TEX__", null),
+    );
+
+    const isTrivialFactor = kMaxima === "1" || summandMaxima === "1";
 
     return {
       original: { maxima: input.expression, tex: "" },
       simplified: { maxima: simplifiedMaxima, tex: simplifiedTex },
+      ...(isTrivialFactor
+        ? {}
+        : {
+            simplifiedK: { maxima: kMaxima, tex: kTex },
+            simplifiedSummand: { maxima: summandMaxima, tex: summandTex },
+          }),
       profile: input.profile,
       functionsApplied: functions,
     };
