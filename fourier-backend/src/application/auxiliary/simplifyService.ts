@@ -9,18 +9,23 @@ import type {
 const DEFAULT_FUNCTIONS: Record<string, SimplificationFunction[]> = {
   raw: [],
   integer: ["fullratsimp", "factor"],
-  trigonometric: ["fullratsimp", "factor"],
-  exponential: ["fullratsimp", "factor"],
-  complete: ["fullratsimp", "factor"],
+  trigonometric: ["trigsimp", "fullratsimp"],
+  exponential: ["fullratsimp", "radcan"],
+  complete: ["trigsimp", "fullratsimp", "radcan", "factor"],
 };
 
 export class SimplifyService {
   constructor(private readonly runner: MaximaRunner) {}
 
   async simplify(input: SimplifyInput): Promise<SimplifyResult> {
-    const functions = input.functions ?? DEFAULT_FUNCTIONS[input.profile] ?? [];
+    let functions = input.functions ?? DEFAULT_FUNCTIONS[input.profile] ?? [];
     const flags = input.displayFlags ?? {};
     const erfRepresentation = flags.erfRepresentation ?? "erf";
+    const declareNInteger = flags.declareNInteger ?? (input.profile !== "raw");
+
+    if (flags.toHyperbolic && !functions.includes("to_hyper")) {
+      functions = [...functions, "to_hyper"];
+    }
 
     if (flags.exponentialize && flags.demoivre) {
       throw new Error("exponentialize and demoivre cannot both be true");
@@ -41,11 +46,13 @@ export class SimplifyService {
 ${radexpandLine}EXPR_INPUT: "${input.expression.replace(/"/g, '\\"')}"$
 PROFILE: "${input.profile}"$
 SIMP_FUNCTIONS: ${simpFunctionsList}$
-FLAG_EDISPFLAG: ${flags.edispflag ? "true" : "false"}$
-FLAG_EXPONENT:  ${flags.exponentialize ? "true" : "false"}$
-FLAG_DEMOIVRE:  ${flags.demoivre ? "true" : "false"}$
-FLAG_ERF_REPR:  "${erfRepresentation}"$
+FLAG_EDISPFLAG:   ${flags.edispflag ? "true" : "false"}$
+FLAG_EXPONENT:    ${flags.exponentialize ? "true" : "false"}$
+FLAG_DEMOIVRE:    ${flags.demoivre ? "true" : "false"}$
+FLAG_ERF_REPR:    "${erfRepresentation}"$
+FLAG_N_INTEGER:   ${declareNInteger ? "true" : "false"}$
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
+load("${process.cwd()}/src/scripts/maxima/lib/hyper.mac")$
 ${script}
 kill(all)$
 `;

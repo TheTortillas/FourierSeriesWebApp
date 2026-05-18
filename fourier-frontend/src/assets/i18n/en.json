@@ -180,7 +180,9 @@
       "asintotica": "Asymptotic",
       "esencial": "Essential",
       "fuera_de_dominio": "Out of domain"
-    }
+    },
+    "seriesStandard": "Standard",
+    "seriesFactored": "Factored"
   },
   "share": {
     "title": "Share link",
@@ -805,5 +807,9 @@
       "f4": "Responsive design — works on desktop and mobile"
     },
     "cta": "Start exploring"
+  },
+  "simplify": {
+    "nInteger": "n ∈ ℤ",
+    "toHyperbolic": "→ Hyperbolic"
   }
 }

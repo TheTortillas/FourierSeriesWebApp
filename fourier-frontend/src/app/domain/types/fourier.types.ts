@@ -228,7 +228,8 @@ export type SimplificationFunction =
   | 'expand'
   | 'radcan'
   | 'rectform'
-  | 'polarform';
+  | 'polarform'
+  | 'to_hyper';
 
 export interface SimplifyInput {
   expression: string;
@@ -239,6 +240,8 @@ export interface SimplifyInput {
     exponentialize?: boolean;
     demoivre?: boolean;
     erfRepresentation?: 'erf' | 'erfc' | 'erfi';
+    declareNInteger?: boolean;
+    toHyperbolic?: boolean;
   };
 }
 

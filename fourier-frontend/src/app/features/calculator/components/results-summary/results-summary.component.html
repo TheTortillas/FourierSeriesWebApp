@@ -571,8 +571,36 @@
                 <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
                   {{ 'resultPanel.fourierSeries' | transloco }}
                 </p>
+                @if (factoredSeriesTex()) {
+                  <div
+                    class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                  >
+                    <button
+                      type="button"
+                      (click)="showFactoredSeries.set(false)"
+                      [class]="
+                        !showFactoredSeries()
+                          ? 'px-2 py-0.5 bg-accent/15 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ 'resultPanel.seriesStandard' | transloco }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="showFactoredSeries.set(true)"
+                      [class]="
+                        showFactoredSeries()
+                          ? 'px-2 py-0.5 bg-accent/15 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ 'resultPanel.seriesFactored' | transloco }}
+                    </button>
+                  </div>
+                }
                 <app-export-button
-                  [tex]="composedSeriesTex() ?? ''"
+                  [tex]="(showFactoredSeries() ? factoredSeriesTex() : composedSeriesTex()) ?? ''"
                   [mathEl]="seriesFormulaEl"
                   filename="fourier-series"
                   [label]="seriesLabel()"
@@ -581,104 +609,131 @@
               <div
                 #seriesFormulaEl
                 class="overflow-x-auto text-ink dark:text-dark-ink"
-                [mathjax]="'\\[' + composedSeriesTex() + '\\]'"
+                [mathjax]="'\\[' + (showFactoredSeries() && factoredSeriesTex() ? factoredSeriesTex() : composedSeriesTex()) + '\\]'"
               ></div>
-              @if (factoredSeriesTex()) {
-                <div
-                  class="overflow-x-auto text-muted dark:text-dark-muted"
-                  [mathjax]="'\\[=\\,' + factoredSeriesTex() + '\\]'"
-                ></div>
-              }
             </div>
           }
 
           <!-- Simplify controls -->
-          <div
-            class="px-4 py-3 flex items-center gap-2 flex-wrap border-t border-border dark:border-dark-border"
-          >
-            <div
-              class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
-            >
-              @for (opt of profileOptions; track opt.value) {
-                <button
-                  type="button"
-                  (click)="setProfile(opt.value)"
-                  [class]="
-                    simplifyProfile() === opt.value
-                      ? 'px-2 py-1 bg-accent text-white font-semibold'
-                      : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
-                  "
-                >
-                  {{ opt.labelKey | transloco }}
-                </button>
-              }
-            </div>
-
-            @if (simplifyProfile() === 'exponential') {
+          <div class="border-t border-border dark:border-dark-border">
+            <!-- Row 1: Profile buttons + contextual sub-flags -->
+            <div class="px-4 pt-2.5 pb-2 flex items-center gap-2 flex-wrap">
               <div
                 class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
               >
-                <button
-                  type="button"
-                  (click)="setExpFlag('exponentialize')"
-                  [class]="
-                    expFlag() === 'exponentialize'
-                      ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
-                      : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
-                  "
-                >
-                  e^ix
-                </button>
-                <button
-                  type="button"
-                  (click)="setExpFlag('demoivre')"
-                  [class]="
-                    expFlag() === 'demoivre'
-                      ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
-                      : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
-                  "
-                >
-                  De Moivre
-                </button>
-              </div>
-            }
-
-            @if (simplifyProfile() !== 'raw') {
-              <label
-                class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
-              >
-                <input
-                  type="checkbox"
-                  class="accent-accent"
-                  [checked]="useEdispflag()"
-                  (change)="setEdispflag($any($event.target).checked)"
-                />
-                edispflag
-              </label>
-
-              <div
-                class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
-              >
-                @for (repr of erfRepresentationOptions; track repr) {
+                @for (opt of profileOptions; track opt.value) {
                   <button
                     type="button"
-                    (click)="setErfRepresentation(repr)"
+                    (click)="setProfile(opt.value)"
                     [class]="
-                      erfRepresentation() === repr
+                      simplifyProfile() === opt.value
+                        ? 'px-2 py-1 bg-accent text-white font-semibold'
+                        : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                    "
+                  >
+                    {{ opt.labelKey | transloco }}
+                  </button>
+                }
+              </div>
+
+              @if (simplifyProfile() === 'exponential') {
+                <div
+                  class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                >
+                  <button
+                    type="button"
+                    (click)="setExpFlag('exponentialize')"
+                    [class]="
+                      expFlag() === 'exponentialize'
                         ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
                         : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
                     "
                   >
-                    {{ repr }}
+                    e^ix
                   </button>
-                }
-              </div>
-            }
+                  <button
+                    type="button"
+                    (click)="setExpFlag('demoivre')"
+                    [class]="
+                      expFlag() === 'demoivre'
+                        ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                        : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                    "
+                  >
+                    De Moivre
+                  </button>
+                </div>
+              }
 
-            @if (simplifying()) {
-              <span
-                class="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0"
-              ></span>
+              @if (simplifying()) {
+                <span
+                  class="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0"
+                ></span>
+              }
+            </div>
+
+            <!-- Row 2: Secondary options (display flags | transform flags) -->
+            @if (simplifyProfile() !== 'raw') {
+              <div class="px-4 pb-2.5 flex items-center gap-3 flex-wrap">
+                <!-- Display group -->
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="useEdispflag()"
+                    (change)="setEdispflag($any($event.target).checked)"
+                  />
+                  edispflag
+                </label>
+
+                <div
+                  class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                >
+                  @for (repr of erfRepresentationOptions; track repr) {
+                    <button
+                      type="button"
+                      (click)="setErfRepresentation(repr)"
+                      [class]="
+                        erfRepresentation() === repr
+                          ? 'px-2 py-0.5 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ repr }}
+                    </button>
+                  }
+                </div>
+
+                <!-- Divider -->
+                <span class="w-px h-3 bg-border dark:bg-dark-border shrink-0"></span>
+
+                <!-- Transform group -->
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="declareNInteger()"
+                    (change)="setDeclareNInteger($any($event.target).checked)"
+                  />
+                  {{ 'simplify.nInteger' | transloco }}
+                </label>
+
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="toHyperbolic()"
+                    (change)="setToHyperbolic($any($event.target).checked)"
+                  />
+                  {{ 'simplify.toHyperbolic' | transloco }}
+                </label>
+              </div>
             }
           </div>
 
@@ -694,14 +749,14 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.w0"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.w0" [maxima]="coeffMaxima()?.w0 ?? undefined" [mathEl]="w0El" filename="fourier-w0" label="ω₀" />
+                <app-export-button [tex]="activeCoeffTex()!.w0" [maxima]="activeCoeffMaxima()?.w0 ?? undefined" [mathEl]="w0El" filename="fourier-w0" label="ω₀" />
               </div>
             }
             @if (a0DisplayTex(); as a0Tex) {
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">a₀ =</span>
                 <span #a0El class="text-ink dark:text-dark-ink text-sm" [mathjax]="a0Tex"></span>
-                <app-export-button [tex]="a0Tex" [maxima]="coeffMaxima()?.a0 ?? undefined" [mathEl]="a0El" filename="fourier-a0" label="a₀" />
+                <app-export-button [tex]="a0Tex" [maxima]="a0DisplayMaxima() ?? undefined" [mathEl]="a0El" filename="fourier-a0" label="a₀" />
               </div>
             }
             @if (activeCoeffTex()!.an) {
@@ -712,7 +767,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.an"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.an ?? ''" [maxima]="coeffMaxima()?.an ?? undefined" [mathEl]="anEl" filename="fourier-an" label="aₙ" />
+                <app-export-button [tex]="activeCoeffTex()!.an ?? ''" [maxima]="activeCoeffMaxima()?.an ?? undefined" [mathEl]="anEl" filename="fourier-an" label="aₙ" />
               </div>
             }
             @if (activeCoeffTex()!.bn) {
@@ -723,7 +778,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.bn"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.bn ?? ''" [maxima]="coeffMaxima()?.bn ?? undefined" [mathEl]="bnEl" filename="fourier-bn" label="bₙ" />
+                <app-export-button [tex]="activeCoeffTex()!.bn ?? ''" [maxima]="activeCoeffMaxima()?.bn ?? undefined" [mathEl]="bnEl" filename="fourier-bn" label="bₙ" />
               </div>
             }
             @if (activeCoeffTex()!.c0) {
@@ -734,7 +789,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.c0"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.c0 ?? ''" [maxima]="coeffMaxima()?.c0 ?? undefined" [mathEl]="c0El" filename="fourier-c0" label="c₀" />
+                <app-export-button [tex]="activeCoeffTex()!.c0 ?? ''" [maxima]="activeCoeffMaxima()?.c0 ?? undefined" [mathEl]="c0El" filename="fourier-c0" label="c₀" />
               </div>
             }
             @if (activeCoeffTex()!.cn) {
@@ -745,7 +800,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.cn"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.cn ?? ''" [maxima]="coeffMaxima()?.cn ?? undefined" [mathEl]="cnEl" filename="fourier-cn" label="cₙ" />
+                <app-export-button [tex]="activeCoeffTex()!.cn ?? ''" [maxima]="activeCoeffMaxima()?.cn ?? undefined" [mathEl]="cnEl" filename="fourier-cn" label="cₙ" />
               </div>
             }
           </div>
@@ -1447,6 +1502,32 @@
                   </button>
                 }
               </div>
+              @if (parsevalSimplifyProfile() !== 'raw') {
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="declareNInteger()"
+                    (change)="setDeclareNInteger($any($event.target).checked)"
+                  />
+                  {{ 'simplify.nInteger' | transloco }}
+                </label>
+
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="toHyperbolic()"
+                    (change)="setToHyperbolic($any($event.target).checked)"
+                  />
+                  {{ 'simplify.toHyperbolic' | transloco }}
+                </label>
+              }
+
               @if (parsevalSimplifying()) {
                 <span class="text-[10px] font-mono text-muted dark:text-dark-muted animate-pulse">
                   {{ 'common.loading' | transloco }}

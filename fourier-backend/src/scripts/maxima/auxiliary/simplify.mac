@@ -53,19 +53,19 @@ if FLAG_ERF_REPR = "erf"  then erf_representation: erf$
 if FLAG_ERF_REPR = "erfc" then erf_representation: erfc$
 if FLAG_ERF_REPR = "erfi" then erf_representation: erfi$
 
-/* Aplicar perfil */
-if PROFILE = "integer" or PROFILE = "trigonometric" or
-   PROFILE = "exponential" or PROFILE = "complete" then
-    declare(n, integer)$
+/* Declarar n como entero si el flag lo indica (independiente del perfil) */
+if FLAG_N_INTEGER then declare(n, integer)$
 
-if PROFILE = "trigonometric" or PROFILE = "complete" then (
+/* Reglas trigonométricas: sin(nπ/2 ± kπ/2) → 0 o ±(-1)^n */
+if FLAG_N_INTEGER and (PROFILE = "trigonometric" or PROFILE = "complete") then (
     matchdeclare(kk, lambda([kk], is(evenp(kk)))),
     matchdeclare(jj, lambda([jj], is(evenp(jj) = false))),
     tellsimpafter(sin(((2*n+kk)*%pi)/2), 0),
     tellsimpafter(sin(((2*n+jj)*%pi)/2), if mod(jj,4)=1 then (-1)^n else -(-1)^n)
 )$
 
-if PROFILE = "exponential" or PROFILE = "complete" then (
+/* Reglas exponenciales: e^(iπn) → (-1)^n */
+if FLAG_N_INTEGER and (PROFILE = "exponential" or PROFILE = "complete") then (
     lognegint: true,
     tellsimpafter(exp(%i * %pi * n), (-1)^n),
     tellsimpafter(exp(%i * 2 * %pi * n), 1),
@@ -108,6 +108,9 @@ for fn in SIMP_FUNCTIONS do (
     else if fn = "radcan"     then _result_expr: radcan(_result_expr)
     else if fn = "rectform"   then _result_expr: rectform(_result_expr)
     else if fn = "polarform"  then _result_expr: polarform(_result_expr)
+    else if fn = "to_hyper"   then block(
+        [_r: errcatch(to_hyper(_result_expr))],
+        if not(_r = []) then _result_expr: first(_r))
 )$
 
 /* Output */

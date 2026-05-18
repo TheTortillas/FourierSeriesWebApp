@@ -1,0 +1,156 @@
+/* ═══════════════════════════════════════════════════════════════
+   hyper.mac — Convierte combinaciones lineales de exponenciales
+   a funciones hiperbólicas (sinh, cosh, tanh, sech, csch, coth).
+
+   Función principal: to_hyper(expr)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Descompone un argumento en [coeficiente_constante, base_variable] */
+decompose_arg(a) := block([c, b, db],
+  if atom(a) then return([1, a]),
+  if op(a) = "*" then (
+    c:1, b:1,
+    for f in args(a) do
+      if integerp(f) or ratnump(f) then c:c*f else b:b*f,
+    return([c, b])),
+  if op(a) = "-" then (
+    db: decompose_arg(first(args(a))),
+    return([-first(db), second(db)])),
+  return([1, a]))$
+
+/* Extrae todos los argumentos de exponenciales e^(...) en la expresión */
+get_exp_args(e) := block([result: []],
+  if atom(e) then return([])
+  else if op(e) = "^" and first(args(e)) = %e then return([second(args(e))])
+  else (for s in args(e) do result: append(result, get_exp_args(s)), result))$
+
+/* MCD de una lista de valores */
+list_gcd(lst) := block([g],
+  if length(lst) = 0 then return(1),
+  g: abs(first(lst)),
+  for x in rest(lst) do g: gcd(g, abs(x)),
+  g)$
+
+/* Encuentra la base (argumento base) y el paso común entre exponenciales */
+find_base_step(ea) := block([dc, cf, ac, pc, bs, st],
+  dc: map(decompose_arg, ea),
+  bs: second(first(dc)),
+  cf: map(first, dc),
+  ac: map(abs, cf),
+  pc: sublist(ac, lambda([x], x > 0)),
+  st: if length(pc) = 0 then 1 else list_gcd(pc),
+  [st, bs])$
+
+/* Construye la sustitución e^(k*base) → hypu^k */
+build_subst(ea, pbase) := block([sl, dc, k, seen],
+  sl: [], seen: [],
+  for arg in ea do (
+    dc: decompose_arg(arg), k: first(dc),
+    if not(member(k, seen)) then (
+      sl: append(sl, [%e^(k*pbase) = hypu^k, %e^(-k*pbase) = hypu^(-k)]),
+      seen: cons(k, seen))),
+  sl)$
+
+/* Extrae coeficiente y potencia de hypu en un término */
+get_cp(term, u) := block([c, k, db, cn, kn, cd, kd],
+  if term = 0 then return([0, 0]),
+  if atom(term) then (if term = u then return([1, 1]) else return([term, 0])),
+  if op(term) = "-" then (
+    db: get_cp(first(args(term)), u), return([-first(db), second(db)])),
+  if op(term) = "^" and first(args(term)) = u then return([1, second(args(term))]),
+  if op(term) = "/" then (
+    db: get_cp(num(term), u),   cn: first(db), kn: second(db),
+    db: get_cp(denom(term), u), cd: first(db), kd: second(db),
+    return([cn/cd, kn - kd])),
+  if op(term) = "*" then (
+    c: 1, k: 0,
+    for f in args(term) do (db: get_cp(f, u), c: c*first(db), k: k+second(db)),
+    return([c, k])),
+  return([term, 0]))$
+
+/* Agrupa pares de potencias (k, -k) en sinh/cosh */
+group_pairs(clist, pbase) := block(
+  [result: 0, paired: [], c, k, cj, found, db],
+  for i:1 thru length(clist) do (
+    c: first(clist[i]), k: second(clist[i]),
+    if not(member(i, paired)) then (
+      if k = 0 then (result: result + c, paired: cons(i, paired))
+      else (
+        found: false,
+        for j:1 thru length(clist) do (
+          cj: first(clist[j]),
+          if not(member(j, paired)) and j # i and second(clist[j]) = -k then (
+            if ratsimp(c - cj) = 0 then result: result + 2*c*cosh(k*pbase)
+            else if ratsimp(c + cj) = 0 then result: result + 2*c*sinh(k*pbase)
+            else result: result + c*exp(k*pbase) + cj*exp(-k*pbase),
+            paired: append([i, j], paired), found: true, j: length(clist)+1)),
+        if not(found) then (result: result + c*exp(k*pbase), paired: cons(i, paired))))),
+  result)$
+
+/* Simetriza numerador y denominador dividiendo por hypu^mid.
+   Solo centra si mid es entero; si es fraccionario, skip para evitar
+   que Maxima deje hypu^(1/2) sin distribuir. */
+sym_expand(nu, du) := block([nt, dt, at, pw, mn, mx, mid, ns, ds],
+  nt: if atom(nu) or op(nu) # "+" then [nu] else args(nu),
+  dt: if atom(du) or op(du) # "+" then [du] else args(du),
+  at: append(nt, dt),
+  pw: map(lambda([t], second(get_cp(t, hypu))), at),
+  mn: lmin(pw), mx: lmax(pw), mid: (mn + mx)/2,
+  if not(integerp(mid)) then return([nu, du]),
+  ns: expand(ratsimp(nu / hypu^mid)),
+  ds: expand(ratsimp(du / hypu^mid)),
+  [ns, ds])$
+
+/* Simplifica ratios de funciones hiperbólicas (→ tanh, sech, csch, coth) */
+final_simp(e) := block([n, d, r, ad, dop, arg, found, hp, cp],
+  r: ratsimp(e),
+  if atom(r) then return(r),
+  if op(r) # "/" then return(r),
+  n: num(r), d: denom(r),
+  ad: not(atom(d)),
+  if not(ad) then return(r),
+  dop: op(d),
+  if not(member(dop, [sinh, cosh])) then return(r),
+  arg: first(args(d)),
+  if is(n = 1) then (
+    if is(dop = cosh) then return(sech(arg)),
+    if is(dop = sinh) then return(csch(arg))),
+  if not(atom(n)) and member(op(n), [sinh, cosh]) and is(first(args(n)) = arg) then (
+    if is(op(n) = sinh) and is(dop = cosh) then return(tanh(arg))
+    else if is(op(n) = cosh) and is(dop = sinh) then return(1/tanh(arg))
+    else return(r)),
+  if not(atom(n)) and is(op(n) = "*") then (
+    found: false, hp: 1, cp: 1,
+    for f in args(n) do (
+      if not(atom(f)) and member(op(f), [sinh, cosh]) and is(first(args(f)) = arg)
+        then (hp: f, found: true)
+      else cp: cp*f),
+    if found then (
+      if is(op(hp) = sinh) and is(dop = cosh) then return(cp*tanh(arg))
+      else if is(op(hp) = cosh) and is(dop = sinh) then return(cp/tanh(arg))
+      else return(r))),
+  if is(dop = cosh) then return(n * sech(arg)),
+  if is(dop = sinh) then return(n * csch(arg)),
+  r)$
+
+/* ── FUNCIÓN PRINCIPAL ────────────────────────────────────────── */
+to_hyper(expr) := block(
+  [ea, bs, st_l, base_l, sl, er, nu, du, sy, ns, ds, nt, dt, nc, dc, nh, dh, _result],
+  ea: get_exp_args(expr),
+  if length(ea) = 0 then return(expr),
+  bs: find_base_step(ea),
+  st_l: first(bs), base_l: second(bs),
+  sl: build_subst(ea, base_l),
+  er: ratsimp(subst(sl, expr)),
+  nu: expand(num(er)), du: expand(denom(er)),
+  sy: sym_expand(nu, du),
+  ns: first(sy), ds: second(sy),
+  nt: if atom(ns) or op(ns) # "+" then [ns] else args(ns),
+  dt: if atom(ds) or op(ds) # "+" then [ds] else args(ds),
+  nc: map(lambda([t], get_cp(t, hypu)), nt),
+  dc: map(lambda([t], get_cp(t, hypu)), dt),
+  nh: group_pairs(nc, base_l),
+  dh: group_pairs(dc, base_l),
+  _result: final_simp(ratsimp(nh / dh)),
+  /* If hypu leaked into the result the conversion failed — return original */
+  if freeof(hypu, _result) then _result else expr)$
