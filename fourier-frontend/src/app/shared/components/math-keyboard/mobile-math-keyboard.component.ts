@@ -79,7 +79,7 @@ const FX_ROWS: KeyBtn[][] = [
   [
     { label: 'log', typedText: 'log(' },
     { label: 'ln', typedText: 'ln(' },
-    { label: 'exp' },
+    { label: 'exp', typedText: 'exp(' },
     { label: '|·|' },
   ],
   [
