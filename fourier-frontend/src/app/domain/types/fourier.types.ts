@@ -59,6 +59,7 @@ export interface SingularTerm {
   n: number;
   tex: string;
   maxima: string;
+  tex2x?: string;
 }
 
 export interface ParsevalTrig {
@@ -99,6 +100,15 @@ export interface ParsevalHalfRange {
   };
 }
 
+export interface ParsevalComplexBilateral {
+  k: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
+  formal?: {
+    k: SymbolicExpression;
+    lhsFinal: SymbolicExpression;
+  };
+}
+
 export interface ParsevalComplex {
   lhs: SymbolicExpression;
   c0Term: SymbolicExpression;
@@ -110,6 +120,7 @@ export interface ParsevalComplex {
   singVals: number[];
   singularTerms: SingularTerm[];
   formal?: ParsevalFormal;
+  bilateral?: ParsevalComplexBilateral;
 }
 
 export interface ParsevalResponse {

@@ -677,7 +677,29 @@ export class ResultsSummaryComponent {
     return parts.join('+');
   }
 
-  /** Parseval identity LaTeX — two views: formal (sum from 1) or simplified (split or plain). */
+  /**
+   * Builds the RHS for the bilateral sum (n ∈ ℤ, n ≠ 0).
+   * Since |cₙ|² = |c₋ₙ|² (even summand), each singular pair n = ±k
+   * contributes 2·V_k. The remaining sum excludes 0 and all ±k.
+   */
+  private buildBilateralSumTex(s: string, singularTerms: SingularTerm[]): string {
+    if (!singularTerms.length) {
+      return `\\sum_{\\substack{n=-\\infty \\\\ n\\neq 0}}^{\\infty}\\!\\left(${s}\\right)`;
+    }
+
+    const sorted = [...singularTerms].sort((a, b) => a.n - b.n);
+    const excl = ['0', ...sorted.map(t => `{\\pm ${t.n}}`)].join(',\\,');
+    const remainingSum = `\\sum_{\\substack{n=-\\infty \\\\ n\\notin\\{${excl}\\}}}^{\\infty}\\!\\left(${s}\\right)`;
+
+    const singParts = sorted.map(t => {
+      const val = t.tex2x ?? `2\\!\\left(${t.tex || '0'}\\right)`;
+      return `\\underbrace{${val}}_{\\lim_{|n|\\to ${t.n}}}`;
+    });
+    return [...singParts, remainingSum].join('+');
+  }
+
+  /** Parseval identity LaTeX — two views: formal (sum from 1) or simplified (split or plain).
+   *  Complex series additionally supports bilateral (n ∈ ℤ, n ≠ 0) vs unilateral (n ≥ 1). */
   readonly parsevalTex = computed(() => {
     const result = this.store.result();
     const p = this.parsevalData();
@@ -686,6 +708,7 @@ export class ResultsSummaryComponent {
     const view = this.parsevalView();
     const lhsOverride = this.parsevalSimplifiedLhsFinal();
     const summandOverride = this.parsevalSimplifiedSummand();
+    const isBilateral = result.type === 'complex' && this.parsevalComplexSumForm() === 'bilateral';
 
     const fmtSimplified = (
       lhsFinal: string,
@@ -698,6 +721,11 @@ export class ResultsSummaryComponent {
 
     const fmtFormal = (lhsFinal: string, s: string): string =>
       `${lhsFinal}=\\sum_{n=1}^{\\infty}\\left(${s}\\right)`;
+
+    const fmtBilateral = (lhsFinal: string, s: string, singularTerms: SingularTerm[]): string => {
+      const rhsTex = this.buildBilateralSumTex(summandOverride ?? s, singularTerms);
+      return `${lhsOverride ?? lhsFinal}=${rhsTex}`;
+    };
 
     if (result.type === 'trigonometric') {
       const pt = p as ParsevalTrig;
@@ -719,6 +747,13 @@ export class ResultsSummaryComponent {
 
     if (result.type === 'complex') {
       const pc = p as ParsevalComplex;
+      if (isBilateral && pc.bilateral) {
+        const bil = pc.bilateral;
+        if (view === 'formal' && bil.formal) {
+          return fmtBilateral(bil.formal.lhsFinal.tex, pc.formal?.summand.tex ?? pc.summand.tex, pc.singularTerms ?? []);
+        }
+        return fmtBilateral(bil.lhsFinal.tex, pc.summand.tex, pc.singularTerms ?? []);
+      }
       if (view === 'formal' && pc.formal) return fmtFormal(pc.formal.lhsFinal.tex, pc.formal.summand.tex);
       return fmtSimplified(pc.lhsFinal.tex, pc.summand.tex, pc.singularTerms ?? []);
     }
@@ -744,6 +779,13 @@ export class ResultsSummaryComponent {
       return this.halfRangeMode() === 'cosine' ? !!ph.cosine.formal : !!ph.sine.formal;
     }
     return false;
+  });
+
+  readonly parsevalHasBilateral = computed(() => {
+    const result = this.store.result();
+    const p = this.parsevalData();
+    if (!result || !p) return false;
+    return result.type === 'complex' && !!(p as ParsevalComplex).bilateral;
   });
 
   readonly parsevalSingVals = computed((): number[] => {
@@ -904,6 +946,7 @@ export class ResultsSummaryComponent {
   readonly parsevalSimplifiedLhsFinal = signal<string | null>(null);
   readonly parsevalSimplifiedSummand = signal<string | null>(null);
   readonly parsevalView = signal<'simplified' | 'formal'>('simplified');
+  readonly parsevalComplexSumForm = signal<'unilateral' | 'bilateral'>('unilateral');
 
   /**
    * Series LaTeX composed from active coefficient values.
@@ -1172,6 +1215,7 @@ export class ResultsSummaryComponent {
         this.parsevalSimplifiedSummand.set(null);
         this.parsevalSimplifyProfile.set('raw');
         this.parsevalView.set('simplified');
+        this.parsevalComplexSumForm.set('unilateral');
         this.controlHarmonics.set(false);
         this.enabledHarmonics.set(new Set(result.terms.terms.map((t) => t.n)));
         this.selectedHarmonicN.set(null);
@@ -1276,7 +1320,8 @@ export class ResultsSummaryComponent {
       hasSingularTerms = (pt.singularTerms?.length ?? 0) > 0;
     } else if (result.type === 'complex') {
       const pc = p as ParsevalComplex;
-      lhsFinalMaxima = pc.lhsFinal.maxima;
+      const isBilateral = this.parsevalComplexSumForm() === 'bilateral';
+      lhsFinalMaxima = isBilateral ? (pc.bilateral?.lhsFinal.maxima ?? pc.lhsFinal.maxima) : pc.lhsFinal.maxima;
       summandMaxima = pc.summand.maxima;
       hasSingularTerms = (pc.singularTerms?.length ?? 0) > 0;
     } else if (result.type === 'halfRange') {
@@ -1319,6 +1364,13 @@ export class ResultsSummaryComponent {
       });
   }
 
+  setComplexSumForm(form: 'unilateral' | 'bilateral'): void {
+    this.parsevalComplexSumForm.set(form);
+    this.parsevalSimplifiedLhsFinal.set(null);
+    this.parsevalSimplifiedSummand.set(null);
+    this.parsevalSimplifyProfile.set('raw');
+  }
+
   setHalfRangeMode(mode: 'cosine' | 'sine'): void {
     this.halfRangeMode.set(mode);
     this.simplifiedCoeffs.set(null);
@@ -1327,6 +1379,7 @@ export class ResultsSummaryComponent {
     this.parsevalSimplifiedSummand.set(null);
     this.parsevalSimplifyProfile.set('raw');
     this.parsevalView.set('simplified');
+    this.parsevalComplexSumForm.set('unilateral');
   }
 
   setHarmonicControl(enabled: boolean): void {

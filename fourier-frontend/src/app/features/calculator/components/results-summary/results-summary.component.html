@@ -1307,7 +1307,7 @@
                 />
               </div>
 
-              <!-- Controls row: halfRange toggle + Formal/Simplified toggle -->
+              <!-- Controls row: halfRange toggle + bilateral/unilateral toggle + Formal/Simplified toggle -->
               <div class="flex items-center gap-2 flex-wrap mb-3">
                 <!-- halfRange mode toggle -->
                 @if (store.result()?.type === 'halfRange') {
@@ -1330,6 +1330,30 @@
                         : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
                       (click)="setHalfRangeMode('sine')"
                     >{{ 'resultPanel.sine' | transloco }}</button>
+                  </div>
+                }
+
+                <!-- Bilateral / Unilateral sum form toggle (complex only) -->
+                @if (parsevalHasBilateral()) {
+                  <div
+                    class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                  >
+                    <button
+                      type="button"
+                      class="px-2.5 py-1 transition-colors"
+                      [class]="parsevalComplexSumForm() === 'unilateral'
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                      (click)="setComplexSumForm('unilateral')"
+                    >{{ 'resultPanel.parsevalUnilateral' | transloco }}</button>
+                    <button
+                      type="button"
+                      class="px-2.5 py-1 transition-colors border-l border-border dark:border-dark-border"
+                      [class]="parsevalComplexSumForm() === 'bilateral'
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                      (click)="setComplexSumForm('bilateral')"
+                    >{{ 'resultPanel.parsevalBilateral' | transloco }}</button>
                   </div>
                 }
 
@@ -1372,6 +1396,19 @@
                 >
                   <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-muted dark:bg-dark-muted shrink-0"></span>
                   <span>{{ 'resultPanel.parsevalFormalNote' | transloco }}</span>
+                </div>
+              } @else if (parsevalComplexSumForm() === 'bilateral') {
+                <div
+                  class="mt-2 flex items-start gap-2 text-[10px] font-mono text-sky-600 dark:text-sky-400"
+                >
+                  <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+                  <span>
+                    @if (parsevalHasSingular()) {
+                      {{ parsevalSingValsLabel() }} — {{ 'resultPanel.parsevalBilateralSingularNote' | transloco }}
+                    } @else {
+                      {{ 'resultPanel.parsevalBilateralNote' | transloco }}
+                    }
+                  </span>
                 </div>
               } @else if (parsevalHasSingular()) {
                 <div

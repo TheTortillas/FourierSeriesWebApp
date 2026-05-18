@@ -7,6 +7,7 @@ import type {
   ParsevalTrig,
   ParsevalHalfRange,
   ParsevalComplex,
+  ParsevalComplexBilateral,
   ParsevalApiResult,
   SingularTerm,
 } from "../../domain/types/fourier.types";
@@ -83,6 +84,14 @@ const COMPLEX_PARSEVAL_MARKERS = [
   "__PARSEVAL_FORMAL_SUMMAND_TEX__",
   "__PARSEVAL_FORMAL_LHS_FINAL_MAXIMA__",
   "__PARSEVAL_FORMAL_LHS_FINAL_TEX__",
+  "__PARSEVAL_BILATERAL_K_MAXIMA__",
+  "__PARSEVAL_BILATERAL_K_TEX__",
+  "__PARSEVAL_BILATERAL_LHS_FINAL_MAXIMA__",
+  "__PARSEVAL_BILATERAL_LHS_FINAL_TEX__",
+  "__PARSEVAL_FORMAL_BILATERAL_K_MAXIMA__",
+  "__PARSEVAL_FORMAL_BILATERAL_K_TEX__",
+  "__PARSEVAL_FORMAL_BILATERAL_LHS_FINAL_MAXIMA__",
+  "__PARSEVAL_FORMAL_BILATERAL_LHS_FINAL_TEX__",
 ];
 
 export class ParsevalService {
@@ -323,6 +332,20 @@ kill(all)$
                 parsed["parseval_formal_lhs_final"] ?? parsed["parseval_lhs"],
             }
           : undefined,
+      bilateral: this.parseBilateral(parsed),
+    };
+  }
+
+  private parseBilateral(parsed: Record<string, any>): ParsevalComplexBilateral | undefined {
+    const k = parsed["parseval_bilateral_k"];
+    const lhsFinal = parsed["parseval_bilateral_lhs_final"];
+    if (!k || !lhsFinal) return undefined;
+    const formalK = parsed["parseval_formal_bilateral_k"];
+    const formalLhs = parsed["parseval_formal_bilateral_lhs_final"];
+    return {
+      k,
+      lhsFinal,
+      formal: formalK && formalLhs ? { k: formalK, lhsFinal: formalLhs } : undefined,
     };
   }
 
@@ -348,6 +371,7 @@ kill(all)$
     const nMarker = "__SING_TERM_N__";
     const maximaMarker = "__SING_TERM_MAXIMA__";
     const texMarker = "__SING_TERM_TEX__";
+    const tex2xMarker = "__SING_TERM_2X_TEX__";
     const chunks = block.split(nMarker).slice(1);
     return chunks.flatMap((chunk) => {
       const mIdx = chunk.indexOf(maximaMarker);
@@ -355,10 +379,20 @@ kill(all)$
       if (mIdx === -1 || tIdx === -1) return [];
       const n = parseInt(chunk.slice(0, mIdx).trim().split("\n")[0] ?? "", 10);
       const maxima = chunk.slice(mIdx + maximaMarker.length, tIdx).trim().split("\n")[0] ?? "";
-      const texRaw = chunk.slice(tIdx + texMarker.length).trim();
+      const tx2Idx = chunk.indexOf(tex2xMarker);
+      const texRaw = (tx2Idx !== -1
+        ? chunk.slice(tIdx + texMarker.length, tx2Idx)
+        : chunk.slice(tIdx + texMarker.length)
+      ).trim();
       const tex = texRaw.replace(/^\s*\$\$\s*/, "").replace(/\s*\$\$\s*$/, "").trim();
+      let tex2x: string | undefined;
+      if (tx2Idx !== -1) {
+        const raw2x = chunk.slice(tx2Idx + tex2xMarker.length).trim();
+        const cleaned = raw2x.replace(/^\s*\$\$\s*/, "").replace(/\s*\$\$\s*$/, "").trim();
+        if (cleaned) tex2x = cleaned;
+      }
       if (!Number.isFinite(n) || !maxima) return [];
-      return [{ n, maxima, tex }];
+      return [{ n, maxima, tex, tex2x }];
     });
   }
 
