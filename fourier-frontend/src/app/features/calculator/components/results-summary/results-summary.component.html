@@ -1294,10 +1294,18 @@
 
             <!-- Header -->
             <div class="px-4 pt-4 pb-2">
-              <p class="text-[10px] font-mono text-muted dark:text-dark-muted mb-3">
-                {{ 'settingsCanvas.tabParseval' | transloco }} &mdash;
-                {{ 'resultPanel.parsevalHeader' | transloco }}
-              </p>
+              <div class="flex items-center gap-2 mb-3">
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                  {{ 'settingsCanvas.tabParseval' | transloco }} &mdash;
+                  {{ 'resultPanel.parsevalHeader' | transloco }}
+                </p>
+                <app-export-button
+                  [tex]="parsevalTex()!"
+                  [mathEl]="parsevalFormulaEl"
+                  filename="parseval-identity"
+                  label="Parseval"
+                />
+              </div>
 
               <!-- Controls row: halfRange toggle + Formal/Simplified toggle -->
               <div class="flex items-center gap-2 flex-wrap mb-3">
@@ -1352,6 +1360,7 @@
 
               <!-- Identity formula -->
               <div
+                #parsevalFormulaEl
                 class="overflow-x-auto text-ink dark:text-dark-ink"
                 [mathjax]="'\\[' + parsevalTex() + '\\]'"
               ></div>

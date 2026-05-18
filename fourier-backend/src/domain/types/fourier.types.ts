@@ -55,6 +55,12 @@ export interface ParsevalFormal {
   lhsFinal: SymbolicExpression;
 }
 
+export interface SingularTerm {
+  n: number;
+  tex: string;
+  maxima: string;
+}
+
 export interface ParsevalTrig {
   lhs: SymbolicExpression;
   a0Term: SymbolicExpression;
@@ -64,6 +70,7 @@ export interface ParsevalTrig {
   sumStart: number;
   hasSingular: boolean;
   singVals: number[];
+  singularTerms: SingularTerm[];
   formal?: ParsevalFormal;
 }
 
@@ -77,6 +84,7 @@ export interface ParsevalHalfRange {
     sumStart: number;
     hasSingular: boolean;
     singVals: number[];
+    singularTerms: SingularTerm[];
     formal?: ParsevalFormal;
   };
   sine: {
@@ -86,6 +94,7 @@ export interface ParsevalHalfRange {
     sumStart: number;
     hasSingular: boolean;
     singVals: number[];
+    singularTerms: SingularTerm[];
     formal?: ParsevalFormal;
   };
 }
@@ -99,6 +108,7 @@ export interface ParsevalComplex {
   sumStart: number;
   hasSingular: boolean;
   singVals: number[];
+  singularTerms: SingularTerm[];
   formal?: ParsevalFormal;
 }
 

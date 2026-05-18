@@ -38,6 +38,7 @@ import {
   ParsevalTrig,
   ParsevalHalfRange,
   ParsevalComplex,
+  SingularTerm,
 } from '../../../../domain/types/fourier.types';
 import type { SymbolicExpression } from '../../../../domain/types/common.types';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button.component';
@@ -650,24 +651,49 @@ export class ResultsSummaryComponent {
     return null;
   });
 
-  private buildExclusionSumTex(singVals: number[]): string {
-    if (!singVals.length) return '\\sum_{n=1}^{\\infty}';
-    const excl = singVals.join(',\\,');
-    return `\\sum_{\\substack{n=1\\\\n\\neq ${excl}}}^{\\infty}`;
+  /**
+   * Builds the RHS of the Parseval identity as TeX.
+   * When singular terms exist, renders an explicit split:
+   *   Σ_{n=1}^{k₁-1}(s) + V₁ + Σ_{n=k₁+1}^{k₂-1}(s) + V₂ + Σ_{n=k₂+1}^∞(s)
+   * When there are none, renders a plain Σ_{n=1}^∞(s).
+   */
+  private buildSplitSumTex(s: string, singularTerms: SingularTerm[]): string {
+    if (!singularTerms.length) return `\\sum_{n=1}^{\\infty}\\left(${s}\\right)`;
+
+    const sorted = [...singularTerms].sort((a, b) => a.n - b.n);
+    const parts: string[] = [];
+    let lo = 1;
+
+    for (const term of sorted) {
+      if (term.n > lo) {
+        const hi = term.n - 1;
+        parts.push(`\\sum_{n=${lo}}^{${hi}}\\left(${s}\\right)`);
+      }
+      parts.push(`\\underbrace{${term.tex || '0'}}_{\\lim_{n\\to ${term.n}}}`);
+      lo = term.n + 1;
+    }
+
+    parts.push(`\\sum_{n=${lo}}^{\\infty}\\left(${s}\\right)`);
+    return parts.join('+');
   }
 
-  /** Parseval identity LaTeX — two views: formal (sum from 1) or simplified (exclusion notation). */
+  /** Parseval identity LaTeX — two views: formal (sum from 1) or simplified (split or plain). */
   readonly parsevalTex = computed(() => {
     const result = this.store.result();
     const p = this.parsevalData();
     if (!result || !p) return null;
 
     const view = this.parsevalView();
-    const override = this.parsevalSimplifiedLhsFinal();
+    const lhsOverride = this.parsevalSimplifiedLhsFinal();
+    const summandOverride = this.parsevalSimplifiedSummand();
 
-    const fmtSimplified = (lhsFinal: string, s: string, singVals: number[]): string => {
-      const sumTex = this.buildExclusionSumTex(singVals);
-      return `${override ?? lhsFinal}=${sumTex}\\left(${s}\\right)`;
+    const fmtSimplified = (
+      lhsFinal: string,
+      s: string,
+      singularTerms: SingularTerm[],
+    ): string => {
+      const rhsTex = this.buildSplitSumTex(summandOverride ?? s, singularTerms);
+      return `${lhsOverride ?? lhsFinal}=${rhsTex}`;
     };
 
     const fmtFormal = (lhsFinal: string, s: string): string =>
@@ -676,7 +702,7 @@ export class ResultsSummaryComponent {
     if (result.type === 'trigonometric') {
       const pt = p as ParsevalTrig;
       if (view === 'formal' && pt.formal) return fmtFormal(pt.formal.lhsFinal.tex, pt.formal.summand.tex);
-      return fmtSimplified(pt.lhsFinal.tex, pt.summand.tex, pt.singVals ?? []);
+      return fmtSimplified(pt.lhsFinal.tex, pt.summand.tex, pt.singularTerms ?? []);
     }
 
     if (result.type === 'halfRange') {
@@ -684,17 +710,17 @@ export class ResultsSummaryComponent {
       const hrMode = this.halfRangeMode();
       if (hrMode === 'cosine') {
         if (view === 'formal' && ph.cosine.formal) return fmtFormal(ph.cosine.formal.lhsFinal.tex, ph.cosine.formal.summand.tex);
-        return fmtSimplified(ph.cosine.lhsFinal.tex, ph.cosine.summand.tex, ph.cosine.singVals ?? []);
+        return fmtSimplified(ph.cosine.lhsFinal.tex, ph.cosine.summand.tex, ph.cosine.singularTerms ?? []);
       } else {
         if (view === 'formal' && ph.sine.formal) return fmtFormal(ph.sine.formal.lhsFinal.tex, ph.sine.formal.summand.tex);
-        return fmtSimplified(ph.sine.lhsFinal.tex, ph.sine.summand.tex, ph.sine.singVals ?? []);
+        return fmtSimplified(ph.sine.lhsFinal.tex, ph.sine.summand.tex, ph.sine.singularTerms ?? []);
       }
     }
 
     if (result.type === 'complex') {
       const pc = p as ParsevalComplex;
       if (view === 'formal' && pc.formal) return fmtFormal(pc.formal.lhsFinal.tex, pc.formal.summand.tex);
-      return fmtSimplified(pc.lhsFinal.tex, pc.summand.tex, pc.singVals ?? []);
+      return fmtSimplified(pc.lhsFinal.tex, pc.summand.tex, pc.singularTerms ?? []);
     }
 
     return null;
@@ -876,6 +902,7 @@ export class ResultsSummaryComponent {
   readonly parsevalSimplifyProfile = signal<SimplifyProfile>('raw');
   readonly parsevalSimplifying = signal(false);
   readonly parsevalSimplifiedLhsFinal = signal<string | null>(null);
+  readonly parsevalSimplifiedSummand = signal<string | null>(null);
   readonly parsevalView = signal<'simplified' | 'formal'>('simplified');
 
   /**
@@ -1142,6 +1169,7 @@ export class ResultsSummaryComponent {
         this.cancelParseval$.next();
         this.parsevalData.set(null);
         this.parsevalSimplifiedLhsFinal.set(null);
+        this.parsevalSimplifiedSummand.set(null);
         this.parsevalSimplifyProfile.set('raw');
         this.parsevalView.set('simplified');
         this.controlHarmonics.set(false);
@@ -1230,6 +1258,7 @@ export class ResultsSummaryComponent {
     this.parsevalSimplifyProfile.set(profile);
     if (profile === 'raw') {
       this.parsevalSimplifiedLhsFinal.set(null);
+      this.parsevalSimplifiedSummand.set(null);
       return;
     }
 
@@ -1238,23 +1267,55 @@ export class ResultsSummaryComponent {
     if (!result || !p) return;
 
     let lhsFinalMaxima: string | undefined;
+    let summandMaxima: string | undefined;
+    let hasSingularTerms = false;
     if (result.type === 'trigonometric') {
-      lhsFinalMaxima = (p as ParsevalTrig).lhsFinal.maxima;
+      const pt = p as ParsevalTrig;
+      lhsFinalMaxima = pt.lhsFinal.maxima;
+      summandMaxima = pt.summand.maxima;
+      hasSingularTerms = (pt.singularTerms?.length ?? 0) > 0;
     } else if (result.type === 'complex') {
-      lhsFinalMaxima = (p as ParsevalComplex).lhsFinal.maxima;
+      const pc = p as ParsevalComplex;
+      lhsFinalMaxima = pc.lhsFinal.maxima;
+      summandMaxima = pc.summand.maxima;
+      hasSingularTerms = (pc.singularTerms?.length ?? 0) > 0;
     } else if (result.type === 'halfRange') {
-      const ph = p as ParsevalHalfRange;
-      lhsFinalMaxima = this.halfRangeMode() === 'cosine' ? ph.cosine.lhsFinal.maxima : ph.sine.lhsFinal.maxima;
+      const arm = this.halfRangeMode() === 'cosine'
+        ? (p as ParsevalHalfRange).cosine
+        : (p as ParsevalHalfRange).sine;
+      lhsFinalMaxima = arm.lhsFinal.maxima;
+      summandMaxima = arm.summand.maxima;
+      hasSingularTerms = (arm.singularTerms?.length ?? 0) > 0;
     }
 
-    if (!lhsFinalMaxima) return;
+    if (!lhsFinalMaxima || !summandMaxima) return;
 
     this.parsevalSimplifying.set(true);
-    this.api
-      .simplify({ expression: lhsFinalMaxima, profile })
-      .pipe(finalize(() => this.parsevalSimplifying.set(false)), takeUntilDestroyed(this.destroyRef))
-      .subscribe((res) => {
-        this.parsevalSimplifiedLhsFinal.set(res.simplified.tex);
+
+    // Step 1: simplify the summand and extract any remaining constant factor K.
+    // Step 2: simplify lhsFinal / K so both sides of the identity stay balanced.
+    // When singular terms exist, K-extraction is suppressed: the singular term TeX
+    // values are scalars already normalized by the original K, so dividing out a new K'
+    // would break the equation balance without a way to update those values.
+    this.api.simplify({ expression: summandMaxima, profile })
+      .pipe(
+        switchMap((summandRes) => {
+          const K = hasSingularTerms ? null : summandRes.simplifiedK;
+          const newSummandTex = K
+            ? (summandRes.simplifiedSummand?.tex ?? summandRes.simplified.tex)
+            : summandRes.simplified.tex;
+          // If K ≠ 1 divide it out of the LHS; otherwise just simplify as-is.
+          const adjustedLhs = K ? `(${lhsFinalMaxima!}) / (${K.maxima})` : lhsFinalMaxima!;
+          return this.api.simplify({ expression: adjustedLhs, profile }).pipe(
+            map((lhsRes) => ({ lhsFinalTex: lhsRes.simplified.tex, summandTex: newSummandTex })),
+          );
+        }),
+        finalize(() => this.parsevalSimplifying.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ lhsFinalTex, summandTex }) => {
+        this.parsevalSimplifiedLhsFinal.set(lhsFinalTex);
+        this.parsevalSimplifiedSummand.set(summandTex);
       });
   }
 
@@ -1263,6 +1324,7 @@ export class ResultsSummaryComponent {
     this.simplifiedCoeffs.set(null);
     this.simplifyProfile.set('raw');
     this.parsevalSimplifiedLhsFinal.set(null);
+    this.parsevalSimplifiedSummand.set(null);
     this.parsevalSimplifyProfile.set('raw');
     this.parsevalView.set('simplified');
   }

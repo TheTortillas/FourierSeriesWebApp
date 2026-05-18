@@ -8,6 +8,7 @@ import type {
   ParsevalHalfRange,
   ParsevalComplex,
   ParsevalApiResult,
+  SingularTerm,
 } from "../../domain/types/fourier.types";
 import {
   buildCacheKey,
@@ -152,6 +153,11 @@ kill(all)$
           "__PARSEVAL_FORMAL_K_MAXIMA__",
         ),
       ),
+      singularTerms: this.parseSingularTerms(
+        result.raw,
+        "__PARSEVAL_SING_TERMS_START__",
+        "__PARSEVAL_SING_TERMS_END__",
+      ),
       formal:
         parsed["parseval_formal_k"] && parsed["parseval_formal_summand"]
           ? {
@@ -206,6 +212,11 @@ kill(all)$
             "__PARSEVAL_SIN_K_MAXIMA__",
           ),
         ),
+        singularTerms: this.parseSingularTerms(
+          result.raw,
+          "__PARSEVAL_COS_SING_TERMS_START__",
+          "__PARSEVAL_COS_SING_TERMS_END__",
+        ),
         formal:
           parsed["parseval_cos_formal_k"] && parsed["parseval_cos_formal_summand"]
             ? {
@@ -238,6 +249,11 @@ kill(all)$
             "__PARSEVAL_SIN_SING_VALS__",
             "__PARSEVAL_COS_FORMAL_K_MAXIMA__",
           ),
+        ),
+        singularTerms: this.parseSingularTerms(
+          result.raw,
+          "__PARSEVAL_SIN_SING_TERMS_START__",
+          "__PARSEVAL_SIN_SING_TERMS_END__",
         ),
         formal:
           parsed["parseval_sin_formal_k"] && parsed["parseval_sin_formal_summand"]
@@ -293,6 +309,11 @@ kill(all)$
           "__PARSEVAL_FORMAL_K_MAXIMA__",
         ),
       ),
+      singularTerms: this.parseSingularTerms(
+        result.raw,
+        "__PARSEVAL_SING_TERMS_START__",
+        "__PARSEVAL_SING_TERMS_END__",
+      ),
       formal:
         parsed["parseval_formal_k"] && parsed["parseval_formal_summand"]
           ? {
@@ -319,6 +340,26 @@ kill(all)$
       .split(",")
       .map(Number)
       .filter((n) => Number.isFinite(n) && n > 0);
+  }
+
+  private parseSingularTerms(raw: string, startMarker: string, endMarker: string): SingularTerm[] {
+    const block = this.extractBetween(raw, startMarker, endMarker);
+    if (!block.trim()) return [];
+    const nMarker = "__SING_TERM_N__";
+    const maximaMarker = "__SING_TERM_MAXIMA__";
+    const texMarker = "__SING_TERM_TEX__";
+    const chunks = block.split(nMarker).slice(1);
+    return chunks.flatMap((chunk) => {
+      const mIdx = chunk.indexOf(maximaMarker);
+      const tIdx = chunk.indexOf(texMarker);
+      if (mIdx === -1 || tIdx === -1) return [];
+      const n = parseInt(chunk.slice(0, mIdx).trim().split("\n")[0] ?? "", 10);
+      const maxima = chunk.slice(mIdx + maximaMarker.length, tIdx).trim().split("\n")[0] ?? "";
+      const texRaw = chunk.slice(tIdx + texMarker.length).trim();
+      const tex = texRaw.replace(/^\s*\$\$\s*/, "").replace(/\s*\$\$\s*$/, "").trim();
+      if (!Number.isFinite(n) || !maxima) return [];
+      return [{ n, maxima, tex }];
+    });
   }
 
   private extractBetween(text: string, start: string, end: string | null): string {

@@ -55,33 +55,30 @@ block(
 )$
 
 block(
-    [_denom, _roots_wrap, _roots_raw, _sing_vals, _sing_sum],
+    [_denom, _roots_wrap, _roots_raw, _all_sing_vals, _sing_terms, _sing_vals],
     _denom: denom(factor(Parseval_Cos_Summand)),
     _roots_wrap: errcatch(solve(_denom = 0, n)),
     _roots_raw: if _roots_wrap = [] then []
                 else block([_r: first(_roots_wrap)],
                     if listp(_r) then _r else []),
-    _sing_vals: map(rhs,
+    _all_sing_vals: map(rhs,
         sublist(_roots_raw,
             lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    _sing_terms: sublist(
+        map(lambda([k],
+            block([_flim: errcatch(limit(Parseval_Cos_Formal_Summand, n, k)), _v],
+                _v: if _flim = [] then 0
+                    else fullratsimp(Parseval_Cos_Formal_K * first(_flim) / fullratsimp(Parseval_Cos_K)),
+                [k, factor(_v)])),
+            _all_sing_vals),
+        lambda([t], not is(second(t) = 0))),
+    _sing_vals: map(first, _sing_terms),
     Parseval_Cos_sing_vals: _sing_vals,
-    if _sing_vals = [] then (
-        Parseval_Cos_has_singular: false,
-        Parseval_Cos_sum_start: 1,
-        Parseval_Cos_LHS_final: fullratsimp(
-            (Parseval_LHS - Parseval_Cos_A0_term) / fullratsimp(Parseval_Cos_K))
-    ) else (
-        Parseval_Cos_has_singular: true,
-        Parseval_Cos_sum_start: lmax(_sing_vals) + 1,
-        _sing_sum: factor(apply("+",
-            map(lambda([k],
-                block([_alim: errcatch(limit(Coeff_An, n, k)), _ak],
-                    _ak: if _alim = [] then 0 else factor(first(_alim)),
-                    factor(ratsimp(_ak^2 / 2)))),
-                _sing_vals))),
-        Parseval_Cos_LHS_final: fullratsimp(
-            (Parseval_LHS - Parseval_Cos_A0_term - _sing_sum) / fullratsimp(Parseval_Cos_K))
-    )
+    Parseval_Cos_has_singular: not is(_sing_vals = []),
+    Parseval_Cos_sum_start: if _sing_vals = [] then 1 else lmax(_sing_vals) + 1,
+    Parseval_Cos_LHS_final: fullratsimp(
+        (Parseval_LHS - Parseval_Cos_A0_term) / fullratsimp(Parseval_Cos_K)),
+    Parseval_Cos_sing_terms: _sing_terms
 )$
 
 /* Serie seno */
@@ -93,34 +90,51 @@ block(
 )$
 
 block(
-    [_denom, _roots_wrap, _roots_raw, _sing_vals, _sing_sum],
+    [_denom, _roots_wrap, _roots_raw, _all_sing_vals, _sing_terms, _sing_vals],
     _denom: denom(factor(Parseval_Sin_Summand)),
     _roots_wrap: errcatch(solve(_denom = 0, n)),
     _roots_raw: if _roots_wrap = [] then []
                 else block([_r: first(_roots_wrap)],
                     if listp(_r) then _r else []),
-    _sing_vals: map(rhs,
+    _all_sing_vals: map(rhs,
         sublist(_roots_raw,
             lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    _sing_terms: sublist(
+        map(lambda([k],
+            block([_flim: errcatch(limit(Parseval_Sin_Formal_Summand, n, k)), _v],
+                _v: if _flim = [] then 0
+                    else fullratsimp(Parseval_Sin_Formal_K * first(_flim) / fullratsimp(Parseval_Sin_K)),
+                [k, factor(_v)])),
+            _all_sing_vals),
+        lambda([t], not is(second(t) = 0))),
+    _sing_vals: map(first, _sing_terms),
     Parseval_Sin_sing_vals: _sing_vals,
-    if _sing_vals = [] then (
-        Parseval_Sin_has_singular: false,
-        Parseval_Sin_sum_start: 1,
-        Parseval_Sin_LHS_final: fullratsimp(Parseval_LHS / fullratsimp(Parseval_Sin_K))
-    ) else (
-        Parseval_Sin_has_singular: true,
-        Parseval_Sin_sum_start: lmax(_sing_vals) + 1,
-        _sing_sum: factor(apply("+",
-            map(lambda([k],
-                block([_blim: errcatch(limit(Coeff_Bn, n, k)), _bk],
-                    _bk: if _blim = [] then 0 else factor(first(_blim)),
-                    factor(ratsimp(_bk^2 / 2)))),
-                _sing_vals))),
-        Parseval_Sin_LHS_final: fullratsimp(
-            (Parseval_LHS - _sing_sum) / fullratsimp(Parseval_Sin_K))
-    )
+    Parseval_Sin_has_singular: not is(_sing_vals = []),
+    Parseval_Sin_sum_start: if _sing_vals = [] then 1 else lmax(_sing_vals) + 1,
+    Parseval_Sin_LHS_final: fullratsimp(Parseval_LHS / fullratsimp(Parseval_Sin_K)),
+    Parseval_Sin_sing_terms: _sing_terms
 )$
 
+print("__PARSEVAL_COS_SING_TERMS_START__")$
+for _t in Parseval_Cos_sing_terms do (
+    print("__SING_TERM_N__"),
+    print(string(first(_t))),
+    print("__SING_TERM_MAXIMA__"),
+    print(string(second(_t))),
+    print("__SING_TERM_TEX__"),
+    tex(second(_t))
+)$
+print("__PARSEVAL_COS_SING_TERMS_END__")$
+print("__PARSEVAL_SIN_SING_TERMS_START__")$
+for _t in Parseval_Sin_sing_terms do (
+    print("__SING_TERM_N__"),
+    print(string(first(_t))),
+    print("__SING_TERM_MAXIMA__"),
+    print(string(second(_t))),
+    print("__SING_TERM_TEX__"),
+    tex(second(_t))
+)$
+print("__PARSEVAL_SIN_SING_TERMS_END__")$
 print("__PARSEVAL_LHS_MAXIMA__")$                  print(string(Parseval_LHS))$
 print("__PARSEVAL_LHS_TEX__")$                     tex(Parseval_LHS)$
 print("__PARSEVAL_COS_A0_TERM_MAXIMA__")$          print(string(Parseval_Cos_A0_term))$

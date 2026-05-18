@@ -176,7 +176,7 @@
     "parsevalSimplified": "Simplificada",
     "parsevalFormal": "Formal",
     "parsevalFormalNote": "Forma analítica: sin aplicar declare(n, integer). Las singularidades en la fórmula son removibles; la suma es válida desde n=1.",
-    "parsevalSingularNote": "coeficiente(s) indeterminado(s) evaluado(s) por límite y restado(s) explícitamente del LHS.",
+    "parsevalSingularNote": "suma dividida en el/los punto(s) singular(es); cada valor excluido fue evaluado por límite.",
     "fourierSeries": "Serie de Fourier",
     "indeterminateCoeffLabel": " * coeficiente indeterminado (0/0); evaluado por límite",
     "indeterminateCoeffTooltip": "Este coeficiente es indeterminado (0/0) al evaluar la fórmula general, pero el límite existe y es finito. Se ha evaluado el límite para obtener su valor correcto.",

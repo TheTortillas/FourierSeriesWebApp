@@ -48,40 +48,47 @@ block(
     Parseval_Summand: _cf[2]
 )$
 
-/* Singularity detection. */
+/* Singularity detection.
+   Limits are evaluated on the FORMAL summand (pre-declare) to avoid integer-declaration
+   artifacts. K-normalized contribution: Formal_K * lim(Formal_Summand) / K.
+   Only non-zero contributions are kept. LHS_final is the full normalised LHS. */
 block(
-    [_denom, _roots_wrap, _roots_raw, _sing_vals, _sing_sum],
+    [_denom, _roots_wrap, _roots_raw, _all_sing_vals, _sing_terms, _sing_vals],
     _denom: denom(factor(Parseval_Summand)),
     _roots_wrap: errcatch(solve(_denom = 0, n)),
     _roots_raw: if _roots_wrap = [] then []
                 else block([_r: first(_roots_wrap)],
                     if listp(_r) then _r else []),
-    _sing_vals: map(rhs,
+    _all_sing_vals: map(rhs,
         sublist(_roots_raw,
             lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    _sing_terms: sublist(
+        map(lambda([k],
+            block([_flim: errcatch(limit(Parseval_Formal_Summand, n, k)), _v],
+                _v: if _flim = [] then 0
+                    else fullratsimp(Parseval_Formal_K * first(_flim) / fullratsimp(Parseval_K)),
+                [k, factor(_v)])),
+            _all_sing_vals),
+        lambda([t], not is(second(t) = 0))),
+    _sing_vals: map(first, _sing_terms),
     Parseval_sing_vals: _sing_vals,
-    if _sing_vals = [] then (
-        Parseval_has_singular: false,
-        Parseval_sum_start: 1,
-        Parseval_LHS_final: fullratsimp(
-            (Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_K))
-    ) else (
-        Parseval_has_singular: true,
-        Parseval_sum_start: lmax(_sing_vals) + 1,
-        _sing_sum: factor(apply("+",
-            map(lambda([k],
-                block([_clim: errcatch(limit(Coeff_n, n, k)), _ck_re, _ck_im],
-                    if _clim = [] then 0
-                    else block([_ck: factor(first(_clim))],
-                        _ck_re: realpart(rectform(_ck)),
-                        _ck_im: imagpart(rectform(_ck)),
-                        factor(ratsimp(2 * (_ck_re^2 + _ck_im^2)))))),
-                _sing_vals))),
-        Parseval_LHS_final: fullratsimp(
-            (Parseval_LHS - Parseval_C0_term - _sing_sum) / fullratsimp(Parseval_K))
-    )
+    Parseval_has_singular: not is(_sing_vals = []),
+    Parseval_sum_start: if _sing_vals = [] then 1 else lmax(_sing_vals) + 1,
+    Parseval_LHS_final: fullratsimp(
+        (Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_K)),
+    Parseval_sing_terms: _sing_terms
 )$
 
+print("__PARSEVAL_SING_TERMS_START__")$
+for _t in Parseval_sing_terms do (
+    print("__SING_TERM_N__"),
+    print(string(first(_t))),
+    print("__SING_TERM_MAXIMA__"),
+    print(string(second(_t))),
+    print("__SING_TERM_TEX__"),
+    tex(second(_t))
+)$
+print("__PARSEVAL_SING_TERMS_END__")$
 print("__PARSEVAL_LHS_MAXIMA__")$          print(string(Parseval_LHS))$
 print("__PARSEVAL_LHS_TEX__")$             tex(Parseval_LHS)$
 print("__PARSEVAL_C0_TERM_MAXIMA__")$      print(string(Parseval_C0_term))$

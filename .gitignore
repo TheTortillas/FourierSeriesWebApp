@@ -52,4 +52,5 @@ node_modules/
 PLOTTER_EVAL.md
 FOURIER_TABLES.md
 deploy.sh
+PARSEVAL_PLAN.md
 .claude/
