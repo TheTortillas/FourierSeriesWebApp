@@ -1296,7 +1296,7 @@
             <div class="px-4 pt-4 pb-2">
               <p class="text-[10px] font-mono text-muted dark:text-dark-muted mb-3">
                 {{ 'settingsCanvas.tabParseval' | transloco }} &mdash;
-                Identidad de Parseval asociada a esta serie de Fourier
+                {{ 'resultPanel.parsevalHeader' | transloco }}
               </p>
 
               <!-- Controls row: halfRange toggle + Formal/Simplified toggle -->
@@ -1410,8 +1410,8 @@
 
           } @else {
             <div class="p-4">
-              <p class="text-sm font-body text-muted dark:text-dark-muted">
-                No hay identidad de Parseval disponible para esta función.
+              <p class="text-[11px] font-mono text-muted dark:text-dark-muted">
+                {{ 'resultPanel.parsevalUnavailable' | transloco }}
               </p>
             </div>
           }

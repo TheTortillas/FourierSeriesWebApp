@@ -138,7 +138,7 @@ kill(all)$
           this.extractBetween(result.raw, "__PARSEVAL_SUM_START__", "__PARSEVAL_HAS_SINGULAR__")
             .replace(/false/g, "")
             .trim()
-            .split(/[\s\n]/)[0] ?? "1",
+            .split("\n")[0] ?? "1",
         ) || 1,
       hasSingular: this.extractBetween(
         result.raw,
@@ -192,7 +192,7 @@ kill(all)$
             this.extractBetween(result.raw, "__PARSEVAL_COS_SUM_START__", "__PARSEVAL_COS_HAS_SINGULAR__")
               .replace(/false/g, "")
               .trim()
-              .split(/[\s\n]/)[0] ?? "1",
+              .split("\n")[0] ?? "1",
           ) || 1,
         hasSingular: this.extractBetween(
           result.raw,
@@ -225,7 +225,7 @@ kill(all)$
             this.extractBetween(result.raw, "__PARSEVAL_SIN_SUM_START__", "__PARSEVAL_SIN_HAS_SINGULAR__")
               .replace(/false/g, "")
               .trim()
-              .split(/[\s\n]/)[0] ?? "1",
+              .split("\n")[0] ?? "1",
           ) || 1,
         hasSingular: this.extractBetween(
           result.raw,
@@ -279,7 +279,7 @@ kill(all)$
           this.extractBetween(result.raw, "__PARSEVAL_SUM_START__", "__PARSEVAL_HAS_SINGULAR__")
             .replace(/false/g, "")
             .trim()
-            .split(/[\s\n]/)[0] ?? "1",
+            .split("\n")[0] ?? "1",
         ) || 1,
       hasSingular: this.extractBetween(
         result.raw,

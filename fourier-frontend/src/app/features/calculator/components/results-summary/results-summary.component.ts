@@ -11,7 +11,7 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, finalize, of, switchMap, map, catchError } from 'rxjs';
+import { forkJoin, finalize, of, switchMap, map, catchError, Subject, takeUntil } from 'rxjs';
 import { CalculatorStore } from '../../store/calculator.store';
 import {
   FunctionPlotComponent,
@@ -870,6 +870,7 @@ export class ResultsSummaryComponent {
   );
 
   // ── Parseval tab state ───────────────────────────────────────────────────
+  private readonly cancelParseval$ = new Subject<void>();
   readonly parsevalData = signal<ParsevalTrig | ParsevalHalfRange | ParsevalComplex | null>(null);
   readonly parsevalLoading = signal(false);
   readonly parsevalSimplifyProfile = signal<SimplifyProfile>('raw');
@@ -1138,6 +1139,7 @@ export class ResultsSummaryComponent {
         this.simplifiedFactored.set(null);
         this.simplifyProfile.set('raw');
         this.halfRangeMode.set('cosine');
+        this.cancelParseval$.next();
         this.parsevalData.set(null);
         this.parsevalSimplifiedLhsFinal.set(null);
         this.parsevalSimplifyProfile.set('raw');
@@ -1209,20 +1211,18 @@ export class ResultsSummaryComponent {
   private fetchParseval(): void {
     const result = this.store.result();
     if (!result) return;
+    this.cancelParseval$.next();
     this.parsevalLoading.set(true);
     this.api
       .calculateParseval(result.data.input)
       .pipe(
-        finalize(() => this.parsevalLoading.set(false)),
+        takeUntil(this.cancelParseval$),
         takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.parsevalLoading.set(false)),
       )
       .subscribe({
-        next: (res) => {
-          this.parsevalData.set(res.parseval ?? null);
-        },
-        error: () => {
-          this.parsevalData.set(null);
-        },
+        next: (res) => this.parsevalData.set(res.parseval ?? null),
+        error: () => this.parsevalData.set(null),
       });
   }
 
