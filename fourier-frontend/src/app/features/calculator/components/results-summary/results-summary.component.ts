@@ -205,15 +205,19 @@ export class ResultsSummaryComponent {
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
   readonly simplifying = signal(false);
   readonly simplifiedCoeffs = signal<Record<string, string> | null>(null);
+  readonly simplifiedCoeffsMaxima = signal<Record<string, string> | null>(null);
   readonly simplifiedFactored = signal<Record<string, { k: string; s: string } | null> | null>(
     null,
   );
+  readonly showFactoredSeries = signal(false);
 
   // exponential sub-flags (only relevant when profile === 'exponential')
   readonly expFlag = signal<'exponentialize' | 'demoivre'>('exponentialize');
   readonly useEdispflag = signal(false);
   readonly erfRepresentationOptions = ['erf', 'erfc', 'erfi'] as const;
   readonly erfRepresentation = signal<'erf' | 'erfc' | 'erfi'>('erf');
+  readonly declareNInteger = signal(true);
+  readonly toHyperbolic = signal(false);
 
   // half-range series mode (only relevant when result.type === 'halfRange')
   readonly halfRangeMode = signal<'cosine' | 'sine'>('cosine');
@@ -583,25 +587,41 @@ export class ResultsSummaryComponent {
     const w0Tex = result.data.w0.tex;
     const w0IsOne = w0Tex === '1';
 
-    const withA0Prefix = (a0Tex: string | undefined, sumTex: string): string => {
+    const activeA0Tex = this.activeCoeffTex()?.a0;
+    const withA0Prefix = (rawA0Tex: string | undefined, sumTex: string): string => {
+      const a0Tex = activeA0Tex ?? rawA0Tex;
       const a0IsZero = !a0Tex || a0Tex.trim() === '0';
-      return a0IsZero ? sumTex : `${a0Tex}+${sumTex}`;
+      if (a0IsZero) return sumTex;
+      const sumStartsNegative = sumTex.trimStart().startsWith('-');
+      return `${a0Tex}${sumStartsNegative ? '' : '+'}${sumTex}`;
     };
+
+    const activeMx = this.activeCoeffMaxima();
 
     if (result.type === 'trigonometric') {
       const c = result.data.coefficients;
-      const anIsZero = (c.an?.maxima ?? '').trim() === '0';
-      const bnIsZero = (c.bn?.maxima ?? '').trim() === '0';
+      const anIsZero = (activeMx?.an ?? c.an?.maxima ?? '').trim() === '0';
+      const bnIsZero = (activeMx?.bn ?? c.bn?.maxima ?? '').trim() === '0';
       const om = w0IsOne ? `n\\,${intVar}` : `n\\,${w0Tex}\\,${intVar}`;
 
       if (anIsZero) {
         const f = pick('bn');
-        if (f)
-          return `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\sin\\!\\left(${om}\\right)`;
+        if (f) {
+          const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\sin\\!\\left(${om}\\right)`;
+          return withA0Prefix(c.a0?.tex, sumTex);
+        }
       } else if (bnIsZero) {
         const f = pick('an');
         if (f) {
           const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\cos\\!\\left(${om}\\right)`;
+          return withA0Prefix(c.a0?.tex, sumTex);
+        }
+      } else {
+        // Both non-zero: show K·Σ(sₐ·cos + s_b·sin) when they share the same K
+        const fa = pick('an');
+        const fb = pick('bn');
+        if (fa && fb && fa.k === fb.k && fa.k !== '1') {
+          const sumTex = `${fa.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${fa.s}\\,\\cos\\!\\left(${om}\\right)+${fb.s}\\,\\sin\\!\\left(${om}\\right)\\right)`;
           return withA0Prefix(c.a0?.tex, sumTex);
         }
       }
@@ -618,7 +638,7 @@ export class ResultsSummaryComponent {
         : `n\\,${w0Tex}\\,\\left(${shiftedVar}\\right)`;
 
       if (hrMode === 'cosine') {
-        const anIsZero = (c.an?.maxima ?? '').trim() === '0';
+        const anIsZero = (activeMx?.an ?? c.an?.maxima ?? '').trim() === '0';
         if (!anIsZero) {
           const f = pick('an');
           if (f) {
@@ -627,7 +647,7 @@ export class ResultsSummaryComponent {
           }
         }
       } else {
-        const bnIsZero = (c.bn?.maxima ?? '').trim() === '0';
+        const bnIsZero = (activeMx?.bn ?? c.bn?.maxima ?? '').trim() === '0';
         if (!bnIsZero) {
           const f = pick('bn');
           if (f)
@@ -639,7 +659,7 @@ export class ResultsSummaryComponent {
 
     if (result.type === 'complex') {
       const c = result.data.coefficients;
-      const cnIsZero = (c.cn?.maxima ?? '').trim() === '0';
+      const cnIsZero = (activeMx?.cn ?? c.cn?.maxima ?? '').trim() === '0';
       if (!cnIsZero) {
         const f = pick('cn');
         const om = w0IsOne ? `n\\,${intVar}` : `n\\,${w0Tex}\\,${intVar}`;
@@ -911,15 +931,48 @@ export class ResultsSummaryComponent {
     const result = this.store.result();
     if (!result) return null;
 
+    const simplifiedA0Raw = this.simplifiedCoeffs()?.['a0Raw'];
+
     if (result.type === 'trigonometric') {
-      return result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
+      return simplifiedA0Raw ?? result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
     }
 
     if (result.type === 'halfRange' && this.halfRangeMode() === 'cosine') {
-      return result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
+      return simplifiedA0Raw ?? result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
     }
 
     return this.activeCoeffTex()?.a0 ?? null;
+  });
+
+  /** Active coefficient Maxima: uses simplified Maxima when available, else raw. */
+  readonly activeCoeffMaxima = computed(() => {
+    const simplified = this.simplifiedCoeffsMaxima();
+    const base = this.coeffMaxima();
+    if (!base) return null;
+    if (!simplified) return base;
+    return {
+      ...base,
+      ...(simplified['a0'] !== undefined ? { a0: simplified['a0'] } : {}),
+      ...(simplified['an'] !== undefined ? { an: simplified['an'] } : {}),
+      ...(simplified['bn'] !== undefined ? { bn: simplified['bn'] } : {}),
+      ...(simplified['c0'] !== undefined ? { c0: simplified['c0'] } : {}),
+      ...(simplified['cn'] !== undefined ? { cn: simplified['cn'] } : {}),
+      ...(simplified['w0'] !== undefined ? { w0: simplified['w0'] } : {}),
+    };
+  });
+
+  /** Maxima for the a₀ panel row (uses a0Raw simplified Maxima when available). */
+  readonly a0DisplayMaxima = computed(() => {
+    const result = this.store.result();
+    if (!result) return null;
+    const simplifiedA0RawMaxima = this.simplifiedCoeffsMaxima()?.['a0Raw'];
+    if (result.type === 'trigonometric') {
+      return simplifiedA0RawMaxima ?? result.data.a0Raw?.maxima ?? this.activeCoeffMaxima()?.a0 ?? null;
+    }
+    if (result.type === 'halfRange' && this.halfRangeMode() === 'cosine') {
+      return simplifiedA0RawMaxima ?? result.data.a0Raw?.maxima ?? this.activeCoeffMaxima()?.a0 ?? null;
+    }
+    return this.activeCoeffMaxima()?.a0 ?? null;
   });
 
   readonly execTime = computed(() => {
@@ -1206,8 +1259,12 @@ export class ResultsSummaryComponent {
           Math.max(0, Math.min(this.store.nTerms(), result.terms.terms.length)),
         );
         this.simplifiedCoeffs.set(null);
+        this.simplifiedCoeffsMaxima.set(null);
         this.simplifiedFactored.set(null);
+        this.showFactoredSeries.set(false);
         this.simplifyProfile.set('raw');
+        this.declareNInteger.set(true);
+        this.toHyperbolic.set(false);
         this.halfRangeMode.set('cosine');
         this.cancelParseval$.next();
         this.parsevalData.set(null);
@@ -1342,7 +1399,12 @@ export class ResultsSummaryComponent {
     // When singular terms exist, K-extraction is suppressed: the singular term TeX
     // values are scalars already normalized by the original K, so dividing out a new K'
     // would break the equation balance without a way to update those values.
-    this.api.simplify({ expression: summandMaxima, profile })
+    const parsevalDisplayFlags = {
+      declareNInteger: this.declareNInteger(),
+      ...(this.toHyperbolic() ? { toHyperbolic: true } : {}),
+    };
+
+    this.api.simplify({ expression: summandMaxima, profile, displayFlags: parsevalDisplayFlags })
       .pipe(
         switchMap((summandRes) => {
           const K = hasSingularTerms ? null : summandRes.simplifiedK;
@@ -1351,7 +1413,7 @@ export class ResultsSummaryComponent {
             : summandRes.simplified.tex;
           // If K ≠ 1 divide it out of the LHS; otherwise just simplify as-is.
           const adjustedLhs = K ? `(${lhsFinalMaxima!}) / (${K.maxima})` : lhsFinalMaxima!;
-          return this.api.simplify({ expression: adjustedLhs, profile }).pipe(
+          return this.api.simplify({ expression: adjustedLhs, profile, displayFlags: parsevalDisplayFlags }).pipe(
             map((lhsRes) => ({ lhsFinalTex: lhsRes.simplified.tex, summandTex: newSummandTex })),
           );
         }),
@@ -1654,7 +1716,9 @@ export class ResultsSummaryComponent {
     this.simplifyProfile.set(profile);
     if (profile === 'raw') {
       this.simplifiedCoeffs.set(null);
+      this.simplifiedCoeffsMaxima.set(null);
       this.simplifiedFactored.set(null);
+      this.showFactoredSeries.set(false);
     } else {
       this.simplifyAll(profile);
     }
@@ -1681,6 +1745,20 @@ export class ResultsSummaryComponent {
     }
   }
 
+  setDeclareNInteger(enabled: boolean): void {
+    this.declareNInteger.set(enabled);
+    if (this.simplifyProfile() !== 'raw') {
+      this.simplifyAll(this.simplifyProfile());
+    }
+  }
+
+  setToHyperbolic(enabled: boolean): void {
+    this.toHyperbolic.set(enabled);
+    if (this.simplifyProfile() !== 'raw') {
+      this.simplifyAll(this.simplifyProfile());
+    }
+  }
+
   simplifyAll(
     profile: SimplifyProfile,
     flag: 'exponentialize' | 'demoivre' = this.expFlag(),
@@ -1701,6 +1779,8 @@ export class ResultsSummaryComponent {
       ...(profileFlags ?? {}),
       ...(this.useEdispflag() ? { edispflag: true } : {}),
       erfRepresentation: this.erfRepresentation(),
+      declareNInteger: this.declareNInteger(),
+      ...(this.toHyperbolic() ? { toHyperbolic: true } : {}),
     };
 
     const calls: Record<string, ReturnType<typeof this.api.simplify>> = {};
@@ -1709,6 +1789,8 @@ export class ResultsSummaryComponent {
       const c = result.data.coefficients;
       if (c.a0?.maxima)
         calls['a0'] = this.api.simplify({ expression: c.a0.maxima, profile, displayFlags });
+      if (result.data.a0Raw?.maxima)
+        calls['a0Raw'] = this.api.simplify({ expression: result.data.a0Raw.maxima, profile, displayFlags });
       if (c.an?.maxima)
         calls['an'] = this.api.simplify({ expression: c.an.maxima, profile, displayFlags });
       if (c.bn?.maxima)
@@ -1719,6 +1801,8 @@ export class ResultsSummaryComponent {
       if (hrMode === 'cosine') {
         if (c.a0?.maxima)
           calls['a0'] = this.api.simplify({ expression: c.a0.maxima, profile, displayFlags });
+        if (result.data.a0Raw?.maxima)
+          calls['a0Raw'] = this.api.simplify({ expression: result.data.a0Raw.maxima, profile, displayFlags });
         if (c.an?.maxima)
           calls['an'] = this.api.simplify({ expression: c.an.maxima, profile, displayFlags });
       } else {
@@ -1745,16 +1829,20 @@ export class ResultsSummaryComponent {
       )
       .subscribe((responses) => {
         const simplified: Record<string, string> = {};
+        const simplifiedMaxima: Record<string, string> = {};
         const factored: Record<string, { k: string; s: string } | null> = {};
         for (const [key, res] of Object.entries(responses)) {
           simplified[key] = res.simplified.tex;
+          simplifiedMaxima[key] = res.simplified.maxima;
           factored[key] =
             res.simplifiedK && res.simplifiedSummand
               ? { k: res.simplifiedK.tex, s: res.simplifiedSummand.tex }
               : null;
         }
         this.simplifiedCoeffs.set(simplified);
+        this.simplifiedCoeffsMaxima.set(simplifiedMaxima);
         this.simplifiedFactored.set(factored);
+        this.showFactoredSeries.set(false);
       });
   }
 }

@@ -209,7 +209,9 @@
       "asintotica": "Asintótica",
       "esencial": "Esencial",
       "fuera_de_dominio": "Fuera del dominio"
-    }
+    },
+    "seriesStandard": "Estándar",
+    "seriesFactored": "Factorizada"
   },
   "share": {
     "title": "Compartir enlace",
@@ -805,5 +807,9 @@
       "f4": "Diseño responsive — funciona en escritorio y móvil"
     },
     "cta": "Empezar a explorar"
+  },
+  "simplify": {
+    "nInteger": "n ∈ ℤ",
+    "toHyperbolic": "→ Hiperbólicas"
   }
 }
