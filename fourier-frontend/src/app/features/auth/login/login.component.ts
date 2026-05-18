@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
+import { AnalyticsService } from '../../../core/services/analytics/analytics.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -14,25 +15,32 @@ import { GoogleSignInComponent } from '../../../shared/components/google-sign-in
   imports: [ReactiveFormsModule, RouterLink, NavComponent, GoogleSignInComponent, TranslocoPipe],
 })
 export class LoginComponent {
-  private readonly fb       = inject(FormBuilder);
-  private readonly auth     = inject(AuthService);
-  private readonly router   = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly auth = inject(AuthService);
+  private readonly analytics = inject(AnalyticsService);
+  private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
-  private readonly seo      = inject(SeoService);
+  private readonly seo = inject(SeoService);
 
-  constructor() { this.seo.setNoIndex(); }
+  constructor() {
+    this.seo.setNoIndex();
+  }
 
   readonly form = this.fb.nonNullable.group({
-    email:    ['', [Validators.required, Validators.email]],
+    email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
   });
 
-  readonly loading  = signal(false);
+  readonly loading = signal(false);
   readonly apiError = signal<string | null>(null);
   readonly showPass = signal(false);
 
-  get email()    { return this.form.controls.email; }
-  get password() { return this.form.controls.password; }
+  get email() {
+    return this.form.controls.email;
+  }
+  get password() {
+    return this.form.controls.password;
+  }
 
   onGoogleCredential(idToken: string): void {
     this.apiError.set(null);
@@ -53,7 +61,10 @@ export class LoginComponent {
     this.loading.set(true);
 
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']),
+      next: () => {
+        this.analytics.trackEvent('login', { method: 'email' });
+        this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']);
+      },
       error: (err) => {
         this.apiError.set(err?.error?.error ?? 'Error al iniciar sesión');
         this.loading.set(false);

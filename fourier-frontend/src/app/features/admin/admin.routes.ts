@@ -41,6 +41,11 @@ export const adminRoutes: Routes = [
           import('./system/system-stats.component').then((m) => m.SystemStatsComponent),
       },
       {
+        path: 'calculations',
+        loadComponent: () =>
+          import('./calc-stats/calc-stats.component').then((m) => m.CalcStatsComponent),
+      },
+      {
         path: 'feedback',
         loadComponent: () =>
           import('./feedback-stats/feedback-stats.component').then((m) => m.FeedbackStatsComponent),

@@ -29,6 +29,11 @@ const COMPLEX_MARKERS = [
   "__SERIES_COMPLEX_TEX__",
   "__W0_MAXIMA__",
   "__W0_TEX__",
+  "__CN_K_MAXIMA__",
+  "__CN_K_TEX__",
+  "__CN_SUMMAND_MAXIMA__",
+  "__CN_SUMMAND_TEX__",
+  "__C0_FLOAT__",
 ];
 
 export class ComplexService {
@@ -78,6 +83,7 @@ export class ComplexService {
     const fullScript = `
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
+load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
 __C0_CLEAN__: if not freeof(gamma_incomplete, Coeff_0)
@@ -121,6 +127,8 @@ kill(all)$
         c0: parsed["c0"] ?? { tex: "", maxima: "" },
         c0Float: isNaN(c0Float) ? undefined : c0Float,
         cn: parsed["cn"] ?? { tex: "", maxima: "" },
+        cnK: parsed["cn_k"],
+        cnSummand: parsed["cn_summand"],
       },
       seriesComplex: parsed["series_complex"] ?? { tex: "", maxima: "" },
       w0: parsed["w0"] ?? { tex: "", maxima: "" },

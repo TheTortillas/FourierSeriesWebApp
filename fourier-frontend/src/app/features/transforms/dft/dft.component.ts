@@ -13,7 +13,7 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 
@@ -54,6 +54,43 @@ import type { CanvasViewport, Curve } from '../../../core/services/canvas/canvas
 const N_OPTIONS = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
 const INT_VARS = ['x', 't', 'u', 's'];
 const TOP_LIMIT = 256;
+
+/** Identifiers that are never free symbols: math functions, Maxima constants, keywords. */
+const KNOWN_IDENTIFIERS = new Set([
+  // Maxima constants (after stripping %)
+  'pi', 'e', 'i', 'inf', 'minf', 'true', 'false',
+  // Maxima keywords
+  'if', 'then', 'else', 'elseif', 'and', 'or', 'not',
+  // Standard math functions
+  'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2',
+  'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
+  'cot', 'sec', 'csc', 'acot', 'asec', 'acsc',
+  'sqrt', 'exp', 'log', 'log2', 'log10', 'abs',
+  'floor', 'ceiling', 'round', 'truncate', 'max', 'min',
+  'sign', 'sgn', 'signum',
+  // Special functions supported by the frontend
+  'u', 'rect', 'delta', 'gamma', 'factorial', 'erf', 'erfc',
+]);
+
+/**
+ * Returns identifiers in `expr` that are not the integration variable,
+ * not known math functions/constants, and not numbers.
+ * These are "free symbols" that would prevent numeric DFT sampling.
+ */
+function extractFreeSymbols(expr: string, intVar: string): string[] {
+  // Strip % so %pi → pi, %e → e (handled via KNOWN_IDENTIFIERS)
+  const cleaned = expr.replace(/%/g, '');
+  const found = new Set<string>();
+  const re = /\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(cleaned)) !== null) {
+    const name = m[1];
+    if (name !== intVar && !KNOWN_IDENTIFIERS.has(name)) {
+      found.add(name);
+    }
+  }
+  return [...found];
+}
 
 // ── Epicycles helpers ──────────────────────────────────────────────────────────
 
@@ -165,6 +202,7 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly mqs                 = inject(MathquillService);
   readonly userStore           = inject(UserStore);
   private readonly csvExport   = inject(CsvExportService);
+  private readonly transloco   = inject(TranslocoService);
 
   readonly signalPlotRef    = viewChild<FunctionPlotComponent>('signalPlot');
   readonly spectrumPlotRef  = viewChild<FunctionPlotComponent>('spectrumPlot');
@@ -191,6 +229,19 @@ export class DftComponent implements OnInit, OnDestroy {
     this.algorithm() === 'fft' ? this.N() : this.dftCustomN(),
   );
 
+  /** Free symbolic identifiers found across all segment expressions and endpoints. */
+  readonly freeSymbolsInDft = computed<string[]>(() => {
+    if (this.inputMode() !== 'function') return [];
+    const v = this.intVar();
+    const found = new Set<string>();
+    for (const seg of this.segments()) {
+      for (const sym of extractFreeSymbols(seg.expression, v)) found.add(sym);
+      for (const sym of extractFreeSymbols(seg.from, v)) found.add(sym);
+      for (const sym of extractFreeSymbols(seg.to, v)) found.add(sym);
+    }
+    return [...found].sort();
+  });
+
   // ── Manual-mode state ────────────────────────────────────────────────────────
   readonly manualRaw  = signal<string>('1, 0, 0, 0, 0, 0, 0, 0');
   readonly manualN    = signal(8);
@@ -216,7 +267,9 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly mobileExtraGroup: KeyBtn[] = [
     { label: 'sin', typedText: 'sin(' },
     { label: 'cos', typedText: 'cos(' },
-    { label: 'exp', typedText: 'exp(' },
+    { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+    { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+    { label: 'rect(□)', writeWithCursor: '\\operatorname{rect}\\left(\\right)' },
     { label: 'π', typedText: 'pi' },
   ];
 
@@ -233,6 +286,9 @@ export class DftComponent implements OnInit, OnDestroy {
       { label: 'asin', typedText: 'asin(' },
       { label: 'acos', typedText: 'acos(' },
       { label: 'atan', typedText: 'atan(' },
+      { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+      { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+      { label: 'rect(□)', writeWithCursor: '\\operatorname{rect}\\left(\\right)' },
     ],
     [
       { label: 'log', typedText: 'log(' },

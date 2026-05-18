@@ -36,6 +36,11 @@ import { logger } from "./infrastructure/logging/logger";
 export function createApp(): Application {
   const app = express();
 
+  // Trust exactly one reverse-proxy hop (nginx).
+  // "1" means only the first entry in X-Forwarded-For is used as req.ip,
+  // preventing clients from injecting a spoofed IP via that header.
+  app.set("trust proxy", 1);
+
   app.disable("x-powered-by");
   app.use(helmet());
 

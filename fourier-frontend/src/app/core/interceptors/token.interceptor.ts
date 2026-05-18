@@ -26,6 +26,18 @@ function addBearer(req: Parameters<HttpInterceptorFn>[0], token: string) {
   return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
 }
 
+function isPublicAuthEndpoint(url: string): boolean {
+  return (
+    url.includes('/auth/login') ||
+    url.includes('/auth/register') ||
+    url.includes('/auth/google') ||
+    url.includes('/auth/forgot-password') ||
+    url.includes('/auth/reset-password') ||
+    url.includes('/auth/verify-email') ||
+    url.includes('/auth/resend-verification')
+  );
+}
+
 /**
  * Interceptor funcional (Angular 17+).
  * 1. Agrega el Bearer token a cada petición si existe.
@@ -35,10 +47,16 @@ function addBearer(req: Parameters<HttpInterceptorFn>[0], token: string) {
  * 4. Si el refresh falla, cierra la sesión.
  */
 export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
-  const auth   = inject(AuthService);
+  const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (req.url.includes('/auth/refresh')) {
+  // These endpoints must never trigger a reactive refresh — doing so creates an
+  // infinite loop: refresh fails → logout → logout gets 401 → refresh again → …
+  if (req.url.includes('/auth/refresh') || req.url.includes('/auth/logout')) {
+    return next(req);
+  }
+
+  if (isPublicAuthEndpoint(req.url)) {
     return next(req);
   }
 

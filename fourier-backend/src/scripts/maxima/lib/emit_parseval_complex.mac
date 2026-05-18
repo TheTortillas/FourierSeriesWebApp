@@ -1,0 +1,130 @@
+/* ═══════════════════════════════════════════════════════════════
+   Parseval – Serie Compleja
+   Requiere: FUNC_INPUT, INTVAR, PERIOD, Coeff_0, Coeff_n, const_factor
+   Identidad: (1/T)∫|f|²dx = |c₀|² + 2·Σ|cₙ|²
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── LHS y término de c₀ (no dependen de n) ── */
+block(
+    [_f2_acum: 0],
+    for _i:1 thru length(FUNC_INPUT) do (
+        _f2_acum: _f2_acum + integrate(FUNC_INPUT[_i][1]^2, INTVAR,
+                                       FUNC_INPUT[_i][2], FUNC_INPUT[_i][3])
+    ),
+    Parseval_LHS: factor(ratsimp(_f2_acum / PERIOD))
+)$
+
+Parseval_C0_term: factor(ratsimp(Coeff_0^2))$
+
+/* ── Versión formal (sin declare(n, integer)) ── */
+errcatch(assume(n > 0))$
+
+block(
+    [_cn_re_f: realpart(rectform(Coeff_n)),
+     _cn_im_f: imagpart(rectform(Coeff_n)),
+     _cn_mod2_f, _cf_f],
+    _cn_mod2_f: factor(trigsimp(ratsimp(_cn_re_f^2 + _cn_im_f^2))),
+    _cf_f: const_factor(_cn_mod2_f, n),
+    Parseval_Formal_K:       factor(2 * _cf_f[1]),
+    Parseval_Formal_Summand: _cf_f[2]
+)$
+
+Parseval_Formal_LHS_final: fullratsimp(
+    (Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_Formal_K))$
+
+/* ── Versión simplificada (con declare(n, integer)) ── */
+declare(n, integer)$
+errcatch(assume(n > 0))$
+
+_Cn: factor(fullratsimp(Coeff_n))$
+
+block(
+    [_cn_re: realpart(rectform(_Cn)),
+     _cn_im: imagpart(rectform(_Cn)),
+     _cn_mod2, _cf],
+    _cn_mod2: factor(trigsimp(ratsimp(_cn_re^2 + _cn_im^2))),
+    _cf: const_factor(_cn_mod2, n),
+    Parseval_K:       factor(2 * _cf[1]),
+    Parseval_Summand: _cf[2]
+)$
+
+/* Singularity detection.
+   Limits are evaluated on the FORMAL summand (pre-declare) to avoid integer-declaration
+   artifacts. K-normalized contribution: Formal_K * lim(Formal_Summand) / K.
+   Only non-zero contributions are kept. LHS_final is the full normalised LHS. */
+block(
+    [_denom, _roots_wrap, _roots_raw, _all_sing_vals, _sing_terms, _sing_vals],
+    _denom: denom(factor(Parseval_Summand)),
+    _roots_wrap: errcatch(solve(_denom = 0, n)),
+    _roots_raw: if _roots_wrap = [] then []
+                else block([_r: first(_roots_wrap)],
+                    if listp(_r) then _r else []),
+    _all_sing_vals: map(rhs,
+        sublist(_roots_raw,
+            lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    _sing_terms: sublist(
+        map(lambda([k],
+            block([_flim: errcatch(limit(Parseval_Formal_Summand, n, k)), _v],
+                _v: if _flim = [] then 0
+                    else fullratsimp(Parseval_Formal_K * first(_flim) / fullratsimp(Parseval_K)),
+                [k, factor(_v)])),
+            _all_sing_vals),
+        lambda([t], not is(second(t) = 0))),
+    _sing_vals: map(first, _sing_terms),
+    Parseval_sing_vals: _sing_vals,
+    Parseval_has_singular: not is(_sing_vals = []),
+    Parseval_sum_start: if _sing_vals = [] then 1 else lmax(_sing_vals) + 1,
+    Parseval_LHS_final: fullratsimp(
+        (Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_K)),
+    Parseval_sing_terms: _sing_terms
+)$
+
+/* Bilateral form (n: -∞ to ∞, n≠0): K_bilateral = K/2.
+   LHS_bilateral_final = (LHS - c₀²) / K_bilateral = 2·LHS_final.
+   Singular pairs (n=±k) each contribute 2·V_k to the bilateral sum. */
+Parseval_Bilateral_K: factor(Parseval_K / 2)$
+Parseval_Bilateral_LHS_final: fullratsimp(
+    (Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_Bilateral_K))$
+Parseval_Formal_Bilateral_K: factor(Parseval_Formal_K / 2)$
+Parseval_Formal_Bilateral_LHS_final: fullratsimp(
+    (Parseval_LHS - Parseval_C0_term) / fullratsimp(Parseval_Formal_Bilateral_K))$
+
+print("__PARSEVAL_SING_TERMS_START__")$
+for _t in Parseval_sing_terms do (
+    print("__SING_TERM_N__"),
+    print(string(first(_t))),
+    print("__SING_TERM_MAXIMA__"),
+    print(string(second(_t))),
+    print("__SING_TERM_TEX__"),
+    tex(second(_t)),
+    print("__SING_TERM_2X_TEX__"),
+    tex(factor(2 * second(_t)))
+)$
+print("__PARSEVAL_SING_TERMS_END__")$
+print("__PARSEVAL_LHS_MAXIMA__")$          print(string(Parseval_LHS))$
+print("__PARSEVAL_LHS_TEX__")$             tex(Parseval_LHS)$
+print("__PARSEVAL_C0_TERM_MAXIMA__")$      print(string(Parseval_C0_term))$
+print("__PARSEVAL_C0_TERM_TEX__")$         tex(Parseval_C0_term)$
+print("__PARSEVAL_K_MAXIMA__")$            print(string(Parseval_K))$
+print("__PARSEVAL_K_TEX__")$               tex(Parseval_K)$
+print("__PARSEVAL_SUMMAND_MAXIMA__")$      print(string(Parseval_Summand))$
+print("__PARSEVAL_SUMMAND_TEX__")$         tex(Parseval_Summand)$
+print("__PARSEVAL_LHS_FINAL_MAXIMA__")$    print(string(Parseval_LHS_final))$
+print("__PARSEVAL_LHS_FINAL_TEX__")$       tex(Parseval_LHS_final)$
+print("__PARSEVAL_SUM_START__")$           print(string(Parseval_sum_start))$
+print("__PARSEVAL_HAS_SINGULAR__")$        print(string(Parseval_has_singular))$
+print("__PARSEVAL_SING_VALS__")$           print(string(Parseval_sing_vals))$
+print("__PARSEVAL_FORMAL_K_MAXIMA__")$     print(string(Parseval_Formal_K))$
+print("__PARSEVAL_FORMAL_K_TEX__")$        tex(Parseval_Formal_K)$
+print("__PARSEVAL_FORMAL_SUMMAND_MAXIMA__")$ print(string(Parseval_Formal_Summand))$
+print("__PARSEVAL_FORMAL_SUMMAND_TEX__")$   tex(Parseval_Formal_Summand)$
+print("__PARSEVAL_FORMAL_LHS_FINAL_MAXIMA__")$ print(string(Parseval_Formal_LHS_final))$
+print("__PARSEVAL_FORMAL_LHS_FINAL_TEX__")$   tex(Parseval_Formal_LHS_final)$
+print("__PARSEVAL_BILATERAL_K_MAXIMA__")$           print(string(Parseval_Bilateral_K))$
+print("__PARSEVAL_BILATERAL_K_TEX__")$              tex(Parseval_Bilateral_K)$
+print("__PARSEVAL_BILATERAL_LHS_FINAL_MAXIMA__")$   print(string(Parseval_Bilateral_LHS_final))$
+print("__PARSEVAL_BILATERAL_LHS_FINAL_TEX__")$      tex(Parseval_Bilateral_LHS_final)$
+print("__PARSEVAL_FORMAL_BILATERAL_K_MAXIMA__")$         print(string(Parseval_Formal_Bilateral_K))$
+print("__PARSEVAL_FORMAL_BILATERAL_K_TEX__")$            tex(Parseval_Formal_Bilateral_K)$
+print("__PARSEVAL_FORMAL_BILATERAL_LHS_FINAL_MAXIMA__")$ print(string(Parseval_Formal_Bilateral_LHS_final))$
+print("__PARSEVAL_FORMAL_BILATERAL_LHS_FINAL_TEX__")$    tex(Parseval_Formal_Bilateral_LHS_final)$

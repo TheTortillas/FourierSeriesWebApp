@@ -110,6 +110,86 @@ const options: Options = {
             executionTimeMs: { type: "number" },
           },
         },
+        ParsevalFormal: {
+          type: "object",
+          properties: {
+            k: { $ref: "#/components/schemas/SymbolicExpression" },
+            summand: { $ref: "#/components/schemas/SymbolicExpression" },
+            lhsFinal: { $ref: "#/components/schemas/SymbolicExpression" },
+          },
+        },
+        ParsevalTrig: {
+          type: "object",
+          properties: {
+            lhs: { $ref: "#/components/schemas/SymbolicExpression" },
+            a0Term: { $ref: "#/components/schemas/SymbolicExpression" },
+            k: { $ref: "#/components/schemas/SymbolicExpression" },
+            summand: { $ref: "#/components/schemas/SymbolicExpression" },
+            lhsFinal: { $ref: "#/components/schemas/SymbolicExpression" },
+            sumStart: { type: "number" },
+            hasSingular: { type: "boolean" },
+            singVals: { type: "array", items: { type: "number" } },
+            formal: { $ref: "#/components/schemas/ParsevalFormal" },
+          },
+        },
+        ParsevalHalfRange: {
+          type: "object",
+          properties: {
+            lhs: { $ref: "#/components/schemas/SymbolicExpression" },
+            cosine: {
+              type: "object",
+              properties: {
+                a0Term: { $ref: "#/components/schemas/SymbolicExpression" },
+                k: { $ref: "#/components/schemas/SymbolicExpression" },
+                summand: { $ref: "#/components/schemas/SymbolicExpression" },
+                lhsFinal: { $ref: "#/components/schemas/SymbolicExpression" },
+                sumStart: { type: "number" },
+                hasSingular: { type: "boolean" },
+                singVals: { type: "array", items: { type: "number" } },
+                formal: { $ref: "#/components/schemas/ParsevalFormal" },
+              },
+            },
+            sine: {
+              type: "object",
+              properties: {
+                k: { $ref: "#/components/schemas/SymbolicExpression" },
+                summand: { $ref: "#/components/schemas/SymbolicExpression" },
+                lhsFinal: { $ref: "#/components/schemas/SymbolicExpression" },
+                sumStart: { type: "number" },
+                hasSingular: { type: "boolean" },
+                singVals: { type: "array", items: { type: "number" } },
+                formal: { $ref: "#/components/schemas/ParsevalFormal" },
+              },
+            },
+          },
+        },
+        ParsevalComplex: {
+          type: "object",
+          properties: {
+            lhs: { $ref: "#/components/schemas/SymbolicExpression" },
+            c0Term: { $ref: "#/components/schemas/SymbolicExpression" },
+            k: { $ref: "#/components/schemas/SymbolicExpression" },
+            summand: { $ref: "#/components/schemas/SymbolicExpression" },
+            lhsFinal: { $ref: "#/components/schemas/SymbolicExpression" },
+            sumStart: { type: "number" },
+            hasSingular: { type: "boolean" },
+            singVals: { type: "array", items: { type: "number" } },
+            formal: { $ref: "#/components/schemas/ParsevalFormal" },
+          },
+        },
+        ParsevalResponse: {
+          type: "object",
+          properties: {
+            parseval: {
+              oneOf: [
+                { $ref: "#/components/schemas/ParsevalTrig" },
+                { $ref: "#/components/schemas/ParsevalHalfRange" },
+                { $ref: "#/components/schemas/ParsevalComplex" },
+              ],
+            },
+            executionTimeMs: { type: "number" },
+          },
+        },
       },
     },
   },

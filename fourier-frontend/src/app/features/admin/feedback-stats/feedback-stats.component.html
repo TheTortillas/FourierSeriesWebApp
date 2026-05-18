@@ -1,5 +1,4 @@
 <div class="p-6 flex flex-col gap-6 max-w-5xl">
-
   <!-- ── Header ──────────────────────────────────────────────────────────── -->
   <div>
     <h1 class="font-display text-xl text-ink dark:text-dark-ink">Feedback</h1>
@@ -10,11 +9,20 @@
 
   <!-- ── Error ────────────────────────────────────────────────────────────── -->
   @if (error) {
-    <div class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono
-                bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400
-                border border-red-200 dark:border-red-800">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 shrink-0">
-        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+    <div
+      class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="w-4 h-4 shrink-0"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+          clip-rule="evenodd"
+        />
       </svg>
       No se pudieron cargar las estadísticas de feedback.
     </div>
@@ -23,58 +31,227 @@
   <!-- ── Skeleton ─────────────────────────────────────────────────────────── -->
   @if (loading && !stats) {
     <div class="flex flex-col gap-4 animate-pulse">
-      <div class="h-10 w-32 rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+      <div
+        class="h-10 w-32 rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+      ></div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
-        <div class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+        <div
+          class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+        ></div>
+        <div
+          class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+        ></div>
       </div>
-      <div class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+      <div
+        class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+      ></div>
     </div>
   }
 
   @if (stats) {
-
     <!-- Total badge -->
     <div class="flex items-center gap-2">
-      <span class="font-mono text-3xl font-bold text-ink dark:text-dark-ink">{{ stats.total }}</span>
+      <span class="font-mono text-3xl font-bold text-ink dark:text-dark-ink">{{
+        stats.total
+      }}</span>
       <span class="text-sm text-muted dark:text-dark-muted font-mono">envíos en total</span>
     </div>
 
     <!-- ── Row 1: Category + Rating ────────────────────────────────────────── -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
       <!-- By category -->
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <section
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Por categoría</span>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+            >Por categoría</span
+          >
         </div>
-        <div class="p-4" style="height: 220px; position: relative;">
+        <div class="p-4" style="height: 220px; position: relative">
           <canvas id="fbCat"></canvas>
         </div>
       </section>
 
       <!-- Rating distribution -->
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <section
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Distribución de calificaciones</span>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+            >Distribución de calificaciones</span
+          >
         </div>
-        <div class="p-4" style="height: 220px; position: relative;">
+        <div class="p-4" style="height: 220px; position: relative">
           <canvas id="fbRating"></canvas>
         </div>
       </section>
-
     </div>
 
     <!-- ── Trend ────────────────────────────────────────────────────────────── -->
-    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+    <section
+      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+    >
       <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Envíos — últimos 30 días</span>
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+          >Envíos — últimos 30 días</span
+        >
       </div>
-      <div class="p-4" style="height: 220px; position: relative;">
+      <div class="p-4" style="height: 220px; position: relative">
         <canvas id="fbDay"></canvas>
       </div>
     </section>
 
-  }
+    <!-- ── Comments List ────────────────────────────────────────────────── -->
+    <section
+      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+    >
+      <div
+        class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between"
+      >
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+          >Todos los comentarios</span
+        >
+        @if (commentsList) {
+          <span class="text-xs font-mono text-muted dark:text-dark-muted">
+            {{ commentsList.offset + 1 }}–{{
+              Math.min(commentsList.offset + commentsList.limit, commentsList.total)
+            }}
+            de {{ commentsList.total }}
+          </span>
+        }
+      </div>
 
+      @if (loadingComments) {
+        <div class="p-4 text-center text-sm text-muted dark:text-dark-muted font-mono">
+          Cargando comentarios...
+        </div>
+      } @else if (errorComments) {
+        <div
+          class="p-4 text-sm text-red-600 dark:text-red-400 font-mono bg-red-50 dark:bg-red-950/30"
+        >
+          Error al cargar comentarios
+        </div>
+      } @else if (!commentsList || commentsList.data.length === 0) {
+        <div class="p-4 text-center text-sm text-muted dark:text-dark-muted font-mono">
+          Sin comentarios disponibles
+        </div>
+      } @else {
+        <div class="divide-y divide-border dark:divide-dark-border">
+          @for (item of commentsList.data; track item.id) {
+            <div class="p-4 hover:bg-paper3 dark:hover:bg-dark-surface/80 transition-colors">
+              <!-- Header: Category, Rating, Date -->
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    [attr.title]="
+                      item.source === 'feedback' ? 'Formulario de feedback' : 'Encuesta'
+                    "
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-mono rounded-md"
+                    [ngClass]="
+                      item.type === 'bug'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                        : item.type === 'suggestion'
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                          : item.type === 'question'
+                            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                            : item.type === 'rating'
+                              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                              : item.type === 'comment'
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                    "
+                  >
+                    @switch (item.type) {
+                      @case ('bug') {
+                        Error
+                      }
+                      @case ('suggestion') {
+                        Sugerencia
+                      }
+                      @case ('question') {
+                        Pregunta
+                      }
+                      @case ('rating') {
+                        Calificación
+                      }
+                      @case ('comment') {
+                        Comentario
+                      }
+                      @default {
+                        Otro
+                      }
+                    }
+                  </span>
+
+                  <span
+                    class="inline-flex items-center px-2 py-1 text-xs font-mono rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                  >
+                    {{ item.source === 'feedback' ? 'Feedback' : 'Survey' }}
+                  </span>
+
+                  @if (item.rating) {
+                    <span class="text-yellow-500">{{ '★'.repeat(item.rating) }}</span>
+                  }
+                </div>
+                <span class="text-xs text-muted dark:text-dark-muted font-mono">{{
+                  formatDate(item.created_at)
+                }}</span>
+              </div>
+
+              <!-- Message -->
+              @if (item.content) {
+                <p
+                  class="text-sm text-ink dark:text-dark-ink mb-2 wrap-break-word whitespace-pre-wrap"
+                >
+                  {{ item.content }}
+                </p>
+              }
+
+              <!-- Footer: Email/User -->
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-muted dark:text-dark-muted font-mono">
+                  @if (item.email) {
+                    {{ item.email }}
+                  } @else if (item.user_id) {
+                    <span class="text-muted dark:text-dark-muted">Usuario autenticado</span>
+                  } @else {
+                    <span class="text-muted dark:text-dark-muted">Anónimo</span>
+                  }
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Pagination -->
+        @if (commentsList.total > commentsList.limit) {
+          <div
+            class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between"
+          >
+            <button
+              (click)="loadPreviousComments()"
+              [disabled]="commentsList.offset === 0 || loadingComments"
+              class="px-3 py-1.5 text-xs font-mono rounded border border-border dark:border-dark-border hover:bg-paper3 dark:hover:bg-dark-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ← Anterior
+            </button>
+            <span class="text-xs text-muted dark:text-dark-muted font-mono">
+              Página {{ commentsList.offset / commentsList.limit + 1 }} de
+              {{ Math.ceil(commentsList.total / commentsList.limit) }}
+            </span>
+            <button
+              (click)="loadNextComments()"
+              [disabled]="
+                commentsList.offset + commentsList.limit >= commentsList.total || loadingComments
+              "
+              class="px-3 py-1.5 text-xs font-mono rounded border border-border dark:border-dark-border hover:bg-paper3 dark:hover:bg-dark-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Siguiente →
+            </button>
+          </div>
+        }
+      }
+    </section>
+  }
 </div>

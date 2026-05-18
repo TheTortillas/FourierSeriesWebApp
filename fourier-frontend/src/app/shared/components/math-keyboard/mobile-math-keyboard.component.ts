@@ -100,39 +100,34 @@ const FX_ROWS: KeyBtn[][] = [
   ],
 ];
 
-const LETTERS_ROWS: KeyBtn[][] = [
-  [
-    { label: 'a', typedText: 'a' },
-    { label: 'b', typedText: 'b' },
-    { label: 'c', typedText: 'c' },
-    { label: 'k', typedText: 'k' },
-    { label: 'n', typedText: 'n' },
-    { label: 'm', typedText: 'm' },
-  ],
-  [
-    { label: 'T', typedText: 'T' },
-    { label: 'L', typedText: 'L' },
-    { label: 'A', typedText: 'A' },
-    { label: 'B', typedText: 'B' },
-    { label: 'N', typedText: 'N' },
-    { label: 'K', typedText: 'K' },
-  ],
-  [
-    { label: 'α', write: '\\alpha' },
-    { label: 'β', write: '\\beta' },
-    { label: 'γ', write: '\\gamma' },
-    { label: 'λ', write: '\\lambda' },
-    { label: 'ω', write: '\\omega' },
-    { label: 'τ', write: '\\tau' },
-  ],
-  [
-    { label: 'φ', write: '\\phi' },
-    { label: 'θ', write: '\\theta' },
-    { label: 'σ', write: '\\sigma' },
-    { label: 'ε', write: '\\epsilon' },
-    { label: 'μ', write: '\\mu' },
-  ],
+const GREEK_ROW: KeyBtn[] = [
+  { label: 'α', write: '\\alpha' },
+  { label: 'β', write: '\\beta' },
+  { label: 'γ', write: '\\gamma' },
+  { label: 'λ', write: '\\lambda' },
+  { label: 'ω', write: '\\omega' },
+  { label: 'τ', write: '\\tau' },
+  { label: 'φ', write: '\\phi' },
+  { label: 'θ', write: '\\theta' },
+  { label: 'σ', write: '\\sigma' },
 ];
+
+/** Sentinel label — clicking this toggles shift state instead of inserting text. */
+const SHIFT_LABEL = '⇧';
+
+function buildQwertyRows(upper: boolean): KeyBtn[][] {
+  const lc = (c: string): KeyBtn => ({ label: upper ? c.toUpperCase() : c, typedText: upper ? c.toUpperCase() : c });
+  return [
+    ['q','w','e','r','t','y','u','i','o','p'].map(lc),
+    ['a','s','d','f','g','h','j','k','l'].map(lc),
+    [
+      { label: SHIFT_LABEL, typedText: '' },
+      ...['z','x','c','v','b','n','m'].map(lc),
+      { label: '⌫', keystroke: 'Backspace' },
+    ],
+    GREEK_ROW,
+  ];
+}
 
 @Component({
   selector: 'app-mobile-math-keyboard',
@@ -146,7 +141,8 @@ export class MobileMathKeyboardComponent implements OnInit, OnDestroy {
   /** Context-specific extra buttons (e.g. δ, u, sgn for transforms). */
   readonly extraGroup = input<KeyBtn[]>([]);
 
-  readonly activeTab = signal<TabId>('123');
+  readonly activeTab  = signal<TabId>('123');
+  readonly abcShift   = signal(false);
 
   readonly visibleTabs = computed<Tab[]>(() => {
     const tabs: Tab[] = [
@@ -162,7 +158,7 @@ export class MobileMathKeyboardComponent implements OnInit, OnDestroy {
   readonly activeRows = computed<KeyBtn[][]>(() => {
     switch (this.activeTab()) {
       case 'abc':
-        return LETTERS_ROWS;
+        return buildQwertyRows(this.abcShift());
       case 'trig':
         return TRIG_ROWS;
       case 'fx':
@@ -173,6 +169,18 @@ export class MobileMathKeyboardComponent implements OnInit, OnDestroy {
         return NUM_ROWS;
     }
   });
+
+  handleKey(btn: KeyBtn): void {
+    if (btn.label === SHIFT_LABEL) {
+      this.abcShift.update(v => !v);
+      return;
+    }
+    this.mqs.insertKey(btn);
+    /* Auto-reset shift after one lowercase-producing keystroke. */
+    if (this.abcShift() && btn.typedText) {
+      this.abcShift.set(false);
+    }
+  }
 
   // ── Close on outside tap ───────────────────────────────────────────────────
 

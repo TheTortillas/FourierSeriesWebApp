@@ -30,6 +30,7 @@ export interface AuditLogInput {
 export interface AuditFilters {
   action?: AuditAction;
   userId?: string;
+  ip?: string;
   dateFrom?: Date;
   dateTo?: Date;
   anonymousOnly?: boolean;

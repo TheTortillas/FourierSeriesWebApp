@@ -1,0 +1,299 @@
+<div class="p-6 flex flex-col gap-6 max-w-5xl">
+
+  <!-- ── Header ───────────────────────────────────────────────────────────── -->
+  <div>
+    <h1 class="font-display text-xl text-ink dark:text-dark-ink">Cálculos</h1>
+    <p class="text-xs text-muted dark:text-dark-muted font-mono mt-0.5">
+      Estadísticas de uso del motor de cálculo
+    </p>
+  </div>
+
+  <!-- ── Filters ───────────────────────────────────────────────────────────── -->
+  <div class="flex flex-wrap gap-2 items-end">
+
+    <!-- Quick-period shortcuts -->
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Período rápido</label>
+      <div class="flex gap-1">
+        @for (p of quickPeriods; track p.days) {
+          <button
+            (click)="setQuickPeriod(p.days)"
+            [ngClass]="activeQuickDays() === p.days
+              ? 'bg-accent text-white border-accent'
+              : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+            class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer border transition-colors"
+          >{{ p.label }}</button>
+        }
+        <button
+          (click)="clearDates()"
+          [ngClass]="!hasFilter
+            ? 'bg-accent text-white border-accent'
+            : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+          class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer border transition-colors"
+        >Todo</button>
+      </div>
+    </div>
+
+    <!-- Date from -->
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Desde</label>
+      <input
+        type="date"
+        [(ngModel)]="dateFrom"
+        (change)="applyDates()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      />
+    </div>
+
+    <!-- Date to -->
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Hasta</label>
+      <input
+        type="date"
+        [(ngModel)]="dateTo"
+        (change)="applyDates()"
+        [min]="dateFrom"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      />
+    </div>
+
+    <!-- Clear dates -->
+    @if (hasFilter) {
+      <button
+        (click)="clearDates()"
+        class="mb-0.5 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted hover:text-red-500 hover:border-red-400 transition-colors self-end"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+          <path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z"/>
+        </svg>
+        Limpiar
+      </button>
+    }
+
+  </div>
+
+  <!-- ── Error ─────────────────────────────────────────────────────────────── -->
+  @if (error) {
+    <div class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 shrink-0">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+      </svg>
+      No se pudieron cargar las estadísticas de cálculo.
+    </div>
+  }
+
+  <!-- ── Skeleton ──────────────────────────────────────────────────────────── -->
+  @if (loading) {
+    <div class="flex flex-col gap-4 animate-pulse">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="h-20 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+        }
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+        <div class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+      </div>
+      <div class="h-64 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+      <div class="h-56 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+    </div>
+  }
+
+  @if (!loading && stats) {
+
+    <!-- ── Summary cards ─────────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+      <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1">
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">Total ejecuciones</span>
+        <span class="font-mono text-2xl font-bold text-ink dark:text-dark-ink">
+          {{ stats.summary.total_executions.toLocaleString() }}
+        </span>
+      </div>
+
+      <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1">
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">Cálculos únicos</span>
+        <span class="font-mono text-2xl font-bold text-ink dark:text-dark-ink">
+          {{ stats.summary.unique_calcs.toLocaleString() }}
+        </span>
+      </div>
+
+      <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1">
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">Usuarios únicos</span>
+        <span class="font-mono text-2xl font-bold text-ink dark:text-dark-ink">
+          {{ stats.summary.unique_users.toLocaleString() }}
+        </span>
+      </div>
+
+      <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1">
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">Tiempo promedio</span>
+        <span class="font-mono text-2xl font-bold text-ink dark:text-dark-ink">
+          @if (stats.summary.avg_execution_ms !== null) {
+            {{ stats.summary.avg_execution_ms.toLocaleString() }}<span class="text-sm font-normal text-muted dark:text-dark-muted ml-1">ms</span>
+          } @else {
+            <span class="text-base text-muted dark:text-dark-muted">—</span>
+          }
+        </span>
+      </div>
+
+    </div>
+
+    <!-- ── Row 1: Group donut + Auth donut ───────────────────────────────── -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Por grupo</span>
+          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">Series · Transformadas · DFT</p>
+        </div>
+        <div class="p-4" style="height:240px; position:relative">
+          <canvas id="csGroup"></canvas>
+        </div>
+      </section>
+
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Anónimos vs autenticados</span>
+          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">Por total de ejecuciones</p>
+        </div>
+        <div class="p-4" style="height:240px; position:relative">
+          <canvas id="csAuth"></canvas>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ── Subtype bar chart ─────────────────────────────────────────────── -->
+    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Por subtipo</span>
+        <p class="text-xs text-muted dark:text-dark-muted mt-0.5">Ejecuciones totales por tipo de cálculo</p>
+      </div>
+      <div class="p-4" [style.height.px]="48 + stats.byType.length * 44" style="position:relative">
+        <canvas id="csSubtype"></canvas>
+      </div>
+    </section>
+
+    <!-- ── Trend line ────────────────────────────────────────────────────── -->
+    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+        <div>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Tendencia de ejecuciones</span>
+          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">
+            @if (dateFrom || dateTo) {
+              @if (dateFrom && dateTo) { De {{ dateFrom }} a {{ dateTo }} }
+              @else if (dateFrom)     { Desde {{ dateFrom }} }
+              @else                   { Hasta {{ dateTo }} }
+            } @else {
+              Últimos 30 días
+            }
+          </p>
+        </div>
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">
+          {{ stats.daily.length }} {{ stats.daily.length === 1 ? 'día' : 'días' }} en el período
+        </span>
+      </div>
+      <div class="p-4" style="height:220px; position:relative">
+        <canvas id="csTrend"></canvas>
+      </div>
+    </section>
+
+    <!-- ── Top 10 calculations ───────────────────────────────────────────── -->
+    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Top {{ topN }} cálculos más repetidos</span>
+          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">Inputs únicos con mayor número de ejecuciones acumuladas</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Mostrar</label>
+          <select
+            [(ngModel)]="topN"
+            (change)="load()"
+            class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+          >
+            @for (n of topNOptions; track n) {
+              <option [value]="n">Top {{ n }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (stats.topCalcs.length === 0) {
+        <div class="p-6 text-center text-sm text-muted dark:text-dark-muted font-mono">
+          Sin datos en el período seleccionado
+        </div>
+      } @else {
+        <div class="divide-y divide-border dark:divide-dark-border">
+          @for (entry of stats.topCalcs; track entry.id; let i = $index) {
+            <div class="px-4 py-3 flex items-start gap-3 hover:bg-paper3 dark:hover:bg-dark-surface/80 transition-colors">
+
+              <!-- Rank -->
+              <span
+                class="shrink-0 w-6 text-center font-mono text-sm font-bold"
+                [class.text-yellow-500]="i === 0"
+                [class.text-slate-400]="i === 1"
+                [class.text-amber-600]="i === 2"
+                [class.text-muted]="i > 2"
+                [class.dark\:text-dark-muted]="i > 2"
+              >#{{ i + 1 }}</span>
+
+              <!-- Info -->
+              <div class="flex-1 min-w-0">
+
+                <!-- Badges row -->
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <span
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium"
+                    [class.bg-blue-100]="groupLabel(entry.type) === 'Series'"
+                    [class.dark\:bg-blue-900\/30]="groupLabel(entry.type) === 'Series'"
+                    [class.text-blue-700]="groupLabel(entry.type) === 'Series'"
+                    [class.dark\:text-blue-300]="groupLabel(entry.type) === 'Series'"
+                    [class.bg-emerald-100]="groupLabel(entry.type) === 'Transformadas'"
+                    [class.dark\:bg-emerald-900\/30]="groupLabel(entry.type) === 'Transformadas'"
+                    [class.text-emerald-700]="groupLabel(entry.type) === 'Transformadas'"
+                    [class.dark\:text-emerald-300]="groupLabel(entry.type) === 'Transformadas'"
+                    [class.bg-purple-100]="groupLabel(entry.type) === 'DFT'"
+                    [class.dark\:bg-purple-900\/30]="groupLabel(entry.type) === 'DFT'"
+                    [class.text-purple-700]="groupLabel(entry.type) === 'DFT'"
+                    [class.dark\:text-purple-300]="groupLabel(entry.type) === 'DFT'"
+                  >{{ groupLabel(entry.type) }}</span>
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ typeLabel(entry.type) }}</span>
+                </div>
+
+                <!-- Input summary -->
+                <p class="text-xs font-mono text-ink dark:text-dark-ink break-all">
+                  {{ inputSummary(entry) }}
+                </p>
+
+                <!-- Raw JSON toggle -->
+                <details class="mt-1">
+                  <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer hover:text-accent select-none w-fit">
+                    ver input completo
+                  </summary>
+                  <pre class="mt-1 text-[10px] font-mono bg-paper dark:bg-dark-bg rounded p-2 overflow-x-auto text-muted dark:text-dark-muted leading-relaxed">{{ entry.input | json }}</pre>
+                </details>
+
+              </div>
+
+              <!-- Counters -->
+              <div class="shrink-0 text-right">
+                <div class="font-mono text-sm font-bold text-ink dark:text-dark-ink">
+                  {{ entry.total_executions.toLocaleString() }}
+                </div>
+                <div class="text-[10px] font-mono text-muted dark:text-dark-muted">ejecuciones</div>
+                @if (entry.unique_users > 0) {
+                  <div class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                    {{ entry.unique_users }} {{ entry.unique_users === 1 ? 'usuario' : 'usuarios' }}
+                  </div>
+                }
+              </div>
+
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+  }
+</div>

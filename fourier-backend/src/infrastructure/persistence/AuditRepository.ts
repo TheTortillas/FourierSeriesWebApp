@@ -53,11 +53,12 @@ export class AuditRepository implements IAuditRepository {
     const params: unknown[] = [];
     let p = 1;
 
-    if (filters?.action)        { conditions.push(`action = $${p++}`);                          params.push(filters.action); }
-    if (filters?.userId)        { conditions.push(`user_id = $${p++}`);                         params.push(filters.userId); }
+    if (filters?.action)        { conditions.push(`action = $${p++}`);                                        params.push(filters.action); }
+    if (filters?.userId)        { conditions.push(`user_id = $${p++}`);                                       params.push(filters.userId); }
+    if (filters?.ip)            { conditions.push(`ip_address = $${p++}::inet`);                              params.push(filters.ip); }
     if (filters?.anonymousOnly) { conditions.push(`user_id IS NULL`); }
-    if (filters?.dateFrom)      { conditions.push(`created_at >= $${p++}`);                     params.push(filters.dateFrom); }
-    if (filters?.dateTo)        { conditions.push(`created_at < $${p++}::date + '1 day'::interval`); params.push(filters.dateTo); }
+    if (filters?.dateFrom)      { conditions.push(`created_at >= $${p++}`);                                   params.push(filters.dateFrom); }
+    if (filters?.dateTo)        { conditions.push(`created_at < $${p++}::date + '1 day'::interval`);          params.push(filters.dateTo); }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     params.push(limit, offset);
@@ -74,11 +75,12 @@ export class AuditRepository implements IAuditRepository {
     const params: unknown[] = [];
     let p = 1;
 
-    if (filters?.action)        { conditions.push(`action = $${p++}`);                          params.push(filters.action); }
-    if (filters?.userId)        { conditions.push(`user_id = $${p++}`);                         params.push(filters.userId); }
+    if (filters?.action)        { conditions.push(`action = $${p++}`);                                        params.push(filters.action); }
+    if (filters?.userId)        { conditions.push(`user_id = $${p++}`);                                       params.push(filters.userId); }
+    if (filters?.ip)            { conditions.push(`ip_address = $${p++}::inet`);                              params.push(filters.ip); }
     if (filters?.anonymousOnly) { conditions.push(`user_id IS NULL`); }
-    if (filters?.dateFrom)      { conditions.push(`created_at >= $${p++}`);                     params.push(filters.dateFrom); }
-    if (filters?.dateTo)        { conditions.push(`created_at < $${p++}::date + '1 day'::interval`); params.push(filters.dateTo); }
+    if (filters?.dateFrom)      { conditions.push(`created_at >= $${p++}`);                                   params.push(filters.dateFrom); }
+    if (filters?.dateTo)        { conditions.push(`created_at < $${p++}::date + '1 day'::interval`);          params.push(filters.dateTo); }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     const result = await db.query(`SELECT COUNT(*) FROM audit_log ${where}`, params);

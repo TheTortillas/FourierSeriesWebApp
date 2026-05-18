@@ -139,6 +139,37 @@ export class ProfileComponent {
     });
   }
 
+  // ── Delete account ─────────────────────────────────────────────────────────
+  readonly deleteConfirm   = signal(false);
+  readonly deleteLoading   = signal(false);
+  readonly deleteError     = signal<string | null>(null);
+
+  openDeleteConfirm(): void {
+    this.deleteConfirm.set(true);
+    this.deleteError.set(null);
+  }
+
+  cancelDelete(): void {
+    this.deleteConfirm.set(false);
+  }
+
+  onDeleteAccount(): void {
+    if (this.deleteLoading()) return;
+    this.deleteLoading.set(true);
+    this.deleteError.set(null);
+
+    this.api.deleteAccount().subscribe({
+      next: () => {
+        this.store.clearUser();
+        window.location.href = `/${this.lang()}/home`;
+      },
+      error: (err) => {
+        this.deleteError.set(err?.error?.error ?? 'Error al eliminar la cuenta');
+        this.deleteLoading.set(false);
+      },
+    });
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
   formatDate(iso: string | null | undefined): string {
     if (!iso) return '—';

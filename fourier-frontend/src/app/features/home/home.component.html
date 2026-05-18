@@ -18,7 +18,6 @@
         <span class="text-accent">Web</span> Calculator
       </h1>
 
-      <!-- TODO: link to /:lang/about once that page exists -->
       <a
         [routerLink]="'/' + lang() + '/about'"
         class="font-bold text-[11px] font-mono text-muted dark:text-dark-muted hover:text-accent dark:hover:text-accent transition-colors underline-offset-2 hover:underline"
@@ -29,6 +28,11 @@
       <p class="font-body text-base text-muted dark:text-dark-muted max-w-md leading-relaxed">
         {{ 'home.subtitle' | transloco }}
       </p>
+
+      <a [routerLink]="'/' + lang() + '/about'"
+        class="text-sm font-mono text-accent hover:underline underline-offset-2 transition-colors">
+        {{ 'home.learnMore' | transloco }}
+      </a>
     </div>
   </section>
 

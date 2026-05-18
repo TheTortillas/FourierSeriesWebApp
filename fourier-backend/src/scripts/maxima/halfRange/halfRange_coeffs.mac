@@ -1,10 +1,15 @@
 display2d: false$
 
+rect(x) := if abs(x) < 1/2 then 1 elseif abs(x) = 1/2 then 1/2 else 0$
+u(x)    := if x >= 0 then 1 else 0$
+sgn(x)  := if x > 0 then 1 elseif x = 0 then 0 else -1$
+
 pieces: length(FUNC_INPUT);
 inicio: FUNC_INPUT[1][2];
 fin: FUNC_INPUT[pieces][3];
 PERIOD: ratsimp(fin - inicio);
 T: PERIOD;
+SHIFT: INTVAR - inicio;
 block([_all_limit_vars: listofvars(PERIOD)],
     for _i: 1 thru length(FUNC_INPUT) do (
         _all_limit_vars: append(_all_limit_vars,
@@ -21,8 +26,11 @@ block([_all_limit_vars: listofvars(PERIOD)],
 )$
 w0: %pi / PERIOD;
 
-cos_core: cos(n * w0 * INTVAR);
-sin_core: sin(n * w0 * INTVAR);
+/* Asegurar que n se trate como entero positivo para evitar prompts interactivos */
+errcatch(assume(n > 0));
+
+cos_core: cos(n * w0 * SHIFT);
+sin_core: sin(n * w0 * SHIFT);
 
 a0_acum: 0;
 an_acum: 0;

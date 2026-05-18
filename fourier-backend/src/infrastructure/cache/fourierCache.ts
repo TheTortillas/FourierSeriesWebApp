@@ -4,13 +4,14 @@ import type {
   FourierResult,
   HalfRangeResult,
   ComplexFourierResult,
+  ParsevalApiResult,
   PiecewiseFourierInput,
 } from "../../domain/types/fourier.types";
 import { config } from "../../config/env";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type CacheValue = FourierResult | HalfRangeResult | ComplexFourierResult;
+type CacheValue = FourierResult | HalfRangeResult | ComplexFourierResult | ParsevalApiResult;
 
 export interface CacheStats {
   backend: "redis" | "lru";
@@ -25,7 +26,7 @@ export interface CacheStats {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 /** Bump this whenever the Maxima scripts change to invalidate stale entries. */
-const CACHE_VERSION = "5";
+const CACHE_VERSION = "7";
 
 const KEY_PREFIX = `fourier:v${CACHE_VERSION}`;
 const TTL_SECONDS = config.cache.ttlDays * 86_400;
@@ -50,9 +51,15 @@ if (config.redis.enabled) {
     commandTimeout: 2_000,
   });
 
-  redis.on("ready", () => { redisReady = true; });
-  redis.on("close", () => { redisReady = false; });
-  redis.on("error", () => { redisReady = false; });
+  redis.on("ready", () => {
+    redisReady = true;
+  });
+  redis.on("close", () => {
+    redisReady = false;
+  });
+  redis.on("error", () => {
+    redisReady = false;
+  });
 
   // Connect asynchronously on startup; failures are non-fatal.
   redis.connect().catch(() => {
@@ -71,7 +78,9 @@ export function buildCacheKey(input: PiecewiseFourierInput): string {
 
 // ── Public async API ──────────────────────────────────────────────────────────
 
-export async function getFromCache(key: string): Promise<CacheValue | undefined> {
+export async function getFromCache(
+  key: string,
+): Promise<CacheValue | undefined> {
   if (redisReady && redis) {
     try {
       const raw = await redis.get(key);
@@ -84,7 +93,10 @@ export async function getFromCache(key: string): Promise<CacheValue | undefined>
   return lru.get(key);
 }
 
-export async function setInCache(key: string, value: CacheValue): Promise<void> {
+export async function setInCache(
+  key: string,
+  value: CacheValue,
+): Promise<void> {
   if (redisReady && redis) {
     try {
       await redis.set(key, JSON.stringify(value), "EX", TTL_SECONDS);

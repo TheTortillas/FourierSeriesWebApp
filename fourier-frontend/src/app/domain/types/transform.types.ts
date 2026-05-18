@@ -118,6 +118,8 @@ export interface SimplifyRequest {
 export interface SimplifyResponse {
   original: SymbolicExpression;
   simplified: SymbolicExpression;
+  simplifiedK?: SymbolicExpression;
+  simplifiedSummand?: SymbolicExpression;
   profile: SimplifyProfile;
   functionsApplied: SimplifyFunction[];
 }

@@ -7,6 +7,14 @@
 
 display2d: false$
 
+/* Funciones especiales para evaluación numérica.
+   Usar is() para forzar evaluación booleana con valores flotantes.
+   sgn: comparar > y < en lugar de = 0 (is(0.0 = 0) falla en Maxima).
+   rect: usar 0.5 en lugar de 1/2 (is(float = rational) falla). */
+rect(x) := if is(abs(x) < 0.5) then 1 elseif is(abs(x) = 0.5) then 1/2 else 0$
+u(x)    := if is(x >= 0) then 1 else 0$
+sgn(x)  := if is(x > 0) then 1 elseif is(x < 0) then -1 else 0$
+
 _n_segs: length(FUNC_INPUT)$
 _a: float(FUNC_INPUT[1][2])$
 _b: float(FUNC_INPUT[_n_segs][3])$
@@ -29,13 +37,17 @@ _try_limit(expr, xval) := block(
 
 /* Evalúa la función piecewise en un punto xval */
 _eval_at(xval) := block(
-  [_res: 0.0, _i, _seg, _v, _lo, _hi, _lim],
+  [_res: 0.0, _i, _seg, _v, _lo, _hi, _lim, _subst_eq],
+  /* Pre-build the substitution equation so ev() applies it before evaluating
+     the expression — passing it inline (INTVAR = xval) causes ev to evaluate
+     the expression first with symbolic INTVAR, corrupting if/is() conditions. */
+  _subst_eq: (INTVAR = xval),
   for _i: 1 thru _n_segs do (
     _seg: FUNC_INPUT[_i],
     _lo: float(_seg[2]),
     _hi: float(_seg[3]),
     if xval >= _lo and (xval < _hi or _i = _n_segs) then (
-      _v: errcatch(float(subst(xval, INTVAR, _seg[1]))),
+      _v: errcatch(float(ev(_seg[1], _subst_eq))),
       if _v # [] and numberp(first(_v)) then
         _res: first(_v)
       else (

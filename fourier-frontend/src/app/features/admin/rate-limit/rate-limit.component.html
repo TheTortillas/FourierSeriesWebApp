@@ -1,4 +1,6 @@
 <div class="p-6 flex flex-col gap-6 max-w-5xl">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="flex items-start justify-between gap-4">
     <div>
       <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Rate Limit Health</h1>
@@ -6,10 +8,9 @@
         Estado de throttling por bucket, endpoint y limiter
       </p>
     </div>
-
     <button
       type="button"
-      (click)="refresh()"
+      (click)="refresh(); loadHistory()"
       class="px-3 py-2 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-ink dark:text-dark-ink hover:border-accent/40 transition-colors"
     >
       Actualizar
@@ -18,155 +19,271 @@
 
   @if (loading()) {
     <div class="flex items-center gap-2 text-muted dark:text-dark-muted text-sm font-mono">
-      <svg
-        class="w-4 h-4 animate-spin"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
+      <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-        <path
-          class="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
-        />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
       </svg>
       Cargando métricas…
     </div>
   } @else if (loadError()) {
-    <div
-      class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
-    >
+    <div class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
       No se pudieron cargar las métricas de rate limit.
     </div>
   } @else if (metrics(); as rm) {
-    <div
-      class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-4 py-3"
-    >
+
+    <!-- snapshot timestamp -->
+    <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-4 py-3">
       <p class="text-[11px] font-mono text-muted dark:text-dark-muted">
         Snapshot activo desde: {{ rm.startedAt | adminDate: 'seconds' }}
+        &nbsp;·&nbsp;
+        Los porcentajes muestran <strong>bloqueadas / (bloqueadas + permitidas)</strong>
       </p>
     </div>
 
+    <!-- ── Bucket cards ──────────────────────────────────────────────────── -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div
-        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4"
-      >
-        <p class="text-xs font-mono text-muted dark:text-dark-muted flex items-center gap-1">
-          Compute
-          <span
-            class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-border dark:border-dark-border text-[10px]"
-            title="Porcentaje de requests bloqueadas (429) en endpoints de cálculo pesado como Fourier, transforms y DFT."
-            >?</span
-          >
-        </p>
-        <p class="font-display text-3xl text-ink dark:text-dark-ink mt-1">
-          {{ rm.ratios.compute.toFixed(2) }}%
-        </p>
-        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-2">
-          {{ rm.blockedByBucket.compute }} bloqueadas de {{ rm.requestsByBucket.compute }}
-        </p>
-      </div>
 
-      <div
-        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4"
-      >
-        <p class="text-xs font-mono text-muted dark:text-dark-muted flex items-center gap-1">
-          Parse
-          <span
-            class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-border dark:border-dark-border text-[10px]"
-            title="Porcentaje de 429 en endpoints de parse/validación rápida, típicamente usados durante escritura en tiempo real."
-            >?</span
+      @for (bucket of [
+        { key: 'compute', label: 'Compute', hint: 'Fourier, transforms y DFT.' },
+        { key: 'parse',   label: 'Parse',   hint: 'Endpoints de parse/validación.' },
+        { key: 'auth',    label: 'Auth + General', hint: 'Auth, login, y tráfico genérico (escaneos de bots, rutas desconocidas).' }
+      ]; track bucket.key) {
+        @let blocked = $any(rm.blockedByBucket)[bucket.key];
+        @let allowed = $any(rm.requestsByBucket)[bucket.key];
+        @let total   = blocked + allowed;
+        @let ratio   = $any(rm.ratios)[bucket.key];
+        <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4">
+          <p class="text-xs font-mono text-muted dark:text-dark-muted flex items-center gap-1">
+            {{ bucket.label }}
+            <span
+              class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-border dark:border-dark-border text-[10px] cursor-default"
+              [title]="bucket.hint"
+            >?</span>
+          </p>
+          <p
+            class="font-display text-3xl mt-1"
+            [ngClass]="ratio > 20 ? 'text-red-500 dark:text-red-400' : ratio > 5 ? 'text-amber-500 dark:text-amber-400' : 'text-ink dark:text-dark-ink'"
           >
-        </p>
-        <p class="font-display text-3xl text-ink dark:text-dark-ink mt-1">
-          {{ rm.ratios.parse.toFixed(2) }}%
-        </p>
-        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-2">
-          {{ rm.blockedByBucket.parse }} bloqueadas de {{ rm.requestsByBucket.parse }}
-        </p>
-      </div>
+            {{ ratio.toFixed(2) }}%
+          </p>
+          <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-2">
+            {{ blocked }} bloqueadas de {{ total }} totales
+          </p>
+        </div>
+      }
 
-      <div
-        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4"
-      >
-        <p class="text-xs font-mono text-muted dark:text-dark-muted flex items-center gap-1">
-          Auth
-          <span
-            class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-border dark:border-dark-border text-[10px]"
-            title="Porcentaje de 429 en endpoints de autenticación (login, recuperación, verificación)."
-            >?</span
-          >
-        </p>
-        <p class="font-display text-3xl text-ink dark:text-dark-ink mt-1">
-          {{ rm.ratios.auth.toFixed(2) }}%
-        </p>
-        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-2">
-          {{ rm.blockedByBucket.auth }} bloqueadas de {{ rm.requestsByBucket.auth }}
-        </p>
-      </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div
-        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
-      >
+    <!-- ── Top tables (limiters, endpoints, IPs) ────────────────────────── -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <!-- Top por limiter -->
+      <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <h2
-            class="text-sm font-mono text-ink dark:text-dark-ink"
-            title="Limiters que más respuestas 429 generaron desde que inició el snapshot."
-          >
-            Top bloqueos por limiter
+          <h2 class="text-sm font-mono text-ink dark:text-dark-ink" title="Limiters que más 429 generaron.">
+            Por limiter
           </h2>
         </div>
         <div class="divide-y divide-border dark:divide-dark-border">
           @for (item of topEntries(rm.blockedByLimiter); track item.key) {
             <div class="px-4 py-2.5 flex items-center justify-between gap-2">
-              <span class="text-[11px] font-mono text-muted dark:text-dark-muted truncate">{{
-                item.key
-              }}</span>
-              <span
-                class="text-[11px] font-mono px-2 py-0.5 rounded border border-border dark:border-dark-border"
-                >{{ item.value }}</span
-              >
+              <span class="text-[11px] font-mono text-muted dark:text-dark-muted truncate">{{ item.key }}</span>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded border border-border dark:border-dark-border">{{ item.value }}</span>
             </div>
           } @empty {
-            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">
-              Sin bloqueos registrados.
-            </p>
+            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">Sin bloqueos registrados.</p>
           }
         </div>
       </div>
 
-      <div
-        class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
-      >
+      <!-- Top endpoints bloqueados -->
+      <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <h2
-            class="text-sm font-mono text-ink dark:text-dark-ink"
-            title="Endpoints con mayor número de respuestas 429."
-          >
-            Top endpoints bloqueados
+          <h2 class="text-sm font-mono text-ink dark:text-dark-ink" title="Endpoints con mayor número de 429.">
+            Endpoints bloqueados
           </h2>
         </div>
         <div class="divide-y divide-border dark:divide-dark-border">
           @for (item of topEntries(rm.blockedByEndpoint); track item.key) {
             <div class="px-4 py-2.5 flex items-center justify-between gap-2">
-              <span class="text-[11px] font-mono text-muted dark:text-dark-muted truncate">{{
-                item.key
-              }}</span>
-              <span
-                class="text-[11px] font-mono px-2 py-0.5 rounded border border-border dark:border-dark-border"
-                >{{ item.value }}</span
-              >
+              <span class="text-[11px] font-mono text-muted dark:text-dark-muted truncate">{{ item.key }}</span>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded border border-border dark:border-dark-border">{{ item.value }}</span>
             </div>
           } @empty {
-            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">
-              Sin endpoints bloqueados.
-            </p>
+            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">Sin endpoints bloqueados.</p>
           }
         </div>
       </div>
+
+      <!-- Top IPs bloqueadas -->
+      <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+          <h2 class="text-sm font-mono text-ink dark:text-dark-ink" title="IPs con más solicitudes bloqueadas en el snapshot actual.">
+            IPs bloqueadas
+          </h2>
+        </div>
+        <div class="divide-y divide-border dark:divide-dark-border">
+          @for (item of topEntries(rm.blockedByIp); track item.key) {
+            <div class="px-4 py-2.5 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                class="text-[11px] font-mono text-accent hover:underline truncate text-left cursor-pointer"
+                title="Filtrar historial por esta IP"
+                (click)="filterByIp(item.key)"
+              >{{ item.key }}</button>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded border border-border dark:border-dark-border shrink-0">{{ item.value }}</span>
+            </div>
+          } @empty {
+            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">Sin IPs bloqueadas.</p>
+          }
+        </div>
+      </div>
+
     </div>
   }
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Historial persistente de bloqueos (desde audit_log)
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
+
+    <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <h2 class="text-sm font-mono text-ink dark:text-dark-ink">Historial de bloqueos</h2>
+        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-0.5">
+          Persistido en base de datos · sobrevive reinicios del servidor
+        </p>
+      </div>
+      @if (histTotal() > 0) {
+        <span class="text-[11px] font-mono text-muted dark:text-dark-muted">
+          {{ histTotal() }} registros totales
+        </span>
+      }
+    </div>
+
+    <!-- Filtros -->
+    <div class="px-4 py-3 border-b border-border dark:border-dark-border flex flex-wrap items-end gap-3">
+      <div class="flex flex-col gap-1">
+        <label class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide">IP</label>
+        <input
+          type="text"
+          [(ngModel)]="filterIp"
+          placeholder="ej. 192.168.1.1"
+          class="h-8 px-2.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink focus:outline-none focus:border-accent/50 w-40"
+        />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide">Limiter</label>
+        <select
+          [(ngModel)]="filterLimiter"
+          class="h-8 px-2.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink focus:outline-none focus:border-accent/50"
+        >
+          <option value="">Todos</option>
+          @for (l of LIMITER_OPTIONS; track l) {
+            <option [value]="l">{{ l }}</option>
+          }
+        </select>
+      </div>
+      <button
+        type="button"
+        (click)="applyHistFilters()"
+        class="h-8 px-3 rounded-lg text-xs font-mono border border-accent/50 text-accent hover:bg-accent/10 transition-colors"
+      >
+        Aplicar
+      </button>
+      @if (filterIp || filterLimiter) {
+        <button
+          type="button"
+          (click)="clearHistFilters()"
+          class="h-8 px-3 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/40 hover:text-accent transition-colors"
+        >
+          Limpiar
+        </button>
+      }
+    </div>
+
+    <!-- Tabla -->
+    @if (histLoading()) {
+      <div class="px-4 py-6 flex items-center gap-2 text-muted dark:text-dark-muted text-xs font-mono">
+        <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        Cargando historial…
+      </div>
+    } @else if (histError()) {
+      <p class="px-4 py-4 text-xs font-mono text-red-500">Error al cargar el historial.</p>
+    } @else if (history().length === 0) {
+      <p class="px-4 py-6 text-xs font-mono text-muted dark:text-dark-muted">
+        Sin bloqueos registrados{{ (filterIp || filterLimiter) ? ' para este filtro' : '' }}.
+      </p>
+    } @else {
+      <div class="divide-y divide-border dark:divide-dark-border">
+        @for (ev of history(); track ev.id) {
+          <div class="px-4 py-3 grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 hover:bg-black/2 dark:hover:bg-white/2">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <!-- IP (clickable filter) -->
+              @if (ev.ip_address) {
+                <button
+                  type="button"
+                  class="text-[11px] font-mono text-accent hover:underline cursor-pointer"
+                  title="Filtrar por esta IP"
+                  (click)="filterByIp(ev.ip_address)"
+                >{{ ev.ip_address }}</button>
+              } @else {
+                <span class="text-[11px] font-mono text-muted dark:text-dark-muted">IP desconocida</span>
+              }
+
+              <!-- Limiter badge -->
+              <span
+                class="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                [ngClass]="limiterBadgeClass(ev.metadata.limiter)"
+              >{{ ev.metadata.limiter }}</span>
+
+              <!-- Endpoint -->
+              <span class="text-[11px] font-mono text-muted dark:text-dark-muted">
+                <span class="opacity-60">{{ ev.metadata.method }}</span>
+                {{ ev.metadata.endpoint }}
+              </span>
+
+              <!-- User if authenticated -->
+              @if (ev.user_id) {
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted opacity-60">
+                  user:{{ ev.user_id }}
+                </span>
+              }
+            </div>
+
+            <!-- Timestamp -->
+            <span class="text-[11px] font-mono text-muted dark:text-dark-muted whitespace-nowrap">
+              {{ ev.created_at | adminDate: 'seconds' }}
+            </span>
+          </div>
+        }
+      </div>
+
+      <!-- Paginación -->
+      @if (histTotalPages() > 1) {
+        <div class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between gap-4">
+          <button
+            type="button"
+            (click)="prevHistPage()"
+            [disabled]="histCurrentPage() === 1"
+            class="px-3 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/40 hover:text-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >← Anterior</button>
+          <span class="text-xs font-mono text-muted dark:text-dark-muted">
+            Página {{ histCurrentPage() }} de {{ histTotalPages() }}
+          </span>
+          <button
+            type="button"
+            (click)="nextHistPage()"
+            [disabled]="histCurrentPage() >= histTotalPages()"
+            class="px-3 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/40 hover:text-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >Siguiente →</button>
+        </div>
+      }
+    }
+
+  </div>
+
 </div>

@@ -35,6 +35,6 @@ export const serverRoutes: ServerRoute[] = [
     getPrerenderParams: langParams,
   },
 
-  // ── Fallback ──────────────────────────────────────────────────────────────────
-  { path: '**', renderMode: RenderMode.Prerender },
+  // ── Fallback — serve shell only; client handles rendering ─────────────────────
+  { path: '**', renderMode: RenderMode.Client },
 ];

@@ -6,6 +6,11 @@
 
 display2d: false$
 
+/* Funciones especiales para integración simbólica en series */
+rect(x) := if abs(x) < 1/2 then 1 elseif abs(x) = 1/2 then 1/2 else 0$
+u(x)    := if x >= 0 then 1 else 0$
+sgn(x)  := if x > 0 then 1 elseif x = 0 then 0 else -1$
+
 /* Número de tramos */
 pieces: length(FUNC_INPUT);
 
@@ -35,6 +40,8 @@ block([_all_limit_vars: listofvars(PERIOD)],
     )
 );
 w0: 2 * %pi / PERIOD;
+/* Asegurar que n se trate como entero positivo para evitar prompts interactivos */
+errcatch(assume(n > 0));
     
 /* Núcleos */
 cos_core: cos(n * w0 * INTVAR);

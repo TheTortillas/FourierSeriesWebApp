@@ -7,6 +7,10 @@
 display2d: false$
 %iargs: false$
 
+rect(x) := if abs(x) < 1/2 then 1 elseif abs(x) = 1/2 then 1/2 else 0$
+u(x)    := if x >= 0 then 1 else 0$
+sgn(x)  := if x > 0 then 1 elseif x = 0 then 0 else -1$
+
 /* Número de tramos */
 pieces: length(FUNC_INPUT);
 
@@ -69,6 +73,17 @@ print("__SERIES_COMPLEX_MAXIMA__")$ print(string(serie_compleja))$
 print("__SERIES_COMPLEX_TEX__")$    tex(serie_compleja)$
 print("__W0_MAXIMA__")$             print(string(w0))$
 print("__W0_TEX__")$                tex(w0)$
+
+/* Factored coefficient forms: expr = K * summand, K free of n */
+block(
+    [_cf_cn: const_factor(factor(Coeff_n), n)],
+    Coeff_n_K: _cf_cn[1],
+    Coeff_n_Summand: _cf_cn[2]
+)$
+print("__CN_K_MAXIMA__")$        print(string(Coeff_n_K))$
+print("__CN_K_TEX__")$           tex(Coeff_n_K)$
+print("__CN_SUMMAND_MAXIMA__")$  print(string(Coeff_n_Summand))$
+print("__CN_SUMMAND_TEX__")$     tex(Coeff_n_Summand)$
 
 /* Parámetros libres en los coeficientes */
 free_params: []$
