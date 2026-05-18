@@ -3,6 +3,7 @@ import {
   complexService,
   halfRangeService,
   trigonometricService,
+  parsevalService,
 } from "../../infrastructure/container";
 import { validateFourierInput } from "../middlewares/validate";
 import type { PiecewiseFourierInput } from "../../domain/types/fourier.types";
@@ -413,6 +414,61 @@ fourierRouter.post(
         return;
       }
       const result = await complexService.calculateTerms(input, nTerms);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/fourier/parseval:
+ *   post:
+ *     summary: Calcula la identidad de Parseval para una serie de Fourier
+ *     description: |
+ *       Genera la identidad de Parseval (relación entre la energía de la función
+ *       y la suma de cuadrados de coeficientes de Fourier) para series trigonométricas,
+ *       de medio rango y complejas. Incluye versiones formales y simplificadas,
+ *       con detección automática de singularidades removibles.
+ *     tags: [Fourier]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/FourierInput'
+ *           example:
+ *             segments:
+ *               - expression: "x^2"
+ *                 from: "-1"
+ *                 to: "1"
+ *             seriesType: "trigonometric"
+ *             intVar: "x"
+ *     responses:
+ *       200:
+ *         description: Identidad de Parseval calculada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ParsevalResponse'
+ *       400:
+ *         description: Input inválido (segmentos malformados o tipo de serie desconocido)
+ *       500:
+ *         description: Error de cálculo en Maxima
+ */
+fourierRouter.post(
+  "/parseval",
+  validateFourierInput,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = req.body as PiecewiseFourierInput;
+      const sanitizeCheck = sanitizeFourierInput(input);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
+      const result = await parsevalService.calculate(input);
       res.json(result);
     } catch (err) {
       next(err);
