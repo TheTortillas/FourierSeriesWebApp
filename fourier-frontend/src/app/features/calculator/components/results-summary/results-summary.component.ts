@@ -1363,6 +1363,7 @@ export class ResultsSummaryComponent {
         this.simplifiedFactored.set(null);
         this.showFactoredSeries.set(false);
         this.simplifyProfile.set('raw');
+        this.showCanvasSettings.set(true);
         this.declareNInteger.set(true);
         this.toHyperbolic.set(false);
         this.halfRangeMode.set('cosine');
