@@ -211,7 +211,9 @@
       "fuera_de_dominio": "Fuera del dominio"
     },
     "seriesStandard": "Estándar",
-    "seriesFactored": "Factorizada"
+    "seriesFactored": "Factorizada",
+    "notationIntegral": "Si/Ei",
+    "notationGamma": "Γ"
   },
   "share": {
     "title": "Compartir enlace",

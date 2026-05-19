@@ -1,0 +1,16 @@
+/* ═══════════════════════════════════════════════════════════════
+   Emite marcadores __CN_K_*__ para la forma factorizada.
+   Requiere: const_factor cargado, Coeff_n definido.
+   clean_integral.mac debe cargarse y Coeff_n limpiarse ANTES
+   de llamar este archivo para que K quede libre de gamma_incomplete.
+   ═══════════════════════════════════════════════════════════════ */
+
+block(
+    [_cf_cn: const_factor(factor(Coeff_n), n)],
+    Coeff_n_K: _cf_cn[1],
+    Coeff_n_Summand: _cf_cn[2]
+)$
+print("__CN_K_MAXIMA__")$        print(string(Coeff_n_K))$
+print("__CN_K_TEX__")$           tex(Coeff_n_K)$
+print("__CN_SUMMAND_MAXIMA__")$  print(string(Coeff_n_Summand))$
+print("__CN_SUMMAND_TEX__")$     tex(Coeff_n_Summand)$

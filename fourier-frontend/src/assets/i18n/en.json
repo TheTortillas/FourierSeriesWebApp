@@ -182,7 +182,9 @@
       "fuera_de_dominio": "Out of domain"
     },
     "seriesStandard": "Standard",
-    "seriesFactored": "Factored"
+    "seriesFactored": "Factored",
+    "notationIntegral": "Si/Ei",
+    "notationGamma": "Γ"
   },
   "share": {
     "title": "Share link",

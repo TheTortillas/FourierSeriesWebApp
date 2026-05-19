@@ -210,6 +210,15 @@ export class ResultsSummaryComponent {
     null,
   );
   readonly showFactoredSeries = signal(false);
+  readonly showGammaNotation = signal(false);
+
+  /** True when the backend stored gamma_incomplete alternatives in simplifications. */
+  readonly hasGammaAlternatives = computed(() => {
+    const result = this.store.result();
+    if (!result) return false;
+    const s = result.data.simplifications;
+    return !!s && Object.keys(s).some(k => k.endsWith('_gamma'));
+  });
 
   // exponential sub-flags (only relevant when profile === 'exponential')
   readonly expFlag = signal<'exponentialize' | 'demoivre'>('exponentialize');
@@ -1008,22 +1017,36 @@ export class ResultsSummaryComponent {
     return null;
   });
 
-  /** Active coefficient LaTeX: uses simplified values when available, else falls back to coeffTex */
+  /** Active coefficient LaTeX: uses simplified values when available, else falls back to coeffTex.
+   *  When showGammaNotation is true, gamma_incomplete forms from simplifications override everything. */
   readonly activeCoeffTex = computed(() => {
     const simplified = this.simplifiedCoeffs();
     const base = this.coeffTex();
     if (!base) return null;
-    if (!simplified) return base;
 
-    return {
-      ...base,
-      ...(simplified['a0'] !== undefined ? { a0: simplified['a0'] } : {}),
-      ...(simplified['an'] !== undefined ? { an: simplified['an'] } : {}),
-      ...(simplified['bn'] !== undefined ? { bn: simplified['bn'] } : {}),
-      ...(simplified['c0'] !== undefined ? { c0: simplified['c0'] } : {}),
-      ...(simplified['cn'] !== undefined ? { cn: simplified['cn'] } : {}),
-      ...(simplified['w0'] !== undefined ? { w0: simplified['w0'] } : {}),
-    };
+    const withSimplified = simplified
+      ? {
+          ...base,
+          ...(simplified['a0'] !== undefined ? { a0: simplified['a0'] } : {}),
+          ...(simplified['an'] !== undefined ? { an: simplified['an'] } : {}),
+          ...(simplified['bn'] !== undefined ? { bn: simplified['bn'] } : {}),
+          ...(simplified['c0'] !== undefined ? { c0: simplified['c0'] } : {}),
+          ...(simplified['cn'] !== undefined ? { cn: simplified['cn'] } : {}),
+          ...(simplified['w0'] !== undefined ? { w0: simplified['w0'] } : {}),
+        }
+      : { ...base };
+
+    if (!this.showGammaNotation()) return withSimplified;
+
+    const result = this.store.result();
+    const simplifications = result?.data.simplifications;
+    if (!simplifications) return withSimplified;
+
+    const gammaOverrides: Record<string, string> = {};
+    for (const [k, v] of Object.entries(simplifications)) {
+      if (k.endsWith('_gamma')) gammaOverrides[k.slice(0, -6)] = v.tex;
+    }
+    return { ...withSimplified, ...gammaOverrides };
   });
 
   /** Display-only a0: prefer backend raw a0 (before /2) for trig and half-range cosine views. */
@@ -1362,6 +1385,7 @@ export class ResultsSummaryComponent {
         this.simplifiedCoeffsMaxima.set(null);
         this.simplifiedFactored.set(null);
         this.showFactoredSeries.set(false);
+        this.showGammaNotation.set(false);
         this.simplifyProfile.set('raw');
         this.showCanvasSettings.set(true);
         this.declareNInteger.set(true);
