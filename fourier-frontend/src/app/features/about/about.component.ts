@@ -19,7 +19,7 @@ export class AboutComponent implements OnInit {
     initialValue: this.transloco.getActiveLang(),
   });
 
-  readonly seriesItems = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10'].map(
+  readonly seriesItems = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11'].map(
     (k) => `about.series.${k}`,
   );
   readonly transformItems = ['f1', 'f3', 'f4', 'f5', 'f7', 'f8', 'f9', 'f6'].map((k) => `about.transforms.${k}`);
@@ -29,6 +29,10 @@ export class AboutComponent implements OnInit {
   readonly uxItems = ['f1', 'f2', 'f3', 'f4'].map((k) => `about.ux.${k}`);
 
   ngOnInit(): void {
-    this.seo.setPage('seo.about.title', 'seo.about.description');
+    const lang = this.transloco.getActiveLang();
+    const keywords = lang === 'es'
+      ? 'Fourier, series, transformada, identidad de Parseval, Parseval, DFT, análisis, cálculo simbólico, Maxima'
+      : 'Fourier, series, transform, Parseval identity, Parseval, DFT, analysis, symbolic computation, Maxima';
+    this.seo.setPage('seo.about.title', 'seo.about.description', keywords);
   }
 }

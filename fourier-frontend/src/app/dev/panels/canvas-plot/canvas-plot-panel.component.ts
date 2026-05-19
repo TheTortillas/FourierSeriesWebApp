@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { FunctionPlotComponent, PlotLayer } from '../../../shared/components/function-plot/function-plot.component';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { FourierReconstructionService } from '../../../core/services/canvas/fourier-reconstruction.service';
@@ -15,7 +16,7 @@ interface FunctionPreset {
 
 @Component({
   selector: 'app-canvas-plot-panel',
-  imports: [FunctionPlotComponent],
+  imports: [FunctionPlotComponent, FormsModule],
   templateUrl: './canvas-plot-panel.component.html',
 })
 export class CanvasPlotPanelComponent {
@@ -50,10 +51,13 @@ export class CanvasPlotPanelComponent {
     },
   ];
 
-  selectedPreset = signal(0);
-  nTerms         = signal(5);
-  showOriginal   = signal(true);
-  showApprox     = signal(true);
+  selectedPreset  = signal(0);
+  nTerms          = signal(5);
+  showOriginal    = signal(true);
+  showApprox      = signal(true);
+
+  sandboxExpr     = signal('');
+  sandboxError    = signal('');
 
   readonly layers = signal<PlotLayer[]>([]);
 
@@ -81,6 +85,16 @@ export class CanvasPlotPanelComponent {
     this.updatePlot();
   }
 
+  applySandbox(): void {
+    this.updatePlot();
+  }
+
+  clearSandbox(): void {
+    this.sandboxExpr.set('');
+    this.sandboxError.set('');
+    this.updatePlot();
+  }
+
   private updatePlot(): void {
     const preset       = this.presets[this.selectedPreset()];
     const showOriginal = this.showOriginal();
@@ -101,25 +115,33 @@ export class CanvasPlotPanelComponent {
       preset.a0, preset.terms, preset.w0, nTerms,
     );
 
+    // Compile sandbox expression
+    const rawSandbox = this.sandboxExpr().trim();
+    let sandboxFn: ((x: number) => number) | null = null;
+    if (rawSandbox) {
+      sandboxFn = this.mathUtils.compile(rawSandbox);
+      this.sandboxError.set(sandboxFn ? '' : 'Expresión inválida');
+    } else {
+      this.sandboxError.set('');
+    }
+
     this.layers.set([
       {
         curves: [],
         onDraw(ctx, vp) {
-          // Original: bounded to piece intervals — intentional
           if (showOriginal) {
-            plotter.samplePiecewise(compiledPieces, 400).reduce<null>((_, pt, i, arr) => {
-              // Use drawCurve per-piece so discontinuities at boundaries are clean
-              void pt; void i; void arr; return null;
-            }, null);
             for (const piece of compiledPieces) {
               plotter.plotFnRange(ctx, piece.fn, piece.from, piece.to, 400, vp,
                 { color: '#8b2500', lineWidth: 2.5 });
             }
           }
 
-          // Approximation: fills visible range (periodic series)
           if (showApprox) {
             plotter.plotFn(ctx, approxFn, vp, { color: '#1a4a6b', lineWidth: 1.75 });
+          }
+
+          if (sandboxFn) {
+            plotter.plotFn(ctx, sandboxFn, vp, { color: '#a855f7', lineWidth: 2 });
           }
         },
       },

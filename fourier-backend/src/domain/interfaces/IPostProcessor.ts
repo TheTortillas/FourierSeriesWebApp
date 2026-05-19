@@ -1,6 +1,11 @@
-import type { FourierResult, SymbolicExpression } from "../types/fourier.types";
+import type { FourierCoefficients, SymbolicExpression } from "../types/fourier.types";
+
+export interface CleanableSeriesResult {
+  coefficients: FourierCoefficients;
+  simplifications?: Record<string, SymbolicExpression>;
+}
 
 export interface IPostProcessor {
   canProcess(expr: SymbolicExpression): boolean;
-  process(result: FourierResult): Promise<FourierResult>;
+  process<T extends CleanableSeriesResult>(result: T): Promise<T>;
 }

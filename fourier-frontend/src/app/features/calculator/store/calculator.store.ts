@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
+import { forkJoin, Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api/api.service';
 import { formatApiError } from '../../../shared/utils/api-error.utils';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
@@ -221,84 +222,51 @@ export class CalculatorStore {
     this.error.set(null);
     this.result.set(null);
 
-    const terms$ = { input: req, nTerms: this.nTerms() };
+    const termsReq = { input: req, nTerms: this.nTerms() };
+    const emptyTerms = { terms: [], executionTimeMs: 0 };
 
     if (type === 'trigonometric') {
-      this.api.calculateTrigonometric(req).subscribe({
-        next: (data) => {
-          if (data.validation?.decision === 'reject') {
-            this.result.set({
-              type: 'trigonometric',
-              data,
-              terms: { terms: [], executionTimeMs: 0 },
-            });
-            this.loading.set(false);
-            this.userStore.refreshQuota();
-            return;
-          }
-
-          this.api.calculateTrigonometricTerms(terms$).subscribe({
-            next: (terms) => {
-              this.result.set({ type: 'trigonometric', data, terms });
-              this.loading.set(false);
-              this.userStore.refreshQuota();
-            },
-            error: (e) => this.handleError(e),
-          });
-        },
-        error: (e) => this.handleError(e),
-      });
+      this.runCalculation(
+        this.api.calculateTrigonometric(req),
+        this.api.calculateTrigonometricTerms(termsReq),
+        emptyTerms,
+        (data, terms) => ({ type: 'trigonometric', data, terms }),
+      );
     } else if (type === 'complex') {
-      this.api.calculateComplex(req).subscribe({
-        next: (data) => {
-          if (data.validation?.decision === 'reject') {
-            this.result.set({
-              type: 'complex',
-              data,
-              terms: { terms: [], executionTimeMs: 0 },
-            });
-            this.loading.set(false);
-            this.userStore.refreshQuota();
-            return;
-          }
-
-          this.api.calculateComplexTerms(terms$).subscribe({
-            next: (terms) => {
-              this.result.set({ type: 'complex', data, terms });
-              this.loading.set(false);
-              this.userStore.refreshQuota();
-            },
-            error: (e) => this.handleError(e),
-          });
-        },
-        error: (e) => this.handleError(e),
-      });
+      this.runCalculation(
+        this.api.calculateComplex(req),
+        this.api.calculateComplexTerms(termsReq),
+        emptyTerms,
+        (data, terms) => ({ type: 'complex', data, terms }),
+      );
     } else {
-      this.api.calculateHalfRange(req).subscribe({
-        next: (data) => {
-          if (data.validation?.decision === 'reject') {
-            this.result.set({
-              type: 'halfRange',
-              data,
-              terms: { terms: [], executionTimeMs: 0 },
-            });
-            this.loading.set(false);
-            this.userStore.refreshQuota();
-            return;
-          }
-
-          this.api.calculateHalfRangeTerms(terms$).subscribe({
-            next: (terms) => {
-              this.result.set({ type: 'halfRange', data, terms });
-              this.loading.set(false);
-              this.userStore.refreshQuota();
-            },
-            error: (e) => this.handleError(e),
-          });
-        },
-        error: (e) => this.handleError(e),
-      });
+      this.runCalculation(
+        this.api.calculateHalfRange(req),
+        this.api.calculateHalfRangeTerms(termsReq),
+        emptyTerms,
+        (data, terms) => ({ type: 'halfRange', data, terms }),
+      );
     }
+  }
+
+  private runCalculation<
+    D extends { validation?: { decision: string } },
+    T extends { terms: unknown[]; executionTimeMs: number },
+  >(
+    data$: Observable<D>,
+    terms$: Observable<T>,
+    emptyTerms: T,
+    toResult: (data: D, terms: T) => CalculatorResult,
+  ): void {
+    forkJoin({ data: data$, terms: terms$ }).subscribe({
+      next: ({ data, terms }) => {
+        const finalTerms = data.validation?.decision === 'reject' ? emptyTerms : terms;
+        this.result.set(toResult(data, finalTerms));
+        this.loading.set(false);
+        this.userStore.refreshQuota();
+      },
+      error: (e) => this.handleError(e),
+    });
   }
 
   // ── URL state persistence ──────────────────────────────────────────────────
