@@ -6,7 +6,7 @@
 
 const_factor(expr, n) := block(
     [num_raw, den_raw, sign, num_inner, num_args, den_args,
-     const_num, n_num, const_den, n_den],
+     const_num, n_num, const_den, n_den, K_raw, _neg],
     if freeof(n, expr) then return([expr, 1]),
     num_raw : num(expr),
     den_raw : denom(expr),
@@ -25,5 +25,10 @@ const_factor(expr, n) := block(
     const_den : apply("*", sublist(den_args, lambda([x], freeof(n, x)))),
     n_den     : apply("*", sublist(den_args, lambda([x], not freeof(n, x)))),
     if n_num = 1 and n_den = 1 then return([expr, 1]),
-    [sign * const_num / const_den, n_num / n_den]
+    K_raw : sign * const_num / const_den,
+    /* Keep K positive: if Maxima can prove K < 0, move the sign to the summand.
+       errcatch guards against unknown/error so we fall back gracefully. */
+    _neg : errcatch(is(K_raw < 0)),
+    if _neg = [true] then return([-K_raw, -(n_num / n_den)]),
+    [K_raw, n_num / n_den]
 )$
