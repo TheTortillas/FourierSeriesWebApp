@@ -127,7 +127,10 @@ export class ParsevalService {
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
+load("${process.cwd()}/src/scripts/maxima/lib/texput_special.mac")$
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+remove(n, integer)$
 load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_trig.mac")$
 kill(all)$
 `;
@@ -185,7 +188,10 @@ kill(all)$
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
+load("${process.cwd()}/src/scripts/maxima/lib/texput_special.mac")$
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+remove(n, integer)$
 load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_half.mac")$
 kill(all)$
 `;
@@ -283,7 +289,10 @@ kill(all)$
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
+load("${process.cwd()}/src/scripts/maxima/lib/texput_special.mac")$
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+remove(n, integer)$
 load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_complex.mac")$
 kill(all)$
 `;

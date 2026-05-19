@@ -24,25 +24,26 @@ texput(expintegral_ci,  "\\operatorname{Ci}")$
 texput(expintegral_shi, "\\operatorname{Shi}")$
 texput(expintegral_chi, "\\operatorname{Chi}")$
 
-/* Exponential integral — dos argumentos: E_v(z) con subíndice real */
+/* Exponential integral — dos argumentos: E_v(z) con subíndice real.
+   texput lambdas receive the WHOLE expression — use part() to extract args. */
 texput(expintegral_e,
-    lambda([v,z], sconcat("\\operatorname{E}_{", tex1(v), "}\\!\\left(", tex1(z), "\\right)")))$
+    lambda([e], sconcat("\\operatorname{E}_{", tex1(part(e,1)), "}\\!\\left(", tex1(part(e,2)), "\\right)")))$
 
 /* Gamma incompleta superior: Γ(a,z) */
 texput(gamma_incomplete,
-    lambda([a,z], sconcat("\\Gamma\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+    lambda([e], sconcat("\\Gamma\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), "\\right)")))$
 
 /* Gamma incompleta inferior: γ(a,z) */
 texput(gamma_incomplete_lower,
-    lambda([a,z], sconcat("\\gamma\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+    lambda([e], sconcat("\\gamma\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), "\\right)")))$
 
 /* Gamma incompleta regularizada: Q(a,z) */
 texput(gamma_incomplete_regularized,
-    lambda([a,z], sconcat("Q\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+    lambda([e], sconcat("Q\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), "\\right)")))$
 
 /* Gamma incompleta generalizada: Γ(a,z1,z2) */
 texput(gamma_incomplete_generalized,
-    lambda([a,z1,z2], sconcat("\\Gamma\\!\\left(", tex1(a), ",", tex1(z1), ",", tex1(z2), "\\right)")))$
+    lambda([e], sconcat("\\Gamma\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), ",", tex1(part(e,3)), "\\right)")))$
 
 /* log-gamma */
 texput(log_gamma, "\\ln\\!\\Gamma")$

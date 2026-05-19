@@ -599,6 +599,34 @@
                     </button>
                   </div>
                 }
+                @if (hasGammaAlternatives()) {
+                  <div
+                    class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                  >
+                    <button
+                      type="button"
+                      (click)="showGammaNotation.set(false)"
+                      [class]="
+                        !showGammaNotation()
+                          ? 'px-2 py-0.5 bg-accent/15 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ 'resultPanel.notationIntegral' | transloco }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="showGammaNotation.set(true)"
+                      [class]="
+                        showGammaNotation()
+                          ? 'px-2 py-0.5 bg-accent/15 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ 'resultPanel.notationGamma' | transloco }}
+                    </button>
+                  </div>
+                }
                 <app-export-button
                   [tex]="(showFactoredSeries() ? factoredSeriesTex() : composedSeriesTex()) ?? ''"
                   [mathEl]="seriesFormulaEl"

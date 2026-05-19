@@ -182,7 +182,9 @@
       "fuera_de_dominio": "Out of domain"
     },
     "seriesStandard": "Standard",
-    "seriesFactored": "Factored"
+    "seriesFactored": "Factored",
+    "notationIntegral": "Si/Ei",
+    "notationGamma": "Γ"
   },
   "share": {
     "title": "Share link",
@@ -562,7 +564,7 @@
     },
     "about": {
       "title": "About",
-      "description": "Discover everything Fourier Web Calculator can do: Fourier series, continuous and discrete transforms, epicycles, math keyboard and more."
+      "description": "Discover everything Fourier Web Calculator can do: Fourier series with Parseval's identity, continuous and discrete transforms, epicycles, math keyboard and more."
     }
   },
   "dev": {
@@ -755,7 +757,8 @@
       "f7": "Export results as image, LaTeX code, CSV or Maxima script",
       "f8": "Share your result with a unique permanent link",
       "f9": "Apply symbolic simplifications to the resulting series expressions",
-      "f10": "Supports free parameters (e.g. a·x, sin(n·t)) — vary them with interactive sliders after computing"
+      "f10": "Supports free parameters (e.g. a·x, sin(n·t)) — vary them with interactive sliders after computing",
+      "f11": "Parseval's identity associated with the series: get the exact symbolic relation between the function's energy and the sum of squared coefficients"
     },
     "transforms": {
       "title": "Continuous Transforms",

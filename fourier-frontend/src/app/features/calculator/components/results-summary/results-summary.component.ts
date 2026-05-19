@@ -206,10 +206,19 @@ export class ResultsSummaryComponent {
   readonly simplifying = signal(false);
   readonly simplifiedCoeffs = signal<Record<string, string> | null>(null);
   readonly simplifiedCoeffsMaxima = signal<Record<string, string> | null>(null);
-  readonly simplifiedFactored = signal<Record<string, { k: string; s: string } | null> | null>(
+  readonly simplifiedFactored = signal<Record<string, { k: string; s: string; kMx: string } | null> | null>(
     null,
   );
   readonly showFactoredSeries = signal(false);
+  readonly showGammaNotation = signal(false);
+
+  /** True when the backend stored gamma_incomplete alternatives in simplifications. */
+  readonly hasGammaAlternatives = computed(() => {
+    const result = this.store.result();
+    if (!result) return false;
+    const s = result.data.simplifications;
+    return !!s && Object.keys(s).some(k => k.endsWith('_gamma'));
+  });
 
   // exponential sub-flags (only relevant when profile === 'exponential')
   readonly expFlag = signal<'exponentialize' | 'demoivre'>('exponentialize');
@@ -263,6 +272,37 @@ export class ResultsSummaryComponent {
       )() as number;
     } catch {
       return 0;
+    }
+  }
+
+  /**
+   * Evaluates a Maxima K-factor string to a finite number.
+   * Handles trig/hyperbolic/exp functions so that format-independent numeric
+   * comparison can be used instead of string matching.
+   * Returns NaN when K is symbolic (e.g. contains free parameters).
+   */
+  private evalKMx(mx: string): number {
+    if (!mx.trim()) return NaN;
+    try {
+      const js = mx.trim()
+        .replace(/%pi\b/g, String(Math.PI))
+        .replace(/%e\b/g, String(Math.E))
+        .replace(/\^/g, '**')
+        .replace(/\bsinh\b/g, 'Math.sinh')
+        .replace(/\bcosh\b/g, 'Math.cosh')
+        .replace(/\btanh\b/g, 'Math.tanh')
+        .replace(/\bsin\b/g, 'Math.sin')
+        .replace(/\bcos\b/g, 'Math.cos')
+        .replace(/\btan\b/g, 'Math.tan')
+        .replace(/\bsqrt\b/g, 'Math.sqrt')
+        .replace(/\babs\b/g, 'Math.abs')
+        .replace(/\blog\b/g, 'Math.log')
+        .replace(/\bexp\b/g, 'Math.exp');
+      // eslint-disable-next-line no-new-func
+      const v = new Function(`return (${js})`)() as number;
+      return isFinite(v) ? v : NaN;
+    } catch {
+      return NaN;
     }
   }
 
@@ -571,7 +611,7 @@ export class ResultsSummaryComponent {
     const result = this.store.result();
     if (!result) return null;
 
-    type FEntry = { k: string; s: string } | null;
+    type FEntry = { k: string; s: string; kMx?: string } | null;
 
     // simplifiedFactored has priority; fall back to raw coeffFactoredTex
     const simplFact = this.simplifiedFactored();
@@ -581,6 +621,20 @@ export class ResultsSummaryComponent {
       if (simplFact && key in simplFact) return simplFact[key];
       if (rawFact) return (rawFact as unknown as Record<string, FEntry>)[key] ?? null;
       return null;
+    };
+
+    // Normalize sign convention: K always carries the sign, summand is unsigned.
+    // The backend (after simplification) sometimes returns positive K with a
+    // negative summand (e.g. 6/π · Σ(-((-1)^n−1)/n)). This absorbs the leading
+    // minus from the summand into K so the display is -6/π · Σ(((-1)^n−1)/n).
+    const normalize = (f: FEntry): FEntry => {
+      if (!f) return null;
+      const s = f.s.trimStart();
+      if (!s.startsWith('-')) return f;
+      const posS = s.slice(1).trimStart();
+      const k = f.k.trimStart();
+      const negK = k.startsWith('-') ? k.slice(1).trimStart() : `-${f.k}`;
+      return { k: negK, s: posS, kMx: f.kMx };
     };
 
     const intVar = result.data.input.intVar ?? 'x';
@@ -605,24 +659,79 @@ export class ResultsSummaryComponent {
       const om = w0IsOne ? `n\\,${intVar}` : `n\\,${w0Tex}\\,${intVar}`;
 
       if (anIsZero) {
-        const f = pick('bn');
+        const f = normalize(pick('bn'));
         if (f) {
           const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\sin\\!\\left(${om}\\right)`;
           return withA0Prefix(c.a0?.tex, sumTex);
         }
       } else if (bnIsZero) {
-        const f = pick('an');
+        const f = normalize(pick('an'));
         if (f) {
           const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\cos\\!\\left(${om}\\right)`;
           return withA0Prefix(c.a0?.tex, sumTex);
         }
       } else {
-        // Both non-zero: show K·Σ(sₐ·cos + s_b·sin) when they share the same K
+        // Both non-zero: show K·Σ(sₐ·cos ± s_b·sin) when they share the same K magnitude
         const fa = pick('an');
         const fb = pick('bn');
-        if (fa && fb && fa.k === fb.k && fa.k !== '1') {
-          const sumTex = `${fa.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${fa.s}\\,\\cos\\!\\left(${om}\\right)+${fb.s}\\,\\sin\\!\\left(${om}\\right)\\right)`;
-          return withA0Prefix(c.a0?.tex, sumTex);
+        if (fa && fb) {
+          const faMx = fa.kMx ?? '';
+          const fbMx = fb.kMx ?? '';
+
+          // Primary: numeric comparison — format-independent, handles sinh/cosh/sqrt/etc.
+          const faNum = this.evalKMx(faMx);
+          const fbNum = this.evalKMx(fbMx);
+
+          let kSame: boolean;
+          let kOpposite: boolean;
+          let faIsNeg: boolean;
+          let nonTrivialK: boolean;
+
+          if (isFinite(faNum) && isFinite(fbNum) && Math.abs(faNum) > 1e-12) {
+            const tol = Math.abs(faNum) * 1e-9;
+            kSame     = Math.abs(faNum - fbNum) < tol;
+            kOpposite = !kSame && Math.abs(faNum + fbNum) < tol;
+            faIsNeg   = faNum < 0;
+            nonTrivialK = Math.abs(Math.abs(faNum) - 1) > 1e-9;
+          } else {
+            // Fallback: normalized string comparison (strips leading minus + outer parens)
+            const stripSign = (s: string): string => {
+              const t = s.trim();
+              if (!t.startsWith('-')) return t;
+              const rest = t.slice(1).trim();
+              return rest.startsWith('(') && rest.endsWith(')') ? rest.slice(1, -1).trim() : rest;
+            };
+            const isNegStr = (s: string): boolean => s.trim().startsWith('-');
+            const src = (mx: string, tex: string): string => mx || tex.trimStart();
+            const faMag   = stripSign(src(faMx, fa.k));
+            const fbMag   = stripSign(src(fbMx, fb.k));
+            faIsNeg       = isNegStr(src(faMx, fa.k));
+            const fbIsNeg = isNegStr(src(fbMx, fb.k));
+            kSame       = faMag === fbMag && faIsNeg === fbIsNeg;
+            kOpposite   = faMag === fbMag && faIsNeg !== fbIsNeg;
+            nonTrivialK = faMag !== '1';
+          }
+
+          if ((kSame || kOpposite) && nonTrivialK) {
+            let commonK: string;
+            let anS: string;
+            let bnS: string;
+
+            if (kSame) {
+              commonK = fa.k; anS = fa.s; bnS = fb.s;
+            } else {
+              // Use the positive K as commonK; negate the summand of the negative-K coefficient
+              commonK = faIsNeg ? fb.k : fa.k;
+              anS     = faIsNeg ? `-${fa.s}` : fa.s;
+              bnS     = faIsNeg ? fb.s : `-${fb.s}`;
+            }
+
+            const bnNeg    = bnS.trimStart().startsWith('-');
+            const connector  = bnNeg ? '-' : '+';
+            const bnDisplay  = bnNeg ? bnS.trimStart().replace(/^-\s*/, '') : bnS;
+            const sumTex = `${commonK}\\cdot\\sum_{n=1}^{\\infty}\\left(${anS}\\,\\cos\\!\\left(${om}\\right)${connector}${bnDisplay}\\,\\sin\\!\\left(${om}\\right)\\right)`;
+            return withA0Prefix(c.a0?.tex, sumTex);
+          }
         }
       }
       return null;
@@ -640,7 +749,7 @@ export class ResultsSummaryComponent {
       if (hrMode === 'cosine') {
         const anIsZero = (activeMx?.an ?? c.an?.maxima ?? '').trim() === '0';
         if (!anIsZero) {
-          const f = pick('an');
+          const f = normalize(pick('an'));
           if (f) {
             const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\cos\\!\\left(${shiftedOmega}\\right)`;
             return withA0Prefix(c.a0?.tex, sumTex);
@@ -649,7 +758,7 @@ export class ResultsSummaryComponent {
       } else {
         const bnIsZero = (activeMx?.bn ?? c.bn?.maxima ?? '').trim() === '0';
         if (!bnIsZero) {
-          const f = pick('bn');
+          const f = normalize(pick('bn'));
           if (f)
             return `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\sin\\!\\left(${shiftedOmega}\\right)`;
         }
@@ -661,7 +770,7 @@ export class ResultsSummaryComponent {
       const c = result.data.coefficients;
       const cnIsZero = (activeMx?.cn ?? c.cn?.maxima ?? '').trim() === '0';
       if (!cnIsZero) {
-        const f = pick('cn');
+        const f = normalize(pick('cn'));
         const om = w0IsOne ? `n\\,${intVar}` : `n\\,${w0Tex}\\,${intVar}`;
         if (f) return `${f.k}\\cdot\\sum_{n=-\\infty}^{\\infty}\\left(${f.s}\\right)e^{i${om}}`;
       }
@@ -861,20 +970,20 @@ export class ResultsSummaryComponent {
     if (result.type === 'trigonometric') {
       const c = result.data.coefficients;
       return {
-        an: isTrivial(c.anK, c.anSummand) ? null : { k: c.anK!.tex, s: c.anSummand!.tex },
-        bn: isTrivial(c.bnK, c.bnSummand) ? null : { k: c.bnK!.tex, s: c.bnSummand!.tex },
+        an: isTrivial(c.anK, c.anSummand) ? null : { k: c.anK!.tex, s: c.anSummand!.tex, kMx: c.anK!.maxima },
+        bn: isTrivial(c.bnK, c.bnSummand) ? null : { k: c.bnK!.tex, s: c.bnSummand!.tex, kMx: c.bnK!.maxima },
       };
     }
     if (result.type === 'halfRange') {
       const c = result.data.coefficients;
       return hrMode === 'cosine'
-        ? { an: isTrivial(c.anK, c.anSummand) ? null : { k: c.anK!.tex, s: c.anSummand!.tex } }
-        : { bn: isTrivial(c.bnK, c.bnSummand) ? null : { k: c.bnK!.tex, s: c.bnSummand!.tex } };
+        ? { an: isTrivial(c.anK, c.anSummand) ? null : { k: c.anK!.tex, s: c.anSummand!.tex, kMx: c.anK!.maxima } }
+        : { bn: isTrivial(c.bnK, c.bnSummand) ? null : { k: c.bnK!.tex, s: c.bnSummand!.tex, kMx: c.bnK!.maxima } };
     }
     if (result.type === 'complex') {
       const c = result.data.coefficients;
       return {
-        cn: isTrivial(c.cnK, c.cnSummand) ? null : { k: c.cnK!.tex, s: c.cnSummand!.tex },
+        cn: isTrivial(c.cnK, c.cnSummand) ? null : { k: c.cnK!.tex, s: c.cnSummand!.tex, kMx: c.cnK!.maxima },
       };
     }
     return null;
@@ -908,22 +1017,36 @@ export class ResultsSummaryComponent {
     return null;
   });
 
-  /** Active coefficient LaTeX: uses simplified values when available, else falls back to coeffTex */
+  /** Active coefficient LaTeX: uses simplified values when available, else falls back to coeffTex.
+   *  When showGammaNotation is true, gamma_incomplete forms from simplifications override everything. */
   readonly activeCoeffTex = computed(() => {
     const simplified = this.simplifiedCoeffs();
     const base = this.coeffTex();
     if (!base) return null;
-    if (!simplified) return base;
 
-    return {
-      ...base,
-      ...(simplified['a0'] !== undefined ? { a0: simplified['a0'] } : {}),
-      ...(simplified['an'] !== undefined ? { an: simplified['an'] } : {}),
-      ...(simplified['bn'] !== undefined ? { bn: simplified['bn'] } : {}),
-      ...(simplified['c0'] !== undefined ? { c0: simplified['c0'] } : {}),
-      ...(simplified['cn'] !== undefined ? { cn: simplified['cn'] } : {}),
-      ...(simplified['w0'] !== undefined ? { w0: simplified['w0'] } : {}),
-    };
+    const withSimplified = simplified
+      ? {
+          ...base,
+          ...(simplified['a0'] !== undefined ? { a0: simplified['a0'] } : {}),
+          ...(simplified['an'] !== undefined ? { an: simplified['an'] } : {}),
+          ...(simplified['bn'] !== undefined ? { bn: simplified['bn'] } : {}),
+          ...(simplified['c0'] !== undefined ? { c0: simplified['c0'] } : {}),
+          ...(simplified['cn'] !== undefined ? { cn: simplified['cn'] } : {}),
+          ...(simplified['w0'] !== undefined ? { w0: simplified['w0'] } : {}),
+        }
+      : { ...base };
+
+    if (!this.showGammaNotation()) return withSimplified;
+
+    const result = this.store.result();
+    const simplifications = result?.data.simplifications;
+    if (!simplifications) return withSimplified;
+
+    const gammaOverrides: Record<string, string> = {};
+    for (const [k, v] of Object.entries(simplifications)) {
+      if (k.endsWith('_gamma')) gammaOverrides[k.slice(0, -6)] = v.tex;
+    }
+    return { ...withSimplified, ...gammaOverrides };
   });
 
   /** Display-only a0: prefer backend raw a0 (before /2) for trig and half-range cosine views. */
@@ -1262,7 +1385,9 @@ export class ResultsSummaryComponent {
         this.simplifiedCoeffsMaxima.set(null);
         this.simplifiedFactored.set(null);
         this.showFactoredSeries.set(false);
+        this.showGammaNotation.set(false);
         this.simplifyProfile.set('raw');
+        this.showCanvasSettings.set(true);
         this.declareNInteger.set(true);
         this.toHyperbolic.set(false);
         this.halfRangeMode.set('cosine');
@@ -1830,15 +1955,33 @@ export class ResultsSummaryComponent {
       .subscribe((responses) => {
         const simplified: Record<string, string> = {};
         const simplifiedMaxima: Record<string, string> = {};
-        const factored: Record<string, { k: string; s: string } | null> = {};
+        const factored: Record<string, { k: string; s: string; kMx: string } | null> = {};
         for (const [key, res] of Object.entries(responses)) {
           simplified[key] = res.simplified.tex;
           simplifiedMaxima[key] = res.simplified.maxima;
           factored[key] =
             res.simplifiedK && res.simplifiedSummand
-              ? { k: res.simplifiedK.tex, s: res.simplifiedSummand.tex }
+              ? { k: res.simplifiedK.tex, s: res.simplifiedSummand.tex, kMx: res.simplifiedK.maxima }
               : null;
         }
+
+        // K-unification for trig series: when raw emission unified K_an == K_bn
+        // (emit_factored_trig absorbed the ratio into bn_summand) but simplifying
+        // each coefficient independently gives different Ks, adopt the raw bn
+        // summand (which already carries the ratio) under the simplified K so the
+        // frontend's kSame path can render K·Σ(sₐ·cos + s_b·sin).
+        type FE = { k: string; s: string; kMx: string } | null;
+        const rawFact = this.coeffFactoredTex() as Record<string, FE> | null;
+        if (rawFact) {
+          const rawAn = rawFact['an'];
+          const rawBn = rawFact['bn'];
+          const simpAn = factored['an'];
+          const simpBn = factored['bn'];
+          if (rawAn && rawBn && rawAn.kMx === rawBn.kMx && simpAn && simpBn && simpAn.kMx !== simpBn.kMx) {
+            factored['bn'] = { k: simpAn.k, s: rawBn.s, kMx: simpAn.kMx };
+          }
+        }
+
         this.simplifiedCoeffs.set(simplified);
         this.simplifiedCoeffsMaxima.set(simplifiedMaxima);
         this.simplifiedFactored.set(factored);

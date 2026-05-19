@@ -14,6 +14,30 @@ block(
     Parseval_LHS: factor(ratsimp(_f2_acum / PERIOD))
 )$
 
+Parseval_LHS: if not freeof(gamma_incomplete, Parseval_LHS)
+    then block([_cl: errcatch(simplify_expint(clean_integral(Parseval_LHS, INTVAR)))],
+               if _cl = [] then Parseval_LHS else first(_cl))
+    else Parseval_LHS$
+
+/* Clean gamma_incomplete from Fourier coefficients before squaring.
+   Maxima expresses integrals like ∫sin(x)/x·cos(nx) in gamma_incomplete form with
+   imaginary factors; squaring gives negative values.  clean_integral(·, n) converts
+   them to real expintegral_si expressions so |an|² + |bn|² is correct. */
+block([_r],
+    if not freeof(gamma_incomplete, Coeff_A0) then (
+        _r: errcatch(clean_integral(Coeff_A0, n)),
+        if _r # [] then Coeff_A0: first(_r)
+    ),
+    if not freeof(gamma_incomplete, Coeff_An) then (
+        _r: errcatch(clean_integral(Coeff_An, n)),
+        if _r # [] then Coeff_An: first(_r)
+    ),
+    if not freeof(gamma_incomplete, Coeff_Bn) then (
+        _r: errcatch(clean_integral(Coeff_Bn, n)),
+        if _r # [] then Coeff_Bn: first(_r)
+    )
+)$
+
 Parseval_A0_term: factor(Coeff_A0^2)$
 
 /* ── Versión formal (sin declare(n, integer)) ──────────────────

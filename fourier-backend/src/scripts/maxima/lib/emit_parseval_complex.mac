@@ -14,6 +14,21 @@ block(
     Parseval_LHS: factor(ratsimp(_f2_acum / PERIOD))
 )$
 
+Parseval_LHS: if not freeof(gamma_incomplete, Parseval_LHS)
+    then block([_cl: errcatch(simplify_expint(clean_integral(Parseval_LHS, INTVAR)))],
+               if _cl = [] then Parseval_LHS else first(_cl))
+    else Parseval_LHS$
+
+/* Clean gamma_incomplete from Coeff_n before squaring.
+   Coeff_0 is NOT cleaned here — it comes from a plain integral (no complex
+   exponential), so clean_integral would produce wrong Shi/Ei forms for it. */
+block([_r],
+    if not freeof(gamma_incomplete, Coeff_n) then (
+        _r: errcatch(clean_integral(Coeff_n, n)),
+        if _r # [] then Coeff_n: first(_r)
+    )
+)$
+
 Parseval_C0_term: factor(ratsimp(Coeff_0^2))$
 
 /* ── Versión formal (sin declare(n, integer)) ── */
@@ -24,6 +39,11 @@ block(
      _cn_im_f: imagpart(rectform(Coeff_n)),
      _cn_mod2_f, _cf_f],
     _cn_mod2_f: factor(trigsimp(ratsimp(_cn_re_f^2 + _cn_im_f^2))),
+    /* Fallback for complex-argument special functions: rectform cannot decompose
+       E_v(complex) into re+im, so the result is spuriously 0.
+       For a real function, |cn|^2 = cn * c_{-n} (conjugate via n→-n substitution). */
+    if is(ratsimp(_cn_mod2_f) = 0) and not is(ratsimp(Coeff_n) = 0) then
+        _cn_mod2_f: factor(trigsimp(ratsimp(Coeff_n * subst(n = -n, Coeff_n)))),
     _cf_f: const_factor(_cn_mod2_f, n),
     Parseval_Formal_K:       factor(2 * _cf_f[1]),
     Parseval_Formal_Summand: _cf_f[2]
@@ -43,6 +63,8 @@ block(
      _cn_im: imagpart(rectform(_Cn)),
      _cn_mod2, _cf],
     _cn_mod2: factor(trigsimp(ratsimp(_cn_re^2 + _cn_im^2))),
+    if is(ratsimp(_cn_mod2) = 0) and not is(ratsimp(_Cn) = 0) then
+        _cn_mod2: factor(trigsimp(ratsimp(_Cn * subst(n = -n, _Cn)))),
     _cf: const_factor(_cn_mod2, n),
     Parseval_K:       factor(2 * _cf[1]),
     Parseval_Summand: _cf[2]

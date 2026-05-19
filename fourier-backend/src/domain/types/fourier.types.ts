@@ -137,6 +137,7 @@ export interface HalfRangeResult {
   a0Raw?: SymbolicExpression;
   a0Float?: number;
   parseval?: ParsevalHalfRange;
+  simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
@@ -144,16 +145,11 @@ export interface HalfRangeResult {
 
 export interface ComplexFourierResult {
   input: PiecewiseFourierInput;
-  coefficients: {
-    c0: SymbolicExpression;
-    c0Float?: number;
-    cn: SymbolicExpression;
-    cnK?: SymbolicExpression;
-    cnSummand?: SymbolicExpression;
-  };
+  coefficients: FourierCoefficients;
   seriesComplex: SymbolicExpression;
   w0: SymbolicExpression;
   parseval?: ParsevalComplex;
+  simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;

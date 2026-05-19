@@ -3077,9 +3077,12 @@ FT(FUNC_INPUT, t_var, w_var) := block(
     declare(w_var, real),
     _ft_reserved: [t_var, w_var],
 
-    /* ── declarar parametros libres de todos los tramos ── */
-    for i : 1 thru length(FUNC_INPUT) do
+    /* ── declarar parametros libres de todos los tramos (expresion y limites) ── */
+    for i : 1 thru length(FUNC_INPUT) do (
         FT_declare_params(FUNC_INPUT[i][1], _ft_reserved),
+        FT_declare_params(FUNC_INPUT[i][2], _ft_reserved),
+        FT_declare_params(FUNC_INPUT[i][3], _ft_reserved)
+    ),
 
     n_orig : length(FUNC_INPUT),
     done   : false,
@@ -3395,9 +3398,12 @@ IFT(FUNC_INPUT, w_var, t_var) := block(
     declare(t_var, real),
     _ift_reserved: [w_var, t_var],
 
-    /* ── declarar parametros libres de todos los tramos ── */
-    for i : 1 thru length(FUNC_INPUT) do
+    /* ── declarar parametros libres de todos los tramos (expresion y limites) ── */
+    for i : 1 thru length(FUNC_INPUT) do (
         FT_declare_params(FUNC_INPUT[i][1], _ift_reserved),
+        FT_declare_params(FUNC_INPUT[i][2], _ift_reserved),
+        FT_declare_params(FUNC_INPUT[i][3], _ift_reserved)
+    ),
 
     n_orig : length(FUNC_INPUT),
     done   : false,

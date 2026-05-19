@@ -135,6 +135,7 @@ export interface TrigonometricResponse {
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
   parseval?: ParsevalTrig;
+  simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
@@ -164,6 +165,7 @@ export interface HalfRangeResponse {
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
   parseval?: ParsevalHalfRange;
+  simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
@@ -182,6 +184,7 @@ export interface ComplexResponse {
   coefficients: ComplexCoefficients;
   seriesComplex: SymbolicExpression;
   w0: SymbolicExpression;
+  simplifications?: Record<string, SymbolicExpression>;
   parseval?: ParsevalComplex;
   validation?: ValidationResult;
   params?: string[];

@@ -84,8 +84,16 @@ export class ComplexService {
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
+load("${process.cwd()}/src/scripts/maxima/lib/texput_special.mac")$
 ${script}
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+block([_r],
+  if not freeof(gamma_incomplete, Coeff_n) then (
+    _r: errcatch(clean_integral(Coeff_n, n)),
+    if _r # [] then Coeff_n: first(_r)
+  )
+)$
+load("${process.cwd()}/src/scripts/maxima/lib/emit_factored_complex.mac")$
 __C0_CLEAN__: if not freeof(gamma_incomplete, Coeff_0)
   then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_0, ${intVar})))],
     if cleaned = [] then Coeff_0 else first(cleaned))
@@ -136,6 +144,19 @@ kill(all)$
       params,
       executionTimeMs: Date.now() - startTime,
     };
+
+    if (
+      (complexResult.coefficients.c0 &&
+        this.postProcessor.canProcess(complexResult.coefficients.c0)) ||
+      (complexResult.coefficients.cn &&
+        this.postProcessor.canProcess(complexResult.coefficients.cn)) ||
+      (complexResult.seriesComplex &&
+        this.postProcessor.canProcess(complexResult.seriesComplex))
+    ) {
+      const processed = await this.postProcessor.process(complexResult);
+      void setInCache(cacheKey, processed);
+      return processed;
+    }
 
     void setInCache(cacheKey, complexResult);
     return complexResult;
