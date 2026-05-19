@@ -40,8 +40,9 @@ export class SeoService {
    *
    * @param titleKey       Transloco key for the page title (without site name).
    * @param descriptionKey Transloco key for the meta description.
+   * @param keywords       Optional: comma-separated keywords for this page.
    */
-  setPage(titleKey: string, descriptionKey: string): void {
+  setPage(titleKey: string, descriptionKey: string, keywords?: string): void {
     const lang = this.transloco.getActiveLang();
 
     this.transloco.selectTranslation(lang).pipe(take(1)).subscribe(() => {
@@ -55,6 +56,10 @@ export class SeoService {
       this.titleSvc.setTitle(fullTitle);
       this.meta.updateTag({ name: 'description', content: description });
       this.meta.updateTag({ name: 'robots',      content: 'index, follow' });
+      
+      if (keywords) {
+        this.meta.updateTag({ name: 'keywords', content: keywords });
+      }
 
       // ── Open Graph ───────────────────────────────────────────────────────
       this.meta.updateTag({ property: 'og:type',        content: 'website' });

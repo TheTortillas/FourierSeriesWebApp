@@ -562,7 +562,7 @@
     },
     "about": {
       "title": "Acerca de",
-      "description": "Descubre todo lo que puedes hacer con Fourier Web Calculator: series de Fourier, transformadas continuas y discretas, epicíclos, teclado matemático y más."
+      "description": "Descubre todo lo que puedes hacer con Fourier Web Calculator: series de Fourier con identidad de Parseval, transformadas continuas y discretas, epicíclos, teclado matemático y más."
     }
   },
   "dev": {
@@ -755,7 +755,8 @@
       "f7": "Exportar resultados como imagen, código LaTeX, CSV o script Maxima",
       "f8": "Compartir el resultado con un enlace permanente único",
       "f9": "Aplicar simplificaciones simbólicas a las expresiones resultantes de la serie",
-      "f10": "Acepta parámetros libres (p. ej. a·x, sin(n·t)) — varíalos con sliders interactivos después de calcular"
+      "f10": "Acepta parámetros libres (p. ej. a·x, sin(n·t)) — varíalos con sliders interactivos después de calcular",
+      "f11": "Identidad de Parseval asociada a la serie: obtén la relación simbólica exacta entre la energía de la función y la suma de cuadrados de los coeficientes"
     },
     "transforms": {
       "title": "Transformadas Continuas",
