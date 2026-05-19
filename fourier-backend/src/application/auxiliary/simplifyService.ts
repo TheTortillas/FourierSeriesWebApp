@@ -53,6 +53,7 @@ FLAG_ERF_REPR:    "${erfRepresentation}"$
 FLAG_N_INTEGER:   ${declareNInteger ? "true" : "false"}$
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 load("${process.cwd()}/src/scripts/maxima/lib/hyper.mac")$
+load("${process.cwd()}/src/scripts/maxima/lib/texput_special.mac")$
 ${script}
 kill(all)$
 `;

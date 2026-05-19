@@ -89,6 +89,7 @@ export class TrigonometricService {
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
+load("${process.cwd()}/src/scripts/maxima/lib/texput_special.mac")$
 ${script}
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
 block([_r],
