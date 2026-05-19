@@ -128,6 +128,8 @@ FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+remove(n, integer)$
 load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_trig.mac")$
 kill(all)$
 `;
@@ -186,6 +188,8 @@ FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+remove(n, integer)$
 load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_half.mac")$
 kill(all)$
 `;
@@ -284,6 +288,8 @@ FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
+load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+remove(n, integer)$
 load("${process.cwd()}/src/scripts/maxima/lib/emit_parseval_complex.mac")$
 kill(all)$
 `;
