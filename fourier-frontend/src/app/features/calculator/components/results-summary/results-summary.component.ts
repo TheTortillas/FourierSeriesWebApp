@@ -1940,6 +1940,24 @@ export class ResultsSummaryComponent {
               ? { k: res.simplifiedK.tex, s: res.simplifiedSummand.tex, kMx: res.simplifiedK.maxima }
               : null;
         }
+
+        // K-unification for trig series: when raw emission unified K_an == K_bn
+        // (emit_factored_trig absorbed the ratio into bn_summand) but simplifying
+        // each coefficient independently gives different Ks, adopt the raw bn
+        // summand (which already carries the ratio) under the simplified K so the
+        // frontend's kSame path can render K·Σ(sₐ·cos + s_b·sin).
+        type FE = { k: string; s: string; kMx: string } | null;
+        const rawFact = this.coeffFactoredTex() as Record<string, FE> | null;
+        if (rawFact) {
+          const rawAn = rawFact['an'];
+          const rawBn = rawFact['bn'];
+          const simpAn = factored['an'];
+          const simpBn = factored['bn'];
+          if (rawAn && rawBn && rawAn.kMx === rawBn.kMx && simpAn && simpBn && simpAn.kMx !== simpBn.kMx) {
+            factored['bn'] = { k: simpAn.k, s: rawBn.s, kMx: simpAn.kMx };
+          }
+        }
+
         this.simplifiedCoeffs.set(simplified);
         this.simplifiedCoeffsMaxima.set(simplifiedMaxima);
         this.simplifiedFactored.set(factored);

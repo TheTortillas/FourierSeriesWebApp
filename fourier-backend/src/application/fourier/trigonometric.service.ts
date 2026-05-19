@@ -90,8 +90,18 @@ FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
-load("${process.cwd()}/src/scripts/maxima/lib/emit_factored_trig.mac")$
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
+block([_r],
+  if not freeof(gamma_incomplete, Coeff_An) then (
+    _r: errcatch(clean_integral(Coeff_An, n)),
+    if _r # [] then Coeff_An: first(_r)
+  ),
+  if not freeof(gamma_incomplete, Coeff_Bn) then (
+    _r: errcatch(clean_integral(Coeff_Bn, n)),
+    if _r # [] then Coeff_Bn: first(_r)
+  )
+)$
+load("${process.cwd()}/src/scripts/maxima/lib/emit_factored_trig.mac")$
 __A0_CLEAN__: if not freeof(gamma_incomplete, Coeff_A0_Raw)
   then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_A0_Raw, ${intVar})))],
     if cleaned = [] then Coeff_A0_Raw else first(cleaned))

@@ -11,6 +11,24 @@ block(
     Coeff_Bn_K: _cf_bn[1],
     Coeff_Bn_Summand: _cf_bn[2]
 )$
+
+/* When K_an ≠ K_bn but their ratio is a constant free of n, absorb the ratio
+   into the bn summand so both share the same K.  The frontend's kSame path then
+   renders K · Σ(sₐ·cos + s_b·sin) instead of leaving the factored tab hidden. */
+block(
+    [_ratio_wrap, _ratio],
+    if is(Coeff_An_K # 0) and is(Coeff_Bn_K # 0)
+       and freeof(n, Coeff_An_K) and freeof(n, Coeff_Bn_K) then (
+        _ratio_wrap: errcatch(factor(Coeff_Bn_K / Coeff_An_K)),
+        if _ratio_wrap # [] then (
+            _ratio: first(_ratio_wrap),
+            if freeof(n, _ratio) and _ratio # 1 then (
+                Coeff_Bn_Summand: factor(_ratio * Coeff_Bn_Summand),
+                Coeff_Bn_K: Coeff_An_K
+            )
+        )
+    )
+)$
 print("__AN_K_MAXIMA__")$        print(string(Coeff_An_K))$
 print("__AN_K_TEX__")$           tex(Coeff_An_K)$
 print("__AN_SUMMAND_MAXIMA__")$  print(string(Coeff_An_Summand))$
