@@ -1,0 +1,40 @@
+/* ── TeX notation for special functions ──
+   Load this early (before any tex() call) to ensure proper rendering.
+   No kill/declare — safe to load at any point in a script. */
+
+texput(expintegral_e1,  "\\operatorname{E_1}")$
+texput(expintegral_ei,  "\\operatorname{Ei}")$
+texput(expintegral_li,  "\\operatorname{li}")$
+texput(expintegral_si,  "\\operatorname{Si}")$
+texput(expintegral_ci,  "\\operatorname{Ci}")$
+texput(expintegral_shi, "\\operatorname{Shi}")$
+texput(expintegral_chi, "\\operatorname{Chi}")$
+
+/* E_v(z) with subscript.
+   texput lambdas receive the WHOLE expression, not individual args — use part(). */
+texput(expintegral_e,
+    lambda([e], sconcat("\\operatorname{E}_{", tex1(part(e,1)), "}\\!\\left(", tex1(part(e,2)), "\\right)")))$
+
+/* Incomplete gamma: Γ(a,z) */
+texput(gamma_incomplete,
+    lambda([e], sconcat("\\Gamma\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), "\\right)")))$
+
+/* Lower incomplete gamma: γ(a,z) */
+texput(gamma_incomplete_lower,
+    lambda([e], sconcat("\\gamma\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), "\\right)")))$
+
+/* Regularized incomplete gamma: Q(a,z) */
+texput(gamma_incomplete_regularized,
+    lambda([e], sconcat("Q\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), "\\right)")))$
+
+/* Generalized incomplete gamma: Γ(a,z1,z2) */
+texput(gamma_incomplete_generalized,
+    lambda([e], sconcat("\\Gamma\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), ",", tex1(part(e,3)), "\\right)")))$
+
+/* log-gamma */
+texput(log_gamma, "\\ln\\!\\Gamma")$
+
+/* sech: Maxima has no built-in sech, but we use it as a display symbol.
+   Results are rewritten from 1/cosh(...) to sech(...) by FT_to_sech()
+   before calling tex(), so the LaTeX comes out as \operatorname{sech}. */
+texput(sech, "\\operatorname{sech}")$
