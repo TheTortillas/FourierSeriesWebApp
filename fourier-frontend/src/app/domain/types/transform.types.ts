@@ -41,8 +41,12 @@ export interface FourierTransformResponse {
   input: FourierTransformRequest;
   exists: boolean;
   F?: SymbolicExpression;
+  /** Alternative display form for F (e.g. sech or sinh/(cosh+1)) shown in "Otras formas". */
+  FAlt?: SymbolicExpression;
   realPart?: SymbolicExpression;
+  realPartAlt?: SymbolicExpression;
   imagPart?: SymbolicExpression;
+  imagPartAlt?: SymbolicExpression;
   /** Real part of the input f(t) after piecewise normalization (for plotting). */
   inputRealPart?: SymbolicExpression;
   /** Imaginary part of the input f(t) after piecewise normalization (for plotting). */

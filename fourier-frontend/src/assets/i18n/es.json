@@ -247,6 +247,7 @@
     "reFw": "Re F({{ v }})",
     "imFw": "Im F({{ v }})",
     "altForms": "Otras formas",
+    "altFormAlt": "Forma alternativa",
     "altFormFactor": "Factorizada",
     "altFormExpand": "Expandida",
     "altFormTrig": "Trigonométrica",
