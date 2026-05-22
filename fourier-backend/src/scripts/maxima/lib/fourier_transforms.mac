@@ -64,6 +64,35 @@ texput(rect, "\\operatorname{rect}")$
 FT_is_minf(x) := is(x = minf) or is(x = -inf)$
 FT_is_inf(x)  := is(x = inf)  or is(x = +inf)$
 
+/* ── FT_to_sech: rewrite 1/cosh(u) → sech(u) throughout an expression ──
+   sech is not a Maxima built-in, so results with 1/cosh(…) render as messy
+   fractions in TeX.  This traversal rewrites every occurrence to sech(…)
+   so that, combined with texput(sech,"\\operatorname{sech}"), the output
+   renders cleanly.  Only the exact form 1/cosh(u) (op="/", num=1, den=cosh)
+   is replaced; other fractions are left untouched. */
+FT_to_sech(e) :=
+    if atom(e) then e
+    else if is(op(e) = "/")
+         and is(part(e, 1) = 1)
+         and not atom(part(e, 2))
+         and is(op(part(e, 2)) = cosh)
+    then sech(FT_to_sech(part(part(e, 2), 1)))
+    else map(FT_to_sech, e)$
+
+/* ── FT_to_tanh_alt: rewrite tanh(u) → sinh(2u)/(cosh(2u)+1) throughout ──
+   Uses the half-angle identity: tanh(x) = sinh(2x)/(cosh(2x)+1).
+   Applied as an alternative display form for sin(at)/sinh(bt) results,
+   mirroring what Wolfram Alpha shows as "alternate form assuming a,w real".
+   Only the exact form tanh(u) is replaced; other sub-expressions recurse. */
+FT_to_tanh_alt(e) :=
+    if atom(e) then e
+    else if is(op(e) = 'tanh) then block(
+        [u],
+        u: FT_to_tanh_alt(part(e, 1)),
+        sinh(2*u) / (cosh(2*u) + 1)
+    )
+    else map(FT_to_tanh_alt, e)$
+
 FT_limit_nonneg(x) :=
     if numberp(x) then x >= 0
     else is(x >= 0)$
@@ -712,9 +741,24 @@ IFT_simplify(expr) := block(
   - Otherwise a light ratsimp pass to cancel obvious algebraic factors.
 */
 FT_pick_display_expr(expr) := block(
-    [tmp],
+    [tmp, tmp2],
     if expr = false then return(false),
     if not freeof('delta, expr) then return(expr),
+    /* Apply sech rewrite BEFORE ratsimp: ratsimp merges 1/cosh(a)+1/cosh(b)
+       into (cosh(a)+cosh(b))/(cosh(a)*cosh(b)), destroying the 1/cosh pattern.
+       We rewrite first while the sum-of-fractions structure is still intact. */
+    if not freeof(cosh, expr) then (
+        tmp2 : errcatch(FT_to_sech(expr)),
+        if tmp2 # [] then return(first(tmp2))
+    ),
+    /* Apply tanh → sinh(2u)/(cosh(2u)+1) alternative form for expressions
+       containing tanh.  ratsimp does not destroy tanh structure, so this
+       can be applied after (or instead of) ratsimp; we do it here to keep
+       the display pipeline uniform with the sech case above. */
+    if not freeof('tanh, expr) then (
+        tmp2 : errcatch(FT_to_tanh_alt(expr)),
+        if tmp2 # [] then return(first(tmp2))
+    ),
     tmp : errcatch(ratsimp(expr)),
     if tmp # [] then return(first(tmp)),
     expr
@@ -1704,6 +1748,8 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
             if freeof(t_var, _ch_a) and freeof(t_var, _ch_b)
                and freeof(t_var, _ch_coef)
                and is(_ch_a >= 0) and is(_ch_b > 0) then
+                /* Return 1/cosh form (numerically evaluable by the plotter).
+                   FT_pick_display_expr will rewrite it to sech for TeX display. */
                 res: [_ch_coef * (%piexact / (2*_ch_b))
                         * (1/cosh(%piexact*(w_var - _ch_a) / (2*_ch_b))
                            + 1/cosh(%piexact*(w_var + _ch_a) / (2*_ch_b))),
