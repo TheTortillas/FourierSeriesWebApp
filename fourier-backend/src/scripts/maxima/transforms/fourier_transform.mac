@@ -27,6 +27,26 @@ F_imag      : if result[3] # false then ratsimp(FT_SCALE * result[3]) else false
 exists      : result[4]$
 free_params : result[5]$
 
+/* ── sech display: capture pre-ratsimp forms for expressions containing cosh.
+   ratsimp merges 1/cosh(a)+1/cosh(b) into a single fraction, destroying the
+   1/cosh pattern that FT_to_sech needs.  We store the sech-rewritten form
+   here so it can be emitted as DISPLAY_F (shown in "Otras formas" in the UI)
+   while F keeps the ratsimp'd 1/cosh form for numerical evaluation (plotter). */
+F_sech_disp : if result[1] # false and not freeof(cosh, result[1])
+              then errcatch(FT_to_sech(FT_SCALE * result[1]))
+              else []$
+F_sech_disp : if F_sech_disp # [] then first(F_sech_disp) else false$
+
+F_real_sech_disp : if result[2] # false and not freeof(cosh, result[2])
+                   then errcatch(FT_to_sech(FT_SCALE * result[2]))
+                   else []$
+F_real_sech_disp : if F_real_sech_disp # [] then first(F_real_sech_disp) else false$
+
+F_imag_sech_disp : if result[3] # false and not freeof(cosh, result[3])
+                   then errcatch(FT_to_sech(FT_SCALE * result[3]))
+                   else []$
+F_imag_sech_disp : if F_imag_sech_disp # [] then first(F_imag_sech_disp) else false$
+
 /* ── Real / imaginary parts of the input f(t) for post-calc plotting ── */
 block([_i, _e, _a, _b, _gate],
         f_in_expr : 0,
@@ -50,12 +70,22 @@ F_in_real : if F_in_real = [] then false else first(F_in_real)$
 F_in_imag : errcatch(ratsimp(F_in_imag_raw))$
 F_in_imag : if F_in_imag = [] then false else first(F_in_imag)$
 
-F_disp : errcatch(FT_pick_display_expr(F))$
-F_disp : if F_disp = [] then F else first(F_disp)$
-F_real_disp : errcatch(FT_pick_display_expr(F_real))$
-F_real_disp : if F_real_disp = [] then F_real else first(F_real_disp)$
-F_imag_disp : errcatch(FT_pick_display_expr(F_imag))$
-F_imag_disp : if F_imag_disp = [] then F_imag else first(F_imag_disp)$
+/* For results that have a sech form, use it as the display expression directly
+   (bypassing FT_pick_display_expr which would receive the already-ratsimp'd form
+   where 1/cosh(a)+1/cosh(b) has been merged into a single fraction).
+   Otherwise fall back to the normal display pipeline. */
+block([_tmp_fd],
+    if F_sech_disp # false then F_disp: F_sech_disp
+    else (_tmp_fd: errcatch(FT_pick_display_expr(F)),
+          F_disp: if _tmp_fd = [] then F else first(_tmp_fd)))$
+block([_tmp_frd],
+    if F_real_sech_disp # false then F_real_disp: F_real_sech_disp
+    else (_tmp_frd: errcatch(FT_pick_display_expr(F_real)),
+          F_real_disp: if _tmp_frd = [] then F_real else first(_tmp_frd)))$
+block([_tmp_fid],
+    if F_imag_sech_disp # false then F_imag_disp: F_imag_sech_disp
+    else (_tmp_fid: errcatch(FT_pick_display_expr(F_imag)),
+          F_imag_disp: if _tmp_fid = [] then F_imag else first(_tmp_fid)))$
 F_in_real_disp : errcatch(FT_pick_display_expr(F_in_real))$
 F_in_real_disp : if F_in_real_disp = [] then F_in_real else first(F_in_real_disp)$
 F_in_imag_disp : errcatch(FT_pick_display_expr(F_in_imag))$
