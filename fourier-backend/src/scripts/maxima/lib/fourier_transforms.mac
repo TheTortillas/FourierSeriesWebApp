@@ -1299,6 +1299,67 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── ANTI-CAUSAL family: k*exp(at)*u(-t) -> k/(a-iw)  (a > 0) ──
+       Also handles cos/sin modulated variants. */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "*") then block(
+            [u_part, exp_part, cos_part, sin_part, coef_k,
+             exp_arg, u_arg, aa, bb],
+            u_part: false,
+            exp_part: false,
+            cos_part: false,
+            sin_part: false,
+            coef_k: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'u)
+                then u_part: s
+                else if not atom(s) and is(op(s) = "^")
+                     and is(part(s, 1) = %e)
+                     and not freeof(t_var, s)
+                then exp_part: s
+                else if not atom(s) and is(op(s) = 'cos)
+                then cos_part: s
+                else if not atom(s) and is(op(s) = 'sin)
+                then sin_part: s
+                else coef_k: coef_k * s
+            ),
+            if is(u_part # false) and is(exp_part # false) then (
+                u_arg: part(u_part, 1),
+                /* Gate must be u(-t), i.e. u_arg = -t_var */
+                if ratsimp(u_arg + t_var) = 0 then (
+                    exp_arg: part(exp_part, 2),
+                    /* exp(at)*u(-t): exp_arg / t_var = a > 0 */
+                    aa: ratsimp(exp_arg / t_var),
+                    if freeof(t_var, aa) and freeof(t_var, coef_k)
+                       and is(aa > 0) then (
+                        if is(cos_part = false) and is(sin_part = false) then (
+                            /* k*exp(at)*u(-t) -> k/(a - iw) */
+                            res: [coef_k / (aa - %i*w_var),
+                                  concat("k*exp(at)*u(-t) -> k/(a-iw), a=",
+                                         string(aa))]
+                        ) else if is(cos_part # false) and is(sin_part = false) then (
+                            /* k*exp(at)*cos(bt)*u(-t) -> k*(a-iw)/((a-iw)^2+b^2) */
+                            bb: ratsimp(part(cos_part, 1) / t_var),
+                            if freeof(t_var, bb) and is(bb > 0) then
+                                res: [coef_k * (aa - %i*w_var)
+                                          / ((aa - %i*w_var)^2 + bb^2),
+                                      concat("k*exp(at)*cos(bt)*u(-t) -> k*(a-iw)/((a-iw)^2+b^2), a=",
+                                             string(aa), ", b=", string(bb))]
+                        ) else if is(sin_part # false) and is(cos_part = false) then (
+                            /* k*exp(at)*sin(bt)*u(-t) -> -k*b/((a-iw)^2+b^2) */
+                            bb: ratsimp(part(sin_part, 1) / t_var),
+                            if freeof(t_var, bb) and is(bb > 0) then
+                                res: [- coef_k * bb
+                                          / ((aa - %i*w_var)^2 + bb^2),
+                                      concat("k*exp(at)*sin(bt)*u(-t) -> -k*b/((a-iw)^2+b^2), a=",
+                                             string(aa), ", b=", string(bb))]
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── sin(w0*t)*u(t) -> w0/(w0^2-w^2) + pi/(2i)*[delta(w-w0)-delta(w+w0)] ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "*") then block(
@@ -1556,6 +1617,98 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     )
                 )
             )
+        )
+    ),
+
+    /* ── k*sin(at)/sinh(bt) -> k*(pi/(2b))*(tanh(pi(a-w)/(2b)) + tanh(pi(a+w)/(2b)))
+       Derived via K(λ) = ∫ e^{iλt}/sinh(t) dt = πi·tanh(λπ/2).
+       For sin(at)/sinh(bt): substitute t→t/b, use linearity + odd symmetry.
+       Handles both op="/" (direct ratio) and op="*" (with 1/sinh factor).
+       Matches: k * sin(a*t) / sinh(b*t), a>0, b>0.
+       ── */
+    if is(res = false) then block(
+        [_sh_sin, _sh_sinh, _sh_coef, _sh_a, _sh_b, _sh_e],
+        _sh_sin: false,
+        _sh_sinh: false,
+        _sh_coef: 1,
+        /* Handle e = k*sin(...)/sinh(...) with op="/" */
+        if not atom(e) and is(op(e) = "/") then (
+            _sh_e: part(e, 1),  /* numerator */
+            /* numerator may be k*sin(...) or just sin(...) */
+            if not atom(_sh_e) and is(op(_sh_e) = 'sin) then (
+                _sh_sin: _sh_e,
+                _sh_sinh: errcatch(part(e, 2)),
+                if _sh_sinh # [] then _sh_sinh: first(_sh_sinh) else _sh_sinh: false,
+                if not atom(_sh_sinh) and is(op(_sh_sinh) = 'sinh)
+                then _sh_coef: 1
+                else _sh_sinh: false
+            ) else if not atom(_sh_e) and is(op(_sh_e) = "*") then (
+                for _s in args(_sh_e) do (
+                    if not atom(_s) and is(op(_s) = 'sin) then _sh_sin: _s
+                    else _sh_coef: _sh_coef * _s
+                ),
+                _sh_sinh: errcatch(part(e, 2)),
+                if _sh_sinh # [] then _sh_sinh: first(_sh_sinh) else _sh_sinh: false,
+                if not (not atom(_sh_sinh) and is(op(_sh_sinh) = 'sinh))
+                then _sh_sinh: false
+            )
+        ),
+        if is(_sh_sin # false) and is(_sh_sinh # false) then (
+            _sh_a: ratsimp(part(_sh_sin, 1) / t_var),
+            _sh_b: ratsimp(part(_sh_sinh, 1) / t_var),
+            if freeof(t_var, _sh_a) and freeof(t_var, _sh_b)
+               and freeof(t_var, _sh_coef)
+               and is(_sh_a > 0) and is(_sh_b > 0) then
+                res: [_sh_coef * (%piexact / (2*_sh_b))
+                        * (tanh(%piexact*(_sh_a - w_var) / (2*_sh_b))
+                           + tanh(%piexact*(_sh_a + w_var) / (2*_sh_b))),
+                      concat("k*sin(at)/sinh(bt) -> k*pi/(2b)*(tanh(pi(a-w)/(2b))+tanh(pi(a+w)/(2b))), a=",
+                             string(_sh_a), ", b=", string(_sh_b))]
+        )
+    ),
+
+    /* ── k*cos(at)/cosh(bt) -> k*(pi/(2b))*(sech(pi(w-a)/(2b)) + sech(pi(w+a)/(2b)))
+       FT[cos(at)/cosh(bt)](w) = (π/(2b)) * (1/cosh(π(w-a)/(2b)) + 1/cosh(π(w+a)/(2b)))
+       Derived from K_even(λ) = ∫ e^{iλt}/cosh(t) dt = π/cosh(λπ/2).
+       Substituting t → t/b gives the scaled form. Note: sech not a Maxima builtin,
+       use 1/cosh() instead.
+       Handles op="/" form: k*cos(at)/cosh(bt).
+       ── */
+    if is(res = false) then block(
+        [_ch_cos, _ch_cosh, _ch_coef, _ch_a, _ch_b, _ch_e],
+        _ch_cos: false,
+        _ch_cosh: false,
+        _ch_coef: 1,
+        if not atom(e) and is(op(e) = "/") then (
+            _ch_e: part(e, 1),
+            if not atom(_ch_e) and is(op(_ch_e) = 'cos) then (
+                _ch_cos: _ch_e,
+                _ch_cosh: errcatch(part(e, 2)),
+                if _ch_cosh # [] then _ch_cosh: first(_ch_cosh) else _ch_cosh: false,
+                if not (not atom(_ch_cosh) and is(op(_ch_cosh) = 'cosh))
+                then _ch_cosh: false
+            ) else if not atom(_ch_e) and is(op(_ch_e) = "*") then (
+                for _s in args(_ch_e) do (
+                    if not atom(_s) and is(op(_s) = 'cos) then _ch_cos: _s
+                    else _ch_coef: _ch_coef * _s
+                ),
+                _ch_cosh: errcatch(part(e, 2)),
+                if _ch_cosh # [] then _ch_cosh: first(_ch_cosh) else _ch_cosh: false,
+                if not (not atom(_ch_cosh) and is(op(_ch_cosh) = 'cosh))
+                then _ch_cosh: false
+            )
+        ),
+        if is(_ch_cos # false) and is(_ch_cosh # false) then (
+            _ch_a: ratsimp(part(_ch_cos, 1) / t_var),
+            _ch_b: ratsimp(part(_ch_cosh, 1) / t_var),
+            if freeof(t_var, _ch_a) and freeof(t_var, _ch_b)
+               and freeof(t_var, _ch_coef)
+               and is(_ch_a >= 0) and is(_ch_b > 0) then
+                res: [_ch_coef * (%piexact / (2*_ch_b))
+                        * (1/cosh(%piexact*(w_var - _ch_a) / (2*_ch_b))
+                           + 1/cosh(%piexact*(w_var + _ch_a) / (2*_ch_b))),
+                      concat("k*cos(at)/cosh(bt) -> k*pi/(2b)*(sech(pi(w-a)/(2b))+sech(pi(w+a)/(2b))), a=",
+                             string(_ch_a), ", b=", string(_ch_b))]
         )
     ),
 
@@ -2165,6 +2318,61 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── ANTI-CAUSAL: k/(a-iw)^n -> (-1)^(n-1)*k*t^(n-1)/(n-1)!*e^{at}*u(-t)  (a>0, n>=1 entero)
+       Mirror of the causal handler: denominator root is at w = -ia (lower half-plane).
+       Detection: expand (a-iw)^n, check leading coeff of w^n = (-i)^n.
+       Then _ac_s = _ac_cn / (-i)^n, _ac_aa = (c_0/_ac_s)^(1/n) > 0.
+       Result: IFT[k/(a-iw)^n](t) = (-1)^(n-1) * k_eff * t^(n-1)/(n-1)! * e^{at} * u(-t).
+       NOTE: use `e` (expand form) not `er` (rat form), because rat() canonicalizes
+       1/(a-iw) → -(1/(iw-a)) which changes op from "/" to "-".
+       ── */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "/") then block(
+            [_ac_num, _ac_den, _ac_n, _ac_cn, _ac_c0, _ac_s, _ac_aa, _ac_kk, _ac_ok],
+            _ac_num: part(e, 1),
+            _ac_den: rat(expand(part(e, 2))),
+            if freeof(w_var, _ac_num) and not freeof(w_var, _ac_den) then (
+                /* degree of denominator in w */
+                _ac_n: hipow(_ac_den, w_var),
+                if _ac_n >= 1 then (
+                    /* leading coeff of w^n: should be (-i)^n */
+                    _ac_cn: ratsimp(coeff(_ac_den, w_var, _ac_n)),
+                    /* constant term: c0 = a^n * (-i)^n * (-1)^n ... simpler: s*a^n */
+                    _ac_c0: ratsimp(subst(w_var=0, _ac_den)),
+                    /* s = leading / (-i)^n  →  (a-iw)^n = s * (a-iw)^n  */
+                    _ac_s: errcatch(ratsimp(_ac_cn / (-%i)^_ac_n)),
+                    if _ac_s # [] then (
+                        _ac_s: first(_ac_s),
+                        /* a = (c0/s)^(1/n), must be real positive */
+                        _ac_aa: errcatch(ratsimp((_ac_c0 / _ac_s)^(1/_ac_n))),
+                        if _ac_aa # [] then (
+                            _ac_aa: first(_ac_aa),
+                            if freeof(w_var, _ac_aa) and freeof(%i, _ac_aa)
+                               and is(_ac_aa > 0) then (
+                                /* verify denom = s*(a-iw)^n exactly */
+                                _ac_ok: errcatch(ratsimp(
+                                    _ac_den - _ac_s*expand((_ac_aa - %i*w_var)^_ac_n))),
+                                if _ac_ok # [] and first(_ac_ok) = 0 then (
+                                    _ac_kk: errcatch(ratsimp(_ac_num / _ac_s)),
+                                    if _ac_kk # [] and freeof(w_var, first(_ac_kk)) then (
+                                        _ac_kk: first(_ac_kk),
+                                        /* IFT[k/(a-iw)^n](t) = (-1)^(n-1)*k*t^(n-1)/(n-1)!*e^{at}*u(-t)
+                                           The sign (-1)^(n-1) arises because the pole at w=-ia
+                                           is in the lower half-plane; contour closes downward for t<0. */
+                                        res: [(-1)^(_ac_n-1) * _ac_kk * t_var^(_ac_n-1) / (_ac_n-1)!
+                                                   * exp(_ac_aa*t_var) * u(-t_var),
+                                              concat("k/(a-iw)^n -> (-1)^(n-1)*k*t^(n-1)/(n-1)!*e^{at}*u(-t), n=",
+                                                     string(_ac_n), ", a=", string(_ac_aa))]
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── b/((iw+a)^2+b^2) -> e^{-at}*sin(bt)*u(t)  (a,b > 0) ── */
     if is(res = false) then (
         if not atom(er) and is(op(er) = "/") then block(
@@ -2279,6 +2487,120 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                                               concat("(iw+a)/((iw+a)^2+b^2) -> e^{-at}cos(bt)u(t), a=",
                                                      string(aa7), ", b=", string(bb7))]
                                 )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── ANTI-CAUSAL: -b/((a-iw)^2+b^2) -> e^{at}*sin(bt)*u(-t)  (a,b > 0) ──
+       Mirror of the causal sin handler: denominator = (a-iw)^2+b^2, numerator = -b (constant).
+       IFT[−b/((a−iw)²+b²)](t) = e^{at}·sin(bt)·u(−t).
+       Detection via coeff of w^2 = -1 and c1 from -2*i*a term.
+       In Maxima, -b/denom is represented as -(b/denom) with op="-".
+       We detect this by: if op="-", extract the inner b/denom expression,
+       check denominator structure, numerator = b (positive), then result has u(-t).
+       ── */
+    if is(res = false) then block(
+        [_as_inner, _as_num, _as_den, _as_d2, _as_d1, _as_d0, _as_aa, _as_bbsq, _as_bb],
+        _as_inner: false,
+        if not atom(F_expr) and is(op(F_expr) = "-") then (
+            _as_inner: errcatch(part(F_expr, 1)),
+            if _as_inner # [] then _as_inner: first(_as_inner) else _as_inner: false
+        ),
+        if is(_as_inner # false) and not atom(_as_inner) and is(op(_as_inner) = "/") then (
+            _as_num: part(_as_inner, 1),
+            _as_den: rat(expand(part(_as_inner, 2))),
+            if freeof(w_var, _as_num) and not freeof(w_var, _as_den) then (
+                _as_d2: ratsimp(diff(_as_den, w_var, 2) / 2),
+                /* coeff of w^2 must be -1 */
+                if ratsimp(_as_d2 + 1) = 0 then (
+                    _as_d1: ratsimp(diff(_as_den, w_var) + 2*w_var),
+                    _as_d0: ratsimp(subst(w_var=0, _as_den)),
+                    /* For (a-iw)^2+b^2: diff/dw + 2w = -2ia → aa = _as_d1 / (-2*i) */
+                    _as_aa: ratsimp(_as_d1 / (-2*%i)),
+                    if freeof(w_var, _as_aa) and is(_as_aa > 0) then (
+                        _as_bbsq: ratsimp(_as_d0 - _as_aa^2),
+                        if is(_as_bbsq > 0) then (
+                            _as_bb: sqrt(_as_bbsq),
+                            if freeof(w_var, _as_bb) and is(_as_bb > 0)
+                               /* inner numerator must be +bb (the minus is in the outer "-") */
+                               and ratsimp(_as_num - _as_bb) = 0 then
+                                res: [exp(_as_aa*t_var) * sin(_as_bb*t_var) * u(-t_var),
+                                      concat("-b/((a-iw)^2+b^2) -> e^{at}sin(bt)u(-t), a=",
+                                             string(_as_aa), ", b=", string(_as_bb))]
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── ANTI-CAUSAL: (a-iw)/((a-iw)^2+b^2) -> e^{at}*cos(bt)*u(-t)  (a,b > 0) ──
+       Numerator = (a-iw): d/dw = -i, constant term = a.
+       Denominator same as above with coeff(w^2)=-1, coeff(w)=-2ia.
+       Uses F_expr (pre-expand) to handle the numerator correctly.
+       ── */
+    if is(res = false) then (
+        if not atom(F_expr) and is(op(F_expr) = "/") then block(
+            [_ac2_num, _ac2_den, _ac2_nc1, _ac2_nc0, _ac2_d2, _ac2_d1, _ac2_d0, _ac2_aa, _ac2_bbsq, _ac2_bb],
+            _ac2_num: rat(expand(part(F_expr, 1))),
+            _ac2_den: rat(expand(part(F_expr, 2))),
+            if not freeof(w_var, _ac2_num) and not freeof(w_var, _ac2_den) then (
+                _ac2_nc1: ratsimp(diff(_ac2_num, w_var)),
+                _ac2_nc0: ratsimp(subst(w_var=0, _ac2_num)),
+                /* numerator = a-iw: d/dw = -i, constant = a > 0 */
+                if ratsimp(_ac2_nc1 + %i) = 0 and freeof(w_var, _ac2_nc0) then (
+                    _ac2_aa: _ac2_nc0,
+                    if is(_ac2_aa > 0) then (
+                        _ac2_d2: ratsimp(diff(_ac2_den, w_var, 2) / 2),
+                        if ratsimp(_ac2_d2 + 1) = 0 then (
+                            _ac2_d1: ratsimp(diff(_ac2_den, w_var) + 2*w_var),
+                            _ac2_d0: ratsimp(subst(w_var=0, _ac2_den)),
+                            if ratsimp(_ac2_d1 / (-2*%i) - _ac2_aa) = 0 then (
+                                _ac2_bbsq: ratsimp(_ac2_d0 - _ac2_aa^2),
+                                if is(_ac2_bbsq > 0) then (
+                                    _ac2_bb: sqrt(_ac2_bbsq),
+                                    if freeof(w_var, _ac2_bb) and is(_ac2_bb > 0) then
+                                        res: [exp(_ac2_aa*t_var) * cos(_ac2_bb*t_var) * u(-t_var),
+                                              concat("(a-iw)/((a-iw)^2+b^2) -> e^{at}cos(bt)u(-t), a=",
+                                                     string(_ac2_aa), ", b=", string(_ac2_bb))]
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── ANTI-CAUSAL: k/((a-iw)^2+b^2) -> -k*e^{at}*sin(bt)*u(-t)/b  (a,b > 0) ──
+       Generalisation with scalar numerator k: result = -k/b * e^{at}*sin(bt)*u(-t).
+       Negative sign because residue closes below (t<0) with opposite orientation.
+       Uses F_expr (pre-expand) to keep numerator as constant.
+       ── */
+    if is(res = false) then (
+        if not atom(F_expr) and is(op(F_expr) = "/") then block(
+            [_ak_num, _ak_den, _ak_d2, _ak_d1, _ak_d0, _ak_aa, _ak_bbsq, _ak_bb, _ak_kk],
+            _ak_num: part(F_expr, 1),
+            _ak_den: rat(expand(part(F_expr, 2))),
+            if freeof(w_var, _ak_num) and not freeof(w_var, _ak_den) then (
+                _ak_d2: ratsimp(diff(_ak_den, w_var, 2) / 2),
+                if ratsimp(_ak_d2 + 1) = 0 then (
+                    _ak_d1: ratsimp(diff(_ak_den, w_var) + 2*w_var),
+                    _ak_d0: ratsimp(subst(w_var=0, _ak_den)),
+                    _ak_aa: ratsimp(_ak_d1 / (-2*%i)),
+                    if freeof(w_var, _ak_aa) and is(_ak_aa > 0) then (
+                        _ak_bbsq: ratsimp(_ak_d0 - _ak_aa^2),
+                        if is(_ak_bbsq > 0) then (
+                            _ak_bb: sqrt(_ak_bbsq),
+                            if freeof(w_var, _ak_bb) and is(_ak_bb > 0) then (
+                                _ak_kk: ratsimp(_ak_num / _ak_bb),
+                                res: [- _ak_kk * exp(_ak_aa*t_var) * sin(_ak_bb*t_var) * u(-t_var),
+                                      concat("k/((a-iw)^2+b^2) -> -k*e^{at}sin(bt)u(-t)/b, a=",
+                                             string(_ak_aa), ", b=", string(_ak_bb))]
                             )
                         )
                     )
@@ -3531,7 +3853,9 @@ IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
         else if ratsimp(fn_flip + f_pos) = 0
         then ratsimp(sgn(t_var) * subst(t_var = abs(t_var), f_pos))
         else if ratsimp(f_neg) = 0 then f_pos * u(t_var)
-        else if ratsimp(f_pos) = 0 then f_neg * u(t_var)
+        /* f_pos = 0: signal is non-zero only for t < 0 (anti-causal).
+           Combined form must gate on t < 0, i.e. u(-t), NOT u(t). */
+        else if ratsimp(f_pos) = 0 then f_neg * u(-t_var)
         else false,
 
     _ift_reserved: [t_var, w_var, 'u, 'delta, 'sgn],
