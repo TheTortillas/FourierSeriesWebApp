@@ -303,8 +303,12 @@ export interface FourierTransformResult {
   input: FourierTransformInput;
   exists: boolean;
   F?: SymbolicExpression;
+  /** Alternative display form for F (e.g. sech or sinh/(cosh+1)) shown in "Otras formas". */
+  FAlt?: SymbolicExpression;
   realPart?: SymbolicExpression;
+  realPartAlt?: SymbolicExpression;
   imagPart?: SymbolicExpression;
+  imagPartAlt?: SymbolicExpression;
   inputRealPart?: SymbolicExpression;
   inputImagPart?: SymbolicExpression;
   params?: string[];

@@ -1243,15 +1243,30 @@ export class ContinuousTransformComponent implements OnInit {
     if (mode === 'ft') this.altFormsLoadingFt.set(true);
     else this.altFormsLoadingIft.set(true);
 
-    this.runAltForms(mainSymbolic, (forms) => {
-      if (mode === 'ft') {
-        this.altFormsFt.set(forms);
-        this.altFormsLoadingFt.set(false);
-      } else {
-        this.altFormsIft.set(forms);
-        this.altFormsLoadingIft.set(false);
-      }
-    });
+    // For FT: prepend the backend-provided alternate form (sech / sinh/(cosh+1))
+    // if it exists and differs from the principal. This is the canonical "Otras formas"
+    // entry derived directly from the Maxima computation, not from simplification.
+    const ftAlt =
+      mode === 'ft' ? (res as FourierTransformResponse).FAlt : undefined;
+    const altSeed: AltForm | undefined =
+      ftAlt?.tex && ftAlt.tex !== mainSymbolic.tex
+        ? { labelKey: 'transforms.altFormAlt', tex: ftAlt.tex, maxima: ftAlt.maxima }
+        : undefined;
+
+    this.runAltForms(
+      mainSymbolic,
+      (forms) => {
+        const allForms = altSeed ? [altSeed, ...forms] : forms;
+        if (mode === 'ft') {
+          this.altFormsFt.set(allForms);
+          this.altFormsLoadingFt.set(false);
+        } else {
+          this.altFormsIft.set(allForms);
+          this.altFormsLoadingIft.set(false);
+        }
+      },
+      altSeed ? [altSeed.tex] : [],
+    );
   }
 
   private loadAltFormsInto(
