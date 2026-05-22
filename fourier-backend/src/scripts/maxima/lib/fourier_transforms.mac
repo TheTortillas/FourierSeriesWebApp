@@ -87,9 +87,12 @@ FT_to_sech(e) :=
 FT_to_tanh_alt(e) :=
     if atom(e) then e
     else if is(op(e) = 'tanh) then block(
-        [u],
+        [u, u2],
         u: FT_to_tanh_alt(part(e, 1)),
-        sinh(2*u) / (cosh(2*u) + 1)
+        /* Simplify the doubled argument: ratsimp(2 * π(a±w)/(2b)) → π(a±w)/b */
+        u2: errcatch(ratsimp(2*u)),
+        u2: if u2 # [] then first(u2) else 2*u,
+        sinh(u2) / (cosh(u2) + 1)
     )
     else map(FT_to_tanh_alt, e)$
 
@@ -749,14 +752,6 @@ FT_pick_display_expr(expr) := block(
        We rewrite first while the sum-of-fractions structure is still intact. */
     if not freeof(cosh, expr) then (
         tmp2 : errcatch(FT_to_sech(expr)),
-        if tmp2 # [] then return(first(tmp2))
-    ),
-    /* Apply tanh → sinh(2u)/(cosh(2u)+1) alternative form for expressions
-       containing tanh.  ratsimp does not destroy tanh structure, so this
-       can be applied after (or instead of) ratsimp; we do it here to keep
-       the display pipeline uniform with the sech case above. */
-    if not freeof('tanh, expr) then (
-        tmp2 : errcatch(FT_to_tanh_alt(expr)),
         if tmp2 # [] then return(first(tmp2))
     ),
     tmp : errcatch(ratsimp(expr)),

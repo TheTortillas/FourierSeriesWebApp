@@ -47,6 +47,26 @@ F_imag_sech_disp : if result[3] # false and not freeof(cosh, result[3])
                    else []$
 F_imag_sech_disp : if F_imag_sech_disp # [] then first(F_imag_sech_disp) else false$
 
+/* ── tanh alt display: rewrite tanh(u) → sinh(2u)/(cosh(2u)+1) for "Otras formas".
+   F keeps the canonical tanh form for the plotter; F_tanh_alt_disp holds the
+   sinh/(cosh+1) alternative shown in the UI.  Unlike sech, ratsimp does not
+   destroy tanh structure, so we apply FT_to_tanh_alt on the already-ratsimp'd F
+   (no pre-ratsimp capture needed). */
+F_tanh_alt_disp : if F # false and not freeof('tanh, F)
+                  then errcatch(FT_to_tanh_alt(F))
+                  else []$
+F_tanh_alt_disp : if F_tanh_alt_disp # [] then first(F_tanh_alt_disp) else false$
+
+F_real_tanh_alt_disp : if F_real # false and not freeof('tanh, F_real)
+                       then errcatch(FT_to_tanh_alt(F_real))
+                       else []$
+F_real_tanh_alt_disp : if F_real_tanh_alt_disp # [] then first(F_real_tanh_alt_disp) else false$
+
+F_imag_tanh_alt_disp : if F_imag # false and not freeof('tanh, F_imag)
+                       then errcatch(FT_to_tanh_alt(F_imag))
+                       else []$
+F_imag_tanh_alt_disp : if F_imag_tanh_alt_disp # [] then first(F_imag_tanh_alt_disp) else false$
+
 /* ── Real / imaginary parts of the input f(t) for post-calc plotting ── */
 block([_i, _e, _a, _b, _gate],
         f_in_expr : 0,
@@ -70,20 +90,27 @@ F_in_real : if F_in_real = [] then false else first(F_in_real)$
 F_in_imag : errcatch(ratsimp(F_in_imag_raw))$
 F_in_imag : if F_in_imag = [] then false else first(F_in_imag)$
 
-/* For results that have a sech form, use it as the display expression directly
-   (bypassing FT_pick_display_expr which would receive the already-ratsimp'd form
-   where 1/cosh(a)+1/cosh(b) has been merged into a single fraction).
-   Otherwise fall back to the normal display pipeline. */
+/* For results with a sech or tanh-alt form, use it directly as the display
+   expression (bypassing FT_pick_display_expr).
+   Priority: sech > tanh_alt > normal display pipeline.
+   - sech: must bypass FT_pick_display_expr because ratsimp already merged
+     1/cosh(a)+1/cosh(b) into a single fraction (captured pre-ratsimp above).
+   - tanh_alt: F already has the canonical tanh form; tanh_alt is an explicit
+     alternative for "Otras formas", so we use it directly rather than letting
+     FT_pick_display_expr transform it (which would invert principal/alternate). */
 block([_tmp_fd],
     if F_sech_disp # false then F_disp: F_sech_disp
+    else if F_tanh_alt_disp # false then F_disp: F_tanh_alt_disp
     else (_tmp_fd: errcatch(FT_pick_display_expr(F)),
           F_disp: if _tmp_fd = [] then F else first(_tmp_fd)))$
 block([_tmp_frd],
     if F_real_sech_disp # false then F_real_disp: F_real_sech_disp
+    else if F_real_tanh_alt_disp # false then F_real_disp: F_real_tanh_alt_disp
     else (_tmp_frd: errcatch(FT_pick_display_expr(F_real)),
           F_real_disp: if _tmp_frd = [] then F_real else first(_tmp_frd)))$
 block([_tmp_fid],
     if F_imag_sech_disp # false then F_imag_disp: F_imag_sech_disp
+    else if F_imag_tanh_alt_disp # false then F_imag_disp: F_imag_tanh_alt_disp
     else (_tmp_fid: errcatch(FT_pick_display_expr(F_imag)),
           F_imag_disp: if _tmp_fid = [] then F_imag else first(_tmp_fid)))$
 F_in_real_disp : errcatch(FT_pick_display_expr(F_in_real))$
