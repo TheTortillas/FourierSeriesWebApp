@@ -33,3 +33,8 @@ texput(gamma_incomplete_generalized,
 
 /* log-gamma */
 texput(log_gamma, "\\ln\\!\\Gamma")$
+
+/* sech: Maxima has no built-in sech, but we use it as a display symbol.
+   Results are rewritten from 1/cosh(...) to sech(...) by FT_to_sech()
+   before calling tex(), so the LaTeX comes out as \operatorname{sech}. */
+texput(sech, "\\operatorname{sech}")$

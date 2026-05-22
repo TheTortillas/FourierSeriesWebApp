@@ -135,9 +135,23 @@ kill(all)$
     const inputImagTex = this.extractTex(
       this.extractBetween(raw, "__INPUT_IMAG_TEX__", "__DISPLAY_F_MAXIMA__"),
     );
+    const displayFMaxima = this.extractBetween(
+      raw,
+      "__DISPLAY_F_MAXIMA__",
+      "__DISPLAY_F_TEX__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
     const displayFTex = this.extractTex(
       this.extractBetween(raw, "__DISPLAY_F_TEX__", "__DISPLAY_REAL_MAXIMA__"),
     );
+    const displayRealMaxima = this.extractBetween(
+      raw,
+      "__DISPLAY_REAL_MAXIMA__",
+      "__DISPLAY_REAL_TEX__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
     const displayRealTex = this.extractTex(
       this.extractBetween(
         raw,
@@ -145,6 +159,13 @@ kill(all)$
         "__DISPLAY_IMAG_MAXIMA__",
       ),
     );
+    const displayImagMaxima = this.extractBetween(
+      raw,
+      "__DISPLAY_IMAG_MAXIMA__",
+      "__DISPLAY_IMAG_TEX__",
+    )
+      .replace(/\bfalse\b/g, "")
+      .trim();
     const displayImagTex = this.extractTex(
       this.extractBetween(
         raw,
@@ -168,23 +189,20 @@ kill(all)$
     return {
       input,
       exists,
-      F: exists ? this.toSymbolic(fMaxima, fTex, displayFTex) : undefined,
-      realPart: exists
-        ? this.toSymbolic(realMaxima, realTex, displayRealTex)
+      F: exists ? this.toSymbolic(fMaxima, fTex) : undefined,
+      FAlt: exists
+        ? this.toSymbolic(displayFMaxima, displayFTex)
         : undefined,
-      imagPart: exists
-        ? this.toSymbolic(imagMaxima, imagTex, displayImagTex)
+      realPart: exists ? this.toSymbolic(realMaxima, realTex) : undefined,
+      realPartAlt: exists
+        ? this.toSymbolic(displayRealMaxima, displayRealTex)
         : undefined,
-      inputRealPart: this.toSymbolic(
-        inputRealMaxima,
-        inputRealTex,
-        displayInputRealTex,
-      ),
-      inputImagPart: this.toSymbolic(
-        inputImagMaxima,
-        inputImagTex,
-        displayInputImagTex,
-      ),
+      imagPart: exists ? this.toSymbolic(imagMaxima, imagTex) : undefined,
+      imagPartAlt: exists
+        ? this.toSymbolic(displayImagMaxima, displayImagTex)
+        : undefined,
+      inputRealPart: this.toSymbolic(inputRealMaxima, inputRealTex),
+      inputImagPart: this.toSymbolic(inputImagMaxima, inputImagTex),
       params,
       executionTimeMs: Date.now() - startTime,
     };
@@ -466,34 +484,24 @@ kill(all)$
     return {
       input,
       exists: fPosMaxima !== "" || fNegMaxima !== "",
-      fPositive: this.toSymbolic(fPosMaxima, fPosTex, displayFPosTex),
-      fNegative: this.toSymbolic(fNegMaxima, fNegTex, displayFNegTex),
+      fPositive: this.toSymbolic(fPosMaxima, displayFPosTex || fPosTex),
+      fNegative: this.toSymbolic(fNegMaxima, displayFNegTex || fNegTex),
       fCombined:
         hasCombined && fCombinedMaxima
-          ? this.toSymbolic(fCombinedMaxima, fCombinedTex, displayFCombinedTex)
+          ? this.toSymbolic(fCombinedMaxima, displayFCombinedTex || fCombinedTex)
           : undefined,
       fOutUForm: fOutUFormMaxima
-        ? this.toSymbolic(fOutUFormMaxima, fOutUFormTex, displayFOutUFormTex)
+        ? this.toSymbolic(fOutUFormMaxima, displayFOutUFormTex || fOutUFormTex)
         : undefined,
-      inputRealPart: this.toSymbolic(
-        inputRealMaxima,
-        inputRealTex,
-        displayInputRealTex,
-      ),
-      inputImagPart: this.toSymbolic(
-        inputImagMaxima,
-        inputImagTex,
-        displayInputImagTex,
-      ),
+      inputRealPart: this.toSymbolic(inputRealMaxima, inputRealTex),
+      inputImagPart: this.toSymbolic(inputImagMaxima, inputImagTex),
       outputRealPart: this.toSymbolic(
         outputRealMaxima,
-        outputRealTex,
-        displayOutputRealTex,
+        displayOutputRealTex || outputRealTex,
       ),
       outputImagPart: this.toSymbolic(
         outputImagMaxima,
-        outputImagTex,
-        displayOutputImagTex,
+        displayOutputImagTex || outputImagTex,
       ),
       outputRealPartPositive: this.toSymbolic(
         outputRealPosMaxima,
@@ -518,16 +526,13 @@ kill(all)$
     };
   }
 
-  private toSymbolic(maxima: string, tex: string, displayTex?: string) {
+  private toSymbolic(maxima: string, tex: string) {
     if (!maxima) return undefined;
     // Maxima sometimes returns internal label names (result3, %r2, %t1, …) when
     // integrate() leaves an expression unsimplified. These are meaningless to the
     // user and should be treated as "no closed form found".
     if (/^(result\d+|%r\d+|%t\d+|%c\d+)$/.test(maxima.trim())) return undefined;
-    return {
-      maxima,
-      tex: displayTex || tex,
-    };
+    return { maxima, tex };
   }
 
   private buildFuncInput(segments: PiecewiseSegment[]): string {
