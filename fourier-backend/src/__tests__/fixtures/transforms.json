@@ -3813,5 +3813,207 @@
             "fCombined": "(k*(delta(t+b)*%e^(%i*theta)+delta(t-b)*%e^-(%i*theta)))/2",
             "params": ["k", "b", "theta"]
         }
+    },
+
+    {
+        "id": "AC01",
+        "type": "ft",
+        "description": "FT anti-causal numérica: FT(e^{2t}·u(-t)) = 1/(2-iω)",
+        "input": {
+            "segments": [{ "expression": "exp(2*t)*u(-t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "1/(2-%i*w)"
+        }
+    },
+    {
+        "id": "AC02",
+        "type": "ft",
+        "description": "FT anti-causal simbólica: FT(e^{at}·u(-t)) = 1/(a-iω), a>0",
+        "input": {
+            "segments": [{ "expression": "exp(a*t)*u(-t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "1/(a-%i*w)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "AC03",
+        "type": "ft",
+        "description": "FT anti-causal con coseno: FT(e^{2t}·cos(3t)·u(-t)) = (2-iω)/((2-iω)²+9)",
+        "input": {
+            "segments": [{ "expression": "exp(2*t)*cos(3*t)*u(-t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(2-%i*w)/((2-%i*w)^2+9)"
+        }
+    },
+    {
+        "id": "AC04",
+        "type": "ft",
+        "description": "FT anti-causal con seno: FT(e^{2t}·sin(3t)·u(-t)) = -3/((2-iω)²+9)",
+        "input": {
+            "segments": [{ "expression": "exp(2*t)*sin(3*t)*u(-t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(3/((2-%i*w)^2+9))"
+        }
+    },
+    {
+        "id": "AC05",
+        "type": "ift",
+        "description": "IFT anti-causal numérica: IFT(1/(2-iω)) = e^{2t}·u(-t)",
+        "input": {
+            "segments": [{ "expression": "1/(2-%i*w)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "u(-t)*%e^(2*t)"
+        }
+    },
+    {
+        "id": "AC06",
+        "type": "ift",
+        "description": "IFT anti-causal simbólica: IFT(1/(a-iω)) = e^{at}·u(-t), a>0",
+        "input": {
+            "segments": [{ "expression": "1/(a-%i*w)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "u(-t)*%e^(a*t)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "AC07",
+        "type": "ift",
+        "description": "IFT anti-causal con coseno: IFT((2-iω)/((2-iω)²+9)) = e^{2t}·cos(3t)·u(-t)",
+        "input": {
+            "segments": [{ "expression": "(2-%i*w)/((2-%i*w)^2+9)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "u(-t)*%e^(2*t)*cos(3*t)"
+        }
+    },
+    {
+        "id": "AC08",
+        "type": "ift",
+        "description": "IFT anti-causal con seno: IFT(-3/((2-iω)²+9)) = e^{2t}·sin(3t)·u(-t)",
+        "input": {
+            "segments": [{ "expression": "-(3/((2-%i*w)^2+9))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "u(-t)*%e^(2*t)*sin(3*t)"
+        }
+    },
+
+    {
+        "id": "TH01",
+        "type": "ft",
+        "description": "FT trig/hiperbólica: FT(sin(3t)/sinh(t)) = (π/2)·(tanh(π(w+3)/2)+tanh(π(3-w)/2))",
+        "input": {
+            "segments": [{ "expression": "sin(3*t)/sinh(t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(tanh((%pi*(w+3))/2)+tanh((%pi*(3-w))/2)))/2"
+        }
+    },
+    {
+        "id": "TH02",
+        "type": "ft",
+        "description": "FT trig/hiperbólica simbólica: FT(sin(at)/sinh(bt)) = (π/(2b))·(tanh(π(w+a)/(2b))+tanh(π(a-w)/(2b))), a,b>0",
+        "input": {
+            "segments": [{ "expression": "sin(a*t)/sinh(b*t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(tanh((%pi*(w+a))/(2*b))+tanh((%pi*(a-w))/(2*b))))/(2*b)",
+            "params": ["a", "b"]
+        }
+    },
+    {
+        "id": "TH03",
+        "type": "ft",
+        "description": "FT trig/hiperbólica: FT(cos(2t)/cosh(t)) = (π/2)·(1/cosh(π(w+2)/2)+1/cosh(π(w-2)/2))",
+        "input": {
+            "segments": [{ "expression": "cos(2*t)/cosh(t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(1/cosh((%pi*(w+2))/2)+1/cosh((%pi*(w-2))/2)))/2"
+        }
+    },
+    {
+        "id": "TH04",
+        "type": "ft",
+        "description": "FT trig/hiperbólica simbólica: FT(cos(at)/cosh(bt)) = (π/(2b))·(1/cosh(π(w+a)/(2b))+1/cosh(π(w-a)/(2b))), a,b>0",
+        "input": {
+            "segments": [{ "expression": "cos(a*t)/cosh(b*t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*(1/cosh((%pi*(w+a))/(2*b))+1/cosh((%pi*(w-a))/(2*b))))/(2*b)",
+            "params": ["a", "b"]
+        }
+    },
+    {
+        "id": "TH05",
+        "type": "ift",
+        "description": "IFT round-trip tanh-par: IFT((π/2)·(tanh(π(w+3)/2)+tanh(π(3-w)/2))) = sin(3t)/sinh(t)",
+        "input": {
+            "segments": [{ "expression": "(%pi*(tanh((%pi*(w+3))/2)+tanh((%pi*(3-w))/2)))/2", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "sin(3*t)/sinh(t)"
+        }
+    },
+    {
+        "id": "TH06",
+        "type": "ift",
+        "description": "IFT round-trip sech-par: IFT((π/2)·(1/cosh(π(w+2)/2)+1/cosh(π(w-2)/2))) = cos(2t)/cosh(t)",
+        "input": {
+            "segments": [{ "expression": "(%pi*(1/cosh((%pi*(w+2))/2)+1/cosh((%pi*(w-2))/2)))/2", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "cos(2*t)/cosh(t)"
+        }
     }
 ]
