@@ -804,28 +804,6 @@ IFT_raw(F_expr, w_var, t_var, a, b) := block(
     raw
 )$
 
-/* IFT_anticausal_grows_p: returns true if f(t) grows as t → -∞.
-   Used to detect the degenerate case where all poles of F(ω) are in the upper
-   half-plane but the corresponding residues produce exponentials that grow
-   (rather than decay) for t < 0, meaning the IFT does not exist classically.
-   Strategy: sample |f| at two points deep in the negative-t region.
-   If |f(-100)| > |f(-1)|, the function grows → IFT is non-physical. */
-IFT_anticausal_grows_p(f_expr, t_var) := block(
-    [_v1, _v2, _f1, _f2],
-    /* Substitute numeric values; errcatch guards against overflow/Maxima errors */
-    _v1 : errcatch(abs(float(subst(t_var = -1,   f_expr)))),
-    _v2 : errcatch(abs(float(subst(t_var = -100, f_expr)))),
-    if _v1 = [] or _v2 = [] then return(false),   /* can't determine — be permissive */
-    _f1 : first(_v1),
-    _f2 : first(_v2),
-    /* NaN/false can appear if Maxima can't evaluate; treat as unknown → permissive */
-    if not numberp(_f1) or not numberp(_f2) then return(false),
-    /* If both are (near) zero the function is the zero function — fine */
-    if _f1 < 1e-300 and _f2 < 1e-300 then return(false),
-    /* Grows if value at t=-100 exceeds value at t=-1 */
-    is(_f2 > _f1)
-)$
-
 IFT_simplify(expr) := block(
     [e, ef],
     e  : ratsimp(rectform(expr)),
@@ -4338,16 +4316,8 @@ IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
         then ratsimp(sgn(t_var) * subst(t_var = abs(t_var), f_pos))
         else if ratsimp(f_neg) = 0 then f_pos * u(t_var)
         /* f_pos = 0: signal is non-zero only for t < 0 (anti-causal).
-           Combined form must gate on t < 0, i.e. u(-t), NOT u(t).
-           Guard: verify f_neg actually decays as t → -∞.  If it grows, the
-           IFT does not exist classically (all poles in the same half-plane
-           with the wrong orientation, e.g. both in UHP but exponents negative
-           → terms blow up for t < 0).  Return false so exists = false. */
-        else if ratsimp(f_pos) = 0 then (
-            if IFT_anticausal_grows_p(f_neg, t_var)
-            then false
-            else f_neg * u(-t_var)
-        )
+           Combined form must gate on t < 0, i.e. u(-t), NOT u(t). */
+        else if ratsimp(f_pos) = 0 then f_neg * u(-t_var)
         else false,
 
     _ift_reserved: [t_var, w_var, 'u, 'delta, 'sgn],
