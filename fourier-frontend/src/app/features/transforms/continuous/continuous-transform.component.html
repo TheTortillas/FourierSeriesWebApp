@@ -611,6 +611,28 @@
                 </svg>
               </button>
             }
+
+            <!-- Export test case (dev tool) -->
+            @if (hasComputedResult()) {
+              <button
+                type="button"
+                (click)="exportTestCase()"
+                title="Exportar caso de prueba (JSON para tests)"
+                class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded transition-colors flex items-center justify-center"
+                [class]="exportCopied() ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'"
+              >
+                @if (exportCopied()) {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6" />
+                    <polyline points="8 6 2 12 8 18" />
+                  </svg>
+                }
+              </button>
+            }
           </div>
           @if (hasComputedResult() && showCanvasSettings()) {
             <div

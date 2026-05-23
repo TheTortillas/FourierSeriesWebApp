@@ -548,24 +548,24 @@
   },
   "seo": {
     "home": {
-      "title": "Fourier Series and Transform Calculator",
-      "description": "Symbolic Fourier series and transform calculator. Exact coefficients, real-time graphs and support for piecewise functions."
+      "title": "Fourier Transform Calculator — Series, IFT and DFT",
+      "description": "Free online Fourier transform calculator. Compute the Fourier transform, inverse Fourier transform, Fourier series, and DFT symbolically. Exact coefficients, real-time graphs and piecewise function support."
     },
     "calculator": {
-      "title": "Fourier Series Calculator",
-      "description": "Calculate trigonometric, complex and half-range Fourier series with exact symbolic coefficients and interactive graphical reconstruction."
+      "title": "Fourier Series Calculator with Interactive Graph",
+      "description": "Calculate trigonometric, complex, and half-range Fourier series with exact symbolic coefficients. Animated graphical reconstruction, Parseval identity, and support for discontinuous piecewise functions."
     },
     "transforms": {
-      "title": "Continuous Fourier Transform Calculator",
-      "description": "Calculate the continuous Fourier transform and its inverse symbolically. Visualize the amplitude and phase spectrum in real time."
+      "title": "Fourier Transform Calculator — Direct and Inverse",
+      "description": "Calculate the Fourier transform and inverse Fourier transform symbolically. Visualize amplitude and phase spectrum in real time. Supports piecewise functions, complex inputs, and all standard conventions."
     },
     "dft": {
-      "title": "DFT — Discrete Fourier Transform Calculator",
-      "description": "Calculate the DFT with amplitude and phase spectrum visualization and signal reconstruction via epicycles."
+      "title": "DFT Calculator — Discrete Fourier Transform with Epicycles",
+      "description": "Calculate the DFT and FFT with amplitude and phase spectrum visualization. Reconstruct signals with animated epicycles. Perfect for signal processing and frequency analysis."
     },
     "about": {
-      "title": "About",
-      "description": "Discover everything Fourier Web Calculator can do: Fourier series with Parseval's identity, continuous and discrete transforms, epicycles, math keyboard and more."
+      "title": "About Fourier Web Calculator",
+      "description": "Fourier Web Calculator: free tool for computing continuous Fourier transforms, inverse transforms, Fourier series, DFT and epicycles. Exact symbolic results with real-time visualization."
     }
   },
   "dev": {

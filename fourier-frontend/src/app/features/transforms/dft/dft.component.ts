@@ -756,7 +756,7 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.seo.setPage('seo.dft.title', 'seo.dft.description');
+    this.seo.setPage('seo.dft.title', 'seo.dft.description', 'DFT calculator, discrete Fourier transform, FFT, epicycles, spectrum analyzer, calculadora DFT');
     const encoded = this.route.snapshot.queryParamMap.get('s');
     if (encoded) {
       void this._restoreState(encoded).then((ok) => {

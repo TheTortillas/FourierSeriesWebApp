@@ -548,24 +548,24 @@
   },
   "seo": {
     "home": {
-      "title": "Calculadora de Series y Transformadas de Fourier",
-      "description": "Calculadora simbólica de series y transformadas de Fourier. Coeficientes exactos, gráficas en tiempo real y soporte para funciones a trozos."
+      "title": "Calculadora de Transformada de Fourier y Series de Fourier",
+      "description": "Calculadora simbólica de transformada de Fourier, transformada inversa y series de Fourier. Coeficientes exactos, gráficas interactivas en tiempo real y soporte para funciones definidas por tramos. Gratuita y en línea."
     },
     "calculator": {
-      "title": "Calculadora de Series de Fourier",
-      "description": "Calcula series de Fourier trigonométricas, complejas y de medio rango con coeficientes simbólicos exactos y reconstrucción gráfica interactiva."
+      "title": "Calculadora de Series de Fourier con Gráfica Interactiva",
+      "description": "Calcula series de Fourier trigonométricas, complejas y de medio rango con coeficientes simbólicos exactos. Reconstrucción gráfica animada, identidad de Parseval y soporte para funciones discontinuas."
     },
     "transforms": {
-      "title": "Calculadora de Transformada de Fourier Continua",
-      "description": "Calcula la transformada de Fourier continua y su inversa de forma simbólica. Visualiza el espectro de amplitud y fase en tiempo real."
+      "title": "Calculadora de Transformada de Fourier — Directa e Inversa",
+      "description": "Calcula la transformada de Fourier y la transformada inversa de Fourier de forma simbólica. Visualiza el espectro de amplitud y fase. Compatible con funciones a trozos, convolución, series de Taylor y más."
     },
     "dft": {
-      "title": "Calculadora de DFT — Transformada Discreta de Fourier",
-      "description": "Calcula la DFT con visualización de espectro de amplitud, fase y reconstrucción de señales mediante epiciclos."
+      "title": "Calculadora de DFT — Transformada Discreta de Fourier con Epiciclos",
+      "description": "Calcula la DFT y la FFT con visualización del espectro de amplitud y fase. Reconstruye señales con epiciclos animados. Ideal para procesamiento de señales y análisis de frecuencias."
     },
     "about": {
-      "title": "Acerca de",
-      "description": "Descubre todo lo que puedes hacer con Fourier Web Calculator: series de Fourier con identidad de Parseval, transformadas continuas y discretas, epicíclos, teclado matemático y más."
+      "title": "Acerca de Fourier Web Calculator",
+      "description": "Fourier Web Calculator: herramienta gratuita para calcular transformadas de Fourier continuas, inversas, series de Fourier, DFT y epiciclos. Resultados simbólicos exactos con visualización en tiempo real."
     }
   },
   "dev": {

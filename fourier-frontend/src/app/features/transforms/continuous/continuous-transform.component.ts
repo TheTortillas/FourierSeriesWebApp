@@ -248,7 +248,11 @@ export class ContinuousTransformComponent implements OnInit {
   private readonly intervalValidator = inject(LatexToMaximaService);
 
   ngOnInit(): void {
-    this.seo.setPage('seo.transforms.title', 'seo.transforms.description');
+    this.seo.setPage(
+      'seo.transforms.title',
+      'seo.transforms.description',
+      'Fourier transform calculator, inverse Fourier transform, calculadora transformada de Fourier, transformada inversa de Fourier, IFT, FT, piecewise, symbolic',
+    );
   }
   readonly plotter = inject(PlottingService);
   private readonly drawingUtils = inject(DrawingUtilsService);
@@ -1528,6 +1532,80 @@ export class ContinuousTransformComponent implements OnInit {
     } catch {
       // clipboard not available
     }
+  }
+
+  // ── Test-case export ────────────────────────────────────────────────────────
+  readonly exportCopied = signal(false);
+
+  exportTestCase(): void {
+    const mode = this.mode();
+    const ft   = this.ftResult();
+    const ift  = this.iftResult();
+    const segs = this.segments();
+    const intV = this.intVar();
+    const trV  = this.transVar();
+    const conv = this.convention();
+
+    if (!ft && !ift) return;
+
+    // Build segment list in fixture format
+    const segments = segs.map(s => ({
+      expression: s.expression,
+      from: s.from,
+      to: s.to,
+    }));
+
+    let testCase: Record<string, unknown>;
+
+    if (mode === 'ft' && ft) {
+      testCase = {
+        id: 'XX00',
+        type: 'FT',
+        convention: conv,
+        intVar: intV,
+        transVar: trV,
+        segments,
+        expected: {
+          exists: ft.exists,
+          ...(ft.F?.maxima         ? { F:        ft.F.maxima }        : {}),
+          ...(ft.realPart?.maxima  ? { realPart: ft.realPart.maxima } : {}),
+          ...(ft.imagPart?.maxima  ? { imagPart: ft.imagPart.maxima } : {}),
+        },
+      };
+    } else if (mode === 'ift' && ift) {
+      testCase = {
+        id: 'XX00',
+        type: 'IFT',
+        convention: conv,
+        intVar: intV,
+        transVar: trV,
+        segments,
+        expected: {
+          exists: ift.exists,
+          ...(ift.fCombined?.maxima  ? { fCombined:  ift.fCombined.maxima }  : {}),
+          ...(ift.fPositive?.maxima  ? { fPositive:  ift.fPositive.maxima }  : {}),
+          ...(ift.fNegative?.maxima  ? { fNegative:  ift.fNegative.maxima }  : {}),
+          ...(ift.fOutUForm?.maxima  ? { fOutUForm:  ift.fOutUForm.maxima }   : {}),
+        },
+      };
+    } else {
+      return;
+    }
+
+    const json = JSON.stringify(testCase, null, 2);
+
+    // Print to browser console for easy copy
+    console.group('📋 Test case export');
+    console.log(json);
+    console.groupEnd();
+
+    // Also copy to clipboard
+    navigator.clipboard.writeText(json).then(() => {
+      this.exportCopied.set(true);
+      setTimeout(() => this.exportCopied.set(false), 2500);
+    }).catch(() => {
+      // clipboard unavailable — user can copy from console
+    });
   }
 
   toggleFullscreen(): void {
