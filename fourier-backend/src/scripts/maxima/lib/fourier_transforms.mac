@@ -607,54 +607,11 @@ FT_raw(f_expr, t_var, w_var, a, b) := block(
     raw
 )$
 
-/* FT_collect_ci_neg_args: collect all negated Ci arguments in expr.
-   Returns a list of expressions u such that Ci(-u) appears in expr. */
-FT_collect_ci_neg_args(expr) := block(
-    [_a, _sub, _rest],
-    if atom(expr) then return([]),
-    if is(op(expr) = 'expintegral_ci) then (
-        _a: first(args(expr)),
-        if not atom(_a) and is(op(_a) = "-") and length(args(_a)) = 1 then
-            [- first(args(_a))]   /* u such that arg = -u */
-        else
-            []
-    ) else (
-        /* recurse over all sub-expressions and merge */
-        _rest: [],
-        for _sub in args(expr) do
-            _rest: append(_rest, FT_collect_ci_neg_args(_sub)),
-        _rest
-    )
-)$
-
-/* FT_rewrite_ci_neg: apply Ci(-x) → Ci(x) + i·π via subst.
-   Uses the branch-cut identity Ci(-u) = Ci(u) + i*pi (u > 0).
-   Maxima's integrator produces Ci(-u) when integration limits are fractional
-   (e.g. a/2); the i*pi terms cancel after subst but NOT after map-based rewrite
-   because Maxima re-normalizes -(-u) → u during tree traversal. */
-FT_rewrite_ci_neg(expr) := block(
-    [_negs, _subs, _u],
-    _negs: FT_collect_ci_neg_args(expr),
-    if _negs = [] then return(expr),
-    /* build substitution list: Ci(-u) → Ci(u) + i*pi for each unique u */
-    _subs: [],
-    for _u in _negs do
-        _subs: append(_subs, [expintegral_ci(-_u) = expintegral_ci(_u) + %i*%pi]),
-    subst(_subs, expr)
-)$
-
 FT_simplify(expr) := block(
-    [e, e2, ef],
-    /* Apply Ci branch-cut identity before ratsimp so i*pi terms cancel.
-       subst replaces Ci(-u) as a whole unit; ratsimp then cancels i*Ci(u)
-       with -i*(Ci(u)+i*pi) = -i*Ci(u) + pi, leaving only the Si terms. */
-    e  : if freeof('expintegral_ci, expr) then expr
-         else errcatch(FT_rewrite_ci_neg(expr)),
-    e  : if listp(e) and e # [] then first(e) else expr,
-    /* Standard simplification pipeline */
-    e2 : ratsimp(rectform(e)),
-    ef : errcatch(factor(e2)),
-    if ef # [] then first(ef) else e2
+    [e, ef],
+    e  : ratsimp(rectform(expr)),
+    ef : errcatch(factor(e)),
+    if ef # [] then first(ef) else e
 )$
 
 FT_exists(expr) :=
