@@ -4102,5 +4102,65 @@
             "fCombined": "k/cosh(b*t)",
             "params": ["k", "b"]
         }
+    },
+
+    {
+        "id": "SE07",
+        "type": "ft",
+        "description": "FT sech directo: FT(sech(t)) = FT(1/cosh(t)) = π/cosh(πω/2) — vía FT_normalize_hyp",
+        "input": {
+            "segments": [{ "expression": "sech(t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi/cosh((%pi*w)/2)"
+        }
+    },
+
+    {
+        "id": "SE08",
+        "type": "ft",
+        "description": "FT sech escalado directo: FT(sech(2t)) = (π/2)/cosh(πω/4) — vía FT_normalize_hyp",
+        "input": {
+            "segments": [{ "expression": "sech(2*t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi/(2*cosh((%pi*w)/4))"
+        }
+    },
+
+    {
+        "id": "SE09",
+        "type": "ft",
+        "description": "FT 3·sech(5t) directo: FT(3*sech(5t)) = (3π/5)/cosh(πω/10) — vía FT_normalize_hyp",
+        "input": {
+            "segments": [{ "expression": "3*sech(5*t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(3*%pi)/(5*cosh((%pi*w)/10))"
+        }
+    },
+
+    {
+        "id": "SE10",
+        "type": "ift",
+        "description": "IFT sech directo: IFT(sech(πω/2)) = IFT(1/cosh(πω/2)) = 1/(π·cosh(t)) — vía FT_normalize_hyp",
+        "input": {
+            "segments": [{ "expression": "sech((%pi*w)/2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "1/(%pi*cosh(t))"
+        }
     }
 ]
