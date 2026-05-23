@@ -607,11 +607,31 @@ FT_raw(f_expr, t_var, w_var, a, b) := block(
     raw
 )$
 
-FT_simplify(expr) := block(
-    [e, ef],
+/* compact_iw: reduce denominator degree by substituting s=%i*w_var.
+   Example: (1-%i*w)/(w^2+1)  ->  1/(%i*w+1)
+   Only applied when the denominator polynomial degree strictly decreases,
+   guaranteeing the result is algebraically equivalent and simpler.
+   wv  — the transform variable (same as w_var in the calling FT/IFT scope). */
+compact_iw(e, wv) := block([_s, _simplified, _back, _deg_e, _deg_back],
+    _simplified : errcatch(ratsimp(subst([wv = -_s*%i], e))),
+    if _simplified = [] then return(e),
+    _simplified : first(_simplified),
+    _back : errcatch(ratsimp(subst([_s = %i*wv], _simplified))),
+    if _back = [] then return(e),
+    _back : first(_back),
+    _deg_e    : hipow(expand(denom(e)),     wv),
+    _deg_back : hipow(expand(denom(_back)), wv),
+    if _deg_back < _deg_e then _back else e
+)$
+
+FT_simplify(expr, wv) := block(
+    [e, ef, ec],
     e  : ratsimp(rectform(expr)),
     ef : errcatch(factor(e)),
-    if ef # [] then first(ef) else e
+    e  : if ef # [] then first(ef) else e,
+    /* Try to reduce denominator degree via s=%i*wv substitution */
+    ec : errcatch(compact_iw(e, wv)),
+    if ec # [] then first(ec) else e
 )$
 
 FT_exists(expr) :=
@@ -3988,7 +4008,7 @@ FT(FUNC_INPUT, t_var, w_var) := block(
                                             f_base: f_base + apply("+", other_terms),
                                         contrib_p: FT_raw(f_base, t_var, w_var, a_lim, b_lim),
                                         if contrib_p # 'failed then (
-                                            F: errcatch(FT_simplify(contrib_p)),
+                                            F: errcatch(FT_simplify(contrib_p, w_var)),
                                             F: if F = [] then contrib_p else first(F),
                                             F_real: if freeof(%i,F) then F
                                                     else ratsimp(realpart(F)),
@@ -4062,7 +4082,7 @@ FT(FUNC_INPUT, t_var, w_var) := block(
         ),
         /* solo aceptar si procesamos TODOS los tramos */
         if all_ok and processed = n_orig then (
-            F: errcatch(FT_simplify(F_acum2)),
+            F: errcatch(FT_simplify(F_acum2, w_var)),
             F: if F = [] then F_acum2 else first(F),
             F_real: if freeof(%i,F) then F else ratsimp(realpart(F)),
             F_imag: if freeof(%i,F) then 0 else ratsimp(imagpart(F)),
@@ -4096,7 +4116,7 @@ FT(FUNC_INPUT, t_var, w_var) := block(
             else F_acum : F_acum + contrib
         ),
 
-        F : errcatch(FT_simplify(F_acum)),
+        F : errcatch(FT_simplify(F_acum, w_var)),
         F : if F = [] then F_acum else first(F),
 
         if not freeof('expintegral_shi, F) or
