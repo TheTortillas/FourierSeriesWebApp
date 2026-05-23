@@ -5120,5 +5120,435 @@
             "transVar": "w"
         },
         "expected": { "exists": true, "F": "2*%pi*delta(w)" }
+    },
+
+    {
+        "id": "BI01",
+        "type": "ft",
+        "description": "FT rect: 1 sobre [-1,1] → 2·sin(ω)/ω (sinc)",
+        "input": {
+            "segments": [{ "expression": "1", "from": "-1", "to": "1" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": { "exists": true, "F": "2*sin(w)/w" }
+    },
+    {
+        "id": "BI02",
+        "type": "ft",
+        "description": "FT rect parametrizado: 1 sobre [-a,a] → 2·sin(aω)/ω",
+        "input": {
+            "segments": [{ "expression": "1", "from": "-a", "to": "a" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": { "exists": true, "F": "2*sin(a*w)/w", "params": ["a"] }
+    },
+    {
+        "id": "BI03",
+        "type": "ft",
+        "description": "FT sin(πt)/(πt) sobre [-1,1] — resultado en términos de Si(x)",
+        "input": {
+            "segments": [{ "expression": "sin(%pi*t)/(%pi*t)", "from": "-1", "to": "1" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(expintegral_si(w+%pi)-expintegral_si(w-%pi))/%pi"
+        }
+    },
+    {
+        "id": "BI04",
+        "type": "ft",
+        "description": "FT sin(πt)/(πt) sobre [-a,a] parametrizado — Si con parámetro",
+        "input": {
+            "segments": [{ "expression": "sin(%pi*t)/(%pi*t)", "from": "-a", "to": "a" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(expintegral_si(a*w+%pi*a)-expintegral_si(a*w-%pi*a))/%pi",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "BI05",
+        "type": "ft",
+        "description": "FT sin(t)/t sobre [-π,π] — sinc en intervalo simétrico con Si(πω±π)",
+        "input": {
+            "segments": [{ "expression": "sin(t)/t", "from": "-%pi", "to": "%pi" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "expintegral_si(%pi*w+%pi)-expintegral_si(%pi*w-%pi)"
+        }
+    },
+    {
+        "id": "BI06",
+        "type": "ft",
+        "description": "FT sin(t)/t sobre [-a,a] parametrizado — Si combinada",
+        "input": {
+            "segments": [{ "expression": "sin(t)/t", "from": "-a", "to": "a" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "expintegral_si(a*w+a)-expintegral_si(a*w-a)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "BI07",
+        "type": "ft",
+        "description": "FT sin(2t)/t sobre [-a,a] — Si con frecuencia doble",
+        "input": {
+            "segments": [{ "expression": "sin(2*t)/t", "from": "-a", "to": "a" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "expintegral_si(a*w+2*a)-expintegral_si(a*w-2*a)",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "BI08",
+        "type": "ft",
+        "description": "FT cos(πt) sobre [-1,1] — par coseno acotado",
+        "input": {
+            "segments": [{ "expression": "cos(%pi*t)", "from": "-1", "to": "1" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-2*w*sin(w)/(w^2-%pi^2)"
+        }
+    },
+    {
+        "id": "BI09",
+        "type": "ft",
+        "description": "FT 1-t² sobre [-1,1] — parábola acotada",
+        "input": {
+            "segments": [{ "expression": "1-t^2", "from": "-1", "to": "1" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(4*sin(w)-4*w*cos(w))/w^3"
+        }
+    },
+    {
+        "id": "BI10",
+        "type": "ft",
+        "description": "FT |t| sobre [-1,1] — valor absoluto acotado",
+        "input": {
+            "segments": [{ "expression": "abs(t)", "from": "-1", "to": "1" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(2*w*sin(w)+2*cos(w)-2)/w^2"
+        }
+    },
+    {
+        "id": "BI11",
+        "type": "ft",
+        "description": "FT sin²(t) sobre [-π,π] — cuadrado sinusoidal acotado",
+        "input": {
+            "segments": [{ "expression": "sin(t)^2", "from": "-%pi", "to": "%pi" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-4*sin(%pi*w)/(w^3-4*w)"
+        }
+    },
+    {
+        "id": "BI12",
+        "type": "ft",
+        "description": "FT triángulo bilineal: t en [0,1] + (2-t) en [1,2]",
+        "input": {
+            "segments": [
+                { "expression": "t",   "from": "0", "to": "1" },
+                { "expression": "2-t", "from": "1", "to": "2" }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%i*sin(2*w)-cos(2*w)-2*%i*sin(w)+2*cos(w)-1)/w^2"
+        }
+    },
+    {
+        "id": "BI13",
+        "type": "ft",
+        "description": "FT e^{-2t} sobre [0,3] — exponencial truncada",
+        "input": {
+            "segments": [{ "expression": "exp(-2*t)", "from": "0", "to": "3" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "((w+2*%i)*sin(3*w)+(%i*w-2)*cos(3*w)-%e^6*%i*w+2*%e^6)/(%e^6*w^2+4*%e^6)"
+        }
+    },
+    {
+        "id": "BI14",
+        "type": "ft",
+        "description": "FT sin(πt) sobre [0,2] — semiperiodo de seno",
+        "input": {
+            "segments": [{ "expression": "sin(%pi*t)", "from": "0", "to": "2" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%i*%pi*sin(2*w)-%pi*cos(2*w)+%pi)/(w^2-%pi^2)"
+        }
+    },
+    {
+        "id": "BI15",
+        "type": "ft",
+        "description": "FT rampa (2-t) sobre [0,2] — función rampa descendente",
+        "input": {
+            "segments": [{ "expression": "2-t", "from": "0", "to": "2" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%i*sin(2*w)-cos(2*w)-2*%i*w+1)/w^2"
+        }
+    },
+    {
+        "id": "BI16",
+        "type": "ft",
+        "description": "FT t² sobre [-1,1] — polinomio par acotado",
+        "input": {
+            "segments": [{ "expression": "t^2", "from": "-1", "to": "1" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "((2*w^2-4)*sin(w)+4*w*cos(w))/w^3"
+        }
+    },
+    {
+        "id": "BI17",
+        "type": "ft",
+        "description": "FT t sobre [-a,a] — función impar acotada (solo parte imaginaria)",
+        "input": {
+            "segments": [{ "expression": "t", "from": "-a", "to": "a" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-2*%i*(sin(a*w)-a*w*cos(a*w))/w^2",
+            "params": ["a"]
+        }
+    },
+    {
+        "id": "BI18",
+        "type": "ft",
+        "description": "FT cos(t) sobre [-π,π] — coseno acotado en banda",
+        "input": {
+            "segments": [{ "expression": "cos(t)", "from": "-%pi", "to": "%pi" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-2*w*sin(%pi*w)/(w^2-1)"
+        }
+    },
+    {
+        "id": "BI19",
+        "type": "ft",
+        "description": "FT e^{-t}u(t) + e^{t}u(-t) bilateral = 2/(1+ω²)",
+        "input": {
+            "segments": [
+                { "expression": "exp(-t)", "from": "0",    "to": "inf"  },
+                { "expression": "exp(t)",  "from": "minf", "to": "0"    }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "2/(w^2+1)"
+        }
+    },
+    {
+        "id": "BI20",
+        "type": "ft",
+        "description": "FT e^{-a|t|} bilateral simbólico = 2a/(a²+ω²)",
+        "input": {
+            "segments": [
+                { "expression": "exp(-a*t)", "from": "0",    "to": "inf"  },
+                { "expression": "exp(a*t)",  "from": "minf", "to": "0"    }
+            ],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "2*a/(a^2+w^2)",
+            "params": ["a"]
+        }
+    },
+
+    {
+        "id": "BI21",
+        "type": "ift",
+        "description": "IFT 2·sin(ω)/ω → rect(t) sobre [-1,1]",
+        "input": {
+            "segments": [{ "expression": "2*sin(w)/w", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(sgn(t+1)-sgn(t-1))/2"
+        }
+    },
+    {
+        "id": "BI22",
+        "type": "ift",
+        "description": "IFT 2·sin(3ω)/ω → rect sobre [-3,3]",
+        "input": {
+            "segments": [{ "expression": "2*sin(3*w)/w", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "(sgn(t+3)-sgn(t-3))/2"
+        }
+    },
+    {
+        "id": "BI23",
+        "type": "ift",
+        "description": "IFT e^{-|ω|} → Lorentziana 1/(π(1+t²))",
+        "input": {
+            "segments": [{ "expression": "exp(-abs(w))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "1/(%pi*(t^2+1))"
+        }
+    },
+    {
+        "id": "BI24",
+        "type": "ift",
+        "description": "IFT e^{-ω²/2} → Gaussiana normalizada e^{-t²/2}/√(2π)",
+        "input": {
+            "segments": [{ "expression": "exp(-w^2/2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "exp(-t^2/2)/sqrt(2*%pi)"
+        }
+    },
+    {
+        "id": "BI25",
+        "type": "ift",
+        "description": "IFT e^{-2ω²} → Gaussiana escalada e^{-t²/8}/(2^{3/2}·√π)",
+        "input": {
+            "segments": [{ "expression": "exp(-2*w^2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "exp(-t^2/8)/(2^(3/2)*sqrt(%pi))"
+        }
+    },
+    {
+        "id": "BI26",
+        "type": "ift",
+        "description": "IFT 1/(1+ω²) → Lorentziana bilateral e^{-|t|}/2",
+        "input": {
+            "segments": [{ "expression": "1/(1+w^2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "exp(-abs(t))/2"
+        }
+    },
+    {
+        "id": "BI27",
+        "type": "ift",
+        "description": "IFT π/(ω²+4) = (π/4)·e^{-2|t|} — Lorentziana escalada",
+        "input": {
+            "segments": [{ "expression": "%pi/(w^2+4)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "%pi*exp(-2*abs(t))/4"
+        }
+    },
+    {
+        "id": "BI28",
+        "type": "ift",
+        "description": "IFT 2/(iω+1)² = 2t·e^{-t}·u(t) — doble polo causal escalado",
+        "input": {
+            "segments": [{ "expression": "2/(%i*w+1)^2", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "2*t*exp(-t)*u(t)"
+        }
+    },
+    {
+        "id": "BI29",
+        "type": "ift",
+        "description": "IFT 1/(iω+2)² + 1/(iω+1) — suma de polo doble y simple",
+        "input": {
+            "segments": [{ "expression": "1/(%i*w+2)^2 + 1/(%i*w+1)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "exp(-2*t)*(%e^t+t)*u(t)"
+        }
+    },
+    {
+        "id": "BI30",
+        "type": "ift",
+        "description": "IFT 1/(ω²+4ω+8) — Lorentziana desplazada en frecuencia",
+        "input": {
+            "segments": [{ "expression": "1/(w^2+4*w+8)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "exp(-(2*abs(t))-2*%i*t)/4"
+        }
     }
 ]
