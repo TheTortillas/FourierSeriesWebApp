@@ -4345,10 +4345,14 @@ IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
            → terms blow up for t < 0).  Return false so exists = false. */
         else if ratsimp(f_pos) = 0 then (
             if IFT_anticausal_grows_p(f_neg, t_var)
-            then false
+            then (f_pos: false, f_neg: false, false)
             else f_neg * u(-t_var)
         )
         else false,
+
+    /* If IFT does not exist (growing anti-causal), all branches are false */
+    if f_pos = false and f_neg = false then
+        return([false, false, false, []]),
 
     _ift_reserved: [t_var, w_var, 'u, 'delta, 'sgn],
     _ift_ref: if f_combined # false then f_combined else f_pos + f_neg,

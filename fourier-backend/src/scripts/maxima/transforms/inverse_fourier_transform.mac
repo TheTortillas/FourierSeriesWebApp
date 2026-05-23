@@ -29,11 +29,22 @@ f_neg       : if result[2] # false then ratsimp(IFT_SCALE * result[2]) else fals
 f_combined  : if result[3] # false then ratsimp(IFT_SCALE * result[3]) else false$
 free_params : result[4]$
 
+/* IFT exists iff at least one branch was successfully computed.
+   When all branches are false, the IFT does not exist classically
+   (e.g. all poles in UHP with growing anti-causal residues). */
+ift_exists  : is(f_pos # false or f_neg # false)$
+
 has_combined : is(f_combined # false)$
 
 /* Always compute the u(t) combined form for display */
-f_out_u_form : ratsimp(f_pos*u(TRANSVAR) + f_neg*u(-TRANSVAR))$
-f_out_expr   : if has_combined then f_combined else f_out_u_form$
+f_out_u_form : if ift_exists
+               then ratsimp(
+                        (if f_pos # false then f_pos else 0)*u(TRANSVAR)
+                      + (if f_neg # false then f_neg else 0)*u(-TRANSVAR))
+               else false$
+f_out_expr   : if has_combined then f_combined
+               else if ift_exists then f_out_u_form
+               else false$
 
 /* ── Real / imaginary parts of the input F(w) for plotting ── */
 block([_i, _e, _a, _b, _gate],
@@ -113,6 +124,7 @@ f_neg_real_disp : if f_neg_real_disp = [] then f_neg_real else first(f_neg_real_
 f_neg_imag_disp : errcatch(FT_pick_display_expr_algebraic(f_neg_imag))$
 f_neg_imag_disp : if f_neg_imag_disp = [] then f_neg_imag else first(f_neg_imag_disp)$
 
+print("__IFT_EXISTS__")$         print(string(ift_exists))$
 print("__F_POS_MAXIMA__")$      print(string(f_pos))$
 print("__F_POS_TEX__")$         tex(f_pos)$
 print("__F_NEG_MAXIMA__")$      print(string(f_neg))$
