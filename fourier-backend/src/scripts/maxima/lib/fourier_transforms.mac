@@ -64,19 +64,37 @@ texput(rect, "\\operatorname{rect}")$
 FT_is_minf(x) := is(x = minf) or is(x = -inf)$
 FT_is_inf(x)  := is(x = inf)  or is(x = +inf)$
 
-/* ── FT_to_sech: rewrite 1/cosh(u) → sech(u) throughout an expression ──
+/* ── FT_to_sech: rewrite k/cosh(u) → k*sech(u) throughout an expression ──
    sech is not a Maxima built-in, so results with 1/cosh(…) render as messy
    fractions in TeX.  This traversal rewrites every occurrence to sech(…)
    so that, combined with texput(sech,"\\operatorname{sech}"), the output
-   renders cleanly.  Only the exact form 1/cosh(u) (op="/", num=1, den=cosh)
-   is replaced; other fractions are left untouched. */
+   renders cleanly.
+   Handles two cases:
+     · k/cosh(u)   (op="/", den=cosh)        → k*sech(u)
+     · k/(c*cosh(u)) (op="/", den=c*cosh)   → (k/c)*sech(u)
+   When k=1 the leading 1* is dropped by Maxima simplification. */
 FT_to_sech(e) :=
     if atom(e) then e
     else if is(op(e) = "/")
-         and is(part(e, 1) = 1)
          and not atom(part(e, 2))
          and is(op(part(e, 2)) = cosh)
-    then sech(FT_to_sech(part(part(e, 2), 1)))
+    /* k/cosh(u) → k*sech(u) */
+    then part(e, 1) * sech(FT_to_sech(part(part(e, 2), 1)))
+    else if is(op(e) = "/")
+         and not atom(part(e, 2))
+         and is(op(part(e, 2)) = "*")
+         and not every(lambda([s], freeof(cosh, s) or atom(s)), args(part(e, 2))) then block(
+        /* k/(c * cosh(u)) → (k/c)*sech(u);  extract the cosh factor from denominator */
+        [_num: part(e, 1), _cosh_arg: false, _rest_den: 1],
+        for _df in args(part(e, 2)) do (
+            if not atom(_df) and is(op(_df) = 'cosh)
+            then _cosh_arg: part(_df, 1)
+            else _rest_den: _rest_den * _df
+        ),
+        if _cosh_arg # false
+        then (_num / _rest_den) * sech(FT_to_sech(_cosh_arg))
+        else map(FT_to_sech, e)
+    )
     else map(FT_to_sech, e)$
 
 /* ── FT_to_tanh_alt: rewrite tanh(u) → sinh(2u)/(cosh(2u)+1) throughout ──
@@ -1656,6 +1674,48 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     )
                 )
             )
+        )
+    ),
+
+    /* ── k/cosh(bt) -> (kπ/b) * sech(πω/(2b))  [= (kπ/b)/cosh(πω/(2b))]
+       FT[sech(bt)](ω) = (π/b) · sech(πω/(2b))
+       Derived from the even kernel K(λ) = ∫ e^{iλt}/cosh(πt/2) dt = 2/cosh(λ),
+       or equivalently from cos(at)/cosh(bt) with a=0.
+       The result is returned as 1/cosh() for plotter compatibility; FT_to_sech
+       rewrites it to sech() notation in the TeX display stream.
+       Matches: k/cosh(b*t) or k*(1/cosh(b*t)), b>0.
+       ── */
+    if is(res = false) then block(
+        [_se_cosh, _se_coef, _se_b],
+        _se_cosh: false,
+        _se_coef: 1,
+        /* Case 1: e = 1/cosh(b*t)  →  op="/", part(e,1)=1, part(e,2)=cosh(...) */
+        if not atom(e) and is(op(e) = "/") and is(part(e, 1) = 1)
+           and not atom(part(e, 2)) and is(op(part(e, 2)) = 'cosh)
+        then _se_cosh: part(e, 2)
+        /* Case 2: e = k/cosh(b*t)  →  op="/", part(e,1)=k (atom or expr free of t), part(e,2)=cosh(...) */
+        else if not atom(e) and is(op(e) = "/")
+           and freeof(t_var, part(e, 1))
+           and not atom(part(e, 2)) and is(op(part(e, 2)) = 'cosh)
+        then (_se_coef: part(e, 1), _se_cosh: part(e, 2))
+        /* Case 3: e = k * (1/cosh(b*t))  →  op="*", one factor is 1/cosh */
+        else if not atom(e) and is(op(e) = "*") then (
+            for _s in args(e) do (
+                if not atom(_s) and is(op(_s) = "/")
+                   and is(part(_s, 1) = 1)
+                   and not atom(part(_s, 2)) and is(op(part(_s, 2)) = 'cosh)
+                then _se_cosh: part(_s, 2)
+                else if freeof(t_var, _s) then _se_coef: _se_coef * _s
+            )
+        ),
+        if is(_se_cosh # false) then (
+            _se_b: ratsimp(part(_se_cosh, 1) / t_var),
+            if freeof(t_var, _se_b) and freeof(t_var, _se_coef)
+               and is(_se_b > 0) then
+                res: [_se_coef * (%piexact / _se_b)
+                        * (1/cosh(%piexact * w_var / (2 * _se_b))),
+                      concat("k/cosh(bt) -> (kπ/b)*sech(πω/(2b)), b=",
+                             string(_se_b))]
         )
     ),
 
@@ -3430,6 +3490,45 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                               concat("IFT tanh-pair -> k*sin(at)/sinh(bt), a=",
                                      string(_th_aa), ", b=", string(_th_bb))]
                 )
+            )
+        )
+    ),
+
+    /* ── IFT of single sech: k/cosh(p*w) → (k*b/π) * sech(b*t)  [= (kb/π)/cosh(bt)]
+       Inverse of FT[sech(bt)](ω) = (π/b)*sech(πω/(2b)) = (π/b)/cosh(πω/(2b)).
+       Recognition: F_expr = coef / cosh(p*w)  with constant offset q=0 and p>0.
+       Recovers: b = π/(2p),  k = coef * b / π  so that IFT = k/cosh(bt).
+       Placed BEFORE the sech-pair handler to catch the single-term case first. */
+    if is(res = false) and not freeof(cosh, F_expr) then block(
+        [_ss_e, _ss_coef, _ss_arg, _ss_p, _ss_q, _ss_bb, _ss_kk],
+        _ss_e: errcatch(expand(F_expr)),
+        _ss_e: if _ss_e # [] then first(_ss_e) else F_expr,
+        _ss_coef: false,  _ss_arg: false,
+        /* Accept only a single fraction coef/cosh(p*w), no addition */
+        if not atom(_ss_e) and is(op(_ss_e) = "/") then block(
+            [_num: part(_ss_e, 1), _den: part(_ss_e, 2)],
+            if not atom(_den) and is(op(_den) = 'cosh)
+            then (_ss_coef: _num, _ss_arg: part(_den, 1))
+            else if not atom(_den) and is(op(_den) = "*") then (
+                _ss_coef: _num,
+                for _s in args(_den) do (
+                    if not atom(_s) and is(op(_s) = 'cosh) then _ss_arg: part(_s, 1)
+                    else _ss_coef: _ss_coef / _s
+                )
+            )
+        ),
+        if _ss_coef # false and _ss_arg # false
+           and freeof(w_var, _ss_coef) then (
+            _ss_p: ratsimp(coeff(_ss_arg, w_var, 1)),
+            _ss_q: ratsimp(coeff(_ss_arg, w_var, 0)),
+            /* Require linear in w with zero constant offset (pure sech centered at 0) */
+            if freeof(w_var, _ss_p) and ratsimp(_ss_q) = 0 and is(_ss_p > 0) then (
+                _ss_bb: ratsimp(%pi / (2 * _ss_p)),
+                _ss_kk: ratsimp(_ss_coef * _ss_bb / %pi),
+                if freeof(w_var, _ss_bb) and freeof(w_var, _ss_kk) and is(_ss_bb > 0) then
+                    res: [_ss_kk / cosh(_ss_bb * t_var),
+                          concat("IFT single-sech: k/cosh(pw) -> (kb/π)/cosh(bt), b=",
+                                 string(_ss_bb))]
             )
         )
     ),
