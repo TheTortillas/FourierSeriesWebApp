@@ -128,6 +128,11 @@ export class MathUtilsService {
       .replace(/\bacot\b/g, '_acot')
       .replace(/\basec\b/g, '_asec')
       .replace(/\bacsc\b/g, '_acsc')
+      // Hyperbolic reciprocals: sech(x)=1/cosh(x), csch(x)=1/sinh(x), coth(x)=cosh(x)/sinh(x)
+      // Must come BEFORE the plain sinh/cosh/tanh replacements (longer names first)
+      .replace(/\bsech\b/g, '_sech')
+      .replace(/\bcsch\b/g, '_csch')
+      .replace(/\bcoth\b/g, '_coth')
       .replace(/\bsinh\b/g, 'Math.sinh')
       .replace(/\bcosh\b/g, 'Math.cosh')
       .replace(/\btanh\b/g, 'Math.tanh')
@@ -247,6 +252,7 @@ export class MathUtilsService {
     const known = new Set([
       'Math', 'function', 'return', 'NaN', 'Infinity',
       '_cot', '_sec', '_csc', '_acot', '_asec', '_acsc',
+      '_sech', '_csch', '_coth',
       '_gamma', '_factorial', '_erf', '_erfc',
       '_Si', '_Ci', '_Shi', '_Chi', '_Ei', '_E1', '_li',
       'rect',
@@ -498,6 +504,9 @@ export class MathUtilsService {
     function _acot(x) { return Math.PI / 2 - Math.atan(x); }
     function _asec(x) { return Math.acos(1 / x); }
     function _acsc(x) { return Math.asin(1 / x); }
+    function _sech(x) { return 1 / Math.cosh(x); }
+    function _csch(x) { return 1 / Math.sinh(x); }
+    function _coth(x) { return Math.cosh(x) / Math.sinh(x); }
     function _gamma(x) {
       if (x <= 0 && x === Math.floor(x)) return Infinity;
       if (x < 0.5) return Math.PI / (Math.sin(Math.PI * x) * _gamma(1 - x));
