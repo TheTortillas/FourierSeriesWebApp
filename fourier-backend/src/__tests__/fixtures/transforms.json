@@ -4015,5 +4015,92 @@
             "exists": true,
             "fCombined": "cos(2*t)/cosh(t)"
         }
+    },
+
+    {
+        "id": "SE01",
+        "type": "ft",
+        "description": "FT sech auto-dual numérico: FT(1/cosh(t)) = π·sech(πω/2) = π/cosh(πω/2)",
+        "input": {
+            "segments": [{ "expression": "1/cosh(t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi/cosh((%pi*w)/2)"
+        }
+    },
+    {
+        "id": "SE02",
+        "type": "ft",
+        "description": "FT sech escalado: FT(1/cosh(2t)) = (π/2)·sech(πω/4) = π/(2·cosh(πω/4))",
+        "input": {
+            "segments": [{ "expression": "1/cosh(2*t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi/(2*cosh((%pi*w)/4))"
+        }
+    },
+    {
+        "id": "SE03",
+        "type": "ft",
+        "description": "FT sech simbólico: FT(k/cosh(bt)) = (kπ/b)·sech(πω/(2b)), k,b>0",
+        "input": {
+            "segments": [{ "expression": "k/cosh(b*t)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*k)/(b*cosh((%pi*w)/(2*b)))",
+            "params": ["k", "b"]
+        }
+    },
+    {
+        "id": "SE04",
+        "type": "ift",
+        "description": "IFT sech auto-dual numérico: IFT(π/cosh(πω/2)) = 1/cosh(t) = sech(t)",
+        "input": {
+            "segments": [{ "expression": "%pi/cosh((%pi*w)/2)", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "1/cosh(t)"
+        }
+    },
+    {
+        "id": "SE05",
+        "type": "ift",
+        "description": "IFT sech escalado: IFT(π/(2·cosh(πω/4))) = 1/cosh(2t)",
+        "input": {
+            "segments": [{ "expression": "%pi/(2*cosh((%pi*w)/4))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "1/cosh(2*t)"
+        }
+    },
+    {
+        "id": "SE06",
+        "type": "ift",
+        "description": "IFT sech simbólico: IFT((kπ/b)/cosh(πω/(2b))) = k/cosh(bt), k,b>0",
+        "input": {
+            "segments": [{ "expression": "(%pi*k)/(b*cosh((%pi*w)/(2*b)))", "from": "minf", "to": "inf" }],
+            "intVar": "w",
+            "transVar": "t"
+        },
+        "expected": {
+            "exists": true,
+            "fCombined": "k/cosh(b*t)",
+            "params": ["k", "b"]
+        }
     }
 ]
