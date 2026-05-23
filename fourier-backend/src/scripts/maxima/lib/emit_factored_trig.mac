@@ -1,0 +1,39 @@
+/* ═══════════════════════════════════════════════════════════════
+   Emite marcadores __AN_K_*__ y __BN_K_*__ para la forma factorizada.
+   Requiere: const_factor cargado, Coeff_An y Coeff_Bn definidos.
+   ═══════════════════════════════════════════════════════════════ */
+
+block(
+    [_cf_an: const_factor(factor(Coeff_An), n),
+     _cf_bn: const_factor(factor(Coeff_Bn), n)],
+    Coeff_An_K: _cf_an[1],
+    Coeff_An_Summand: _cf_an[2],
+    Coeff_Bn_K: _cf_bn[1],
+    Coeff_Bn_Summand: _cf_bn[2]
+)$
+
+/* When K_an ≠ K_bn but their ratio is a constant free of n, absorb the ratio
+   into the bn summand so both share the same K.  The frontend's kSame path then
+   renders K · Σ(sₐ·cos + s_b·sin) instead of leaving the factored tab hidden. */
+block(
+    [_ratio_wrap, _ratio],
+    if is(Coeff_An_K # 0) and is(Coeff_Bn_K # 0)
+       and freeof(n, Coeff_An_K) and freeof(n, Coeff_Bn_K) then (
+        _ratio_wrap: errcatch(factor(Coeff_Bn_K / Coeff_An_K)),
+        if _ratio_wrap # [] then (
+            _ratio: first(_ratio_wrap),
+            if freeof(n, _ratio) and _ratio # 1 then (
+                Coeff_Bn_Summand: factor(_ratio * Coeff_Bn_Summand),
+                Coeff_Bn_K: Coeff_An_K
+            )
+        )
+    )
+)$
+print("__AN_K_MAXIMA__")$        print(string(Coeff_An_K))$
+print("__AN_K_TEX__")$           tex(Coeff_An_K)$
+print("__AN_SUMMAND_MAXIMA__")$  print(string(Coeff_An_Summand))$
+print("__AN_SUMMAND_TEX__")$     tex(Coeff_An_Summand)$
+print("__BN_K_MAXIMA__")$        print(string(Coeff_Bn_K))$
+print("__BN_K_TEX__")$           tex(Coeff_Bn_K)$
+print("__BN_SUMMAND_MAXIMA__")$  print(string(Coeff_Bn_Summand))$
+print("__BN_SUMMAND_TEX__")$     tex(Coeff_Bn_Summand)$

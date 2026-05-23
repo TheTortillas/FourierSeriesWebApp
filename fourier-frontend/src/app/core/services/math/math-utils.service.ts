@@ -162,7 +162,16 @@ export class MathUtilsService {
       .replace(/\bfactorial\b/g, '_factorial')
       // Error functions — approximate via Horner series
       .replace(/\berfc\b/g, '_erfc')
-      .replace(/\berf\b/g, '_erf');
+      .replace(/\berf\b/g, '_erf')
+      // Exponential / trigonometric integral functions (Maxima names → JS helpers)
+      // Longer names first to avoid partial matches (shi before si, chi before ci)
+      .replace(/\bexpintegral_shi\b/g, '_Shi')
+      .replace(/\bexpintegral_chi\b/g, '_Chi')
+      .replace(/\bexpintegral_si\b/g, '_Si')
+      .replace(/\bexpintegral_ci\b/g, '_Ci')
+      .replace(/\bexpintegral_e1\b/g, '_E1')
+      .replace(/\bexpintegral_ei\b/g, '_Ei')
+      .replace(/\bexpintegral_li\b/g, '_li');
 
     // Maxima if(cond, then, else) → JS ternary.  Must run before nested-fn replacements.
     s = this._replaceMathIf(s);
@@ -245,6 +254,7 @@ export class MathUtilsService {
       '_cot', '_sec', '_csc', '_acot', '_asec', '_acsc',
       '_sech', '_csch', '_coth',
       '_gamma', '_factorial', '_erf', '_erfc',
+      '_Si', '_Ci', '_Shi', '_Chi', '_Ei', '_E1', '_li',
       'rect',
     ]);
     // Collect unknown function calls using nested-paren-aware finder
@@ -516,5 +526,100 @@ export class MathUtilsService {
       return x >= 0 ? y : -y;
     }
     function _erfc(x) { return 1 - _erf(x); }
+    const _EG = 0.5772156649015329;
+    function _Ei(x) {
+      if (x === 0) return -Infinity;
+      if (x > 0 && x < 6) {
+        let s = 0, t = x;
+        for (let n = 1; n <= 50; n++) {
+          s += t;
+          const tn = t * (x * n / ((n + 1) * (n + 1)));
+          if (Math.abs(tn) < 1e-13 * Math.abs(s) && n > 3) break;
+          t = tn;
+        }
+        return _EG + Math.log(x) + s;
+      }
+      if (x > 0) {
+        let s = 1, t = 1;
+        for (let n = 1; n <= 25; n++) { const tn = t * (n / x); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
+        return Math.exp(x) / x * s;
+      }
+      return NaN;
+    }
+    function _E1(x) {
+      if (x <= 0) return NaN;
+      if (x < 6) {
+        let s = 0, t = x;
+        for (let n = 1; n <= 50; n++) {
+          s += t;
+          const tn = t * (-n * x / ((n + 1) * (n + 1)));
+          if (Math.abs(tn) < 1e-13 * Math.abs(s) && n > 3) break;
+          t = tn;
+        }
+        return -_EG - Math.log(x) + s;
+      }
+      let s = 1, t = 1;
+      for (let n = 1; n <= 25; n++) { const tn = t * (-n / x); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
+      return Math.exp(-x) / x * s;
+    }
+    function _fAux(x) {
+      let s = 1, t = 1, x2 = x * x;
+      for (let n = 1; n <= 25; n++) { const tn = t * (-(2*n) * (2*n-1) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
+      return s / x;
+    }
+    function _gAux(x) {
+      let s = 1, t = 1, x2 = x * x;
+      for (let n = 1; n <= 25; n++) { const tn = t * (-(2*n+1) * (2*n) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
+      return s / (x * x);
+    }
+    function _Si(x) {
+      const a = Math.abs(x);
+      if (a < 4) {
+        let s = 0, t = x, x2 = x * x;
+        for (let n = 0; n < 30; n++) { s += t; t *= -x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3)); }
+        return s;
+      }
+      // Si is odd: Si(-x) = -Si(x), so sign wraps the entire asymptotic expression
+      return Math.sign(x) * (Math.PI / 2 - _fAux(a) * Math.cos(a) - _gAux(a) * Math.sin(a));
+    }
+    function _Ci(x) {
+      if (x <= 0) return NaN;
+      if (x < 4) {
+        let s = 0, t = -x * x / 4, x2 = x * x;
+        for (let n = 1; n <= 30; n++) { s += t; t *= -x2 * 2*n / ((2*n+2) * (2*n+2) * (2*n+1)); }
+        return _EG + Math.log(x) + s;
+      }
+      return _fAux(x) * Math.sin(x) - _gAux(x) * Math.cos(x);
+    }
+    function _Shi(x) {
+      if (x === 0) return 0;
+      const a = Math.abs(x);
+      if (a < 10) {
+        let s = 0, t = x, x2 = x * x;
+        for (let n = 0; n < 50; n++) {
+          s += t;
+          const tn = t * x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3));
+          if (Math.abs(tn) < 1e-13 * Math.abs(s) && n > 3) break;
+          t = tn;
+        }
+        return s;
+      }
+      return x > 0 ? (_Ei(x) + _E1(x)) / 2 : -(_Ei(a) + _E1(a)) / 2;
+    }
+    function _Chi(x) {
+      if (x <= 0) return NaN;
+      if (x < 10) {
+        let s = 0, t = x * x / 4, x2 = x * x;
+        for (let n = 1; n <= 50; n++) {
+          s += t;
+          const tn = t * x2 * 2*n / ((2*n+2) * (2*n+2) * (2*n+1));
+          if (Math.abs(tn) < 1e-13 * Math.abs(s) && n > 3) break;
+          t = tn;
+        }
+        return _EG + Math.log(x) + s;
+      }
+      return (_Ei(x) - _E1(x)) / 2;
+    }
+    function _li(x) { return x <= 0 ? NaN : _Ei(Math.log(x)); }
   `;
 }

@@ -1,0 +1,135 @@
+/* ═══════════════════════════════════════════════════════════════
+   Parseval – Serie Trigonométrica
+   Requiere: FUNC_INPUT, INTVAR, PERIOD, Coeff_A0, Coeff_An, Coeff_Bn, const_factor
+   Identidad: (1/T)∫|f|²dx = (a₀/2)² + (1/2)·Σ(aₙ²+bₙ²)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── LHS y término de a₀ (no dependen de n) ── */
+block(
+    [_f2_acum: 0],
+    for _i:1 thru length(FUNC_INPUT) do (
+        _f2_acum: _f2_acum + integrate(FUNC_INPUT[_i][1]^2, INTVAR,
+                                       FUNC_INPUT[_i][2], FUNC_INPUT[_i][3])
+    ),
+    Parseval_LHS: factor(ratsimp(_f2_acum / PERIOD))
+)$
+
+Parseval_LHS: if not freeof(gamma_incomplete, Parseval_LHS)
+    then block([_cl: errcatch(simplify_expint(clean_integral(Parseval_LHS, INTVAR)))],
+               if _cl = [] then Parseval_LHS else first(_cl))
+    else Parseval_LHS$
+
+/* Clean gamma_incomplete from Fourier coefficients before squaring.
+   Maxima expresses integrals like ∫sin(x)/x·cos(nx) in gamma_incomplete form with
+   imaginary factors; squaring gives negative values.  clean_integral(·, n) converts
+   them to real expintegral_si expressions so |an|² + |bn|² is correct. */
+block([_r],
+    if not freeof(gamma_incomplete, Coeff_A0) then (
+        _r: errcatch(clean_integral(Coeff_A0, n)),
+        if _r # [] then Coeff_A0: first(_r)
+    ),
+    if not freeof(gamma_incomplete, Coeff_An) then (
+        _r: errcatch(clean_integral(Coeff_An, n)),
+        if _r # [] then Coeff_An: first(_r)
+    ),
+    if not freeof(gamma_incomplete, Coeff_Bn) then (
+        _r: errcatch(clean_integral(Coeff_Bn, n)),
+        if _r # [] then Coeff_Bn: first(_r)
+    )
+)$
+
+Parseval_A0_term: factor(Coeff_A0^2)$
+
+/* ── Versión formal (sin declare(n, integer)) ──────────────────
+   El summando conserva cos(nπ)/sin(nπ) como expresiones analíticas;
+   las singularidades son removibles en esta forma, la suma empieza en n=1. */
+errcatch(assume(n > 0))$
+
+block(
+    [_an2bn2_f: factor(trigsimp(ratsimp(Coeff_An^2 + Coeff_Bn^2))), _cf_f],
+    _cf_f: const_factor(_an2bn2_f, n),
+    Parseval_Formal_K:       factor(_cf_f[1] / 2),
+    Parseval_Formal_Summand: _cf_f[2]
+)$
+
+Parseval_Formal_LHS_final: fullratsimp(
+    (Parseval_LHS - Parseval_A0_term) / fullratsimp(Parseval_Formal_K))$
+
+/* ── Versión simplificada (con declare(n, integer)) ────────────
+   cos(nπ)→(-1)ⁿ, sin(nπ)→0 permiten simplificación algebraica completa.
+   Se detectan y manejan singularidades removibles del summando. */
+declare(n, integer)$
+
+_An: factor(fullratsimp(Coeff_An))$
+_Bn: factor(fullratsimp(Coeff_Bn))$
+
+block(
+    [_an2bn2: factor(trigsimp(ratsimp(_An^2 + _Bn^2))), _cf],
+    _cf: const_factor(_an2bn2, n),
+    Parseval_K:       factor(_cf[1] / 2),
+    Parseval_Summand: _cf[2]
+)$
+
+/* Singularity detection.
+   Limits are evaluated on the FORMAL summand (pre-declare) to avoid integer-declaration
+   artifacts (e.g. declare turns cos(nπ)→(-1)^n which breaks continuous L'Hôpital limits).
+   Each candidate's K-normalised contribution is Formal_K * lim(Formal_Summand) / K.
+   Only non-zero contributions are kept.
+   LHS_final is always the full (non-subtracted) normalised LHS; singular terms are shown
+   explicitly on the RHS of the split-sum display. */
+block(
+    [_denom, _roots_wrap, _roots_raw, _all_sing_vals, _sing_terms, _sing_vals],
+    _denom: denom(factor(Parseval_Summand)),
+    _roots_wrap: errcatch(solve(_denom = 0, n)),
+    _roots_raw: if _roots_wrap = [] then []
+                else block([_r: first(_roots_wrap)],
+                    if listp(_r) then _r else []),
+    _all_sing_vals: map(rhs,
+        sublist(_roots_raw,
+            lambda([eq], integerp(rhs(eq)) and is(rhs(eq) >= 1)))),
+    _sing_terms: sublist(
+        map(lambda([k],
+            block([_flim: errcatch(limit(Parseval_Formal_Summand, n, k)), _v],
+                _v: if _flim = [] then 0
+                    else fullratsimp(Parseval_Formal_K * first(_flim) / fullratsimp(Parseval_K)),
+                [k, factor(_v)])),
+            _all_sing_vals),
+        lambda([t], not is(second(t) = 0))),
+    _sing_vals: map(first, _sing_terms),
+    Parseval_sing_vals: _sing_vals,
+    Parseval_has_singular: not is(_sing_vals = []),
+    Parseval_sum_start: if _sing_vals = [] then 1 else lmax(_sing_vals) + 1,
+    Parseval_LHS_final: fullratsimp(
+        (Parseval_LHS - Parseval_A0_term) / fullratsimp(Parseval_K)),
+    Parseval_sing_terms: _sing_terms
+)$
+
+print("__PARSEVAL_SING_TERMS_START__")$
+for _t in Parseval_sing_terms do (
+    print("__SING_TERM_N__"),
+    print(string(first(_t))),
+    print("__SING_TERM_MAXIMA__"),
+    print(string(second(_t))),
+    print("__SING_TERM_TEX__"),
+    tex(second(_t))
+)$
+print("__PARSEVAL_SING_TERMS_END__")$
+print("__PARSEVAL_LHS_MAXIMA__")$          print(string(Parseval_LHS))$
+print("__PARSEVAL_LHS_TEX__")$             tex(Parseval_LHS)$
+print("__PARSEVAL_A0_TERM_MAXIMA__")$      print(string(Parseval_A0_term))$
+print("__PARSEVAL_A0_TERM_TEX__")$         tex(Parseval_A0_term)$
+print("__PARSEVAL_K_MAXIMA__")$            print(string(Parseval_K))$
+print("__PARSEVAL_K_TEX__")$              tex(Parseval_K)$
+print("__PARSEVAL_SUMMAND_MAXIMA__")$      print(string(Parseval_Summand))$
+print("__PARSEVAL_SUMMAND_TEX__")$         tex(Parseval_Summand)$
+print("__PARSEVAL_LHS_FINAL_MAXIMA__")$    print(string(Parseval_LHS_final))$
+print("__PARSEVAL_LHS_FINAL_TEX__")$       tex(Parseval_LHS_final)$
+print("__PARSEVAL_SUM_START__")$           print(string(Parseval_sum_start))$
+print("__PARSEVAL_HAS_SINGULAR__")$        print(string(Parseval_has_singular))$
+print("__PARSEVAL_SING_VALS__")$           print(string(Parseval_sing_vals))$
+print("__PARSEVAL_FORMAL_K_MAXIMA__")$     print(string(Parseval_Formal_K))$
+print("__PARSEVAL_FORMAL_K_TEX__")$        tex(Parseval_Formal_K)$
+print("__PARSEVAL_FORMAL_SUMMAND_MAXIMA__")$ print(string(Parseval_Formal_Summand))$
+print("__PARSEVAL_FORMAL_SUMMAND_TEX__")$   tex(Parseval_Formal_Summand)$
+print("__PARSEVAL_FORMAL_LHS_FINAL_MAXIMA__")$ print(string(Parseval_Formal_LHS_final))$
+print("__PARSEVAL_FORMAL_LHS_FINAL_TEX__")$   tex(Parseval_Formal_LHS_final)$

@@ -21,25 +21,26 @@ texput(expintegral_ci,  "\\operatorname{Ci}")$
 texput(expintegral_shi, "\\operatorname{Shi}")$
 texput(expintegral_chi, "\\operatorname{Chi}")$
 
-/* Exponential integral — dos argumentos: E_v(z) con subíndice real */
+/* Exponential integral — dos argumentos: E_v(z) con subíndice real.
+   texput lambdas receive the WHOLE expression — use part() to extract args. */
 texput(expintegral_e,
-    lambda([v,z], sconcat("\\operatorname{E}_{", tex1(v), "}\\!\\left(", tex1(z), "\\right)")))$
+    lambda([e], sconcat("\\operatorname{E}_{", tex1(part(e,1)), "}\\!\\left(", tex1(part(e,2)), "\\right)")))$
 
 /* Gamma incompleta superior: Γ(a,z) */
 texput(gamma_incomplete,
-    lambda([a,z], sconcat("\\Gamma\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+    lambda([e], sconcat("\\Gamma\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), "\\right)")))$
 
 /* Gamma incompleta inferior: γ(a,z) */
 texput(gamma_incomplete_lower,
-    lambda([a,z], sconcat("\\gamma\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+    lambda([e], sconcat("\\gamma\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), "\\right)")))$
 
 /* Gamma incompleta regularizada: Q(a,z) */
 texput(gamma_incomplete_regularized,
-    lambda([a,z], sconcat("Q\\!\\left(", tex1(a), ",", tex1(z), "\\right)")))$
+    lambda([e], sconcat("Q\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), "\\right)")))$
 
 /* Gamma incompleta generalizada: Γ(a,z1,z2) */
 texput(gamma_incomplete_generalized,
-    lambda([a,z1,z2], sconcat("\\Gamma\\!\\left(", tex1(a), ",", tex1(z1), ",", tex1(z2), "\\right)")))$
+    lambda([e], sconcat("\\Gamma\\!\\left(", tex1(part(e,1)), ",", tex1(part(e,2)), ",", tex1(part(e,3)), "\\right)")))$
 
 /* log-gamma */
 texput(log_gamma, "\\ln\\!\\Gamma")$
@@ -53,19 +54,19 @@ if FLAG_ERF_REPR = "erf"  then erf_representation: erf$
 if FLAG_ERF_REPR = "erfc" then erf_representation: erfc$
 if FLAG_ERF_REPR = "erfi" then erf_representation: erfi$
 
-/* Aplicar perfil */
-if PROFILE = "integer" or PROFILE = "trigonometric" or
-   PROFILE = "exponential" or PROFILE = "complete" then
-    declare(n, integer)$
+/* Declarar n como entero si el flag lo indica (independiente del perfil) */
+if FLAG_N_INTEGER then declare(n, integer)$
 
-if PROFILE = "trigonometric" or PROFILE = "complete" then (
+/* Reglas trigonométricas: sin(nπ/2 ± kπ/2) → 0 o ±(-1)^n */
+if FLAG_N_INTEGER and (PROFILE = "trigonometric" or PROFILE = "complete") then (
     matchdeclare(kk, lambda([kk], is(evenp(kk)))),
     matchdeclare(jj, lambda([jj], is(evenp(jj) = false))),
     tellsimpafter(sin(((2*n+kk)*%pi)/2), 0),
     tellsimpafter(sin(((2*n+jj)*%pi)/2), if mod(jj,4)=1 then (-1)^n else -(-1)^n)
 )$
 
-if PROFILE = "exponential" or PROFILE = "complete" then (
+/* Reglas exponenciales: e^(iπn) → (-1)^n */
+if FLAG_N_INTEGER and (PROFILE = "exponential" or PROFILE = "complete") then (
     lognegint: true,
     tellsimpafter(exp(%i * %pi * n), (-1)^n),
     tellsimpafter(exp(%i * 2 * %pi * n), 1),
@@ -84,32 +85,65 @@ declare(rect,      real)$
 /* Parsear expresión */
 _input_expr: parse_string(EXPR_INPUT)$
 
+/* Guard: returns true when expr contains special integral functions that
+   CAS routines like radcan/fullratsimp may incorrectly zero out. */
+_has_special_fn(e) :=
+    not freeof(expintegral_e,   e) or not freeof(expintegral_e1,  e) or
+    not freeof(expintegral_ei,  e) or not freeof(expintegral_si,  e) or
+    not freeof(expintegral_ci,  e) or not freeof(expintegral_shi, e) or
+    not freeof(expintegral_chi, e) or not freeof(gamma_incomplete, e)$
+
+/* Wrap a simplification step: if the result collapses to 0 but the input
+   contained special integral functions, revert to the original. */
+_safe_apply(prev, new_expr) :=
+    if is(new_expr = 0) and _has_special_fn(prev) and not is(prev = 0)
+    then prev
+    else new_expr$
+
 /* Aplicar funciones en orden */
 _result_expr: _input_expr$
 for fn in SIMP_FUNCTIONS do (
-    if fn = "fullratsimp" then _result_expr: fullratsimp(_result_expr)
-    else if fn = "ratsimp"    then _result_expr: ratsimp(_result_expr)
-    else if fn = "trigsimp"   then _result_expr: trigsimp(_result_expr)
-    else if fn = "trigreduce" then _result_expr: trigreduce(_result_expr)
-    else if fn = "trigexpand" then _result_expr: trigexpand(_result_expr)
+    if fn = "fullratsimp" then _result_expr: _safe_apply(_result_expr, fullratsimp(_result_expr))
+    else if fn = "ratsimp"    then _result_expr: _safe_apply(_result_expr, ratsimp(_result_expr))
+    else if fn = "trigsimp"   then _result_expr: _safe_apply(_result_expr, trigsimp(_result_expr))
+    else if fn = "trigreduce" then _result_expr: _safe_apply(_result_expr, trigreduce(_result_expr))
+    else if fn = "trigexpand" then _result_expr: _safe_apply(_result_expr, trigexpand(_result_expr))
     else if fn = "factor"     then block(
         /* Try factor directly, and also fullratsimp→factor.
            Keep whichever string representation is shorter. */
-        [_f1, _f2, _s1, _s2],
+        [_prev: _result_expr, _f1, _f2, _s1, _s2],
         _f1: errcatch(factor(_result_expr)),
         _f2: errcatch(factor(fullratsimp(_result_expr))),
         _f1: if _f1 = [] then _result_expr else first(_f1),
         _f2: if _f2 = [] then _result_expr else first(_f2),
         _s1: slength(string(_f1)),
         _s2: slength(string(_f2)),
-        _result_expr: if _s2 < _s1 then _f2 else _f1
+        _result_expr: _safe_apply(_prev, if _s2 < _s1 then _f2 else _f1)
     )
-    else if fn = "expand"     then _result_expr: expand(_result_expr)
-    else if fn = "radcan"     then _result_expr: radcan(_result_expr)
-    else if fn = "rectform"   then _result_expr: rectform(_result_expr)
-    else if fn = "polarform"  then _result_expr: polarform(_result_expr)
+    else if fn = "expand"     then _result_expr: _safe_apply(_result_expr, expand(_result_expr))
+    else if fn = "radcan"     then block(
+        [_prev: _result_expr, _r: errcatch(radcan(_result_expr))],
+        if _r # [] then _result_expr: _safe_apply(_prev, first(_r))
+    )
+    else if fn = "rectform"   then _result_expr: _safe_apply(_result_expr, rectform(_result_expr))
+    else if fn = "polarform"  then _result_expr: _safe_apply(_result_expr, polarform(_result_expr))
+    else if fn = "to_hyper"   then block(
+        [_r: errcatch(to_hyper(_result_expr))],
+        if not(_r = []) then _result_expr: _safe_apply(_result_expr, first(_r)))
 )$
 
 /* Output */
 print("__SIMPLIFIED_MAXIMA__")$ print(string(_result_expr))$
 print("__SIMPLIFIED_TEX__")$    tex(_result_expr)$
+
+/* Factored form: K · summand where K is free of n.
+   factor() ensures the denominator is in product form before splitting. */
+block(
+    [_cf: const_factor(factor(_result_expr), n)],
+    _K_simp: _cf[1],
+    _S_simp: _cf[2]
+)$
+print("__SIMPLIFIED_K_MAXIMA__")$       print(string(_K_simp))$
+print("__SIMPLIFIED_K_TEX__")$          tex(_K_simp)$
+print("__SIMPLIFIED_SUMMAND_MAXIMA__")$ print(string(_S_simp))$
+print("__SIMPLIFIED_SUMMAND_TEX__")$    tex(_S_simp)$
