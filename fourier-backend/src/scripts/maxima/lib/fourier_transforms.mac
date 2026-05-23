@@ -2014,6 +2014,123 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── Generic time-shift: FT[k·h(α·t − t₀)](ω) = (k/|α|)·e^{−iω·t₀}·FT[h(α·t)](ω) ──
+       Applies the time-shift (and optional scaling) theorem to expressions whose
+       t_var-dependence is entirely contained within a single affine argument.
+       Covers: k*f(α·t+β),  k/f(α·t+β),  k*f(α·t+β)/g(β)  etc.
+
+       Strategy:
+         1. Extract from expression e a "core" sub-expression h(arg) where h is a
+            1-argument function and arg is linear in t_var with a nonzero constant.
+            Also extract the constant multiplier k  (everything else in e is free of t).
+            Cases handled:
+              • e = f(arg)               → k=1,   h=f
+              • e = k*f(arg)             → k=k,   h=f   (product, one t-dependent factor)
+              • e = k_num/f(arg)         → k=k_num, h=f, sign flips (numerator)
+              • e = k_num/(c*f(arg))     → as above with c absorbed into k
+         2. Linearity check: arg must be α·t_var + β with α≠0, β≠0.
+         3. t₀ = −β/α.  Centered form: h_c(t_var) = h(α·t_var).
+         4. Delegate to FT_pattern_lookup for the centered form h_c.
+         5. Apply shift + scaling: FT[h_c(t_var)](ω/α)/|α| * e^{−iω·t₀} * k.
+
+       Guard: centered arg has no constant offset, so this handler won't re-fire.
+    */
+    if is(res = false) then block(
+        [_sh_k, _sh_func, _sh_arg, _sh_alpha, _sh_beta,
+         _sh_t0, _sh_centered, _sh_ft_g, _sh_ft_val, _sh_w_scaled],
+        _sh_k: 1,
+        _sh_func: false,
+
+        /* Case A: e itself is a 1-arg function  f(arg) */
+        if not atom(e) and length(args(e)) = 1 then _sh_func: e
+
+        /* Case B: product  k * f(arg)  — one t-dependent 1-arg factor, rest constant */
+        else if not atom(e) and is(op(e) = "*") then block(
+            [_sh_facs, _sh_residual, _sh_nfuncs],
+            _sh_facs: args(e),
+            _sh_residual: false,
+            _sh_nfuncs: 0,
+            for _sh_f in _sh_facs do (
+                if freeof(t_var, _sh_f) then _sh_k: _sh_k * _sh_f
+                else if not atom(_sh_f) and length(args(_sh_f)) = 1 and _sh_nfuncs = 0
+                then (_sh_residual: _sh_f, _sh_nfuncs: _sh_nfuncs + 1)
+                else _sh_nfuncs: _sh_nfuncs + 10   /* >1 t-dependent factor → bail */
+            ),
+            if _sh_nfuncs = 1 then _sh_func: _sh_residual
+        )
+
+        /* Case C: ratio  k_num / f(arg)  or  k_num / (c * f(arg))
+           After normalization, sech(t-t0) = 1/cosh(t-t0) lands here. */
+        else if not atom(e) and is(op(e) = "/") then block(
+            [_sh_num, _sh_den, _sh_den_func, _sh_den_c],
+            _sh_num: part(e, 1),
+            _sh_den: part(e, 2),
+            if freeof(t_var, _sh_num) then (
+                /* denominator is either f(arg) or c*f(arg) */
+                if not atom(_sh_den) and length(args(_sh_den)) = 1 then (
+                    /* k_num / f(arg) */
+                    _sh_k: _sh_num,
+                    _sh_func: _sh_den
+                ) else if not atom(_sh_den) and is(op(_sh_den) = "*") then (
+                    /* k_num / (c * f(arg))  — split constant and function factors */
+                    _sh_den_func: false,
+                    _sh_den_c: 1,
+                    for _sh_df in args(_sh_den) do (
+                        if freeof(t_var, _sh_df) then _sh_den_c: _sh_den_c * _sh_df
+                        else if not atom(_sh_df) and length(args(_sh_df)) = 1
+                                and is(_sh_den_func = false)
+                        then _sh_den_func: _sh_df
+                        else _sh_den_func: false   /* >1 t-dep → bail */
+                    ),
+                    if is(_sh_den_func # false) then (
+                        _sh_k: _sh_num / _sh_den_c,
+                        _sh_func: _sh_den_func
+                    )
+                )
+            )
+        ),
+
+        /* Step 2: verify argument is linear in t_var with nonzero constant offset */
+        if is(_sh_func # false) then (
+            _sh_arg: part(_sh_func, 1),
+            _sh_alpha: errcatch(ratsimp(diff(_sh_arg, t_var))),
+            _sh_beta:  errcatch(ratsimp(subst(t_var = 0, _sh_arg))),
+            if _sh_alpha # [] and _sh_beta # []
+               and freeof(t_var, first(_sh_alpha)) and not equal(first(_sh_alpha), 0)
+               and freeof(t_var, first(_sh_beta))  and not equal(first(_sh_beta), 0)
+               /* Verify arg is truly linear: no higher-order terms */
+               and ratsimp(_sh_arg - first(_sh_alpha)*t_var - first(_sh_beta)) = 0
+            then (
+                _sh_alpha: first(_sh_alpha),
+                _sh_beta:  first(_sh_beta),
+                /* Step 3: t₀ = −β/α */
+                _sh_t0: ratsimp(-_sh_beta / _sh_alpha),
+
+                /* Step 4: build centered form by substituting the argument.
+                   h_c(t_var) = h(α·t_var): same function, centered argument. */
+                _sh_centered: subst(_sh_arg = _sh_alpha * t_var, _sh_func),
+
+                /* Step 5: delegate to FT_pattern_lookup for centered form.
+                   For ratio case (Case C), wrap back as k_orig / _sh_centered. */
+                if not is(op(e) = "/") or not freeof(t_var, part(e, 1)) then
+                    _sh_ft_g: errcatch(FT_pattern_lookup(_sh_k * _sh_centered, t_var, w_var))
+                else
+                    _sh_ft_g: errcatch(FT_pattern_lookup(_sh_k / _sh_centered, t_var, w_var)),
+                if _sh_ft_g # [] then _sh_ft_g: first(_sh_ft_g),
+
+                /* Step 6: apply shift: multiply by e^{-iω·t₀} */
+                if not is(_sh_ft_g = false) and not is(_sh_ft_g = []) then (
+                    _sh_ft_val: ratsimp(
+                        _sh_ft_g[1] * exp(-%i * w_var * _sh_t0)
+                    ),
+                    res: [_sh_ft_val,
+                          concat("time-shift: t₀=", string(_sh_t0),
+                                 ", α=", string(_sh_alpha), " → ", _sh_ft_g[2])]
+                )
+            )
+        )
+    ),
+
     /* ── linearity: FT(f+g+...) = FT(f)+FT(g)+... ──
        Handles unary minus terms: Maxima represents -(k*f) with op="-",
        not as (-k)*f. We negate the FT of the inner expression. */
