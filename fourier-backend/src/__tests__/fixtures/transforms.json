@@ -4162,5 +4162,80 @@
             "exists": true,
             "fCombined": "1/(%pi*cosh(t))"
         }
+    },
+
+    {
+        "id": "TS01",
+        "type": "ft",
+        "description": "FT desplazamiento temporal: FT(sin(t−1)) = iπ·e^{−iω}·(δ(ω+1)−δ(ω−1))",
+        "input": {
+            "segments": [{ "expression": "sin(t-1)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-(%i*%pi*(%e^-%i*delta(w-1)-%e^%i*delta(w+1)))"
+        }
+    },
+
+    {
+        "id": "TS02",
+        "type": "ft",
+        "description": "FT desplazamiento temporal: FT(sech(t−2)) = π·e^{−2iω}/cosh(πω/2)",
+        "input": {
+            "segments": [{ "expression": "sech(t-2)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*%e^-(2*%i*w))/cosh((%pi*w)/2)"
+        }
+    },
+
+    {
+        "id": "TS03",
+        "type": "ft",
+        "description": "FT desplazamiento + escalado: FT(sech(2t−1)) = FT(1/cosh(2t−1)) = (π/2)·e^{−iω/2}/cosh(πω/4)",
+        "input": {
+            "segments": [{ "expression": "1/cosh(2*t-1)", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "(%pi*%e^-((%i*w)/2))/(2*cosh((%pi*w)/4))"
+        }
+    },
+
+    {
+        "id": "TS04",
+        "type": "ft",
+        "description": "FT desplazamiento temporal: FT(cos(2(t−3))) = π·(e^{6i}·δ(ω+2)+e^{−6i}·δ(ω−2))",
+        "input": {
+            "segments": [{ "expression": "cos(2*(t-3))", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "%pi*(%e^(6*%i)*delta(w+2)+%e^-(6*%i)*delta(w-2))"
+        }
+    },
+
+    {
+        "id": "TS05",
+        "type": "ft",
+        "description": "FT desplazamiento temporal: FT(e^{−|t−1|}) = 2·e^{−iω}/(ω²+1)",
+        "input": {
+            "segments": [{ "expression": "exp(-abs(t-1))", "from": "-inf", "to": "inf" }],
+            "intVar": "t",
+            "transVar": "w"
+        },
+        "expected": {
+            "exists": true,
+            "F": "-((2*(%i*sin(w)-cos(w)))/(w^2+1))"
+        }
     }
 ]
