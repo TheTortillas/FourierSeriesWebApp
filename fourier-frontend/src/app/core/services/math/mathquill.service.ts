@@ -126,7 +126,7 @@ export class MathquillService {
       autoCommands: 'pi theta sqrt sum int',
       autoOperatorNames:
         'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
-        'sinh cosh tanh asinh acosh atanh log ln exp abs ' +
+        'sinh cosh tanh sech csch coth asinh acosh atanh log ln exp abs ' +
         'sen tg senh ctg arcsin arccos arctan ' +
         'gamma factorial ' +
         'delta sgn rect',

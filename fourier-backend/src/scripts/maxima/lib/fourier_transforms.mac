@@ -64,6 +64,22 @@ texput(rect, "\\operatorname{rect}")$
 FT_is_minf(x) := is(x = minf) or is(x = -inf)$
 FT_is_inf(x)  := is(x = inf)  or is(x = +inf)$
 
+/* ── FT_normalize_hyp: rewrite sech/csch/coth to their 1/cosh form ──────────
+   Maxima does not simplify sech(u) → 1/cosh(u) automatically.  When the user
+   inputs sech(bt) the pattern matchers only see cosh, so we normalize first.
+     sech(u)  → 1/cosh(u)
+     csch(u)  → 1/sinh(u)
+     coth(u)  → cosh(u)/sinh(u)
+   Called at the top of both FT_pattern_lookup and IFT_pattern_lookup. */
+FT_normalize_hyp(e) :=
+    /* numberp catches rationals like 1/2 which are not atoms but have no args */
+    if atom(e) or numberp(e) then e
+    else if is(op(e) = 'sech) then 1 / cosh(FT_normalize_hyp(part(e, 1)))
+    else if is(op(e) = 'csch) then 1 / sinh(FT_normalize_hyp(part(e, 1)))
+    else if is(op(e) = 'coth) then cosh(FT_normalize_hyp(part(e, 1)))
+                                    / sinh(FT_normalize_hyp(part(e, 1)))
+    else map(FT_normalize_hyp, e)$
+
 /* ── FT_to_sech: rewrite k/cosh(u) → k*sech(u) throughout an expression ──
    sech is not a Maxima built-in, so results with 1/cosh(…) render as messy
    fractions in TeX.  This traversal rewrites every occurrence to sech(…)
@@ -815,6 +831,9 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
 
     /* ── loop defensivo PRIMERO, antes de expand/rat ── */
     FT_declare_params(f_expr, [t_var, w_var]),
+
+    /* Normalize sech/csch/coth → 1/cosh, 1/sinh, cosh/sinh so pattern matchers work */
+    f_expr: FT_normalize_hyp(f_expr),
 
     %piexact: %pi,
     e: expand(f_expr),
@@ -2056,6 +2075,9 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
 
     /* ── loop defensivo PRIMERO, antes de rat() y expand() ── */
     FT_declare_params(F_expr, [w_var, t_var]),
+
+    /* Normalize sech/csch/coth → 1/cosh, 1/sinh, cosh/sinh so pattern matchers work */
+    F_expr: FT_normalize_hyp(F_expr),
 
     e:  expand(F_expr),
     er: rat(F_expr),

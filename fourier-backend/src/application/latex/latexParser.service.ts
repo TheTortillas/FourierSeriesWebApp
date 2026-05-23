@@ -74,10 +74,14 @@ export class LatexParserService {
       .replace(/\\operatorname\{arctan\}/g, "\\operatorname{atan}")
       .replace(/\\operatorname\{ln\}/g, "\\log")
       .replace(/\\ln\b/g, "\\log")
-      // Normalize exp — strip \left so substituteExp finds the marker
-      .replace(/\\operatorname\{exp\}\\left\(/g, "\\operatorname{exp}(")
-      .replace(/\\exp\(/g, "\\operatorname{exp}(")
-      .replace(/\\operatorname\{exp\}\(/g, "\\operatorname{exp}(")
+      // Normalize exp — unify all forms (\exp, \operatorname{exp}) so substituteExp finds the marker.
+      // MathQuill may emit \exp\left( or \operatorname{exp}\left( depending on context.
+      .replace(/\\exp\b/g, "\\operatorname{exp}")
+      .replace(/\\operatorname\{exp\}\s*\\left\s*\(/g, "\\operatorname{exp}(")
+      .replace(/\\operatorname\{exp\}\s*\(/g, "\\operatorname{exp}(")
+      .replace(/\\operatorname\{sech\}/g, "\\sech")
+      .replace(/\\operatorname\{csch\}/g, "\\csch")
+      .replace(/\\operatorname\{coth\}/g, "\\coth")
       .replace(/\\operatorname\{sgn\}/g, "sgn")
       .replace(/\\operatorname\{rect\}/g, "rect")
       .replace(/\\operatorname\{delta\}/g, " TMDELTA")
@@ -187,7 +191,7 @@ export class LatexParserService {
       .replace(/\bTMDELTA\b/g, "delta")
       .replace(/\bTMGAMMA\b/g, "gamma")
       .replace(/\bTMFACTORIAL\b/g, "factorial")
-      .replace(/\b(u|sgn|delta|rect|gamma|factorial|exp)\s*\*\s*\(/g, "$1(");
+      .replace(/\b(u|sgn|delta|rect|gamma|factorial|exp|sech|csch|coth)\s*\*\s*\(/g, "$1(");
 
     return this.normalizePostfixFactorial(normalized);
   }
