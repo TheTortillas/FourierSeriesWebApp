@@ -21,17 +21,27 @@ if not(boundp('FT_SCALE)) then FT_SCALE: 1$
 
 result : FT(FUNC_INPUT, INTVAR, TRANSVAR)$
 
-/* Apply FT_SCALE and ratsimp, but skip ratsimp when delta is present —
-   ratsimp merges rational+delta addends into a single fraction. */
-F      : if result[1] = false then false
-         else if freeof('delta, result[1]) then ratsimp(FT_SCALE * result[1])
-         else FT_SCALE * result[1]$
-F_real : if result[2] = false then false
-         else if freeof('delta, result[2]) then ratsimp(FT_SCALE * result[2])
-         else FT_SCALE * result[2]$
-F_imag : if result[3] = false then false
-         else if freeof('delta, result[3]) then ratsimp(FT_SCALE * result[3])
-         else FT_SCALE * result[3]$
+/* Apply FT_SCALE and ratsimp.
+   When delta is present, ratsimp merges rational+delta addends into a single
+   fraction.  Instead, apply ratsimp separately to the rational part and scale
+   the delta terms by ratsimp(FT_SCALE) to keep the table-form display. */
+FT_apply_scale(e, sc) := block([_terms, _dt, _rt, _r],
+    if e = false then return(false),
+    if freeof('delta, e) then return(ratsimp(sc * e)),
+    if sc = 1 then return(e),
+    _terms : if atom(e) or not is(op(e) = "+") then [e] else args(e),
+    _dt : [], _rt : [],
+    for _t in _terms do (
+        if freeof('delta, _t) then _rt : cons(_t, _rt)
+        else _dt : cons(_t, _dt)
+    ),
+    _r : if _rt = [] then 0 else ratsimp(sc * apply("+", _rt)),
+    _r + ratsimp(sc) * apply("+", _dt)
+)$
+
+F      : FT_apply_scale(result[1], FT_SCALE)$
+F_real : FT_apply_scale(result[2], FT_SCALE)$
+F_imag : FT_apply_scale(result[3], FT_SCALE)$
 exists      : result[4]$
 free_params : result[5]$
 

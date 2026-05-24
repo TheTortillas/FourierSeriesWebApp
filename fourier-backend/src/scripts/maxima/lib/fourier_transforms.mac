@@ -883,6 +883,18 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         ) else if not atom(e) and is(op(e) = "-") and
                   not atom(part(e,1)) and is(op(part(e,1)) = 'cos) then (
             _k: -1,  _trig: part(e, 1)
+        ) else if not atom(e) and is(op(e) = "-") and
+                  not atom(part(e,1)) and is(op(part(e,1)) = "*") then block(
+            /* -(k*cos(...)): unary minus wrapping a product */
+            [_inner, _sc2, _tp2, _ac2],
+            _inner: part(e,1),
+            _sc2: 1,  _tp2: false,  _ac2: true,
+            for _f2 in args(_inner) do (
+                if not atom(_f2) and is(op(_f2) = 'cos) then _tp2: _f2
+                else if freeof(t_var, _f2) then _sc2: _sc2 * _f2
+                else _ac2: false
+            ),
+            if is(_tp2 # false) and _ac2 then (_k: -_sc2,  _trig: _tp2)
         ) else if not atom(e) and is(op(e) = "*") then block(
             [_factors, _scalar, _trigpart, _all_const],
             _factors: args(e),
@@ -916,6 +928,18 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         ) else if not atom(e) and is(op(e) = "-") and
                   not atom(part(e,1)) and is(op(part(e,1)) = 'sin) then (
             _k: -1,  _trig: part(e, 1)
+        ) else if not atom(e) and is(op(e) = "-") and
+                  not atom(part(e,1)) and is(op(part(e,1)) = "*") then block(
+            /* -(k*sin(...)): unary minus wrapping a product */
+            [_inner, _sc2, _tp2, _ac2],
+            _inner: part(e,1),
+            _sc2: 1,  _tp2: false,  _ac2: true,
+            for _f2 in args(_inner) do (
+                if not atom(_f2) and is(op(_f2) = 'sin) then _tp2: _f2
+                else if freeof(t_var, _f2) then _sc2: _sc2 * _f2
+                else _ac2: false
+            ),
+            if is(_tp2 # false) and _ac2 then (_k: -_sc2,  _trig: _tp2)
         ) else if not atom(e) and is(op(e) = "*") then block(
             [_factors, _scalar, _trigpart, _all_const],
             _factors: args(e),
