@@ -609,6 +609,9 @@ FT_raw(f_expr, t_var, w_var, a, b) := block(
 
 FT_simplify(expr) := block(
     [e, ef],
+    /* When delta is present, ratsimp merges addends into one fraction,
+       destroying the readable "rational + delta" form. Leave as-is. */
+    if not freeof('delta, expr) then return(expr),
     e  : ratsimp(rectform(expr)),
     ef : errcatch(factor(e)),
     if ef # [] then first(ef) else e
