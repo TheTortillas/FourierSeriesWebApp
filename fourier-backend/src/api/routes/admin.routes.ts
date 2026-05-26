@@ -12,7 +12,6 @@ import type {
   AuditAction,
   AuditFilters,
 } from "../../domain/interfaces/repositories/IAuditRepository";
-import { getRateLimitMetricsSnapshot } from "../middlewares/rateLimiter";
 import { ipBlocksRouter } from "./admin.ip-blocks.routes";
 
 export const adminRouter = Router();
@@ -26,46 +25,18 @@ adminRouter.use("/ip-blocks", ipBlocksRouter);
  * @openapi
  * /api/admin/rate-limit/metrics:
  *   get:
- *     summary: Obtener métricas en memoria de rate limiting
+ *     summary: Métricas de rate limiting desde audit_log (sobrevive reinicios)
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: windowHours
+ *         schema: { type: integer, default: 24 }
+ *         description: Ventana de tiempo en horas para agregar datos (1-720)
  *     responses:
  *       200:
- *         description: Snapshot de métricas de rate limiting por bucket y endpoint
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 startedAt: { type: string, format: date-time }
- *                 requestsByBucket:
- *                   type: object
- *                   properties:
- *                     compute: { type: integer }
- *                     parse: { type: integer }
- *                     auth: { type: integer }
- *                 blockedByBucket:
- *                   type: object
- *                   properties:
- *                     compute: { type: integer }
- *                     parse: { type: integer }
- *                     auth: { type: integer }
- *                 requestsByEndpoint:
- *                   type: object
- *                   additionalProperties: { type: integer }
- *                 blockedByEndpoint:
- *                   type: object
- *                   additionalProperties: { type: integer }
- *                 blockedByLimiter:
- *                   type: object
- *                   additionalProperties: { type: integer }
- *                 ratios:
- *                   type: object
- *                   properties:
- *                     compute: { type: number, format: float }
- *                     parse: { type: number, format: float }
- *                     auth: { type: number, format: float }
+ *         description: Métricas de bloqueos por bucket, limiter, endpoint e IP
  */
 
 /**
@@ -105,9 +76,90 @@ adminRouter.use("/ip-blocks", ipBlocksRouter);
  */
 adminRouter.get(
   "/rate-limit/metrics",
-  async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      res.json(getRateLimitMetricsSnapshot());
+      // Ventana de tiempo configurable — default 24h, máximo 720h (30 días)
+      const windowHours = Math.min(
+        Math.max(1, parseInt(String(req.query["windowHours"] ?? "24")) || 24),
+        720,
+      );
+      const windowStart = new Date(Date.now() - windowHours * 60 * 60 * 1000);
+
+      // Todas las queries en paralelo contra audit_log
+      const [bucketRes, limiterRes, endpointRes, ipRes] = await Promise.all([
+        // Bloqueados por bucket
+        db.query<{ bucket: string; blocked: number }>(
+          `SELECT metadata->>'bucket' AS bucket, COUNT(*)::int AS blocked
+           FROM audit_log
+           WHERE action = 'rate_limit_blocked'
+             AND created_at >= $1
+             AND metadata->>'bucket' IS NOT NULL
+           GROUP BY metadata->>'bucket'`,
+          [windowStart],
+        ),
+        // Bloqueados por limiter
+        db.query<{ limiter: string; blocked: number }>(
+          `SELECT metadata->>'limiter' AS limiter, COUNT(*)::int AS blocked
+           FROM audit_log
+           WHERE action = 'rate_limit_blocked'
+             AND created_at >= $1
+             AND metadata->>'limiter' IS NOT NULL
+           GROUP BY metadata->>'limiter'
+           ORDER BY blocked DESC`,
+          [windowStart],
+        ),
+        // Bloqueados por endpoint (top 20)
+        db.query<{ endpoint: string; blocked: number }>(
+          `SELECT metadata->>'endpoint' AS endpoint, COUNT(*)::int AS blocked
+           FROM audit_log
+           WHERE action = 'rate_limit_blocked'
+             AND created_at >= $1
+             AND metadata->>'endpoint' IS NOT NULL
+           GROUP BY metadata->>'endpoint'
+           ORDER BY blocked DESC
+           LIMIT 20`,
+          [windowStart],
+        ),
+        // Bloqueados por IP (top 20)
+        db.query<{ ip: string; blocked: number }>(
+          `SELECT ip_address::text AS ip, COUNT(*)::int AS blocked
+           FROM audit_log
+           WHERE action = 'rate_limit_blocked'
+             AND created_at >= $1
+             AND ip_address IS NOT NULL
+           GROUP BY ip_address
+           ORDER BY blocked DESC
+           LIMIT 20`,
+          [windowStart],
+        ),
+      ]);
+
+      // Construir blockedByBucket con los 3 buckets siempre presentes
+      const buckets: Record<string, number> = { compute: 0, parse: 0, auth: 0 };
+      for (const row of bucketRes.rows) {
+        if (row.bucket in buckets) buckets[row.bucket] = row.blocked;
+      }
+
+      const blockedByLimiter: Record<string, number> = {};
+      for (const row of limiterRes.rows) blockedByLimiter[row.limiter] = row.blocked;
+
+      const blockedByEndpoint: Record<string, number> = {};
+      for (const row of endpointRes.rows) blockedByEndpoint[row.endpoint] = row.blocked;
+
+      const blockedByIp: Record<string, number> = {};
+      for (const row of ipRes.rows) blockedByIp[row.ip] = row.blocked;
+
+      const totalBlocked = Object.values(buckets).reduce((a, b) => a + b, 0);
+
+      res.json({
+        windowHours,
+        windowStart: windowStart.toISOString(),
+        totalBlocked,
+        blockedByBucket: buckets,
+        blockedByLimiter,
+        blockedByEndpoint,
+        blockedByIp,
+      });
     } catch (err) {
       next(err);
     }

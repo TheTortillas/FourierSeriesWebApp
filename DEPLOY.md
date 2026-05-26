@@ -634,7 +634,7 @@ rsync -e "ssh -i ~/.ssh/fourier_deploy" \
   root@209.46.121.183:/tmp/
 
 ssh -i ~/.ssh/fourier_deploy root@209.46.121.183 \
-  "sudo -u postgres psql -d fourier_db -f /tmp/migrate_v3_deleted_email_hash.sql"
+  "psql -U fourier_user -d fourier_db -f /tmp/migrate_v3_deleted_email_hash.sql"
 ```
 
 > Todos los scripts de migración usan `IF NOT EXISTS` — son seguros de re-ejecutar.
@@ -650,7 +650,7 @@ rsync -e "ssh -i ~/.ssh/fourier_deploy" \
   root@209.46.121.183:/tmp/
 
 ssh -i ~/.ssh/fourier_deploy root@209.46.121.183 \
-  "sudo -u postgres psql -d fourier_db -f /tmp/migrate_v4_ip_blocks.sql"
+  "psql -U fourier_user -d fourier_db -f /tmp/migrate_v4_ip_blocks.sql"
 ```
 
 Otorgar permisos a `fourier_user` sobre la nueva tabla:

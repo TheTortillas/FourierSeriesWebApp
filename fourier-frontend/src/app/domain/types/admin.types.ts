@@ -80,14 +80,16 @@ export interface SystemStats {
 }
 
 export interface RateLimitMetricsSnapshot {
-  startedAt: string;
-  requestsByBucket: { compute: number; parse: number; auth: number };
+  /** Ventana de tiempo consultada en horas */
+  windowHours: number;
+  /** ISO timestamp — inicio de la ventana */
+  windowStart: string;
+  /** Total de bloqueos en la ventana */
+  totalBlocked: number;
   blockedByBucket:  { compute: number; parse: number; auth: number };
-  requestsByEndpoint: Record<string, number>;
-  blockedByEndpoint:  Record<string, number>;
-  blockedByLimiter:   Record<string, number>;
-  blockedByIp:        Record<string, number>;
-  ratios: { compute: number; parse: number; auth: number };
+  blockedByEndpoint: Record<string, number>;
+  blockedByLimiter:  Record<string, number>;
+  blockedByIp:       Record<string, number>;
 }
 
 export interface RateLimitBlockedEvent {

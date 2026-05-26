@@ -329,8 +329,10 @@ export class ApiService {
     return this.http.get<SystemStats>(`${this.base}/admin/system/stats`);
   }
 
-  getRateLimitMetrics(): Observable<RateLimitMetricsSnapshot> {
-    return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
+  getRateLimitMetrics(windowHours?: number): Observable<RateLimitMetricsSnapshot> {
+    let params = new HttpParams();
+    if (windowHours !== undefined) params = params.set('windowHours', windowHours);
+    return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`, { params });
   }
 
   getRateLimitHistory(params: { limit?: number; offset?: number; ip?: string; limiter?: string } = {}):
