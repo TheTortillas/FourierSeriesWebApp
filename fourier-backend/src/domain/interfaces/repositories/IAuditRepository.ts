@@ -14,7 +14,10 @@ export type AuditAction =
   | "user_deactivated"
   | "user_activated"
   | "tier_changed"
-  | "audit_log_cleared";
+  | "audit_log_cleared"
+  | "rate_limit_blocked"
+  | "ip_blocked"
+  | "ip_unblocked";
 
 export interface AuditLogInput {
   id?: string;

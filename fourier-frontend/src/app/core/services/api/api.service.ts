@@ -345,6 +345,42 @@ export class ApiService {
     );
   }
 
+  // ── IP Blocklist ────────────────────────────────────────────────────────────
+
+  getIpBlocks(params: {
+    limit?: number; offset?: number;
+    ip?: string; blockedBy?: string; activeOnly?: boolean;
+  } = {}): Observable<import('../../../domain').IpBlockListResponse> {
+    let p = new HttpParams();
+    if (params.limit    != null) p = p.set('limit',      params.limit);
+    if (params.offset   != null) p = p.set('offset',     params.offset);
+    if (params.ip)               p = p.set('ip',         params.ip);
+    if (params.blockedBy)        p = p.set('blockedBy',  params.blockedBy);
+    if (params.activeOnly)       p = p.set('activeOnly', 'true');
+    return this.http.get<import('../../../domain').IpBlockListResponse>(
+      `${this.base}/admin/ip-blocks`, { params: p },
+    );
+  }
+
+  getIpBlocksActive(): Observable<import('../../../domain').IpBlockActiveResponse> {
+    return this.http.get<import('../../../domain').IpBlockActiveResponse>(
+      `${this.base}/admin/ip-blocks/active`,
+    );
+  }
+
+  blockIp(ip: string, reason: string, durationHours?: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${this.base}/admin/ip-blocks`,
+      { ip, reason, ...(durationHours != null && { durationHours }) },
+    );
+  }
+
+  unblockIp(ip: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.base}/admin/ip-blocks/${encodeURIComponent(ip)}`,
+    );
+  }
+
   getFeedbackStats(): Observable<import('../../../domain').FeedbackStats> {
     return this.http.get<import('../../../domain').FeedbackStats>(
       `${this.base}/admin/feedback/stats`,

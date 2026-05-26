@@ -13,10 +13,14 @@ import type {
   AuditFilters,
 } from "../../domain/interfaces/repositories/IAuditRepository";
 import { getRateLimitMetricsSnapshot } from "../middlewares/rateLimiter";
+import { ipBlocksRouter } from "./admin.ip-blocks.routes";
 
 export const adminRouter = Router();
 
 adminRouter.use(authenticate, requireAdmin);
+
+// IP blocklist — /api/admin/ip-blocks
+adminRouter.use("/ip-blocks", ipBlocksRouter);
 
 /**
  * @openapi

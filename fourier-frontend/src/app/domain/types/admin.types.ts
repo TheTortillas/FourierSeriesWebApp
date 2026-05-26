@@ -108,6 +108,35 @@ export interface RateLimitHistoryResponse {
   entries: RateLimitBlockedEvent[];
 }
 
+// ── IP Blocklist ──────────────────────────────────────────────────────────────
+
+export interface IpBlockEntry {
+  id: string;
+  ip_address: string;
+  reason: string;
+  blocked_by: 'auto' | 'admin';
+  blocked_until: string | null;   // ISO string, null = permanente
+  admin_user_id: string | null;
+  created_at: string;
+  released_at: string | null;
+  released_by: 'expired' | 'admin' | null;
+  is_active: boolean;
+}
+
+export interface IpBlockListResponse {
+  total:   number;
+  limit:   number;
+  offset:  number;
+  entries: IpBlockEntry[];
+}
+
+export interface IpBlockActiveResponse {
+  total:   number;
+  entries: IpBlockEntry[];
+}
+
+// ── CacheStats ────────────────────────────────────────────────────────────────
+
 export interface CacheStats {
   backend: 'redis' | 'lru';
   connected: boolean;
