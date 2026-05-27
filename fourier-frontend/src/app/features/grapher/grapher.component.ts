@@ -13,6 +13,7 @@ import {
 import { ParamSlidersComponent, ParamValues } from '../../shared/components/param-sliders/param-sliders.component';
 import { PlottingService } from '../../core/services/canvas/plotting.service';
 import { MathUtilsService } from '../../core/services/math/math-utils.service';
+import { CoordinateTransformService } from '../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport, MathPoint } from '../../core/services/canvas/canvas.types';
 
 let _idCounter = 0;
@@ -27,6 +28,45 @@ function newExpr(colorIdx = 0): GraphExpression {
   };
 }
 
+function bisect(fn: (x: number) => number, a: number, b: number, iters = 12): number {
+  for (let i = 0; i < iters; i++) {
+    const m = (a + b) / 2;
+    if (fn(a) * fn(m) <= 0) b = m; else a = m;
+  }
+  return (a + b) / 2;
+}
+
+function findRoots(fn: (x: number) => number, xMin: number, xMax: number, steps = 400): number[] {
+  const roots: number[] = [];
+  const step = (xMax - xMin) / steps;
+  let prev = fn(xMin);
+  for (let i = 1; i <= steps; i++) {
+    const x = xMin + i * step;
+    const cur = fn(x);
+    if (isFinite(prev) && isFinite(cur) && prev * cur < 0) {
+      roots.push(bisect(fn, x - step, x));
+    }
+    prev = cur;
+  }
+  return roots;
+}
+
+function drawOpenCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number, color: string, r = 4): void {
+  ctx.beginPath();
+  ctx.arc(sx, sy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([]);
+  ctx.stroke();
+}
+
+function drawFilledCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number, color: string, r = 4): void {
+  ctx.beginPath();
+  ctx.arc(sx, sy, r, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
 @Component({
   selector: 'app-grapher',
   templateUrl: './grapher.component.html',
@@ -35,13 +75,12 @@ function newExpr(colorIdx = 0): GraphExpression {
 export class GrapherComponent {
   private readonly plotter   = inject(PlottingService);
   private readonly mathUtils = inject(MathUtilsService);
+  private readonly coords    = inject(CoordinateTransformService);
 
-  readonly expressions = signal<GraphExpression[]>([newExpr(0)]);
-  readonly paramValues = signal<ParamValues>({});
+  readonly expressions  = signal<GraphExpression[]>([newExpr(0)]);
+  readonly paramValues  = signal<ParamValues>({});
   readonly hoveredPoint = signal<MathPoint | null>(null);
-  readonly viewport = signal<CanvasViewport | null>(null);
 
-  /** Single-letter identifiers found in all visible maxima strings, excluding 'x'. */
   readonly detectedParams = computed<string[]>(() => {
     const seen = new Set<string>();
     for (const e of this.expressions()) {
@@ -54,19 +93,60 @@ export class GrapherComponent {
   });
 
   readonly layers = computed<PlotLayer[]>(() => {
-    const exprs  = this.expressions();
-    const params = this.paramValues();
+    const exprs   = this.expressions();
+    const params  = this.paramValues();
     const plotter = this.plotter;
-    const math = this.mathUtils;
+    const math    = this.mathUtils;
+    const coords  = this.coords;
 
     return [{
       curves: [],
-      onDraw: (ctx, vp) => {
+      onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
+        const compiled: { fn: (x: number) => number; expr: GraphExpression }[] = [];
+
+        // ── Curves ──────────────────────────────────────────────────────────
         for (const e of exprs) {
           if (!e.visible || !e.maxima) continue;
           const fn = math.compile(e.maxima, 'x', params);
           if (!fn) continue;
+          compiled.push({ fn, expr: e });
           plotter.plotFn(ctx, fn, vp, { color: e.color, lineWidth: e.lineWidth });
+        }
+
+        if (compiled.length === 0) return;
+
+        const xMin = vp.originMath.x - vp.cssWidth  / (2 * vp.unit * vp.scaleX);
+        const xMax = vp.originMath.x + vp.cssWidth  / (2 * vp.unit * vp.scaleX);
+        const yMin = vp.originMath.y - vp.cssHeight / (2 * vp.unit * vp.scaleY);
+        const yMax = vp.originMath.y + vp.cssHeight / (2 * vp.unit * vp.scaleY);
+
+        // ── Root markers (open circles on x-axis) ───────────────────────────
+        for (const { fn, expr } of compiled) {
+          const roots = findRoots(fn, xMin, xMax);
+          for (const rx of roots) {
+            const ry = fn(rx);
+            if (!isFinite(ry) || Math.abs(ry) > 1e-4 * (yMax - yMin + 1)) continue;
+            const { x: sx, y: sy } = coords.mathToScreen({ x: rx, y: 0 }, vp);
+            drawOpenCircle(ctx, sx, sy, expr.color);
+          }
+        }
+
+        // ── Intersection markers (filled circles, capped at 20) ─────────────
+        if (compiled.length < 2) return;
+        let intersectionCount = 0;
+        outer: for (let i = 0; i < compiled.length - 1; i++) {
+          for (let j = i + 1; j < compiled.length; j++) {
+            const diff = (x: number) => compiled[i].fn(x) - compiled[j].fn(x);
+            const pts = findRoots(diff, xMin, xMax);
+            for (const ix of pts) {
+              if (intersectionCount >= 20) break outer;
+              const iy = compiled[i].fn(ix);
+              if (!isFinite(iy)) continue;
+              const { x: sx, y: sy } = coords.mathToScreen({ x: ix, y: iy }, vp);
+              drawFilledCircle(ctx, sx, sy, compiled[i].expr.color);
+              intersectionCount++;
+            }
+          }
         }
       },
     }];
@@ -92,9 +172,5 @@ export class GrapherComponent {
 
   onPointerMove(pt: MathPoint | null): void {
     this.hoveredPoint.set(pt);
-  }
-
-  onViewportChange(vp: CanvasViewport): void {
-    this.viewport.set(vp);
   }
 }
