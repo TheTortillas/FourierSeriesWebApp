@@ -686,45 +686,69 @@ export class ContinuousTransformComponent implements OnInit {
           (this.mode() === 'ft' && !hasFtComputedInput) ||
           (this.mode() === 'ift' && !ift?.exists && !iftInputIsComplex);
         if ((showOrigRe || showOrigM) && shouldDrawInputPreview) {
-          for (const seg of segs) {
-            const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
-            const from = this.parseLimit(seg.from, pv);
-            const to = this.parseLimit(seg.to, pv);
-            if (!fn) continue;
+          // Compile all segments up-front and partition by bound type.
+          // Finite-bound pieces go through plotPiecewise (single canvas path,
+          // NaN-sentinel between pieces → no spurious vertical lines at boundaries).
+          // Infinite-bound pieces use a gated plotFn as before.
+          const compiled = segs.map(seg => ({
+            fn:   this.mathUtils.compile(seg.expression, intVariable, pv),
+            from: this.parseLimit(seg.from, pv),
+            to:   this.parseLimit(seg.to, pv),
+            expression: seg.expression,
+          })).filter(s => !!s.fn);
+
+          const finitePieces  = compiled.filter(s => isFinite(s.from) && isFinite(s.to));
+          const infinitePieces = compiled.filter(s => !isFinite(s.from) || !isFinite(s.to));
+
+          // ── Finite pieces: draw together via plotPiecewise ──────────────
+          if (finitePieces.length > 0) {
             if (showOrigRe) {
-              if (isFinite(from) && isFinite(to)) {
-                plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
-                  color: origReColor,
-                  lineWidth: origLW,
-                });
-              } else {
-                const gated = (x: number) => (x >= from && x <= to ? fn(x) : NaN);
-                plotter.plotFn(ctx, gated, vp, { color: origReColor, lineWidth: origLW });
-              }
+              plotter.plotPiecewise(
+                ctx,
+                finitePieces.map(s => ({ fn: s.fn!, from: s.from, to: s.to })),
+                vp,
+                { color: origReColor, lineWidth: origLW },
+              );
             }
             if (showOrigM) {
-              const absFn = (x: number) => {
-                const y = fn(x);
+              plotter.plotPiecewise(
+                ctx,
+                finitePieces.map(s => ({
+                  fn: (x: number) => { const y = s.fn!(x); return isFinite(y) ? Math.abs(y) : NaN; },
+                  from: s.from,
+                  to:   s.to,
+                })),
+                vp,
+                { color: origMgColor, lineWidth: origLW },
+              );
+            }
+          }
+
+          // ── Infinite pieces: gated plotFn (existing behaviour) ──────────
+          for (const s of infinitePieces) {
+            if (showOrigRe) {
+              const gated = (x: number) => (x >= s.from && x <= s.to ? s.fn!(x) : NaN);
+              plotter.plotFn(ctx, gated, vp, { color: origReColor, lineWidth: origLW });
+            }
+            if (showOrigM) {
+              const gatedAbs = (x: number) => {
+                if (x < s.from || x > s.to) return NaN;
+                const y = s.fn!(x);
                 return isFinite(y) ? Math.abs(y) : NaN;
               };
-              if (isFinite(from) && isFinite(to)) {
-                plotter.plotFnRange(ctx, absFn, from, to, 400, vp, {
-                  color: origMgColor,
-                  lineWidth: origLW,
-                });
-              } else {
-                const gatedAbs = (x: number) => (x >= from && x <= to ? absFn(x) : NaN);
-                plotter.plotFn(ctx, gatedAbs, vp, { color: origMgColor, lineWidth: origLW });
-              }
+              plotter.plotFn(ctx, gatedAbs, vp, { color: origMgColor, lineWidth: origLW });
             }
-            // Draw Dirac delta terms (FT mode only — IFT inputs are rarely delta)
-            if (this.mode() === 'ft' && showOrigRe) {
+          }
+
+          // ── Dirac delta terms (FT mode only, per segment) ───────────────
+          if (this.mode() === 'ft' && showOrigRe) {
+            for (const s of compiled) {
               for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
-                seg.expression,
+                s.expression,
                 intVariable,
                 pv,
               )) {
-                if (pos >= from && pos <= to) {
+                if (pos >= s.from && pos <= s.to) {
                   this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origReColor, origLW);
                 }
               }
