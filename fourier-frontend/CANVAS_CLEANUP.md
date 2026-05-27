@@ -431,10 +431,12 @@ ReferenceError, el comportamiento externo es idéntico.
 
 ---
 
-## Estado — Fase 2
+## Estado — Fase 2 (completada ✅)
 
-- [ ] Commit 8: `plotting.service.ts` — `plotPiecewise` + `openEnds` en `sampleRange`
-- [ ] Commit 9: `continuous-transform.component.ts` — usar `plotPiecewise` en preview de trozos
-- [ ] Commit 10: `math-utils.service.ts` — caché de compilación + fix smoke-test
-- [ ] Commit 11: `math-utils.service.ts` — `_stubUnknownFunctions` → Proxy o whitelist ampliada
-- [ ] Commit 12: Verificación final Fase 2 + actualizar `PLOTTER_EVAL.md`
+- [x] Commit 8: `plotting.service.ts` — `plotPiecewise` + `openEnds` en `sampleRange`
+- [x] Commit 9: `continuous-transform.component.ts` — usar `plotPiecewise` en preview de trozos
+- [x] Commit 10: `math-utils.service.ts` — caché de compilación + fix smoke-test
+- [x] Commit 11: `math-utils.service.ts` — `_stubUnknownFunctions` → whitelist ampliada (Proxy descartado: incompatible con `"use strict"`)
+- [x] Commit 12: Verificación final Fase 2 + `PLOTTER_EVAL.md` actualizado (7/10 → 8.5/10)
+
+**Build final**: `ng build --configuration=production` ✅ (sin errores TypeScript; warning de budget preexistente +18 kB no relacionado con estos cambios)
