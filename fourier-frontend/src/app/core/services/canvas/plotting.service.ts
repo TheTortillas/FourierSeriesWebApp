@@ -1,9 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { CanvasViewport, Curve, MathPoint } from './canvas.types';
+import { CanvasViewport, Curve, MathPoint, CanvasRenderConfig, DEFAULT_RENDER_CONFIG } from './canvas.types';
 import { CoordinateTransformService } from './coordinate-transform.service';
-
-/** Maximum Y-jump (in CSS pixels) before a path is broken at a discontinuity */
-const MAX_JUMP_PX = 120;
 
 /**
  * Samples mathematical functions and renders them onto a canvas context.
@@ -24,15 +21,23 @@ export class PlottingService {
 
   /**
    * Samples a function over the full visible X range.
-   * Resolution = cssWidth × oversample (default 2× for smoother curves).
+   *
+   * Step count = `cssWidth × effectiveOversample` where `effectiveOversample`
+   * is at least `config.defaultOversample` and grows on wide canvases so that
+   * high-frequency functions stay smooth regardless of viewport width.
+   *
+   * @param oversample  Explicit override. When omitted, computed adaptively from config.
+   * @param config      Render tunables. Defaults to DEFAULT_RENDER_CONFIG.
    */
   sampleVisible(
     fn: (x: number) => number,
     vp: CanvasViewport,
-    oversample = 2,
+    oversample?: number,
+    config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
   ): MathPoint[] {
+    const effective = oversample ?? Math.max(config.defaultOversample, Math.ceil(vp.cssWidth / 200));
     const range = this.t.visibleRange(vp);
-    return this.sampleRange(fn, range.xMin, range.xMax, vp.cssWidth * oversample);
+    return this.sampleRange(fn, range.xMin, range.xMax, vp.cssWidth * effective);
   }
 
   /**
@@ -78,11 +83,14 @@ export class PlottingService {
    * Draws a pre-sampled Curve onto ctx.
    * Automatically breaks the path at NaN values and large Y jumps
    * (discontinuity detection).
+   *
+   * @param config  Render tunables. Defaults to DEFAULT_RENDER_CONFIG.
    */
   drawCurve(
     ctx: CanvasRenderingContext2D,
     curve: Curve,
     vp: CanvasViewport,
+    config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
   ): void {
     if (curve.points.length === 0) return;
 
@@ -111,7 +119,7 @@ export class PlottingService {
       const sy = this.t.mathToScreenY(pt.y, vp) / vp.dpr;
 
       // Discontinuity: large vertical jump
-      if (penDown && isFinite(prevSy) && Math.abs(sy - prevSy) > MAX_JUMP_PX) {
+      if (penDown && isFinite(prevSy) && Math.abs(sy - prevSy) > config.maxJumpPx) {
         penDown = false;
       }
 
@@ -130,19 +138,24 @@ export class PlottingService {
 
   /**
    * Convenience: sample and draw a function over the visible range in one call.
+   *
+   * @param config  Render tunables passed to both sampleVisible and drawCurve.
    */
   plotFn(
     ctx: CanvasRenderingContext2D,
     fn: (x: number) => number,
     vp: CanvasViewport,
     style: { color: string; lineWidth: number; dashed?: boolean },
+    config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
   ): void {
-    const points = this.sampleVisible(fn, vp);
-    this.drawCurve(ctx, { points, ...style }, vp);
+    const points = this.sampleVisible(fn, vp, undefined, config);
+    this.drawCurve(ctx, { points, ...style }, vp, config);
   }
 
   /**
    * Convenience: sample and draw a function over [from, to] in one call.
+   *
+   * @param config  Render tunables passed to drawCurve.
    */
   plotFnRange(
     ctx: CanvasRenderingContext2D,
@@ -152,9 +165,10 @@ export class PlottingService {
     steps: number,
     vp: CanvasViewport,
     style: { color: string; lineWidth: number; dashed?: boolean },
+    config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
   ): void {
     const points = this.sampleRange(fn, from, to, steps);
-    this.drawCurve(ctx, { points, ...style }, vp);
+    this.drawCurve(ctx, { points, ...style }, vp, config);
   }
 
   // ── Spectrum bars ─────────────────────────────────────────────────────────
