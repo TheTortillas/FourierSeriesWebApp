@@ -62,6 +62,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'grapher',
+        loadComponent: () =>
+          import('./features/grapher/grapher.component').then(
+            (m) => m.GrapherComponent,
+          ),
+      },
+      {
         path: 'results',
         loadChildren: () =>
           import('./features/results/results.routes').then((m) => m.resultsRoutes),

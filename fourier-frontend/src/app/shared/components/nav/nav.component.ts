@@ -79,7 +79,7 @@ export class NavComponent {
   /** True when the active route belongs to the Fourier analysis section. */
   readonly isAnalysisActive = computed(() => {
     const url = this.currentUrl();
-    return url.includes('/calculator') || url.includes('/transforms');
+    return url.includes('/calculator') || url.includes('/transforms') || url.includes('/grapher');
   });
 
   switchToLang(code: string): void {
