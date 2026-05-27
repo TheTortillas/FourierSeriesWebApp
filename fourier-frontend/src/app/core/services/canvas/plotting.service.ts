@@ -42,13 +42,18 @@ export class PlottingService {
 
   /**
    * Samples a function over [xFrom, xTo] with `steps` uniform steps.
-   * Falls back to cssWidth×2 steps if not specified.
+   *
+   * @param openEnds  When true, appends a NaN sentinel as the last point.
+   *   This forces `drawCurve` to lift the pen after the last sample, so that
+   *   adjacent piecewise pieces never get visually connected — even when they
+   *   share the same boundary x-coordinate. Default: false.
    */
   sampleRange(
     fn: (x: number) => number,
     xFrom: number,
     xTo: number,
     steps: number,
+    openEnds = false,
   ): MathPoint[] {
     const pts: MathPoint[] = [];
     const n = Math.max(2, Math.round(steps));
@@ -61,20 +66,38 @@ export class PlottingService {
         pts.push({ x, y: NaN });
       }
     }
+    // Sentinel: lift the pen so the next piece starts independently
+    if (openEnds) pts.push({ x: xTo, y: NaN });
     return pts;
   }
 
   /**
    * Samples a piecewise function defined by an array of { fn, from, to }.
-   * Each piece is sampled independently so endpoints are exact.
+   *
+   * Each piece is sampled independently and separated by a NaN sentinel so
+   * `drawCurve` never connects adjacent pieces — eliminating the spurious
+   * vertical line that appears when two pieces share a boundary x-value but
+   * have different y-values there.
+   *
+   * Steps per piece scale with the viewport width (adaptive, same logic as
+   * `sampleVisible`) so the density is always proportional to screen space.
    */
   samplePiecewise(
     pieces: { fn: (x: number) => number; from: number; to: number }[],
-    stepsPerPiece: number,
+    vp: CanvasViewport,
+    config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
   ): MathPoint[] {
-    return pieces.flatMap(({ fn, from, to }) =>
-      this.sampleRange(fn, from, to, stepsPerPiece),
-    );
+    const oversample = Math.max(config.defaultOversample, Math.ceil(vp.cssWidth / 200));
+    const range = this.t.visibleRange(vp);
+    const visibleWidth = Math.max(1, range.xMax - range.xMin);
+    const stepsPerUnit = (vp.cssWidth * oversample) / visibleWidth;
+
+    return pieces.flatMap(({ fn, from, to }) => {
+      // Steps proportional to the piece width relative to the visible range —
+      // wide pieces get more samples, narrow ones fewer, minimum 4.
+      const steps = Math.max(4, Math.round(stepsPerUnit * (to - from)));
+      return this.sampleRange(fn, from, to, steps, /* openEnds */ true);
+    });
   }
 
   // ── Rendering ─────────────────────────────────────────────────────────────
@@ -168,6 +191,36 @@ export class PlottingService {
     config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
   ): void {
     const points = this.sampleRange(fn, from, to, steps);
+    this.drawCurve(ctx, { points, ...style }, vp, config);
+  }
+
+  /**
+   * Samples and draws a piecewise-defined function in a single canvas path.
+   *
+   * Each piece is isolated by a NaN sentinel so no spurious vertical line
+   * is drawn at the shared boundary between adjacent pieces — regardless of
+   * how large or small the jump between them is. This fixes the intermittent
+   * "ghost vertical line" seen when zooming or changing parameters on
+   * functions like sinc(a·t) with small values of a.
+   *
+   * Pieces with non-finite bounds (±Infinity) are silently skipped; callers
+   * should handle infinite-domain pieces with a gated `plotFn` instead.
+   *
+   * @param pieces  Array of `{ fn, from, to }` — each piece sampled over [from, to].
+   * @param vp      Current viewport (used for adaptive step count).
+   * @param style   Stroke color, lineWidth, optional dashed flag.
+   * @param config  Render tunables. Defaults to DEFAULT_RENDER_CONFIG.
+   */
+  plotPiecewise(
+    ctx: CanvasRenderingContext2D,
+    pieces: { fn: (x: number) => number; from: number; to: number }[],
+    vp: CanvasViewport,
+    style: { color: string; lineWidth: number; dashed?: boolean },
+    config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
+  ): void {
+    const finite = pieces.filter(p => isFinite(p.from) && isFinite(p.to));
+    if (finite.length === 0) return;
+    const points = this.samplePiecewise(finite, vp, config);
     this.drawCurve(ctx, { points, ...style }, vp, config);
   }
 
