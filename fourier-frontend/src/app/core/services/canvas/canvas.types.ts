@@ -95,3 +95,69 @@ export const NEUTRAL_DARK_THEME: CanvasTheme = {
 
 /** Fourier series types supported by the backend */
 export type FourierSeriesType = 'trigonometric' | 'complex' | 'halfRange';
+
+// ── Render configuration ───────────────────────────────────────────────────────
+
+/**
+ * All rendering tunables in one place.
+ *
+ * Pass a `Partial<CanvasRenderConfig>` to `FunctionPlotComponent` via the
+ * `[renderConfig]` input; unspecified keys fall back to `DEFAULT_RENDER_CONFIG`.
+ *
+ * Having these as data (rather than module-level `const`) makes the canvas
+ * components library-ready: callers can override fonts, grid density, zoom
+ * limits, etc. without touching service code.
+ */
+export interface CanvasRenderConfig {
+  // ── Grid & labels ──────────────────────────────────────────────────────────
+  /** Target spacing between major grid lines, in CSS pixels. Default: 80 */
+  targetGridPx: number;
+  /** Minimum CSS-pixel gap between consecutive axis labels (prevents overlap). Default: 44 */
+  minLabelGap: number;
+  /** Font size for axis tick labels, in CSS pixels. Default: 11 */
+  labelFontSize: number;
+  /** CSS font-family string for axis tick labels. Default: 'JetBrains Mono, monospace' */
+  labelFont: string;
+
+  // ── Axes ───────────────────────────────────────────────────────────────────
+  /** Stroke width of the X and Y axes, in CSS pixels. Default: 1.5 */
+  axisLineWidth: number;
+
+  // ── Curve sampling & discontinuity ─────────────────────────────────────────
+  /**
+   * Maximum allowed vertical jump (CSS pixels) between two consecutive sampled
+   * points before the path is broken (discontinuity detection). Default: 120
+   */
+  maxJumpPx: number;
+  /**
+   * Base oversample factor: `sampleVisible` uses `cssWidth × defaultOversample`
+   * samples, then clamps upward if the canvas is very wide. Default: 2
+   */
+  defaultOversample: number;
+
+  // ── Zoom limits ─────────────────────────────────────────────────────────────
+  /** Minimum allowed `unit` value (most zoomed-out). Default: 1e-4 */
+  minUnit: number;
+  /** Maximum allowed `unit` value (most zoomed-in). Default: 1e9 */
+  maxUnit: number;
+}
+
+/**
+ * Production defaults — match the values that were previously hardcoded
+ * across `canvas-renderer.service.ts`, `plotting.service.ts`, and
+ * `function-plot.component.ts`.
+ *
+ * Callers that do not pass `[renderConfig]` get exactly the same behaviour
+ * as before this refactor.
+ */
+export const DEFAULT_RENDER_CONFIG: CanvasRenderConfig = {
+  targetGridPx:    80,
+  minLabelGap:     44,
+  labelFontSize:   11,
+  labelFont:       'JetBrains Mono, monospace',
+  axisLineWidth:   1.5,
+  maxJumpPx:       120,
+  defaultOversample: 2,
+  minUnit:         1e-4,
+  maxUnit:         1e9,
+};
