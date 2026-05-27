@@ -8,6 +8,7 @@
 display2d: false$
 
 rect(x) := if abs(x) < 1/2 then 1 elseif abs(x) = 1/2 then 1/2 else 0$
+tri(x)  := if abs(x) < 1   then 1 - abs(x)                    else 0$
 u(x)    := if x >= 0 then 1 else 0$
 sgn(x)  := if x > 0 then 1 elseif x = 0 then 0 else -1$
 

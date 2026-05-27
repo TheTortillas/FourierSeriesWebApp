@@ -183,6 +183,7 @@ export class MathUtilsService {
     s = this._replaceNestedFn(s, 'delta', (_arg) => '0');
     s = this._replaceNestedFn(s, 'u', (arg) => `(${arg} >= 0 ? 1 : 0)`);
     s = this._replaceNestedFn(s, 'rect', (arg) => `(Math.abs(${arg}) < 0.5 ? 1 : Math.abs(${arg}) === 0.5 ? 0.5 : 0)`);
+    s = this._replaceNestedFn(s, 'tri',  (arg) => `(Math.abs(${arg}) < 1 ? 1 - Math.abs(${arg}) : 0)`);
 
     // Unrecognised Maxima names (e.g. besselj, polygamma) would produce
     // ReferenceErrors at eval time.  Replace any remaining bare identifiers
@@ -255,7 +256,7 @@ export class MathUtilsService {
       '_sech', '_csch', '_coth',
       '_gamma', '_factorial', '_erf', '_erfc',
       '_Si', '_Ci', '_Shi', '_Chi', '_Ei', '_E1', '_li',
-      'rect',
+      'rect', 'tri',
     ]);
     // Collect unknown function calls using nested-paren-aware finder
     const re = /(?<!\.)(\b[a-zA-Z_][a-zA-Z0-9_]*\b)\s*\(/g;
