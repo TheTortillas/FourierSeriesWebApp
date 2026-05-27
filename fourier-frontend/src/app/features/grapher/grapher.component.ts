@@ -14,8 +14,98 @@ import {
 import { ParamSlidersComponent, ParamValues } from '../../shared/components/param-sliders/param-sliders.component';
 import { PlottingService } from '../../core/services/canvas/plotting.service';
 import { MathUtilsService } from '../../core/services/math/math-utils.service';
+import { MathquillService, KeyBtn } from '../../core/services/math/mathquill.service';
 import { CoordinateTransformService } from '../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport, MathPoint } from '../../core/services/canvas/canvas.types';
+
+export interface FnGroup {
+  label: string;
+  keys: KeyBtn[];
+}
+
+export const FN_GROUPS: FnGroup[] = [
+  {
+    label: 'Trig',
+    keys: [
+      { label: 'sin',  cmd: '\\sin'  },
+      { label: 'cos',  cmd: '\\cos'  },
+      { label: 'tan',  cmd: '\\tan'  },
+      { label: 'cot',  cmd: '\\cot'  },
+      { label: 'sec',  cmd: '\\sec'  },
+      { label: 'csc',  cmd: '\\csc'  },
+    ],
+  },
+  {
+    label: 'Inv. trig',
+    keys: [
+      { label: 'arcsin', write: '\\arcsin' },
+      { label: 'arccos', write: '\\arccos' },
+      { label: 'arctan', write: '\\arctan' },
+    ],
+  },
+  {
+    label: 'Hiperbólicas',
+    keys: [
+      { label: 'sinh',  write: '\\sinh'  },
+      { label: 'cosh',  write: '\\cosh'  },
+      { label: 'tanh',  write: '\\tanh'  },
+      { label: 'coth',  write: '\\coth'  },
+      { label: 'sech',  write: '\\sech'  },
+      { label: 'csch',  write: '\\csch'  },
+      { label: 'asinh', write: 'asinh'   },
+      { label: 'acosh', write: 'acosh'   },
+      { label: 'atanh', write: 'atanh'   },
+    ],
+  },
+  {
+    label: 'Exp / Log',
+    keys: [
+      { label: 'eˣ',   typedText: 'e', cmd: '^' },
+      { label: 'ln',   cmd: '\\ln'  },
+      { label: 'log',  cmd: '\\log' },
+      { label: 'exp',  write: '\\exp' },
+    ],
+  },
+  {
+    label: 'Raíces / Potencias',
+    keys: [
+      { label: '√x',   cmd: '\\sqrt'  },
+      { label: '∛x',   write: '\\sqrt[3]{}', writeWithCursor: '\\sqrt[3]{}' },
+      { label: 'x²',   keystroke: '^ 2 Right' },
+      { label: 'xⁿ',   cmd: '^'      },
+      { label: 'x/y',  cmd: '/'      },
+      { label: '|x|',  write: '\\left|\\right|', writeWithCursor: '\\left|\\right|' },
+    ],
+  },
+  {
+    label: 'Constantes',
+    keys: [
+      { label: 'π',    cmd: '\\pi'    },
+      { label: 'e',    typedText: 'e' },
+      { label: '∞',    write: '\\infty' },
+    ],
+  },
+  {
+    label: 'Integrales especiales',
+    keys: [
+      { label: 'Si',   typedText: 'Si'   },
+      { label: 'Ci',   typedText: 'Ci'   },
+      { label: 'Shi',  typedText: 'Shi'  },
+      { label: 'Chi',  typedText: 'Chi'  },
+      { label: 'Ei',   typedText: 'Ei'   },
+      { label: 'E1',   typedText: 'E1'   },
+      { label: 'li',   typedText: 'li'   },
+    ],
+  },
+  {
+    label: 'Error',
+    keys: [
+      { label: 'erf',  typedText: 'erf'  },
+      { label: 'erfc', typedText: 'erfc' },
+      { label: 'Γ(x)', write: '\\Gamma'  },
+    ],
+  },
+];
 
 export interface GrapherSettings {
   showRoots:         boolean;
@@ -90,6 +180,7 @@ function drawFilledCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number,
 export class GrapherComponent {
   private readonly plotter   = inject(PlottingService);
   private readonly mathUtils = inject(MathUtilsService);
+  private readonly mqs       = inject(MathquillService);
   private readonly coords    = inject(CoordinateTransformService);
 
   readonly expressions    = signal<GraphExpression[]>([newExpr(0)]);
@@ -97,7 +188,9 @@ export class GrapherComponent {
   readonly hoveredPoint   = signal<MathPoint | null>(null);
   readonly settings       = signal<GrapherSettings>({ ...DEFAULT_SETTINGS });
   readonly settingsOpen   = signal(false);
+  readonly keyboardOpen   = signal(false);
   readonly canvasMounted  = signal(true);
+  readonly fnGroups       = FN_GROUPS;
 
   constructor() {
     let prev = this.settings().initialUnit;
@@ -220,5 +313,15 @@ export class GrapherComponent {
 
   setSetting<K extends keyof GrapherSettings>(key: K, value: GrapherSettings[K]): void {
     this.settings.update((s) => ({ ...s, [key]: value }));
+  }
+
+  // ── Function keyboard ──────────────────────────────────────────────────────
+
+  toggleKeyboard(): void {
+    this.keyboardOpen.update((v) => !v);
+  }
+
+  insertKey(btn: KeyBtn): void {
+    this.mqs.insertKey(btn);
   }
 }

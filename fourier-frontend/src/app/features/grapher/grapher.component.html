@@ -127,16 +127,52 @@
       }
     </div>
 
-    <!-- Add expression button -->
-    <div class="p-3 border-t border-border dark:border-dark-border">
+    <!-- Add expression + keyboard toggle -->
+    <div class="p-3 border-t border-border dark:border-dark-border flex gap-2">
       <button
         type="button"
         (click)="addExpression()"
-        class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded border border-dashed border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors"
+        class="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded border border-dashed border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors"
       >
         {{ 'grapher.addExpression' | transloco }}
       </button>
+      <button
+        type="button"
+        (click)="toggleKeyboard()"
+        [class.text-accent]="keyboardOpen()"
+        title="Teclado de funciones"
+        class="px-2.5 py-1.5 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors text-xs font-mono"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="6" width="20" height="12" rx="2"/>
+          <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M10 14h4"/>
+        </svg>
+      </button>
     </div>
+
+    <!-- Function keyboard (collapsible) -->
+    @if (keyboardOpen()) {
+      <div class="border-t border-border dark:border-dark-border px-3 py-3 space-y-3">
+        @for (group of fnGroups; track group.label) {
+          <div>
+            <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-1.5">
+              {{ group.label }}
+            </p>
+            <div class="flex flex-wrap gap-1">
+              @for (btn of group.keys; track btn.label) {
+                <button
+                  type="button"
+                  (click)="insertKey(btn)"
+                  class="px-2 py-1 rounded border border-border dark:border-dark-border text-xs font-mono text-ink dark:text-dark-ink hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors"
+                >
+                  {{ btn.label }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
 
     <!-- Parameter sliders -->
     @if (detectedParams().length > 0) {

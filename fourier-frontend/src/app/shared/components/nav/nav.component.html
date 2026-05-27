@@ -79,17 +79,21 @@
           >
             {{ 'nav.transforms' | transloco }}
           </a>
-          <a
-            [routerLink]="'/' + lang() + '/grapher'"
-            routerLinkActive="!text-accent bg-accent/5"
-            (click)="fourierMenuOpen.set(false)"
-            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
-          >
-            {{ 'nav.grapher' | transloco }}
-          </a>
         </div>
       }
     </div>
+
+    <!-- Grapher — top-level link -->
+    <a
+      [routerLink]="'/' + lang() + '/grapher'"
+      [class]="
+        isGrapherActive()
+          ? 'hidden sm:flex items-center px-2 py-1.5 rounded text-xs font-mono text-accent hover:bg-paper2 dark:hover:bg-dark-surface transition-colors'
+          : 'hidden sm:flex items-center px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors'
+      "
+    >
+      {{ 'nav.grapher' | transloco }}
+    </a>
 
     <div class="relative hidden sm:block" (focusout)="onMoreMenuFocusOut($event)">
       <button
