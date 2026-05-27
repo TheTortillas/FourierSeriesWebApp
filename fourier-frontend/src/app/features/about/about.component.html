@@ -202,6 +202,66 @@
 
     </section>
 
+    <!-- ── Funciones especiales ──────────────────────────────────────────────── -->
+    <section class="flex flex-col gap-6">
+
+      <div class="flex flex-col gap-1">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          {{ 'about.fns.title' | transloco }}
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted max-w-2xl leading-relaxed">
+          {{ 'about.fns.intro' | transloco }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+
+        @for (fn of specialFns; track fn.key) {
+          <div class="flex flex-col gap-3 p-4 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+
+            <!-- Notación + alias -->
+            <div class="flex items-start justify-between gap-3">
+              <span class="font-mono text-lg text-accent leading-none select-all">
+                {{ ('about.fns.' + fn.key + '.notation') | transloco }}
+              </span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border border-border dark:border-dark-border text-muted dark:text-dark-muted shrink-0 self-center">
+                {{ ('about.fns.' + fn.key + '.aka') | transloco }}
+              </span>
+            </div>
+
+            <!-- Nombre formal -->
+            <p class="font-display text-sm text-ink dark:text-dark-ink leading-snug -mt-1">
+              {{ ('about.fns.' + fn.key + '.name') | transloco }}
+            </p>
+
+            <!-- Definición LaTeX -->
+            <div class="overflow-x-auto py-1">
+              <span [mathjax]="'\\[' + (('about.fns.' + fn.key + '.latex') | transloco) + '\\]'"
+                    class="text-ink dark:text-dark-ink text-sm"></span>
+            </div>
+
+            <!-- Descripción en texto -->
+            <p class="font-body text-xs text-muted dark:text-dark-muted leading-relaxed">
+              {{ ('about.fns.' + fn.key + '.def') | transloco }}
+            </p>
+
+            <!-- Transformada de Fourier -->
+            <div class="pt-2 border-t border-border dark:border-dark-border flex flex-col gap-1">
+              <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide opacity-60">
+                {{ 'about.fns.ftLabel' | transloco }}
+              </p>
+              <div class="overflow-x-auto">
+                <span [mathjax]="'\\(' + (('about.fns.' + fn.key + '.ft') | transloco) + '\\)'"
+                      class="text-ink dark:text-dark-ink text-sm"></span>
+              </div>
+            </div>
+
+          </div>
+        }
+
+      </div>
+    </section>
+
     <!-- ── CTA ────────────────────────────────────────────────────────────────── -->
     <section class="flex flex-col items-center gap-5 py-6 border-t border-border dark:border-dark-border">
       <p class="font-display text-xl text-ink dark:text-dark-ink">

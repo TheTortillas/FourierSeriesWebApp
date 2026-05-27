@@ -69,7 +69,7 @@ const KNOWN_IDENTIFIERS = new Set([
   'floor', 'ceiling', 'round', 'truncate', 'max', 'min',
   'sign', 'sgn', 'signum',
   // Special functions supported by the frontend
-  'u', 'rect', 'delta', 'gamma', 'factorial', 'erf', 'erfc',
+  'u', 'rect', 'tri', 'sinc', 'delta', 'gamma', 'factorial', 'erf', 'erfc',
 ]);
 
 /**
@@ -270,6 +270,8 @@ export class DftComponent implements OnInit, OnDestroy {
     { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
     { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
     { label: 'rect(□)', writeWithCursor: '\\operatorname{rect}\\left(\\right)' },
+    { label: 'tri(□)',  writeWithCursor: '\\operatorname{tri}\\left(\\right)'  },
+    { label: 'sinc(□)', writeWithCursor: '\\operatorname{sinc}\\left(\\right)' },
     { label: 'π', typedText: 'pi' },
   ];
 
@@ -286,9 +288,11 @@ export class DftComponent implements OnInit, OnDestroy {
       { label: 'asin', typedText: 'asin(' },
       { label: 'acos', typedText: 'acos(' },
       { label: 'atan', typedText: 'atan(' },
-      { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
-      { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+      { label: 'u(□)',    writeWithCursor: '\\operatorname{u}\\left(\\right)'    },
+      { label: 'sgn(□)',  writeWithCursor: '\\operatorname{sgn}\\left(\\right)'  },
       { label: 'rect(□)', writeWithCursor: '\\operatorname{rect}\\left(\\right)' },
+      { label: 'tri(□)',  writeWithCursor: '\\operatorname{tri}\\left(\\right)'  },
+      { label: 'sinc(□)', writeWithCursor: '\\operatorname{sinc}\\left(\\right)' },
     ],
     [
       { label: 'log', typedText: 'log(' },

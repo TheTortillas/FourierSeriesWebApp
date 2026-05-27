@@ -53,9 +53,13 @@ declare(delta, real)$
 declare(u,     real)$
 declare(sgn,   real)$
 declare(rect,  real)$
+declare(tri,   real)$
+declare(sinc,  real)$
 
 texput(sgn,  "\\operatorname{sgn}")$
 texput(rect, "\\operatorname{rect}")$
+texput(tri,  "\\operatorname{tri}")$
+texput(sinc, "\\operatorname{sinc}")$
 
 /* ════════════════════════════════════════════════════════════════════
    BLOQUE 2 — Auxiliares de reconocimiento
@@ -377,6 +381,77 @@ FT_match_rect(expr, t_var) := block(
                 rect_arg: part(rect_part, 1),
                 aa: ratsimp(diff(rect_arg, t_var)),
                 bb: ratsimp(subst(t_var=0, rect_arg)),
+                if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                    res: [coef, aa, bb]
+            )
+        )
+    ),
+    res
+)$
+
+/* Detecta k*tri(a*t+b) con k,a,b constantes en t_var.
+   tri(a*t+b) es 1-|a*t+b| cuando |a*t+b| < 1, pulso triangular de ancho
+   2/|a| centrado en t0 = -b/a.
+   Devuelve [k, a, b] o false. */
+FT_match_tri(expr, t_var) := block(
+    [e, tri_part, coef, res, tri_arg, aa, bb],
+    e: expand(expr),
+    res: false,
+    if not atom(e) then (
+        if is(op(e) = 'tri) then (
+            tri_arg: part(e, 1),
+            aa: ratsimp(diff(tri_arg, t_var)),
+            bb: ratsimp(subst(t_var=0, tri_arg)),
+            if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                res: [1, aa, bb]
+        )
+        else if is(op(e) = "*") then (
+            tri_part: false,
+            coef: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'tri)
+                then tri_part: s
+                else coef: coef * s
+            ),
+            if is(tri_part # false) and freeof(t_var, coef) then (
+                tri_arg: part(tri_part, 1),
+                aa: ratsimp(diff(tri_arg, t_var)),
+                bb: ratsimp(subst(t_var=0, tri_arg)),
+                if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                    res: [coef, aa, bb]
+            )
+        )
+    ),
+    res
+)$
+
+/* Detecta k*sinc(a*t+b) con k,a,b constantes en t_var.
+   sinc(x) = sin(x)/x  (no normalizada).
+   sinc(a*t+b): argumento lineal. Devuelve [k, a, b] o false. */
+FT_match_sinc(expr, t_var) := block(
+    [e, sinc_part, coef, res, sinc_arg, aa, bb],
+    e: expand(expr),
+    res: false,
+    if not atom(e) then (
+        if is(op(e) = 'sinc) then (
+            sinc_arg: part(e, 1),
+            aa: ratsimp(diff(sinc_arg, t_var)),
+            bb: ratsimp(subst(t_var=0, sinc_arg)),
+            if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                res: [1, aa, bb]
+        )
+        else if is(op(e) = "*") then (
+            sinc_part: false,
+            coef: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'sinc)
+                then sinc_part: s
+                else coef: coef * s
+            ),
+            if is(sinc_part # false) and freeof(t_var, coef) then (
+                sinc_arg: part(sinc_part, 1),
+                aa: ratsimp(diff(sinc_arg, t_var)),
+                bb: ratsimp(subst(t_var=0, sinc_arg)),
                 if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
                     res: [coef, aa, bb]
             )
@@ -1062,6 +1137,53 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
             res: [_rk * 2 * sin(w_var * _rT / 2) / w_var * exp(-%i * w_var * _rt0),
                   concat("k*rect(a*t+b)->2k*sin(wT/2)/w*exp(-iwt0), T=", string(_rT),
                          ", t0=", string(_rt0))]
+        )
+    ),
+
+    /* ── k*sinc(a*t+b) -> k*(π/|a|)*rect(ω/(2a)) * exp(-i*ω*t0)  (t0=-b/a) ──
+       FT[sinc(a*t)](ω) = FT[sin(at)/(at)](ω) = (π/|a|)*rect(ω/(2a)).
+       Convención: sinc(x)=sin(x)/x (no norm.). El rect resultante tiene
+       ancho 2|a| en ω centrado en 0; con desplazamiento t0 = -b/a,
+       se multiplica por e^{-iωt0} (time-shift). */
+    if is(res = false) then block(
+        [_sm, _sk, _sa, _sb, _st0, _raw_sinc],
+        _sm: FT_match_sinc(e, t_var),
+        if is(_sm # false) then (
+            _sk: _sm[1],
+            _sa: _sm[2],
+            _sb: _sm[3],
+            _st0: ratsimp(-_sb / _sa),
+            /* resultado: k*(pi/|a|)*rect(w/(2*a)) — rect simbólica en w */
+            _raw_sinc: _sk * %pi / abs(_sa) * rect(w_var / (2 * _sa)),
+            if not equal(ratsimp(_st0), 0) then
+                _raw_sinc: _raw_sinc * exp(-%i * w_var * _st0),
+            res: [_raw_sinc,
+                  concat("k*sinc(a*t+b)->(k*pi/|a|)*rect(w/(2a))*exp(-iwt0), t0=",
+                         string(_st0))]
+        )
+    ),
+
+    /* ── k*tri(a*t+b) -> k*(2/T)*sin²(w*T/2)/w²  * exp(-i*w*t0)  (T=1/|a|, t0=-b/a) ──
+       FT[tri(t/T)](w) = integral_{-T}^{T} (1-|t|/T) e^{-iwt} dt = T*sinc²(wT/(2π))
+       Con sinc normalizado: T*(sin(wT/2)/(wT/2))² = 4*sin²(wT/2)/(w²*T).
+       Para k*tri((t-t0)/T): multiplicar por e^{-i*w*t0} (time-shift).
+       tri se trata simbólicamente — FT_match_tri detecta a y b. */
+    if is(res = false) then block(
+        [_tm, _tk, _ta, _tb, _tt0, _tT, _raw_tri],
+        _tm: FT_match_tri(e, t_var),
+        if is(_tm # false) then (
+            _tk: _tm[1],
+            _ta: _tm[2],
+            _tb: _tm[3],
+            _tt0: ratsimp(-_tb / _ta),
+            _tT:  ratsimp(1 / abs(_ta)),
+            _raw_tri: _tk * 4 * sin(w_var * _tT / 2)^2 / (w_var^2 * _tT),
+            /* si hay desplazamiento, aplicar time-shift */
+            if not equal(ratsimp(_tt0), 0) then
+                _raw_tri: _raw_tri * exp(-%i * w_var * _tt0),
+            res: [_raw_tri,
+                  concat("k*tri(a*t+b)->4k*sin²(wT/2)/(w²T)*exp(-iwt0), T=", string(_tT),
+                         ", t0=", string(_tt0))]
         )
     ),
 
@@ -3623,6 +3745,55 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             res: [_raw_res,
                   concat("k*rect(a*w+b)->k*sin(Wt/2)/(pi*t)*exp(iw0t), W=", string(_rW),
                          ", w0=", string(_rw0))]
+        )
+    ),
+
+    /* ── k*sinc(a*w+b) -> k*(1/(2|a|))*rect(t/(2a)) * exp(i*w0*t)  (w0=-b/a) ──
+       IFT[sinc(a*w)](t) = (1/2pi)*∫ sin(aw)/(aw) * e^{iwt} dw = (1/(2|a|))*rect(t/(2a)).
+       sinc(x)=sin(x)/x no normalizada; el rect resultante tiene ancho 2|a| en t.
+       Desplazamiento w0=-b/a genera e^{iw0t} (frequency-shift → modulation). */
+    if is(res = false) then block(
+        [_sm, _sk, _sa, _sb, _sw0, _raw_sinc_ift],
+        _sm: FT_match_sinc(e, w_var),
+        if is(_sm # false) then (
+            _sk: _sm[1],
+            _sa: _sm[2],
+            _sb: _sm[3],
+            _sw0: ratsimp(-_sb / _sa),
+            _raw_sinc_ift: _sk / (2 * abs(_sa)) * rect(t_var / (2 * _sa)),
+            if not equal(ratsimp(_sw0), 0) then
+                _raw_sinc_ift: _raw_sinc_ift * exp(%i * _sw0 * t_var),
+            res: [_raw_sinc_ift,
+                  concat("k*sinc(a*w+b)->k/(2|a|)*rect(t/(2a))*exp(iw0t), w0=",
+                         string(_sw0))]
+        )
+    ),
+
+    /* ── k*tri(a*w+b) -> k*(2/W)*sin²(W*t/2)/(pi²*t²) * exp(i*w0*t)  (W=1/|a|, w0=-b/a) ──
+       IFT[tri(w/W)](t) = (1/2pi)*integral_{-W}^{W} (1-|w|/W) e^{iwt} dw
+                        = W/(2pi) * sinc²(Wt/(2pi)) = 2*sin²(Wt/2)/(pi²*t²*W).
+       Para desplazamiento w0: multiplicar por e^{i*w0*t} (frequency-shift → time modulation).
+       tri se trata simbólicamente — FT_match_tri con variable w. */
+    if is(res = false) then block(
+        [_tm, _tk, _ta, _tb, _tw0, _tW, _raw_tri_ift],
+        _tm: FT_match_tri(e, w_var),
+        if is(_tm # false) then (
+            _tk: _tm[1],
+            _ta: _tm[2],
+            _tb: _tm[3],
+            _tw0: ratsimp(-_tb / _ta),
+            _tW:  ratsimp(1 / abs(_ta)),
+            _raw_tri_ift: _tk * 2 * sin(_tW * t_var / 2)^2 / (%pi^2 * t_var^2 * _tW) * (2 * %pi),
+            /* simplificacion: 2*sin²(Wt/2)/(pi²*t²*W) * 2*pi = 4*sin²(Wt/2)/(pi*t²*W)... */
+            /* usar forma compacta directamente */
+            _raw_tri_ift: _tk * _tW * sin(_tW * t_var / 2)^2 / (2 * %pi * (_tW * t_var / 2)^2),
+            /* = k*W/(2pi) * sinc²(Wt/2) con sinc no-normalizado */
+            /* si no hay desplazamiento, resultado real */
+            if not equal(ratsimp(_tw0), 0) then
+                _raw_tri_ift: _raw_tri_ift * exp(%i * _tw0 * t_var),
+            res: [_raw_tri_ift,
+                  concat("k*tri(a*w+b)->k*W*sinc²(Wt/2)/(2pi)*exp(iw0t), W=", string(_tW),
+                         ", w0=", string(_tw0))]
         )
     ),
 
