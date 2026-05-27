@@ -286,20 +286,45 @@ export class MathUtilsService {
   }
 
   /**
-   * Replaces any remaining `name(arg)` calls where `name` is a bare identifier
-   * not already translated to a known JS/helper function, with `NaN`.
-   * This prevents ReferenceErrors from unknown Maxima specials (besselj, polygamma…).
+   * Replaces any remaining `name(arg)` calls where `name` is not a known JS or
+   * helper function with the literal `NaN`, preventing ReferenceErrors at
+   * evaluation time for unknown Maxima specials (besselj, polygamma, …).
+   *
+   * The whitelist covers every identifier that the maximaToJs pipeline can
+   * legally produce: JS built-ins, Math methods, all `_helpers` names, and the
+   * special-function JS helpers (rect, tri, sinc, …). Any identifier outside
+   * this set that still appears as a function call is an untranslated Maxima
+   * function — stub it to NaN so the curve renders as empty rather than crashing.
+   *
+   * Note on the Proxy alternative: `with(scope){}` is forbidden in strict mode
+   * and restructuring `new Function` to accept a scope object would require
+   * changing the generated JS for all expressions. The whitelist approach is
+   * simpler, easier to audit, and sufficient for the backend's Maxima output.
    */
   private _stubUnknownFunctions(expr: string): string {
     const known = new Set([
-      'Math', 'function', 'return', 'NaN', 'Infinity',
+      // JS keywords / globals that appear in generated code
+      'Math', 'function', 'return', 'NaN', 'Infinity', 'typeof', 'void',
+      'true', 'false', 'null', 'undefined', 'isFinite', 'isNaN',
+      'parseInt', 'parseFloat', 'String', 'Number', 'Boolean', 'Array',
+      // Math static methods (all of them, to future-proof)
+      'abs', 'acos', 'acosh', 'asin', 'asinh', 'atan', 'atan2', 'atanh',
+      'cbrt', 'ceil', 'clz32', 'cos', 'cosh', 'exp', 'expm1', 'floor',
+      'fround', 'hypot', 'imul', 'log', 'log10', 'log1p', 'log2', 'max',
+      'min', 'pow', 'random', 'round', 'sign', 'sin', 'sinh', 'sqrt',
+      'tan', 'tanh', 'trunc',
+      // _helpers defined in this service
       '_cot', '_sec', '_csc', '_acot', '_asec', '_acsc',
       '_sech', '_csch', '_coth',
       '_gamma', '_factorial', '_erf', '_erfc',
       '_Si', '_Ci', '_Shi', '_Chi', '_Ei', '_E1', '_li',
-      'rect', 'tri', 'sinc',
+      '_fAux', '_gAux',               // internal helpers used by _Si/_Ci
+      // Special-function JS replacements (already handled by _replaceNestedFn
+      // before this step runs, but kept here as safety net)
+      'rect', 'tri', 'sinc', 'delta', 'u',
     ]);
-    // Collect unknown function calls using nested-paren-aware finder
+    // Collect unknown function calls using nested-paren-aware finder.
+    // Negative lookbehind (?<!\.) ensures we don't match Math.sin as "sin".
     const re = /(?<!\.)(\b[a-zA-Z_][a-zA-Z0-9_]*\b)\s*\(/g;
     const stubs: string[] = [];
     let m: RegExpExecArray | null;
