@@ -157,15 +157,14 @@ export class PlottingService {
     }
 
     const jumpStyle = curve.jumpStyle ?? 'none';
-
-    // Collected heuristic jumps (for jumpStyle != 'none' when no explicit discontinuities).
-    // Each entry is { sx, prevSy, sy } — the screen coords of the two sides of the jump.
-    const heuristicJumps: { sx: number; sy1: number; sy2: number }[] = [];
+    const trackHeuristic = jumpStyle !== 'none' && !curve.discontinuities?.length;
 
     ctx.beginPath();
     let penDown = false;
     let prevSy  = NaN;
     let prevSx  = NaN;
+    // Only allocated when jumpStyle is active — avoids per-frame GC on the common path.
+    let heuristicJumps: { sx: number; sy1: number; sy2: number }[] | null = null;
 
     for (const pt of curve.points) {
       if (!isFinite(pt.y) || isNaN(pt.y)) {
@@ -179,9 +178,8 @@ export class PlottingService {
 
       // Discontinuity: large vertical jump
       if (penDown && isFinite(prevSy) && Math.abs(sy - prevSy) > config.maxJumpPx) {
-        if (jumpStyle !== 'none' && !curve.discontinuities?.length) {
-          // Record the jump so we can draw a marker line after the main stroke.
-          heuristicJumps.push({ sx: (sx + prevSx) / 2, sy1: prevSy, sy2: sy });
+        if (trackHeuristic) {
+          (heuristicJumps ??= []).push({ sx: (sx + prevSx) / 2, sy1: prevSy, sy2: sy });
         }
         penDown = false;
       }
@@ -199,13 +197,12 @@ export class PlottingService {
     ctx.stroke();
 
     // ── Jump markers ────────────────────────────────────────────────────────
-    // Source A: caller-supplied explicit discontinuities (from plotPiecewise).
-    // Source B: heuristic jumps detected above (from plotFn with jumpStyle set).
     const explicitDisc = curve.discontinuities;
     const hasExplicit  = !!explicitDisc?.length;
-    const hasHeuristic = heuristicJumps.length > 0;
+    const hasHeuristic = !!heuristicJumps?.length;
 
     if (jumpStyle !== 'none' && (hasExplicit || hasHeuristic)) {
+      ctx.lineWidth = Math.max(0.5, curve.lineWidth * 0.5);
       ctx.setLineDash(jumpStyle === 'dashed' ? [4, 4] : []);
       ctx.beginPath();
 
@@ -218,7 +215,7 @@ export class PlottingService {
           ctx.lineTo(sx, sy2);
         }
       } else {
-        for (const { sx, sy1, sy2 } of heuristicJumps) {
+        for (const { sx, sy1, sy2 } of heuristicJumps!) {
           ctx.moveTo(sx, sy1);
           ctx.lineTo(sx, sy2);
         }

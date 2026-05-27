@@ -666,6 +666,9 @@ export class ContinuousTransformComponent implements OnInit {
     const plotter = this.plotter;
     const pv = this.paramValues();
 
+    const inputJumpStyle = 'dashed' as const; // f(t) piecewise boundaries
+    const resultJumpStyle = 'dashed' as const; // F(w) / IFT discontinuities
+
     const layer: PlotLayer = {
       curves: [],
       onDraw: (ctx, vp) => {
@@ -709,7 +712,7 @@ export class ContinuousTransformComponent implements OnInit {
                 ctx,
                 finitePieces.map((s) => ({ fn: s.fn!, from: s.from, to: s.to })),
                 vp,
-                { color: origReColor, lineWidth: origLW, jumpStyle: 'none' },
+                { color: origReColor, lineWidth: origLW, jumpStyle: inputJumpStyle },
               );
             }
             if (showOrigM) {
@@ -724,7 +727,7 @@ export class ContinuousTransformComponent implements OnInit {
                   to: s.to,
                 })),
                 vp,
-                { color: origMgColor, lineWidth: origLW, jumpStyle: 'dashed' },
+                { color: origMgColor, lineWidth: origLW, jumpStyle: inputJumpStyle },
               );
             }
           }
@@ -834,9 +837,24 @@ export class ContinuousTransformComponent implements OnInit {
               ? this.buildMagFn(ft.realPart.maxima, ft.imagPart.maxima, transVariable, pv)
               : null;
 
-          if (reFn) plotter.plotFn(ctx, reFn, vp, { color: reColor, lineWidth: resLW, jumpStyle: 'solid' });
-          if (imFn) plotter.plotFn(ctx, imFn, vp, { color: imColor, lineWidth: resLW, jumpStyle: 'solid' });
-          if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW, jumpStyle: 'solid' });
+          if (reFn)
+            plotter.plotFn(ctx, reFn, vp, {
+              color: reColor,
+              lineWidth: resLW,
+              jumpStyle: resultJumpStyle,
+            });
+          if (imFn)
+            plotter.plotFn(ctx, imFn, vp, {
+              color: imColor,
+              lineWidth: resLW,
+              jumpStyle: resultJumpStyle,
+            });
+          if (magFn)
+            plotter.plotFn(ctx, magFn, vp, {
+              color: mgColor,
+              lineWidth: resLW,
+              jumpStyle: resultJumpStyle,
+            });
 
           // ── Dirac delta impulses ───────────────────────────────────────
           // compile() already replaces delta(…) with 0, so plotFn produces
@@ -890,17 +908,25 @@ export class ContinuousTransformComponent implements OnInit {
 
             if (outputReFn || outputImFn || outputMagFn) {
               if (outputReFn) {
-                plotter.plotFn(ctx, outputReFn, vp, { color: origReColor, lineWidth: origLW, jumpStyle: 'solid' });
+                plotter.plotFn(ctx, outputReFn, vp, {
+                  color: origReColor,
+                  lineWidth: origLW,
+                  jumpStyle: resultJumpStyle,
+                });
               }
               if (outputImFn) {
                 plotter.plotFn(ctx, outputImFn, vp, {
                   color: origImColor,
                   lineWidth: Math.max(1, origLW - 0.25),
-                  jumpStyle: 'solid',
+                  jumpStyle: resultJumpStyle,
                 });
               }
               if (outputMagFn) {
-                plotter.plotFn(ctx, outputMagFn, vp, { color: origMgColor, lineWidth: origLW, jumpStyle: 'solid' });
+                plotter.plotFn(ctx, outputMagFn, vp, {
+                  color: origMgColor,
+                  lineWidth: origLW,
+                  jumpStyle: resultJumpStyle,
+                });
               }
               if (showOrigRe && outputRealExpr) {
                 for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
@@ -959,7 +985,12 @@ export class ContinuousTransformComponent implements OnInit {
           // Input F(ω) split into Re/Im/|F| for inverse mode controls.
           if (showRe && ift.inputRealPart?.maxima) {
             const fn = this.mathUtils.compile(ift.inputRealPart.maxima, intVariable, pv);
-            if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW, jumpStyle: 'solid' });
+            if (fn)
+              plotter.plotFn(ctx, fn, vp, {
+                color: reColor,
+                lineWidth: resLW,
+                jumpStyle: resultJumpStyle,
+              });
             for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
               ift.inputRealPart.maxima,
               intVariable,
@@ -970,7 +1001,12 @@ export class ContinuousTransformComponent implements OnInit {
           }
           if (showIm && ift.inputImagPart?.maxima) {
             const fn = this.mathUtils.compile(ift.inputImagPart.maxima, intVariable, pv);
-            if (fn) plotter.plotFn(ctx, fn, vp, { color: imColor, lineWidth: resLW, jumpStyle: 'solid' });
+            if (fn)
+              plotter.plotFn(ctx, fn, vp, {
+                color: imColor,
+                lineWidth: resLW,
+                jumpStyle: resultJumpStyle,
+              });
             for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
               ift.inputImagPart.maxima,
               intVariable,
@@ -984,7 +1020,12 @@ export class ContinuousTransformComponent implements OnInit {
             const realExpr = ift.inputRealPart?.maxima ?? '0';
             const imagExpr = ift.inputImagPart?.maxima ?? '0';
             const magFn = this.buildMagFn(realExpr, imagExpr, intVariable, pv);
-            if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW, jumpStyle: 'solid' });
+            if (magFn)
+              plotter.plotFn(ctx, magFn, vp, {
+                color: mgColor,
+                lineWidth: resLW,
+                jumpStyle: resultJumpStyle,
+              });
           }
         }
       },
