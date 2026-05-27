@@ -13,7 +13,6 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { MathquillService, MathField } from '../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../core/services/math/latex-to-maxima.service';
-import { convertForGrapher } from './grapher-latex-to-maxima';
 
 export interface GraphExpression {
   id: string;
@@ -91,7 +90,7 @@ export class GrapherExpressionComponent implements AfterViewInit, OnDestroy {
       this._editSubject
         .pipe(
           debounceTime(350),
-          switchMap((latex) => convertForGrapher(latex, this.tex2max)),
+          switchMap((latex) => this.tex2max.convertWithSpecialFns(latex)),
         )
         .subscribe((result) => {
           if (result.ok) {
