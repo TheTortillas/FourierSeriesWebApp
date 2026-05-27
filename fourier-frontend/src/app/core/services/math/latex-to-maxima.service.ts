@@ -44,7 +44,6 @@ const STD_FN: Record<string, string> = {
   ln: 'log', log: 'log', exp: 'exp',
   // Misc
   sqrt: 'sqrt', abs: 'abs',
-  floor: 'floor', ceiling: 'ceiling', round: 'round',
   gamma: 'gamma', factorial: 'factorial',
   // Spanish aliases
   sen: 'sin', tg: 'tan', senh: 'sinh',

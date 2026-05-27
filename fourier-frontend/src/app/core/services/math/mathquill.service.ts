@@ -128,7 +128,7 @@ export class MathquillService {
         'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
         'arcsin arccos arctan arccot arcsec arccsc ' +
         'sinh cosh tanh coth sech csch asinh acosh atanh acoth asech acsch ' +
-        'log ln exp abs floor ceiling round ' +
+        'log ln exp abs ' +
         'sen tg senh ctg ' +
         'gamma factorial ' +
         'delta sgn rect tri sinc ' +

@@ -89,14 +89,6 @@ export const FN_GROUPS: FnGroup[] = [
     ],
   },
   {
-    label: 'Redondeo',
-    keys: [
-      { label: '⌊x⌋', typedText: 'floor'   },
-      { label: '⌈x⌉', typedText: 'ceiling' },
-      { label: 'round', typedText: 'round' },
-    ],
-  },
-  {
     label: 'Constantes',
     keys: [
       { label: 'π', cmd: '\\pi'      },
