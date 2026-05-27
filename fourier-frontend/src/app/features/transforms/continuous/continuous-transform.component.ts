@@ -666,8 +666,8 @@ export class ContinuousTransformComponent implements OnInit {
     const plotter = this.plotter;
     const pv = this.paramValues();
 
-    const inputJumpStyle = 'dashed' as const; // f(t) piecewise boundaries
-    const resultJumpStyle = 'dashed' as const; // F(w) / IFT discontinuities
+    const inputJumpStyle  = 'dashed' as const; // f(t) piecewise boundaries (explicit, zero perf cost)
+    const resultJumpStyle = 'none'   as const; // F(w) result curves — heuristic tracking too costly
 
     const layer: PlotLayer = {
       curves: [],
