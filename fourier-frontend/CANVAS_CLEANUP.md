@@ -202,7 +202,7 @@ Los nuevos outputs son opcionales — nadie los escucha todavía → **cero camb
 
 ---
 
-## Estado
+## Estado — Fase 1 (completada)
 
 - [x] Commit 1: `canvas.types.ts` — `CanvasRenderConfig` + `DEFAULT_RENDER_CONFIG`
 - [x] Commit 2: `canvas-renderer.service.ts` — consumir config, fix bug fuente
@@ -210,4 +210,231 @@ Los nuevos outputs son opcionales — nadie los escucha todavía → **cero camb
 - [x] Commit 4: `drawing-utils.service.ts` — unificar `colorWithAlpha`
 - [x] Commit 5: `function-plot.component.ts` — outputs, `renderConfig` input, fix `resetView`
 - [x] Commit 6: `spectrum-chart.component.ts` — usar `mathPointerMove`, eliminar duplicación
-- [ ] Commit 7: Verificación final de callers + lint
+- [x] Commit 7: Verificación final de callers + build limpio
+
+---
+
+---
+
+# Fase 2 — Plotter quality & piecewise fix
+
+> Origen: `PLOTTER_EVAL.md` (evaluación 2026-04-29, nota 7/10) + bug de líneas
+> verticales en funciones a trozos reportado en 2026-05-27.
+>
+> **Regla de oro igual que Fase 1**: cada commit deja el build verde y cero
+> cambios de comportamiento para callers que no tocan las APIs nuevas.
+
+---
+
+## Diagnóstico: el bug de la línea vertical en trozos
+
+### Causa raíz
+
+`plotFnRange(ctx, fn, from, to, 400, vp, style)` muestrea `n+1` puntos con
+`i = 0..n`, de modo que incluye `x = from` y `x = to` exactamente. Cuando dos
+trozos adyacentes tienen la misma `x` frontera pero distintos valores de `y`, el
+path del tramo anterior termina en `(to, y₁)` y el del siguiente empieza en
+`(from, y₂) = (to, y₂)`. Aunque son paths independientes (`beginPath/stroke`
+separados), el **punto final del tramo 1** puede caer en la misma columna de
+píxeles que el **punto inicial del tramo 2**, y el alias visual de Canvas + el
+antialiasing producen una línea casi vertical que el ojo ve como conexión.
+
+El efecto es intermitente porque depende de cuánto difieren `y₁` e `y₂`:
+- `a = 1.1`: `sinc(a·t)` oscila rápido, `y₁ ≠ y₂` → el salto supera
+  `maxJumpPx = 120` → `drawCurve` corta el path → **no hay línea** ✅
+- `a = 0.6`: función más suave, `y₁ ≈ y₂` → salto pequeño → el path dibuja
+  una línea casi vertical de longitud pequeña **dentro del tramo 1**,
+  justo en `x = to` (el penúltimo y último punto del muestreo son casi iguales
+  pero la función real se discontinúa ahí) → **línea visible** ❌
+
+La solución correcta es que cada tramo **nunca dibuje en su punto de frontera
+exacto**, o que se fuerce un corte del path en ese punto.
+
+---
+
+## Commits planificados — Fase 2
+
+### [ ] Commit 8 — `plotting.service.ts`: `plotPiecewise` + NaN-sentinel en `sampleRange`
+
+**Archivos**: `plotting.service.ts`, `canvas.types.ts`
+
+**Qué hace**:
+
+**8a — `sampleRange` con opción `openEnds`**
+
+Añadir parámetro opcional `{ openEnds?: boolean }` (default `false`):
+```typescript
+sampleRange(fn, xFrom, xTo, steps, { openEnds = false } = {}): MathPoint[]
+```
+Cuando `openEnds = true`, el array resultante termina con `{ x: xTo, y: NaN }` —
+el NaN-sentinel fuerza `penDown = false` en `drawCurve`, cerrando el path
+limpiamente sin trazar al punto siguiente.
+
+Esto es la solución **correcta a nivel de biblioteca**: el tramo nunca "pinta"
+su punto de cierre; cada tramo es visualmente aislado.
+
+**8b — Nuevo método `plotPiecewise`**
+
+```typescript
+plotPiecewise(
+  ctx: CanvasRenderingContext2D,
+  pieces: { fn: (x: number) => number; from: number; to: number }[],
+  vp: CanvasViewport,
+  style: { color: string; lineWidth: number; dashed?: boolean },
+  config?: CanvasRenderConfig,
+): void
+```
+
+- Para cada piece: llama `sampleRange(fn, from, to, steps, { openEnds: true })`
+  donde `steps = Math.round(vp.cssWidth * effectiveOversample)` proporcional al
+  viewport (no fijo en 400)
+- Concatena todos los arrays de puntos y hace **un solo `drawCurve`** — un único
+  path con NaN-sentinelas entre trozos. Ventaja: un solo `beginPath/stroke` en
+  lugar de N, más eficiente en canvas.
+
+**Verificar callers**: método nuevo, nadie lo llama aún → cero impacto.
+
+---
+
+### [ ] Commit 9 — `continuous-transform.component.ts`: usar `plotPiecewise` en preview
+
+**Archivos**: `continuous-transform.component.ts`
+
+**Qué hace**:
+
+Reemplazar el loop de `plotFnRange` del input preview de trozos por `plotPiecewise`:
+
+```typescript
+// ANTES (por cada seg):
+plotter.plotFnRange(ctx, fn, from, to, 400, vp, style);
+
+// DESPUÉS (una sola llamada con todos los trozos):
+plotter.plotPiecewise(ctx, compiledPieces, vp, style);
+```
+
+Los trozos con `from = -∞` o `to = +∞` se mantienen con `plotFn` + función
+gateada (comportamiento actual correcto, no se toca).
+
+**Verificar callers**: solo afecta al preview visual del input en modo FT/IFT.
+El cálculo simbólico (backend) no cambia. Los resultados post-cálculo
+(`reFn`, `imFn`, `magFn`) ya no son a trozos — siguen usando `plotFn`.
+
+---
+
+### [ ] Commit 10 — `math-utils.service.ts`: caché de compilación + smoke-test fix
+
+**Archivos**: `math-utils.service.ts`
+
+**Qué hace**:
+
+**10a — Caché de `compile()`** (issue −0.5 pts de PLOTTER_EVAL):
+
+```typescript
+private readonly _compileCache = new Map<string, JsFunction | null>();
+
+compile(maxima, variable = 'x', params?): JsFunction | null {
+  const key = `${variable}::${maxima}::${JSON.stringify(params ?? {})}`;
+  if (this._compileCache.has(key)) return this._compileCache.get(key)!;
+  const fn = this._compileUncached(maxima, variable, params);
+  this._compileCache.set(key, fn);
+  return fn;
+}
+```
+
+La lógica actual pasa a `_compileUncached`. El cache es ilimitado en tamaño
+(las expresiones son pocas y vienen del backend), pero añadimos un límite
+suave de 256 entradas con LRU simple (delete el más antiguo si Map.size > 256).
+
+**10b — Smoke-test fix** (issue de PLOTTER_EVAL: `sqrt(x)` con puntos negativos):
+
+El smoke-test actual devuelve `null` si los 5 puntos de prueba todos son NaN.
+Fix: si la función compila sintácticamente válida, **siempre retornarla** — el
+muestreador ya filtra NaN. Eliminar el rechazo por smoke-test, mantenerlo solo
+para detectar errores de compilación JS (try/catch del `new Function`).
+
+```typescript
+// ANTES: retorna null si todos los puntos de prueba son NaN/error
+// DESPUÉS: retorna fn si new Function tuvo éxito; el muestreador decide
+const fn = new Function(...) as JsFunction;
+return fn; // smoke-test eliminado — NaN es un valor válido de retorno
+```
+
+**Verificar callers**: `compile()` retornaba `null` para `sqrt(x)` si todos los
+puntos de prueba eran negativos. Ahora retorna la función. El muestreador ya
+maneja NaN con `isFinite(y)`. Revisar `evaluate()` y `parseDeltaTerms()` —
+ambos usan `compile()` y manejan correctamente `null` y `NaN`.
+
+---
+
+### [ ] Commit 11 — `math-utils.service.ts`: `_stubUnknownFunctions` → Proxy runtime
+
+**Archivos**: `math-utils.service.ts`
+
+**Qué hace**:
+
+Reemplazar `_stubUnknownFunctions` (regex estático, frágil) por un `Proxy` que
+intercepta accesos a nombres desconocidos en tiempo de ejecución:
+
+```typescript
+// En lugar de reescribir el JS, envolver la ejecución en un Proxy:
+const safeGlobals = new Proxy(
+  { Math, NaN, Infinity, _cot, _sec, ... },
+  { get(target, prop) { return prop in target ? target[prop] : () => NaN; } }
+);
+const fn = new Function('__g', variable,
+  `"use strict"; with(__g) { return (${js}); }`
+)(safeGlobals);
+```
+
+> **Nota**: `with` está prohibido en `"use strict"`. La alternativa sin `with`
+> es pasar cada helper como argumento nombrado, o usar `Function` con un scope
+> object. La implementación concreta usará un wrapper sin `with`:
+> ```typescript
+> // Crear la función con todos los helpers inyectados explícitamente
+> // igual que hoy, pero añadir un paso de validación sintáctica separado
+> // del smoke-test de valores.
+> ```
+> Si la complejidad del Proxy resulta mayor que el beneficio (el stub regex
+> funciona bien para el conjunto actual de funciones Maxima), este commit puede
+> reducirse a **solo documentar la limitación** y ampliar el whitelist de
+> `_stubUnknownFunctions` para cubrir los casos conocidos que fallan.
+> Decisión final: al implementar.
+
+**Verificar callers**: si la función compila y devuelve NaN en lugar de lanzar
+ReferenceError, el comportamiento externo es idéntico.
+
+---
+
+### [ ] Commit 12 — Verificación final Fase 2 + actualizar `PLOTTER_EVAL.md`
+
+**Archivos**: `PLOTTER_EVAL.md`, `CANVAS_CLEANUP.md`
+
+**Qué hace**:
+- `ng build --configuration=production` sin errores
+- Probar manualmente: funciones a trozos con `a = 0.6` y `a = 1.1` → sin línea vertical
+- Probar: `sqrt(x)` → curva visible para `x > 0`, NaN para `x < 0` (sin rechazo)
+- Probar: zoom/scroll rápido → sin reconstrucción de `new Function` (log de cache hits)
+- Actualizar nota en `PLOTTER_EVAL.md`: issues resueltos, nota nueva estimada
+
+---
+
+## Resumen de issues de PLOTTER_EVAL.md y su tratamiento
+
+| Issue (eval) | Nota original | Commit | Tratamiento |
+|---|---|---|---|
+| Muestreo uniforme ciego | −1.5 pts | **Commit 3** ✅ | Oversample adaptativo `max(2, ceil(w/200))` |
+| `_stubUnknownFunctions` frágil | −0.5 pts | **Commit 11** | Proxy runtime o whitelist ampliada |
+| Sin caché de compilación | −0.5 pts | **Commit 10** | `Map<key, fn>` con LRU 256 |
+| Smoke test rechaza funciones válidas | heurístico | **Commit 10** | Retornar `fn` siempre si compila |
+| Línea vertical en trozos | no evaluado | **Commits 8+9** | `plotPiecewise` + NaN-sentinel |
+| Hover/tooltip | no evaluado | **Commit 5** ✅ | `mathPointerMove` output disponible |
+
+---
+
+## Estado — Fase 2
+
+- [ ] Commit 8: `plotting.service.ts` — `plotPiecewise` + `openEnds` en `sampleRange`
+- [ ] Commit 9: `continuous-transform.component.ts` — usar `plotPiecewise` en preview de trozos
+- [ ] Commit 10: `math-utils.service.ts` — caché de compilación + fix smoke-test
+- [ ] Commit 11: `math-utils.service.ts` — `_stubUnknownFunctions` → Proxy o whitelist ampliada
+- [ ] Commit 12: Verificación final Fase 2 + actualizar `PLOTTER_EVAL.md`
