@@ -204,10 +204,10 @@ Los nuevos outputs son opcionales — nadie los escucha todavía → **cero camb
 
 ## Estado
 
-- [ ] Commit 1: `canvas.types.ts` — `CanvasRenderConfig` + `DEFAULT_RENDER_CONFIG`
-- [ ] Commit 2: `canvas-renderer.service.ts` — consumir config, fix bug fuente
-- [ ] Commit 3: `plotting.service.ts` — consumir config, oversample adaptativo
-- [ ] Commit 4: `drawing-utils.service.ts` — unificar `colorWithAlpha`
-- [ ] Commit 5: `function-plot.component.ts` — outputs, `renderConfig` input, fix `resetView`
-- [ ] Commit 6: `spectrum-chart.component.ts` — usar `mathPointerMove`, eliminar duplicación
+- [x] Commit 1: `canvas.types.ts` — `CanvasRenderConfig` + `DEFAULT_RENDER_CONFIG`
+- [x] Commit 2: `canvas-renderer.service.ts` — consumir config, fix bug fuente
+- [x] Commit 3: `plotting.service.ts` — consumir config, oversample adaptativo
+- [x] Commit 4: `drawing-utils.service.ts` — unificar `colorWithAlpha`
+- [x] Commit 5: `function-plot.component.ts` — outputs, `renderConfig` input, fix `resetView`
+- [x] Commit 6: `spectrum-chart.component.ts` — usar `mathPointerMove`, eliminar duplicación
 - [ ] Commit 7: Verificación final de callers + lint
