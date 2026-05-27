@@ -765,7 +765,7 @@
       "title": "Transformadas Continuas",
       "desc": "Calcula transformadas simbólicas exactas de señales a trozos, incluyendo funciones especiales.",
       "f1": "Transformada de Fourier continua bilateral (ℱ) y su inversa (ℱ⁻¹)",
-      "f3": "Entrada a trozos con soporte para u(·), sgn(·), rect(·), δ(·)",
+      "f3": "Entrada a trozos con soporte para u(·), sgn(·), rect(·), tri(·), δ(·)",
       "f4": "Resultados simbólicos exactos mediante Maxima CAS",
       "f5": "Gráficas interactivas de la función original y su transformada",
       "f6": "Exportar y compartir resultados",
@@ -777,7 +777,7 @@
       "title": "Transformada Discreta de Fourier (DFT)",
       "desc": "Analiza señales numéricamente con la DFT, visualiza el espectro y observa la animación de epiciclos.",
       "f1": "Tres modos de entrada: muestreo de función, datos manuales y epiciclos",
-      "f2": "Modo función: muestreo numérico de funciones a trozos (soporta u, sgn, rect)",
+      "f2": "Modo función: muestreo numérico de funciones a trozos (soporta u, sgn, rect, tri)",
       "f3": "Modo manual: introduce cualquier cantidad de muestras a mano",
       "f4": "Modo epiciclos: la DFT cobra vida como vectores complejos giratorios que trazan cualquier figura cerrada",
       "f5": "Espectro: gráficas de amplitud |X[k]| y fase ∠X[k]",
@@ -792,7 +792,7 @@
       "f1": "Editor LaTeX interactivo con MathQuill",
       "f2": "Barra de escritorio con operadores, funciones, letras griegas y constantes",
       "f3": "Teclado táctil para móvil: numérico, trig, f(x), QWERTY completo + mayúsculas, letras griegas",
-      "f4": "Funciones disponibles: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), n!, Γ(·)"
+      "f4": "Funciones disponibles: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), tri(·), n!, Γ(·)"
     },
     "account": {
       "title": "Cuentas e Historial",

@@ -765,7 +765,7 @@
       "title": "Continuous Transforms",
       "desc": "Compute exact symbolic transforms of piecewise signals, including special functions.",
       "f1": "Bilateral continuous Fourier transform (ℱ) and its inverse (ℱ⁻¹)",
-      "f3": "Piecewise input supporting u(·), sgn(·), rect(·), δ(·)",
+      "f3": "Piecewise input supporting u(·), sgn(·), rect(·), tri(·), δ(·)",
       "f4": "Exact symbolic results via Maxima CAS",
       "f5": "Interactive graphs of the original function and its transform",
       "f6": "Export and share results",
@@ -777,7 +777,7 @@
       "title": "Discrete Fourier Transform (DFT)",
       "desc": "Analyze signals numerically with the DFT, visualize the spectrum and watch the epicycles animation.",
       "f1": "Three input modes: function sampling, manual data entry and epicycles",
-      "f2": "Function mode: numeric sampling of piecewise functions (u, sgn, rect supported)",
+      "f2": "Function mode: numeric sampling of piecewise functions (u, sgn, rect, tri supported)",
       "f3": "Manual mode: enter any number of samples by hand",
       "f4": "Epicycles mode: watch the DFT come to life as rotating complex vectors that trace any closed figure",
       "f5": "Spectrum: amplitude |X[k]| and phase ∠X[k] charts",
@@ -792,7 +792,7 @@
       "f1": "Interactive LaTeX editor powered by MathQuill",
       "f2": "Desktop toolbar with operators, functions, Greek letters and constants",
       "f3": "Mobile touchscreen keyboard: numeric, trig, f(x), full QWERTY + shift, Greek letters",
-      "f4": "Supported functions: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), n!, Γ(·)"
+      "f4": "Supported functions: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), tri(·), n!, Γ(·)"
     },
     "account": {
       "title": "Accounts & History",
