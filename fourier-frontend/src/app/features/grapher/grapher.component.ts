@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
@@ -16,6 +16,20 @@ import { PlottingService } from '../../core/services/canvas/plotting.service';
 import { MathUtilsService } from '../../core/services/math/math-utils.service';
 import { CoordinateTransformService } from '../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport, MathPoint } from '../../core/services/canvas/canvas.types';
+
+export interface GrapherSettings {
+  showRoots:         boolean;
+  showIntersections: boolean;
+  xAxisFormat:       'integer' | 'pi' | 'e';
+  initialUnit:       number;
+}
+
+const DEFAULT_SETTINGS: GrapherSettings = {
+  showRoots:         true,
+  showIntersections: true,
+  xAxisFormat:       'integer',
+  initialUnit:       80,
+};
 
 let _idCounter = 0;
 function newExpr(colorIdx = 0): GraphExpression {
@@ -78,9 +92,27 @@ export class GrapherComponent {
   private readonly mathUtils = inject(MathUtilsService);
   private readonly coords    = inject(CoordinateTransformService);
 
-  readonly expressions  = signal<GraphExpression[]>([newExpr(0)]);
-  readonly paramValues  = signal<ParamValues>({});
-  readonly hoveredPoint = signal<MathPoint | null>(null);
+  readonly expressions    = signal<GraphExpression[]>([newExpr(0)]);
+  readonly paramValues    = signal<ParamValues>({});
+  readonly hoveredPoint   = signal<MathPoint | null>(null);
+  readonly settings       = signal<GrapherSettings>({ ...DEFAULT_SETTINGS });
+  readonly settingsOpen   = signal(false);
+  readonly canvasMounted  = signal(true);
+
+  constructor() {
+    let prev = this.settings().initialUnit;
+    effect(() => {
+      const next = this.settings().initialUnit;
+      if (next !== prev) {
+        prev = next;
+        untracked(() => {
+          this.canvasMounted.set(false);
+          // One microtask is enough — Angular will re-render on the next CD cycle.
+          Promise.resolve().then(() => this.canvasMounted.set(true));
+        });
+      }
+    });
+  }
 
   readonly detectedParams = computed<string[]>(() => {
     const seen = new Set<string>();
@@ -94,18 +126,18 @@ export class GrapherComponent {
   });
 
   readonly layers = computed<PlotLayer[]>(() => {
-    const exprs   = this.expressions();
-    const params  = this.paramValues();
-    const plotter = this.plotter;
-    const math    = this.mathUtils;
-    const coords  = this.coords;
+    const exprs    = this.expressions();
+    const params   = this.paramValues();
+    const cfg      = this.settings();
+    const plotter  = this.plotter;
+    const math     = this.mathUtils;
+    const coords   = this.coords;
 
     return [{
       curves: [],
       onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
         const compiled: { fn: (x: number) => number; expr: GraphExpression }[] = [];
 
-        // ── Curves ──────────────────────────────────────────────────────────
         for (const e of exprs) {
           if (!e.visible || !e.maxima) continue;
           const fn = math.compile(e.maxima, 'x', params);
@@ -121,37 +153,40 @@ export class GrapherComponent {
         const yMin = vp.originMath.y - vp.cssHeight / (2 * vp.unit * vp.scaleY);
         const yMax = vp.originMath.y + vp.cssHeight / (2 * vp.unit * vp.scaleY);
 
-        // ── Root markers (open circles on x-axis) ───────────────────────────
-        for (const { fn, expr } of compiled) {
-          const roots = findRoots(fn, xMin, xMax);
-          for (const rx of roots) {
-            const ry = fn(rx);
-            if (!isFinite(ry) || Math.abs(ry) > 1e-4 * (yMax - yMin + 1)) continue;
-            const { x: sx, y: sy } = coords.mathToScreen({ x: rx, y: 0 }, vp);
-            drawOpenCircle(ctx, sx, sy, expr.color);
+        if (cfg.showRoots) {
+          for (const { fn, expr } of compiled) {
+            const roots = findRoots(fn, xMin, xMax);
+            for (const rx of roots) {
+              const ry = fn(rx);
+              if (!isFinite(ry) || Math.abs(ry) > 1e-4 * (yMax - yMin + 1)) continue;
+              const { x: sx, y: sy } = coords.mathToScreen({ x: rx, y: 0 }, vp);
+              drawOpenCircle(ctx, sx, sy, expr.color);
+            }
           }
         }
 
-        // ── Intersection markers (filled circles, capped at 20) ─────────────
-        if (compiled.length < 2) return;
-        let intersectionCount = 0;
-        outer: for (let i = 0; i < compiled.length - 1; i++) {
-          for (let j = i + 1; j < compiled.length; j++) {
-            const diff = (x: number) => compiled[i].fn(x) - compiled[j].fn(x);
-            const pts = findRoots(diff, xMin, xMax);
-            for (const ix of pts) {
-              if (intersectionCount >= 20) break outer;
-              const iy = compiled[i].fn(ix);
-              if (!isFinite(iy)) continue;
-              const { x: sx, y: sy } = coords.mathToScreen({ x: ix, y: iy }, vp);
-              drawFilledCircle(ctx, sx, sy, compiled[i].expr.color);
-              intersectionCount++;
+        if (cfg.showIntersections && compiled.length >= 2) {
+          let count = 0;
+          outer: for (let i = 0; i < compiled.length - 1; i++) {
+            for (let j = i + 1; j < compiled.length; j++) {
+              const diff = (x: number) => compiled[i].fn(x) - compiled[j].fn(x);
+              const pts = findRoots(diff, xMin, xMax);
+              for (const ix of pts) {
+                if (count >= 20) break outer;
+                const iy = compiled[i].fn(ix);
+                if (!isFinite(iy)) continue;
+                const { x: sx, y: sy } = coords.mathToScreen({ x: ix, y: iy }, vp);
+                drawFilledCircle(ctx, sx, sy, compiled[i].expr.color);
+                count++;
+              }
             }
           }
         }
       },
     }];
   });
+
+  // ── Expression list ────────────────────────────────────────────────────────
 
   addExpression(): void {
     this.expressions.update((list) => [...list, newExpr(list.length)]);
@@ -167,11 +202,23 @@ export class GrapherComponent {
     this.expressions.update((list) => list.filter((e) => e.id !== id));
   }
 
+  // ── Pointer / params ───────────────────────────────────────────────────────
+
   onParamChange(values: ParamValues): void {
     this.paramValues.set(values);
   }
 
   onPointerMove(pt: MathPoint | null): void {
     this.hoveredPoint.set(pt);
+  }
+
+  // ── Settings ───────────────────────────────────────────────────────────────
+
+  toggleSettings(): void {
+    this.settingsOpen.update((v) => !v);
+  }
+
+  setSetting<K extends keyof GrapherSettings>(key: K, value: GrapherSettings[K]): void {
+    this.settings.update((s) => ({ ...s, [key]: value }));
   }
 }

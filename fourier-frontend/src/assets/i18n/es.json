@@ -63,7 +63,14 @@
     "remove": "Eliminar",
     "emptyHint": "Escribe una expresión para empezar",
     "xLabel": "x",
-    "yLabel": "y"
+    "yLabel": "y",
+    "settings": {
+      "markers": "Marcadores",
+      "showRoots": "Raíces (función-eje)",
+      "showIntersections": "Intersecciones (función-función)",
+      "xAxis": "Formato eje X",
+      "zoom": "Zoom inicial"
+    }
   },
   "home": {
     "subtitle": "Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",

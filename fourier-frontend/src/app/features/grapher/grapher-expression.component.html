@@ -11,15 +11,16 @@
 
   <!-- MathQuill input -->
   <div
-    class="flex-1 min-w-0 px-2 py-1 rounded border text-sm cursor-text
+    class="flex-1 min-w-0 min-h-8 px-2 py-1 rounded border text-sm cursor-text
            bg-paper2 dark:bg-dark-surface2
            border-border dark:border-dark-border
            focus-within:border-accent focus-within:ring-1 focus-within:ring-accent
            transition-colors"
     [class.opacity-50]="!expr().visible"
+    (click)="field?.focus()"
     (focusin)="onFocus()"
   >
-    <span #mqExpr></span>
+    <span #mqExpr class="block min-h-5"></span>
   </div>
 
   <!-- Conversion error indicator -->

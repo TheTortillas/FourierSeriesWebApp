@@ -129,7 +129,8 @@ export class MathquillService {
         'sinh cosh tanh sech csch coth asinh acosh atanh log ln exp abs ' +
         'sen tg senh ctg arcsin arccos arctan ' +
         'gamma factorial ' +
-        'delta sgn rect tri sinc',
+        'delta sgn rect tri sinc ' +
+        'erf erfc Si Ci Shi Chi Ei',
     };
     // On mobile viewports, replace MathQuill's hidden textarea with a non-editable
     // span so the native OS keyboard never appears. Input is handled exclusively

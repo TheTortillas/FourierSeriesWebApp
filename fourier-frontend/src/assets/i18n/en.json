@@ -63,7 +63,14 @@
     "remove": "Remove",
     "emptyHint": "Type an expression to get started",
     "xLabel": "x",
-    "yLabel": "y"
+    "yLabel": "y",
+    "settings": {
+      "markers": "Markers",
+      "showRoots": "Roots (function-axis)",
+      "showIntersections": "Intersections (function-function)",
+      "xAxis": "X-axis format",
+      "zoom": "Initial zoom"
+    }
   },
   "home": {
     "subtitle": "Calculate, visualize and analyze Fourier Series and Transforms with exact symbolic expressions and real-time graphical reconstruction.",
