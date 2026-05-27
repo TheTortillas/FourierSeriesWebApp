@@ -4,11 +4,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
+import { MathjaxDirective } from '../../shared/directives/mathjax.directive';
 import { SeoService } from '../../core/services/seo/seo.service';
 
 @Component({
   selector: 'app-about',
-  imports: [RouterLink, NavComponent, FooterComponent, TranslocoPipe],
+  imports: [RouterLink, NavComponent, FooterComponent, TranslocoPipe, MathjaxDirective],
   templateUrl: './about.component.html',
 })
 export class AboutComponent implements OnInit {
@@ -18,6 +19,15 @@ export class AboutComponent implements OnInit {
   readonly lang = toSignal(this.transloco.langChanges$, {
     initialValue: this.transloco.getActiveLang(),
   });
+
+  readonly specialFns = [
+    { key: 'u'     },
+    { key: 'sgn'   },
+    { key: 'delta' },
+    { key: 'rect'  },
+    { key: 'tri'   },
+    { key: 'sinc'  },
+  ];
 
   readonly seriesItems = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11'].map(
     (k) => `about.series.${k}`,

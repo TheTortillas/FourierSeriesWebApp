@@ -82,6 +82,7 @@ declare(delta,     real)$
 declare(unit_step, real)$
 declare(rect,      real)$
 declare(tri,       real)$
+declare(sinc,      real)$
 
 /* Parsear expresión */
 _input_expr: parse_string(EXPR_INPUT)$

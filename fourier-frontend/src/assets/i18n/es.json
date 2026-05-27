@@ -810,7 +810,60 @@
       "f3": "Completamente bilingüe: español e inglés",
       "f4": "Diseño responsive — funciona en escritorio y móvil"
     },
-    "cta": "Empezar a explorar"
+    "cta": "Empezar a explorar",
+    "fns": {
+      "title": "Funciones especiales soportadas",
+      "intro": "Además de las funciones trigonométricas e hiperbólicas estándar, la calculadora reconoce estas funciones propias del análisis de señales, tanto en la entrada simbólica como en la evaluación numérica y las transformadas.",
+      "ftLabel": "Transformada de Fourier",
+      "u": {
+        "name": "Escalón unitario",
+        "notation": "u(t)",
+        "aka": "Función de Heaviside",
+        "def": "Vale 1 para t ≥ 0 y 0 para t < 0. Modela el encendido abrupto de una señal: multiplica por u(t) para «activar» una función desde t = 0, o por u(t − a) para retrasarla a t = a.",
+        "latex": "u(t) = \\begin{cases} 1 & t \\ge 0 \\\\ 0 & t < 0 \\end{cases}",
+        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}"
+      },
+      "sgn": {
+        "name": "Función signo",
+        "notation": "sgn(t)",
+        "aka": "Función signum",
+        "def": "Devuelve +1 si t > 0, −1 si t < 0 y 0 en el origen. Se relaciona con el escalón por sgn(t) = 2u(t) − 1. Aparece en la transformada de Hilbert y en el análisis de señales causales.",
+        "latex": "\\operatorname{sgn}(t) = \\begin{cases} 1 & t > 0 \\\\ 0 & t = 0 \\\\ -1 & t < 0 \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{sgn}(t)\\} = \\dfrac{2}{i\\omega}"
+      },
+      "delta": {
+        "name": "Delta de Dirac",
+        "notation": "δ(t)",
+        "aka": "Impulso unitario",
+        "def": "Distribución de área unidad concentrada en t = 0. Propiedad de muestreo: ∫ f(t) δ(t − a) dt = f(a). Es el elemento neutro de la convolución y el fundamento de los sistemas LTI.",
+        "latex": "\\int_{-\\infty}^{\\infty} \\delta(t)\\,dt = 1",
+        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1"
+      },
+      "rect": {
+        "name": "Pulso rectangular",
+        "notation": "rect(t)",
+        "aka": "Función puerta",
+        "def": "Vale 1 cuando |t| < ½, ½ en los bordes y 0 fuera. Usa rect(t/T) para un pulso de ancho T, o rect((t − t₀)/T) para desplazarlo en el tiempo.",
+        "latex": "\\operatorname{rect}(t) = \\begin{cases} 1 & |t| < \\tfrac{1}{2} \\\\ \\tfrac{1}{2} & |t| = \\tfrac{1}{2} \\\\ 0 & |t| > \\tfrac{1}{2} \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{rect}(t/T)\\} = T\\,\\operatorname{sinc}\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
+      },
+      "tri": {
+        "name": "Pulso triangular",
+        "notation": "tri(t)",
+        "aka": "Función sombrero",
+        "def": "Una pirámide de base 2 y altura 1 — la autoconvolución normalizada de rect. Usa tri(t/T) para escalar la base a 2T. Su transformada es sinc², lo que lo hace útil en diseño de ventanas espectrales.",
+        "latex": "\\operatorname{tri}(t) = \\begin{cases} 1 - |t| & |t| < 1 \\\\ 0 & |t| \\ge 1 \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{tri}(t/T)\\} = T\\,\\operatorname{sinc}^2\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
+      },
+      "sinc": {
+        "name": "Función sinc",
+        "notation": "sinc(t)",
+        "aka": "Cardinal del seno",
+        "def": "Definida como sin(t)/t (sinc no normalizada). Surge naturalmente como la transformada de rect y como la respuesta en frecuencia del filtro paso bajo ideal. Por continuidad, sinc(0) = 1.",
+        "latex": "\\operatorname{sinc}(t) = \\frac{\\sin t}{t}",
+        "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
+      }
+    }
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",

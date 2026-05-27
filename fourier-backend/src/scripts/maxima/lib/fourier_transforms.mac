@@ -54,10 +54,12 @@ declare(u,     real)$
 declare(sgn,   real)$
 declare(rect,  real)$
 declare(tri,   real)$
+declare(sinc,  real)$
 
 texput(sgn,  "\\operatorname{sgn}")$
 texput(rect, "\\operatorname{rect}")$
 texput(tri,  "\\operatorname{tri}")$
+texput(sinc, "\\operatorname{sinc}")$
 
 /* ════════════════════════════════════════════════════════════════════
    BLOQUE 2 — Auxiliares de reconocimiento
@@ -415,6 +417,41 @@ FT_match_tri(expr, t_var) := block(
                 tri_arg: part(tri_part, 1),
                 aa: ratsimp(diff(tri_arg, t_var)),
                 bb: ratsimp(subst(t_var=0, tri_arg)),
+                if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                    res: [coef, aa, bb]
+            )
+        )
+    ),
+    res
+)$
+
+/* Detecta k*sinc(a*t+b) con k,a,b constantes en t_var.
+   sinc(x) = sin(x)/x  (no normalizada).
+   sinc(a*t+b): argumento lineal. Devuelve [k, a, b] o false. */
+FT_match_sinc(expr, t_var) := block(
+    [e, sinc_part, coef, res, sinc_arg, aa, bb],
+    e: expand(expr),
+    res: false,
+    if not atom(e) then (
+        if is(op(e) = 'sinc) then (
+            sinc_arg: part(e, 1),
+            aa: ratsimp(diff(sinc_arg, t_var)),
+            bb: ratsimp(subst(t_var=0, sinc_arg)),
+            if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                res: [1, aa, bb]
+        )
+        else if is(op(e) = "*") then (
+            sinc_part: false,
+            coef: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'sinc)
+                then sinc_part: s
+                else coef: coef * s
+            ),
+            if is(sinc_part # false) and freeof(t_var, coef) then (
+                sinc_arg: part(sinc_part, 1),
+                aa: ratsimp(diff(sinc_arg, t_var)),
+                bb: ratsimp(subst(t_var=0, sinc_arg)),
                 if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
                     res: [coef, aa, bb]
             )
@@ -1100,6 +1137,29 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
             res: [_rk * 2 * sin(w_var * _rT / 2) / w_var * exp(-%i * w_var * _rt0),
                   concat("k*rect(a*t+b)->2k*sin(wT/2)/w*exp(-iwt0), T=", string(_rT),
                          ", t0=", string(_rt0))]
+        )
+    ),
+
+    /* ── k*sinc(a*t+b) -> k*(π/|a|)*rect(ω/(2a)) * exp(-i*ω*t0)  (t0=-b/a) ──
+       FT[sinc(a*t)](ω) = FT[sin(at)/(at)](ω) = (π/|a|)*rect(ω/(2a)).
+       Convención: sinc(x)=sin(x)/x (no norm.). El rect resultante tiene
+       ancho 2|a| en ω centrado en 0; con desplazamiento t0 = -b/a,
+       se multiplica por e^{-iωt0} (time-shift). */
+    if is(res = false) then block(
+        [_sm, _sk, _sa, _sb, _st0, _raw_sinc],
+        _sm: FT_match_sinc(e, t_var),
+        if is(_sm # false) then (
+            _sk: _sm[1],
+            _sa: _sm[2],
+            _sb: _sm[3],
+            _st0: ratsimp(-_sb / _sa),
+            /* resultado: k*(pi/|a|)*rect(w/(2*a)) — rect simbólica en w */
+            _raw_sinc: _sk * %pi / abs(_sa) * rect(w_var / (2 * _sa)),
+            if not equal(ratsimp(_st0), 0) then
+                _raw_sinc: _raw_sinc * exp(-%i * w_var * _st0),
+            res: [_raw_sinc,
+                  concat("k*sinc(a*t+b)->(k*pi/|a|)*rect(w/(2a))*exp(-iwt0), t0=",
+                         string(_st0))]
         )
     ),
 
@@ -3685,6 +3745,27 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             res: [_raw_res,
                   concat("k*rect(a*w+b)->k*sin(Wt/2)/(pi*t)*exp(iw0t), W=", string(_rW),
                          ", w0=", string(_rw0))]
+        )
+    ),
+
+    /* ── k*sinc(a*w+b) -> k*(1/(2|a|))*rect(t/(2a)) * exp(i*w0*t)  (w0=-b/a) ──
+       IFT[sinc(a*w)](t) = (1/2pi)*∫ sin(aw)/(aw) * e^{iwt} dw = (1/(2|a|))*rect(t/(2a)).
+       sinc(x)=sin(x)/x no normalizada; el rect resultante tiene ancho 2|a| en t.
+       Desplazamiento w0=-b/a genera e^{iw0t} (frequency-shift → modulation). */
+    if is(res = false) then block(
+        [_sm, _sk, _sa, _sb, _sw0, _raw_sinc_ift],
+        _sm: FT_match_sinc(e, w_var),
+        if is(_sm # false) then (
+            _sk: _sm[1],
+            _sa: _sm[2],
+            _sb: _sm[3],
+            _sw0: ratsimp(-_sb / _sa),
+            _raw_sinc_ift: _sk / (2 * abs(_sa)) * rect(t_var / (2 * _sa)),
+            if not equal(ratsimp(_sw0), 0) then
+                _raw_sinc_ift: _raw_sinc_ift * exp(%i * _sw0 * t_var),
+            res: [_raw_sinc_ift,
+                  concat("k*sinc(a*w+b)->k/(2|a|)*rect(t/(2a))*exp(iw0t), w0=",
+                         string(_sw0))]
         )
     ),
 
