@@ -312,30 +312,9 @@ export class SpectrumChartComponent {
     return mode === this.spectrumMode() ? this.stemColor() : this.defaultColorForMode(mode);
   }
 
-  colorWithAlpha(hex: string, alpha: number): string {
-    const normalized = hex.trim();
-    const short = /^#([0-9a-fA-F]{3})$/;
-    const full = /^#([0-9a-fA-F]{6})$/;
-
-    if (short.test(normalized)) {
-      const m = normalized.match(short);
-      if (!m) return `rgba(0,0,0,${alpha})`;
-      const r = parseInt(m[1][0] + m[1][0], 16);
-      const g = parseInt(m[1][1] + m[1][1], 16);
-      const b = parseInt(m[1][2] + m[1][2], 16);
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
-
-    if (full.test(normalized)) {
-      const m = normalized.match(full);
-      if (!m) return `rgba(0,0,0,${alpha})`;
-      const r = parseInt(m[1].slice(0, 2), 16);
-      const g = parseInt(m[1].slice(2, 4), 16);
-      const b = parseInt(m[1].slice(4, 6), 16);
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
-
-    return `rgba(0,0,0,${alpha})`;
+  /** Delegates to DrawingUtilsService.colorWithAlpha — supports hsl(), #rgb, #rrggbb. */
+  colorWithAlpha(color: string, alpha: number): string {
+    return this.drawingUtils.colorWithAlpha(color, alpha);
   }
 
   private defaultColorForMode(mode: SpectrumMode): string {
