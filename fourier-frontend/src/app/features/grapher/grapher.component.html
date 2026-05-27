@@ -1,7 +1,41 @@
 <app-nav />
 
-<div class="flex flex-col h-[calc(100vh-3rem)]">
-  <div class="flex items-center justify-center h-full text-muted dark:text-dark-muted font-mono text-sm">
-    Graficador — próximamente
-  </div>
+<div class="flex h-[calc(100vh-3rem)]">
+
+  <!-- Sidebar -->
+  <aside class="flex flex-col w-72 shrink-0 border-r border-border dark:border-dark-border bg-paper dark:bg-dark-bg overflow-y-auto">
+
+    <!-- Expression list -->
+    <div class="flex-1">
+      @for (expr of expressions(); track expr.id) {
+        <app-grapher-expression
+          [expr]="expr"
+          [isOnly]="expressions().length === 1"
+          (changed)="updateExpression($event)"
+          (removed)="removeExpression($event)"
+        />
+      }
+    </div>
+
+    <!-- Add expression button -->
+    <div class="p-3 border-t border-border dark:border-dark-border">
+      <button
+        type="button"
+        (click)="addExpression()"
+        class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded border border-dashed border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add expression
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- Canvas placeholder -->
+  <main class="flex-1 flex items-center justify-center text-muted dark:text-dark-muted font-mono text-sm">
+    Canvas — coming next
+  </main>
+
 </div>

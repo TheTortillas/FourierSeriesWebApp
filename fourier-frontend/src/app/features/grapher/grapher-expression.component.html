@@ -1,0 +1,68 @@
+<div class="flex items-center gap-2 px-3 py-2 border-b border-border dark:border-dark-border group">
+
+  <!-- Color swatch / visibility dot -->
+  <button
+    type="button"
+    (click)="cycleColor()"
+    class="w-5 h-5 rounded-full shrink-0 border-2 border-white dark:border-dark-surface transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-accent"
+    [style.background-color]="expr().color"
+    title="Change color"
+  ></button>
+
+  <!-- MathQuill input -->
+  <div
+    class="flex-1 min-w-0 px-2 py-1 rounded border text-sm cursor-text
+           bg-paper2 dark:bg-dark-surface2
+           border-border dark:border-dark-border
+           focus-within:border-accent focus-within:ring-1 focus-within:ring-accent
+           transition-colors"
+    [class.opacity-50]="!expr().visible"
+    (focusin)="onFocus()"
+  >
+    <span #mqExpr></span>
+  </div>
+
+  <!-- Conversion error -->
+  @if (conversionError) {
+    <span class="text-red-400 text-xs shrink-0" title="{{ conversionError }}">!</span>
+  }
+
+  <!-- Visibility toggle -->
+  <button
+    type="button"
+    (click)="toggleVisible()"
+    class="text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors focus:outline-none"
+    [title]="expr().visible ? 'Hide' : 'Show'"
+  >
+    @if (expr().visible) {
+      <!-- eye open -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    } @else {
+      <!-- eye closed -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>
+      </svg>
+    }
+  </button>
+
+  <!-- Delete -->
+  @if (!isOnly()) {
+    <button
+      type="button"
+      (click)="remove()"
+      class="text-muted dark:text-dark-muted hover:text-red-400 transition-colors focus:outline-none opacity-0 group-hover:opacity-100"
+      title="Remove"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  }
+
+</div>
