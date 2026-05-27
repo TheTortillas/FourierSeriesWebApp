@@ -42,6 +42,29 @@ export interface ScreenPoint {
   y: number;
 }
 
+/**
+ * How to render known discontinuities (vertical jumps between pieces).
+ *
+ * - `'none'`   — lift the pen and draw nothing at the jump (mathematically clean).
+ * - `'solid'`  — draw a solid vertical line from y₁ to y₂ at the jump x.
+ * - `'dashed'` — draw a dashed vertical line at the jump x (academic convention).
+ *
+ * Only used when the caller supplies explicit `discontinuities` on the `Curve`,
+ * or when `PlottingService.plotPiecewise` auto-detects shared boundary x-values
+ * between adjacent finite pieces.
+ */
+export type JumpStyle = 'none' | 'solid' | 'dashed';
+
+/** A known discontinuity point: x position + left (y1) and right (y2) y-values. */
+export interface Discontinuity {
+  /** Math x-coordinate of the jump */
+  x: number;
+  /** y-value of the piece ending at this x (left limit) */
+  y1: number;
+  /** y-value of the piece starting at this x (right limit) */
+  y2: number;
+}
+
 /** A continuous curve to be rendered */
 export interface Curve {
   /** Sampled points in math space */
@@ -50,6 +73,21 @@ export interface Curve {
   lineWidth: number;
   /** If true, render as dashed line */
   dashed?: boolean;
+  /**
+   * How to render known discontinuities. Defaults to `'none'` (pen lifted,
+   * nothing drawn at the jump). Set to `'solid'` or `'dashed'` to draw a
+   * vertical marker line at each entry in `discontinuities`.
+   */
+  jumpStyle?: JumpStyle;
+  /**
+   * Explicit discontinuity points. When provided alongside `jumpStyle`,
+   * `drawCurve` draws (or skips) a vertical segment at each position.
+   *
+   * Populated automatically by `PlottingService.plotPiecewise` from the
+   * shared boundary x-values between adjacent finite pieces — callers
+   * using that method do not need to supply this manually.
+   */
+  discontinuities?: Discontinuity[];
 }
 
 /** Visual theme tokens for the canvas */

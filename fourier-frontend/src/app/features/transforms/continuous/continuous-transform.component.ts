@@ -690,36 +690,41 @@ export class ContinuousTransformComponent implements OnInit {
           // Finite-bound pieces go through plotPiecewise (single canvas path,
           // NaN-sentinel between pieces → no spurious vertical lines at boundaries).
           // Infinite-bound pieces use a gated plotFn as before.
-          const compiled = segs.map(seg => ({
-            fn:   this.mathUtils.compile(seg.expression, intVariable, pv),
-            from: this.parseLimit(seg.from, pv),
-            to:   this.parseLimit(seg.to, pv),
-            expression: seg.expression,
-          })).filter(s => !!s.fn);
+          const compiled = segs
+            .map((seg) => ({
+              fn: this.mathUtils.compile(seg.expression, intVariable, pv),
+              from: this.parseLimit(seg.from, pv),
+              to: this.parseLimit(seg.to, pv),
+              expression: seg.expression,
+            }))
+            .filter((s) => !!s.fn);
 
-          const finitePieces  = compiled.filter(s => isFinite(s.from) && isFinite(s.to));
-          const infinitePieces = compiled.filter(s => !isFinite(s.from) || !isFinite(s.to));
+          const finitePieces = compiled.filter((s) => isFinite(s.from) && isFinite(s.to));
+          const infinitePieces = compiled.filter((s) => !isFinite(s.from) || !isFinite(s.to));
 
           // ── Finite pieces: draw together via plotPiecewise ──────────────
           if (finitePieces.length > 0) {
             if (showOrigRe) {
               plotter.plotPiecewise(
                 ctx,
-                finitePieces.map(s => ({ fn: s.fn!, from: s.from, to: s.to })),
+                finitePieces.map((s) => ({ fn: s.fn!, from: s.from, to: s.to })),
                 vp,
-                { color: origReColor, lineWidth: origLW },
+                { color: origReColor, lineWidth: origLW, jumpStyle: 'none' },
               );
             }
             if (showOrigM) {
               plotter.plotPiecewise(
                 ctx,
-                finitePieces.map(s => ({
-                  fn: (x: number) => { const y = s.fn!(x); return isFinite(y) ? Math.abs(y) : NaN; },
+                finitePieces.map((s) => ({
+                  fn: (x: number) => {
+                    const y = s.fn!(x);
+                    return isFinite(y) ? Math.abs(y) : NaN;
+                  },
                   from: s.from,
-                  to:   s.to,
+                  to: s.to,
                 })),
                 vp,
-                { color: origMgColor, lineWidth: origLW },
+                { color: origMgColor, lineWidth: origLW, jumpStyle: 'dashed' },
               );
             }
           }
@@ -829,9 +834,9 @@ export class ContinuousTransformComponent implements OnInit {
               ? this.buildMagFn(ft.realPart.maxima, ft.imagPart.maxima, transVariable, pv)
               : null;
 
-          if (reFn) plotter.plotFn(ctx, reFn, vp, { color: reColor, lineWidth: resLW });
-          if (imFn) plotter.plotFn(ctx, imFn, vp, { color: imColor, lineWidth: resLW });
-          if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW });
+          if (reFn) plotter.plotFn(ctx, reFn, vp, { color: reColor, lineWidth: resLW, jumpStyle: 'solid' });
+          if (imFn) plotter.plotFn(ctx, imFn, vp, { color: imColor, lineWidth: resLW, jumpStyle: 'solid' });
+          if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW, jumpStyle: 'solid' });
 
           // ── Dirac delta impulses ───────────────────────────────────────
           // compile() already replaces delta(…) with 0, so plotFn produces
@@ -885,16 +890,17 @@ export class ContinuousTransformComponent implements OnInit {
 
             if (outputReFn || outputImFn || outputMagFn) {
               if (outputReFn) {
-                plotter.plotFn(ctx, outputReFn, vp, { color: origReColor, lineWidth: origLW });
+                plotter.plotFn(ctx, outputReFn, vp, { color: origReColor, lineWidth: origLW, jumpStyle: 'solid' });
               }
               if (outputImFn) {
                 plotter.plotFn(ctx, outputImFn, vp, {
                   color: origImColor,
                   lineWidth: Math.max(1, origLW - 0.25),
+                  jumpStyle: 'solid',
                 });
               }
               if (outputMagFn) {
-                plotter.plotFn(ctx, outputMagFn, vp, { color: origMgColor, lineWidth: origLW });
+                plotter.plotFn(ctx, outputMagFn, vp, { color: origMgColor, lineWidth: origLW, jumpStyle: 'solid' });
               }
               if (showOrigRe && outputRealExpr) {
                 for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
@@ -953,7 +959,7 @@ export class ContinuousTransformComponent implements OnInit {
           // Input F(ω) split into Re/Im/|F| for inverse mode controls.
           if (showRe && ift.inputRealPart?.maxima) {
             const fn = this.mathUtils.compile(ift.inputRealPart.maxima, intVariable, pv);
-            if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW });
+            if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW, jumpStyle: 'solid' });
             for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
               ift.inputRealPart.maxima,
               intVariable,
@@ -964,7 +970,7 @@ export class ContinuousTransformComponent implements OnInit {
           }
           if (showIm && ift.inputImagPart?.maxima) {
             const fn = this.mathUtils.compile(ift.inputImagPart.maxima, intVariable, pv);
-            if (fn) plotter.plotFn(ctx, fn, vp, { color: imColor, lineWidth: resLW });
+            if (fn) plotter.plotFn(ctx, fn, vp, { color: imColor, lineWidth: resLW, jumpStyle: 'solid' });
             for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
               ift.inputImagPart.maxima,
               intVariable,
@@ -978,7 +984,7 @@ export class ContinuousTransformComponent implements OnInit {
             const realExpr = ift.inputRealPart?.maxima ?? '0';
             const imagExpr = ift.inputImagPart?.maxima ?? '0';
             const magFn = this.buildMagFn(realExpr, imagExpr, intVariable, pv);
-            if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW });
+            if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW, jumpStyle: 'solid' });
           }
         }
       },
@@ -1274,8 +1280,7 @@ export class ContinuousTransformComponent implements OnInit {
     // For FT: prepend the backend-provided alternate form (sech / sinh/(cosh+1))
     // if it exists and differs from the principal. This is the canonical "Otras formas"
     // entry derived directly from the Maxima computation, not from simplification.
-    const ftAlt =
-      mode === 'ft' ? (res as FourierTransformResponse).FAlt : undefined;
+    const ftAlt = mode === 'ft' ? (res as FourierTransformResponse).FAlt : undefined;
     const altSeed: AltForm | undefined =
       ftAlt?.tex && ftAlt.tex !== mainSymbolic.tex
         ? { labelKey: 'transforms.altFormAlt', tex: ftAlt.tex, maxima: ftAlt.maxima }
@@ -1563,17 +1568,17 @@ export class ContinuousTransformComponent implements OnInit {
 
   exportTestCase(): void {
     const mode = this.mode();
-    const ft   = this.ftResult();
-    const ift  = this.iftResult();
+    const ft = this.ftResult();
+    const ift = this.iftResult();
     const segs = this.segments();
     const intV = this.intVar();
-    const trV  = this.transVar();
+    const trV = this.transVar();
     const conv = this.convention();
 
     if (!ft && !ift) return;
 
     // Build segment list in fixture format
-    const segments = segs.map(s => ({
+    const segments = segs.map((s) => ({
       expression: s.expression,
       from: s.from,
       to: s.to,
@@ -1591,9 +1596,9 @@ export class ContinuousTransformComponent implements OnInit {
         segments,
         expected: {
           exists: ft.exists,
-          ...(ft.F?.maxima         ? { F:        ft.F.maxima }        : {}),
-          ...(ft.realPart?.maxima  ? { realPart: ft.realPart.maxima } : {}),
-          ...(ft.imagPart?.maxima  ? { imagPart: ft.imagPart.maxima } : {}),
+          ...(ft.F?.maxima ? { F: ft.F.maxima } : {}),
+          ...(ft.realPart?.maxima ? { realPart: ft.realPart.maxima } : {}),
+          ...(ft.imagPart?.maxima ? { imagPart: ft.imagPart.maxima } : {}),
         },
       };
     } else if (mode === 'ift' && ift) {
@@ -1606,10 +1611,10 @@ export class ContinuousTransformComponent implements OnInit {
         segments,
         expected: {
           exists: ift.exists,
-          ...(ift.fCombined?.maxima  ? { fCombined:  ift.fCombined.maxima }  : {}),
-          ...(ift.fPositive?.maxima  ? { fPositive:  ift.fPositive.maxima }  : {}),
-          ...(ift.fNegative?.maxima  ? { fNegative:  ift.fNegative.maxima }  : {}),
-          ...(ift.fOutUForm?.maxima  ? { fOutUForm:  ift.fOutUForm.maxima }   : {}),
+          ...(ift.fCombined?.maxima ? { fCombined: ift.fCombined.maxima } : {}),
+          ...(ift.fPositive?.maxima ? { fPositive: ift.fPositive.maxima } : {}),
+          ...(ift.fNegative?.maxima ? { fNegative: ift.fNegative.maxima } : {}),
+          ...(ift.fOutUForm?.maxima ? { fOutUForm: ift.fOutUForm.maxima } : {}),
         },
       };
     } else {
@@ -1624,12 +1629,15 @@ export class ContinuousTransformComponent implements OnInit {
     console.groupEnd();
 
     // Also copy to clipboard
-    navigator.clipboard.writeText(json).then(() => {
-      this.exportCopied.set(true);
-      setTimeout(() => this.exportCopied.set(false), 2500);
-    }).catch(() => {
-      // clipboard unavailable — user can copy from console
-    });
+    navigator.clipboard
+      .writeText(json)
+      .then(() => {
+        this.exportCopied.set(true);
+        setTimeout(() => this.exportCopied.set(false), 2500);
+      })
+      .catch(() => {
+        // clipboard unavailable — user can copy from console
+      });
   }
 
   toggleFullscreen(): void {
