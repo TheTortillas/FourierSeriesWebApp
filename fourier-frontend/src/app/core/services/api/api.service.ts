@@ -329,8 +329,10 @@ export class ApiService {
     return this.http.get<SystemStats>(`${this.base}/admin/system/stats`);
   }
 
-  getRateLimitMetrics(): Observable<RateLimitMetricsSnapshot> {
-    return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
+  getRateLimitMetrics(windowHours?: number): Observable<RateLimitMetricsSnapshot> {
+    let params = new HttpParams();
+    if (windowHours !== undefined) params = params.set('windowHours', windowHours);
+    return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`, { params });
   }
 
   getRateLimitHistory(params: { limit?: number; offset?: number; ip?: string; limiter?: string } = {}):
@@ -342,6 +344,42 @@ export class ApiService {
     if (params.limiter) p = p.set('limiter', params.limiter);
     return this.http.get<import('../../../domain').RateLimitHistoryResponse>(
       `${this.base}/admin/rate-limit/history`, { params: p },
+    );
+  }
+
+  // ── IP Blocklist ────────────────────────────────────────────────────────────
+
+  getIpBlocks(params: {
+    limit?: number; offset?: number;
+    ip?: string; blockedBy?: string; activeOnly?: boolean;
+  } = {}): Observable<import('../../../domain').IpBlockListResponse> {
+    let p = new HttpParams();
+    if (params.limit    != null) p = p.set('limit',      params.limit);
+    if (params.offset   != null) p = p.set('offset',     params.offset);
+    if (params.ip)               p = p.set('ip',         params.ip);
+    if (params.blockedBy)        p = p.set('blockedBy',  params.blockedBy);
+    if (params.activeOnly)       p = p.set('activeOnly', 'true');
+    return this.http.get<import('../../../domain').IpBlockListResponse>(
+      `${this.base}/admin/ip-blocks`, { params: p },
+    );
+  }
+
+  getIpBlocksActive(): Observable<import('../../../domain').IpBlockActiveResponse> {
+    return this.http.get<import('../../../domain').IpBlockActiveResponse>(
+      `${this.base}/admin/ip-blocks/active`,
+    );
+  }
+
+  blockIp(ip: string, reason: string, durationHours?: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${this.base}/admin/ip-blocks`,
+      { ip, reason, ...(durationHours != null && { durationHours }) },
+    );
+  }
+
+  unblockIp(ip: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.base}/admin/ip-blocks/${encodeURIComponent(ip)}`,
     );
   }
 

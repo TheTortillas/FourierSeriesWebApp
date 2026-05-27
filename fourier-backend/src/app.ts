@@ -21,6 +21,7 @@ import {
   feedbackLimiter,
   trackRateLimitRequests,
 } from "./api/middlewares/rateLimiter";
+import { ipBlocklistMiddleware } from "./api/middlewares/ipBlocklist";
 import { authRouter } from "./api/routes/auth.routes";
 import { optionalAuth } from "./api/middlewares/authenticate";
 import { requireVerified } from "./api/middlewares/requireVerified";
@@ -67,8 +68,14 @@ export function createApp(): Application {
     }),
   );
 
-  // ── Health endpoint — no auth, no rate limit ────────────────────────────────
+  // ── Health endpoint — no auth, no rate limit, no IP check ──────────────────
   app.use("/health", healthRouter);
+
+  // ── IP blocklist — antes de todo lo demás (excepto /health) ────────────────
+  // Consulta la tabla ip_blocks con cache en memoria (TTL 60 s).
+  // IPs suspendidas reciben 403 sin llegar a los rate-limiters ni a Node.
+  // El worker autoBlocker se arranca en server.ts, después de checkDbConnection.
+  app.use(ipBlocklistMiddleware);
 
   app.use(generalLimiter);
 
