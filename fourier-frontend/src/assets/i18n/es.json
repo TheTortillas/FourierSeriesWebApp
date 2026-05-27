@@ -55,6 +55,16 @@
     },
     "grapher": "Graficador"
   },
+  "grapher": {
+    "addExpression": "+ Agregar expresión",
+    "changeColor": "Cambiar color",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "remove": "Eliminar",
+    "emptyHint": "Escribe una expresión para empezar",
+    "xLabel": "x",
+    "yLabel": "y"
+  },
   "home": {
     "subtitle": "Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
     "learnMore": "Conoce más sobre la herramienta →",

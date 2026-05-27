@@ -8,6 +8,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { MathquillService, MathField } from '../../core/services/math/mathquill.service';
@@ -34,6 +35,7 @@ export const GRAPH_PALETTE = [
 @Component({
   selector: 'app-grapher-expression',
   templateUrl: './grapher-expression.component.html',
+  imports: [TranslocoPipe],
 })
 export class GrapherExpressionComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mqExpr') mqExprRef!: ElementRef<HTMLElement>;

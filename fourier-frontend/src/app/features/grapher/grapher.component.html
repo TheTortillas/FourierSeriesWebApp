@@ -14,6 +14,10 @@
           (changed)="updateExpression($event)"
           (removed)="removeExpression($event)"
         />
+      } @empty {
+        <p class="px-4 py-6 text-xs font-mono text-muted dark:text-dark-muted text-center">
+          {{ 'grapher.emptyHint' | transloco }}
+        </p>
       }
     </div>
 
@@ -24,10 +28,7 @@
         (click)="addExpression()"
         class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded border border-dashed border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Add expression
+        {{ 'grapher.addExpression' | transloco }}
       </button>
     </div>
 

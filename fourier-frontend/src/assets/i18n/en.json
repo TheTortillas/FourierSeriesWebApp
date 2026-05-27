@@ -55,6 +55,16 @@
     },
     "grapher": "Grapher"
   },
+  "grapher": {
+    "addExpression": "+ Add expression",
+    "changeColor": "Change color",
+    "show": "Show",
+    "hide": "Hide",
+    "remove": "Remove",
+    "emptyHint": "Type an expression to get started",
+    "xLabel": "x",
+    "yLabel": "y"
+  },
   "home": {
     "subtitle": "Calculate, visualize and analyze Fourier Series and Transforms with exact symbolic expressions and real-time graphical reconstruction.",
     "learnMore": "Learn more about the tool →",

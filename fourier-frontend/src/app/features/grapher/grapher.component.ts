@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import {
   GrapherExpressionComponent,
@@ -70,7 +71,7 @@ function drawFilledCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number,
 @Component({
   selector: 'app-grapher',
   templateUrl: './grapher.component.html',
-  imports: [NavComponent, GrapherExpressionComponent, FunctionPlotComponent, ParamSlidersComponent, DecimalPipe],
+  imports: [NavComponent, GrapherExpressionComponent, FunctionPlotComponent, ParamSlidersComponent, DecimalPipe, TranslocoPipe],
 })
 export class GrapherComponent {
   private readonly plotter   = inject(PlottingService);
