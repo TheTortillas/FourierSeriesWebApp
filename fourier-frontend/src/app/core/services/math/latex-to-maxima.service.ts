@@ -31,15 +31,23 @@ const SPECIAL_FN: Record<string, string> = {
 const SPECIAL_FN_RE = new RegExp(`\\b(${Object.keys(SPECIAL_FN).join('|')})\\b`);
 
 const STD_FN: Record<string, string> = {
-  sin: 'sin', cos: 'cos', tan: 'tan', cot: 'cot',
-  sec: 'sec', csc: 'csc',
-  asin: 'asin', acos: 'acos', atan: 'atan',
-  arcsin: 'asin', arccos: 'acos', arctan: 'atan',
-  sinh: 'sinh', cosh: 'cosh', tanh: 'tanh',
+  // Trig
+  sin: 'sin', cos: 'cos', tan: 'tan', cot: 'cot', sec: 'sec', csc: 'csc',
+  // Inverse trig
+  asin: 'asin', acos: 'acos', atan: 'atan', acot: 'acot', asec: 'asec', acsc: 'acsc',
+  arcsin: 'asin', arccos: 'acos', arctan: 'atan', arccot: 'acot', arcsec: 'asec', arccsc: 'acsc',
+  // Hyperbolic
+  sinh: 'sinh', cosh: 'cosh', tanh: 'tanh', coth: 'coth', sech: 'sech', csch: 'csch',
+  // Inverse hyperbolic
+  asinh: 'asinh', acosh: 'acosh', atanh: 'atanh', acoth: 'acoth', asech: 'asech', acsch: 'acsch',
+  // Exp / log
   ln: 'log', log: 'log', exp: 'exp',
+  // Misc
   sqrt: 'sqrt', abs: 'abs',
+  floor: 'floor', ceiling: 'ceiling', round: 'round',
   gamma: 'gamma', factorial: 'factorial',
-  sen: 'sin', tg: 'tan',
+  // Spanish aliases
+  sen: 'sin', tg: 'tan', senh: 'sinh',
 };
 
 type Token =
