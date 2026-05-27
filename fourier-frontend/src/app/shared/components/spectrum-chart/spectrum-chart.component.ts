@@ -10,7 +10,6 @@ import {
   viewChild,
 } from '@angular/core';
 import { FunctionPlotComponent, PlotLayer } from '../function-plot/function-plot.component';
-import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport } from '../../../core/services/canvas/canvas.types';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { TrigonometricTerm, ComplexTerm } from '../../../domain/types/fourier.types';
@@ -120,10 +119,13 @@ interface StemPoint {
       <div
         #chartWrapper
         class="relative h-80 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg overflow-hidden"
-        (pointermove)="onChartPointerMove($event)"
-        (pointerleave)="onChartPointerLeave()"
       >
-        <app-function-plot [layers]="layers()" [initialUnit]="48" [xAxisFormat]="'integer'" />
+        <app-function-plot
+          [layers]="layers()"
+          [initialUnit]="48"
+          [xAxisFormat]="'integer'"
+          (mathPointerMove)="onMathPointerMove($event)"
+        />
 
         <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
           <button
@@ -166,11 +168,9 @@ interface StemPoint {
   `,
 })
 export class SpectrumChartComponent {
-  private readonly coordTransform = inject(CoordinateTransformService);
   private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly theme = inject(ThemeService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly plotRef = viewChild(FunctionPlotComponent);
   readonly chartWrapper = viewChild<ElementRef<HTMLDivElement>>('chartWrapper');
 
   readonly seriesType = input<'trigonometric' | 'halfRange' | 'complex'>('trigonometric');
@@ -342,35 +342,29 @@ export class SpectrumChartComponent {
     }
   }
 
-  onChartPointerMove(event: PointerEvent): void {
-    const plot = this.plotRef();
-    if (!plot) return;
+  /**
+   * Called by FunctionPlotComponent's (mathPointerMove) output.
+   * Receives pre-converted math coordinates — no manual CSS→math transform needed.
+   * Emits null on pointerleave, which clears the hover state.
+   */
+  onMathPointerMove(p: { x: number; y: number } | null): void {
+    if (!p) {
+      this.hoveredPoint.set(null);
+      return;
+    }
 
-    const target = event.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const cssX = event.clientX - rect.left;
-    const cssY = event.clientY - rect.top;
-
-    const vp = plot.getViewport();
-    const mathX = this.coordTransform.cssToMathX(cssX, vp);
-    const mathY = this.coordTransform.cssToMathY(cssY, vp);
     const points = this.points();
-
     // Check if cursor is over a stem (X proximity + Y between 0 and tip)
     const xTol = 0.4;
     let hit: StemPoint | null = null;
     for (const point of points) {
-      if (Math.abs(point.x - mathX) > xTol) continue;
+      if (Math.abs(point.x - p.x) > xTol) continue;
       const yMin = Math.min(0, point.y) - Math.abs(point.y) * 0.05 - 0.02;
       const yMax = Math.max(0, point.y) + Math.abs(point.y) * 0.05 + 0.02;
-      if (mathY >= yMin && mathY <= yMax) { hit = point; break; }
+      if (p.y >= yMin && p.y <= yMax) { hit = point; break; }
     }
 
     this.hoveredPoint.set(hit);
-  }
-
-  onChartPointerLeave(): void {
-    this.hoveredPoint.set(null);
   }
 
   private buildTrigPoints(
