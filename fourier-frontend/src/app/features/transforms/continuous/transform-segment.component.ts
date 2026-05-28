@@ -140,7 +140,7 @@ export class TransformSegmentComponent implements AfterViewInit, OnDestroy {
         this.fieldSubjects[i]
           .pipe(
             debounceTime(350),
-            switchMap((latexRaw) => this.tex2max.convertForTransforms(latexRaw)),
+            switchMap((latexRaw) => this.tex2max.convertWithSpecialFns(latexRaw)),
           )
           .subscribe((result) => {
             if (result.ok) {

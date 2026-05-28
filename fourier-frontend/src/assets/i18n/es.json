@@ -52,6 +52,24 @@
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
+    },
+    "grapher": "Graficador"
+  },
+  "grapher": {
+    "addExpression": "+ Agregar expresión",
+    "changeColor": "Cambiar color",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "remove": "Eliminar",
+    "emptyHint": "Escribe una expresión para empezar",
+    "xLabel": "x",
+    "yLabel": "y",
+    "settings": {
+      "markers": "Marcadores",
+      "showRoots": "Raíces (función-eje)",
+      "showIntersections": "Intersecciones (función-función)",
+      "xAxis": "Formato eje X",
+      "zoom": "Zoom inicial"
     }
   },
   "home": {

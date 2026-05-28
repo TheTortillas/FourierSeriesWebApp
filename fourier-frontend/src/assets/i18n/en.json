@@ -52,6 +52,24 @@
     "betaBanner": {
       "message": "You're using the free beta — there will always be a free version. Some advanced features may require an account in the future.",
       "dismiss": "Dismiss beta notice"
+    },
+    "grapher": "Grapher"
+  },
+  "grapher": {
+    "addExpression": "+ Add expression",
+    "changeColor": "Change color",
+    "show": "Show",
+    "hide": "Hide",
+    "remove": "Remove",
+    "emptyHint": "Type an expression to get started",
+    "xLabel": "x",
+    "yLabel": "y",
+    "settings": {
+      "markers": "Markers",
+      "showRoots": "Roots (function-axis)",
+      "showIntersections": "Intersections (function-function)",
+      "xAxis": "X-axis format",
+      "zoom": "Initial zoom"
     }
   },
   "home": {
