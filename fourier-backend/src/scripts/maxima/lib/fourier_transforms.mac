@@ -682,12 +682,43 @@ FT_raw(f_expr, t_var, w_var, a, b) := block(
     raw
 )$
 
+/* FT_collect_ci_neg_args: returns list of u such that Ci(-u) appears in expr. */
+FT_collect_ci_neg_args(expr) := block(
+    [_a, _sub, _rest],
+    if atom(expr) then return([]),
+    if is(op(expr) = 'expintegral_ci) then (
+        _a: first(args(expr)),
+        if not atom(_a) and is(op(_a) = "-") and length(args(_a)) = 1 then
+            [- first(args(_a))]
+        else []
+    ) else (
+        _rest: [],
+        for _sub in args(expr) do
+            _rest: append(_rest, FT_collect_ci_neg_args(_sub)),
+        _rest
+    )
+)$
+
+/* FT_rewrite_ci_neg: apply Ci(-u) → Ci(u) + i·π (branch-cut identity, u > 0).
+   Maxima's integrator produces Ci(-u) when limits are fractional (e.g. a/2).
+   Only applied when no delta is present, to avoid disturbing rational+delta forms. */
+FT_rewrite_ci_neg(expr) := block(
+    [_negs, _subs, _u],
+    if freeof('expintegral_ci, expr) then return(expr),
+    _negs: FT_collect_ci_neg_args(expr),
+    if _negs = [] then return(expr),
+    _subs: [],
+    for _u in _negs do
+        _subs: append(_subs, [expintegral_ci(-_u) = expintegral_ci(_u) + %i*%pi]),
+    subst(_subs, expr)
+)$
+
 FT_simplify(expr) := block(
     [e, ef],
     /* When delta is present, ratsimp merges addends into one fraction,
        destroying the readable "rational + delta" form. Leave as-is. */
     if not freeof('delta, expr) then return(expr),
-    e  : ratsimp(rectform(expr)),
+    e  : ratsimp(rectform(FT_rewrite_ci_neg(expr))),
     ef : errcatch(factor(e)),
     if ef # [] then first(ef) else e
 )$
@@ -4043,16 +4074,21 @@ FT(FUNC_INPUT, t_var, w_var) := block(
     [n_orig, expanded, pieces, F_acum, F,
      F_real, F_imag, exists, had_error, pattern, done,
      trozo, f_i, ai, bi, contrib, free_params,
-     _ft_reserved],
+     _ft_reserved, _input_params],
 
     declare(w_var, real),
     _ft_reserved: [t_var, w_var],
 
-    /* ── declarar parametros libres de todos los tramos (expresion y limites) ── */
+    /* ── collect + declare free params from all pieces (expr and limits) ── */
+    _input_params: [],
     for i : 1 thru length(FUNC_INPUT) do (
         FT_declare_params(FUNC_INPUT[i][1], _ft_reserved),
         FT_declare_params(FUNC_INPUT[i][2], _ft_reserved),
-        FT_declare_params(FUNC_INPUT[i][3], _ft_reserved)
+        FT_declare_params(FUNC_INPUT[i][3], _ft_reserved),
+        _input_params: append(_input_params,
+            listofvars(FUNC_INPUT[i][1]),
+            listofvars(FUNC_INPUT[i][2]),
+            listofvars(FUNC_INPUT[i][3]))
     ),
 
     n_orig : length(FUNC_INPUT),
@@ -4349,7 +4385,18 @@ FT(FUNC_INPUT, t_var, w_var) := block(
         F_imag : if F_imag = [] then 'unknown else first(F_imag)
     ),
 
-    free_params: FT_free_params(F, append(_ft_reserved, ['u, 'delta, 'sgn])),
+    /* Union of params from result F and from input limits/exprs.
+       Catches params that appear only in limits and cancel out of F. */
+    block([_reserved: append(_ft_reserved, ['u, 'delta, 'sgn]), _fp_result, _fp_input, _sym],
+        _fp_result: FT_free_params(F, _reserved),
+        _fp_input: [],
+        for _sym in _input_params do (
+            if not numberp(_sym) and not member(_sym, _reserved)
+               and not member(_sym, _fp_input) then
+                _fp_input: append(_fp_input, [_sym])
+        ),
+        free_params: listify(setify(append(_fp_result, _fp_input)))
+    ),
 
     [F, F_real, F_imag, if done then true else exists, free_params]
 )$
@@ -4448,7 +4495,7 @@ IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
     [rp, rn, f_pos, f_neg, f_combined, fn_flip, dcheck, same_branch,
      eq_pos, eq_neg,
      free_params, _ift_reserved, _ift_ref,
-     _pre_pat],
+     _pre_pat, _input_params],
 
     /* ── Pre-check: pattern lookup without any assumptions ──────────────────
        Handlers that embed abs(t) or sgn(t) in their result already encode
@@ -4515,7 +4562,25 @@ IFT_bilateral(FUNC_INPUT, w_var, t_var) := block(
 
     _ift_reserved: [t_var, w_var, 'u, 'delta, 'sgn],
     _ift_ref: if f_combined # false then f_combined else f_pos + f_neg,
-    free_params: FT_free_params(_ift_ref, _ift_reserved),
+
+    /* Collect params from input limits/exprs to catch params that cancel out of result */
+    _input_params: [],
+    for _ii : 1 thru length(FUNC_INPUT) do (
+        _input_params: append(_input_params,
+            listofvars(FUNC_INPUT[_ii][1]),
+            listofvars(FUNC_INPUT[_ii][2]),
+            listofvars(FUNC_INPUT[_ii][3]))
+    ),
+    block([_fp_result, _fp_input, _sym],
+        _fp_result: FT_free_params(_ift_ref, _ift_reserved),
+        _fp_input: [],
+        for _sym in _input_params do (
+            if not numberp(_sym) and not member(_sym, _ift_reserved)
+               and not member(_sym, _fp_input) then
+                _fp_input: append(_fp_input, [_sym])
+        ),
+        free_params: listify(setify(append(_fp_result, _fp_input)))
+    ),
 
     [f_pos, f_neg, f_combined, free_params]
 )$
