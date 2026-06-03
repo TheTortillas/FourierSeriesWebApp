@@ -23,8 +23,14 @@ export interface FourierCoefficients {
   a0Raw?: SymbolicExpression;
   a0Float?: number;
   an?: SymbolicExpression;
+  anK?: SymbolicExpression;
+  anSummand?: SymbolicExpression;
   bn?: SymbolicExpression;
+  bnK?: SymbolicExpression;
+  bnSummand?: SymbolicExpression;
   cn?: SymbolicExpression;
+  cnK?: SymbolicExpression;
+  cnSummand?: SymbolicExpression;
   c0?: SymbolicExpression;
   c0Float?: number;
 }
@@ -36,9 +42,89 @@ export interface FourierResult {
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
   a0Float?: number;
+  parseval?: ParsevalTrig;
   simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   params?: string[];
+  executionTimeMs: number;
+}
+
+export interface ParsevalFormal {
+  k: SymbolicExpression;
+  summand: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
+}
+
+export interface SingularTerm {
+  n: number;
+  tex: string;
+  maxima: string;
+  tex2x?: string;
+}
+
+export interface ParsevalTrig {
+  lhs: SymbolicExpression;
+  a0Term: SymbolicExpression;
+  k: SymbolicExpression;
+  summand: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
+  sumStart: number;
+  hasSingular: boolean;
+  singVals: number[];
+  singularTerms: SingularTerm[];
+  formal?: ParsevalFormal;
+}
+
+export interface ParsevalHalfRange {
+  lhs: SymbolicExpression;
+  cosine: {
+    a0Term: SymbolicExpression;
+    k: SymbolicExpression;
+    summand: SymbolicExpression;
+    lhsFinal: SymbolicExpression;
+    sumStart: number;
+    hasSingular: boolean;
+    singVals: number[];
+    singularTerms: SingularTerm[];
+    formal?: ParsevalFormal;
+  };
+  sine: {
+    k: SymbolicExpression;
+    summand: SymbolicExpression;
+    lhsFinal: SymbolicExpression;
+    sumStart: number;
+    hasSingular: boolean;
+    singVals: number[];
+    singularTerms: SingularTerm[];
+    formal?: ParsevalFormal;
+  };
+}
+
+export interface ParsevalComplexBilateral {
+  k: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
+  formal?: {
+    k: SymbolicExpression;
+    lhsFinal: SymbolicExpression;
+  };
+}
+
+export interface ParsevalComplex {
+  lhs: SymbolicExpression;
+  c0Term: SymbolicExpression;
+  k: SymbolicExpression;
+  summand: SymbolicExpression;
+  lhsFinal: SymbolicExpression;
+  sumStart: number;
+  hasSingular: boolean;
+  singVals: number[];
+  singularTerms: SingularTerm[];
+  formal?: ParsevalFormal;
+  bilateral?: ParsevalComplexBilateral;
+}
+
+export interface ParsevalApiResult {
+  parseval: ParsevalTrig | ParsevalHalfRange | ParsevalComplex | undefined;
   executionTimeMs: number;
 }
 
@@ -50,6 +136,8 @@ export interface HalfRangeResult {
   w0: SymbolicExpression;
   a0Raw?: SymbolicExpression;
   a0Float?: number;
+  parseval?: ParsevalHalfRange;
+  simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
@@ -57,13 +145,11 @@ export interface HalfRangeResult {
 
 export interface ComplexFourierResult {
   input: PiecewiseFourierInput;
-  coefficients: {
-    c0: SymbolicExpression;
-    c0Float?: number;
-    cn: SymbolicExpression;
-  };
+  coefficients: FourierCoefficients;
   seriesComplex: SymbolicExpression;
   w0: SymbolicExpression;
+  parseval?: ParsevalComplex;
+  simplifications?: Record<string, SymbolicExpression>;
   validation?: ValidationResult;
   params?: string[];
   executionTimeMs: number;
@@ -126,7 +212,8 @@ export type SimplificationFunction =
   | "expand"
   | "radcan"
   | "rectform"
-  | "polarform";
+  | "polarform"
+  | "to_hyper";
 
 export interface SimplifyInput {
   expression: string;
@@ -137,6 +224,8 @@ export interface SimplifyInput {
     exponentialize?: boolean;
     demoivre?: boolean;
     erfRepresentation?: "erf" | "erfc" | "erfi";
+    declareNInteger?: boolean;
+    toHyperbolic?: boolean;
   };
   convention?: NormalizationConvention;
 }
@@ -144,6 +233,8 @@ export interface SimplifyInput {
 export interface SimplifyResult {
   original: SymbolicExpression;
   simplified: SymbolicExpression;
+  simplifiedK?: SymbolicExpression;
+  simplifiedSummand?: SymbolicExpression;
   profile: SimplificationProfile;
   functionsApplied: SimplificationFunction[];
 }

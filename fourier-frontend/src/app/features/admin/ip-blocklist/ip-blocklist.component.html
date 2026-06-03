@@ -1,0 +1,369 @@
+<div class="p-6 flex flex-col gap-6 max-w-5xl">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="flex items-start justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">IP Blocklist</h1>
+      <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">
+        Suspensiones activas y historial · Auto-detección cada 5 min
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="toggleForm()"
+        class="px-3 py-2 rounded-lg text-xs font-mono border transition-colors"
+        [ngClass]="showForm()
+          ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
+          : 'border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-ink dark:text-dark-ink hover:border-accent/40'"
+      >
+        {{ showForm() ? '✕ Cancelar' : '+ Bloquear IP' }}
+      </button>
+      <button
+        type="button"
+        (click)="refresh()"
+        class="px-3 py-2 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-ink dark:text-dark-ink hover:border-accent/40 transition-colors"
+      >
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Formulario de bloqueo manual ──────────────────────────────────── -->
+  @if (showForm()) {
+    <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
+      <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+        <h2 class="text-sm font-mono text-ink dark:text-dark-ink">Bloquear IP manualmente</h2>
+        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-0.5">
+          Omite la duración para un bloqueo permanente (solo reversible manualmente).
+        </p>
+      </div>
+      <div class="px-4 py-4 flex flex-wrap gap-3 items-end">
+
+        <!-- IP -->
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide">IP</label>
+          <input
+            type="text"
+            [(ngModel)]="formIp"
+            placeholder="45.65.200.6"
+            class="h-8 px-2.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink focus:outline-none focus:border-accent/50 w-40"
+          />
+        </div>
+
+        <!-- Razón -->
+        <div class="flex flex-col gap-1 flex-1 min-w-48">
+          <label class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide">Razón</label>
+          <input
+            type="text"
+            [(ngModel)]="formReason"
+            placeholder="Abuso detectado en logs..."
+            class="h-8 px-2.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink focus:outline-none focus:border-accent/50 w-full"
+          />
+        </div>
+
+        <!-- Duración -->
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide">Duración (h)</label>
+          <input
+            type="number"
+            [(ngModel)]="formDurationHours"
+            placeholder="∞ perm."
+            min="1"
+            class="h-8 px-2.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink focus:outline-none focus:border-accent/50 w-24"
+          />
+        </div>
+
+        <!-- Botón -->
+        <button
+          type="button"
+          (click)="submitBlock()"
+          [disabled]="formLoading()"
+          class="h-8 px-4 rounded-lg text-xs font-mono border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          @if (formLoading()) { Bloqueando… } @else { Bloquear }
+        </button>
+      </div>
+
+      @if (formError()) {
+        <p class="px-4 pb-4 text-xs font-mono text-red-500 dark:text-red-400">{{ formError() }}</p>
+      }
+      @if (formSuccess()) {
+        <p class="px-4 pb-4 text-xs font-mono text-emerald-600 dark:text-emerald-400">{{ formSuccess() }}</p>
+      }
+    </div>
+  }
+
+  <!-- ── Modal de confirmación de desbloqueo ────────────────────────────── -->
+  @if (confirmingIp()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div class="rounded-2xl border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-xl p-6 w-full max-w-sm mx-4 flex flex-col gap-4">
+        <h3 class="font-display text-base text-ink dark:text-dark-ink">¿Desbloquear esta IP?</h3>
+        <p class="text-xs font-mono text-muted dark:text-dark-muted">
+          La IP <span class="text-ink dark:text-dark-ink font-semibold">{{ confirmingIp() }}</span>
+          quedará libre de inmediato. El cache del servidor se invalida al instante.
+        </p>
+        @if (unblockError()) {
+          <p class="text-xs font-mono text-red-500">{{ unblockError() }}</p>
+        }
+        <div class="flex gap-2 justify-end">
+          <button
+            type="button"
+            (click)="cancelUnblock()"
+            class="px-3 py-2 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/40 hover:text-accent transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="confirmUnblock()"
+            [disabled]="unblockLoading()"
+            class="px-3 py-2 rounded-lg text-xs font-mono border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            @if (unblockLoading()) { Desbloqueando… } @else { Sí, desbloquear }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── IPs activas ahora ──────────────────────────────────────────────── -->
+  <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
+    <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+      <div>
+        <h2 class="text-sm font-mono text-ink dark:text-dark-ink">IPs suspendidas ahora</h2>
+        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-0.5">
+          Bloques activos · cache invalidado inmediatamente al desbloquear
+        </p>
+      </div>
+      @if (!activeLoading() && !activeError()) {
+        <span class="text-[11px] font-mono text-muted dark:text-dark-muted">
+          {{ activeBlocks().length }} activa{{ activeBlocks().length !== 1 ? 's' : '' }}
+        </span>
+      }
+    </div>
+
+    @if (activeLoading()) {
+      <div class="px-4 py-6 flex items-center gap-2 text-muted dark:text-dark-muted text-xs font-mono">
+        <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        Cargando bloqueos activos…
+      </div>
+    } @else if (activeError()) {
+      <p class="px-4 py-4 text-xs font-mono text-red-500">Error al cargar los bloqueos activos.</p>
+    } @else if (activeBlocks().length === 0) {
+      <p class="px-4 py-6 text-xs font-mono text-muted dark:text-dark-muted">
+        No hay IPs suspendidas en este momento. ✓
+      </p>
+    } @else {
+      <div class="divide-y divide-border dark:divide-dark-border">
+        @for (block of activeBlocks(); track block.id) {
+          <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 hover:bg-black/2 dark:hover:bg-white/2">
+
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+              <!-- IP -->
+              <button
+                type="button"
+                class="text-[11px] font-mono text-accent hover:underline cursor-pointer"
+                title="Filtrar historial por esta IP"
+                (click)="filterByIp(block.ip_address)"
+              >{{ block.ip_address }}</button>
+
+              <!-- Badge auto/admin -->
+              <span
+                class="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                [ngClass]="blockedByClass(block.blocked_by)"
+              >{{ block.blocked_by }}</span>
+
+              <!-- Razón -->
+              <span class="text-[11px] font-mono text-muted dark:text-dark-muted truncate max-w-xs">
+                {{ block.reason }}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-4 shrink-0">
+              <!-- Vence -->
+              <div class="text-right">
+                @if (block.blocked_until) {
+                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">vence</p>
+                  <p class="text-[11px] font-mono text-ink dark:text-dark-ink">
+                    {{ block.blocked_until | adminDate: 'seconds' }}
+                  </p>
+                } @else {
+                  <span class="text-[11px] font-mono text-red-500 dark:text-red-400 font-semibold">∞ Permanente</span>
+                }
+              </div>
+
+              <!-- Acción desbloquear -->
+              <button
+                type="button"
+                (click)="requestUnblock(block.ip_address)"
+                class="px-2.5 py-1.5 rounded-lg text-[11px] font-mono border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors shrink-0"
+              >
+                Desbloquear
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- ── Historial completo ─────────────────────────────────────────────── -->
+  <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
+
+    <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <h2 class="text-sm font-mono text-ink dark:text-dark-ink">Historial de bloqueos</h2>
+        <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-0.5">
+          Activos y expirados · persistido en base de datos
+        </p>
+      </div>
+      @if (histTotal() > 0) {
+        <span class="text-[11px] font-mono text-muted dark:text-dark-muted">
+          {{ histTotal() }} registros totales
+        </span>
+      }
+    </div>
+
+    <!-- Filtros -->
+    <div class="px-4 py-3 border-b border-border dark:border-dark-border flex flex-wrap items-end gap-3">
+      <div class="flex flex-col gap-1">
+        <label class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide">IP</label>
+        <input
+          type="text"
+          [(ngModel)]="filterIp"
+          placeholder="ej. 192.168.1.1"
+          class="h-8 px-2.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink focus:outline-none focus:border-accent/50 w-40"
+        />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide">Origen</label>
+        <select
+          [(ngModel)]="filterBlockedBy"
+          class="h-8 px-2.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink focus:outline-none focus:border-accent/50"
+        >
+          <option value="">Todos</option>
+          <option value="auto">auto</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+      <button
+        type="button"
+        (click)="applyFilters()"
+        class="h-8 px-3 rounded-lg text-xs font-mono border border-accent/50 text-accent hover:bg-accent/10 transition-colors"
+      >
+        Aplicar
+      </button>
+      @if (filterIp || filterBlockedBy) {
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="h-8 px-3 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/40 hover:text-accent transition-colors"
+        >
+          Limpiar
+        </button>
+      }
+    </div>
+
+    <!-- Tabla historial -->
+    @if (histLoading()) {
+      <div class="px-4 py-6 flex items-center gap-2 text-muted dark:text-dark-muted text-xs font-mono">
+        <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        Cargando historial…
+      </div>
+    } @else if (histError()) {
+      <p class="px-4 py-4 text-xs font-mono text-red-500">Error al cargar el historial.</p>
+    } @else if (history().length === 0) {
+      <p class="px-4 py-6 text-xs font-mono text-muted dark:text-dark-muted">
+        Sin registros{{ (filterIp || filterBlockedBy) ? ' para este filtro' : '' }}.
+      </p>
+    } @else {
+      <div class="divide-y divide-border dark:divide-dark-border">
+        @for (entry of history(); track entry.id) {
+          <div
+            class="px-4 py-3 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 hover:bg-black/2 dark:hover:bg-white/2"
+            [ngClass]="entry.is_active ? '' : 'opacity-60'"
+          >
+            <!-- Columna izq -->
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+              <!-- IP -->
+              <button
+                type="button"
+                class="text-[11px] font-mono text-accent hover:underline cursor-pointer"
+                title="Filtrar por esta IP"
+                (click)="filterByIp(entry.ip_address)"
+              >{{ entry.ip_address }}</button>
+
+              <!-- Badge auto/admin -->
+              <span
+                class="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                [ngClass]="blockedByClass(entry.blocked_by)"
+              >{{ entry.blocked_by }}</span>
+
+              <!-- Estado: activo / expirado / admin released -->
+              @if (entry.is_active) {
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded border bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800">
+                  activo
+                </span>
+              } @else if (entry.released_by) {
+                <span
+                  class="text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                  [ngClass]="releasedByClass(entry.released_by)"
+                >
+                  {{ entry.released_by === 'expired' ? 'expirado' : 'liberado' }}
+                </span>
+              }
+
+              <!-- Razón -->
+              <span class="text-[11px] font-mono text-muted dark:text-dark-muted truncate max-w-xs">
+                {{ entry.reason }}
+              </span>
+            </div>
+
+            <!-- Columna der: fechas -->
+            <div class="text-right shrink-0">
+              <p class="text-[11px] font-mono text-muted dark:text-dark-muted">
+                {{ entry.created_at | adminDate: 'seconds' }}
+              </p>
+              @if (entry.blocked_until) {
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted opacity-70">
+                  hasta {{ entry.blocked_until | adminDate: 'seconds' }}
+                </p>
+              } @else {
+                <p class="text-[10px] font-mono text-red-500 dark:text-red-400">∞ permanente</p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Paginación -->
+      @if (histTotalPages() > 1) {
+        <div class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between gap-4">
+          <button
+            type="button"
+            (click)="prevPage()"
+            [disabled]="histCurrentPage() === 1"
+            class="px-3 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/40 hover:text-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >← Anterior</button>
+          <span class="text-xs font-mono text-muted dark:text-dark-muted">
+            Página {{ histCurrentPage() }} de {{ histTotalPages() }}
+          </span>
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="histCurrentPage() >= histTotalPages()"
+            class="px-3 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/40 hover:text-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >Siguiente →</button>
+        </div>
+      }
+    }
+  </div>
+
+</div>

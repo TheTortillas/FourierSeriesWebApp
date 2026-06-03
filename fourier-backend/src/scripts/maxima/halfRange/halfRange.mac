@@ -8,6 +8,8 @@
 display2d: false$
 
 rect(x) := if abs(x) < 1/2 then 1 elseif abs(x) = 1/2 then 1/2 else 0$
+tri(x)  := if abs(x) < 1   then 1 - abs(x)                    else 0$
+sinc(x) := if x = 0             then 1         else sin(x)/x$
 u(x)    := if x >= 0 then 1 else 0$
 sgn(x)  := if x > 0 then 1 elseif x = 0 then 0 else -1$
 
@@ -85,10 +87,12 @@ print("__SERIES_COSENO_TEX__")$    tex(serie_coseno)$
 print("__SERIES_SENO_MAXIMA__")$   print(string(serie_seno))$
 print("__SERIES_SENO_TEX__")$      tex(serie_seno)$
 
-/* Parámetros libres en los coeficientes */
-free_params: []$
-for sym in listofvars(Coeff_An + Coeff_Bn + Coeff_A0) do (
-    if sym # INTVAR and sym # n then
-        free_params: append(free_params, [sym])
+/* Parámetros libres: coeficientes + w0 (captura params que solo aparecen en límites) */
+block([_scan: listofvars(Coeff_An + Coeff_Bn + Coeff_A0 + w0)],
+    free_params: [],
+    for sym in _scan do (
+        if sym # INTVAR and sym # n then
+            free_params: append(free_params, [sym])
+    )
 )$
 print("__PARAMS__")$ print(string(free_params))$

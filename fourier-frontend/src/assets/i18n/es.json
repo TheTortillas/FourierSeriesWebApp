@@ -47,9 +47,29 @@
     "footerText": "Herramienta de análisis matemático",
     "more": "Más opciones",
     "about": "Acerca de",
+    "privacy": "Privacidad",
+    "terms": "Términos de Uso",
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
+    },
+    "grapher": "Graficador"
+  },
+  "grapher": {
+    "addExpression": "+ Agregar expresión",
+    "changeColor": "Cambiar color",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "remove": "Eliminar",
+    "emptyHint": "Escribe una expresión para empezar",
+    "xLabel": "x",
+    "yLabel": "y",
+    "settings": {
+      "markers": "Marcadores",
+      "showRoots": "Raíces (función-eje)",
+      "showIntersections": "Intersecciones (función-función)",
+      "xAxis": "Formato eje X",
+      "zoom": "Zoom inicial"
     }
   },
   "home": {
@@ -163,11 +183,22 @@
     "tabCoefficients": "Coeficientes",
     "tabTerms": "Términos",
     "tabSpectrum": "Espectro",
-    "tabValidation": "Validación"
+    "tabValidation": "Validación",
+    "tabParseval": "Parseval"
   },
   "resultPanel": {
     "sine": "Seno",
     "cosine": "Coseno",
+    "parsevalHeader": "Identidad de Parseval asociada a esta serie de Fourier",
+    "parsevalUnavailable": "No hay identidad de Parseval disponible para esta función.",
+    "parsevalSimplified": "Simplificada",
+    "parsevalFormal": "Formal",
+    "parsevalFormalNote": "Forma analítica: sin aplicar declare(n, integer). Las singularidades en la fórmula son removibles; la suma es válida desde n=1.",
+    "parsevalSingularNote": "suma dividida en el/los punto(s) singular(es); cada valor excluido fue evaluado por límite.",
+    "parsevalUnilateral": "n ≥ 1",
+    "parsevalBilateral": "n ≠ 0",
+    "parsevalBilateralNote": "Forma bilateral: n recorre todos los enteros no nulos (ℤ∖{0}). Equivalente a la forma unilateral por simetría |cₙ|² = |c₋ₙ|².",
+    "parsevalBilateralSingularNote": "Forma bilateral; los pares singulares n = ±k contribuyen 2·Vₖ por simetría.",
     "fourierSeries": "Serie de Fourier",
     "indeterminateCoeffLabel": " * coeficiente indeterminado (0/0); evaluado por límite",
     "indeterminateCoeffTooltip": "Este coeficiente es indeterminado (0/0) al evaluar la fórmula general, pero el límite existe y es finito. Se ha evaluado el límite para obtener su valor correcto.",
@@ -177,11 +208,15 @@
     "bnValue": "bₙ (valor)",
     "cnExpression": "cₙ (expresión)",
     "cMnExpression": "c₋ₙ (expresión)",
-    "noSingularities": "No se encontraron singularidades en los coeficientes calculados.",
-    "noSingularitiesInDomain": "No se detectaron singularidades en el dominio de integración.",
+    "noSingularities": "Función integrable",
+    "noSingularitiesInDomain": "No se detectaron singularidades no integrables en el dominio.",
+    "indeterminateCoeffSection": "Coeficientes indeterminados",
+    "indeterminateCoeffFound": "Los siguientes términos presentan coeficientes en forma 0/0 en la fórmula general. Sus valores se obtienen evaluando el límite y son finitos.",
+    "noIndeterminate": "Todos los coeficientes evaluados son determinados.",
     "singularitiesDetected": "Singularidades detectadas",
     "point": "Punto",
     "type": "Tipo",
+    "coefficient": "Coeficiente",
     "noInfoAvailable": "No hay información de validación disponible.",
     "selectAllHarmonics": "Seleccionar todos los armónicos visibles",
     "includeHarmonic": "Incluir armónico n={{ n }}",
@@ -192,7 +227,11 @@
       "asintotica": "Asintótica",
       "esencial": "Esencial",
       "fuera_de_dominio": "Fuera del dominio"
-    }
+    },
+    "seriesStandard": "Estándar",
+    "seriesFactored": "Factorizada",
+    "notationIntegral": "Si/Ei",
+    "notationGamma": "Γ"
   },
   "share": {
     "title": "Compartir enlace",
@@ -432,7 +471,9 @@
       "submitting": "Creando cuenta...",
       "successTitle": "¡Cuenta creada!",
       "successMessage": "Te enviamos un correo de verificación. Revisa tu bandeja de entrada y confirma tu email para comenzar.",
-      "goToLogin": "Ir a iniciar sesión"
+      "goToLogin": "Ir a iniciar sesión",
+      "legalNotice": "Al registrarte aceptas nuestros",
+      "legalAnd": "y nuestra"
     },
     "forgotPassword": {
       "title": "Recuperar contraseña",
@@ -503,7 +544,14 @@
     "confirmNewPassword": "Confirmar nueva contraseña",
     "savePassword": "Cambiar contraseña",
     "savingPassword": "Guardando…",
-    "googleNoPassword": "Tu cuenta usa Google — el cambio de contraseña no está disponible."
+    "googleNoPassword": "Tu cuenta usa Google — el cambio de contraseña no está disponible.",
+    "dangerZone": "Zona de peligro",
+    "deleteAccount": "Eliminar cuenta",
+    "deleteAccountDesc": "Esta acción es permanente. Tu cuenta, historial y favoritos serán eliminados.",
+    "deleteAccountBtn": "Eliminar cuenta",
+    "deleteAccountConfirm": "¿Estás seguro? Esta acción no se puede deshacer. Tu cuenta y todos tus datos serán eliminados de forma permanente.",
+    "deleting": "Eliminando…",
+    "confirmDelete": "Sí, eliminar mi cuenta"
   },
   "errors": {
     "generic": "Ocurrió un error. Intenta de nuevo.",
@@ -513,28 +561,29 @@
     "emailNotVerified": "Debes verificar tu correo antes de hacer cálculos.",
     "weeklyLimitReached": "Límite semanal alcanzado. Tu cuota se renueva el {{ date }}.",
     "tooManyRequests": "Demasiadas solicitudes. Intenta de nuevo en un momento.",
-    "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos."
+    "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos.",
+    "emailRecentlyDeleted": "Esta dirección fue usada en una cuenta eliminada esta semana. Puedes volver a registrarte cuando inicie la nueva semana."
   },
   "seo": {
     "home": {
-      "title": "Calculadora de Series y Transformadas de Fourier",
-      "description": "Calculadora simbólica de series y transformadas de Fourier. Coeficientes exactos, gráficas en tiempo real y soporte para funciones a trozos."
+      "title": "Calculadora de Transformada de Fourier y Series de Fourier",
+      "description": "Calculadora simbólica de transformada de Fourier, transformada inversa y series de Fourier. Coeficientes exactos, gráficas interactivas en tiempo real y soporte para funciones definidas por tramos. Gratuita y en línea."
     },
     "calculator": {
-      "title": "Calculadora de Series de Fourier",
-      "description": "Calcula series de Fourier trigonométricas, complejas y de medio rango con coeficientes simbólicos exactos y reconstrucción gráfica interactiva."
+      "title": "Calculadora de Series de Fourier con Gráfica Interactiva",
+      "description": "Calcula series de Fourier trigonométricas, complejas y de medio rango con coeficientes simbólicos exactos. Reconstrucción gráfica animada, identidad de Parseval y soporte para funciones discontinuas."
     },
     "transforms": {
-      "title": "Calculadora de Transformada de Fourier Continua",
-      "description": "Calcula la transformada de Fourier continua y su inversa de forma simbólica. Visualiza el espectro de amplitud y fase en tiempo real."
+      "title": "Calculadora de Transformada de Fourier — Directa e Inversa",
+      "description": "Calcula la transformada de Fourier y la transformada inversa de Fourier de forma simbólica. Visualiza el espectro de amplitud y fase. Compatible con funciones a trozos, convolución, series de Taylor y más."
     },
     "dft": {
-      "title": "Calculadora de DFT — Transformada Discreta de Fourier",
-      "description": "Calcula la DFT con visualización de espectro de amplitud, fase y reconstrucción de señales mediante epiciclos."
+      "title": "Calculadora de DFT — Transformada Discreta de Fourier con Epiciclos",
+      "description": "Calcula la DFT y la FFT con visualización del espectro de amplitud y fase. Reconstruye señales con epiciclos animados. Ideal para procesamiento de señales y análisis de frecuencias."
     },
     "about": {
-      "title": "Acerca de",
-      "description": "Descubre todo lo que puedes hacer con Fourier Web Calculator: series de Fourier, transformadas continuas y discretas, epicíclos, teclado matemático y más."
+      "title": "Acerca de Fourier Web Calculator",
+      "description": "Fourier Web Calculator: herramienta gratuita para calcular transformadas de Fourier continuas, inversas, series de Fourier, DFT y epiciclos. Resultados simbólicos exactos con visualización en tiempo real."
     }
   },
   "dev": {
@@ -727,13 +776,14 @@
       "f7": "Exportar resultados como imagen, código LaTeX, CSV o script Maxima",
       "f8": "Compartir el resultado con un enlace permanente único",
       "f9": "Aplicar simplificaciones simbólicas a las expresiones resultantes de la serie",
-      "f10": "Acepta parámetros libres (p. ej. a·x, sin(n·t)) — varíalos con sliders interactivos después de calcular"
+      "f10": "Acepta parámetros libres (p. ej. a·x, sin(n·t)) — varíalos con sliders interactivos después de calcular",
+      "f11": "Identidad de Parseval asociada a la serie: obtén la relación simbólica exacta entre la energía de la función y la suma de cuadrados de los coeficientes"
     },
     "transforms": {
       "title": "Transformadas Continuas",
       "desc": "Calcula transformadas simbólicas exactas de señales a trozos, incluyendo funciones especiales.",
       "f1": "Transformada de Fourier continua bilateral (ℱ) y su inversa (ℱ⁻¹)",
-      "f3": "Entrada a trozos con soporte para u(·), sgn(·), rect(·), δ(·)",
+      "f3": "Entrada a trozos con soporte para u(·), sgn(·), rect(·), tri(·), δ(·)",
       "f4": "Resultados simbólicos exactos mediante Maxima CAS",
       "f5": "Gráficas interactivas de la función original y su transformada",
       "f6": "Exportar y compartir resultados",
@@ -745,13 +795,14 @@
       "title": "Transformada Discreta de Fourier (DFT)",
       "desc": "Analiza señales numéricamente con la DFT, visualiza el espectro y observa la animación de epiciclos.",
       "f1": "Tres modos de entrada: muestreo de función, datos manuales y epiciclos",
-      "f2": "Modo función: muestreo numérico de funciones a trozos (soporta u, sgn, rect)",
+      "f2": "Modo función: muestreo numérico de funciones a trozos (soporta u, sgn, rect, tri)",
       "f3": "Modo manual: introduce cualquier cantidad de muestras a mano",
-      "f4": "Epiciclos: DFT animada como vectores complejos giratorios",
+      "f4": "Modo epiciclos: la DFT cobra vida como vectores complejos giratorios que trazan cualquier figura cerrada",
       "f5": "Espectro: gráficas de amplitud |X[k]| y fase ∠X[k]",
       "f6": "fftShift para centrar las frecuencias negativas",
       "f7": "Reconstrucción de la señal mediante IDFT a partir de los coeficientes",
-      "f8": "Exportar cada gráfica de forma independiente y compartir resultados"
+      "f8": "Exportar cada gráfica de forma independiente y compartir resultados",
+      "f9": "Dibuja cualquier figura a mano sobre el lienzo y observa cómo se reconstruye como animación de epiciclos de Fourier en tiempo real"
     },
     "input": {
       "title": "Entrada matemática",
@@ -759,7 +810,7 @@
       "f1": "Editor LaTeX interactivo con MathQuill",
       "f2": "Barra de escritorio con operadores, funciones, letras griegas y constantes",
       "f3": "Teclado táctil para móvil: numérico, trig, f(x), QWERTY completo + mayúsculas, letras griegas",
-      "f4": "Funciones disponibles: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), n!, Γ(·)"
+      "f4": "Funciones disponibles: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), tri(·), n!, Γ(·)"
     },
     "account": {
       "title": "Cuentas e Historial",
@@ -777,6 +828,63 @@
       "f3": "Completamente bilingüe: español e inglés",
       "f4": "Diseño responsive — funciona en escritorio y móvil"
     },
-    "cta": "Empezar a explorar"
+    "cta": "Empezar a explorar",
+    "fns": {
+      "title": "Funciones especiales soportadas",
+      "intro": "Además de las funciones trigonométricas e hiperbólicas estándar, la calculadora reconoce estas funciones propias del análisis de señales, tanto en la entrada simbólica como en la evaluación numérica y las transformadas.",
+      "ftLabel": "Transformada de Fourier",
+      "u": {
+        "name": "Escalón unitario",
+        "notation": "u(t)",
+        "aka": "Función de Heaviside",
+        "def": "Vale 1 para t ≥ 0 y 0 para t < 0. Modela el encendido abrupto de una señal: multiplica por u(t) para «activar» una función desde t = 0, o por u(t − a) para retrasarla a t = a.",
+        "latex": "u(t) = \\begin{cases} 1 & t \\ge 0 \\\\ 0 & t < 0 \\end{cases}",
+        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}"
+      },
+      "sgn": {
+        "name": "Función signo",
+        "notation": "sgn(t)",
+        "aka": "Función signum",
+        "def": "Devuelve +1 si t > 0, −1 si t < 0 y 0 en el origen. Se relaciona con el escalón por sgn(t) = 2u(t) − 1. Aparece en la transformada de Hilbert y en el análisis de señales causales.",
+        "latex": "\\operatorname{sgn}(t) = \\begin{cases} 1 & t > 0 \\\\ 0 & t = 0 \\\\ -1 & t < 0 \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{sgn}(t)\\} = \\dfrac{2}{i\\omega}"
+      },
+      "delta": {
+        "name": "Delta de Dirac",
+        "notation": "δ(t)",
+        "aka": "Impulso unitario",
+        "def": "Distribución de área unidad concentrada en t = 0. Propiedad de muestreo: ∫ f(t) δ(t − a) dt = f(a). Es el elemento neutro de la convolución y el fundamento de los sistemas LTI.",
+        "latex": "\\int_{-\\infty}^{\\infty} \\delta(t)\\,dt = 1",
+        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1"
+      },
+      "rect": {
+        "name": "Pulso rectangular",
+        "notation": "rect(t)",
+        "aka": "Función puerta",
+        "def": "Vale 1 cuando |t| < ½, ½ en los bordes y 0 fuera. Usa rect(t/T) para un pulso de ancho T, o rect((t − t₀)/T) para desplazarlo en el tiempo.",
+        "latex": "\\operatorname{rect}(t) = \\begin{cases} 1 & |t| < \\tfrac{1}{2} \\\\ \\tfrac{1}{2} & |t| = \\tfrac{1}{2} \\\\ 0 & |t| > \\tfrac{1}{2} \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{rect}(t/T)\\} = T\\,\\operatorname{sinc}\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
+      },
+      "tri": {
+        "name": "Pulso triangular",
+        "notation": "tri(t)",
+        "aka": "Función sombrero",
+        "def": "Una pirámide de base 2 y altura 1 — la autoconvolución normalizada de rect. Usa tri(t/T) para escalar la base a 2T. Su transformada es sinc², lo que lo hace útil en diseño de ventanas espectrales.",
+        "latex": "\\operatorname{tri}(t) = \\begin{cases} 1 - |t| & |t| < 1 \\\\ 0 & |t| \\ge 1 \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{tri}(t/T)\\} = T\\,\\operatorname{sinc}^2\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
+      },
+      "sinc": {
+        "name": "Función sinc",
+        "notation": "sinc(t)",
+        "aka": "Cardinal del seno",
+        "def": "Definida como sin(t)/t (sinc no normalizada). Surge naturalmente como la transformada de rect y como la respuesta en frecuencia del filtro paso bajo ideal. Por continuidad, sinc(0) = 1.",
+        "latex": "\\operatorname{sinc}(t) = \\frac{\\sin t}{t}",
+        "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
+      }
+    }
+  },
+  "simplify": {
+    "nInteger": "n ∈ ℤ",
+    "toHyperbolic": "→ Hiperbólicas"
   }
 }

@@ -539,6 +539,16 @@
                 class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-amber-500 align-middle"
               ></span>
             }
+            @if (tab.id === 'validation' && !hasValidationWarning() && hasIndeterminateTerms()) {
+              <span
+                class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-sky-500 align-middle"
+              ></span>
+            }
+            @if (tab.id === 'parseval' && parsevalHasSingular()) {
+              <span
+                class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-sky-500 align-middle"
+              ></span>
+            }
           </button>
         }
 
@@ -561,8 +571,64 @@
                 <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
                   {{ 'resultPanel.fourierSeries' | transloco }}
                 </p>
+                @if (factoredSeriesTex()) {
+                  <div
+                    class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                  >
+                    <button
+                      type="button"
+                      (click)="showFactoredSeries.set(false)"
+                      [class]="
+                        !showFactoredSeries()
+                          ? 'px-2 py-0.5 bg-accent/15 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ 'resultPanel.seriesStandard' | transloco }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="showFactoredSeries.set(true)"
+                      [class]="
+                        showFactoredSeries()
+                          ? 'px-2 py-0.5 bg-accent/15 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ 'resultPanel.seriesFactored' | transloco }}
+                    </button>
+                  </div>
+                }
+                @if (hasGammaAlternatives()) {
+                  <div
+                    class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                  >
+                    <button
+                      type="button"
+                      (click)="showGammaNotation.set(false)"
+                      [class]="
+                        !showGammaNotation()
+                          ? 'px-2 py-0.5 bg-accent/15 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ 'resultPanel.notationIntegral' | transloco }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="showGammaNotation.set(true)"
+                      [class]="
+                        showGammaNotation()
+                          ? 'px-2 py-0.5 bg-accent/15 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ 'resultPanel.notationGamma' | transloco }}
+                    </button>
+                  </div>
+                }
                 <app-export-button
-                  [tex]="composedSeriesTex() ?? ''"
+                  [tex]="(showFactoredSeries() ? factoredSeriesTex() : composedSeriesTex()) ?? ''"
                   [mathEl]="seriesFormulaEl"
                   filename="fourier-series"
                   [label]="seriesLabel()"
@@ -571,98 +637,131 @@
               <div
                 #seriesFormulaEl
                 class="overflow-x-auto text-ink dark:text-dark-ink"
-                [mathjax]="'\\[' + composedSeriesTex() + '\\]'"
+                [mathjax]="'\\[' + (showFactoredSeries() && factoredSeriesTex() ? factoredSeriesTex() : composedSeriesTex()) + '\\]'"
               ></div>
             </div>
           }
 
           <!-- Simplify controls -->
-          <div
-            class="px-4 py-3 flex items-center gap-2 flex-wrap border-t border-border dark:border-dark-border"
-          >
-            <div
-              class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
-            >
-              @for (opt of profileOptions; track opt.value) {
-                <button
-                  type="button"
-                  (click)="setProfile(opt.value)"
-                  [class]="
-                    simplifyProfile() === opt.value
-                      ? 'px-2 py-1 bg-accent text-white font-semibold'
-                      : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
-                  "
-                >
-                  {{ opt.labelKey | transloco }}
-                </button>
-              }
-            </div>
-
-            @if (simplifyProfile() === 'exponential') {
+          <div class="border-t border-border dark:border-dark-border">
+            <!-- Row 1: Profile buttons + contextual sub-flags -->
+            <div class="px-4 pt-2.5 pb-2 flex items-center gap-2 flex-wrap">
               <div
                 class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
               >
-                <button
-                  type="button"
-                  (click)="setExpFlag('exponentialize')"
-                  [class]="
-                    expFlag() === 'exponentialize'
-                      ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
-                      : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
-                  "
-                >
-                  e^ix
-                </button>
-                <button
-                  type="button"
-                  (click)="setExpFlag('demoivre')"
-                  [class]="
-                    expFlag() === 'demoivre'
-                      ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
-                      : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
-                  "
-                >
-                  De Moivre
-                </button>
-              </div>
-            }
-
-            @if (simplifyProfile() !== 'raw') {
-              <label
-                class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
-              >
-                <input
-                  type="checkbox"
-                  class="accent-accent"
-                  [checked]="useEdispflag()"
-                  (change)="setEdispflag($any($event.target).checked)"
-                />
-                edispflag
-              </label>
-
-              <div
-                class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
-              >
-                @for (repr of erfRepresentationOptions; track repr) {
+                @for (opt of profileOptions; track opt.value) {
                   <button
                     type="button"
-                    (click)="setErfRepresentation(repr)"
+                    (click)="setProfile(opt.value)"
                     [class]="
-                      erfRepresentation() === repr
+                      simplifyProfile() === opt.value
+                        ? 'px-2 py-1 bg-accent text-white font-semibold'
+                        : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                    "
+                  >
+                    {{ opt.labelKey | transloco }}
+                  </button>
+                }
+              </div>
+
+              @if (simplifyProfile() === 'exponential') {
+                <div
+                  class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                >
+                  <button
+                    type="button"
+                    (click)="setExpFlag('exponentialize')"
+                    [class]="
+                      expFlag() === 'exponentialize'
                         ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
                         : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
                     "
                   >
-                    {{ repr }}
+                    e^ix
                   </button>
-                }
-              </div>
-            }
+                  <button
+                    type="button"
+                    (click)="setExpFlag('demoivre')"
+                    [class]="
+                      expFlag() === 'demoivre'
+                        ? 'px-2 py-1 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                        : 'px-2 py-1 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                    "
+                  >
+                    De Moivre
+                  </button>
+                </div>
+              }
 
-            @if (simplifying()) {
-              <span
-                class="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0"
-              ></span>
+              @if (simplifying()) {
+                <span
+                  class="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0"
+                ></span>
+              }
+            </div>
+
+            <!-- Row 2: Secondary options (display flags | transform flags) -->
+            @if (simplifyProfile() !== 'raw') {
+              <div class="px-4 pb-2.5 flex items-center gap-3 flex-wrap">
+                <!-- Display group -->
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="useEdispflag()"
+                    (change)="setEdispflag($any($event.target).checked)"
+                  />
+                  edispflag
+                </label>
+
+                <div
+                  class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                >
+                  @for (repr of erfRepresentationOptions; track repr) {
+                    <button
+                      type="button"
+                      (click)="setErfRepresentation(repr)"
+                      [class]="
+                        erfRepresentation() === repr
+                          ? 'px-2 py-0.5 bg-accent/20 text-ink dark:text-dark-ink font-semibold'
+                          : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors'
+                      "
+                    >
+                      {{ repr }}
+                    </button>
+                  }
+                </div>
+
+                <!-- Divider -->
+                <span class="w-px h-3 bg-border dark:bg-dark-border shrink-0"></span>
+
+                <!-- Transform group -->
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="declareNInteger()"
+                    (change)="setDeclareNInteger($any($event.target).checked)"
+                  />
+                  {{ 'simplify.nInteger' | transloco }}
+                </label>
+
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="toHyperbolic()"
+                    (change)="setToHyperbolic($any($event.target).checked)"
+                  />
+                  {{ 'simplify.toHyperbolic' | transloco }}
+                </label>
+              </div>
             }
           </div>
 
@@ -678,14 +777,14 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.w0"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.w0" [maxima]="coeffMaxima()?.w0 ?? undefined" [mathEl]="w0El" filename="fourier-w0" label="ω₀" />
+                <app-export-button [tex]="activeCoeffTex()!.w0" [maxima]="activeCoeffMaxima()?.w0 ?? undefined" [mathEl]="w0El" filename="fourier-w0" label="ω₀" />
               </div>
             }
             @if (a0DisplayTex(); as a0Tex) {
               <div class="flex gap-3 items-center">
                 <span class="text-muted dark:text-dark-muted text-xs font-mono shrink-0">a₀ =</span>
                 <span #a0El class="text-ink dark:text-dark-ink text-sm" [mathjax]="a0Tex"></span>
-                <app-export-button [tex]="a0Tex" [maxima]="coeffMaxima()?.a0 ?? undefined" [mathEl]="a0El" filename="fourier-a0" label="a₀" />
+                <app-export-button [tex]="a0Tex" [maxima]="a0DisplayMaxima() ?? undefined" [mathEl]="a0El" filename="fourier-a0" label="a₀" />
               </div>
             }
             @if (activeCoeffTex()!.an) {
@@ -696,7 +795,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.an"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.an ?? ''" [maxima]="coeffMaxima()?.an ?? undefined" [mathEl]="anEl" filename="fourier-an" label="aₙ" />
+                <app-export-button [tex]="activeCoeffTex()!.an ?? ''" [maxima]="activeCoeffMaxima()?.an ?? undefined" [mathEl]="anEl" filename="fourier-an" label="aₙ" />
               </div>
             }
             @if (activeCoeffTex()!.bn) {
@@ -707,7 +806,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.bn"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.bn ?? ''" [maxima]="coeffMaxima()?.bn ?? undefined" [mathEl]="bnEl" filename="fourier-bn" label="bₙ" />
+                <app-export-button [tex]="activeCoeffTex()!.bn ?? ''" [maxima]="activeCoeffMaxima()?.bn ?? undefined" [mathEl]="bnEl" filename="fourier-bn" label="bₙ" />
               </div>
             }
             @if (activeCoeffTex()!.c0) {
@@ -718,7 +817,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.c0"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.c0 ?? ''" [maxima]="coeffMaxima()?.c0 ?? undefined" [mathEl]="c0El" filename="fourier-c0" label="c₀" />
+                <app-export-button [tex]="activeCoeffTex()!.c0 ?? ''" [maxima]="activeCoeffMaxima()?.c0 ?? undefined" [mathEl]="c0El" filename="fourier-c0" label="c₀" />
               </div>
             }
             @if (activeCoeffTex()!.cn) {
@@ -729,7 +828,7 @@
                   class="text-ink dark:text-dark-ink text-sm"
                   [mathjax]="activeCoeffTex()!.cn"
                 ></span>
-                <app-export-button [tex]="activeCoeffTex()!.cn ?? ''" [maxima]="coeffMaxima()?.cn ?? undefined" [mathEl]="cnEl" filename="fourier-cn" label="cₙ" />
+                <app-export-button [tex]="activeCoeffTex()!.cn ?? ''" [maxima]="activeCoeffMaxima()?.cn ?? undefined" [mathEl]="cnEl" filename="fourier-cn" label="cₙ" />
               </div>
             }
           </div>
@@ -1178,10 +1277,298 @@
                 {{ 'resultPanel.noSingularitiesInDomain' | transloco }}
               </p>
             }
+            <!-- Indeterminate coefficients -->
+            <div class="border-t border-border dark:border-dark-border pt-4">
+              @if (hasIndeterminateTerms()) {
+                <div class="flex items-center gap-2 mb-3">
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 text-[11px] font-mono"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                    {{ 'resultPanel.indeterminateCoeffSection' | transloco }}
+                  </span>
+                </div>
+                <div class="overflow-x-auto">
+                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted mb-2">
+                    {{ 'resultPanel.indeterminateCoeffFound' | transloco }}
+                  </p>
+                  <table class="w-full text-xs font-mono min-w-max">
+                    <thead>
+                      <tr
+                        class="text-muted dark:text-dark-muted text-left border-b border-border dark:border-dark-border"
+                      >
+                        <th class="pb-1.5 pr-8 font-medium whitespace-nowrap">n</th>
+                        <th class="pb-1.5 font-medium whitespace-nowrap">
+                          {{ 'resultPanel.coefficient' | transloco }}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody
+                      class="text-ink dark:text-dark-ink divide-y divide-border/40 dark:divide-dark-border/40"
+                    >
+                      @for (t of indeterminateTrigTerms(); track t.n) {
+                        <tr class="hover:bg-paper2 dark:hover:bg-dark-surface2">
+                          <td class="py-2 pr-8 font-mono">{{ t.n }}</td>
+                          <td class="py-2 whitespace-nowrap">
+                            <span class="inline-flex gap-1">
+                              @if (t.anUsedLimit) {
+                                <span
+                                  class="px-1.5 py-0.5 rounded text-[10px] bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400"
+                                  >aₙ</span
+                                >
+                              }
+                              @if (t.bnUsedLimit) {
+                                <span
+                                  class="px-1.5 py-0.5 rounded text-[10px] bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400"
+                                  >bₙ</span
+                                >
+                              }
+                            </span>
+                          </td>
+                        </tr>
+                      }
+                      @for (t of indeterminateComplexTerms(); track t.n) {
+                        <tr class="hover:bg-paper2 dark:hover:bg-dark-surface2">
+                          <td class="py-2 pr-8 font-mono">{{ t.n }}</td>
+                          <td class="py-2 whitespace-nowrap">
+                            <span class="inline-flex gap-1">
+                              @if (t.cnUsedLimit) {
+                                <span
+                                  class="px-1.5 py-0.5 rounded text-[10px] bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400"
+                                  >cₙ</span
+                                >
+                              }
+                              @if (t.cnNegUsedLimit) {
+                                <span
+                                  class="px-1.5 py-0.5 rounded text-[10px] bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400"
+                                  >c₋ₙ</span
+                                >
+                              }
+                            </span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else if (validation()?.decision !== 'reject') {
+                <p class="text-sm font-body text-muted dark:text-dark-muted">
+                  {{ 'resultPanel.noIndeterminate' | transloco }}
+                </p>
+              }
+            </div>
+
           } @else {
             <p class="text-sm font-body text-muted dark:text-dark-muted">
               {{ 'resultPanel.noInfoAvailable' | transloco }}
             </p>
+          }
+        </div>
+      }
+
+      <!-- ── Tab: Parseval ─────────────────────────────────────────────── -->
+      @if (activeTab() === 'parseval') {
+        <div class="overflow-y-auto">
+          @if (parsevalLoading()) {
+            <div class="p-4 flex items-center gap-2 text-[11px] font-mono text-muted dark:text-dark-muted animate-pulse">
+              <span>{{ 'common.loading' | transloco }}</span>
+            </div>
+          } @else if (parsevalTex()) {
+
+            <!-- Header -->
+            <div class="px-4 pt-4 pb-2">
+              <div class="flex items-center gap-2 mb-3">
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                  {{ 'settingsCanvas.tabParseval' | transloco }} &mdash;
+                  {{ 'resultPanel.parsevalHeader' | transloco }}
+                </p>
+                <app-export-button
+                  [tex]="parsevalTex()!"
+                  [mathEl]="parsevalFormulaEl"
+                  filename="parseval-identity"
+                  label="Parseval"
+                />
+              </div>
+
+              <!-- Controls row: halfRange toggle + bilateral/unilateral toggle + Formal/Simplified toggle -->
+              <div class="flex items-center gap-2 flex-wrap mb-3">
+                <!-- halfRange mode toggle -->
+                @if (store.result()?.type === 'halfRange') {
+                  <div
+                    class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                  >
+                    <button
+                      type="button"
+                      class="px-2.5 py-1 transition-colors"
+                      [class]="halfRangeMode() === 'cosine'
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                      (click)="setHalfRangeMode('cosine')"
+                    >{{ 'resultPanel.cosine' | transloco }}</button>
+                    <button
+                      type="button"
+                      class="px-2.5 py-1 transition-colors border-l border-border dark:border-dark-border"
+                      [class]="halfRangeMode() === 'sine'
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                      (click)="setHalfRangeMode('sine')"
+                    >{{ 'resultPanel.sine' | transloco }}</button>
+                  </div>
+                }
+
+                <!-- Bilateral / Unilateral sum form toggle (complex only) -->
+                @if (parsevalHasBilateral()) {
+                  <div
+                    class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                  >
+                    <button
+                      type="button"
+                      class="px-2.5 py-1 transition-colors"
+                      [class]="parsevalComplexSumForm() === 'unilateral'
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                      (click)="setComplexSumForm('unilateral')"
+                    >{{ 'resultPanel.parsevalUnilateral' | transloco }}</button>
+                    <button
+                      type="button"
+                      class="px-2.5 py-1 transition-colors border-l border-border dark:border-dark-border"
+                      [class]="parsevalComplexSumForm() === 'bilateral'
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                      (click)="setComplexSumForm('bilateral')"
+                    >{{ 'resultPanel.parsevalBilateral' | transloco }}</button>
+                  </div>
+                }
+
+                <!-- Formal / Simplified view toggle -->
+                @if (parsevalHasFormal()) {
+                  <div
+                    class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+                  >
+                    <button
+                      type="button"
+                      class="px-2.5 py-1 transition-colors"
+                      [class]="parsevalView() === 'simplified'
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                      (click)="parsevalView.set('simplified')"
+                    >{{ 'resultPanel.parsevalSimplified' | transloco }}</button>
+                    <button
+                      type="button"
+                      class="px-2.5 py-1 transition-colors border-l border-border dark:border-dark-border"
+                      [class]="parsevalView() === 'formal'
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                      (click)="parsevalView.set('formal')"
+                    >{{ 'resultPanel.parsevalFormal' | transloco }}</button>
+                  </div>
+                }
+              </div>
+
+              <!-- Identity formula -->
+              <div
+                #parsevalFormulaEl
+                class="overflow-x-auto text-ink dark:text-dark-ink"
+                [mathjax]="'\\[' + parsevalTex() + '\\]'"
+              ></div>
+
+              <!-- Notes -->
+              @if (parsevalView() === 'formal') {
+                <div
+                  class="mt-2 flex items-start gap-2 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-muted dark:bg-dark-muted shrink-0"></span>
+                  <span>{{ 'resultPanel.parsevalFormalNote' | transloco }}</span>
+                </div>
+              } @else if (parsevalComplexSumForm() === 'bilateral') {
+                <div
+                  class="mt-2 flex items-start gap-2 text-[10px] font-mono text-sky-600 dark:text-sky-400"
+                >
+                  <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+                  <span>
+                    @if (parsevalHasSingular()) {
+                      {{ parsevalSingValsLabel() }} — {{ 'resultPanel.parsevalBilateralSingularNote' | transloco }}
+                    } @else {
+                      {{ 'resultPanel.parsevalBilateralNote' | transloco }}
+                    }
+                  </span>
+                </div>
+              } @else if (parsevalHasSingular()) {
+                <div
+                  class="mt-2 flex items-start gap-2 text-[10px] font-mono text-sky-600 dark:text-sky-400"
+                >
+                  <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+                  <span>
+                    {{ parsevalSingValsLabel() }} — {{ 'resultPanel.parsevalSingularNote' | transloco }}
+                  </span>
+                </div>
+              }
+            </div>
+
+            <!-- Simplify controls -->
+            <div
+              class="px-4 py-3 flex items-center gap-2 flex-wrap border-t border-border dark:border-dark-border"
+            >
+              <div
+                class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0"
+              >
+                @for (opt of profileOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="px-2.5 py-1 transition-colors"
+                    [class]="
+                      parsevalSimplifyProfile() === opt.value
+                        ? 'bg-accent text-paper dark:text-dark-paper'
+                        : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'
+                    "
+                    [class.border-l]="!$first"
+                    [class.border-border]="!$first"
+                    [class.dark:border-dark-border]="!$first"
+                    (click)="simplifyParseval(opt.value)"
+                  >
+                    {{ opt.labelKey | transloco }}
+                  </button>
+                }
+              </div>
+              @if (parsevalSimplifyProfile() !== 'raw') {
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="declareNInteger()"
+                    (change)="setDeclareNInteger($any($event.target).checked)"
+                  />
+                  {{ 'simplify.nInteger' | transloco }}
+                </label>
+
+                <label
+                  class="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted dark:text-dark-muted"
+                >
+                  <input
+                    type="checkbox"
+                    class="accent-accent"
+                    [checked]="toHyperbolic()"
+                    (change)="setToHyperbolic($any($event.target).checked)"
+                  />
+                  {{ 'simplify.toHyperbolic' | transloco }}
+                </label>
+              }
+
+              @if (parsevalSimplifying()) {
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted animate-pulse">
+                  {{ 'common.loading' | transloco }}
+                </span>
+              }
+            </div>
+
+          } @else {
+            <div class="p-4">
+              <p class="text-[11px] font-mono text-muted dark:text-dark-muted">
+                {{ 'resultPanel.parsevalUnavailable' | transloco }}
+              </p>
+            </div>
           }
         </div>
       }

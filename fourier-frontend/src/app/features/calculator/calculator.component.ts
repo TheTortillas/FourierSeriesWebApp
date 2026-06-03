@@ -27,7 +27,7 @@ export class CalculatorComponent implements OnInit {
   private readonly surveySvc    = inject(SurveyService);
 
   ngOnInit(): void {
-    this.seo.setPage('seo.calculator.title', 'seo.calculator.description');
+    this.seo.setPage('seo.calculator.title', 'seo.calculator.description', 'Fourier series calculator, calculadora series de Fourier, coeficientes de Fourier, Parseval identity, trigonometric series, complex Fourier series');
   }
 
   /** Set to true when URL state was restored and needs a first calculation */

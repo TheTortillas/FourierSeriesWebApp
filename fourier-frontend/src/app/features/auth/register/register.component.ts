@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -34,6 +35,10 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly seo = inject(SeoService);
+
+  readonly lang = toSignal(this.transloco.langChanges$, {
+    initialValue: this.transloco.getActiveLang(),
+  });
 
   constructor() {
     this.seo.setNoIndex();
@@ -80,7 +85,7 @@ export class RegisterComponent {
     this.auth.loginWithGoogle({ idToken }).subscribe({
       next: () => this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']),
       error: (err) => {
-        this.apiError.set(err?.error?.error ?? 'Error al continuar con Google');
+        this.apiError.set(this.mapError(err?.error?.error));
         this.loading.set(false);
       },
     });
@@ -100,9 +105,16 @@ export class RegisterComponent {
         this.success.set(true);
       },
       error: (err) => {
-        this.apiError.set(err?.error?.error ?? 'Error al registrarse');
+        this.apiError.set(this.mapError(err?.error?.error));
         this.loading.set(false);
       },
     });
+  }
+
+  private mapError(code: string | undefined): string {
+    if (code === 'EMAIL_RECENTLY_DELETED') {
+      return this.transloco.translate('errors.emailRecentlyDeleted');
+    }
+    return code ?? this.transloco.translate('errors.generic');
   }
 }

@@ -41,7 +41,7 @@ export class LatexParserService {
     let maxima = base.maxima;
 
     maxima = maxima.replace(
-      /\b(u|sgn|delta|imagunit|rect|sinc|gamma|factorial)\s*\*\s*\(/g,
+      /\b(u|sgn|delta|imagunit|rect|tri|sinc|gamma|factorial)\s*\*\s*\(/g,
       "$1(",
     );
 
@@ -84,6 +84,8 @@ export class LatexParserService {
       .replace(/\\operatorname\{coth\}/g, "\\coth")
       .replace(/\\operatorname\{sgn\}/g, "sgn")
       .replace(/\\operatorname\{rect\}/g, "rect")
+      .replace(/\\operatorname\{tri\}/g, "tri")
+      .replace(/\\operatorname\{sinc\}/g, "sinc")
       .replace(/\\operatorname\{delta\}/g, " TMDELTA")
       .replace(/\\delta\b/g, " TMDELTA")
       .replace(/\\operatorname\{gamma\}/g, "TMGAMMA")
@@ -191,7 +193,7 @@ export class LatexParserService {
       .replace(/\bTMDELTA\b/g, "delta")
       .replace(/\bTMGAMMA\b/g, "gamma")
       .replace(/\bTMFACTORIAL\b/g, "factorial")
-      .replace(/\b(u|sgn|delta|rect|gamma|factorial|exp|sech|csch|coth)\s*\*\s*\(/g, "$1(");
+      .replace(/\b(u|sgn|delta|rect|tri|sinc|gamma|factorial|exp|sech|csch|coth)\s*\*\s*\(/g, "$1(");
 
     return this.normalizePostfixFactorial(normalized);
   }

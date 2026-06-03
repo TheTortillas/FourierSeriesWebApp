@@ -80,14 +80,16 @@ export interface SystemStats {
 }
 
 export interface RateLimitMetricsSnapshot {
-  startedAt: string;
-  requestsByBucket: { compute: number; parse: number; auth: number };
+  /** Ventana de tiempo consultada en horas */
+  windowHours: number;
+  /** ISO timestamp — inicio de la ventana */
+  windowStart: string;
+  /** Total de bloqueos en la ventana */
+  totalBlocked: number;
   blockedByBucket:  { compute: number; parse: number; auth: number };
-  requestsByEndpoint: Record<string, number>;
-  blockedByEndpoint:  Record<string, number>;
-  blockedByLimiter:   Record<string, number>;
-  blockedByIp:        Record<string, number>;
-  ratios: { compute: number; parse: number; auth: number };
+  blockedByEndpoint: Record<string, number>;
+  blockedByLimiter:  Record<string, number>;
+  blockedByIp:       Record<string, number>;
 }
 
 export interface RateLimitBlockedEvent {
@@ -107,6 +109,35 @@ export interface RateLimitHistoryResponse {
   total:   number;
   entries: RateLimitBlockedEvent[];
 }
+
+// ── IP Blocklist ──────────────────────────────────────────────────────────────
+
+export interface IpBlockEntry {
+  id: string;
+  ip_address: string;
+  reason: string;
+  blocked_by: 'auto' | 'admin';
+  blocked_until: string | null;   // ISO string, null = permanente
+  admin_user_id: string | null;
+  created_at: string;
+  released_at: string | null;
+  released_by: 'expired' | 'admin' | null;
+  is_active: boolean;
+}
+
+export interface IpBlockListResponse {
+  total:   number;
+  limit:   number;
+  offset:  number;
+  entries: IpBlockEntry[];
+}
+
+export interface IpBlockActiveResponse {
+  total:   number;
+  entries: IpBlockEntry[];
+}
+
+// ── CacheStats ────────────────────────────────────────────────────────────────
 
 export interface CacheStats {
   backend: 'redis' | 'lru';

@@ -1,10 +1,12 @@
 import {
   AfterViewInit,
   Component,
+  computed,
   ElementRef,
   inject,
   input,
   OnDestroy,
+  output,
   signal,
   viewChild,
   effect,
@@ -15,13 +17,16 @@ import { PlottingService } from '../../../core/services/canvas/plotting.service'
 import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
 import {
   CanvasViewport,
+  CanvasRenderConfig,
+  DEFAULT_RENDER_CONFIG,
   Curve,
+  MathPoint,
   DARK_THEME,
   LIGHT_THEME,
   NEUTRAL_DARK_THEME,
   NEUTRAL_LIGHT_THEME,
 } from '../../../core/services/canvas/canvas.types';
-export type { AxisConst } from '../../../core/services/canvas/canvas.types';
+export type { AxisConst, CanvasRenderConfig } from '../../../core/services/canvas/canvas.types';
 
 export interface PlotLayer {
   curves: Curve[];
@@ -30,10 +35,6 @@ export interface PlotLayer {
 }
 
 type ZoomMode = 'both' | 'x' | 'y';
-
-/** Minimum and maximum unit values — effectively unlimited zoom */
-const MIN_UNIT = 1e-4;
-const MAX_UNIT = 1e9;
 
 /**
  * Reusable Cartesian canvas component.
@@ -58,7 +59,7 @@ const MAX_UNIT = 1e9;
         (pointerdown)="onPointerDown($event)"
         (pointermove)="onPointerMove($event)"
         (pointerup)="onPointerUp($event)"
-        (pointerleave)="onPointerUp($event)"
+        (pointerleave)="onPointerLeave()"
       ></canvas>
 
       <!-- Controls overlay -->
@@ -121,10 +122,40 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   readonly wrapperRef = viewChild<ElementRef<HTMLDivElement>>('wrapper');
 
   // ── Inputs ────────────────────────────────────────────────────────────────
-  readonly layers = input<PlotLayer[]>([]);
+  readonly layers      = input<PlotLayer[]>([]);
   readonly initialUnit = input<number>(75);
   readonly xAxisFormat = input<CanvasViewport['xAxisFormat']>('integer');
   readonly customConst = input<CanvasViewport['customConst']>({ symbol: 'T', value: 1 });
+  /**
+   * Optional rendering overrides merged on top of DEFAULT_RENDER_CONFIG.
+   * Any key not provided falls back to the default value, so existing callers
+   * that don't pass this input are completely unaffected.
+   *
+   * Example — use system font and tighter grid:
+   *   [renderConfig]="{ labelFont: 'system-ui', targetGridPx: 60 }"
+   */
+  readonly renderConfig = input<Partial<CanvasRenderConfig>>({});
+
+  // ── Derived config (merges caller overrides with defaults) ────────────────
+  readonly effectiveConfig = computed<CanvasRenderConfig>(() => ({
+    ...DEFAULT_RENDER_CONFIG,
+    ...this.renderConfig(),
+  }));
+
+  // ── Outputs ───────────────────────────────────────────────────────────────
+  /**
+   * Emits the current viewport every time the user zooms, pans, or the canvas
+   * is resized. Useful for synchronising multiple canvases or displaying
+   * current zoom/origin in a parent component.
+   */
+  readonly viewportChange = output<CanvasViewport>();
+  /**
+   * Emits the mathematical coordinate under the pointer on every pointermove.
+   * Emits `null` on pointerleave. Allows parent components to display
+   * crosshair tooltips or hit-test curves without duplicating the
+   * CSS→math coordinate conversion.
+   */
+  readonly mathPointerMove = output<MathPoint | null>();
 
   // ── Zoom mode ─────────────────────────────────────────────────────────────
   readonly zoomModes = [
@@ -225,17 +256,19 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   /**
    * Zoom by `factor` centered on `cssCenter` (CSS pixel position).
    * Respects current zoomMode: 'both' scales unit, 'x' scales scaleX, 'y' scales scaleY.
+   * Emits `viewportChange` after updating.
    */
   zoom(factor: number, cssCenter?: { x: number; y: number }): void {
     const mode = this.zoomMode();
+    const cfg  = this.effectiveConfig();
     this.vp.update((v) => {
       const cx = cssCenter ? this.coords.cssToMathX(cssCenter.x, v) : v.originMath.x;
       const cy = cssCenter ? this.coords.cssToMathY(cssCenter.y, v) : v.originMath.y;
 
       if (mode === 'x') {
         const newScaleX = Math.max(
-          MIN_UNIT / v.unit,
-          Math.min(MAX_UNIT / v.unit, v.scaleX * factor),
+          cfg.minUnit / v.unit,
+          Math.min(cfg.maxUnit / v.unit, v.scaleX * factor),
         );
         return {
           ...v,
@@ -249,8 +282,8 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
 
       if (mode === 'y') {
         const newScaleY = Math.max(
-          MIN_UNIT / v.unit,
-          Math.min(MAX_UNIT / v.unit, v.scaleY * factor),
+          cfg.minUnit / v.unit,
+          Math.min(cfg.maxUnit / v.unit, v.scaleY * factor),
         );
         return {
           ...v,
@@ -263,7 +296,7 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
       }
 
       // 'both' — scale unit, keep cursor fixed
-      const newUnit = Math.max(MIN_UNIT, Math.min(MAX_UNIT, v.unit * factor));
+      const newUnit = Math.max(cfg.minUnit, Math.min(cfg.maxUnit, v.unit * factor));
       return {
         ...v,
         unit: newUnit,
@@ -273,6 +306,7 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
         },
       };
     });
+    this.viewportChange.emit(this.vp());
     this.scheduleRedraw();
   }
 
@@ -284,6 +318,7 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
       scaleY: 1,
       originMath: { x: 0, y: 0 },
     }));
+    this.viewportChange.emit(this.vp());
     this.scheduleRedraw();
   }
 
@@ -308,7 +343,19 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   }
 
   onPointerMove(e: PointerEvent): void {
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const cssX  = e.clientX - rect.left;
+    const cssY  = e.clientY - rect.top;
+    const vp    = this.vp();
+
+    // Always emit math coordinates (even while dragging, so parent tooltips update)
+    this.mathPointerMove.emit({
+      x: this.coords.cssToMathX(cssX, vp),
+      y: this.coords.cssToMathY(cssY, vp),
+    });
+
     if (!this.dragging) return;
+
     const dx = e.clientX - this.lastPointer.x;
     const dy = e.clientY - this.lastPointer.y;
     this.lastPointer = { x: e.clientX, y: e.clientY };
@@ -320,12 +367,17 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
         y: v.originMath.y + dy / (v.unit * v.scaleY),
       },
     }));
+    this.viewportChange.emit(this.vp());
     this.scheduleRedraw();
   }
 
   onPointerUp(e: PointerEvent): void {
     this.dragging = false;
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  }
+
+  onPointerLeave(): void {
+    this.mathPointerMove.emit(null);
   }
 
   // ── Rendering ─────────────────────────────────────────────────────────────
@@ -345,7 +397,8 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const vp = this.vp();
+    const vp  = this.vp();
+    const cfg = this.effectiveConfig();
     const theme = this.theme.isDark
       ? this.theme.isNeutral
         ? NEUTRAL_DARK_THEME
@@ -355,11 +408,11 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
         : LIGHT_THEME;
 
     ctx.setTransform(vp.dpr, 0, 0, vp.dpr, 0, 0);
-    this.renderer.drawBackground(ctx, vp, theme);
+    this.renderer.drawBackground(ctx, vp, theme, cfg);
 
     for (const layer of this.layers()) {
       for (const curve of layer.curves) {
-        this.plotter.drawCurve(ctx, curve, vp);
+        this.plotter.drawCurve(ctx, curve, vp, cfg);
       }
       layer.onDraw?.(ctx, vp);
     }
@@ -371,8 +424,9 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
     const dpr = window.devicePixelRatio || 1;
     const w = wrapper.clientWidth;
     const h = wrapper.clientHeight;
-    canvas.width = Math.round(w * dpr);
+    canvas.width  = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     this.vp.update((v) => ({ ...v, cssWidth: w, cssHeight: h, dpr }));
+    this.viewportChange.emit(this.vp());
   }
 }

@@ -9,6 +9,14 @@ import { AdminDatePipe } from '../../../shared/pipes/admin-date.pipe';
 const LIMITER_OPTIONS = ['general', 'compute', 'parse_burst', 'parse_sustained', 'auth', 'auth_signin', 'auth_recovery'];
 const HISTORY_PAGE_SIZE = 20;
 
+const WINDOW_OPTIONS: { label: string; hours: number }[] = [
+  { label: '1h',  hours: 1  },
+  { label: '6h',  hours: 6  },
+  { label: '24h', hours: 24 },
+  { label: '7d',  hours: 168 },
+  { label: '30d', hours: 720 },
+];
+
 @Component({
   selector: 'app-rate-limit',
   templateUrl: './rate-limit.component.html',
@@ -32,7 +40,11 @@ export class RateLimitComponent implements OnInit {
   filterIp     = '';
   filterLimiter= '';
 
+  /** Ventana de tiempo para las métricas agregadas */
+  windowHours = 24;
+
   readonly LIMITER_OPTIONS = LIMITER_OPTIONS;
+  readonly WINDOW_OPTIONS  = WINDOW_OPTIONS;
 
   readonly histTotalPages  = () => Math.ceil(this.histTotal() / this.histPageSize);
   readonly histCurrentPage = () => Math.floor(this.histOffset() / this.histPageSize) + 1;
@@ -45,10 +57,15 @@ export class RateLimitComponent implements OnInit {
   refresh(): void {
     this.loading.set(true);
     this.loadError.set(false);
-    this.api.getRateLimitMetrics().subscribe({
+    this.api.getRateLimitMetrics(this.windowHours).subscribe({
       next: (m) => { this.metrics.set(m); this.loading.set(false); },
       error: () => { this.loadError.set(true); this.loading.set(false); },
     });
+  }
+
+  setWindow(hours: number): void {
+    this.windowHours = hours;
+    this.refresh();
   }
 
   loadHistory(): void {

@@ -11,7 +11,7 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, finalize, of, switchMap, map, catchError } from 'rxjs';
+import { forkJoin, finalize, of, switchMap, map, catchError, Subject, takeUntil } from 'rxjs';
 import { CalculatorStore } from '../../store/calculator.store';
 import {
   FunctionPlotComponent,
@@ -32,7 +32,15 @@ import { ParamSlidersComponent } from '../../../../shared/components/param-slide
 import { SpectrumChartComponent } from '../../../../shared/components/spectrum-chart/spectrum-chart.component';
 import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
-import { TrigonometricTerm, ComplexTerm } from '../../../../domain/types/fourier.types';
+import {
+  TrigonometricTerm,
+  ComplexTerm,
+  ParsevalTrig,
+  ParsevalHalfRange,
+  ParsevalComplex,
+  SingularTerm,
+} from '../../../../domain/types/fourier.types';
+import type { SymbolicExpression } from '../../../../domain/types/common.types';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button.component';
 import { CsvExportService } from '../../../../core/services/csv-export.service';
 
@@ -197,12 +205,28 @@ export class ResultsSummaryComponent {
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
   readonly simplifying = signal(false);
   readonly simplifiedCoeffs = signal<Record<string, string> | null>(null);
+  readonly simplifiedCoeffsMaxima = signal<Record<string, string> | null>(null);
+  readonly simplifiedFactored = signal<Record<string, { k: string; s: string; kMx: string } | null> | null>(
+    null,
+  );
+  readonly showFactoredSeries = signal(false);
+  readonly showGammaNotation = signal(false);
+
+  /** True when the backend stored gamma_incomplete alternatives in simplifications. */
+  readonly hasGammaAlternatives = computed(() => {
+    const result = this.store.result();
+    if (!result) return false;
+    const s = result.data.simplifications;
+    return !!s && Object.keys(s).some(k => k.endsWith('_gamma'));
+  });
 
   // exponential sub-flags (only relevant when profile === 'exponential')
   readonly expFlag = signal<'exponentialize' | 'demoivre'>('exponentialize');
   readonly useEdispflag = signal(false);
   readonly erfRepresentationOptions = ['erf', 'erfc', 'erfi'] as const;
   readonly erfRepresentation = signal<'erf' | 'erfc' | 'erfi'>('erf');
+  readonly declareNInteger = signal(true);
+  readonly toHyperbolic = signal(false);
 
   // half-range series mode (only relevant when result.type === 'halfRange')
   readonly halfRangeMode = signal<'cosine' | 'sine'>('cosine');
@@ -248,6 +272,37 @@ export class ResultsSummaryComponent {
       )() as number;
     } catch {
       return 0;
+    }
+  }
+
+  /**
+   * Evaluates a Maxima K-factor string to a finite number.
+   * Handles trig/hyperbolic/exp functions so that format-independent numeric
+   * comparison can be used instead of string matching.
+   * Returns NaN when K is symbolic (e.g. contains free parameters).
+   */
+  private evalKMx(mx: string): number {
+    if (!mx.trim()) return NaN;
+    try {
+      const js = mx.trim()
+        .replace(/%pi\b/g, String(Math.PI))
+        .replace(/%e\b/g, String(Math.E))
+        .replace(/\^/g, '**')
+        .replace(/\bsinh\b/g, 'Math.sinh')
+        .replace(/\bcosh\b/g, 'Math.cosh')
+        .replace(/\btanh\b/g, 'Math.tanh')
+        .replace(/\bsin\b/g, 'Math.sin')
+        .replace(/\bcos\b/g, 'Math.cos')
+        .replace(/\btan\b/g, 'Math.tan')
+        .replace(/\bsqrt\b/g, 'Math.sqrt')
+        .replace(/\babs\b/g, 'Math.abs')
+        .replace(/\blog\b/g, 'Math.log')
+        .replace(/\bexp\b/g, 'Math.exp');
+      // eslint-disable-next-line no-new-func
+      const v = new Function(`return (${js})`)() as number;
+      return isFinite(v) ? v : NaN;
+    } catch {
+      return NaN;
     }
   }
 
@@ -547,6 +602,393 @@ export class ResultsSummaryComponent {
     return null;
   });
 
+  /**
+   * Factored series LaTeX: K · Σ(summand · sin/cos/exp).
+   * Only shown in raw profile (K is always from the raw computation).
+   * Only shown when one coefficient dominates (an=0 or bn=0 for trig).
+   */
+  readonly factoredSeriesTex = computed(() => {
+    const result = this.store.result();
+    if (!result) return null;
+
+    type FEntry = { k: string; s: string; kMx?: string } | null;
+
+    // simplifiedFactored has priority; fall back to raw coeffFactoredTex
+    const simplFact = this.simplifiedFactored();
+    const rawFact = this.coeffFactoredTex();
+
+    const pick = (key: string): FEntry => {
+      if (simplFact && key in simplFact) return simplFact[key];
+      if (rawFact) return (rawFact as unknown as Record<string, FEntry>)[key] ?? null;
+      return null;
+    };
+
+    // Normalize sign convention: K always carries the sign, summand is unsigned.
+    // The backend (after simplification) sometimes returns positive K with a
+    // negative summand (e.g. 6/π · Σ(-((-1)^n−1)/n)). This absorbs the leading
+    // minus from the summand into K so the display is -6/π · Σ(((-1)^n−1)/n).
+    const normalize = (f: FEntry): FEntry => {
+      if (!f) return null;
+      const s = f.s.trimStart();
+      if (!s.startsWith('-')) return f;
+      const posS = s.slice(1).trimStart();
+      const k = f.k.trimStart();
+      const negK = k.startsWith('-') ? k.slice(1).trimStart() : `-${f.k}`;
+      return { k: negK, s: posS, kMx: f.kMx };
+    };
+
+    const intVar = result.data.input.intVar ?? 'x';
+    const w0Tex = result.data.w0.tex;
+    const w0IsOne = w0Tex === '1';
+
+    const activeA0Tex = this.activeCoeffTex()?.a0;
+    const withA0Prefix = (rawA0Tex: string | undefined, sumTex: string): string => {
+      const a0Tex = activeA0Tex ?? rawA0Tex;
+      const a0IsZero = !a0Tex || a0Tex.trim() === '0';
+      if (a0IsZero) return sumTex;
+      const sumStartsNegative = sumTex.trimStart().startsWith('-');
+      return `${a0Tex}${sumStartsNegative ? '' : '+'}${sumTex}`;
+    };
+
+    const activeMx = this.activeCoeffMaxima();
+
+    if (result.type === 'trigonometric') {
+      const c = result.data.coefficients;
+      const anIsZero = (activeMx?.an ?? c.an?.maxima ?? '').trim() === '0';
+      const bnIsZero = (activeMx?.bn ?? c.bn?.maxima ?? '').trim() === '0';
+      const om = w0IsOne ? `n\\,${intVar}` : `n\\,${w0Tex}\\,${intVar}`;
+
+      if (anIsZero) {
+        const f = normalize(pick('bn'));
+        if (f) {
+          const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\sin\\!\\left(${om}\\right)`;
+          return withA0Prefix(c.a0?.tex, sumTex);
+        }
+      } else if (bnIsZero) {
+        const f = normalize(pick('an'));
+        if (f) {
+          const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\cos\\!\\left(${om}\\right)`;
+          return withA0Prefix(c.a0?.tex, sumTex);
+        }
+      } else {
+        // Both non-zero: show K·Σ(sₐ·cos ± s_b·sin) when they share the same K magnitude
+        const fa = pick('an');
+        const fb = pick('bn');
+        if (fa && fb) {
+          const faMx = fa.kMx ?? '';
+          const fbMx = fb.kMx ?? '';
+
+          // Primary: numeric comparison — format-independent, handles sinh/cosh/sqrt/etc.
+          const faNum = this.evalKMx(faMx);
+          const fbNum = this.evalKMx(fbMx);
+
+          let kSame: boolean;
+          let kOpposite: boolean;
+          let faIsNeg: boolean;
+          let nonTrivialK: boolean;
+
+          if (isFinite(faNum) && isFinite(fbNum) && Math.abs(faNum) > 1e-12) {
+            const tol = Math.abs(faNum) * 1e-9;
+            kSame     = Math.abs(faNum - fbNum) < tol;
+            kOpposite = !kSame && Math.abs(faNum + fbNum) < tol;
+            faIsNeg   = faNum < 0;
+            nonTrivialK = Math.abs(Math.abs(faNum) - 1) > 1e-9;
+          } else {
+            // Fallback: normalized string comparison (strips leading minus + outer parens)
+            const stripSign = (s: string): string => {
+              const t = s.trim();
+              if (!t.startsWith('-')) return t;
+              const rest = t.slice(1).trim();
+              return rest.startsWith('(') && rest.endsWith(')') ? rest.slice(1, -1).trim() : rest;
+            };
+            const isNegStr = (s: string): boolean => s.trim().startsWith('-');
+            const src = (mx: string, tex: string): string => mx || tex.trimStart();
+            const faMag   = stripSign(src(faMx, fa.k));
+            const fbMag   = stripSign(src(fbMx, fb.k));
+            faIsNeg       = isNegStr(src(faMx, fa.k));
+            const fbIsNeg = isNegStr(src(fbMx, fb.k));
+            kSame       = faMag === fbMag && faIsNeg === fbIsNeg;
+            kOpposite   = faMag === fbMag && faIsNeg !== fbIsNeg;
+            nonTrivialK = faMag !== '1';
+          }
+
+          if ((kSame || kOpposite) && nonTrivialK) {
+            let commonK: string;
+            let anS: string;
+            let bnS: string;
+
+            if (kSame) {
+              commonK = fa.k; anS = fa.s; bnS = fb.s;
+            } else {
+              // Use the positive K as commonK; negate the summand of the negative-K coefficient
+              commonK = faIsNeg ? fb.k : fa.k;
+              anS     = faIsNeg ? `-${fa.s}` : fa.s;
+              bnS     = faIsNeg ? fb.s : `-${fb.s}`;
+            }
+
+            const bnNeg    = bnS.trimStart().startsWith('-');
+            const connector  = bnNeg ? '-' : '+';
+            const bnDisplay  = bnNeg ? bnS.trimStart().replace(/^-\s*/, '') : bnS;
+            const sumTex = `${commonK}\\cdot\\sum_{n=1}^{\\infty}\\left(${anS}\\,\\cos\\!\\left(${om}\\right)${connector}${bnDisplay}\\,\\sin\\!\\left(${om}\\right)\\right)`;
+            return withA0Prefix(c.a0?.tex, sumTex);
+          }
+        }
+      }
+      return null;
+    }
+
+    if (result.type === 'halfRange') {
+      const hrMode = this.halfRangeMode();
+      const c = result.data.coefficients;
+      const originFrom = result.data.input.segments[0]?.from ?? '0';
+      const shiftedVar = this.formatHalfRangeShiftTex(intVar, originFrom);
+      const shiftedOmega = w0IsOne
+        ? `n\\,${shiftedVar}`
+        : `n\\,${w0Tex}\\,\\left(${shiftedVar}\\right)`;
+
+      if (hrMode === 'cosine') {
+        const anIsZero = (activeMx?.an ?? c.an?.maxima ?? '').trim() === '0';
+        if (!anIsZero) {
+          const f = normalize(pick('an'));
+          if (f) {
+            const sumTex = `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\cos\\!\\left(${shiftedOmega}\\right)`;
+            return withA0Prefix(c.a0?.tex, sumTex);
+          }
+        }
+      } else {
+        const bnIsZero = (activeMx?.bn ?? c.bn?.maxima ?? '').trim() === '0';
+        if (!bnIsZero) {
+          const f = normalize(pick('bn'));
+          if (f)
+            return `${f.k}\\cdot\\sum_{n=1}^{\\infty}\\left(${f.s}\\right)\\sin\\!\\left(${shiftedOmega}\\right)`;
+        }
+      }
+      return null;
+    }
+
+    if (result.type === 'complex') {
+      const c = result.data.coefficients;
+      const cnIsZero = (activeMx?.cn ?? c.cn?.maxima ?? '').trim() === '0';
+      if (!cnIsZero) {
+        const f = normalize(pick('cn'));
+        const om = w0IsOne ? `n\\,${intVar}` : `n\\,${w0Tex}\\,${intVar}`;
+        if (f) return `${f.k}\\cdot\\sum_{n=-\\infty}^{\\infty}\\left(${f.s}\\right)e^{i${om}}`;
+      }
+      return null;
+    }
+
+    return null;
+  });
+
+  /**
+   * Builds the RHS of the Parseval identity as TeX.
+   * When singular terms exist, renders an explicit split:
+   *   Σ_{n=1}^{k₁-1}(s) + V₁ + Σ_{n=k₁+1}^{k₂-1}(s) + V₂ + Σ_{n=k₂+1}^∞(s)
+   * When there are none, renders a plain Σ_{n=1}^∞(s).
+   */
+  private buildSplitSumTex(s: string, singularTerms: SingularTerm[]): string {
+    if (!singularTerms.length) return `\\sum_{n=1}^{\\infty}\\left(${s}\\right)`;
+
+    const sorted = [...singularTerms].sort((a, b) => a.n - b.n);
+    const parts: string[] = [];
+    let lo = 1;
+
+    for (const term of sorted) {
+      if (term.n > lo) {
+        const hi = term.n - 1;
+        parts.push(`\\sum_{n=${lo}}^{${hi}}\\left(${s}\\right)`);
+      }
+      parts.push(`\\underbrace{${term.tex || '0'}}_{\\lim_{n\\to ${term.n}}}`);
+      lo = term.n + 1;
+    }
+
+    parts.push(`\\sum_{n=${lo}}^{\\infty}\\left(${s}\\right)`);
+    return parts.join('+');
+  }
+
+  /**
+   * Builds the RHS for the bilateral sum (n ∈ ℤ, n ≠ 0).
+   * Since |cₙ|² = |c₋ₙ|² (even summand), each singular pair n = ±k
+   * contributes 2·V_k. The remaining sum excludes 0 and all ±k.
+   */
+  private buildBilateralSumTex(s: string, singularTerms: SingularTerm[]): string {
+    if (!singularTerms.length) {
+      return `\\sum_{\\substack{n=-\\infty \\\\ n\\neq 0}}^{\\infty}\\!\\left(${s}\\right)`;
+    }
+
+    const sorted = [...singularTerms].sort((a, b) => a.n - b.n);
+    const excl = ['0', ...sorted.map(t => `{\\pm ${t.n}}`)].join(',\\,');
+    const remainingSum = `\\sum_{\\substack{n=-\\infty \\\\ n\\notin\\{${excl}\\}}}^{\\infty}\\!\\left(${s}\\right)`;
+
+    const singParts = sorted.map(t => {
+      const val = t.tex2x ?? `2\\!\\left(${t.tex || '0'}\\right)`;
+      return `\\underbrace{${val}}_{\\lim_{|n|\\to ${t.n}}}`;
+    });
+    return [...singParts, remainingSum].join('+');
+  }
+
+  /** Parseval identity LaTeX — two views: formal (sum from 1) or simplified (split or plain).
+   *  Complex series additionally supports bilateral (n ∈ ℤ, n ≠ 0) vs unilateral (n ≥ 1). */
+  readonly parsevalTex = computed(() => {
+    const result = this.store.result();
+    const p = this.parsevalData();
+    if (!result || !p) return null;
+
+    const view = this.parsevalView();
+    const lhsOverride = this.parsevalSimplifiedLhsFinal();
+    const summandOverride = this.parsevalSimplifiedSummand();
+    const isBilateral = result.type === 'complex' && this.parsevalComplexSumForm() === 'bilateral';
+
+    const fmtSimplified = (
+      lhsFinal: string,
+      s: string,
+      singularTerms: SingularTerm[],
+    ): string => {
+      const rhsTex = this.buildSplitSumTex(summandOverride ?? s, singularTerms);
+      return `${lhsOverride ?? lhsFinal}=${rhsTex}`;
+    };
+
+    const fmtFormal = (lhsFinal: string, s: string): string =>
+      `${lhsFinal}=\\sum_{n=1}^{\\infty}\\left(${s}\\right)`;
+
+    const fmtBilateral = (lhsFinal: string, s: string, singularTerms: SingularTerm[]): string => {
+      const rhsTex = this.buildBilateralSumTex(summandOverride ?? s, singularTerms);
+      return `${lhsOverride ?? lhsFinal}=${rhsTex}`;
+    };
+
+    if (result.type === 'trigonometric') {
+      const pt = p as ParsevalTrig;
+      if (view === 'formal' && pt.formal) return fmtFormal(pt.formal.lhsFinal.tex, pt.formal.summand.tex);
+      return fmtSimplified(pt.lhsFinal.tex, pt.summand.tex, pt.singularTerms ?? []);
+    }
+
+    if (result.type === 'halfRange') {
+      const ph = p as ParsevalHalfRange;
+      const hrMode = this.halfRangeMode();
+      if (hrMode === 'cosine') {
+        if (view === 'formal' && ph.cosine.formal) return fmtFormal(ph.cosine.formal.lhsFinal.tex, ph.cosine.formal.summand.tex);
+        return fmtSimplified(ph.cosine.lhsFinal.tex, ph.cosine.summand.tex, ph.cosine.singularTerms ?? []);
+      } else {
+        if (view === 'formal' && ph.sine.formal) return fmtFormal(ph.sine.formal.lhsFinal.tex, ph.sine.formal.summand.tex);
+        return fmtSimplified(ph.sine.lhsFinal.tex, ph.sine.summand.tex, ph.sine.singularTerms ?? []);
+      }
+    }
+
+    if (result.type === 'complex') {
+      const pc = p as ParsevalComplex;
+      if (isBilateral && pc.bilateral) {
+        const bil = pc.bilateral;
+        if (view === 'formal' && bil.formal) {
+          return fmtBilateral(bil.formal.lhsFinal.tex, pc.formal?.summand.tex ?? pc.summand.tex, pc.singularTerms ?? []);
+        }
+        return fmtBilateral(bil.lhsFinal.tex, pc.summand.tex, pc.singularTerms ?? []);
+      }
+      if (view === 'formal' && pc.formal) return fmtFormal(pc.formal.lhsFinal.tex, pc.formal.summand.tex);
+      return fmtSimplified(pc.lhsFinal.tex, pc.summand.tex, pc.singularTerms ?? []);
+    }
+
+    return null;
+  });
+
+  readonly parsevalSingValsLabel = computed(() => {
+    const vals = this.parsevalSingVals();
+    if (!vals.length) return '';
+    if (vals.length === 1) return `n=${vals[0]}`;
+    return `n∈{${vals.join(', ')}}`;
+  });
+
+  readonly parsevalHasFormal = computed(() => {
+    const result = this.store.result();
+    const p = this.parsevalData();
+    if (!result || !p) return false;
+    if (result.type === 'trigonometric') return !!(p as ParsevalTrig).formal;
+    if (result.type === 'complex') return !!(p as ParsevalComplex).formal;
+    if (result.type === 'halfRange') {
+      const ph = p as ParsevalHalfRange;
+      return this.halfRangeMode() === 'cosine' ? !!ph.cosine.formal : !!ph.sine.formal;
+    }
+    return false;
+  });
+
+  readonly parsevalHasBilateral = computed(() => {
+    const result = this.store.result();
+    const p = this.parsevalData();
+    if (!result || !p) return false;
+    return result.type === 'complex' && !!(p as ParsevalComplex).bilateral;
+  });
+
+  readonly parsevalSingVals = computed((): number[] => {
+    const result = this.store.result();
+    const p = this.parsevalData();
+    if (!result || !p) return [];
+    if (result.type === 'trigonometric') return (p as ParsevalTrig).singVals ?? [];
+    if (result.type === 'complex') return (p as ParsevalComplex).singVals ?? [];
+    if (result.type === 'halfRange') {
+      const ph = p as ParsevalHalfRange;
+      return (this.halfRangeMode() === 'cosine' ? ph.cosine.singVals : ph.sine.singVals) ?? [];
+    }
+    return [];
+  });
+
+  /** Whether the current Parseval identity has singular terms (sum starts at n > 1). */
+  readonly parsevalHasSingular = computed(() => {
+    const result = this.store.result();
+    const p = this.parsevalData();
+    if (!result || !p) return false;
+    if (result.type === 'trigonometric') return (p as ParsevalTrig).hasSingular ?? false;
+    if (result.type === 'complex') return (p as ParsevalComplex).hasSingular ?? false;
+    if (result.type === 'halfRange') {
+      const ph = p as ParsevalHalfRange;
+      return this.halfRangeMode() === 'cosine' ? (ph.cosine.hasSingular ?? false) : (ph.sine.hasSingular ?? false);
+    }
+    return false;
+  });
+
+  /** The n value at which the Parseval sum starts (1 = normal, k > 1 = singular terms excluded). */
+  readonly parsevalSumStart = computed(() => {
+    const result = this.store.result();
+    const p = this.parsevalData();
+    if (!result || !p) return 1;
+    if (result.type === 'trigonometric') return (p as ParsevalTrig).sumStart ?? 1;
+    if (result.type === 'complex') return (p as ParsevalComplex).sumStart ?? 1;
+    if (result.type === 'halfRange') {
+      const ph = p as ParsevalHalfRange;
+      return this.halfRangeMode() === 'cosine' ? (ph.cosine.sumStart ?? 1) : (ph.sine.sumStart ?? 1);
+    }
+    return 1;
+  });
+
+  /** Factored coefficient LaTeX: K · summandₙ form when non-trivial (K ≠ 1). */
+  readonly coeffFactoredTex = computed(() => {
+    const result = this.store.result();
+    const hrMode = this.halfRangeMode();
+    if (!result) return null;
+
+    const isTrivial = (k?: SymbolicExpression, s?: SymbolicExpression) =>
+      !k || !s || k.maxima.trim() === '1' || s.maxima.trim() === '1';
+
+    if (result.type === 'trigonometric') {
+      const c = result.data.coefficients;
+      return {
+        an: isTrivial(c.anK, c.anSummand) ? null : { k: c.anK!.tex, s: c.anSummand!.tex, kMx: c.anK!.maxima },
+        bn: isTrivial(c.bnK, c.bnSummand) ? null : { k: c.bnK!.tex, s: c.bnSummand!.tex, kMx: c.bnK!.maxima },
+      };
+    }
+    if (result.type === 'halfRange') {
+      const c = result.data.coefficients;
+      return hrMode === 'cosine'
+        ? { an: isTrivial(c.anK, c.anSummand) ? null : { k: c.anK!.tex, s: c.anSummand!.tex, kMx: c.anK!.maxima } }
+        : { bn: isTrivial(c.bnK, c.bnSummand) ? null : { k: c.bnK!.tex, s: c.bnSummand!.tex, kMx: c.bnK!.maxima } };
+    }
+    if (result.type === 'complex') {
+      const c = result.data.coefficients;
+      return {
+        cn: isTrivial(c.cnK, c.cnSummand) ? null : { k: c.cnK!.tex, s: c.cnSummand!.tex, kMx: c.cnK!.maxima },
+      };
+    }
+    return null;
+  });
+
   /** Raw Maxima strings for each coefficient (always unsimplified, for copy-to-Maxima). */
   readonly coeffMaxima = computed(() => {
     const result = this.store.result();
@@ -575,13 +1017,62 @@ export class ResultsSummaryComponent {
     return null;
   });
 
-  /** Active coefficient LaTeX: uses simplified values when available, else falls back to coeffTex */
+  /** Active coefficient LaTeX: uses simplified values when available, else falls back to coeffTex.
+   *  When showGammaNotation is true, gamma_incomplete forms from simplifications override everything. */
   readonly activeCoeffTex = computed(() => {
     const simplified = this.simplifiedCoeffs();
     const base = this.coeffTex();
     if (!base) return null;
-    if (!simplified) return base;
 
+    const withSimplified = simplified
+      ? {
+          ...base,
+          ...(simplified['a0'] !== undefined ? { a0: simplified['a0'] } : {}),
+          ...(simplified['an'] !== undefined ? { an: simplified['an'] } : {}),
+          ...(simplified['bn'] !== undefined ? { bn: simplified['bn'] } : {}),
+          ...(simplified['c0'] !== undefined ? { c0: simplified['c0'] } : {}),
+          ...(simplified['cn'] !== undefined ? { cn: simplified['cn'] } : {}),
+          ...(simplified['w0'] !== undefined ? { w0: simplified['w0'] } : {}),
+        }
+      : { ...base };
+
+    if (!this.showGammaNotation()) return withSimplified;
+
+    const result = this.store.result();
+    const simplifications = result?.data.simplifications;
+    if (!simplifications) return withSimplified;
+
+    const gammaOverrides: Record<string, string> = {};
+    for (const [k, v] of Object.entries(simplifications)) {
+      if (k.endsWith('_gamma')) gammaOverrides[k.slice(0, -6)] = v.tex;
+    }
+    return { ...withSimplified, ...gammaOverrides };
+  });
+
+  /** Display-only a0: prefer backend raw a0 (before /2) for trig and half-range cosine views. */
+  readonly a0DisplayTex = computed(() => {
+    const result = this.store.result();
+    if (!result) return null;
+
+    const simplifiedA0Raw = this.simplifiedCoeffs()?.['a0Raw'];
+
+    if (result.type === 'trigonometric') {
+      return simplifiedA0Raw ?? result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
+    }
+
+    if (result.type === 'halfRange' && this.halfRangeMode() === 'cosine') {
+      return simplifiedA0Raw ?? result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
+    }
+
+    return this.activeCoeffTex()?.a0 ?? null;
+  });
+
+  /** Active coefficient Maxima: uses simplified Maxima when available, else raw. */
+  readonly activeCoeffMaxima = computed(() => {
+    const simplified = this.simplifiedCoeffsMaxima();
+    const base = this.coeffMaxima();
+    if (!base) return null;
+    if (!simplified) return base;
     return {
       ...base,
       ...(simplified['a0'] !== undefined ? { a0: simplified['a0'] } : {}),
@@ -593,20 +1084,18 @@ export class ResultsSummaryComponent {
     };
   });
 
-  /** Display-only a0: prefer backend raw a0 (before /2) for trig and half-range cosine views. */
-  readonly a0DisplayTex = computed(() => {
+  /** Maxima for the a₀ panel row (uses a0Raw simplified Maxima when available). */
+  readonly a0DisplayMaxima = computed(() => {
     const result = this.store.result();
     if (!result) return null;
-
+    const simplifiedA0RawMaxima = this.simplifiedCoeffsMaxima()?.['a0Raw'];
     if (result.type === 'trigonometric') {
-      return result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
+      return simplifiedA0RawMaxima ?? result.data.a0Raw?.maxima ?? this.activeCoeffMaxima()?.a0 ?? null;
     }
-
     if (result.type === 'halfRange' && this.halfRangeMode() === 'cosine') {
-      return result.data.a0Raw?.tex ?? this.activeCoeffTex()?.a0 ?? null;
+      return simplifiedA0RawMaxima ?? result.data.a0Raw?.maxima ?? this.activeCoeffMaxima()?.a0 ?? null;
     }
-
-    return this.activeCoeffTex()?.a0 ?? null;
+    return this.activeCoeffMaxima()?.a0 ?? null;
   });
 
   readonly execTime = computed(() => {
@@ -618,11 +1107,22 @@ export class ResultsSummaryComponent {
   readonly seriesLabel = computed(() => `f(${this.store.intVar()})`);
 
   // ── Tab state ─────────────────────────────────────────────────────────────
-  readonly activeTab = signal<'coefficients' | 'terms' | 'spectrum' | 'validation'>('coefficients');
+  readonly activeTab = signal<'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval'>('coefficients');
   readonly termsTabInitialized = signal(false);
   readonly showTermsTab = computed(
     () => this.termsTabInitialized() || this.activeTab() === 'terms',
   );
+
+  // ── Parseval tab state ───────────────────────────────────────────────────
+  private readonly cancelParseval$ = new Subject<void>();
+  readonly parsevalData = signal<ParsevalTrig | ParsevalHalfRange | ParsevalComplex | null>(null);
+  readonly parsevalLoading = signal(false);
+  readonly parsevalSimplifyProfile = signal<SimplifyProfile>('raw');
+  readonly parsevalSimplifying = signal(false);
+  readonly parsevalSimplifiedLhsFinal = signal<string | null>(null);
+  readonly parsevalSimplifiedSummand = signal<string | null>(null);
+  readonly parsevalView = signal<'simplified' | 'formal'>('simplified');
+  readonly parsevalComplexSumForm = signal<'unilateral' | 'bilateral'>('unilateral');
 
   /**
    * Series LaTeX composed from active coefficient values.
@@ -718,6 +1218,18 @@ export class ResultsSummaryComponent {
     return !!v && v.decision !== 'proceed';
   });
 
+  readonly indeterminateTrigTerms = computed(() =>
+    (this.trigTerms() ?? []).filter(t => t.anUsedLimit || t.bnUsedLimit),
+  );
+
+  readonly indeterminateComplexTerms = computed(() =>
+    (this.complexTerms() ?? []).filter(t => t.cnUsedLimit || t.cnNegUsedLimit),
+  );
+
+  readonly hasIndeterminateTerms = computed(() =>
+    this.indeterminateTrigTerms().length > 0 || this.indeterminateComplexTerms().length > 0,
+  );
+
   // ── Typed term arrays for the terms tab ────────────────────────────────────
   readonly trigTerms = computed<TrigonometricTerm[] | null>(() => {
     const r = this.store.result();
@@ -789,12 +1301,13 @@ export class ResultsSummaryComponent {
   });
 
   /** Typed tabs array so the template gets literal types */
-  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation'; labelKey: string }[] =
+  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval'; labelKey: string }[] =
     [
       { id: 'coefficients', labelKey: 'settingsCanvas.tabCoefficients' },
       { id: 'terms', labelKey: 'settingsCanvas.tabTerms' },
       { id: 'spectrum', labelKey: 'settingsCanvas.tabSpectrum' },
       { id: 'validation', labelKey: 'settingsCanvas.tabValidation' },
+      { id: 'parseval', labelKey: 'settingsCanvas.tabParseval' },
     ];
 
   /** Context for the terms tab — trig / half-range branch */
@@ -869,8 +1382,22 @@ export class ResultsSummaryComponent {
           Math.max(0, Math.min(this.store.nTerms(), result.terms.terms.length)),
         );
         this.simplifiedCoeffs.set(null);
+        this.simplifiedCoeffsMaxima.set(null);
+        this.simplifiedFactored.set(null);
+        this.showFactoredSeries.set(false);
+        this.showGammaNotation.set(false);
         this.simplifyProfile.set('raw');
+        this.showCanvasSettings.set(true);
+        this.declareNInteger.set(true);
+        this.toHyperbolic.set(false);
         this.halfRangeMode.set('cosine');
+        this.cancelParseval$.next();
+        this.parsevalData.set(null);
+        this.parsevalSimplifiedLhsFinal.set(null);
+        this.parsevalSimplifiedSummand.set(null);
+        this.parsevalSimplifyProfile.set('raw');
+        this.parsevalView.set('simplified');
+        this.parsevalComplexSumForm.set('unilateral');
         this.controlHarmonics.set(false);
         this.enabledHarmonics.set(new Set(result.terms.terms.map((t) => t.n)));
         this.selectedHarmonicN.set(null);
@@ -925,17 +1452,121 @@ export class ResultsSummaryComponent {
 
   // ── Tab & mode actions ────────────────────────────────────────────────────
 
-  setTab(tab: 'coefficients' | 'terms' | 'spectrum' | 'validation'): void {
+  setTab(tab: 'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval'): void {
     if (tab === 'terms' && !this.termsTabInitialized()) {
       this.termsTabInitialized.set(true);
     }
+    if (tab === 'parseval' && !this.parsevalData() && !this.parsevalLoading()) {
+      this.fetchParseval();
+    }
     this.activeTab.set(tab);
+  }
+
+  private fetchParseval(): void {
+    const result = this.store.result();
+    if (!result) return;
+    this.cancelParseval$.next();
+    this.parsevalLoading.set(true);
+    this.api
+      .calculateParseval(result.data.input)
+      .pipe(
+        takeUntil(this.cancelParseval$),
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.parsevalLoading.set(false)),
+      )
+      .subscribe({
+        next: (res) => this.parsevalData.set(res.parseval ?? null),
+        error: () => this.parsevalData.set(null),
+      });
+  }
+
+  simplifyParseval(profile: SimplifyProfile): void {
+    this.parsevalSimplifyProfile.set(profile);
+    if (profile === 'raw') {
+      this.parsevalSimplifiedLhsFinal.set(null);
+      this.parsevalSimplifiedSummand.set(null);
+      return;
+    }
+
+    const result = this.store.result();
+    const p = this.parsevalData();
+    if (!result || !p) return;
+
+    let lhsFinalMaxima: string | undefined;
+    let summandMaxima: string | undefined;
+    let hasSingularTerms = false;
+    if (result.type === 'trigonometric') {
+      const pt = p as ParsevalTrig;
+      lhsFinalMaxima = pt.lhsFinal.maxima;
+      summandMaxima = pt.summand.maxima;
+      hasSingularTerms = (pt.singularTerms?.length ?? 0) > 0;
+    } else if (result.type === 'complex') {
+      const pc = p as ParsevalComplex;
+      const isBilateral = this.parsevalComplexSumForm() === 'bilateral';
+      lhsFinalMaxima = isBilateral ? (pc.bilateral?.lhsFinal.maxima ?? pc.lhsFinal.maxima) : pc.lhsFinal.maxima;
+      summandMaxima = pc.summand.maxima;
+      hasSingularTerms = (pc.singularTerms?.length ?? 0) > 0;
+    } else if (result.type === 'halfRange') {
+      const arm = this.halfRangeMode() === 'cosine'
+        ? (p as ParsevalHalfRange).cosine
+        : (p as ParsevalHalfRange).sine;
+      lhsFinalMaxima = arm.lhsFinal.maxima;
+      summandMaxima = arm.summand.maxima;
+      hasSingularTerms = (arm.singularTerms?.length ?? 0) > 0;
+    }
+
+    if (!lhsFinalMaxima || !summandMaxima) return;
+
+    this.parsevalSimplifying.set(true);
+
+    // Step 1: simplify the summand and extract any remaining constant factor K.
+    // Step 2: simplify lhsFinal / K so both sides of the identity stay balanced.
+    // When singular terms exist, K-extraction is suppressed: the singular term TeX
+    // values are scalars already normalized by the original K, so dividing out a new K'
+    // would break the equation balance without a way to update those values.
+    const parsevalDisplayFlags = {
+      declareNInteger: this.declareNInteger(),
+      ...(this.toHyperbolic() ? { toHyperbolic: true } : {}),
+    };
+
+    this.api.simplify({ expression: summandMaxima, profile, displayFlags: parsevalDisplayFlags })
+      .pipe(
+        switchMap((summandRes) => {
+          const K = hasSingularTerms ? null : summandRes.simplifiedK;
+          const newSummandTex = K
+            ? (summandRes.simplifiedSummand?.tex ?? summandRes.simplified.tex)
+            : summandRes.simplified.tex;
+          // If K ≠ 1 divide it out of the LHS; otherwise just simplify as-is.
+          const adjustedLhs = K ? `(${lhsFinalMaxima!}) / (${K.maxima})` : lhsFinalMaxima!;
+          return this.api.simplify({ expression: adjustedLhs, profile, displayFlags: parsevalDisplayFlags }).pipe(
+            map((lhsRes) => ({ lhsFinalTex: lhsRes.simplified.tex, summandTex: newSummandTex })),
+          );
+        }),
+        finalize(() => this.parsevalSimplifying.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ lhsFinalTex, summandTex }) => {
+        this.parsevalSimplifiedLhsFinal.set(lhsFinalTex);
+        this.parsevalSimplifiedSummand.set(summandTex);
+      });
+  }
+
+  setComplexSumForm(form: 'unilateral' | 'bilateral'): void {
+    this.parsevalComplexSumForm.set(form);
+    this.parsevalSimplifiedLhsFinal.set(null);
+    this.parsevalSimplifiedSummand.set(null);
+    this.parsevalSimplifyProfile.set('raw');
   }
 
   setHalfRangeMode(mode: 'cosine' | 'sine'): void {
     this.halfRangeMode.set(mode);
     this.simplifiedCoeffs.set(null);
     this.simplifyProfile.set('raw');
+    this.parsevalSimplifiedLhsFinal.set(null);
+    this.parsevalSimplifiedSummand.set(null);
+    this.parsevalSimplifyProfile.set('raw');
+    this.parsevalView.set('simplified');
+    this.parsevalComplexSumForm.set('unilateral');
   }
 
   setHarmonicControl(enabled: boolean): void {
@@ -1210,6 +1841,9 @@ export class ResultsSummaryComponent {
     this.simplifyProfile.set(profile);
     if (profile === 'raw') {
       this.simplifiedCoeffs.set(null);
+      this.simplifiedCoeffsMaxima.set(null);
+      this.simplifiedFactored.set(null);
+      this.showFactoredSeries.set(false);
     } else {
       this.simplifyAll(profile);
     }
@@ -1236,6 +1870,20 @@ export class ResultsSummaryComponent {
     }
   }
 
+  setDeclareNInteger(enabled: boolean): void {
+    this.declareNInteger.set(enabled);
+    if (this.simplifyProfile() !== 'raw') {
+      this.simplifyAll(this.simplifyProfile());
+    }
+  }
+
+  setToHyperbolic(enabled: boolean): void {
+    this.toHyperbolic.set(enabled);
+    if (this.simplifyProfile() !== 'raw') {
+      this.simplifyAll(this.simplifyProfile());
+    }
+  }
+
   simplifyAll(
     profile: SimplifyProfile,
     flag: 'exponentialize' | 'demoivre' = this.expFlag(),
@@ -1256,6 +1904,8 @@ export class ResultsSummaryComponent {
       ...(profileFlags ?? {}),
       ...(this.useEdispflag() ? { edispflag: true } : {}),
       erfRepresentation: this.erfRepresentation(),
+      declareNInteger: this.declareNInteger(),
+      ...(this.toHyperbolic() ? { toHyperbolic: true } : {}),
     };
 
     const calls: Record<string, ReturnType<typeof this.api.simplify>> = {};
@@ -1264,6 +1914,8 @@ export class ResultsSummaryComponent {
       const c = result.data.coefficients;
       if (c.a0?.maxima)
         calls['a0'] = this.api.simplify({ expression: c.a0.maxima, profile, displayFlags });
+      if (result.data.a0Raw?.maxima)
+        calls['a0Raw'] = this.api.simplify({ expression: result.data.a0Raw.maxima, profile, displayFlags });
       if (c.an?.maxima)
         calls['an'] = this.api.simplify({ expression: c.an.maxima, profile, displayFlags });
       if (c.bn?.maxima)
@@ -1274,6 +1926,8 @@ export class ResultsSummaryComponent {
       if (hrMode === 'cosine') {
         if (c.a0?.maxima)
           calls['a0'] = this.api.simplify({ expression: c.a0.maxima, profile, displayFlags });
+        if (result.data.a0Raw?.maxima)
+          calls['a0Raw'] = this.api.simplify({ expression: result.data.a0Raw.maxima, profile, displayFlags });
         if (c.an?.maxima)
           calls['an'] = this.api.simplify({ expression: c.an.maxima, profile, displayFlags });
       } else {
@@ -1300,10 +1954,38 @@ export class ResultsSummaryComponent {
       )
       .subscribe((responses) => {
         const simplified: Record<string, string> = {};
+        const simplifiedMaxima: Record<string, string> = {};
+        const factored: Record<string, { k: string; s: string; kMx: string } | null> = {};
         for (const [key, res] of Object.entries(responses)) {
           simplified[key] = res.simplified.tex;
+          simplifiedMaxima[key] = res.simplified.maxima;
+          factored[key] =
+            res.simplifiedK && res.simplifiedSummand
+              ? { k: res.simplifiedK.tex, s: res.simplifiedSummand.tex, kMx: res.simplifiedK.maxima }
+              : null;
         }
+
+        // K-unification for trig series: when raw emission unified K_an == K_bn
+        // (emit_factored_trig absorbed the ratio into bn_summand) but simplifying
+        // each coefficient independently gives different Ks, adopt the raw bn
+        // summand (which already carries the ratio) under the simplified K so the
+        // frontend's kSame path can render K·Σ(sₐ·cos + s_b·sin).
+        type FE = { k: string; s: string; kMx: string } | null;
+        const rawFact = this.coeffFactoredTex() as Record<string, FE> | null;
+        if (rawFact) {
+          const rawAn = rawFact['an'];
+          const rawBn = rawFact['bn'];
+          const simpAn = factored['an'];
+          const simpBn = factored['bn'];
+          if (rawAn && rawBn && rawAn.kMx === rawBn.kMx && simpAn && simpBn && simpAn.kMx !== simpBn.kMx) {
+            factored['bn'] = { k: simpAn.k, s: rawBn.s, kMx: simpAn.kMx };
+          }
+        }
+
         this.simplifiedCoeffs.set(simplified);
+        this.simplifiedCoeffsMaxima.set(simplifiedMaxima);
+        this.simplifiedFactored.set(factored);
+        this.showFactoredSeries.set(false);
       });
   }
 }

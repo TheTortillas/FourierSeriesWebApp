@@ -104,7 +104,8 @@ export type SimplifyFunction =
   | 'expand'
   | 'radcan'
   | 'rectform'
-  | 'polarform';
+  | 'polarform'
+  | 'to_hyper';
 
 export interface SimplifyRequest {
   expression: string;
@@ -115,6 +116,8 @@ export interface SimplifyRequest {
     exponentialize?: boolean;
     demoivre?: boolean;
     erfRepresentation?: 'erf' | 'erfc' | 'erfi';
+    declareNInteger?: boolean;
+    toHyperbolic?: boolean;
   };
   convention?: NormalizationConvention;
 }
@@ -122,6 +125,8 @@ export interface SimplifyRequest {
 export interface SimplifyResponse {
   original: SymbolicExpression;
   simplified: SymbolicExpression;
+  simplifiedK?: SymbolicExpression;
+  simplifiedSummand?: SymbolicExpression;
   profile: SimplifyProfile;
   functionsApplied: SimplifyFunction[];
 }

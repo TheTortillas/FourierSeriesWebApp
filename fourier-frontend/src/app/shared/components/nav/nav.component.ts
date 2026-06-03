@@ -82,6 +82,8 @@ export class NavComponent {
     return url.includes('/calculator') || url.includes('/transforms');
   });
 
+  readonly isGrapherActive = computed(() => this.currentUrl().includes('/grapher'));
+
   switchToLang(code: string): void {
     this.langMenuOpen.set(false);
     if (code === this.lang()) return;

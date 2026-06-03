@@ -1,0 +1,763 @@
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
+  <app-nav />
+
+  <main class="flex-1 w-full max-w-3xl mx-auto px-5 py-12 flex flex-col gap-10">
+    <!-- ── Encabezado ── -->
+    <header class="flex flex-col gap-3 pb-6 border-b border-border dark:border-dark-border">
+      <p class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-widest">
+        fouriersolver.com
+      </p>
+      @if (lang() === 'es') {
+        <h1 class="font-display text-4xl text-ink dark:text-dark-ink leading-tight">
+          Política de Privacidad
+        </h1>
+        <p class="font-body text-sm text-muted dark:text-dark-muted">
+          Última actualización: {{ updated }}
+        </p>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+          En <strong class="text-ink dark:text-dark-ink">fouriersolver.com</strong> tomamos tu
+          privacidad en serio. Esta política explica qué datos recopilamos, cómo los usamos y cómo
+          los protegemos.
+        </p>
+      } @else {
+        <h1 class="font-display text-4xl text-ink dark:text-dark-ink leading-tight">
+          Privacy Policy
+        </h1>
+        <p class="font-body text-sm text-muted dark:text-dark-muted">
+          Last updated: {{ updatedEn }}
+        </p>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed max-w-2xl">
+          At <strong class="text-ink dark:text-dark-ink">fouriersolver.com</strong> we take your
+          privacy seriously. This policy explains what data we collect, how we use it, and how we
+          protect it.
+        </p>
+      }
+    </header>
+
+    <!-- ── Contenido ── -->
+    @if (lang() === 'es') {
+      <!-- 1. Información que recopilamos -->
+      <section class="flex flex-col gap-5">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          1. Información que recopilamos
+        </h2>
+
+        <div class="flex flex-col gap-4">
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <h3 class="font-mono text-sm font-medium text-ink dark:text-dark-ink mb-2">
+              1.1 Datos de cuenta
+            </h3>
+            <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+              Si creas una cuenta, recopilamos tu
+              <strong class="text-ink dark:text-dark-ink">dirección de correo electrónico</strong>,
+              usada como identificador único. Si te registras con Google, también obtenemos tu
+              nombre y foto de perfil desde tu cuenta de Google. Las contraseñas
+              <strong class="text-ink dark:text-dark-ink">nunca se almacenan en texto plano</strong
+              >: se guardan como hash BCrypt con 12 rondas de iteración y sal aleatoria de 128 bits.
+            </p>
+          </div>
+
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <h3 class="font-mono text-sm font-medium text-ink dark:text-dark-ink mb-2">
+              1.2 Datos de uso
+            </h3>
+            <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+              Si tienes sesión activa, almacenamos el
+              <strong class="text-ink dark:text-dark-ink">historial de cálculos</strong> (las
+              expresiones matemáticas que introduces) y tus
+              <strong class="text-ink dark:text-dark-ink">favoritos</strong>. Estos datos son
+              visibles únicamente para ti y puedes eliminarlos en cualquier momento.
+            </p>
+          </div>
+
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <h3 class="font-mono text-sm font-medium text-ink dark:text-dark-ink mb-2">
+              1.3 Datos técnicos de seguridad
+            </h3>
+            <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+              Para proteger tu cuenta guardamos temporalmente la
+              <strong class="text-ink dark:text-dark-ink">dirección IP</strong>
+              y el User-Agent de tu navegador al crear sesiones, así como un registro de auditoría
+              de eventos de autenticación (inicio de sesión, cambios de contraseña, etc.). Estos
+              datos se usan exclusivamente para detectar accesos no autorizados.
+            </p>
+          </div>
+
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <h3 class="font-mono text-sm font-medium text-ink dark:text-dark-ink mb-2">
+              1.4 Analítica (Google Analytics 4)
+            </h3>
+            <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+              Usamos Google Analytics 4 para entender cómo se usa el servicio. GA4 recopila datos
+              <strong class="text-ink dark:text-dark-ink">de forma anonimizada</strong>: páginas
+              visitadas, tiempo en el sitio, país/región aproximada y tipo de dispositivo. No
+              recopilamos datos identificables de navegación. Puedes optar por no ser rastreado
+              mediante la extensión oficial
+              <a
+                href="https://tools.google.com/dlpage/gaoptout"
+                target="_blank"
+                rel="noopener"
+                class="text-accent hover:underline underline-offset-2"
+                >Google Analytics Opt-out</a
+              >.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Cómo usamos tu información -->
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          2. Cómo usamos tu información
+        </h2>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              [
+                'Proporcionar el servicio',
+                'calcular transformadas, mostrar tu historial y gestionar tu cuenta.',
+              ],
+              [
+                'Seguridad',
+                'detectar y prevenir accesos no autorizados mediante registros de auditoría.',
+              ],
+              ['Mejora continua', 'analizar patrones de uso anonimizados para priorizar mejoras.'],
+              [
+                'Comunicaciones transaccionales',
+                'enviarte correos de verificación de cuenta o restablecimiento de contraseña cuando lo solicites.',
+              ],
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-accent mt-0.5 shrink-0">✓</span>
+              <span
+                ><strong class="text-ink dark:text-dark-ink">{{ item[0] }}</strong> —
+                {{ item[1] }}</span
+              >
+            </li>
+          }
+        </ul>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          No usamos tu información para publicidad personalizada ni la vendemos ni cedemos a
+          terceros.
+        </p>
+      </section>
+
+      <!-- 3. Seguridad -->
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          3. Cómo protegemos tu información
+        </h2>
+        <div class="rounded-lg border border-border dark:border-dark-border overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr
+                class="bg-paper2 dark:bg-dark-surface border-b border-border dark:border-dark-border"
+              >
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Elemento
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Medida de seguridad
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              class="font-body text-muted dark:text-dark-muted divide-y divide-border dark:divide-dark-border"
+            >
+              <tr>
+                <td class="px-4 py-2.5">Contraseñas</td>
+                <td class="px-4 py-2.5 font-mono text-xs">BCrypt · 12 rondas · sal de 128 bits</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Tokens de sesión</td>
+                <td class="px-4 py-2.5 font-mono text-xs">
+                  512 bits de entropía · almacenados como SHA-256
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Tokens de email</td>
+                <td class="px-4 py-2.5 font-mono text-xs">
+                  SHA-256 · expiran en 24 h (verificación) / 1 h (reset)
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Conexión</td>
+                <td class="px-4 py-2.5 font-mono text-xs">HTTPS / TLS en todo momento</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Cookies de sesión</td>
+                <td class="px-4 py-2.5 font-mono text-xs">HTTPOnly · Secure · SameSite=Strict</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Token de acceso (JWT)</td>
+                <td class="px-4 py-2.5 font-mono text-xs">
+                  Expira en 15 minutos · rotación automática
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 4. Servicios de terceros -->
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">4. Servicios de terceros</h2>
+        <div class="rounded-lg border border-border dark:border-dark-border overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr
+                class="bg-paper2 dark:bg-dark-surface border-b border-border dark:border-dark-border"
+              >
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Servicio
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Propósito
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Política
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              class="font-body text-muted dark:text-dark-muted divide-y divide-border dark:divide-dark-border"
+            >
+              <tr>
+                <td class="px-4 py-2.5">Google Analytics 4</td>
+                <td class="px-4 py-2.5">Analítica anonimizada de uso</td>
+                <td class="px-4 py-2.5">
+                  <a
+                    href="https://policies.google.com/privacy"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-accent hover:underline underline-offset-2 font-mono text-xs"
+                    >Ver →</a
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Google OAuth 2.0</td>
+                <td class="px-4 py-2.5">Inicio de sesión con Google</td>
+                <td class="px-4 py-2.5">
+                  <a
+                    href="https://policies.google.com/privacy"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-accent hover:underline underline-offset-2 font-mono text-xs"
+                    >Ver →</a
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Ionos (1&amp;1)</td>
+                <td class="px-4 py-2.5">Alojamiento VPS + dominio</td>
+                <td class="px-4 py-2.5">
+                  <a
+                    href="https://www.ionos.es/terminos-condiciones/privacidad/"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-accent hover:underline underline-offset-2 font-mono text-xs"
+                    >Ver →</a
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 5. Retención de datos -->
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">5. Retención de datos</h2>
+        <div class="rounded-lg border border-border dark:border-dark-border overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr
+                class="bg-paper2 dark:bg-dark-surface border-b border-border dark:border-dark-border"
+              >
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Dato
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Período de retención
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              class="font-body text-muted dark:text-dark-muted divide-y divide-border dark:divide-dark-border"
+            >
+              <tr>
+                <td class="px-4 py-2.5">Cuenta de usuario</td>
+                <td class="px-4 py-2.5">Hasta que la elimines tú mismo</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Historial de cálculos</td>
+                <td class="px-4 py-2.5">Hasta que los elimines tú mismo</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Tokens de sesión</td>
+                <td class="px-4 py-2.5">30 días desde el último uso</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Registros de auditoría</td>
+                <td class="px-4 py-2.5">Hasta 90 días</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Datos de Google Analytics</td>
+                <td class="px-4 py-2.5">14 meses (política por defecto de Google)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 6. Tus derechos -->
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">6. Tus derechos</h2>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              ['Acceso', 'solicitar una copia de los datos que tenemos sobre ti.'],
+              ['Rectificación', 'corregir información incorrecta en tu cuenta.'],
+              [
+                'Eliminación',
+                'eliminar tu cuenta y todos los datos asociados desde Ajustes → Perfil.',
+              ],
+              ['Portabilidad', 'exportar tu historial de cálculos.'],
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-accent mt-0.5 shrink-0">→</span>
+              <span
+                ><strong class="text-ink dark:text-dark-ink">{{ item[0] }}</strong> —
+                {{ item[1] }}</span
+              >
+            </li>
+          }
+        </ul>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          Para ejercer estos derechos escríbenos a
+          <a
+            href="mailto:contact@fouriersolver.com"
+            class="text-accent hover:underline underline-offset-2"
+          >
+            contact&#64;fouriersolver.com </a
+          >.
+        </p>
+      </section>
+
+      <!-- 7. Menores -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">7. Menores de edad</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          El servicio no está dirigido a menores de 13 años. Si eres padre o madre y crees que tu
+          hijo ha proporcionado datos personales, contáctanos para eliminarlos inmediatamente.
+        </p>
+      </section>
+
+      <!-- 8. Cambios -->
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          8. Cambios a esta política
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          Notificaremos cambios significativos publicando la nueva versión en esta página y
+          actualizando la fecha de "Última actualización". El uso continuado del servicio tras los
+          cambios implica su aceptación.
+        </p>
+      </section>
+
+      <!-- Contacto -->
+      <section class="pt-6 border-t border-border dark:border-dark-border flex flex-col gap-2">
+        <h2 class="font-display text-xl text-ink dark:text-dark-ink">Contacto</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted">
+          <span class="font-mono">fouriersolver.com</span> · Desarrollado por Sebastián Morales
+          Palacios
+        </p>
+        <a
+          href="mailto:contact@fouriersolver.com"
+          class="font-mono text-sm text-accent hover:underline underline-offset-2"
+        >
+          contact&#64;fouriersolver.com
+        </a>
+        <div class="flex gap-4 mt-2">
+          <a
+            [routerLink]="'/' + lang() + '/legal/terms'"
+            class="font-mono text-xs text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:underline underline-offset-2 transition-colors"
+          >
+            Términos de Uso →
+          </a>
+        </div>
+      </section>
+    } @else {
+      <!-- ── ENGLISH VERSION ── -->
+
+      <section class="flex flex-col gap-5">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">1. Information We Collect</h2>
+
+        <div class="flex flex-col gap-4">
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <h3 class="font-mono text-sm font-medium text-ink dark:text-dark-ink mb-2">
+              1.1 Account Data
+            </h3>
+            <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+              If you create an account, we collect your
+              <strong class="text-ink dark:text-dark-ink">email address</strong> as your unique
+              identifier. If you sign up with Google, we also obtain your name and profile picture
+              from your Google account. Passwords are
+              <strong class="text-ink dark:text-dark-ink">never stored in plain text</strong>: they
+              are stored as a BCrypt hash with 12 iteration rounds and a random 128-bit salt.
+            </p>
+          </div>
+
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <h3 class="font-mono text-sm font-medium text-ink dark:text-dark-ink mb-2">
+              1.2 Usage Data
+            </h3>
+            <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+              If you are logged in, we store your
+              <strong class="text-ink dark:text-dark-ink">calculation history</strong> (the
+              mathematical expressions you enter) and your
+              <strong class="text-ink dark:text-dark-ink">favorites</strong>. This data is visible
+              only to you and can be deleted at any time.
+            </p>
+          </div>
+
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <h3 class="font-mono text-sm font-medium text-ink dark:text-dark-ink mb-2">
+              1.3 Technical Security Data
+            </h3>
+            <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+              To protect your account, we temporarily store your
+              <strong class="text-ink dark:text-dark-ink">IP address</strong>
+              and browser User-Agent when creating sessions, as well as an audit log of
+              authentication events (sign-in, password changes, etc.). This data is used solely to
+              detect unauthorized access.
+            </p>
+          </div>
+
+          <div
+            class="p-4 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface"
+          >
+            <h3 class="font-mono text-sm font-medium text-ink dark:text-dark-ink mb-2">
+              1.4 Analytics (Google Analytics 4)
+            </h3>
+            <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+              We use Google Analytics 4 to understand how the service is used. GA4 collects data
+              <strong class="text-ink dark:text-dark-ink">anonymously</strong>: pages visited, time
+              on site, approximate country/region, and device type. You can opt out using the
+              official
+              <a
+                href="https://tools.google.com/dlpage/gaoptout"
+                target="_blank"
+                rel="noopener"
+                class="text-accent hover:underline underline-offset-2"
+                >Google Analytics Opt-out extension</a
+              >.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          2. How We Use Your Information
+        </h2>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              [
+                'Provide the service',
+                'compute transforms, display your history, and manage your account.',
+              ],
+              ['Security', 'detect and prevent unauthorized access through audit logs.'],
+              [
+                'Continuous improvement',
+                'analyze anonymized usage patterns to prioritize features.',
+              ],
+              [
+                'Transactional communications',
+                'send you account verification or password reset emails when requested.',
+              ],
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-accent mt-0.5 shrink-0">✓</span>
+              <span
+                ><strong class="text-ink dark:text-dark-ink">{{ item[0] }}</strong> —
+                {{ item[1] }}</span
+              >
+            </li>
+          }
+        </ul>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          We do not use your information for personalized advertising, and we do not sell or share
+          it with third parties.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          3. How We Protect Your Information
+        </h2>
+        <div class="rounded-lg border border-border dark:border-dark-border overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr
+                class="bg-paper2 dark:bg-dark-surface border-b border-border dark:border-dark-border"
+              >
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Element
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Security measure
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              class="font-body text-muted dark:text-dark-muted divide-y divide-border dark:divide-dark-border"
+            >
+              <tr>
+                <td class="px-4 py-2.5">Passwords</td>
+                <td class="px-4 py-2.5 font-mono text-xs">
+                  BCrypt · 12 rounds · 128-bit random salt
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Session tokens</td>
+                <td class="px-4 py-2.5 font-mono text-xs">512-bit entropy · stored as SHA-256</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Email tokens</td>
+                <td class="px-4 py-2.5 font-mono text-xs">
+                  SHA-256 · expire in 24 h (verification) / 1 h (reset)
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Connection</td>
+                <td class="px-4 py-2.5 font-mono text-xs">HTTPS / TLS at all times</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Session cookies</td>
+                <td class="px-4 py-2.5 font-mono text-xs">HTTPOnly · Secure · SameSite=Strict</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Access token (JWT)</td>
+                <td class="px-4 py-2.5 font-mono text-xs">
+                  Expires in 15 minutes · automatic rotation
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">4. Third-Party Services</h2>
+        <div class="rounded-lg border border-border dark:border-dark-border overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr
+                class="bg-paper2 dark:bg-dark-surface border-b border-border dark:border-dark-border"
+              >
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Service
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Purpose
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Policy
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              class="font-body text-muted dark:text-dark-muted divide-y divide-border dark:divide-dark-border"
+            >
+              <tr>
+                <td class="px-4 py-2.5">Google Analytics 4</td>
+                <td class="px-4 py-2.5">Anonymous usage analytics</td>
+                <td class="px-4 py-2.5">
+                  <a
+                    href="https://policies.google.com/privacy"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-accent hover:underline underline-offset-2 font-mono text-xs"
+                    >View →</a
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Google OAuth 2.0</td>
+                <td class="px-4 py-2.5">Sign in with Google</td>
+                <td class="px-4 py-2.5">
+                  <a
+                    href="https://policies.google.com/privacy"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-accent hover:underline underline-offset-2 font-mono text-xs"
+                    >View →</a
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Ionos (1&amp;1)</td>
+                <td class="px-4 py-2.5">VPS hosting + domain</td>
+                <td class="px-4 py-2.5">
+                  <a
+                    href="https://www.ionos.es/terminos-condiciones/privacidad/"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-accent hover:underline underline-offset-2 font-mono text-xs"
+                    >View →</a
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">5. Data Retention</h2>
+        <div class="rounded-lg border border-border dark:border-dark-border overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr
+                class="bg-paper2 dark:bg-dark-surface border-b border-border dark:border-dark-border"
+              >
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Data
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-xs text-ink dark:text-dark-ink">
+                  Retention period
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              class="font-body text-muted dark:text-dark-muted divide-y divide-border dark:divide-dark-border"
+            >
+              <tr>
+                <td class="px-4 py-2.5">User account</td>
+                <td class="px-4 py-2.5">Until you delete it</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Calculation history</td>
+                <td class="px-4 py-2.5">Until you delete it</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Session tokens</td>
+                <td class="px-4 py-2.5">30 days from last use</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Audit logs</td>
+                <td class="px-4 py-2.5">Up to 90 days</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2.5">Google Analytics data</td>
+                <td class="px-4 py-2.5">14 months (Google default)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">6. Your Rights</h2>
+        <ul class="flex flex-col gap-2">
+          @for (
+            item of [
+              ['Access', 'request a copy of the data we hold about you.'],
+              ['Rectification', 'correct inaccurate information in your account.'],
+              ['Deletion', 'delete your account and all associated data via Settings → Profile.'],
+              ['Portability', 'export your calculation history.'],
+            ];
+            track $index
+          ) {
+            <li
+              class="flex items-start gap-3 font-body text-sm text-muted dark:text-dark-muted leading-relaxed"
+            >
+              <span class="text-accent mt-0.5 shrink-0">→</span>
+              <span
+                ><strong class="text-ink dark:text-dark-ink">{{ item[0] }}</strong> —
+                {{ item[1] }}</span
+              >
+            </li>
+          }
+        </ul>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          To exercise these rights, write to
+          <a
+            href="mailto:contact@fouriersolver.com"
+            class="text-accent hover:underline underline-offset-2"
+          >
+            contact&#64;fouriersolver.com </a
+          >.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">7. Children</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          The service is not directed at children under 13. If you are a parent and believe your
+          child has provided personal data, contact us and we will delete it immediately.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">8. Changes to This Policy</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          We will notify significant changes by posting the new version on this page and updating
+          the "Last updated" date. Continued use of the service after changes implies acceptance.
+        </p>
+      </section>
+
+      <section class="pt-6 border-t border-border dark:border-dark-border flex flex-col gap-2">
+        <h2 class="font-display text-xl text-ink dark:text-dark-ink">Contact</h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted">
+          <span class="font-mono">fouriersolver.com</span> · Developed by Sebastián Morales Palacios
+        </p>
+        <a
+          href="mailto:contact@fouriersolver.com"
+          class="font-mono text-sm text-accent hover:underline underline-offset-2"
+        >
+          contact&#64;fouriersolver.com
+        </a>
+        <div class="flex gap-4 mt-2">
+          <a
+            [routerLink]="'/' + lang() + '/legal/terms'"
+            class="font-mono text-xs text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:underline underline-offset-2 transition-colors"
+          >
+            Terms of Use →
+          </a>
+        </div>
+      </section>
+    }
+  </main>
+
+  <app-footer />
+</div>

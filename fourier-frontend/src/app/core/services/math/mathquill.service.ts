@@ -126,10 +126,13 @@ export class MathquillService {
       autoCommands: 'pi theta sqrt sum int',
       autoOperatorNames:
         'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
-        'sinh cosh tanh sech csch coth asinh acosh atanh log ln exp abs ' +
-        'sen tg senh ctg arcsin arccos arctan ' +
+        'arcsin arccos arctan arccot arcsec arccsc ' +
+        'sinh cosh tanh coth sech csch asinh acosh atanh acoth asech acsch ' +
+        'log ln exp abs ' +
+        'sen tg senh ctg ' +
         'gamma factorial ' +
-        'delta sgn rect',
+        'delta sgn rect tri sinc ' +
+        'erf erfc Si Ci Shi Chi Ei',
     };
     // On mobile viewports, replace MathQuill's hidden textarea with a non-editable
     // span so the native OS keyboard never appears. Input is handled exclusively

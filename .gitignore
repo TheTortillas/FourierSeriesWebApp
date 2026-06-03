@@ -51,4 +51,10 @@ node_modules/
 # Local working notes (non-versioned)
 PLOTTER_EVAL.md
 FOURIER_TABLES.md
+CANVAS_CLEANUP.md
+deploy.sh
+PARSEVAL_PLAN.md
+**/*_PLAN.md
+**/*_EVAL.md
+**/*_CLEANUP.md
 .claude/

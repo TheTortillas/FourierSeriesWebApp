@@ -112,4 +112,20 @@ export const config = {
       .split(",")
       .map((o) => o.trim()),
   },
+  ipBlocklist: {
+    // TTL del cache en memoria del middleware (ms). Default: 60 s.
+    cacheTtlMs: parseInt(optionalEnv("IP_BLOCKLIST_CACHE_TTL_MS", "60000")),
+    // Intervalo entre ejecuciones del worker (ms). Default: 5 min.
+    autoBlockerIntervalMs: parseInt(
+      optionalEnv("IP_BLOCKER_INTERVAL_MS", "300000"),
+    ),
+    // Nivel 1: ráfaga corta
+    shortWindowMin: parseInt(optionalEnv("IP_BLOCKER_SHORT_WINDOW_MIN", "15")),
+    shortThreshold: parseInt(optionalEnv("IP_BLOCKER_SHORT_THRESHOLD", "200")),
+    shortBanHours: parseInt(optionalEnv("IP_BLOCKER_SHORT_BAN_HOURS", "6")),
+    // Nivel 2: abuso sostenido
+    longWindowMin: parseInt(optionalEnv("IP_BLOCKER_LONG_WINDOW_MIN", "60")),
+    longThreshold: parseInt(optionalEnv("IP_BLOCKER_LONG_THRESHOLD", "500")),
+    longBanHours: parseInt(optionalEnv("IP_BLOCKER_LONG_BAN_HOURS", "48")),
+  },
 } as const;

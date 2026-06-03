@@ -1,0 +1,290 @@
+================================= HWEI =================================
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "1",
+      "from": "-((1)/(2))",
+      "to": "((1)/(2))"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "(2*sin(w/2))/w",
+    "realPart": "(2*sin(w/2))/w",
+    "imagPart": "0"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "%e^((-t))",
+      "from": "0",
+      "to": "inf"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "1/(%i*w+1)",
+    "realPart": "1/(w^2+1)",
+    "imagPart": "-(w/(w^2+1))"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "%e^((-t))*u(t)",
+      "from": "minf",
+      "to": "inf"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "1/(%i*w+1)",
+    "realPart": "1/(w^2+1)",
+    "imagPart": "-(w/(w^2+1))"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "%e^((-t))*u(t)",
+      "from": "0",
+      "to": "inf"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "1/(%i*w+1)",
+    "realPart": "1/(w^2+1)",
+    "imagPart": "-(w/(w^2+1))"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "0",
+      "from": "minf",
+      "to": "0"
+    },
+    {
+      "expression": "%e^(-t)",
+      "from": "0",
+      "to": "inf"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "1/(%i*w+1)",
+    "realPart": "1/(w^2+1)",
+    "imagPart": "-(w/(w^2+1))"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "((sin(a*t))/(%pi*t))",
+      "from": "minf",
+      "to": "inf"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "u(w+a)-u(w-a)",
+    "realPart": "u(w+a)-u(w-a)",
+    "imagPart": "0"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "IFT",
+  "convention": "engineering",
+  "intVar": "w",
+  "transVar": "t",
+  "segments": [
+    {
+      "expression": "1/(a+%i*w)",
+      "from": "minf",
+      "to": "inf"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "fCombined": "%e^-(a*t)*u(t)",
+    "fPositive": "%e^-(a*t)*u(t)",
+    "fNegative": "%e^-(a*t)*u(t)",
+    "fOutUForm": "%e^-(a*t)*(u(t)^2+u(-t)*u(t))"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "1",
+      "from": "-1",
+      "to": "1"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "(2*sin(w))/w",
+    "realPart": "(2*sin(w))/w",
+    "imagPart": "0"
+  }
+}   
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "%e^(-a*abs(t))",
+      "from": "minf",
+      "to": "inf"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "(2*a)/(w^2+a^2)",
+    "realPart": "(2*a)/(w^2+a^2)",
+    "imagPart": "0"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "((1)/(a^2+t^2))",
+      "from": "minf",
+      "to": "inf"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "(%pi*%e^-(a*abs(w)))/a",
+    "realPart": "(%pi*%e^-(a*abs(w)))/a",
+    "imagPart": "0"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "((A)/(T))",
+      "from": "-T",
+      "to": "0"
+    },
+    {
+      "expression": "-((A)/(T))",
+      "from": "0",
+      "to": "T"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "-((2*%i*A*cos(T*w)-2*%i*A)/(T*w))",
+    "realPart": "0",
+    "imagPart": "-((2*A*cos(T*w)-2*A)/(T*w))"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "((A*(t+T))/(T))",
+      "from": "-T",
+      "to": "0"
+    },
+    {
+      "expression": "((A*(-t+T))/(T))",
+      "from": "0",
+      "to": "T"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "-((2*A*cos(T*w)-2*A)/(T*w^2))",
+    "realPart": "-((2*A*cos(T*w)-2*A)/(T*w^2))",
+    "imagPart": "0"
+  }
+}
+
+{
+  "id": "XX00",
+  "type": "FT",
+  "convention": "engineering",
+  "intVar": "t",
+  "transVar": "w",
+  "segments": [
+    {
+      "expression": "A",
+      "from": "minf",
+      "to": "inf"
+    }
+  ],
+  "expected": {
+    "exists": true,
+    "F": "2*%pi*A*delta(w)",
+    "realPart": "2*%pi*A*delta(w)",
+    "imagPart": "0"
+  }
+}

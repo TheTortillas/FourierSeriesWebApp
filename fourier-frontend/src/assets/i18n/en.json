@@ -47,9 +47,29 @@
     "footerText": "Mathematical analysis tool",
     "more": "More options",
     "about": "About",
+    "privacy": "Privacy",
+    "terms": "Terms of Use",
     "betaBanner": {
       "message": "You're using the free beta — there will always be a free version. Some advanced features may require an account in the future.",
       "dismiss": "Dismiss beta notice"
+    },
+    "grapher": "Grapher"
+  },
+  "grapher": {
+    "addExpression": "+ Add expression",
+    "changeColor": "Change color",
+    "show": "Show",
+    "hide": "Hide",
+    "remove": "Remove",
+    "emptyHint": "Type an expression to get started",
+    "xLabel": "x",
+    "yLabel": "y",
+    "settings": {
+      "markers": "Markers",
+      "showRoots": "Roots (function-axis)",
+      "showIntersections": "Intersections (function-function)",
+      "xAxis": "X-axis format",
+      "zoom": "Initial zoom"
     }
   },
   "home": {
@@ -134,11 +154,22 @@
     "tabCoefficients": "Coefficients",
     "tabTerms": "Terms",
     "tabSpectrum": "Spectrum",
-    "tabValidation": "Validation"
+    "tabValidation": "Validation",
+    "tabParseval": "Parseval"
   },
   "resultPanel": {
     "sine": "Sine",
     "cosine": "Cosine",
+    "parsevalHeader": "Parseval identity for this Fourier series",
+    "parsevalUnavailable": "No Parseval identity available for this function.",
+    "parsevalSimplified": "Simplified",
+    "parsevalFormal": "Formal",
+    "parsevalFormalNote": "Analytic form: without applying declare(n, integer). Singularities in the formula are removable; the sum is valid from n=1.",
+    "parsevalSingularNote": "sum split at singular point(s); each excluded value was evaluated by limit.",
+    "parsevalUnilateral": "n ≥ 1",
+    "parsevalBilateral": "n ≠ 0",
+    "parsevalBilateralNote": "Bilateral form: n ranges over all non-zero integers (ℤ∖{0}). Equivalent to the unilateral form by symmetry |cₙ|² = |c₋ₙ|².",
+    "parsevalBilateralSingularNote": "Bilateral form; singular pairs n = ±k each contribute 2·Vₖ by symmetry.",
     "fourierSeries": "Fourier Series",
     "indeterminateCoeffLabel": " * indeterminate coefficient (0/0); evaluated by limit",
     "indeterminateCoeffTooltip": "This coefficient is indeterminate in the form 0/0. The value shown is obtained by evaluating the limit of the coefficient as n approaches the current value.",
@@ -148,11 +179,15 @@
     "bnValue": "bₙ (value)",
     "cnExpression": "cₙ (expression)",
     "cMnExpression": "c₋ₙ (expression)",
-    "noSingularities": "No singularities detected in the function. All coefficients are determinate.",
-    "noSingularitiesInDomain": "No singularities detected in the integration domain.",
+    "noSingularities": "Integrable function",
+    "noSingularitiesInDomain": "No non-integrable singularities detected in the domain.",
+    "indeterminateCoeffSection": "Indeterminate Coefficients",
+    "indeterminateCoeffFound": "The following terms have coefficients in 0/0 form from the general formula. Their values are obtained by evaluating the limit and are finite.",
+    "noIndeterminate": "All evaluated coefficients are determinate.",
     "singularitiesDetected": "Singularities detected",
     "point": "Point",
     "type": "Type",
+    "coefficient": "Coefficient",
     "noInfoAvailable": "No validation information available.",
     "selectAllHarmonics": "Select all visible harmonics",
     "includeHarmonic": "Include harmonic n={{ n }}",
@@ -163,7 +198,11 @@
       "asintotica": "Asymptotic",
       "esencial": "Essential",
       "fuera_de_dominio": "Out of domain"
-    }
+    },
+    "seriesStandard": "Standard",
+    "seriesFactored": "Factored",
+    "notationIntegral": "Si/Ei",
+    "notationGamma": "Γ"
   },
   "share": {
     "title": "Share link",
@@ -432,7 +471,9 @@
       "submitting": "Creating account...",
       "successTitle": "Account created!",
       "successMessage": "We sent you a verification email. Check your inbox and confirm your email to get started.",
-      "goToLogin": "Go to log in"
+      "goToLogin": "Go to log in",
+      "legalNotice": "By signing up you agree to our",
+      "legalAnd": "and our"
     },
     "forgotPassword": {
       "title": "Reset password",
@@ -503,7 +544,14 @@
     "confirmNewPassword": "Confirm new password",
     "savePassword": "Change password",
     "savingPassword": "Saving…",
-    "googleNoPassword": "Your account uses Google sign-in — password change is not available."
+    "googleNoPassword": "Your account uses Google sign-in — password change is not available.",
+    "dangerZone": "Danger zone",
+    "deleteAccount": "Delete account",
+    "deleteAccountDesc": "This action is permanent. Your account, history, and favorites will be deleted.",
+    "deleteAccountBtn": "Delete account",
+    "deleteAccountConfirm": "Are you sure? This action cannot be undone. Your account and all your data will be permanently deleted.",
+    "deleting": "Deleting…",
+    "confirmDelete": "Yes, delete my account"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -513,28 +561,29 @@
     "emailNotVerified": "Please verify your email before making calculations.",
     "weeklyLimitReached": "Weekly limit reached. Your quota resets on {{ date }}.",
     "tooManyRequests": "Too many requests. Please try again in a moment.",
-    "tooManyRequestsMinutes": "Too many requests. Please try again in {{ minutes }} minutes."
+    "tooManyRequestsMinutes": "Too many requests. Please try again in {{ minutes }} minutes.",
+    "emailRecentlyDeleted": "This address was used in an account deleted this week. You can register again when the new week begins."
   },
   "seo": {
     "home": {
-      "title": "Fourier Series and Transform Calculator",
-      "description": "Symbolic Fourier series and transform calculator. Exact coefficients, real-time graphs and support for piecewise functions."
+      "title": "Fourier Transform Calculator — Series, IFT and DFT",
+      "description": "Free online Fourier transform calculator. Compute the Fourier transform, inverse Fourier transform, Fourier series, and DFT symbolically. Exact coefficients, real-time graphs and piecewise function support."
     },
     "calculator": {
-      "title": "Fourier Series Calculator",
-      "description": "Calculate trigonometric, complex and half-range Fourier series with exact symbolic coefficients and interactive graphical reconstruction."
+      "title": "Fourier Series Calculator with Interactive Graph",
+      "description": "Calculate trigonometric, complex, and half-range Fourier series with exact symbolic coefficients. Animated graphical reconstruction, Parseval identity, and support for discontinuous piecewise functions."
     },
     "transforms": {
-      "title": "Continuous Fourier Transform Calculator",
-      "description": "Calculate the continuous Fourier transform and its inverse symbolically. Visualize the amplitude and phase spectrum in real time."
+      "title": "Fourier Transform Calculator — Direct and Inverse",
+      "description": "Calculate the Fourier transform and inverse Fourier transform symbolically. Visualize amplitude and phase spectrum in real time. Supports piecewise functions, complex inputs, and all standard conventions."
     },
     "dft": {
-      "title": "DFT — Discrete Fourier Transform Calculator",
-      "description": "Calculate the DFT with amplitude and phase spectrum visualization and signal reconstruction via epicycles."
+      "title": "DFT Calculator — Discrete Fourier Transform with Epicycles",
+      "description": "Calculate the DFT and FFT with amplitude and phase spectrum visualization. Reconstruct signals with animated epicycles. Perfect for signal processing and frequency analysis."
     },
     "about": {
-      "title": "About",
-      "description": "Discover everything Fourier Web Calculator can do: Fourier series, continuous and discrete transforms, epicycles, math keyboard and more."
+      "title": "About Fourier Web Calculator",
+      "description": "Fourier Web Calculator: free tool for computing continuous Fourier transforms, inverse transforms, Fourier series, DFT and epicycles. Exact symbolic results with real-time visualization."
     }
   },
   "dev": {
@@ -727,13 +776,14 @@
       "f7": "Export results as image, LaTeX code, CSV or Maxima script",
       "f8": "Share your result with a unique permanent link",
       "f9": "Apply symbolic simplifications to the resulting series expressions",
-      "f10": "Supports free parameters (e.g. a·x, sin(n·t)) — vary them with interactive sliders after computing"
+      "f10": "Supports free parameters (e.g. a·x, sin(n·t)) — vary them with interactive sliders after computing",
+      "f11": "Parseval's identity associated with the series: get the exact symbolic relation between the function's energy and the sum of squared coefficients"
     },
     "transforms": {
       "title": "Continuous Transforms",
       "desc": "Compute exact symbolic transforms of piecewise signals, including special functions.",
       "f1": "Bilateral continuous Fourier transform (ℱ) and its inverse (ℱ⁻¹)",
-      "f3": "Piecewise input supporting u(·), sgn(·), rect(·), δ(·)",
+      "f3": "Piecewise input supporting u(·), sgn(·), rect(·), tri(·), δ(·)",
       "f4": "Exact symbolic results via Maxima CAS",
       "f5": "Interactive graphs of the original function and its transform",
       "f6": "Export and share results",
@@ -745,13 +795,14 @@
       "title": "Discrete Fourier Transform (DFT)",
       "desc": "Analyze signals numerically with the DFT, visualize the spectrum and watch the epicycles animation.",
       "f1": "Three input modes: function sampling, manual data entry and epicycles",
-      "f2": "Function mode: numeric sampling of piecewise functions (u, sgn, rect supported)",
+      "f2": "Function mode: numeric sampling of piecewise functions (u, sgn, rect, tri supported)",
       "f3": "Manual mode: enter any number of samples by hand",
-      "f4": "Epicycles: animated DFT visualized as rotating complex vectors",
+      "f4": "Epicycles mode: watch the DFT come to life as rotating complex vectors that trace any closed figure",
       "f5": "Spectrum: amplitude |X[k]| and phase ∠X[k] charts",
       "f6": "fftShift to center negative frequencies",
       "f7": "IDFT signal reconstruction from DFT coefficients",
-      "f8": "Export each chart independently and share results"
+      "f8": "Export each chart independently and share results",
+      "f9": "Draw any shape by hand on the canvas and see it reconstructed as a Fourier epicycle animation in real time"
     },
     "input": {
       "title": "Math Input",
@@ -759,7 +810,7 @@
       "f1": "Interactive LaTeX editor powered by MathQuill",
       "f2": "Desktop toolbar with operators, functions, Greek letters and constants",
       "f3": "Mobile touchscreen keyboard: numeric, trig, f(x), full QWERTY + shift, Greek letters",
-      "f4": "Supported functions: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), n!, Γ(·)"
+      "f4": "Supported functions: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), tri(·), n!, Γ(·)"
     },
     "account": {
       "title": "Accounts & History",
@@ -777,6 +828,63 @@
       "f3": "Fully bilingual: Spanish and English",
       "f4": "Responsive design — works on desktop and mobile"
     },
-    "cta": "Start exploring"
+    "cta": "Start exploring",
+    "fns": {
+      "title": "Supported special functions",
+      "intro": "Beyond standard trigonometric and hyperbolic functions, the calculator recognises these signal-analysis functions in symbolic input, numeric evaluation and Fourier transforms.",
+      "ftLabel": "Fourier transform",
+      "u": {
+        "name": "Unit step",
+        "notation": "u(t)",
+        "aka": "Heaviside function",
+        "def": "Equals 1 for t ≥ 0 and 0 for t < 0. Models the abrupt switch-on of a signal: multiply by u(t) to activate a function from t = 0, or by u(t − a) to delay it to t = a.",
+        "latex": "u(t) = \\begin{cases} 1 & t \\ge 0 \\\\ 0 & t < 0 \\end{cases}",
+        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}"
+      },
+      "sgn": {
+        "name": "Sign function",
+        "notation": "sgn(t)",
+        "aka": "Signum function",
+        "def": "Returns +1 for t > 0, −1 for t < 0 and 0 at the origin. Related to the step by sgn(t) = 2u(t) − 1. Appears in the Hilbert transform and in the analysis of causal signals.",
+        "latex": "\\operatorname{sgn}(t) = \\begin{cases} 1 & t > 0 \\\\ 0 & t = 0 \\\\ -1 & t < 0 \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{sgn}(t)\\} = \\dfrac{2}{i\\omega}"
+      },
+      "delta": {
+        "name": "Dirac delta",
+        "notation": "δ(t)",
+        "aka": "Unit impulse",
+        "def": "A unit-area distribution concentrated at t = 0. Sifting property: ∫ f(t) δ(t − a) dt = f(a). Identity element of convolution and the cornerstone of LTI system theory.",
+        "latex": "\\int_{-\\infty}^{\\infty} \\delta(t)\\,dt = 1",
+        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1"
+      },
+      "rect": {
+        "name": "Rectangular pulse",
+        "notation": "rect(t)",
+        "aka": "Gate function",
+        "def": "Equals 1 for |t| < ½, ½ at the edges and 0 outside. Use rect(t/T) for a pulse of width T, or rect((t − t₀)/T) to shift it in time.",
+        "latex": "\\operatorname{rect}(t) = \\begin{cases} 1 & |t| < \\tfrac{1}{2} \\\\ \\tfrac{1}{2} & |t| = \\tfrac{1}{2} \\\\ 0 & |t| > \\tfrac{1}{2} \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{rect}(t/T)\\} = T\\,\\operatorname{sinc}\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
+      },
+      "tri": {
+        "name": "Triangular pulse",
+        "notation": "tri(t)",
+        "aka": "Hat function",
+        "def": "A pyramid of base 2 and height 1 — the normalised self-convolution of rect. Use tri(t/T) to scale the base to 2T. Its transform is sinc², making it useful for spectral window design.",
+        "latex": "\\operatorname{tri}(t) = \\begin{cases} 1 - |t| & |t| < 1 \\\\ 0 & |t| \\ge 1 \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{tri}(t/T)\\} = T\\,\\operatorname{sinc}^2\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
+      },
+      "sinc": {
+        "name": "Sinc function",
+        "notation": "sinc(t)",
+        "aka": "Cardinal sine",
+        "def": "Defined as sin(t)/t (unnormalised sinc). Arises naturally as the transform of rect and as the frequency response of the ideal low-pass filter. By continuity, sinc(0) = 1.",
+        "latex": "\\operatorname{sinc}(t) = \\frac{\\sin t}{t}",
+        "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
+      }
+    }
+  },
+  "simplify": {
+    "nInteger": "n ∈ ℤ",
+    "toHyperbolic": "→ Hyperbolic"
   }
 }
