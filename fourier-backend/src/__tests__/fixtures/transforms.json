@@ -7947,6 +7947,166 @@
     }
   },
   {
+    "id": "TP01",
+    "type": "ft",
+    "description": "FT tri(t)² → 4(ω-sin ω)/ω³",
+    "input": {
+      "segments": [
+        {
+          "expression": "tri(t)^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(4*(w-sin(w)))/w^3"
+    }
+  },
+  {
+    "id": "TP02",
+    "type": "ft",
+    "description": "FT tri(t)³ → 2(3ω²+6cos ω-6)/ω⁴",
+    "input": {
+      "segments": [
+        {
+          "expression": "tri(t)^3",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(2*(6*cos(w)+3*w^2-6))/w^4"
+    }
+  },
+  {
+    "id": "TP03",
+    "type": "ft",
+    "description": "FT tri(t)⁴ → 8(ω³+6sin ω-6ω)/ω⁵",
+    "input": {
+      "segments": [
+        {
+          "expression": "tri(t)^4",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(8*(6*sin(w)+w^3-6*w))/w^5"
+    }
+  },
+  {
+    "id": "TP04",
+    "type": "ft",
+    "description": "FT 2·tri(t)² → 8(ω-sin ω)/ω³ — escalado",
+    "input": {
+      "segments": [
+        {
+          "expression": "2*tri(t)^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(8*(w-sin(w)))/w^3"
+    }
+  },
+  {
+    "id": "ITP01",
+    "type": "ift",
+    "description": "IFT tri(ω)² → 2(t-sin t)/(π·t³)",
+    "input": {
+      "segments": [
+        {
+          "expression": "tri(w)^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(2*(t-sin(t)))/(%pi*t^3)"
+    }
+  },
+  {
+    "id": "ITP02",
+    "type": "ift",
+    "description": "IFT tri(ω)³ → (3t²+6cos t-6)/(π·t⁴)",
+    "input": {
+      "segments": [
+        {
+          "expression": "tri(w)^3",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(6*cos(t)+3*t^2-6)/(%pi*t^4)"
+    }
+  },
+  {
+    "id": "ITP03",
+    "type": "ift",
+    "description": "IFT tri(ω)⁴ → 4(t³+6sin t-6t)/(π·t⁵)",
+    "input": {
+      "segments": [
+        {
+          "expression": "tri(w)^4",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(4*(6*sin(t)+t^3-6*t))/(%pi*t^5)"
+    }
+  },
+  {
+    "id": "ITP04",
+    "type": "ift",
+    "description": "IFT 3·tri(ω)² → 6(t-sin t)/(π·t³) — escalado",
+    "input": {
+      "segments": [
+        {
+          "expression": "3*tri(w)^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(6*(t-sin(t)))/(%pi*t^3)"
+    }
+  },
+  {
     "id": "ISP01",
     "type": "ift",
     "description": "IFT sinc(ω)² → tri(t/2)/2  — dual de SC01",
