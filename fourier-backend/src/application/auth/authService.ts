@@ -412,6 +412,10 @@ export class AuthService {
     const newHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
     await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, input.userId]);
 
+    // Revoke all refresh tokens so any other active session is invalidated immediately.
+    // The caller's current access token (15 min TTL) will expire on its own.
+    await this.tokenRepo.revokeAllUserTokens(input.userId);
+
     await this.auditRepo.log({
       userId: input.userId,
       action: "password_change",
