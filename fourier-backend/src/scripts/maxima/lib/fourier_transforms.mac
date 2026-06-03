@@ -462,45 +462,76 @@ FT_match_sinc(expr, t_var) := block(
     res
 )$
 
-/* Detect k*sinc(a*t+b)^2. Returns [k, a, b] or false.
-   Mirrors FT_match_sinc but matches sinc(...)^2 instead of sinc(...). */
-FT_match_sinc2(expr, t_var) := block(
-    [e, sinc2_part, coef, res, sinc_arg, aa, bb, base, expn],
+/* Detect k*sinc(a*t+b)^n for integer n >= 2. Returns [k, a, b, n] or false.
+   Handles bare sinc(...)^n and k*sinc(...)^n forms. */
+FT_match_sinc_pow(expr, t_var) := block(
+    [e, sinc_part, nn, coef, res, sinc_arg, aa, bb, base, expn],
     e: expand(expr),
     res: false,
     if not atom(e) then (
-        /* bare sinc(...)^2 */
+        /* bare sinc(...)^n */
         if is(op(e) = "^") then (
             base: part(e, 1),
             expn: part(e, 2),
-            if not atom(base) and is(op(base) = 'sinc) and is(expn = 2) then (
+            if not atom(base) and is(op(base) = 'sinc) and
+               integerp(expn) and is(expn >= 2) then (
                 sinc_arg: part(base, 1),
                 aa: ratsimp(diff(sinc_arg, t_var)),
                 bb: ratsimp(subst(t_var=0, sinc_arg)),
                 if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
-                    res: [1, aa, bb]
+                    res: [1, aa, bb, expn]
             )
         )
-        /* k * sinc(...)^2 */
+        /* k * sinc(...)^n */
         else if is(op(e) = "*") then (
-            sinc2_part: false,
+            sinc_part: false,
+            nn: false,
             coef: 1,
             for s in args(e) do (
                 if not atom(s) and is(op(s) = "^") and
-                   not atom(part(s,1)) and is(op(part(s,1)) = 'sinc) and is(part(s,2) = 2)
-                then sinc2_part: part(s, 1)
+                   not atom(part(s,1)) and is(op(part(s,1)) = 'sinc) and
+                   integerp(part(s,2)) and is(part(s,2) >= 2)
+                then (sinc_part: part(s,1), nn: part(s,2))
                 else coef: coef * s
             ),
-            if is(sinc2_part # false) and freeof(t_var, coef) then (
-                sinc_arg: part(sinc2_part, 1),
+            if is(sinc_part # false) and freeof(t_var, coef) then (
+                sinc_arg: part(sinc_part, 1),
                 aa: ratsimp(diff(sinc_arg, t_var)),
                 bb: ratsimp(subst(t_var=0, sinc_arg)),
                 if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
-                    res: [coef, aa, bb]
+                    res: [coef, aa, bb, nn]
             )
         )
     ),
     res
+)$
+
+/* Build FT[sinc(a*t+b)^n](w) using the closed-form B-spline formula:
+   FT[sinc^n(at)](w) = (π / (2^n*(n-1)!)) *
+       Σ_{k=0}^{n} C(n,k)*(-1)^k*(n-2k-w/a)^(n-1)*sgn(n-2k-w/a)
+   Special case n=2 returns the compact tri form instead of the sgn sum.
+   Time-shift e^{-i*w*t0} applied when b≠0 (t0 = -b/a). */
+FT_sincpow_formula(aa, bb, nn, w_var) := block(
+    [t0, wu, coeff, total, k, binom_k, arg, result],
+    t0: ratsimp(-bb / aa),
+    /* n=2 special case: sinc²(at+b) → (π/|a|)*tri(w/(2a))*e^{-iwt0} */
+    if is(nn = 2) then (
+        result: %pi / abs(aa) * tri(w_var / (2 * aa)),
+        if not equal(t0, 0) then result: result * exp(-%i * w_var * t0),
+        return(result)
+    ),
+    /* General case n≥3: B-spline sgn sum */
+    wu: w_var / aa,
+    coeff: %pi / (2^nn * (nn-1)!),
+    total: 0,
+    for k: 0 thru nn do (
+        binom_k: nn! / (k! * (nn-k)!),
+        arg: nn - 2*k - wu,
+        total: total + binom_k * (-1)^k * arg^(nn-1) * sgn(arg)
+    ),
+    result: coeff / abs(aa) * total,
+    if not equal(t0, 0) then result: result * exp(-%i * w_var * t0),
+    result
 )$
 
 /* ════════════════════════════════════════════════════════════════════
@@ -1237,23 +1268,21 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
-    /* ── k*sinc(a*t+b)² -> k*(π/|a|)*tri(ω/(2a)) * exp(-i*ω*t0)  (t0=-b/a) ──
-       FT[sinc²(at)](ω) = (π/|a|)*tri(ω/(2a)).
-       Dual of sinc→rect via the autocorrelation theorem. */
+    /* ── k*sinc(a*t+b)^n (n≥2) — closed-form B-spline via sgn sums ──
+       FT[sinc^n(at)](w) = (π/(2^n*(n-1)!)) * Σ C(n,k)*(-1)^k*(n-2k-w/a)^(n-1)*sgn(n-2k-w/a)
+       Special case n=2 recovers the tri result. Includes time-shift for b≠0. */
     if is(res = false) then block(
-        [_s2m, _s2k, _s2a, _s2b, _s2t0, _raw_s2],
-        _s2m: FT_match_sinc2(e, t_var),
-        if is(_s2m # false) then (
-            _s2k: _s2m[1],
-            _s2a: _s2m[2],
-            _s2b: _s2m[3],
-            _s2t0: ratsimp(-_s2b / _s2a),
-            _raw_s2: _s2k * %pi / abs(_s2a) * tri(w_var / (2 * _s2a)),
-            if not equal(ratsimp(_s2t0), 0) then
-                _raw_s2: _raw_s2 * exp(-%i * w_var * _s2t0),
-            res: [_raw_s2,
-                  concat("k*sinc²(a*t+b)->(k*π/|a|)*tri(w/(2a))*exp(-iwt0), t0=",
-                         string(_s2t0))]
+        [_spm, _spk, _spa, _spb, _spn, _raw_sp],
+        _spm: FT_match_sinc_pow(e, t_var),
+        if is(_spm # false) then (
+            _spk: _spm[1],
+            _spa: _spm[2],
+            _spb: _spm[3],
+            _spn: _spm[4],
+            _raw_sp: _spk * FT_sincpow_formula(_spa, _spb, _spn, w_var),
+            res: [_raw_sp,
+                  concat("k*sinc^n(a*t+b) B-spline formula, n=", string(_spn),
+                         ", a=", string(_spa), ", t0=", string(ratsimp(-_spb/_spa)))]
         )
     ),
 
