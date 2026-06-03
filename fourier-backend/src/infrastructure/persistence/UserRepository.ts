@@ -240,16 +240,16 @@ export class UserRepository implements IUserRepository {
 
   async getWeeklyCount(userId: string): Promise<number> {
     const weekStart = this._currentWeekStart().toISOString().split("T")[0];
-    const result = await db.query<{ count: number }>(
+    const result = await db.query<{ count: string }>(
       `SELECT CASE
-         WHEN week_start < $2 THEN 0
+         WHEN week_start < $2::date THEN 0
          ELSE count
        END AS count
        FROM user_calculation_counters
        WHERE user_id = $1`,
       [userId, weekStart],
     );
-    return result.rows[0]?.count ?? 0;
+    return parseInt(result.rows[0]?.count ?? "0", 10);
   }
 
   async incrementWeeklyCount(userId: string): Promise<void> {
@@ -274,16 +274,16 @@ export class UserRepository implements IUserRepository {
 
   async getAnonymousWeeklyCount(ip: string): Promise<number> {
     const weekStart = this._currentWeekStart().toISOString().split("T")[0];
-    const result = await db.query<{ count: number }>(
+    const result = await db.query<{ count: string }>(
       `SELECT CASE
-         WHEN week_start < $2 THEN 0
+         WHEN week_start < $2::date THEN 0
          ELSE count
        END AS count
        FROM anonymous_calculation_counters
        WHERE ip_address = $1`,
       [ip, weekStart],
     );
-    return result.rows[0]?.count ?? 0;
+    return parseInt(result.rows[0]?.count ?? "0", 10);
   }
 
   async incrementAnonymousCount(ip: string): Promise<void> {
