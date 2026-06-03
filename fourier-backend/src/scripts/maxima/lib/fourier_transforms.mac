@@ -4194,12 +4194,83 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
    que la integral converja.
    ════════════════════════════════════════════════════════════════════ */
 
+/* FT_is_periodic_nondecaying: true when expr is periodic in t_var and has
+   no decaying envelope — meaning FT on (-inf,inf) does not exist as an
+   ordinary function (only as a distribution).
+
+   Periodic = contains sin or cos with a t_var-dependent argument, OR
+   abs of such a function.
+
+   Non-decaying = the denominator of the expression is free of t_var
+   (ruling out sin(bt)/(a+t^n) style functions) AND there is no explicit
+   exp(-a*t) factor with a > 0.
+
+   This check is intentionally conservative: if in doubt, we return false
+   and let the integrator try (it will fail, but safely). */
+FT_is_periodic_nondecaying(expr, t_var) := block(
+    [_e, _numer, _denom, _has_trig, _trig_uses_t,
+     _has_decay, _facs, _f, _base, _exparg, _coeff, _sgn],
+    _e: expr,
+    /* Extract numerator and denominator */
+    _numer: if not atom(_e) and is(op(_e) = "/") then part(_e, 1) else _e,
+    _denom: if not atom(_e) and is(op(_e) = "/") then part(_e, 2) else 1,
+    /* If denominator depends on t_var, the function decays → not periodic-nondecaying */
+    if not freeof(t_var, _denom) then return(false),
+    /* If expression contains u(...), the support is restricted → FT may exist */
+    if not freeof('u, _e) then return(false),
+    /* Check for trig content in numerator */
+    _has_trig: not freeof('sin, _numer) or not freeof('cos, _numer),
+    if not _has_trig then return(false),
+    /* Verify trig argument actually depends on t_var */
+    _trig_uses_t: false,
+    if not atom(_numer) then
+        for _sub in args(expand(_numer)) do (
+            if not atom(_sub) and
+               (is(op(_sub) = 'sin) or is(op(_sub) = 'cos) or
+                (is(op(_sub) = 'abs) and not atom(first(args(_sub))) and
+                 (is(op(first(args(_sub))) = 'sin) or is(op(first(args(_sub))) = 'cos)))) and
+               not freeof(t_var, _sub) then
+                _trig_uses_t: true
+        ),
+    if not _trig_uses_t then return(false),
+    /* Check for exponential decay: e^{-a*t} or e^{-a*abs(t)} with a > 0.
+       All vars declared at block level to avoid scope issues with return(). */
+    _has_decay: false,
+    _facs: if not atom(_numer) and is(op(_numer) = "*") then args(_numer) else [_numer],
+    for _f in _facs while not _has_decay do (
+        if not atom(_f) and is(op(_f) = "^") then (
+            _base: part(_f, 1),
+            _exparg: part(_f, 2),
+            if is(_base = %e) and not freeof(t_var, _exparg) then (
+                /* e^{-a*t}: exparg/t_var is a negative constant */
+                _coeff: errcatch(ratsimp(_exparg / t_var)),
+                if _coeff # [] and freeof(t_var, first(_coeff)) then (
+                    _sgn: errcatch(is(first(_coeff) < 0)),
+                    if _sgn # [] and first(_sgn) = true then _has_decay: true
+                ),
+                /* e^{-a*abs(t)}: exparg/abs(t_var) is a negative constant */
+                if not _has_decay and not freeof('abs, _exparg) then (
+                    _coeff: errcatch(ratsimp(_exparg / abs(t_var))),
+                    if _coeff # [] and freeof(t_var, first(_coeff)) then (
+                        _sgn: errcatch(is(first(_coeff) < 0)),
+                        if _sgn # [] and first(_sgn) = true then _has_decay: true
+                    )
+                )
+            )
+        )
+    ),
+    if _has_decay then return(false),
+    true
+)$
+
 FT(FUNC_INPUT, t_var, w_var) := block(
     [n_orig, expanded, pieces, F_acum, F,
      F_real, F_imag, exists, had_error, pattern, done,
      trozo, f_i, ai, bi, contrib, free_params,
      _ft_reserved, _input_params],
 
+    exists: false,
+    done: false,
     declare(w_var, real),
     _ft_reserved: [t_var, w_var],
 
@@ -4228,7 +4299,17 @@ FT(FUNC_INPUT, t_var, w_var) := block(
                     F      : pattern[1],
                     F_real : if freeof(%i, F) then F else ratsimp(realpart(F)),
                     F_imag : if freeof(%i, F) then 0 else ratsimp(imagpart(F)),
+                    exists : true,
                     done   : true
+                ) else (
+                    /* Pattern lookup failed. If the function is periodic and
+                       non-decaying, its FT does not exist as an ordinary function
+                       and integrate() would hang asking interactive sign questions.
+                       Mark as non-existent immediately. */
+                    if FT_is_periodic_nondecaying(tr[1], t_var) then (
+                        F: false, F_real: false, F_imag: false,
+                        exists: false, done: true
+                    )
                 )
             )
         )
@@ -4252,6 +4333,7 @@ FT(FUNC_INPUT, t_var, w_var) := block(
                     F      : pattern[1],
                     F_real : if freeof(%i, F) then F else ratsimp(realpart(F)),
                     F_imag : if freeof(%i, F) then 0 else ratsimp(imagpart(F)),
+                    exists : true,
                     done   : true
                 )
             )
@@ -4522,7 +4604,7 @@ FT(FUNC_INPUT, t_var, w_var) := block(
         free_params: listify(setify(append(_fp_result, _fp_input)))
     ),
 
-    [F, F_real, F_imag, if done then true else exists, free_params]
+    [F, F_real, F_imag, if done then exists else exists, free_params]
 )$
 
 /* ════════════════════════════════════════════════════════════════════
