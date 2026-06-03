@@ -7713,6 +7713,46 @@
     },
     "expected": { "exists": true, "F": "3*%pi*tri(w/4)/2" }
   },
+  {
+    "id": "SC03",
+    "type": "ft",
+    "description": "FT sinc(t)³ — B-spline orden 3",
+    "input": {
+      "segments": [{ "expression": "sinc(t)^3", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+  {
+    "id": "SC04",
+    "type": "ft",
+    "description": "FT sinc(t)⁴ — B-spline orden 4",
+    "input": {
+      "segments": [{ "expression": "sinc(t)^4", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+  {
+    "id": "SC05",
+    "type": "ft",
+    "description": "FT sinc(t)⁵ — B-spline orden 5",
+    "input": {
+      "segments": [{ "expression": "sinc(t)^5", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+  {
+    "id": "SC06",
+    "type": "ft",
+    "description": "FT 2·sinc(t)³ — escalado, B-spline orden 3",
+    "input": {
+      "segments": [{ "expression": "2*sinc(t)^3", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
 
   {
     "id": "TS01",
