@@ -1153,3 +1153,99 @@ Lo mismo aplica a $\sin(t)$, $\cos(t)$, $|\sin(\pi t)|$, $|\cos(t)|$, y cualquie
 - Se activa **solo si el pattern lookup ya falló** (las TF con deltas como $\cos(t) \to \pi[\delta(\omega-1)+\delta(\omega+1)]$ las maneja el lookup sin llegar aquí)
 - Condiciones de decaimiento reconocidas: denominador con $t$, factor $e^{-at}$, factor $e^{-a|t|}$, presencia de $u(t)$ (soporte restringido)
 - Retorna `false` conservadoramente si hay duda → el integrador intenta y falla limpiamente
+
+## 28. Normalización $(\sin(bt)/t)^n$ → $\text{sinc}^n$ antes del lookup
+
+### El problema
+
+Cuando el usuario escribe $(sin(\pi t)/\pi t)^2$ o $(\sin(bt)/t)^n$, Maxima lo ve tras `expand` como $\sin(bt)^n / (dt)^n$ — una fracción de potencias, no como $\text{sinc}$. El lookup fallaba (timeout o `exists: false`) porque los matchers de `sinc` no reconocen esa forma.
+
+### Solución: preprocesador `FT_sinpow_to_sinc`
+
+Detecta $k \cdot \sin(bt+c)^n / (dt+e)^n$ con $n \ge 2$ cuando el argumento del seno es proporcional al denominador ($b/d = c/e$), y lo reescribe como $k(b/d)^n \cdot \text{sinc}(bt+c)^n$ antes de pasar a los matchers.
+
+**Restricción $n \ge 2$**: el caso $n=1$ tiene su propio matcher `sin(at)/(\pi t) \to u(\omega+a)-u(\omega-a)$ que devuelve la forma canónica de escalón unitario; interceptarlo aquí cambiaría el resultado a `rect`.
+
+### Cobertura tras el preprocesador
+
+| Entrada | Reescritura | Resultado |
+|---|---|---|
+| $(\sin t / t)^2$ | $\text{sinc}(t)^2$ | $\pi \cdot \text{tri}(\omega/2)$ |
+| $(\sin(\pi t)/\pi t)^2$ | $\text{sinc}(\pi t)^2$ | $\text{tri}(\omega/(2\pi))$ |
+| $3(\sin t / t)^2$ | $3\,\text{sinc}(t)^2$ | $3\pi \cdot \text{tri}(\omega/2)$ |
+| $(\sin t / t)^3$ | $\text{sinc}(t)^3$ | B-spline orden 3 |
+
+El preprocesador se aplica al inicio de **ambos** `FT_pattern_lookup` e `IFT_pattern_lookup`, cubriendo también el caso inverso: $(\sin(\omega)/\omega)^n$ en frecuencia.
+
+---
+
+## 29. IFT de potencias de sinc — dual de la B-spline
+
+### Fórmula
+
+$$\mathcal{F}^{-1}\{\text{sinc}(\omega)^n\}(t) = \frac{1}{2\pi} \cdot \text{FT}[\text{sinc}^n](t)$$
+
+donde $\text{FT}[\text{sinc}^n]$ es la fórmula B-spline de la sección 26 evaluada en $t$.
+
+Para $n=2$ con $a$ general:
+
+$$\mathcal{F}^{-1}\{k\,\text{sinc}(a\omega)^2\}(t) = \frac{k}{2|a|}\,\text{tri}\!\left(\frac{t}{2a}\right)$$
+
+Para $n \ge 3$: suma con $\text{sgn}$ de la fórmula B-spline.
+
+### Tabla verificada
+
+| Entrada $F(\omega)$ | $\mathcal{F}^{-1}\{F\}(t)$ |
+|---|---|
+| $\text{sinc}(\omega)^2$ | $\text{tri}(t/2)/2$ |
+| $\text{sinc}(2\omega)^2$ | $\text{tri}(t/4)/4$ |
+| $k\,\text{sinc}(\omega)^n\;(n\ge3)$ | B-spline en $t$ (fórmula sgn) |
+| $\sin(\omega)^2/\omega^2$ | $\text{tri}(t/2)/2$ (vía preprocesador) |
+| $3\sin(\omega)^2/\omega^2$ | $3\,\text{tri}(t/2)/2$ |
+
+### Implementación
+
+`IFT_pattern_lookup` — nuevo bloque con `FT_match_sinc_pow` + `FT_sincpow_formula(a, 0, n, t_var)` escalado por $1/(2\pi)$. Desplazamiento en frecuencia $\omega_0 = -b/a$ genera modulación $e^{i\omega_0 t}$.
+
+---
+
+## 30. Potencias de tri — tabla de fórmulas cerradas $n=2..4$
+
+### Por qué no hay fórmula general tipo B-spline
+
+$\text{FT}[\text{sinc}^n]$ produce sumas con $\text{sgn}$ porque la B-spline tiene soporte compacto y la integral se evalúa por diferencias finitas. $\text{tri}(t)^n$ también tiene soporte compacto $[-1,1]$, pero la integral produce polinomios trigonométricos que **alternan entre sin y cos** con cada $n$ — no hay una suma uniforme tipo B-spline. Cada caso requiere su propia forma cerrada.
+
+### Fórmulas FT verificadas
+
+Sea $u = \omega/a$ la variable normalizada. Para $k \cdot \text{tri}(at+b)^n$, el resultado es $k \cdot R_n(u) \cdot e^{-i\omega t_0}/a$ con $t_0 = -b/a$:
+
+| $n$ | $R_n(u) \cdot a$ | Tipo |
+|---|---|---|
+| 2 | $4(u - \sin u)/u^3$ | sin |
+| 3 | $2(3u^2 + 6\cos u - 6)/u^4$ | cos |
+| 4 | $8(u^3 + 6\sin u - 6u)/u^5$ | sin |
+
+**Patrón de paridad:** $n$ par → sin, $n$ impar → cos. Esto refleja que $\text{tri}^n$ es par, su FT es real, y el tipo trigonométrico alterna por la integración por partes iterada.
+
+### Fórmulas IFT verificadas
+
+Por la dualidad ($\text{tri}$ es par, soporte en $[-1,1]$):
+
+$$\mathcal{F}^{-1}\{\text{tri}(\omega)^n\}(t) = \frac{1}{2\pi}\,\text{FT}[\text{tri}^n]\big|_{\omega \to t}$$
+
+| $n$ | $\mathcal{F}^{-1}\{\text{tri}(\omega)^n\}(t)$ |
+|---|---|
+| 2 | $2(t - \sin t)/(\pi t^3)$ |
+| 3 | $(3t^2 + 6\cos t - 6)/(\pi t^4)$ |
+| 4 | $4(t^3 + 6\sin t - 6t)/(\pi t^5)$ |
+
+### Extensión futura
+
+Si se encuentra una fórmula general, reemplazar el bloque `if/else` en `FT_tripow_formula` por la suma. La función acepta cualquier $n$ y retorna `false` para $n > 4$, haciendo el punto de extensión explícito.
+
+### Implementación
+
+- `FT_match_tri_pow(expr, t_var)` — detecta $k \cdot \text{tri}(at+b)^n$ para $n \ge 2$, devuelve `[k, a, b, n]`
+- `FT_tripow_formula(a, b, n, w_var)` — tabla $n=1..4$ con desplazamiento $e^{-i\omega t_0}$
+- Conectado en `FT_pattern_lookup` **antes** del matcher $n=1$ para que `tri^2` no caiga al handler lineal
+- Conectado en `IFT_pattern_lookup` con escala $1/(2\pi)$ y modulación $e^{i\omega_0 t}$

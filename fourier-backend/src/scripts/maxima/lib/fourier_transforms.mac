@@ -534,6 +534,79 @@ FT_sincpow_formula(aa, bb, nn, w_var) := block(
     result
 )$
 
+/* ── FT_match_tri_pow: detect k*tri(a*t+b)^n for integer n ≥ 2 ──
+   Returns [k, a, b, n] or false.  Same structure as FT_match_sinc_pow. */
+FT_match_tri_pow(expr, t_var) := block(
+    [e, tri_part, nn, coef, res, tri_arg, aa, bb, base, expn],
+    e: expand(expr),
+    res: false,
+    if not atom(e) then (
+        if is(op(e) = "^") then (
+            base: part(e, 1),
+            expn: part(e, 2),
+            if not atom(base) and is(op(base) = 'tri) and
+               integerp(expn) and is(expn >= 2) then (
+                tri_arg: part(base, 1),
+                aa: ratsimp(diff(tri_arg, t_var)),
+                bb: ratsimp(subst(t_var=0, tri_arg)),
+                if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                    res: [1, aa, bb, expn]
+            )
+        )
+        else if is(op(e) = "*") then (
+            tri_part: false,
+            nn: false,
+            coef: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = "^") and
+                   not atom(part(s,1)) and is(op(part(s,1)) = 'tri) and
+                   integerp(part(s,2)) and is(part(s,2) >= 2)
+                then (tri_part: part(s,1), nn: part(s,2))
+                else coef: coef * s
+            ),
+            if is(tri_part # false) and freeof(t_var, coef) then (
+                tri_arg: part(tri_part, 1),
+                aa: ratsimp(diff(tri_arg, t_var)),
+                bb: ratsimp(subst(t_var=0, tri_arg)),
+                if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                    res: [coef, aa, bb, nn]
+            )
+        )
+    ),
+    res
+)$
+
+/* ── FT_tripow_formula: FT[tri(a*t+b)^n](w) for n = 1..4 ──
+   Derived from direct integration; all verified analytically.
+   General form: P_n(w/a) / (a * w^{n+1}) * e^{-i*w*t0}
+   where t0 = -b/a and P_n alternates cos/sin.
+
+   n=1: 2(1-cos u)/u²         (u = w/a, full result: 2(1-cos(w/a))/(a·(w/a)²))
+   n=2: 4(u-sin u)/u³
+   n=3: 6(u²+2cos u-2)/u⁴    (= 2(3u²+6cos u-6)/u⁴ / 3·... wait, see below)
+   n=4: 8(u³+6sin u-6u)/u⁵
+
+   Normalised: let u = a*t+b evaluated at t with shift → simplest to build
+   directly in w with aa, bb.
+
+   If a future general formula is found, replace this block with it. */
+FT_tripow_formula(aa, bb, nn, w_var) := block(
+    [t0, wu, result],
+    if not member(nn, [1,2,3,4]) then return(false),
+    t0: ratsimp(-bb / aa),
+    wu: w_var / aa,     /* normalised frequency variable */
+    result: if is(nn = 1) then
+                2*(1 - cos(wu)) / (aa * wu^2)
+            else if is(nn = 2) then
+                4*(wu - sin(wu)) / (aa * wu^3)
+            else if is(nn = 3) then
+                2*(3*wu^2 + 6*cos(wu) - 6) / (aa * wu^4)
+            else /* n=4 */
+                8*(wu^3 + 6*sin(wu) - 6*wu) / (aa * wu^5),
+    if not equal(t0, 0) then result: result * exp(-%i * w_var * t0),
+    result
+)$
+
 /* ════════════════════════════════════════════════════════════════════
    BLOQUE 3 — Core: expand_abs, raw, simplify, exists
    ════════════════════════════════════════════════════════════════════ */
@@ -1420,6 +1493,25 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
             res: [_raw_sp,
                   concat("k*sinc^n(a*t+b) B-spline formula, n=", string(_spn),
                          ", a=", string(_spa), ", t0=", string(ratsimp(-_spb/_spa)))]
+        )
+    ),
+
+    /* ── k*tri(a*t+b)^n (n=2..4) — closed-form table ──
+       FT[tri(at)^n](w) = k * FT_tripow_formula(a, b, n, w).
+       Must run BEFORE the n=1 tri matcher below. */
+    if is(res = false) then block(
+        [_tpm, _tpk, _tpa, _tpb, _tpn, _raw_tp],
+        _tpm: FT_match_tri_pow(e, t_var),
+        if is(_tpm # false) then (
+            _tpk: _tpm[1],
+            _tpa: _tpm[2],
+            _tpb: _tpm[3],
+            _tpn: _tpm[4],
+            _raw_tp: errcatch(_tpk * FT_tripow_formula(_tpa, _tpb, _tpn, w_var)),
+            if _raw_tp # [] and first(_raw_tp) # false then
+                res: [first(_raw_tp),
+                      concat("k*tri^n(a*t+b) table formula, n=", string(_tpn),
+                             ", a=", string(_tpa), ", t0=", string(ratsimp(-_tpb/_tpa)))]
         )
     ),
 
@@ -4058,6 +4150,31 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             res: [_raw_sp_ift,
                   concat("k*sinc^n(a*w+b) IFT B-spline, n=", string(_spn),
                          ", a=", string(_spa), ", w0=", string(_spw0))]
+        )
+    ),
+
+    /* ── k*tri(a*w+b)^n (n=2..4) — IFT table formula (dual of FT case) ──
+       IFT[tri(w)^n](t) = (1/2π) * FT_tripow_formula(a, 0, n, t)
+       because IFT[F(w)](t) = (1/2π)*FT[F(-w)](t) and tri is even.
+       Frequency-shift w0=-b/a generates e^{i*w0*t} modulation. */
+    if is(res = false) then block(
+        [_tpm, _tpk, _tpa, _tpb, _tpn, _tpw0, _raw_tp_ift],
+        _tpm: FT_match_tri_pow(e, w_var),
+        if is(_tpm # false) then (
+            _tpk: _tpm[1],
+            _tpa: _tpm[2],
+            _tpb: _tpm[3],
+            _tpn: _tpm[4],
+            _tpw0: ratsimp(-_tpb / _tpa),
+            _raw_tp_ift: errcatch(_tpk / (2*%pi) * FT_tripow_formula(_tpa, 0, _tpn, t_var)),
+            if _raw_tp_ift # [] and first(_raw_tp_ift) # false then (
+                _raw_tp_ift: first(_raw_tp_ift),
+                if not equal(ratsimp(_tpw0), 0) then
+                    _raw_tp_ift: _raw_tp_ift * exp(%i * _tpw0 * t_var),
+                res: [_raw_tp_ift,
+                      concat("k*tri^n(a*w+b) IFT table, n=", string(_tpn),
+                             ", a=", string(_tpa), ", w0=", string(_tpw0))]
+            )
         )
     ),
 
