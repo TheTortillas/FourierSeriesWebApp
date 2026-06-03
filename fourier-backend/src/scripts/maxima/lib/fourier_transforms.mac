@@ -628,6 +628,40 @@ FT_abs_sample_point(ai, bi) := (
 /* Second-pass abs expansion for compound abs(g(intvar)).
    Finds zeros of g in each piece's interval, splits there, sign-fixes.
    Used as a fallback after the abs(intvar) direct substitution. */
+/* FT_trig_zeros: return zeros of sin(b*x+c) or cos(b*x+c) in open interval (lo, hi).
+   Roots are at x = (n*pi - c + phase) / b, where phase=0 for sin, pi/2 for cos.
+   Only works when b and c are free of x and b≠0. Returns [] otherwise so the
+   caller can fall back to solve(). Cap at 500 roots to stay finite. */
+FT_trig_zeros(g, x, lo, hi) := block(
+    [_op, _arg, _b, _c, _phase, _lo_n, _hi_n, _nn, _root, _ci, _zs],
+    if atom(g) then return([]),
+    _op: op(g),
+    if not (is(_op = 'sin) or is(_op = 'cos)) then return([]),
+    _arg: first(args(g)),
+    _b: ratsimp(diff(_arg, x)),
+    _c: ratsimp(subst(x=0, _arg)),
+    if not freeof(x, _b) or not freeof(x, _c) or equal(_b, 0) then return([]),
+    _phase: if is(_op = 'sin) then 0 else %pi/2,
+    /* roots at x = (n*pi - _c - _phase) / _b  (using cos(u)=0 ↔ u=pi/2+n*pi) */
+    /* equivalently sin(bt+c)=0 ↔ bt+c = n*pi ↔ t=(n*pi-c)/b */
+    _lo_n: errcatch(ceiling(float((lo * _b + _c + _phase) / %pi))),
+    _hi_n: errcatch(floor(float((hi * _b + _c + _phase) / %pi))),
+    if _lo_n = [] or _hi_n = [] then return([]),
+    _lo_n: first(_lo_n),  _hi_n: first(_hi_n),
+    if _hi_n - _lo_n > 500 then return([]),
+    _zs: [],
+    for _nn: _lo_n thru _hi_n do (
+        _root: errcatch(ratsimp((_nn * %pi - _c - _phase) / _b)),
+        if _root # [] then (
+            _root: first(_root),
+            _ci: errcatch(is(_root > lo) and is(_root < hi)),
+            if _ci # [] and first(_ci) = true then
+                _zs: append(_zs, [_root])
+        )
+    ),
+    _zs
+)$
+
 FT_expand_abs_inner(pieces, intvar) := block(
     [_res, _pc, _f, _a, _b, _g, _rzs, _zs, _pts, _n, _j,
      _lo, _hi, _tp, _gv, _sv, _fn, _z, _zv, _ir],
@@ -638,46 +672,44 @@ FT_expand_abs_inner(pieces, intvar) := block(
             _res: append(_res, [_pc])
         ) else (
             _g: FT_first_abs_arg(_f),
-            if _g = false then (
+            if _g = false then
                 _res: append(_res, [_pc])
-            ) else (
-                _rzs: errcatch(solve(_g = 0, intvar)),
-                if _rzs = [] then (
-                    _res: append(_res, [_pc])
-                ) else (
-                    _rzs: first(_rzs),
-                    _zs: [],
-                    for _z in _rzs do (
-                        _zv: errcatch(rhs(_z)),
-                        if _zv # [] then (
-                            _zv: first(_zv),
-                            if freeof(intvar, _zv) and freeof(%i, _zv) then (
-                                _ir: errcatch(is(_zv > _a) and is(_zv < _b)),
-                                if _ir # [] and first(_ir) = true then
-                                    _zs: append(_zs, [_zv])
+            else block(
+                /* Try analytic trig roots first; fall back to solve() for others */
+                _zs: FT_trig_zeros(_g, intvar, _a, _b),
+                if _zs = [] then (
+                    _rzs: errcatch(solve(_g = 0, intvar)),
+                    if _rzs # [] then
+                        for _z in first(_rzs) do (
+                            _zv: errcatch(rhs(_z)),
+                            if _zv # [] then (
+                                _zv: first(_zv),
+                                if freeof(intvar, _zv) and freeof(%i, _zv) then (
+                                    _ir: errcatch(is(_zv > _a) and is(_zv < _b)),
+                                    if _ir # [] and first(_ir) = true then
+                                        _zs: append(_zs, [_zv])
+                                )
                             )
                         )
-                    ),
-                    _pts: append([_a], _zs, [_b]),
-                    _n: length(_pts) - 1,
-                    for _j: 1 thru _n do (
-                        _lo: _pts[_j], _hi: _pts[_j + 1],
-                        _tp: FT_abs_sample_point(_lo, _hi),
-                        _gv: errcatch(ratsimp(subst(intvar = _tp, _g))),
-                        if _gv = [] then (
+                ),
+                _pts: append([_a], _zs, [_b]),
+                _n: length(_pts) - 1,
+                for _j: 1 thru _n do (
+                    _lo: _pts[_j], _hi: _pts[_j + 1],
+                    _tp: FT_abs_sample_point(_lo, _hi),
+                    _gv: errcatch(ratsimp(subst(intvar = _tp, _g))),
+                    if _gv = [] then
+                        _res: append(_res, [[_f, _lo, _hi]])
+                    else (
+                        _gv: first(_gv),
+                        if is(_gv > 0) then _sv: 1
+                        else if is(_gv < 0) then _sv: -1
+                        else _sv: 0,
+                        if _sv = 1 or _sv = -1 then (
+                            _fn: ratsimp(subst(abs(_g) = _sv * _g, _f)),
+                            _res: append(_res, [[_fn, _lo, _hi]])
+                        ) else
                             _res: append(_res, [[_f, _lo, _hi]])
-                        ) else (
-                            _gv: first(_gv),
-                            if is(_gv > 0) then _sv: 1
-                            else if is(_gv < 0) then _sv: -1
-                            else _sv: 0,
-                            if _sv = 1 or _sv = -1 then (
-                                _fn: ratsimp(subst(abs(_g) = _sv * _g, _f)),
-                                _res: append(_res, [[_fn, _lo, _hi]])
-                            ) else (
-                                _res: append(_res, [[_f, _lo, _hi]])
-                            )
-                        )
                     )
                 )
             )
