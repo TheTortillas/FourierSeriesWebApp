@@ -8,9 +8,7 @@ import type { IAuditRepository } from "../../domain/interfaces/repositories/IAud
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
-  sendRecoveryEmail,
 } from "../../infrastructure/email/emailService";
-import { db } from "../../infrastructure/database/db";
 
 const googleClient = new OAuth2Client(config.google.clientId);
 const BCRYPT_ROUNDS = 12;
@@ -338,10 +336,7 @@ export class AuthService {
     }
 
     await this.tokenRepo.markEmailTokenUsed(record.id);
-
-    await db.query(`UPDATE users SET email_verified = TRUE WHERE id = $1`, [
-      record.userId,
-    ]);
+    await this.userRepo.markEmailVerified(record.userId);
   }
 
   async forgotPassword(email: string, ipAddress?: string, lang?: string): Promise<void> {
@@ -377,11 +372,7 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
-
-    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [
-      passwordHash,
-      record.userId,
-    ]);
+    await this.userRepo.updatePassword(record.userId, passwordHash);
 
     await this.tokenRepo.markPasswordResetUsed(record.id);
     await this.tokenRepo.revokeAllUserTokens(record.userId);
@@ -410,7 +401,7 @@ export class AuthService {
     if (!valid) throw new Error("Current password is incorrect");
 
     const newHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
-    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, input.userId]);
+    await this.userRepo.updatePassword(input.userId, newHash);
 
     // Revoke all refresh tokens so any other active session is invalidated immediately.
     // The caller's current access token (15 min TTL) will expire on its own.
@@ -423,7 +414,7 @@ export class AuthService {
     });
   }
 
-  async resendVerification(email: string, ipAddress?: string, lang?: string): Promise<void> {
+  async resendVerification(email: string, _ipAddress?: string, lang?: string): Promise<void> {
     const user = await this.userRepo.findByEmail(email);
     if (!user || user.emailVerified) return;
 

@@ -432,6 +432,14 @@ export class UserRepository implements IUserRepository {
     };
   }
 
+  async markEmailVerified(userId: string): Promise<void> {
+    await db.query(`UPDATE users SET email_verified = TRUE WHERE id = $1`, [userId]);
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [passwordHash, userId]);
+  }
+
   private _currentWeekStart(): Date {
     const d = new Date();
     d.setHours(0, 0, 0, 0);

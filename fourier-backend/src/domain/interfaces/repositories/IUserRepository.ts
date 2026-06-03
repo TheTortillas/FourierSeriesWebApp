@@ -54,4 +54,6 @@ export interface IUserRepository {
   }): Promise<number>;
   activate(id: string): Promise<void>;
   getAdminStats(): Promise<{ total: number; premium: number; free: number; inactive: number }>;
+  markEmailVerified(userId: string): Promise<void>;
+  updatePassword(userId: string, passwordHash: string): Promise<void>;
 }
