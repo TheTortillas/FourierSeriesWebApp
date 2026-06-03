@@ -462,6 +462,47 @@ FT_match_sinc(expr, t_var) := block(
     res
 )$
 
+/* Detect k*sinc(a*t+b)^2. Returns [k, a, b] or false.
+   Mirrors FT_match_sinc but matches sinc(...)^2 instead of sinc(...). */
+FT_match_sinc2(expr, t_var) := block(
+    [e, sinc2_part, coef, res, sinc_arg, aa, bb, base, expn],
+    e: expand(expr),
+    res: false,
+    if not atom(e) then (
+        /* bare sinc(...)^2 */
+        if is(op(e) = "^") then (
+            base: part(e, 1),
+            expn: part(e, 2),
+            if not atom(base) and is(op(base) = 'sinc) and is(expn = 2) then (
+                sinc_arg: part(base, 1),
+                aa: ratsimp(diff(sinc_arg, t_var)),
+                bb: ratsimp(subst(t_var=0, sinc_arg)),
+                if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                    res: [1, aa, bb]
+            )
+        )
+        /* k * sinc(...)^2 */
+        else if is(op(e) = "*") then (
+            sinc2_part: false,
+            coef: 1,
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = "^") and
+                   not atom(part(s,1)) and is(op(part(s,1)) = 'sinc) and is(part(s,2) = 2)
+                then sinc2_part: part(s, 1)
+                else coef: coef * s
+            ),
+            if is(sinc2_part # false) and freeof(t_var, coef) then (
+                sinc_arg: part(sinc2_part, 1),
+                aa: ratsimp(diff(sinc_arg, t_var)),
+                bb: ratsimp(subst(t_var=0, sinc_arg)),
+                if freeof(t_var, aa) and freeof(t_var, bb) and not equal(aa, 0) then
+                    res: [coef, aa, bb]
+            )
+        )
+    ),
+    res
+)$
+
 /* ════════════════════════════════════════════════════════════════════
    BLOQUE 3 — Core: expand_abs, raw, simplify, exists
    ════════════════════════════════════════════════════════════════════ */
@@ -1193,6 +1234,26 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
             res: [_raw_sinc,
                   concat("k*sinc(a*t+b)->(k*pi/|a|)*rect(w/(2a))*exp(-iwt0), t0=",
                          string(_st0))]
+        )
+    ),
+
+    /* ── k*sinc(a*t+b)² -> k*(π/|a|)*tri(ω/(2a)) * exp(-i*ω*t0)  (t0=-b/a) ──
+       FT[sinc²(at)](ω) = (π/|a|)*tri(ω/(2a)).
+       Dual of sinc→rect via the autocorrelation theorem. */
+    if is(res = false) then block(
+        [_s2m, _s2k, _s2a, _s2b, _s2t0, _raw_s2],
+        _s2m: FT_match_sinc2(e, t_var),
+        if is(_s2m # false) then (
+            _s2k: _s2m[1],
+            _s2a: _s2m[2],
+            _s2b: _s2m[3],
+            _s2t0: ratsimp(-_s2b / _s2a),
+            _raw_s2: _s2k * %pi / abs(_s2a) * tri(w_var / (2 * _s2a)),
+            if not equal(ratsimp(_s2t0), 0) then
+                _raw_s2: _raw_s2 * exp(-%i * w_var * _s2t0),
+            res: [_raw_s2,
+                  concat("k*sinc²(a*t+b)->(k*π/|a|)*tri(w/(2a))*exp(-iwt0), t0=",
+                         string(_s2t0))]
         )
     ),
 
