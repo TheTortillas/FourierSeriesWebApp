@@ -76,7 +76,7 @@ authRouter.post(
         return;
       }
 
-      const result = await authService.register({
+      const { refreshToken, ...clientResult } = await authService.register({
         firstName,
         lastName,
         email,
@@ -85,8 +85,8 @@ authRouter.post(
         lang,
       });
 
-      setRefreshCookie(res, result.refreshToken);
-      res.status(201).json(result);
+      setRefreshCookie(res, refreshToken);
+      res.status(201).json(clientResult);
     } catch (err) {
       if (err instanceof Error && err.message === "Email already registered") {
         res.status(400).json({ error: err.message });
@@ -138,15 +138,15 @@ authRouter.post(
         return;
       }
 
-      const result = await authService.login({
+      const { refreshToken, ...clientResult } = await authService.login({
         email,
         password,
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
 
-      setRefreshCookie(res, result.refreshToken);
-      res.json(result);
+      setRefreshCookie(res, refreshToken);
+      res.json(clientResult);
     } catch (err) {
       if (
         err instanceof Error &&
@@ -194,14 +194,14 @@ authRouter.post(
         return;
       }
 
-      const result = await authService.loginWithGoogle({
+      const { refreshToken, ...clientResult } = await authService.loginWithGoogle({
         idToken,
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
 
-      setRefreshCookie(res, result.refreshToken);
-      res.json(result);
+      setRefreshCookie(res, refreshToken);
+      res.json(clientResult);
     } catch (err) {
       if (err instanceof Error && err.message === "Invalid Google token") {
         res.status(401).json({ error: err.message });
@@ -250,14 +250,14 @@ authRouter.post(
         return;
       }
 
-      const result = await authService.refresh({
+      const { refreshToken, ...clientResult } = await authService.refresh({
         refreshToken: token,
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
 
-      setRefreshCookie(res, result.refreshToken);
-      res.json(result);
+      setRefreshCookie(res, refreshToken);
+      res.json(clientResult);
     } catch (err) {
       if (err instanceof Error) {
         res.status(401).json({ error: err.message });
@@ -341,8 +341,8 @@ authRouter.get(
         res.status(401).json({ error: "User not found" });
         return;
       }
-      const { passwordHash: _, ...safeUser } = user;
-      res.json({ user: safeUser });
+      const { passwordHash, ...safeUser } = user;
+      res.json({ user: { ...safeUser, hasPassword: passwordHash !== null } });
     } catch (err) {
       next(err);
     }
@@ -619,8 +619,8 @@ authRouter.patch(
         res.status(404).json({ error: "User not found" });
         return;
       }
-      const { passwordHash: _, ...safeUser } = user;
-      res.json({ user: safeUser });
+      const { passwordHash, ...safeUser } = user;
+      res.json({ user: { ...safeUser, hasPassword: passwordHash !== null } });
     } catch (err) {
       next(err);
     }

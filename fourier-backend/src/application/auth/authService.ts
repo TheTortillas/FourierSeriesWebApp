@@ -15,9 +15,9 @@ import { db } from "../../infrastructure/database/db";
 const googleClient = new OAuth2Client(config.google.clientId);
 const BCRYPT_ROUNDS = 12;
 
+/** Shape sent to the client in the JSON response body. No tokens beyond the access token. */
 export interface AuthResult {
   accessToken: string;
-  refreshToken: string;
   user: {
     id: string;
     email: string;
@@ -27,6 +27,12 @@ export interface AuthResult {
     tier: "free" | "premium";
     emailVerified: boolean;
   };
+}
+
+/** Internal shape returned by auth methods — includes the refresh token so the router
+ *  can set it as an httpOnly cookie without ever putting it in the JSON body. */
+export interface AuthServiceResult extends AuthResult {
+  refreshToken: string;
 }
 
 export class AuthService {
@@ -44,7 +50,7 @@ export class AuthService {
     password: string;
     ipAddress?: string;
     lang?: string;
-  }): Promise<AuthResult> {
+  }): Promise<AuthServiceResult> {
     const existing = await this.userRepo.findByEmail(input.email);
 
     if (existing) {
@@ -117,7 +123,7 @@ export class AuthService {
     password: string;
     ipAddress?: string;
     userAgent?: string;
-  }): Promise<AuthResult> {
+  }): Promise<AuthServiceResult> {
     const user = await this.userRepo.findByEmail(input.email);
     if (!user || !user.passwordHash) {
       throw new Error("Invalid credentials");
@@ -159,7 +165,7 @@ export class AuthService {
     idToken: string;
     ipAddress?: string;
     userAgent?: string;
-  }): Promise<AuthResult> {
+  }): Promise<AuthServiceResult> {
     const ticket = await googleClient.verifyIdToken({
       idToken: input.idToken,
       audience: config.google.clientId,
@@ -238,7 +244,7 @@ export class AuthService {
     refreshToken: string;
     ipAddress?: string;
     userAgent?: string;
-  }): Promise<AuthResult> {
+  }): Promise<AuthServiceResult> {
     const tokenHash = this.tokenService.hashToken(input.refreshToken);
     const stored = await this.tokenRepo.findRefreshToken(tokenHash);
 
@@ -271,11 +277,7 @@ export class AuthService {
       newTokens.expiresAt,
     );
 
-    return this.buildAuthResult(
-      user,
-      newTokens.accessToken,
-      newTokens.refreshToken,
-    );
+    return this.buildAuthResult(user, newTokens.accessToken, newTokens.refreshToken);
   }
 
   async logout(input: {
@@ -301,7 +303,7 @@ export class AuthService {
     user: ReturnType<typeof Object.assign>,
     accessToken: string,
     refreshToken: string,
-  ): AuthResult {
+  ): AuthServiceResult {
     return {
       accessToken,
       refreshToken,
