@@ -178,9 +178,9 @@ export class TokenRepository implements ITokenRepository {
 
   async findPendingVerificationToken(
     userId: string,
-  ): Promise<{ expiresAt: Date } | null> {
+  ): Promise<{ expiresAt: Date; createdAt: Date } | null> {
     const result = await db.query(
-      `SELECT expires_at as "expiresAt"
+      `SELECT expires_at as "expiresAt", created_at as "createdAt"
      FROM user_email_tokens
      WHERE user_id = $1
        AND purpose = 'email_verification'

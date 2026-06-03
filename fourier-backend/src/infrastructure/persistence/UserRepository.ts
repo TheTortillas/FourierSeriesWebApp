@@ -239,28 +239,17 @@ export class UserRepository implements IUserRepository {
   }
 
   async getWeeklyCount(userId: string): Promise<number> {
-    const weekStart = new Date();
-    weekStart.setHours(0, 0, 0, 0);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-    const result = await db.query(
-      `INSERT INTO user_calculation_counters (user_id, week_start, count)
-     VALUES ($1, $2, 0)
-     ON CONFLICT (user_id) DO UPDATE
-       SET week_start = CASE
-         WHEN user_calculation_counters.week_start < $2
-         THEN $2
-         ELSE user_calculation_counters.week_start
-       END,
-       count = CASE
-         WHEN user_calculation_counters.week_start < $2
-         THEN 0
-         ELSE user_calculation_counters.count
-       END
-     RETURNING count, week_start`,
-      [userId, weekStart.toISOString().split("T")[0]],
+    const weekStart = this._currentWeekStart().toISOString().split("T")[0];
+    const result = await db.query<{ count: string }>(
+      `SELECT CASE
+         WHEN week_start < $2::date THEN 0
+         ELSE count
+       END AS count
+       FROM user_calculation_counters
+       WHERE user_id = $1`,
+      [userId, weekStart],
     );
-    return result.rows[0]?.count ?? 0;
+    return parseInt(result.rows[0]?.count ?? "0", 10);
   }
 
   async incrementWeeklyCount(userId: string): Promise<void> {
@@ -284,28 +273,17 @@ export class UserRepository implements IUserRepository {
   }
 
   async getAnonymousWeeklyCount(ip: string): Promise<number> {
-    const weekStart = new Date();
-    weekStart.setHours(0, 0, 0, 0);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-    const result = await db.query(
-      `INSERT INTO anonymous_calculation_counters (ip_address, week_start, count)
-     VALUES ($1, $2, 0)
-     ON CONFLICT (ip_address) DO UPDATE
-       SET week_start = CASE
-         WHEN anonymous_calculation_counters.week_start < $2
-         THEN $2
-         ELSE anonymous_calculation_counters.week_start
-       END,
-       count = CASE
-         WHEN anonymous_calculation_counters.week_start < $2
-         THEN 0
-         ELSE anonymous_calculation_counters.count
-       END
-     RETURNING count`,
-      [ip, weekStart.toISOString().split("T")[0]],
+    const weekStart = this._currentWeekStart().toISOString().split("T")[0];
+    const result = await db.query<{ count: string }>(
+      `SELECT CASE
+         WHEN week_start < $2::date THEN 0
+         ELSE count
+       END AS count
+       FROM anonymous_calculation_counters
+       WHERE ip_address = $1`,
+      [ip, weekStart],
     );
-    return result.rows[0]?.count ?? 0;
+    return parseInt(result.rows[0]?.count ?? "0", 10);
   }
 
   async incrementAnonymousCount(ip: string): Promise<void> {
@@ -403,7 +381,14 @@ export class UserRepository implements IUserRepository {
 
   async activate(id: string): Promise<void> {
     await db.query(
-      `UPDATE users SET is_active = TRUE, deleted_at = NULL WHERE id = $1`,
+      `UPDATE users SET is_active = TRUE WHERE id = $1 AND deleted_at IS NULL`,
+      [id],
+    );
+  }
+
+  async deactivate(id: string): Promise<void> {
+    await db.query(
+      `UPDATE users SET is_active = FALSE WHERE id = $1 AND deleted_at IS NULL`,
       [id],
     );
   }
@@ -430,6 +415,14 @@ export class UserRepository implements IUserRepository {
       free:     parseInt(row.free),
       inactive: parseInt(row.inactive),
     };
+  }
+
+  async markEmailVerified(userId: string): Promise<void> {
+    await db.query(`UPDATE users SET email_verified = TRUE WHERE id = $1`, [userId]);
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [passwordHash, userId]);
   }
 
   private _currentWeekStart(): Date {

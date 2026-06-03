@@ -76,7 +76,7 @@ authRouter.post(
         return;
       }
 
-      const result = await authService.register({
+      const { refreshToken, ...clientResult } = await authService.register({
         firstName,
         lastName,
         email,
@@ -85,8 +85,8 @@ authRouter.post(
         lang,
       });
 
-      setRefreshCookie(res, result.refreshToken);
-      res.status(201).json(result);
+      setRefreshCookie(res, refreshToken);
+      res.status(201).json(clientResult);
     } catch (err) {
       if (err instanceof Error && err.message === "Email already registered") {
         res.status(400).json({ error: err.message });
@@ -138,15 +138,15 @@ authRouter.post(
         return;
       }
 
-      const result = await authService.login({
+      const { refreshToken, ...clientResult } = await authService.login({
         email,
         password,
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
 
-      setRefreshCookie(res, result.refreshToken);
-      res.json(result);
+      setRefreshCookie(res, refreshToken);
+      res.json(clientResult);
     } catch (err) {
       if (
         err instanceof Error &&
@@ -194,14 +194,14 @@ authRouter.post(
         return;
       }
 
-      const result = await authService.loginWithGoogle({
+      const { refreshToken, ...clientResult } = await authService.loginWithGoogle({
         idToken,
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
 
-      setRefreshCookie(res, result.refreshToken);
-      res.json(result);
+      setRefreshCookie(res, refreshToken);
+      res.json(clientResult);
     } catch (err) {
       if (err instanceof Error && err.message === "Invalid Google token") {
         res.status(401).json({ error: err.message });
@@ -222,18 +222,12 @@ authRouter.post(
  *   post:
  *     summary: Renovar access token
  *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [refreshToken]
- *             properties:
- *               refreshToken: { type: string }
+ *     description: Requiere la cookie httpOnly `refreshToken` seteada en login/register.
  *     responses:
  *       200:
  *         description: Tokens renovados
+ *       400:
+ *         description: Cookie de refresh token ausente
  *       401:
  *         description: Refresh token inválido o expirado
  */
@@ -241,23 +235,21 @@ authRouter.post(
   "/refresh",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const token: string | undefined =
-        req.cookies?.[REFRESH_COOKIE] ??
-        (req.body as { refreshToken?: string }).refreshToken;
+      const token: string | undefined = req.cookies?.[REFRESH_COOKIE];
 
       if (!token) {
         res.status(400).json({ error: "refreshToken is required" });
         return;
       }
 
-      const result = await authService.refresh({
+      const { refreshToken, ...clientResult } = await authService.refresh({
         refreshToken: token,
         ipAddress: req.ip,
         userAgent: req.headers["user-agent"],
       });
 
-      setRefreshCookie(res, result.refreshToken);
-      res.json(result);
+      setRefreshCookie(res, refreshToken);
+      res.json(clientResult);
     } catch (err) {
       if (err instanceof Error) {
         res.status(401).json({ error: err.message });
@@ -276,27 +268,19 @@ authRouter.post(
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [refreshToken]
- *             properties:
- *               refreshToken: { type: string }
+ *     description: Requiere la cookie httpOnly `refreshToken` y un Bearer token válido.
  *     responses:
  *       200:
  *         description: Sesión cerrada
+ *       400:
+ *         description: Cookie de refresh token ausente
  */
 authRouter.post(
   "/logout",
   authenticate,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const token: string | undefined =
-        req.cookies?.[REFRESH_COOKIE] ??
-        (req.body as { refreshToken?: string }).refreshToken;
+      const token: string | undefined = req.cookies?.[REFRESH_COOKIE];
 
       if (!token) {
         res.status(400).json({ error: "refreshToken is required" });
@@ -341,8 +325,8 @@ authRouter.get(
         res.status(401).json({ error: "User not found" });
         return;
       }
-      const { passwordHash: _, ...safeUser } = user;
-      res.json({ user: safeUser });
+      const { passwordHash, ...safeUser } = user;
+      res.json({ user: { ...safeUser, hasPassword: passwordHash !== null } });
     } catch (err) {
       next(err);
     }
@@ -619,8 +603,8 @@ authRouter.patch(
         res.status(404).json({ error: "User not found" });
         return;
       }
-      const { passwordHash: _, ...safeUser } = user;
-      res.json({ user: safeUser });
+      const { passwordHash, ...safeUser } = user;
+      res.json({ user: { ...safeUser, hasPassword: passwordHash !== null } });
     } catch (err) {
       next(err);
     }

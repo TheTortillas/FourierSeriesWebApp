@@ -440,7 +440,7 @@ adminRouter.patch(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const id = req.params["id"] as string;
-      await userRepository.softDelete(id);
+      await userRepository.deactivate(id);
 
       await auditRepository.log({
         userId: req.user!.id,
