@@ -418,6 +418,12 @@ export class AuthService {
     const user = await this.userRepo.findByEmail(email);
     if (!user || user.emailVerified) return;
 
+    // Cooldown: silently skip if a token was sent within the last 5 minutes.
+    // Prevents cross-IP email spam against known unverified addresses.
+    const COOLDOWN_MS = 5 * 60 * 1000;
+    const recent = await this.tokenRepo.findPendingVerificationToken(user.id);
+    if (recent && Date.now() - recent.createdAt.getTime() < COOLDOWN_MS) return;
+
     const emailToken = this.tokenService.generateEmailToken();
     await this.tokenRepo.createEmailToken({
       userId: user.id,

@@ -222,18 +222,12 @@ authRouter.post(
  *   post:
  *     summary: Renovar access token
  *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [refreshToken]
- *             properties:
- *               refreshToken: { type: string }
+ *     description: Requiere la cookie httpOnly `refreshToken` seteada en login/register.
  *     responses:
  *       200:
  *         description: Tokens renovados
+ *       400:
+ *         description: Cookie de refresh token ausente
  *       401:
  *         description: Refresh token inválido o expirado
  */
@@ -241,9 +235,7 @@ authRouter.post(
   "/refresh",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const token: string | undefined =
-        req.cookies?.[REFRESH_COOKIE] ??
-        (req.body as { refreshToken?: string }).refreshToken;
+      const token: string | undefined = req.cookies?.[REFRESH_COOKIE];
 
       if (!token) {
         res.status(400).json({ error: "refreshToken is required" });
@@ -276,27 +268,19 @@ authRouter.post(
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [refreshToken]
- *             properties:
- *               refreshToken: { type: string }
+ *     description: Requiere la cookie httpOnly `refreshToken` y un Bearer token válido.
  *     responses:
  *       200:
  *         description: Sesión cerrada
+ *       400:
+ *         description: Cookie de refresh token ausente
  */
 authRouter.post(
   "/logout",
   authenticate,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const token: string | undefined =
-        req.cookies?.[REFRESH_COOKIE] ??
-        (req.body as { refreshToken?: string }).refreshToken;
+      const token: string | undefined = req.cookies?.[REFRESH_COOKIE];
 
       if (!token) {
         res.status(400).json({ error: "refreshToken is required" });

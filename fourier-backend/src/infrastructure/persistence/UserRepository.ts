@@ -239,26 +239,15 @@ export class UserRepository implements IUserRepository {
   }
 
   async getWeeklyCount(userId: string): Promise<number> {
-    const weekStart = new Date();
-    weekStart.setHours(0, 0, 0, 0);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-    const result = await db.query(
-      `INSERT INTO user_calculation_counters (user_id, week_start, count)
-     VALUES ($1, $2, 0)
-     ON CONFLICT (user_id) DO UPDATE
-       SET week_start = CASE
-         WHEN user_calculation_counters.week_start < $2
-         THEN $2
-         ELSE user_calculation_counters.week_start
-       END,
-       count = CASE
-         WHEN user_calculation_counters.week_start < $2
-         THEN 0
-         ELSE user_calculation_counters.count
-       END
-     RETURNING count, week_start`,
-      [userId, weekStart.toISOString().split("T")[0]],
+    const weekStart = this._currentWeekStart().toISOString().split("T")[0];
+    const result = await db.query<{ count: number }>(
+      `SELECT CASE
+         WHEN week_start < $2 THEN 0
+         ELSE count
+       END AS count
+       FROM user_calculation_counters
+       WHERE user_id = $1`,
+      [userId, weekStart],
     );
     return result.rows[0]?.count ?? 0;
   }
@@ -284,26 +273,15 @@ export class UserRepository implements IUserRepository {
   }
 
   async getAnonymousWeeklyCount(ip: string): Promise<number> {
-    const weekStart = new Date();
-    weekStart.setHours(0, 0, 0, 0);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-    const result = await db.query(
-      `INSERT INTO anonymous_calculation_counters (ip_address, week_start, count)
-     VALUES ($1, $2, 0)
-     ON CONFLICT (ip_address) DO UPDATE
-       SET week_start = CASE
-         WHEN anonymous_calculation_counters.week_start < $2
-         THEN $2
-         ELSE anonymous_calculation_counters.week_start
-       END,
-       count = CASE
-         WHEN anonymous_calculation_counters.week_start < $2
-         THEN 0
-         ELSE anonymous_calculation_counters.count
-       END
-     RETURNING count`,
-      [ip, weekStart.toISOString().split("T")[0]],
+    const weekStart = this._currentWeekStart().toISOString().split("T")[0];
+    const result = await db.query<{ count: number }>(
+      `SELECT CASE
+         WHEN week_start < $2 THEN 0
+         ELSE count
+       END AS count
+       FROM anonymous_calculation_counters
+       WHERE ip_address = $1`,
+      [ip, weekStart],
     );
     return result.rows[0]?.count ?? 0;
   }

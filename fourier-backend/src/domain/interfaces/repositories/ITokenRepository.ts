@@ -55,5 +55,5 @@ export interface ITokenRepository {
   markPasswordResetUsed(id: string): Promise<void>;
   findPendingVerificationToken(
     userId: string,
-  ): Promise<{ expiresAt: Date } | null>;
+  ): Promise<{ expiresAt: Date; createdAt: Date } | null>;
 }
