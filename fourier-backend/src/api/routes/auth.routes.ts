@@ -268,32 +268,24 @@ authRouter.post(
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
- *     description: Requiere la cookie httpOnly `refreshToken` y un Bearer token válido.
+ *     description: Requiere la cookie httpOnly `refreshToken`. No necesita Bearer token.
  *     responses:
  *       200:
- *         description: Sesión cerrada
- *       400:
- *         description: Cookie de refresh token ausente
+ *         description: Sesión cerrada (también si la cookie no existe o ya estaba revocada)
  */
 authRouter.post(
   "/logout",
-  authenticate,
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const token: string | undefined = req.cookies?.[REFRESH_COOKIE];
 
-      if (!token) {
-        res.status(400).json({ error: "refreshToken is required" });
-        return;
+      // Always clear the cookie. If there's no token the session is already gone.
+      clearRefreshCookie(res);
+
+      if (token) {
+        await authService.logout({ refreshToken: token, ipAddress: req.ip });
       }
 
-      await authService.logout({
-        refreshToken: token,
-        userId: req.user!.id,
-        ipAddress: req.ip,
-      });
-
-      clearRefreshCookie(res);
       res.json({ message: "Logged out successfully" });
     } catch (err) {
       next(err);

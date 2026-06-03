@@ -38,6 +38,8 @@ export interface IUserRepository {
   hardDeleteUnverified(id: string): Promise<void>;
   getWeeklyCount(userId: string): Promise<number>;
   incrementWeeklyCount(userId: string): Promise<void>;
+  tryIncrementWeeklyCount(userId: string, limit: number): Promise<{ allowed: boolean }>;
+  tryIncrementAnonymousCount(ip: string, limit: number): Promise<{ allowed: boolean }>;
   findAll(
     limit: number,
     offset: number,

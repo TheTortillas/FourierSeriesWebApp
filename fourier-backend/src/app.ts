@@ -97,7 +97,6 @@ export function createApp(): Application {
     trackRateLimitRequests("compute"),
     optionalAuth,
     requireVerified,
-    requireTierLimit,
     computeLimiter,
     simplifyRouter,
   );

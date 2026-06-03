@@ -280,7 +280,6 @@ export class AuthService {
 
   async logout(input: {
     refreshToken: string;
-    userId: string;
     ipAddress?: string;
   }): Promise<void> {
     const tokenHash = this.tokenService.hashToken(input.refreshToken);
@@ -288,13 +287,12 @@ export class AuthService {
 
     if (stored) {
       await this.tokenRepo.revokeFamily(stored.familyId);
+      await this.auditRepo.log({
+        userId: stored.userId,
+        action: "logout",
+        ipAddress: input.ipAddress,
+      });
     }
-
-    await this.auditRepo.log({
-      userId: input.userId,
-      action: "logout",
-      ipAddress: input.ipAddress,
-    });
   }
 
   private buildAuthResult(

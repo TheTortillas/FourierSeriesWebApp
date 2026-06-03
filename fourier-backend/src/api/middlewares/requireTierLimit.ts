@@ -3,6 +3,14 @@ import type { AuthenticatedRequest } from "./authenticate";
 import { userRepository } from "../../infrastructure/container";
 import { config } from "../../config/env";
 
+export interface QuotaRequest extends AuthenticatedRequest {
+  quota?: {
+    limit: number;
+    isAnonymous: boolean;
+    identifier: string; // userId or IP
+  };
+}
+
 function nextWeekStart(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -11,7 +19,7 @@ function nextWeekStart(): Date {
 }
 
 export async function requireTierLimit(
-  req: AuthenticatedRequest,
+  req: QuotaRequest,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
@@ -33,6 +41,7 @@ export async function requireTierLimit(
       return;
     }
 
+    req.quota = { limit, isAnonymous: true, identifier: ip };
     next();
     return;
   }
@@ -42,6 +51,7 @@ export async function requireTierLimit(
     tier === "premium" ? config.calcLimits.premium : config.calcLimits.free;
 
   if (limit === -1) {
+    req.quota = { limit: -1, isAnonymous: false, identifier: req.user.id };
     next();
     return;
   }
@@ -61,16 +71,19 @@ export async function requireTierLimit(
     return;
   }
 
+  req.quota = { limit, isAnonymous: false, identifier: req.user.id };
   next();
 }
 
-export async function incrementCalculationCount(
-  userIdOrIp: string,
-  isAnonymous = false,
-): Promise<void> {
-  if (isAnonymous) {
-    await userRepository.incrementAnonymousCount(userIdOrIp);
-  } else {
-    await userRepository.incrementWeeklyCount(userIdOrIp);
+export async function tryConsumeQuota(
+  req: QuotaRequest,
+): Promise<{ allowed: boolean }> {
+  const quota = req.quota;
+  if (!quota) return { allowed: true };
+  if (quota.limit === -1) return { allowed: true };
+
+  if (quota.isAnonymous) {
+    return userRepository.tryIncrementAnonymousCount(quota.identifier, quota.limit);
   }
+  return userRepository.tryIncrementWeeklyCount(quota.identifier, quota.limit);
 }
