@@ -403,7 +403,14 @@ export class UserRepository implements IUserRepository {
 
   async activate(id: string): Promise<void> {
     await db.query(
-      `UPDATE users SET is_active = TRUE, deleted_at = NULL WHERE id = $1`,
+      `UPDATE users SET is_active = TRUE WHERE id = $1 AND deleted_at IS NULL`,
+      [id],
+    );
+  }
+
+  async deactivate(id: string): Promise<void> {
+    await db.query(
+      `UPDATE users SET is_active = FALSE WHERE id = $1 AND deleted_at IS NULL`,
       [id],
     );
   }
