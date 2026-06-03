@@ -1025,6 +1025,105 @@ IFT_exists(expr) :=
     freeof('limit,            expr) and
     freeof('gamma_incomplete, expr)$
 
+/* FT_sinpow_to_sinc: rewrite k*(sin(b*t+c))^n / (d*t+e)^n → k/b^n * sinc(b*t+c)^n
+   when (d*t+e) is proportional to the argument of sin (d/b = e/c or e=0,c=0).
+   This allows FT_match_sinc and FT_match_sinc_pow to handle the common form
+   (sin(at)/t)^n = sinc(at)^n without calling integrate().
+   Returns the rewritten expression or false if pattern does not match. */
+FT_sinpow_to_sinc(expr, t_var) := block(
+    [_e, _num, _den, _sin_part, _sin_arg, _coef,
+     _den_base, _den_exp, _b, _c, _d, _e2, _ratio],
+    _e: expr,
+    /* Must be a ratio: num/den */
+    if atom(_e) or not is(op(_e) = "/") then return(false),
+    _num: part(_e, 1),
+    _den: part(_e, 2),
+    /* Den must be (linear in t)^n — factor to expose */
+    block([_fden],
+        _fden: errcatch(factor(_den)),
+        if _fden # [] then _den: first(_fden)
+    ),
+    /* Extract den = (d*t+e)^n or d*t+e (n=1).
+       Also handle expand'd form c^n*t^n (product of same-power factors)
+       by reconstructing (c*t)^n. */
+    if not atom(_den) and is(op(_den) = "^") then (
+        _den_base: part(_den, 1),
+        _den_exp:  part(_den, 2)
+    ) else if not atom(_den) and is(op(_den) = "*") then block(
+        /* Check if all factors share the same integer exponent n */
+        [_facs, _exp_candidate, _all_same, _bases],
+        _facs: args(_den),
+        _exp_candidate: false,
+        _all_same: true,
+        _bases: [],
+        for _ff in _facs do (
+            if not atom(_ff) and is(op(_ff) = "^") and integerp(part(_ff,2)) then (
+                if is(_exp_candidate = false)
+                then _exp_candidate: part(_ff, 2)
+                else if not is(_exp_candidate = part(_ff,2)) then _all_same: false,
+                _bases: append(_bases, [part(_ff,1)])
+            ) else (
+                /* bare factor: treat as factor^1 */
+                if is(_exp_candidate = false) then _exp_candidate: 1
+                else if not is(_exp_candidate = 1) then _all_same: false,
+                _bases: append(_bases, [_ff])
+            )
+        ),
+        if _all_same and is(_exp_candidate # false) and is(_exp_candidate >= 1) then (
+            _den_base: apply("*", _bases),
+            _den_exp:  _exp_candidate
+        ) else (
+            _den_base: _den,
+            _den_exp:  1
+        )
+    ) else (
+        _den_base: _den,
+        _den_exp:  1
+    ),
+    if not (integerp(_den_exp) and is(_den_exp >= 1)) then return(false),
+    _d: ratsimp(diff(_den_base, t_var)),
+    _e2: ratsimp(subst(t_var=0, _den_base)),
+    if not freeof(t_var, _d) or not freeof(t_var, _e2) or equal(_d, 0) then return(false),
+    /* Num must be k*sin(b*t+c)^n with the same n */
+    _sin_part: false,
+    _coef: 1,
+    block([_nn, _base2, _expn2],
+        _e: expand(_num),
+        if not atom(_e) and is(op(_e) = "^") then (
+            _base2: part(_e, 1),
+            _expn2: part(_e, 2),
+            if not atom(_base2) and is(op(_base2) = 'sin) and
+               integerp(_expn2) and is(_expn2 = _den_exp) then
+                _sin_part: _base2
+        ) else if not atom(_e) and is(op(_e) = "*") then (
+            for _s in args(_e) do (
+                if not atom(_s) and is(op(_s) = "^") and
+                   not atom(part(_s,1)) and is(op(part(_s,1)) = 'sin) and
+                   integerp(part(_s,2)) and is(part(_s,2) = _den_exp)
+                then _sin_part: part(_s,1)
+                else _coef: _coef * _s
+            )
+        ) else if not atom(_e) and is(op(_e) = 'sin) and is(_den_exp = 1) then (
+            _sin_part: _e, _coef: 1
+        )
+    ),
+    if is(_sin_part = false) or not freeof(t_var, _coef) then return(false),
+    /* sin arg must be proportional to den base: sin(b*t+c), den=(d*t+e) with b/d = c/e */
+    _sin_arg: first(args(_sin_part)),
+    _b: ratsimp(diff(_sin_arg, t_var)),
+    _c: ratsimp(subst(t_var=0, _sin_arg)),
+    if not freeof(t_var, _b) or not freeof(t_var, _c) or equal(_b, 0) then return(false),
+    /* Check proportionality: sin(b*t+c) / (d*t+e) = (b/d)*sinc(b*t+c)
+       requires b/d = c/e (same ratio), i.e. b*e = c*d */
+    _ratio: errcatch(ratsimp(_b * _e2 - _c * _d)),
+    if _ratio = [] or not equal(first(_ratio), 0) then return(false),
+    /* Only normalize for n≥2 — sin(at)/(π·t) (n=1) has its own dedicated matcher
+       that returns u(w+a)-u(w-a) instead of rect, which is the canonical form. */
+    if is(_den_exp < 2) then return(false),
+    /* Rewrite: k*(sin(bt+c))^n/(dt+e)^n = k*(b/d)^n * sinc(bt+c)^n */
+    _coef * (_b / _d)^_den_exp * sinc(_sin_arg)^_den_exp
+)$
+
 /* ════════════════════════════════════════════════════════════════════
    BLOQUE 4 — Pattern lookups
    ════════════════════════════════════════════════════════════════════ */
@@ -1053,6 +1152,12 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
     %piexact: %pi,
     e: expand(f_expr),
     res: false,
+
+    /* ── (sin(bt+c))^n / (dt+e)^n → sinc(bt+c)^n — normalize before matchers ── */
+    block([_sinc_rewrite],
+        _sinc_rewrite: FT_sinpow_to_sinc(e, t_var),
+        if is(_sinc_rewrite # false) then e: expand(_sinc_rewrite)
+    ),
 
     /* ── delta(t-a) ── */
     dm: FT_match_delta(e, t_var),
@@ -2541,6 +2646,15 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
     e:  expand(F_expr),
     er: rat(F_expr),
 
+    /* ── (sin(bw+c))^n / (dw+e)^n → sinc(bw+c)^n — normalize before matchers ── */
+    block([_sinc_rewrite],
+        _sinc_rewrite: FT_sinpow_to_sinc(e, w_var),
+        if is(_sinc_rewrite # false) then (
+            e: expand(_sinc_rewrite),
+            er: rat(_sinc_rewrite)
+        )
+    ),
+
     /* ── 1 -> delta(t) ── */
     if is(res = false) then (
         if e = 1 then res: [delta(t_var), "1 -> delta(t)"]
@@ -3921,6 +4035,29 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             res: [_raw_sinc_ift,
                   concat("k*sinc(a*w+b)->k/(2|a|)*rect(t/(2a))*exp(iw0t), w0=",
                          string(_sw0))]
+        )
+    ),
+
+    /* ── k*sinc(a*w+b)^n (n≥2) — IFT via B-spline formula (dual of FT case) ──
+       IFT[sinc^n(aw)](t) = (1/2π) * FT_sincpow_formula(a, 0, n, t)
+       = 1/(2π) * (π/(2^n*(n-1)!)) * Σ C(n,k)*(-1)^k*(n-2k-t/a)^(n-1)*sgn(n-2k-t/a) / |a|
+       Frequency-shift w0=-b/a generates e^{i*w0*t} modulation. */
+    if is(res = false) then block(
+        [_spm, _spk, _spa, _spb, _spn, _spw0, _raw_sp_ift],
+        _spm: FT_match_sinc_pow(e, w_var),
+        if is(_spm # false) then (
+            _spk: _spm[1],
+            _spa: _spm[2],
+            _spb: _spm[3],
+            _spn: _spm[4],
+            _spw0: ratsimp(-_spb / _spa),
+            /* IFT formula: (1/2π) * FT_sincpow_formula evaluated at t_var */
+            _raw_sp_ift: _spk / (2 * %pi) * FT_sincpow_formula(_spa, 0, _spn, t_var),
+            if not equal(ratsimp(_spw0), 0) then
+                _raw_sp_ift: _raw_sp_ift * exp(%i * _spw0 * t_var),
+            res: [_raw_sp_ift,
+                  concat("k*sinc^n(a*w+b) IFT B-spline, n=", string(_spn),
+                         ", a=", string(_spa), ", w0=", string(_spw0))]
         )
     ),
 
