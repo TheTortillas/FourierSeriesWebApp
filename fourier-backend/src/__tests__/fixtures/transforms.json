@@ -7818,9 +7818,9 @@
   {
     "id": "RB01",
     "type": "ft",
-    "description": "FT (u(t+1)-u(t-1))·|sin(πt)| — rect ventana sobre |sin(πt)|",
+    "description": "FT |sin(πt)| en (-1,1) — equivalente a rect·|sin(πt)| con límites explícitos",
     "input": {
-      "segments": [{ "expression": "(u(t+1)-u(t-1))*abs(sin(%pi*t))", "from": "minf", "to": "inf" }],
+      "segments": [{ "expression": "abs(sin(%pi*t))", "from": "-1", "to": "1" }],
       "intVar": "t", "transVar": "w"
     },
     "expected": { "exists": true }
@@ -7849,12 +7849,12 @@
   {
     "id": "NE03",
     "type": "ft",
-    "description": "FT cos(t) en (-∞,∞) — no existe como función ordinaria",
+    "description": "FT cos(t) en (-∞,∞) — existe como distribución π(δ(ω-1)+δ(ω+1))",
     "input": {
       "segments": [{ "expression": "cos(t)", "from": "minf", "to": "inf" }],
       "intVar": "t", "transVar": "w"
     },
-    "expected": { "exists": false }
+    "expected": { "exists": true, "F": "%pi*(delta(w-1)+delta(w+1))" }
   },
   {
     "id": "NE04",
