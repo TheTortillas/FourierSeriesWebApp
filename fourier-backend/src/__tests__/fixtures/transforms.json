@@ -7691,5 +7691,139 @@
       "exists": true,
       "fCombined": "exp(-(2*abs(t))-2*%i*t)/4"
     }
+  },
+
+  {
+    "id": "SC01",
+    "type": "ft",
+    "description": "FT sinc(t)² → π·tri(ω/2)",
+    "input": {
+      "segments": [{ "expression": "sinc(t)^2", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true, "F": "%pi*tri(w/2)" }
+  },
+  {
+    "id": "SC02",
+    "type": "ft",
+    "description": "FT 3·sinc(2t)² → 3π/2·tri(ω/4)",
+    "input": {
+      "segments": [{ "expression": "3*sinc(2*t)^2", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true, "F": "3*%pi*tri(w/4)/2" }
+  },
+
+  {
+    "id": "TS01",
+    "type": "ft",
+    "description": "FT |sin(t)| en (-π,π) — un período completo",
+    "input": {
+      "segments": [{ "expression": "abs(sin(t))", "from": "-%pi", "to": "%pi" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+  {
+    "id": "TS02",
+    "type": "ft",
+    "description": "FT |sin(t)| en (-2π,2π) — dos períodos",
+    "input": {
+      "segments": [{ "expression": "abs(sin(t))", "from": "-2*%pi", "to": "2*%pi" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+  {
+    "id": "TS03",
+    "type": "ft",
+    "description": "FT |cos(t)| en (-π,π) — un período completo",
+    "input": {
+      "segments": [{ "expression": "abs(cos(t))", "from": "-%pi", "to": "%pi" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+  {
+    "id": "TS04",
+    "type": "ft",
+    "description": "FT |sin(π·t)| en (-1,1) — un período, frecuencia π",
+    "input": {
+      "segments": [{ "expression": "abs(sin(%pi*t))", "from": "-1", "to": "1" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+  {
+    "id": "TS05",
+    "type": "ft",
+    "description": "FT |cos(π·t)| en (-1/2,1/2) — medio período, frecuencia π",
+    "input": {
+      "segments": [{ "expression": "abs(cos(%pi*t))", "from": "-1/2", "to": "1/2" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+  {
+    "id": "TS06",
+    "type": "ft",
+    "description": "FT 2·|sin(3t)| en (-π/3,π/3) — escalar·|sin| con frecuencia distinta",
+    "input": {
+      "segments": [{ "expression": "2*abs(sin(3*t))", "from": "-%pi/3", "to": "%pi/3" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+
+  {
+    "id": "RB01",
+    "type": "ft",
+    "description": "FT (u(t+1)-u(t-1))·|sin(πt)| — rect ventana sobre |sin(πt)|",
+    "input": {
+      "segments": [{ "expression": "(u(t+1)-u(t-1))*abs(sin(%pi*t))", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
+  },
+
+  {
+    "id": "NE01",
+    "type": "ft",
+    "description": "FT |sin(t)| en (-∞,∞) — no existe (periódica no decayente)",
+    "input": {
+      "segments": [{ "expression": "abs(sin(t))", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": false }
+  },
+  {
+    "id": "NE02",
+    "type": "ft",
+    "description": "FT |sin(π·t)| en (-∞,∞) — no existe (periódica no decayente)",
+    "input": {
+      "segments": [{ "expression": "abs(sin(%pi*t))", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": false }
+  },
+  {
+    "id": "NE03",
+    "type": "ft",
+    "description": "FT cos(t) en (-∞,∞) — no existe como función ordinaria",
+    "input": {
+      "segments": [{ "expression": "cos(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": false }
+  },
+  {
+    "id": "NE04",
+    "type": "ft",
+    "description": "FT sin(2t)/(4+t²) — REGRESIÓN: periódica con decaimiento polinomial, sí existe",
+    "input": {
+      "segments": [{ "expression": "sin(2*t)/(4+t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t", "transVar": "w"
+    },
+    "expected": { "exists": true }
   }
 ]
