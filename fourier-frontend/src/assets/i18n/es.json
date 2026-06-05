@@ -198,10 +198,15 @@
     "profileExp": "Exp.",
     "profileComplete": "Completo",
     "tabCoefficients": "Coeficientes",
+    "tabCoefficientsDesc": "aₙ, bₙ, cₙ",
     "tabTerms": "Términos",
+    "tabTermsDesc": "Serie suma a suma",
     "tabSpectrum": "Espectro",
+    "tabSpectrumDesc": "Amplitud por frecuencia",
     "tabValidation": "Validación",
-    "tabParseval": "Parseval"
+    "tabValidationDesc": "Convergencia y errores",
+    "tabParseval": "Parseval",
+    "tabParsevalDesc": "Identidad de energía"
   },
   "resultPanel": {
     "sine": "Seno",
@@ -902,6 +907,11 @@
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",
-    "toHyperbolic": "→ Hiperbólicas"
+    "toHyperbolic": "→ Hiperbólicas",
+    "profileRawDesc": "Muestra los coeficientes tal como los devuelve el motor, sin ninguna transformación.",
+    "profileIntegerDesc": "Simplificación algebraica básica: aplica declare(n, integer), elimina sin(nπ)=0, cos(nπ)=(-1)ⁿ, etc.",
+    "profileTrigDesc": "Convierte a la forma trigonométrica más compacta, combinando términos y aplicando identidades.",
+    "profileExpDesc": "Reescribe los coeficientes usando exponenciales complejas. Elige entre forma e^{ix} o De Moivre.",
+    "profileCompleteDesc": "Aplica todas las simplificaciones disponibles en cascada: entero → trigonométrico → reducción de potencias."
   }
 }

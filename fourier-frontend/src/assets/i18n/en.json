@@ -169,10 +169,15 @@
     "profileExp": "Exp.",
     "profileComplete": "Complete",
     "tabCoefficients": "Coefficients",
+    "tabCoefficientsDesc": "aₙ, bₙ, cₙ",
     "tabTerms": "Terms",
+    "tabTermsDesc": "Series term by term",
     "tabSpectrum": "Spectrum",
+    "tabSpectrumDesc": "Amplitude per frequency",
     "tabValidation": "Validation",
-    "tabParseval": "Parseval"
+    "tabValidationDesc": "Convergence & errors",
+    "tabParseval": "Parseval",
+    "tabParsevalDesc": "Energy identity"
   },
   "resultPanel": {
     "sine": "Sine",
@@ -902,6 +907,11 @@
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",
-    "toHyperbolic": "→ Hyperbolic"
+    "toHyperbolic": "→ Hyperbolic",
+    "profileRawDesc": "Shows coefficients exactly as returned by the computation engine, without any transformation.",
+    "profileIntegerDesc": "Basic algebraic simplification: applies declare(n, integer), eliminates sin(nπ)=0, cos(nπ)=(-1)ⁿ, etc.",
+    "profileTrigDesc": "Converts to the most compact trigonometric form, combining terms and applying identities.",
+    "profileExpDesc": "Rewrites coefficients using complex exponentials. Choose between e^{ix} form or De Moivre.",
+    "profileCompleteDesc": "Applies all available simplifications in cascade: integer → trigonometric → power reduction."
   }
 }

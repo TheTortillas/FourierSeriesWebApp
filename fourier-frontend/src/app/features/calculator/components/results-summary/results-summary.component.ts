@@ -1331,14 +1331,43 @@ export class ResultsSummaryComponent {
   });
 
   /** Typed tabs array so the template gets literal types */
-  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval'; labelKey: string }[] =
-    [
-      { id: 'coefficients', labelKey: 'settingsCanvas.tabCoefficients' },
-      { id: 'terms', labelKey: 'settingsCanvas.tabTerms' },
-      { id: 'spectrum', labelKey: 'settingsCanvas.tabSpectrum' },
-      { id: 'validation', labelKey: 'settingsCanvas.tabValidation' },
-      { id: 'parseval', labelKey: 'settingsCanvas.tabParseval' },
-    ];
+  readonly tabs: {
+    id: 'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval';
+    labelKey: string;
+    descKey: string;
+    icon: string; // SVG path d=""
+  }[] = [
+    {
+      id: 'coefficients',
+      labelKey: 'settingsCanvas.tabCoefficients',
+      descKey: 'settingsCanvas.tabCoefficientsDesc',
+      icon: 'M4 6h16M4 10h10M4 14h7M4 18h5',
+    },
+    {
+      id: 'terms',
+      labelKey: 'settingsCanvas.tabTerms',
+      descKey: 'settingsCanvas.tabTermsDesc',
+      icon: 'M3 17l3-8 3 4 3-6 3 10 3-6',
+    },
+    {
+      id: 'spectrum',
+      labelKey: 'settingsCanvas.tabSpectrum',
+      descKey: 'settingsCanvas.tabSpectrumDesc',
+      icon: 'M4 20v-4M8 20v-8M12 20V8M16 20v-6M20 20v-10',
+    },
+    {
+      id: 'validation',
+      labelKey: 'settingsCanvas.tabValidation',
+      descKey: 'settingsCanvas.tabValidationDesc',
+      icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
+    },
+    {
+      id: 'parseval',
+      labelKey: 'settingsCanvas.tabParseval',
+      descKey: 'settingsCanvas.tabParsevalDesc',
+      icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+    },
+  ];
 
   /** Context for the terms tab — trig / half-range branch */
   readonly termsTrigCtx = computed(() => {
@@ -1382,13 +1411,21 @@ export class ResultsSummaryComponent {
   }
 
   // ── Profile selector options ────────────────────────────────────────────────
-  readonly profileOptions: { value: SimplifyProfile; labelKey: string }[] = [
-    { value: 'raw', labelKey: 'settingsCanvas.profileRaw' },
-    { value: 'integer', labelKey: 'settingsCanvas.profileInteger' },
-    { value: 'trigonometric', labelKey: 'settingsCanvas.profileTrig' },
-    { value: 'exponential', labelKey: 'settingsCanvas.profileExp' },
-    { value: 'complete', labelKey: 'settingsCanvas.profileComplete' },
+  readonly profileOptions: { value: SimplifyProfile; labelKey: string; descKey: string }[] = [
+    { value: 'raw',           labelKey: 'settingsCanvas.profileRaw',      descKey: 'simplify.profileRawDesc' },
+    { value: 'integer',       labelKey: 'settingsCanvas.profileInteger',  descKey: 'simplify.profileIntegerDesc' },
+    { value: 'trigonometric', labelKey: 'settingsCanvas.profileTrig',     descKey: 'simplify.profileTrigDesc' },
+    { value: 'exponential',   labelKey: 'settingsCanvas.profileExp',      descKey: 'simplify.profileExpDesc' },
+    { value: 'complete',      labelKey: 'settingsCanvas.profileComplete', descKey: 'simplify.profileCompleteDesc' },
   ];
+
+  readonly activeProfileDescKey = computed(
+    () => this.profileOptions.find(o => o.value === this.simplifyProfile())?.descKey ?? '',
+  );
+
+  readonly activeParsevalProfileDescKey = computed(
+    () => this.profileOptions.find(o => o.value === this.parsevalSimplifyProfile())?.descKey ?? '',
+  );
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 

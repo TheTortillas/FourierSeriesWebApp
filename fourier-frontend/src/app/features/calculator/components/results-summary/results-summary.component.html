@@ -540,29 +540,43 @@
           <button
             type="button"
             (click)="setTab(tab.id)"
-            class="relative px-4 py-2.5 text-xs font-mono transition-colors shrink-0"
+            class="relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-t transition-all shrink-0"
             [class]="
               activeTab() === tab.id
-                ? 'text-accent border-b-2 border-accent -mb-px'
-                : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'
+                ? 'text-accent border-b-2 border-accent -mb-px bg-accent/5 dark:bg-accent/10'
+                : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-black/5 dark:hover:bg-white/5'
             "
           >
-            {{ tab.labelKey | transloco }}
-            @if (tab.id === 'validation' && hasValidationWarning()) {
-              <span
-                class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-amber-500 align-middle"
-              ></span>
-            }
-            @if (tab.id === 'validation' && !hasValidationWarning() && hasIndeterminateTerms()) {
-              <span
-                class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-sky-500 align-middle"
-              ></span>
-            }
-            @if (tab.id === 'parseval' && parsevalHasSingular()) {
-              <span
-                class="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-sky-500 align-middle"
-              ></span>
-            }
+            <!-- Icon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path [attr.d]="tab.icon" />
+            </svg>
+            <!-- Label + badge -->
+            <span class="flex items-center gap-1 text-[10px] font-mono leading-none">
+              {{ tab.labelKey | transloco }}
+              @if (tab.id === 'validation' && hasValidationWarning()) {
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              }
+              @if (tab.id === 'validation' && !hasValidationWarning() && hasIndeterminateTerms()) {
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+              }
+              @if (tab.id === 'parseval' && parsevalHasSingular()) {
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+              }
+            </span>
+            <!-- Descriptor (always visible, muted) -->
+            <span class="text-[9px] font-mono leading-none opacity-60">
+              {{ tab.descKey | transloco }}
+            </span>
           </button>
         }
 
@@ -667,6 +681,7 @@
                   <button
                     type="button"
                     (click)="setProfile(opt.value)"
+                    [title]="opt.descKey | transloco"
                     [class]="
                       simplifyProfile() === opt.value
                         ? 'px-2 py-1 bg-accent text-white font-semibold'
@@ -712,6 +727,11 @@
                   class="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0"
                 ></span>
               }
+            </div>
+
+            <!-- Profile description -->
+            <div class="px-4 pb-2 text-[10px] text-muted dark:text-dark-muted leading-snug">
+              {{ activeProfileDescKey() | transloco }}
             </div>
 
             <!-- Row 2: Secondary options (display flags | transform flags) -->
@@ -1530,6 +1550,7 @@
                   <button
                     type="button"
                     class="px-2.5 py-1 transition-colors"
+                    [title]="opt.descKey | transloco"
                     [class]="
                       parsevalSimplifyProfile() === opt.value
                         ? 'bg-accent text-paper dark:text-dark-paper'
@@ -1543,6 +1564,9 @@
                     {{ opt.labelKey | transloco }}
                   </button>
                 }
+              </div>
+              <div class="mt-2 text-[10px] text-muted dark:text-dark-muted leading-snug">
+                {{ activeParsevalProfileDescKey() | transloco }}
               </div>
               @if (parsevalSimplifyProfile() !== 'raw') {
                 <label

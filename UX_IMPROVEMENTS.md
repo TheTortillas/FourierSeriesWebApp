@@ -10,9 +10,9 @@ Principio rector: **no tocar lógica ni matemática — solo reorganizar y clari
 | # | Problema | Estado |
 |---|----------|--------|
 | 1 | Parámetros libres enterrados | ✅ Completado |
-| 2 | Tabs de resultados sin affordance | 🔲 Pendiente |
+| 2 | Tabs de resultados sin affordance | ✅ Completado |
 | 3 | Side panel del canvas sobrecargado / mal ordenado | ✅ Completado |
-| 4 | Botones de simplificación sin jerarquía | 🔲 Pendiente |
+| 4 | Botones de simplificación sin jerarquía | ✅ Completado |
 | 5 | Side panel del espectro | ✅ Completado |
 
 ---
@@ -53,10 +53,10 @@ Principio rector: **no tocar lógica ni matemática — solo reorganizar y clari
 
 **Lo que NO cambia:** lógica de cambio de tab, contenido de cada tab, estado `activeTab`.
 
-- [ ] Añadir campos `icon` y `descriptionKey` al array `tabs`
-- [ ] Añadir claves de descripción en `en.json` y `es.json`
-- [ ] Actualizar tab bar en `.html`: ícono + texto + descripción muted en inactivos
-- [ ] Verificar que el badge de warning/info en Validación y Parseval sigue funcionando
+- [x] Añadir campos `icon` y `descKey` al array `tabs`
+- [x] Añadir claves de descripción en `en.json` y `es.json`
+- [x] Actualizar tab bar en `.html`: ícono SVG + label + descriptor muted (9px)
+- [x] Verificar que el badge de warning/info en Validación y Parseval sigue funcionando
 
 ---
 
@@ -96,12 +96,12 @@ Principio rector: **no tocar lógica ni matemática — solo reorganizar y clari
 
 **Lo que NO cambia:** lógica de `setProfile()`, `simplifyProfile()`, llamadas a la API.
 
-- [ ] Agregar campo `descriptionKey` al array `profileOptions`
-- [ ] Agregar claves de descripción en `en.json` y `es.json`
-- [ ] Mostrar descripción del perfil activo como texto muted bajo la barra
-- [ ] Agregar `[title]` a cada botón con la descripción breve
-- [ ] Aplicar el mismo patrón a la barra de simplificación de Parseval
-- [ ] Verificar que cambiar perfil sigue disparando simplificación
+- [x] Agregar campo `descriptionKey` al array `profileOptions`
+- [x] Agregar claves de descripción en `en.json` y `es.json`
+- [x] Mostrar descripción del perfil activo como texto muted bajo la barra
+- [x] Agregar `[title]` a cada botón con la descripción breve
+- [x] Aplicar el mismo patrón a la barra de simplificación de Parseval
+- [x] Verificar que cambiar perfil sigue disparando simplificación
 
 ---
 
