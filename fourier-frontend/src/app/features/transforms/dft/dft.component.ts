@@ -908,6 +908,7 @@ export class DftComponent implements OnInit, OnDestroy {
     this.hoveredCoeff.set(null);
     this.dftSortByAmplitude.set(false);
     this.showCanvasSettings.set(true);
+    this.showSpecSettings.set(true);
 
     // Track quota on backend (manual compute is client-side, so we fire a lightweight call)
     this.api.calculateDFT({ points: sampledPoints, mode: 'signal' })
@@ -975,6 +976,7 @@ export class DftComponent implements OnInit, OnDestroy {
         this.hoveredCoeff.set(null);
         this.dftSortByAmplitude.set(false);
         this.showCanvasSettings.set(true);
+        this.showSpecSettings.set(true);
         this.userStore.refreshQuota();
         if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       },
@@ -1351,6 +1353,7 @@ export class DftComponent implements OnInit, OnDestroy {
       this.epicTime.set(0);
       this.epicTrace.set([]);
       this.epicSelectedK.set(null);
+      this.showEpicSettings.set(true);
       this.userStore.refreshQuota();
       if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
     } catch (err) {

@@ -1365,27 +1365,6 @@
                 }
               </div>
 
-              <!-- Legend overlay top-right (only after compute) -->
-              @if (result()) {
-                <div
-                  class="absolute top-2 right-2 flex items-center gap-3 text-[10px] font-mono pointer-events-none px-2 py-1 rounded border border-border/40 dark:border-dark-border/40 bg-paper/80 dark:bg-dark-surface/80 backdrop-blur-sm"
-                >
-                  <span class="flex items-center gap-1.5 text-ink/70 dark:text-dark-ink/70">
-                    <span
-                      class="w-2.5 h-2.5 rounded-full shrink-0"
-                      [style.background]="samplesColor()"
-                    ></span>
-                    {{ 'transforms.dft.samplesLabel' | transloco }}
-                  </span>
-                  <span class="flex items-center gap-1.5 text-ink/70 dark:text-dark-ink/70">
-                    <span
-                      class="inline-block w-4 h-0.5 rounded shrink-0"
-                      [style.background]="reconstructionColor()"
-                    ></span>
-                    IDFT
-                  </span>
-                </div>
-              }
 
               <!-- Settings slide-in panel -->
               @if (showCanvasSettings()) {
@@ -1395,7 +1374,7 @@
                     <button type="button" (click)="showCanvasSettings.set(false)" class="w-5 h-5 flex items-center justify-center rounded text-ink/50 hover:text-ink dark:text-dark-ink/50 dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-base leading-none" [title]="'transforms.closePanel' | transloco">×</button>
                   </div>
                   <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1 text-[11px] font-mono">
-                    <!-- Layers -->
+                    <!-- Layers / legend -->
                     <section class="px-5 py-4 flex flex-col gap-3">
                       <div class="flex items-center justify-between">
                         <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.dft.layersShow' | transloco }}</p>
@@ -1672,31 +1651,6 @@
                   }
                 </div>
 
-                <!-- Mode pills top-right -->
-                <div class="absolute top-2 right-2 flex gap-1 pointer-events-none">
-                  <button
-                    type="button"
-                    (click)="specMode.set('amplitude')"
-                    [class]="
-                      specMode() === 'amplitude'
-                        ? 'pointer-events-auto px-2.5 py-1 rounded border border-violet-400 bg-violet-50/90 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[10px] font-mono font-semibold cursor-pointer backdrop-blur-sm'
-                        : 'pointer-events-auto px-2.5 py-1 rounded border border-border dark:border-dark-border bg-paper/80 dark:bg-dark-surface/80 text-[10px] font-mono text-ink/70 dark:text-dark-ink/70 hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer backdrop-blur-sm'
-                    "
-                  >
-                    |X[k]|
-                  </button>
-                  <button
-                    type="button"
-                    (click)="specMode.set('phase')"
-                    [class]="
-                      specMode() === 'phase'
-                        ? 'pointer-events-auto px-2.5 py-1 rounded border border-emerald-400 bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-semibold cursor-pointer backdrop-blur-sm'
-                        : 'pointer-events-auto px-2.5 py-1 rounded border border-border dark:border-dark-border bg-paper/80 dark:bg-dark-surface/80 text-[10px] font-mono text-ink/70 dark:text-dark-ink/70 hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer backdrop-blur-sm'
-                    "
-                  >
-                    ∠X[k]
-                  </button>
-                </div>
 
                 <!-- Hover tooltip -->
                 @if (hoveredCoeff(); as hov) {
@@ -1735,6 +1689,28 @@
                       <button type="button" (click)="showSpecSettings.set(false)" class="w-5 h-5 flex items-center justify-center rounded text-ink/50 hover:text-ink dark:text-dark-ink/50 dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-base leading-none" [title]="'transforms.closePanel' | transloco">×</button>
                     </div>
                     <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1 text-[11px] font-mono">
+                      <!-- Vista (mode selector) -->
+                      <section class="px-5 py-4 flex flex-col gap-3">
+                        <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.dft.specMode' | transloco }}</p>
+                        <div class="flex gap-1.5">
+                          <button
+                            type="button"
+                            (click)="specMode.set('amplitude')"
+                            [class]="specMode() === 'amplitude' ? 'flex-1 py-2 px-2 rounded-lg border border-violet-400 bg-violet-50/90 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 cursor-pointer flex flex-col items-center gap-0.5' : 'flex-1 py-2 px-2 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
+                          >
+                            <span class="text-xs font-mono font-semibold">|X[k]|</span>
+                            <span class="text-[9px] font-sans font-normal opacity-70 leading-tight text-center">{{ 'transforms.dft.specModeAmplitude' | transloco }}</span>
+                          </button>
+                          <button
+                            type="button"
+                            (click)="specMode.set('phase')"
+                            [class]="specMode() === 'phase' ? 'flex-1 py-2 px-2 rounded-lg border border-emerald-400 bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 cursor-pointer flex flex-col items-center gap-0.5' : 'flex-1 py-2 px-2 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
+                          >
+                            <span class="text-xs font-mono font-semibold">∠X[k]</span>
+                            <span class="text-[9px] font-sans font-normal opacity-70 leading-tight text-center">{{ 'transforms.dft.specModePhase' | transloco }}</span>
+                          </button>
+                        </div>
+                      </section>
                       <!-- FFT Shift -->
                       <section class="px-5 py-4 flex flex-col gap-3">
                         <div class="flex items-center justify-between">
