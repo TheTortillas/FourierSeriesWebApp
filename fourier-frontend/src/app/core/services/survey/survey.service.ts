@@ -1,4 +1,4 @@
-import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { effect, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, throwError } from 'rxjs';
@@ -18,6 +18,17 @@ export class SurveyService {
   readonly promptOpen  = signal(false);
   readonly submitting  = signal(false);
   readonly submitted   = signal(false);
+
+  constructor() {
+    // Re-evaluate visibility whenever auth state changes (login or logout).
+    effect(() => {
+      if (!this.store.initialized()) return;
+      if (!this.store.isAuthenticated() || this.store.hasDoneSurvey()) {
+        this.promptOpen.set(false);
+        this.submitted.set(false);
+      }
+    });
+  }
 
   hasDone(): boolean {
     if (!isPlatformBrowser(this.platform)) return true;
@@ -42,8 +53,6 @@ export class SurveyService {
         if (isPlatformBrowser(this.platform)) {
           localStorage.setItem(DONE_KEY, 'true');
         }
-        // Actualiza el store inmediatamente para que hasDone() refleje el cambio
-        // en la misma sesión sin necesidad de un nuevo request al servidor.
         this.store.markSurveyDone();
         this.submitted.set(true);
         this.submitting.set(false);

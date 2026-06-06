@@ -36,6 +36,8 @@ import {
 } from '../../../shared/components/function-plot/function-plot.component';
 import { ApiService } from '../../../core/services/api/api.service';
 import { UserStore } from '../../../core/services/auth/user.store';
+import { FeedbackService } from '../../../core/services/feedback/feedback.service';
+import { SurveyService } from '../../../core/services/survey/survey.service';
 import { formatApiError } from '../../../shared/utils/api-error.utils';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
@@ -195,6 +197,8 @@ export class ContinuousTransformComponent implements OnInit {
   readonly api = inject(ApiService);
   readonly mqs = inject(MathquillService);
   readonly userStore = inject(UserStore);
+  private readonly feedbackSvc = inject(FeedbackService);
+  private readonly surveySvc = inject(SurveyService);
   private readonly transloco = inject(TranslocoService);
 
   showKeyboard = false;
@@ -589,7 +593,7 @@ export class ContinuousTransformComponent implements OnInit {
       this.customConstName.set(null);
     });
 
-    // ── 4. Sync result → URL ──────────────────────────────────────────────
+    // ── 4. Sync result → URL + feedback/survey prompt trigger ────────────
     effect(() => {
       const ft = this.ftResult();
       const ift = this.iftResult();
@@ -600,6 +604,17 @@ export class ContinuousTransformComponent implements OnInit {
           queryParams: { s: this.encodeState() },
           replaceUrl: true,
         });
+        const tryPrompts = () => {
+          setTimeout(() => this.feedbackSvc.tryOpenModal(), 4000);
+          setTimeout(() => this.surveySvc.tryPrompt(), 8000);
+        };
+        if (this.userStore.initialized()) {
+          tryPrompts();
+        } else {
+          toObservable(this.userStore.initialized)
+            .pipe(filter(Boolean), take(1))
+            .subscribe(tryPrompts);
+        }
       } else if (this.urlPopulated) {
         void this.router.navigate([], {
           relativeTo: this.route,

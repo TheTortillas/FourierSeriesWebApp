@@ -1,4 +1,4 @@
-import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { effect, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { ApiService } from '../api/api.service';
@@ -20,6 +20,17 @@ export class FeedbackService {
   readonly modalOpen  = signal(false);
   readonly submitting = signal(false);
   readonly submitted  = signal(false);
+
+  constructor() {
+    // Re-evaluate visibility whenever auth state changes (login or logout).
+    effect(() => {
+      if (!this.store.initialized()) return;
+      if (!this.store.isAuthenticated() || this.store.hasDoneFeedback()) {
+        this.modalOpen.set(false);
+        this.submitted.set(false);
+      }
+    });
+  }
 
   canShowModal(): boolean {
     if (!isPlatformBrowser(this.platform)) return false;
@@ -57,8 +68,6 @@ export class FeedbackService {
           localStorage.setItem(DONE_KEY, 'true');
           localStorage.removeItem(COOLDOWN_KEY);
         }
-        // Actualiza el store inmediatamente para que canShowModal() refleje el cambio
-        // en la misma sesión sin necesidad de un nuevo request al servidor.
         this.store.markFeedbackDone();
         this.submitted.set(true);
         this.submitting.set(false);

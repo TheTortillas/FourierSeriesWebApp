@@ -24,6 +24,8 @@ export interface AuthResult {
     role: "user" | "admin";
     tier: "free" | "premium";
     emailVerified: boolean;
+    hasDoneSurvey: boolean;
+    hasDoneFeedback: boolean;
   };
 }
 
@@ -311,6 +313,8 @@ export class AuthService {
         role: user.role,
         tier: user.tier,
         emailVerified: user.emailVerified,
+        hasDoneSurvey: user.hasDoneSurvey ?? false,
+        hasDoneFeedback: user.hasDoneFeedback ?? false,
       },
     };
   }

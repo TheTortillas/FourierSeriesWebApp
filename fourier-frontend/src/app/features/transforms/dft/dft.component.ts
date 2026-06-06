@@ -14,13 +14,15 @@ import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom } from 'rxjs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { filter, firstValueFrom, take } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { ApiService } from '../../../core/services/api/api.service';
 import { UserStore } from '../../../core/services/auth/user.store';
+import { FeedbackService } from '../../../core/services/feedback/feedback.service';
+import { SurveyService } from '../../../core/services/survey/survey.service';
 import { HistoryEntry } from '../../../domain';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
@@ -274,6 +276,8 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly userStore = inject(UserStore);
   private readonly csvExport = inject(CsvExportService);
   private readonly transloco = inject(TranslocoService);
+  private readonly feedbackSvc = inject(FeedbackService);
+  private readonly surveySvc = inject(SurveyService);
 
   readonly signalPlotRef = viewChild<FunctionPlotComponent>('signalPlot');
   readonly spectrumPlotRef = viewChild<FunctionPlotComponent>('spectrumPlot');
@@ -874,7 +878,7 @@ export class DftComponent implements OnInit, OnDestroy {
       this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
     }
 
-    // Sync result → URL query param (function/manual modes)
+    // Sync result → URL query param + feedback/survey prompt (function/manual modes)
     effect(() => {
       if (this.result()) {
         this.urlPopulated = true;
@@ -885,6 +889,17 @@ export class DftComponent implements OnInit, OnDestroy {
             replaceUrl: true,
           });
         });
+        const tryPrompts = () => {
+          setTimeout(() => this.feedbackSvc.tryOpenModal(), 4000);
+          setTimeout(() => this.surveySvc.tryPrompt(), 8000);
+        };
+        if (this.userStore.initialized()) {
+          tryPrompts();
+        } else {
+          toObservable(this.userStore.initialized)
+            .pipe(filter(Boolean), take(1))
+            .subscribe(tryPrompts);
+        }
       } else if (this.urlPopulated) {
         void this.router.navigate([], {
           relativeTo: this.route,
