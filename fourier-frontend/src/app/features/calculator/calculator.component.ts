@@ -79,8 +79,19 @@ export class CalculatorComponent implements OnInit {
           queryParams: { s: this.store.encodeState() },
           replaceUrl: true,
         });
-        setTimeout(() => this.feedbackSvc.tryOpenModal(), 4000);
-        setTimeout(() => this.surveySvc.tryPrompt(), 8000);
+        // Wait for auth to initialize before checking flags so that
+        // authenticated users are never shown prompts they already completed.
+        const tryPrompts = () => {
+          setTimeout(() => this.feedbackSvc.tryOpenModal(), 4000);
+          setTimeout(() => this.surveySvc.tryPrompt(), 8000);
+        };
+        if (this.userStore.initialized()) {
+          tryPrompts();
+        } else {
+          toObservable(this.userStore.initialized)
+            .pipe(filter(Boolean), take(1))
+            .subscribe(tryPrompts);
+        }
       } else if (this.urlPopulated) {
         // Form was reset — clear the URL param
         void this.router.navigate([], {

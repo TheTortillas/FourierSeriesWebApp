@@ -11,6 +11,8 @@ export interface User {
   hasPassword: boolean;
   createdAt: string;
   lastLoginAt: string | null;
+  hasDoneSurvey: boolean;
+  hasDoneFeedback: boolean;
 }
 
 export interface AuthResponse {

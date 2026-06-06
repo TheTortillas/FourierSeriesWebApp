@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { optionalAuth, type AuthenticatedRequest } from "../middlewares/authenticate";
 import { SurveyRepository } from "../../infrastructure/persistence/SurveyRepository";
+import { UserRepository } from "../../infrastructure/persistence/UserRepository";
 
 export const surveyRouter = Router();
 
-const repo = new SurveyRepository();
+const repo     = new SurveyRepository();
+const userRepo = new UserRepository();
 
 const VALID_ROLES        = ["student", "teacher", "graduate", "other"];
 const VALID_LEVELS       = ["licenciatura", "maestria", "doctorado", "other"];
@@ -69,6 +71,10 @@ surveyRouter.post("/", optionalAuth, async (req: AuthenticatedRequest, res): Pro
 
   // ── Persistencia ────────────────────────────────────────────────────────────
   try {
+    if (req.user?.id) {
+      await userRepo.markSurveyDone(req.user.id);
+    }
+
     await repo.create({
       userId:              req.user?.id,
       ipAddress:           req.ip ?? undefined,

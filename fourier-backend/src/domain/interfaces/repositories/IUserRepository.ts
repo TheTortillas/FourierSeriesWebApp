@@ -22,6 +22,8 @@ export interface UserRecord {
   deletedAt: Date | null;
   firstName: string;
   lastName: string;
+  hasDoneSurvey: boolean;
+  hasDoneFeedback: boolean;
 }
 
 export interface IUserRepository {
@@ -59,4 +61,6 @@ export interface IUserRepository {
   getAdminStats(): Promise<{ total: number; premium: number; free: number; inactive: number }>;
   markEmailVerified(userId: string): Promise<void>;
   updatePassword(userId: string, passwordHash: string): Promise<void>;
+  markSurveyDone(userId: string): Promise<void>;
+  markFeedbackDone(userId: string): Promise<void>;
 }

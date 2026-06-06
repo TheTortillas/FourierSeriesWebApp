@@ -18,6 +18,8 @@ export class UserRepository implements IUserRepository {
             u.updated_at as "updatedAt",
             u.last_login_at as "lastLoginAt",
             u.deleted_at as "deletedAt",
+            u.has_done_survey as "hasDoneSurvey",
+            u.has_done_feedback as "hasDoneFeedback",
             p.first_name as "firstName",
             p.last_name as "lastName"
      FROM users u
@@ -39,6 +41,8 @@ export class UserRepository implements IUserRepository {
             u.updated_at as "updatedAt",
             u.last_login_at as "lastLoginAt",
             u.deleted_at as "deletedAt",
+            u.has_done_survey as "hasDoneSurvey",
+            u.has_done_feedback as "hasDoneFeedback",
             p.first_name as "firstName",
             p.last_name as "lastName"
      FROM users u
@@ -60,6 +64,8 @@ export class UserRepository implements IUserRepository {
             u.updated_at as "updatedAt",
             u.last_login_at as "lastLoginAt",
             u.deleted_at as "deletedAt",
+            u.has_done_survey as "hasDoneSurvey",
+            u.has_done_feedback as "hasDoneFeedback",
             p.first_name as "firstName",
             p.last_name as "lastName"
       FROM users u
@@ -483,6 +489,14 @@ export class UserRepository implements IUserRepository {
 
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
     await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [passwordHash, userId]);
+  }
+
+  async markSurveyDone(userId: string): Promise<void> {
+    await db.query(`UPDATE users SET has_done_survey = TRUE WHERE id = $1`, [userId]);
+  }
+
+  async markFeedbackDone(userId: string): Promise<void> {
+    await db.query(`UPDATE users SET has_done_feedback = TRUE WHERE id = $1`, [userId]);
   }
 
   private _currentWeekStart(): Date {

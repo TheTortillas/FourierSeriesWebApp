@@ -22,11 +22,13 @@ export class UserStore {
   readonly initialized = this._initialized.asReadonly();
 
   // Señales derivadas
-  readonly isAuthenticated = computed(() => this._user() !== null);
-  readonly isAdmin = computed(() => this._user()?.role === 'admin');
-  readonly isPremium = computed(() => this._user()?.tier === 'premium');
-  readonly isEmailVerified = computed(() => this._user()?.emailVerified ?? false);
-  readonly isQuotaExceeded = computed(() => {
+  readonly isAuthenticated  = computed(() => this._user() !== null);
+  readonly isAdmin          = computed(() => this._user()?.role === 'admin');
+  readonly isPremium        = computed(() => this._user()?.tier === 'premium');
+  readonly isEmailVerified  = computed(() => this._user()?.emailVerified ?? false);
+  readonly hasDoneSurvey    = computed(() => this._user()?.hasDoneSurvey ?? false);
+  readonly hasDoneFeedback  = computed(() => this._user()?.hasDoneFeedback ?? false);
+  readonly isQuotaExceeded  = computed(() => {
     const q = this._quota();
     if (!q) return false;
     return q.remaining !== null && q.remaining <= 0;
@@ -61,5 +63,15 @@ export class UserStore {
 
   setInitialized(): void {
     this._initialized.set(true);
+  }
+
+  markSurveyDone(): void {
+    const u = this._user();
+    if (u) this._user.set({ ...u, hasDoneSurvey: true });
+  }
+
+  markFeedbackDone(): void {
+    const u = this._user();
+    if (u) this._user.set({ ...u, hasDoneFeedback: true });
   }
 }
