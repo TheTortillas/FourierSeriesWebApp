@@ -22,11 +22,15 @@
         #cRla="routerLinkActive"
         [class]="
           cRla.isActive
-            ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
-            : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'
+            ? 'px-4 py-2 rounded-md bg-accent text-white shadow-sm transition-colors flex flex-col items-center gap-0.5'
+            : 'px-4 py-2 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors flex flex-col items-center gap-0.5'
         "
       >
-        {{ 'transforms.continuous' | transloco }}
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12 C5 4 8 20 12 12 S18 4 22 12"/>
+        </svg>
+        <span class="text-xs font-mono font-semibold leading-none">{{ 'transforms.continuous' | transloco }}</span>
+        <span class="text-[9px] font-mono leading-none opacity-70">{{ 'transforms.continuousDesc' | transloco }}</span>
       </a>
       <a
         routerLink="../dft"
@@ -35,11 +39,15 @@
         [routerLinkActiveOptions]="{ exact: true }"
         [class]="
           dRla.isActive
-            ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
-            : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'
+            ? 'px-4 py-2 rounded-md bg-accent text-white shadow-sm transition-colors flex flex-col items-center gap-0.5'
+            : 'px-4 py-2 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors flex flex-col items-center gap-0.5'
         "
       >
-        {{ 'transforms.discrete' | transloco }}
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="20" x2="4" y2="12"/><line x1="8" y1="20" x2="8" y2="8"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="16" y1="20" x2="16" y2="10"/><line x1="20" y1="20" x2="20" y2="15"/>
+        </svg>
+        <span class="text-xs font-mono font-semibold leading-none">{{ 'transforms.discrete' | transloco }}</span>
+        <span class="text-[9px] font-mono leading-none opacity-70">{{ 'transforms.discreteDesc' | transloco }}</span>
       </a>
     </div>
   </header>
