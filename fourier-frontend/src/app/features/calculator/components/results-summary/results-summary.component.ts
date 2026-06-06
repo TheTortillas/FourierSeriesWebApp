@@ -195,6 +195,7 @@ export class ResultsSummaryComponent {
   readonly originalDashed = signal(false);
   readonly approxDashed = signal(false);
   readonly showCanvasSettings = signal(false);
+  readonly showSpectrumSettings = signal(false);
 
   // ── Per-param slider ranges (editable in side panel) ─────────────────────
   readonly paramRanges = signal<Record<string, { min: number; max: number }>>({});
@@ -1464,7 +1465,8 @@ export class ResultsSummaryComponent {
         this.showFactoredSeries.set(false);
         this.showGammaNotation.set(false);
         this.simplifyProfile.set('raw');
-        this.showCanvasSettings.set(!this.isMobile());
+        this.showCanvasSettings.set(true);
+        this.showSpectrumSettings.set(true);
         this.declareNInteger.set(true);
         this.toHyperbolic.set(false);
         this.halfRangeMode.set('cosine');
@@ -1506,6 +1508,7 @@ export class ResultsSummaryComponent {
       }
       if (this.hadResult()) {
         this.showCanvasSettings.set(false);
+        this.showSpectrumSettings.set(false);
         this.paramRanges.set({});
         this.originalDashed.set(false);
         this.approxDashed.set(false);

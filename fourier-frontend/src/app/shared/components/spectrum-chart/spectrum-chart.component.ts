@@ -227,6 +227,8 @@ export class SpectrumChartComponent {
   readonly trigZero = input<number | null>(null);
   readonly complexZero = input<number | null>(null);
   readonly halfRangeMode = input<'cosine' | 'sine'>('cosine');
+  /** When true, opens the settings panel on first render (e.g. after computing). */
+  readonly openPanel = input(false);
 
   readonly Math = Math;
   readonly spectrumMode = signal<SpectrumMode>('trigAmp');
@@ -321,6 +323,10 @@ export class SpectrumChartComponent {
   });
 
   constructor() {
+    effect(() => {
+      if (this.openPanel()) this.showStylePanel.set(true);
+    });
+
     effect(() => {
       const options = this.displayOptions();
       const current = this.spectrumMode();
