@@ -14,7 +14,7 @@
     <!-- Canvas overlay buttons — shift right when side panel is open (desktop only) -->
     <div
       class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-200"
-      [style.left]="store.hasResult() && showCanvasSettings() && !isMobile() && !isFullscreen() ? 'calc(33.333% + 8px)' : '8px'"
+      [style.left]="store.hasResult() && showCanvasSettings() && !isMobile() ? 'calc(33.333% + 8px)' : '8px'"
     >
       <!-- Fullscreen toggle -->
       <button
@@ -458,22 +458,21 @@
       </div>
     </ng-template>
 
-      <!-- Desktop lg+ (non-fullscreen): slide-in from left, inside canvas -->
-      @if (store.hasResult() && showCanvasSettings() && !isFullscreen()) {
+      <!-- Desktop lg+: slide-in from left -->
+      @if (store.hasResult() && showCanvasSettings()) {
         <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
           <ng-container *ngTemplateOutlet="settingsPanelContent" />
         </div>
       }
-
-      <!-- Fullscreen (any size): bottom sheet inside canvas -->
-      @if (store.hasResult() && showCanvasSettings() && isFullscreen()) {
-        <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex flex-col max-h-64 border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+      <!-- Mobile + fullscreen: bottom sheet inside canvas -->
+      @if (store.hasResult() && showCanvasSettings() && isMobile() && isFullscreen()) {
+        <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
           <ng-container *ngTemplateOutlet="settingsPanelContent" />
         </div>
       }
   </div>
 
-  <!-- Mobile < lg (non-fullscreen): inline block below canvas, in normal document flow -->
+  <!-- Mobile < lg, non-fullscreen: inline block below canvas -->
   @if (store.hasResult() && showCanvasSettings() && !isFullscreen()) {
     <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-72 overflow-hidden">
       <ng-container *ngTemplateOutlet="settingsPanelContent" />

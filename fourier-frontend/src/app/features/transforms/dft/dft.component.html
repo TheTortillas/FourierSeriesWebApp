@@ -728,7 +728,7 @@
 
               <!-- Overlay buttons top-left: fullscreen → settings → download → share → favorites -->
               <div class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
-                   [style.left]="showEpicSettings() && epicResult() && !isMobile() && !isFullscreen() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
+                   [style.left]="showEpicSettings() && epicResult() && !isMobile() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
                 @if (epicResult()) {
                   <button
                     type="button"
@@ -893,15 +893,15 @@
                 }
               </div>
 
-              <!-- Desktop lg+ (non-fullscreen): slide-in from left -->
-              @if (showEpicSettings() && epicResult() && !isFullscreen()) {
+              <!-- Desktop lg+: slide-in from left -->
+              @if (showEpicSettings() && epicResult()) {
                 <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
                   <ng-container *ngTemplateOutlet="epicPanelContent" />
                 </div>
               }
-              <!-- Fullscreen (any size): bottom sheet -->
-              @if (showEpicSettings() && epicResult() && isFullscreen()) {
-                <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex flex-col max-h-64 border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+              <!-- Mobile + fullscreen: bottom sheet inside canvas -->
+              @if (showEpicSettings() && epicResult() && isMobile() && isFullscreen()) {
+                <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
                   <ng-container *ngTemplateOutlet="epicPanelContent" />
                 </div>
               }
@@ -937,7 +937,7 @@
             </div>
 
             <!-- Mobile < lg (non-fullscreen): inline below epicycles canvas -->
-            @if (showEpicSettings() && epicResult() && !isFullscreen()) {
+            @if (showEpicSettings() && epicResult() && !isFullscreen() && isMobile()) {
               <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
                 <ng-container *ngTemplateOutlet="epicPanelContent" />
               </div>
@@ -1180,7 +1180,7 @@
 
               <!-- Overlay buttons top-left: fullscreen → settings → download → share → favorites -->
               <div class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
-                   [style.left]="showCanvasSettings() && result() && !isMobile() && !isFullscreen() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
+                   [style.left]="showCanvasSettings() && result() && !isMobile() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
                 @if (result()) {
                   <button
                     type="button"
@@ -1346,22 +1346,22 @@
               </div>
 
 
-              <!-- Desktop lg+ (non-fullscreen): slide-in from left -->
-              @if (showCanvasSettings() && !isFullscreen()) {
+              <!-- Desktop lg+: slide-in from left -->
+              @if (showCanvasSettings()) {
                 <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
                   <ng-container *ngTemplateOutlet="signalPanelContent" />
                 </div>
               }
-              <!-- Fullscreen (any size): bottom sheet -->
-              @if (showCanvasSettings() && isFullscreen()) {
-                <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex flex-col max-h-64 border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+              <!-- Mobile + fullscreen: bottom sheet inside canvas -->
+              @if (showCanvasSettings() && isMobile() && isFullscreen()) {
+                <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
                   <ng-container *ngTemplateOutlet="signalPanelContent" />
                 </div>
               }
             </div>
 
-            <!-- Mobile < lg (non-fullscreen): inline below canvas -->
-            @if (showCanvasSettings() && !isFullscreen()) {
+            <!-- Mobile < lg, non-fullscreen: inline below canvas -->
+            @if (showCanvasSettings() && !isFullscreen() && isMobile()) {
               <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
                 <ng-container *ngTemplateOutlet="signalPanelContent" />
               </div>
@@ -1523,7 +1523,7 @@
 
                 <!-- Action buttons overlay top-left: fullscreen → settings → download → share -->
                 <div class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
-                     [style.left]="showSpecSettings() && !isMobile() && !isFullscreen() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
+                     [style.left]="showSpecSettings() && !isMobile() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
                   @if (result()) {
                     <button
                       type="button"
@@ -1678,22 +1678,22 @@
                   </div>
                 }
 
-                <!-- Desktop lg+ (non-fullscreen): slide-in from left -->
-                @if (showSpecSettings() && !isFullscreen()) {
+                <!-- Desktop lg+: slide-in from left -->
+                @if (showSpecSettings()) {
                   <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
                     <ng-container *ngTemplateOutlet="specPanelContent" />
                   </div>
                 }
-                <!-- Fullscreen (any size): bottom sheet -->
-                @if (showSpecSettings() && isFullscreen()) {
-                  <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex flex-col max-h-64 border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+                <!-- Mobile + fullscreen: bottom sheet inside canvas -->
+                @if (showSpecSettings() && isMobile() && isFullscreen()) {
+                  <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
                     <ng-container *ngTemplateOutlet="specPanelContent" />
                   </div>
                 }
               </div>
 
-              <!-- Mobile < lg (non-fullscreen): inline below canvas -->
-              @if (showSpecSettings() && !isFullscreen()) {
+              <!-- Mobile < lg, non-fullscreen: inline below canvas -->
+              @if (showSpecSettings() && !isFullscreen() && isMobile()) {
                 <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
                   <ng-container *ngTemplateOutlet="specPanelContent" />
                 </div>
