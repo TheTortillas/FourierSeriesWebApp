@@ -8,7 +8,7 @@ import {
   ElementRef,
   viewChild,
 } from '@angular/core';
-import { DecimalPipe, LowerCasePipe } from '@angular/common';
+import { DecimalPipe, LowerCasePipe, NgTemplateOutlet } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -124,6 +124,7 @@ function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorP
   imports: [
     DecimalPipe,
     LowerCasePipe,
+    NgTemplateOutlet,
     FunctionPlotComponent,
     MathjaxDirective,
     FormsModule,
@@ -145,6 +146,8 @@ export class ResultsSummaryComponent {
   readonly theme = inject(ThemeService);
   readonly destroyRef = inject(DestroyRef);
   private readonly csvExport = inject(CsvExportService);
+
+  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
 
   // ── Free-parameter sliders ────────────────────────────────────────────────
   readonly activeParams = computed<string[]>(() => this.store.result()?.data.params ?? []);
@@ -1430,6 +1433,12 @@ export class ResultsSummaryComponent {
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   constructor() {
+    if (typeof window !== 'undefined') {
+      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
+      window.addEventListener('resize', onResize);
+      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
+    }
+
     effect(() => {
       void this.theme.theme();
       void this.theme.palette();
@@ -1454,7 +1463,7 @@ export class ResultsSummaryComponent {
         this.showFactoredSeries.set(false);
         this.showGammaNotation.set(false);
         this.simplifyProfile.set('raw');
-        this.showCanvasSettings.set(true);
+        this.showCanvasSettings.set(!this.isMobile());
         this.declareNInteger.set(true);
         this.toHyperbolic.set(false);
         this.halfRangeMode.set('cosine');
