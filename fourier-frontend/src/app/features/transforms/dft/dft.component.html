@@ -68,35 +68,46 @@
           <button
             type="button"
             (click)="switchMode('function')"
-            [class]="
-              inputMode() === 'function'
-                ? 'flex-1 py-1.5 rounded-md text-xs font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-                : 'flex-1 py-1.5 rounded-md text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
-            "
+            [class]="inputMode() === 'function'
+              ? 'flex-1 py-2 px-1 rounded-md bg-accent text-white shadow-sm transition-colors cursor-pointer flex flex-col items-center gap-0.5'
+              : 'flex-1 py-2 px-1 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
           >
-            {{ 'transforms.dft.modeFn' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12 C5 4 8 20 12 12 S18 4 22 12"/>
+            </svg>
+            <span class="text-[10px] font-mono font-semibold leading-none">{{ 'transforms.dft.modeFn' | transloco }}</span>
+            <span class="text-[8px] font-mono leading-none opacity-70">{{ 'transforms.dft.modeFnDesc' | transloco }}</span>
           </button>
           <button
             type="button"
             (click)="switchMode('manual')"
-            [class]="
-              inputMode() === 'manual'
-                ? 'flex-1 py-1.5 rounded-md text-xs font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-                : 'flex-1 py-1.5 rounded-md text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
-            "
+            [class]="inputMode() === 'manual'
+              ? 'flex-1 py-2 px-1 rounded-md bg-accent text-white shadow-sm transition-colors cursor-pointer flex flex-col items-center gap-0.5'
+              : 'flex-1 py-2 px-1 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
           >
-            {{ 'transforms.dft.modeManual' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="20" x2="4" y2="13"/><circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+              <line x1="9" y1="20" x2="9" y2="9"/><circle cx="9" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+              <line x1="14" y1="20" x2="14" y2="5"/><circle cx="14" cy="4" r="1.2" fill="currentColor" stroke="none"/>
+              <line x1="19" y1="20" x2="19" y2="11"/><circle cx="19" cy="10" r="1.2" fill="currentColor" stroke="none"/>
+            </svg>
+            <span class="text-[10px] font-mono font-semibold leading-none">{{ 'transforms.dft.modeManual' | transloco }}</span>
+            <span class="text-[8px] font-mono leading-none opacity-70">{{ 'transforms.dft.modeManualDesc' | transloco }}</span>
           </button>
           <button
             type="button"
             (click)="switchMode('epicycles')"
-            [class]="
-              inputMode() === 'epicycles'
-                ? 'flex-1 py-1.5 rounded-md text-xs font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-                : 'flex-1 py-1.5 rounded-md text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
-            "
+            [class]="inputMode() === 'epicycles'
+              ? 'flex-1 py-2 px-1 rounded-md bg-accent text-white shadow-sm transition-colors cursor-pointer flex flex-col items-center gap-0.5'
+              : 'flex-1 py-2 px-1 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
           >
-            {{ 'transforms.dft.modeEpicycles' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+              <line x1="12" y1="12" x2="17" y2="9"/>
+            </svg>
+            <span class="text-[10px] font-mono font-semibold leading-none">{{ 'transforms.dft.modeEpicycles' | transloco }}</span>
+            <span class="text-[8px] font-mono leading-none opacity-70">{{ 'transforms.dft.modeEpicyclesDesc' | transloco }}</span>
           </button>
         </div>
 

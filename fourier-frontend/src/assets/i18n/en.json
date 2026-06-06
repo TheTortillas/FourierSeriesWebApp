@@ -332,7 +332,9 @@
       "title": "Discrete Fourier Transform",
       "subtitle": "Analyze the frequency spectrum of a sampled function or a discrete sequence.",
       "modeFn": "Continuous function",
+      "modeFnDesc": "piecewise f(x)",
       "modeManual": "Discrete sequence",
+      "modeManualDesc": "x[0], x[1], …, x[N-1]",
       "algorithm": "Computation algorithm",
       "algorithmNote": "FFT and DFT produce the same result — FFT is O(N log N), naïve DFT is O(N²)",
       "variable": "Integration variable",
@@ -378,6 +380,7 @@
       "goToContinuous": "Go to continuous transform",
       "freeSymbolsWarning": "DFT requires numeric expressions. Remove free symbols: {{ symbols }}",
       "modeEpicycles": "Epicycles",
+      "modeEpicyclesDesc": "2D shape → DFT",
       "epicycles": {
         "presetsLabel": "Shape presets",
         "presetCircle": "Circle",

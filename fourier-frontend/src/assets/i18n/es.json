@@ -332,7 +332,9 @@
       "title": "Transformada Discreta de Fourier",
       "subtitle": "Analiza el espectro de frecuencias de una función muestreada o una señal discreta.",
       "modeFn": "Función continua",
+      "modeFnDesc": "f(x) por tramos",
       "modeManual": "Señal discreta",
+      "modeManualDesc": "x[0], x[1], …, x[N-1]",
       "algorithm": "Algoritmo de cómputo",
       "algorithmNote": "FFT y DFT producen el mismo resultado — la FFT es O(N log N), la DFT naïve es O(N²)",
       "variable": "Variable de integración",
@@ -378,6 +380,7 @@
       "goToContinuous": "Ir a transformada continua",
       "freeSymbolsWarning": "La DFT requiere expresiones numéricas. Elimina los símbolos libres: {{ symbols }}",
       "modeEpicycles": "Epiciclos",
+      "modeEpicyclesDesc": "figura 2D → DFT",
       "epicycles": {
         "presetsLabel": "Figuras predefinidas",
         "presetCircle": "Círculo",
