@@ -53,6 +53,12 @@ const FEATURE_LABEL: Record<string, string> = {
   dft_epicycles: 'DFT epiciclos',
   none: 'Ninguna',
 };
+const ACADEMIC_LABEL: Record<string, string> = {
+  licenciatura: 'Licenciatura',
+  maestria: 'Maestría',
+  doctorado: 'Doctorado',
+  other: 'Otro',
+};
 const DEVICE_LABEL: Record<string, string> = { phone: 'Teléfono', computer: 'Computadora' };
 const IMPROVE_LABEL: Record<string, string> = {
   ui: 'Interfaz',
@@ -180,6 +186,15 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
       s.byRole.map((r) => ROLE_LABEL[r.role] ?? r.role),
       s.byRole.map((r) => r.count),
     );
+
+    // 1b — Academic level
+    if (s.byAcademicLevel?.length > 0) {
+      this.hBar(
+        'svAcademicLevel',
+        s.byAcademicLevel.map((r) => ACADEMIC_LABEL[r.academic_level] ?? r.academic_level),
+        s.byAcademicLevel.map((r) => r.count),
+      );
+    }
 
     // 2 — How found
     this.hBar(

@@ -854,6 +854,18 @@ adminRouter.get(
             NULL::SMALLINT AS rating
           FROM survey_responses
           WHERE general_comments IS NOT NULL AND general_comments <> ''
+          UNION ALL
+          SELECT
+            'survey' AS source,
+            id,
+            user_id,
+            NULL::VARCHAR AS email,
+            'regression' AS type,
+            regressions AS content,
+            created_at,
+            NULL::SMALLINT AS rating
+          FROM survey_responses
+          WHERE regressions IS NOT NULL AND regressions <> ''
         )
         SELECT source, id, user_id, email, type, content, created_at, rating
         FROM all_comments
@@ -869,6 +881,8 @@ adminRouter.get(
           SELECT id FROM survey_responses WHERE bug_description IS NOT NULL AND bug_description <> ''
           UNION ALL
           SELECT id FROM survey_responses WHERE general_comments IS NOT NULL AND general_comments <> ''
+          UNION ALL
+          SELECT id FROM survey_responses WHERE regressions IS NOT NULL AND regressions <> ''
         ) AS c
       `;
 
@@ -1049,6 +1063,7 @@ adminRouter.get(
       const [
         totalRes,
         roleRes,
+        academicLevelRes,
         countryRes,
         howFoundRes,
         purposeRes,
@@ -1065,6 +1080,10 @@ adminRouter.get(
         db.query<{ role: string; count: number }>(
           `SELECT role::text, COUNT(*)::int AS count
          FROM survey_responses GROUP BY role ORDER BY count DESC`,
+        ),
+        db.query<{ academic_level: string; count: number }>(
+          `SELECT academic_level::text, COUNT(*)::int AS count
+         FROM survey_responses GROUP BY academic_level ORDER BY count DESC`,
         ),
         db.query<{ country: string; count: number }>(
           `SELECT country, COUNT(*)::int AS count
@@ -1123,6 +1142,7 @@ adminRouter.get(
       res.json({
         total: totalRes.rows[0]?.total ?? 0,
         byRole: roleRes.rows,
+        byAcademicLevel: academicLevelRes.rows,
         topCountries: countryRes.rows,
         byHowFound: howFoundRes.rows,
         byPurpose: purposeRes.rows,

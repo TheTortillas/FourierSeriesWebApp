@@ -87,6 +87,20 @@
         </div>
       </section>
 
+      <!-- Academic level -->
+      @if (stats.byAcademicLevel.length) {
+        <section
+          class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+            <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Nivel académico</span>
+          </div>
+          <div class="p-4" style="height: 200px; position: relative">
+            <canvas id="svAcademicLevel"></canvas>
+          </div>
+        </section>
+      }
+
       <!-- How found -->
       <section
         class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
