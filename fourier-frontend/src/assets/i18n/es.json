@@ -408,7 +408,12 @@
         "coeffsHint": "Filas resaltadas = top-K activos. Clic para aislar.",
         "phaseToggleHint": "Clic para alternar entre radianes/π y grados",
         "drawModeActive": "Modo dibujo activo"
-      }
+      },
+      "errorNValues": "Se necesitan exactamente {{ n }} valores separados por coma.",
+      "errorWeeklyLimit": "Límite semanal de cálculos alcanzado.",
+      "errorCompleteFields": "Completa todos los campos de los tramos.",
+      "errorEvalFunction": "Error al evaluar la función.",
+      "errorMinPoints": "Se necesitan al menos 3 puntos."
     }
   },
   "history": {

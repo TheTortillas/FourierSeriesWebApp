@@ -876,7 +876,7 @@ export class DftComponent implements OnInit, OnDestroy {
     const values = this.parsedManual();
     const N = this.manualN();
     if (values.length !== N) {
-      this.error.set(`Se necesitan exactamente ${N} valores separados por coma.`);
+      this.error.set(this.transloco.translate('transforms.dft.errorNValues', { n: N }));
       return;
     }
 
@@ -921,7 +921,7 @@ export class DftComponent implements OnInit, OnDestroy {
           // 429 = quota exhausted — roll back the result so it doesn't appear as "computed"
           if (err?.status === 429) {
             this.result.set(null);
-            this.error.set(err?.error?.error ?? 'Weekly calculation limit reached');
+            this.error.set(err?.error?.error ?? this.transloco.translate('transforms.dft.errorWeeklyLimit'));
             this.userStore.refreshQuota();
           }
         },
@@ -931,7 +931,7 @@ export class DftComponent implements OnInit, OnDestroy {
   private _computeFromFunction(): void {
     const segs = this.segments();
     if (segs.some((s) => !s.expression.trim() || !s.from.trim() || !s.to.trim())) {
-      this.error.set('Completa todos los campos de los tramos.');
+      this.error.set(this.transloco.translate('transforms.dft.errorCompleteFields'));
       return;
     }
 
@@ -979,7 +979,7 @@ export class DftComponent implements OnInit, OnDestroy {
         if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       },
       error: (err) => {
-        this.error.set(err?.error?.error ?? 'Error al evaluar la función.');
+        this.error.set(err?.error?.error ?? this.transloco.translate('transforms.dft.errorEvalFunction'));
         this.loading.set(false);
       },
     });
@@ -1403,7 +1403,7 @@ export class DftComponent implements OnInit, OnDestroy {
 
   epicConfirmDraw(): void {
     const pts = this.epicDrawPoints();
-    if (pts.length < 3) { this.epicError.set('At least 3 points required.'); return; }
+    if (pts.length < 3) { this.epicError.set(this.transloco.translate('transforms.dft.errorMinPoints')); return; }
     this.epicRawPoints.set(this._epicFormatPoints(pts));
     this.epicDrawDialogOpen.set(false);
     this._epicDrawCtx = null;
