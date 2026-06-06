@@ -41,7 +41,6 @@ import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
-import { ParamSlidersComponent } from '../../../shared/components/param-sliders/param-sliders.component';
 import type { ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
@@ -182,7 +181,6 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     MathjaxDirective,
     FunctionPlotComponent,
     TransformSegmentComponent,
-    ParamSlidersComponent,
     FormsModule,
     RouterLink,
     RouterLinkActive,
@@ -333,7 +331,11 @@ export class ContinuousTransformComponent implements OnInit {
   readonly customMagColor = signal(false);
   readonly originalLineWidth = signal(2);
   readonly resultLineWidth = signal(2);
+  readonly originalDashed = signal(false);
+  readonly resultDashed = signal(false);
   readonly showCanvasSettings = signal(false);
+
+  readonly Math = Math;
 
   // ── Favorites ─────────────────────────────────────────────────────────────
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
@@ -343,12 +345,41 @@ export class ContinuousTransformComponent implements OnInit {
 
   // ── Free parameter sliders ────────────────────────────────────────────────
   readonly paramValues = signal<ParamValues>({});
+  private readonly paramSliderMins = signal<Record<string, number>>({});
+  private readonly paramSliderMaxs = signal<Record<string, number>>({});
 
   readonly activeParams = computed<string[]>(() => {
     const ft = this.ftResult();
     const ift = this.iftResult();
     return (ft ?? ift)?.params ?? [];
   });
+
+  /** Params used on canvas — defaults to 1 for any param not yet moved by the user. */
+  readonly evaluationParams = computed<ParamValues>(() => {
+    const names = this.activeParams();
+    const pv = this.paramValues();
+    const merged: ParamValues = { ...pv };
+    for (const name of names) {
+      if (!Number.isFinite(merged[name])) merged[name] = 1;
+    }
+    return merged;
+  });
+
+  paramSliderMin(p: string): number { return this.paramSliderMins()[p] ?? -5; }
+  paramSliderMax(p: string): number { return this.paramSliderMaxs()[p] ?? 5; }
+
+  setParamMin(p: string, v: number): void {
+    if (!isFinite(v)) return;
+    this.paramSliderMins.update(m => ({ ...m, [p]: v }));
+  }
+  setParamMax(p: string, v: number): void {
+    if (!isFinite(v)) return;
+    this.paramSliderMaxs.update(m => ({ ...m, [p]: v }));
+  }
+  onParamSliderInput(p: string, v: number): void {
+    if (!isFinite(v)) return;
+    this.paramValues.update(pv => ({ ...pv, [p]: v }));
+  }
 
   /** TeX for the piecewise Re f(t) primary display — used in results section. */
   readonly inputRealPiecewiseTex = computed<string>(() => {
@@ -402,7 +433,6 @@ export class ContinuousTransformComponent implements OnInit {
 
   readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
   readonly plotComponent = viewChild(FunctionPlotComponent);
-  readonly paramSliders = viewChild(ParamSlidersComponent);
 
   readonly varPairs = VAR_PAIRS;
 
@@ -662,9 +692,11 @@ export class ContinuousTransformComponent implements OnInit {
     const mgColor = this.magColor();
     const origLW = this.originalLineWidth();
     const resLW = this.resultLineWidth();
+    const origDashed = this.originalDashed();
+    const resDashed = this.resultDashed();
 
     const plotter = this.plotter;
-    const pv = this.paramValues();
+    const pv = this.evaluationParams();
 
     const inputJumpStyle = 'solid' as const; // f(t) piecewise boundaries (explicit, zero perf cost)
     const resultJumpStyle = 'solid' as const; // F(w) result curves — heuristic tracking too costly
@@ -712,7 +744,7 @@ export class ContinuousTransformComponent implements OnInit {
                 ctx,
                 finitePieces.map((s) => ({ fn: s.fn!, from: s.from, to: s.to })),
                 vp,
-                { color: origReColor, lineWidth: origLW, jumpStyle: inputJumpStyle },
+                { color: origReColor, lineWidth: origLW, jumpStyle: inputJumpStyle, dashed: origDashed },
               );
             }
             if (showOrigM) {
@@ -727,7 +759,7 @@ export class ContinuousTransformComponent implements OnInit {
                   to: s.to,
                 })),
                 vp,
-                { color: origMgColor, lineWidth: origLW, jumpStyle: inputJumpStyle },
+                { color: origMgColor, lineWidth: origLW, jumpStyle: inputJumpStyle, dashed: origDashed },
               );
             }
           }
@@ -736,7 +768,7 @@ export class ContinuousTransformComponent implements OnInit {
           for (const s of infinitePieces) {
             if (showOrigRe) {
               const gated = (x: number) => (x >= s.from && x <= s.to ? s.fn!(x) : NaN);
-              plotter.plotFn(ctx, gated, vp, { color: origReColor, lineWidth: origLW });
+              plotter.plotFn(ctx, gated, vp, { color: origReColor, lineWidth: origLW, dashed: origDashed });
             }
             if (showOrigM) {
               const gatedAbs = (x: number) => {
@@ -744,7 +776,7 @@ export class ContinuousTransformComponent implements OnInit {
                 const y = s.fn!(x);
                 return isFinite(y) ? Math.abs(y) : NaN;
               };
-              plotter.plotFn(ctx, gatedAbs, vp, { color: origMgColor, lineWidth: origLW });
+              plotter.plotFn(ctx, gatedAbs, vp, { color: origMgColor, lineWidth: origLW, dashed: origDashed });
             }
           }
 
@@ -774,7 +806,7 @@ export class ContinuousTransformComponent implements OnInit {
               ? this.mathUtils.compile(inputRealExpr, intVariable, pv)
               : null;
           if (inputReFn) {
-            plotter.plotFn(ctx, inputReFn, vp, { color: origReColor, lineWidth: origLW });
+            plotter.plotFn(ctx, inputReFn, vp, { color: origReColor, lineWidth: origLW, dashed: origDashed });
           }
 
           const hasInputImag = !!inputImagExpr && !this.isZeroExpression(inputImagExpr);
@@ -786,6 +818,7 @@ export class ContinuousTransformComponent implements OnInit {
             plotter.plotFn(ctx, inputImFn, vp, {
               color: origImColor,
               lineWidth: Math.max(1, origLW - 0.25),
+              dashed: origDashed,
             });
           }
 
@@ -799,7 +832,7 @@ export class ContinuousTransformComponent implements OnInit {
                 )
               : null;
           if (inputMagFn) {
-            plotter.plotFn(ctx, inputMagFn, vp, { color: origMgColor, lineWidth: origLW });
+            plotter.plotFn(ctx, inputMagFn, vp, { color: origMgColor, lineWidth: origLW, dashed: origDashed });
           }
 
           if (showOrigRe && inputRealExpr) {
@@ -842,18 +875,21 @@ export class ContinuousTransformComponent implements OnInit {
               color: reColor,
               lineWidth: resLW,
               jumpStyle: resultJumpStyle,
+              dashed: resDashed,
             });
           if (imFn)
             plotter.plotFn(ctx, imFn, vp, {
               color: imColor,
               lineWidth: resLW,
               jumpStyle: resultJumpStyle,
+              dashed: resDashed,
             });
           if (magFn)
             plotter.plotFn(ctx, magFn, vp, {
               color: mgColor,
               lineWidth: resLW,
               jumpStyle: resultJumpStyle,
+              dashed: resDashed,
             });
 
           // ── Dirac delta impulses ───────────────────────────────────────
@@ -912,6 +948,7 @@ export class ContinuousTransformComponent implements OnInit {
                   color: origReColor,
                   lineWidth: origLW,
                   jumpStyle: resultJumpStyle,
+                  dashed: origDashed,
                 });
               }
               if (outputImFn) {
@@ -919,6 +956,7 @@ export class ContinuousTransformComponent implements OnInit {
                   color: origImColor,
                   lineWidth: Math.max(1, origLW - 0.25),
                   jumpStyle: resultJumpStyle,
+                  dashed: origDashed,
                 });
               }
               if (outputMagFn) {
@@ -926,6 +964,7 @@ export class ContinuousTransformComponent implements OnInit {
                   color: origMgColor,
                   lineWidth: origLW,
                   jumpStyle: resultJumpStyle,
+                  dashed: origDashed,
                 });
               }
               if (showOrigRe && outputRealExpr) {
@@ -950,32 +989,26 @@ export class ContinuousTransformComponent implements OnInit {
               if (showOrigRe && ift.fPositive?.maxima) {
                 const raw = this.mathUtils.compile(ift.fPositive.maxima, transVariable, pv);
                 const fn = raw ? (x: number) => (x >= 0 ? raw(x) : NaN) : null;
-                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW });
+                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW, dashed: origDashed });
                 if (showOrigM && fn) {
                   plotter.plotFn(
                     ctx,
-                    (x) => {
-                      const y = fn(x);
-                      return isFinite(y) ? Math.abs(y) : NaN;
-                    },
+                    (x) => { const y = fn(x); return isFinite(y) ? Math.abs(y) : NaN; },
                     vp,
-                    { color: origMgColor, lineWidth: origLW },
+                    { color: origMgColor, lineWidth: origLW, dashed: origDashed },
                   );
                 }
               }
               if (showOrigRe && ift.fNegative?.maxima) {
                 const raw = this.mathUtils.compile(ift.fNegative.maxima, transVariable, pv);
                 const fn = raw ? (x: number) => (x <= 0 ? raw(x) : NaN) : null;
-                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW });
+                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW, dashed: origDashed });
                 if (showOrigM && fn) {
                   plotter.plotFn(
                     ctx,
-                    (x) => {
-                      const y = fn(x);
-                      return isFinite(y) ? Math.abs(y) : NaN;
-                    },
+                    (x) => { const y = fn(x); return isFinite(y) ? Math.abs(y) : NaN; },
                     vp,
-                    { color: origMgColor, lineWidth: origLW },
+                    { color: origMgColor, lineWidth: origLW, dashed: origDashed },
                   );
                 }
               }
@@ -990,6 +1023,7 @@ export class ContinuousTransformComponent implements OnInit {
                 color: reColor,
                 lineWidth: resLW,
                 jumpStyle: resultJumpStyle,
+                dashed: resDashed,
               });
             for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
               ift.inputRealPart.maxima,
@@ -1006,6 +1040,7 @@ export class ContinuousTransformComponent implements OnInit {
                 color: imColor,
                 lineWidth: resLW,
                 jumpStyle: resultJumpStyle,
+                dashed: resDashed,
               });
             for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
               ift.inputImagPart.maxima,
@@ -1025,6 +1060,7 @@ export class ContinuousTransformComponent implements OnInit {
                 color: mgColor,
                 lineWidth: resLW,
                 jumpStyle: resultJumpStyle,
+                dashed: resDashed,
               });
           }
         }
@@ -1092,7 +1128,8 @@ export class ContinuousTransformComponent implements OnInit {
     this.showShareDialog.set(false);
     this.urlCopied.set(false);
     this.paramValues.set({});
-    this.paramSliders()?.reset();
+    this.paramSliderMins.set({});
+    this.paramSliderMaxs.set({});
     this.latestHistoryEntry.set(null);
     this.favoriteName = '';
     this.showFavoriteDialog.set(false);
@@ -1751,6 +1788,8 @@ export class ContinuousTransformComponent implements OnInit {
     this.resultColor.set(preset.result);
     this.imagColor.set(preset.imag);
     this.magColor.set(preset.mag);
+    this.originalDashed.set(false);
+    this.resultDashed.set(false);
   }
 
   private isZeroExpression(expr: string): boolean {
