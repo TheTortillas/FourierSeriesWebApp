@@ -21,7 +21,7 @@
         routerLink="../continuous"
         routerLinkActive
         #continuousRla="routerLinkActive"
-        [routerLinkActiveOptions]="{ exact: true }"
+        [routerLinkActiveOptions]="{ exact: false }"
         [class]="
           continuousRla.isActive
             ? 'px-4 py-2 rounded-md bg-accent text-white shadow-sm transition-colors flex flex-col items-center gap-0.5'
@@ -38,10 +38,13 @@
         routerLink="../dft"
         routerLinkActive
         #dftRla="routerLinkActive"
+        (click)="inputsLocked() && $event.preventDefault()"
         [class]="
           dftRla.isActive
             ? 'px-4 py-2 rounded-md bg-accent text-white shadow-sm transition-colors flex flex-col items-center gap-0.5'
-            : 'px-4 py-2 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors flex flex-col items-center gap-0.5'
+            : inputsLocked()
+              ? 'px-4 py-2 rounded-md text-muted dark:text-dark-muted opacity-40 pointer-events-none flex flex-col items-center gap-0.5 cursor-not-allowed'
+              : 'px-4 py-2 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors flex flex-col items-center gap-0.5'
         "
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -450,7 +453,7 @@
           <!-- Overlay buttons (top-left) — shift right when settings panel is open -->
           <div
             class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
-            [style.left]="showCanvasSettings() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'"
+            [style.left]="showCanvasSettings() && !isMobile() && !isFullscreen() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'"
           >
             <!-- Fullscreen toggle -->
             <button
@@ -647,23 +650,44 @@
             }
             -->
           </div>
-          @if (hasComputedResult() && showCanvasSettings()) {
-            <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-              <!-- Panel header -->
-              <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
-                <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
-                  {{ 'transforms.panelSettings' | transloco }}
-                </span>
-                <button
-                  type="button"
-                  (click)="showCanvasSettings.set(false)"
-                  class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light"
-                  [title]="'transforms.closePanel' | transloco"
-                >×</button>
-              </div>
+          <!-- Desktop lg+ (non-fullscreen): slide-in from left inside canvas -->
+          @if (hasComputedResult() && showCanvasSettings() && !isFullscreen()) {
+            <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+              <ng-container *ngTemplateOutlet="settingsPanelContent" />
+            </div>
+          }
 
-              <!-- Scrollable content -->
-              <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
+          <!-- Fullscreen (any size): bottom sheet inside canvas -->
+          @if (hasComputedResult() && showCanvasSettings() && isFullscreen()) {
+            <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex flex-col max-h-64 border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+              <ng-container *ngTemplateOutlet="settingsPanelContent" />
+            </div>
+          }
+        </div>
+
+        <!-- Mobile < lg (non-fullscreen): inline block below canvas -->
+        @if (hasComputedResult() && showCanvasSettings() && !isFullscreen()) {
+          <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-72 overflow-hidden">
+            <ng-container *ngTemplateOutlet="settingsPanelContent" />
+          </div>
+        }
+
+        <ng-template #settingsPanelContent>
+          <!-- Panel header -->
+          <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+            <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
+              {{ 'transforms.panelSettings' | transloco }}
+            </span>
+            <button
+              type="button"
+              (click)="showCanvasSettings.set(false)"
+              class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light"
+              [title]="'transforms.closePanel' | transloco"
+            >×</button>
+          </div>
+
+          <!-- Scrollable content -->
+          <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
 
                 <!-- ── 1. Capas a mostrar ──────────────────────────────────── -->
                 <section class="px-5 py-4 flex flex-col gap-3">
@@ -1012,10 +1036,8 @@
                   </p>
                 </section>
 
-              </div>
-            </div>
-          }
-        </div>
+          </div>
+        </ng-template>
 
         <!-- Share dialog -->
         @if (showShareDialog()) {

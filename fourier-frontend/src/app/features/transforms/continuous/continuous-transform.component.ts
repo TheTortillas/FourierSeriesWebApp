@@ -9,6 +9,7 @@ import {
   viewChild,
   ElementRef,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -187,6 +188,7 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     TranslocoPipe,
     MobileMathKeyboardComponent,
     ExportButtonComponent,
+    NgTemplateOutlet,
   ],
 })
 export class ContinuousTransformComponent implements OnInit {
@@ -334,6 +336,7 @@ export class ContinuousTransformComponent implements OnInit {
   readonly originalDashed = signal(false);
   readonly resultDashed = signal(false);
   readonly showCanvasSettings = signal(false);
+  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
 
   readonly Math = Math;
 
@@ -439,6 +442,12 @@ export class ContinuousTransformComponent implements OnInit {
   private urlPopulated = false;
 
   constructor() {
+    if (typeof window !== 'undefined') {
+      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
+      window.addEventListener('resize', onResize);
+      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
+    }
+
     effect(() => {
       void this.theme.theme();
       void this.theme.palette();
@@ -1518,7 +1527,7 @@ export class ContinuousTransformComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.ftResult.set(res);
-            this.showCanvasSettings.set(true);
+            this.showCanvasSettings.set(!this.isMobile());
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
@@ -1543,7 +1552,7 @@ export class ContinuousTransformComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.iftResult.set(res);
-            this.showCanvasSettings.set(true);
+            this.showCanvasSettings.set(!this.isMobile());
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();

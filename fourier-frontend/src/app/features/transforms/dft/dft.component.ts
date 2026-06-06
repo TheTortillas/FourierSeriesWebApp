@@ -10,7 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -255,6 +255,7 @@ function makePreset(
     TransformSegmentComponent,
     MobileMathKeyboardComponent,
     DecimalPipe,
+    NgTemplateOutlet,
   ],
 })
 export class DftComponent implements OnInit, OnDestroy {
@@ -388,6 +389,7 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly showCanvasSettings = signal(false);
   readonly showSpecSettings = signal(false);
   readonly isFullscreen = signal(false);
+  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
 
   // ── Spectrum mode ──────────────────────────────────────────────────────────
   readonly specMode = signal<'amplitude' | 'phase'>('amplitude');
@@ -610,7 +612,7 @@ export class DftComponent implements OnInit, OnDestroy {
     return `f(${v}) = \\begin{cases} ${rows} \\end{cases}`;
   });
 
-  readonly inputsLocked = computed(() => this.loading() || this.result() !== null);
+  readonly inputsLocked = computed(() => this.loading() || this.epicLoading() || this.result() !== null || this.epicResult() !== null);
 
   // ── Computed canvas layers ─────────────────────────────────────────────────
 
@@ -860,6 +862,12 @@ export class DftComponent implements OnInit, OnDestroy {
       this.spectrumPlotRef()?.redraw();
     });
 
+    if (typeof window !== 'undefined') {
+      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
+      window.addEventListener('resize', onResize);
+      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
+    }
+
     if (typeof document !== 'undefined') {
       const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
       document.addEventListener('fullscreenchange', handler);
@@ -1065,8 +1073,8 @@ export class DftComponent implements OnInit, OnDestroy {
     this.selectedCoeff.set(null);
     this.hoveredCoeff.set(null);
     this.dftSortByAmplitude.set(false);
-    this.showCanvasSettings.set(true);
-    this.showSpecSettings.set(true);
+    this.showCanvasSettings.set(!this.isMobile());
+    this.showSpecSettings.set(!this.isMobile());
 
     // Track quota on backend (manual compute is client-side, so we fire a lightweight call)
     this.api
@@ -1139,8 +1147,8 @@ export class DftComponent implements OnInit, OnDestroy {
         this.selectedCoeff.set(null);
         this.hoveredCoeff.set(null);
         this.dftSortByAmplitude.set(false);
-        this.showCanvasSettings.set(true);
-        this.showSpecSettings.set(true);
+        this.showCanvasSettings.set(!this.isMobile());
+        this.showSpecSettings.set(!this.isMobile());
         this.userStore.refreshQuota();
         if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       },
@@ -1588,7 +1596,7 @@ export class DftComponent implements OnInit, OnDestroy {
       this.epicTime.set(0);
       this.epicTrace.set([]);
       this.epicSelectedK.set(null);
-      this.showEpicSettings.set(true);
+      this.showEpicSettings.set(!this.isMobile());
       this.userStore.refreshQuota();
       if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
     } catch (err) {
