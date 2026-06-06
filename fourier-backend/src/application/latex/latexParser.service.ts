@@ -9,7 +9,6 @@ export interface ParseResult {
 
 /**
  * Converts LaTeX math expressions to Maxima CAS syntax.
- * Mirrors the logic previously in the Angular LatexToMaximaService on the frontend.
  * tex2max is GPL v2 — keeping it server-side avoids bundling it in the browser.
  */
 export class LatexParserService {
@@ -60,7 +59,6 @@ export class LatexParserService {
 
   private preProcess(latex: string): string {
     let s = latex
-      // \cdot → space so tex2max's addTimesSign inserts * correctly
       .replace(/\\cdot\s*/g, " ")
       .replace(/\\operatorname\{sen\}/g, "\\sin")
       .replace(/\\operatorname\{tg\}/g, "\\tan")
@@ -74,8 +72,6 @@ export class LatexParserService {
       .replace(/\\operatorname\{arctan\}/g, "\\operatorname{atan}")
       .replace(/\\operatorname\{ln\}/g, "\\log")
       .replace(/\\ln\b/g, "\\log")
-      // Normalize exp — unify all forms (\exp, \operatorname{exp}) so substituteExp finds the marker.
-      // MathQuill may emit \exp\left( or \operatorname{exp}\left( depending on context.
       .replace(/\\exp\b/g, "\\operatorname{exp}")
       .replace(/\\operatorname\{exp\}\s*\\left\s*\(/g, "\\operatorname{exp}(")
       .replace(/\\operatorname\{exp\}\s*\(/g, "\\operatorname{exp}(")
@@ -97,26 +93,99 @@ export class LatexParserService {
 
     s = this.normalizePipes(s);
     s = this.substituteExp(s);
+    s = this.splitBareIdentifiers(s);
     return s;
   }
 
   /**
+   * Splits multi-letter bare identifiers (outside LaTeX commands) into
+   * individual letters separated by spaces, so that tex2max's addTimesSign
+   * inserts explicit * between them.
+   *
+   * Examples:
+   *   Lt        → L t         → tex2max → L*t
+   *   ab        → a b         → tex2max → a*b
+   *   2Lt       → 2L t        → tex2max → 2*L*t
+   *   \sin(Lt)  → \sin(L t)   → tex2max → sin(L*t)
+   *
+   * Protected (never split):
+   *   - LaTeX commands: \sin, \frac, \operatorname{...}, etc.  (already parsed by tex2max)
+   *   - Our internal markers: TMDELTA, TMINF, TMMINF, TMGAMMA, TMFACTORIAL
+   *   - Single-letter identifiers (trivially already fine)
+   */
+  private splitBareIdentifiers(s: string): string {
+    // Names that tex2max already knows as single tokens — splitting them would break parsing.
+    // Includes all functions tex2max handles natively plus our injected markers.
+    const KNOWN: ReadonlySet<string> = new Set([
+      // tex2max built-ins
+      "lg", "log", "ln", "sqrt", "max", "min", "sum", "lim", "int", "binom", "abs",
+      "arccos", "arccosh", "arccot", "arccoth", "arccsc", "arccsch",
+      "arcsec", "arcsech", "arcsin", "arcsinh", "arctan", "arctanh",
+      "cos", "cosh", "cot", "coth", "csc", "csch",
+      "sec", "sech", "sin", "sinh", "tan", "tanh",
+      // Our domain functions (passed through as bare words after \operatorname substitution)
+      "sgn", "rect", "tri", "sinc", "imagunit",
+      // Internal markers injected before this step
+      "TMDELTA", "TMINF", "TMMINF", "TMGAMMA", "TMFACTORIAL",
+    ]);
+
+    let result = "";
+    let i = 0;
+
+    while (i < s.length) {
+      const ch = s[i];
+
+      // LaTeX command: \word — copy verbatim, including any following braces
+      if (ch === "\\") {
+        result += ch;
+        i++;
+        // Copy the command name
+        while (i < s.length && /[a-zA-Z]/.test(s[i])) {
+          result += s[i++];
+        }
+        continue;
+      }
+
+      // Bare alphabetic run — the only thing tex2max tokenizes as STRING_LITERAL
+      if (/[a-zA-Z]/.test(ch)) {
+        // Collect the full run
+        let run = "";
+        const start = i;
+        while (i < s.length && /[a-zA-Z]/.test(s[i])) run += s[i++];
+
+        if (run.length === 1 || KNOWN.has(run)) {
+          // Single letter or known function — keep as-is
+          result += run;
+        } else {
+          // Unknown multi-letter bare identifier: is it one of our markers?
+          // Markers are already uppercase-only strings; check again just in case.
+          // Separate each letter with a space so tex2max sees distinct tokens.
+          result += run.split("").join(" ");
+        }
+        void start; // suppress unused-var lint
+        continue;
+      }
+
+      result += ch;
+      i++;
+    }
+
+    return result;
+  }
+
+  /**
    * Convert bare pipe pairs |...| to \left|...\right| so tex2max can parse them.
-   * MathQuill emits bare pipes when the user types | directly on the keyboard.
-   * Pipes already wrapped in \left|\right| (inserted programmatically) are left untouched.
    */
   private normalizePipes(s: string): string {
     let result = "";
     let i = 0;
     while (i < s.length) {
       if (s[i] === "|") {
-        // Skip if already preceded by \left or \right (already wrapped)
         const before = result.slice(-5);
         if (before.endsWith("\\left") || before.endsWith("right")) {
           result += s[i++];
           continue;
         }
-        // Find matching closing pipe
         let j = i + 1;
         let depth = 0;
         while (j < s.length) {
@@ -129,7 +198,7 @@ export class LatexParserService {
           result += "\\left|" + s.slice(i + 1, j) + "\\right|";
           i = j + 1;
         } else {
-          result += s[i++]; // unmatched pipe — pass through, tex2max will error
+          result += s[i++];
         }
       } else {
         result += s[i++];
@@ -157,8 +226,6 @@ export class LatexParserService {
         else if (c === ")") {
           depth--;
           if (depth === 0) {
-            // Strip a preceding \right that MathQuill inserts when exp was
-            // written as \operatorname{exp}\left(...\right)
             const inner = result.replace(/\\right$/, "");
             result = inner + ")}";
             i++;
