@@ -20,26 +20,37 @@
         routerLink="../continuous"
         routerLinkActive
         #cRla="routerLinkActive"
+        (click)="inputsLocked() && $event.preventDefault()"
         [class]="
           cRla.isActive
-            ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
-            : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'
+            ? 'px-4 py-2 rounded-md bg-accent text-white shadow-sm transition-colors flex flex-col items-center gap-0.5'
+            : inputsLocked()
+              ? 'px-4 py-2 rounded-md text-muted dark:text-dark-muted opacity-40 pointer-events-none flex flex-col items-center gap-0.5 cursor-not-allowed'
+              : 'px-4 py-2 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors flex flex-col items-center gap-0.5'
         "
       >
-        {{ 'transforms.continuous' | transloco }}
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12 C5 4 8 20 12 12 S18 4 22 12"/>
+        </svg>
+        <span class="text-xs font-mono font-semibold leading-none">{{ 'transforms.continuous' | transloco }}</span>
+        <span class="text-[9px] font-mono leading-none opacity-70">{{ 'transforms.continuousDesc' | transloco }}</span>
       </a>
       <a
         routerLink="../dft"
         routerLinkActive
         #dRla="routerLinkActive"
-        [routerLinkActiveOptions]="{ exact: true }"
+        [routerLinkActiveOptions]="{ exact: false }"
         [class]="
           dRla.isActive
-            ? 'px-4 py-1.5 rounded-md text-sm font-mono bg-accent text-white shadow-sm transition-colors'
-            : 'px-4 py-1.5 rounded-md text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors'
+            ? 'px-4 py-2 rounded-md bg-accent text-white shadow-sm transition-colors flex flex-col items-center gap-0.5'
+            : 'px-4 py-2 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors flex flex-col items-center gap-0.5'
         "
       >
-        {{ 'transforms.discrete' | transloco }}
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="20" x2="4" y2="12"/><line x1="8" y1="20" x2="8" y2="8"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="16" y1="20" x2="16" y2="10"/><line x1="20" y1="20" x2="20" y2="15"/>
+        </svg>
+        <span class="text-xs font-mono font-semibold leading-none">{{ 'transforms.discrete' | transloco }}</span>
+        <span class="text-[9px] font-mono leading-none opacity-70">{{ 'transforms.discreteDesc' | transloco }}</span>
       </a>
     </div>
   </header>
@@ -60,35 +71,46 @@
           <button
             type="button"
             (click)="switchMode('function')"
-            [class]="
-              inputMode() === 'function'
-                ? 'flex-1 py-1.5 rounded-md text-xs font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-                : 'flex-1 py-1.5 rounded-md text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
-            "
+            [class]="inputMode() === 'function'
+              ? 'flex-1 py-2 px-1 rounded-md bg-accent text-white shadow-sm transition-colors cursor-pointer flex flex-col items-center gap-0.5'
+              : 'flex-1 py-2 px-1 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
           >
-            {{ 'transforms.dft.modeFn' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12 C5 4 8 20 12 12 S18 4 22 12"/>
+            </svg>
+            <span class="text-[10px] font-mono font-semibold leading-none">{{ 'transforms.dft.modeFn' | transloco }}</span>
+            <span class="text-[8px] font-mono leading-none opacity-70">{{ 'transforms.dft.modeFnDesc' | transloco }}</span>
           </button>
           <button
             type="button"
             (click)="switchMode('manual')"
-            [class]="
-              inputMode() === 'manual'
-                ? 'flex-1 py-1.5 rounded-md text-xs font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-                : 'flex-1 py-1.5 rounded-md text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
-            "
+            [class]="inputMode() === 'manual'
+              ? 'flex-1 py-2 px-1 rounded-md bg-accent text-white shadow-sm transition-colors cursor-pointer flex flex-col items-center gap-0.5'
+              : 'flex-1 py-2 px-1 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
           >
-            {{ 'transforms.dft.modeManual' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="20" x2="4" y2="13"/><circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+              <line x1="9" y1="20" x2="9" y2="9"/><circle cx="9" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+              <line x1="14" y1="20" x2="14" y2="5"/><circle cx="14" cy="4" r="1.2" fill="currentColor" stroke="none"/>
+              <line x1="19" y1="20" x2="19" y2="11"/><circle cx="19" cy="10" r="1.2" fill="currentColor" stroke="none"/>
+            </svg>
+            <span class="text-[10px] font-mono font-semibold leading-none">{{ 'transforms.dft.modeManual' | transloco }}</span>
+            <span class="text-[8px] font-mono leading-none opacity-70">{{ 'transforms.dft.modeManualDesc' | transloco }}</span>
           </button>
           <button
             type="button"
             (click)="switchMode('epicycles')"
-            [class]="
-              inputMode() === 'epicycles'
-                ? 'flex-1 py-1.5 rounded-md text-xs font-mono bg-accent text-white shadow-sm transition-colors cursor-pointer'
-                : 'flex-1 py-1.5 rounded-md text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer'
-            "
+            [class]="inputMode() === 'epicycles'
+              ? 'flex-1 py-2 px-1 rounded-md bg-accent text-white shadow-sm transition-colors cursor-pointer flex flex-col items-center gap-0.5'
+              : 'flex-1 py-2 px-1 rounded-md text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
           >
-            {{ 'transforms.dft.modeEpicycles' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+              <line x1="12" y1="12" x2="17" y2="9"/>
+            </svg>
+            <span class="text-[10px] font-mono font-semibold leading-none">{{ 'transforms.dft.modeEpicycles' | transloco }}</span>
+            <span class="text-[8px] font-mono leading-none opacity-70">{{ 'transforms.dft.modeEpicyclesDesc' | transloco }}</span>
           </button>
         </div>
 
@@ -476,12 +498,12 @@
             <p class="text-xs text-muted dark:text-dark-muted font-mono">
               {{ 'transforms.dft.epicycles.presetsLabel' | transloco }}
             </p>
-            <div class="flex flex-wrap gap-1.5">
+            <div class="grid grid-cols-3 gap-2">
               @for (preset of epicPresets; track preset.id) {
                 <button
                   type="button"
                   (click)="epicLoadPreset(preset.id)"
-                  class="px-3 py-1 rounded-lg border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors cursor-pointer"
+                  class="px-2 py-2 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-xs font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-accent hover:bg-accent/5 dark:hover:bg-accent/10 transition-colors cursor-pointer text-center leading-tight"
                 >
                   {{ preset.label | transloco }}
                 </button>
@@ -705,7 +727,8 @@
               />
 
               <!-- Overlay buttons top-left: fullscreen → settings → download → share → favorites -->
-              <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
+              <div class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
+                   [style.left]="showEpicSettings() && epicResult() && !isMobile() && !isFullscreen() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
                 @if (epicResult()) {
                   <button
                     type="button"
@@ -716,7 +739,7 @@
                     [attr.aria-label]="
                       (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco
                     "
-                    class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer"
+                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
                   >
                     @if (isFullscreen()) {
                       <svg
@@ -760,7 +783,7 @@
                     [class]="
                       showEpicSettings()
                         ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
-                        : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer'
+                        : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'
                     "
                   >
                     <svg
@@ -784,7 +807,7 @@
                     (click)="downloadCanvas(epicWrapperRef(), 'epicycles.png')"
                     [title]="'results.downloadImage' | transloco"
                     [attr.aria-label]="'results.downloadImage' | transloco"
-                    class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer"
+                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -806,7 +829,7 @@
                     (click)="openShareDialog()"
                     [title]="'transforms.shareLink' | transloco"
                     [attr.aria-label]="'transforms.shareLink' | transloco"
-                    class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer"
+                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -842,7 +865,7 @@
                       [class]="
                         latestHistoryEntry()?.isFavorite
                           ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center cursor-pointer'
-                          : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'
+                          : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/60 dark:text-dark-ink/60 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'
                       "
                     >
                       @if (favoriteLoading()) {
@@ -870,310 +893,39 @@
                 }
               </div>
 
-              <!-- Settings panel overlay -->
-              @if (showEpicSettings() && epicResult()) {
-                <div
-                  class="absolute top-11 left-2 z-20 w-72 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow flex flex-col gap-3 text-[11px] font-mono max-h-[calc(100%-3.5rem)] overflow-y-auto"
-                >
-                  <!-- Animation controls -->
-                  <section class="flex flex-col gap-2">
-                    <h4
-                      class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                    >
-                      {{ 'transforms.dft.epicycles.animate' | transloco }}
-                    </h4>
-                    <div class="flex flex-wrap gap-1.5">
-                      @if (epicIsAnimating()) {
-                        <button
-                          type="button"
-                          (click)="epicToggleAnimation()"
-                          class="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono bg-indigo-100 dark:bg-indigo-950/40 border border-indigo-400 text-indigo-700 dark:text-indigo-300 cursor-pointer transition-colors"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-3 h-3 shrink-0"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                          >
-                            <rect x="6" y="4" width="4" height="16" />
-                            <rect x="14" y="4" width="4" height="16" />
-                          </svg>
-                          {{ 'transforms.dft.epicycles.pause' | transloco }}
-                        </button>
-                      } @else {
-                        <button
-                          type="button"
-                          (click)="epicToggleAnimation()"
-                          class="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-3 h-3 shrink-0"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                          >
-                            <polygon points="5,3 19,12 5,21" />
-                          </svg>
-                          {{ 'transforms.dft.epicycles.animate' | transloco }}
-                        </button>
-                      }
-                      <button
-                        type="button"
-                        (click)="epicResetAnimation()"
-                        class="px-3 py-1.5 rounded text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer"
-                      >
-                        {{ 'transforms.dft.epicycles.reset' | transloco }}
-                      </button>
-                    </div>
-                  </section>
-
-                  <div class="border-t border-border dark:border-dark-border"></div>
-
-                  <!-- Top-K -->
-                  <section class="flex flex-col gap-2">
-                    <div class="flex items-center justify-between">
-                      <h4
-                        class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                      >
-                        {{
-                          'transforms.dft.epicycles.topK'
-                            | transloco: { k: epicTopK(), max: epicMaxTopK() }
-                        }}
-                      </h4>
-                      <span class="text-accent">{{ epicCoverage().toFixed(1) }}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="1"
-                      [max]="epicMaxTopK()"
-                      [value]="epicTopK()"
-                      (input)="epicTopK.set(+$any($event.target).value)"
-                      class="w-full accent-accent cursor-pointer"
-                    />
-                    <div class="flex gap-1.5">
-                      <button
-                        type="button"
-                        (click)="epicCoeffOrder.set('amplitude')"
-                        [class]="
-                          epicCoeffOrder() === 'amplitude'
-                            ? 'flex-1 py-1 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent cursor-pointer'
-                            : 'flex-1 py-1 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
-                        "
-                      >
-                        {{ 'transforms.dft.epicycles.orderAmp' | transloco }}
-                      </button>
-                      <button
-                        type="button"
-                        (click)="epicCoeffOrder.set('frequency')"
-                        [class]="
-                          epicCoeffOrder() === 'frequency'
-                            ? 'flex-1 py-1 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent cursor-pointer'
-                            : 'flex-1 py-1 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
-                        "
-                      >
-                        {{ 'transforms.dft.epicycles.orderFreq' | transloco }}
-                      </button>
-                    </div>
-                  </section>
-
-                  <div class="border-t border-border dark:border-dark-border"></div>
-
-                  <!-- Speed -->
-                  <section class="flex flex-col gap-2">
-                    <div class="flex items-center justify-between">
-                      <h4
-                        class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                      >
-                        {{ 'transforms.dft.epicycles.speed' | transloco }}
-                      </h4>
-                      <span class="text-ink dark:text-dark-ink">{{ epicSpeed().toFixed(3) }}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.005"
-                      max="0.14"
-                      step="0.001"
-                      [value]="epicSpeed()"
-                      (input)="epicSpeed.set(+$any($event.target).value)"
-                      class="w-full accent-accent cursor-pointer"
-                    />
-                  </section>
-
-                  <div class="border-t border-border dark:border-dark-border"></div>
-
-                  <!-- Layers -->
-                  <section class="flex flex-col gap-2">
-                    <h4
-                      class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                    >
-                      {{ 'transforms.dft.layersShow' | transloco }}
-                    </h4>
-                    <div class="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                      <label
-                        class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink"
-                      >
-                        <input
-                          type="checkbox"
-                          [checked]="epicShowOriginal()"
-                          (change)="epicShowOriginal.set($any($event.target).checked)"
-                          class="accent-accent w-3.5 h-3.5 cursor-pointer"
-                        />
-                        {{ 'transforms.dft.epicycles.layerOriginal' | transloco }}
-                      </label>
-                      <label
-                        class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink"
-                      >
-                        <input
-                          type="checkbox"
-                          [checked]="epicShowApprox()"
-                          (change)="epicShowApprox.set($any($event.target).checked)"
-                          class="accent-accent w-3.5 h-3.5 cursor-pointer"
-                        />
-                        {{ 'transforms.dft.epicycles.layerApprox' | transloco }}
-                      </label>
-                      <label
-                        class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink"
-                      >
-                        <input
-                          type="checkbox"
-                          [checked]="epicShowTrace()"
-                          (change)="epicShowTrace.set($any($event.target).checked)"
-                          class="accent-accent w-3.5 h-3.5 cursor-pointer"
-                        />
-                        {{ 'transforms.dft.epicycles.layerTrace' | transloco }}
-                      </label>
-                      <label
-                        class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink"
-                      >
-                        <input
-                          type="checkbox"
-                          [checked]="epicShowSampled()"
-                          (change)="epicShowSampled.set($any($event.target).checked)"
-                          class="accent-accent w-3.5 h-3.5 cursor-pointer"
-                        />
-                        {{ 'transforms.dft.epicycles.layerSampled' | transloco }}
-                      </label>
-                      <label
-                        class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink"
-                      >
-                        <input
-                          type="checkbox"
-                          [checked]="epicShowChains()"
-                          (change)="epicShowChains.set($any($event.target).checked)"
-                          class="accent-accent w-3.5 h-3.5 cursor-pointer"
-                        />
-                        {{ 'transforms.dft.epicycles.layerChains' | transloco }}
-                      </label>
-                    </div>
-                  </section>
-
-                  <div class="border-t border-border dark:border-dark-border"></div>
-
-                  <!-- Normalization info (read-only after compute) -->
-                  @if (epicNormInfo(); as info) {
-                    <section class="flex flex-col gap-1">
-                      <h4
-                        class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                      >
-                        {{ 'transforms.dft.epicycles.autoNorm' | transloco }}
-                      </h4>
-                      <p class="text-[10px] text-accent">
-                        {{
-                          'transforms.dft.epicycles.normApplied'
-                            | transloco: { scale: info.scale.toExponential(3) }
-                        }}
-                      </p>
-                    </section>
-
-                    <div class="border-t border-border dark:border-dark-border"></div>
-                  }
-
-                  <!-- Colors -->
-                  <section class="flex flex-col gap-2">
-                    <div class="flex items-center justify-between">
-                      <h4
-                        class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                      >
-                        {{ 'transforms.lineStyle' | transloco }}
-                      </h4>
-                      <button
-                        type="button"
-                        (click)="resetEpicColors()"
-                        class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer"
-                      >
-                        {{ 'transforms.reset' | transloco }}
-                      </button>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                      <div class="flex items-center gap-2">
-                        <input
-                          type="color"
-                          [value]="epicOriginalColor()"
-                          (input)="onEpicOriginalColorInput($any($event.target).value)"
-                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                        />
-                        <span class="text-muted dark:text-dark-muted flex-1">{{
-                          'transforms.dft.epicycles.layerOriginal' | transloco
-                        }}</span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <input
-                          type="color"
-                          [value]="epicApproxColor()"
-                          (input)="onEpicApproxColorInput($any($event.target).value)"
-                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                        />
-                        <span class="text-muted dark:text-dark-muted flex-1">{{
-                          'transforms.dft.epicycles.layerApprox' | transloco
-                        }}</span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <input
-                          type="color"
-                          [value]="epicTraceColor()"
-                          (input)="onEpicTraceColorInput($any($event.target).value)"
-                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                        />
-                        <span class="text-muted dark:text-dark-muted flex-1">{{
-                          'transforms.dft.epicycles.layerTrace' | transloco
-                        }}</span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <input
-                          type="color"
-                          [value]="epicSampledColor()"
-                          (input)="onEpicSampledColorInput($any($event.target).value)"
-                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                        />
-                        <span class="text-muted dark:text-dark-muted flex-1">{{
-                          'transforms.dft.epicycles.layerSampled' | transloco
-                        }}</span>
-                      </div>
-                    </div>
-                  </section>
+              <!-- Desktop lg+ (non-fullscreen): slide-in from left -->
+              @if (showEpicSettings() && epicResult() && !isFullscreen()) {
+                <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+                  <ng-container *ngTemplateOutlet="epicPanelContent" />
+                </div>
+              }
+              <!-- Fullscreen (any size): bottom sheet -->
+              @if (showEpicSettings() && epicResult() && isFullscreen()) {
+                <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex flex-col max-h-64 border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+                  <ng-container *ngTemplateOutlet="epicPanelContent" />
                 </div>
               }
 
               <!-- Legend top-right (only after compute, pushed down if share button present) -->
               @if (epicResult()) {
                 <div
-                  class="absolute bottom-2 left-2 flex flex-col gap-1 text-[10px] font-mono pointer-events-none px-2 py-1.5 rounded border border-border/40 dark:border-dark-border/40 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
+                  class="absolute bottom-2 left-2 flex flex-col gap-1 text-[10px] font-mono pointer-events-none px-2 py-1.5 rounded border border-border/40 dark:border-dark-border/40 bg-paper/80 dark:bg-dark-surface/80 backdrop-blur-sm"
                 >
-                  <span class="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                  <span class="flex items-center gap-1.5 text-ink/70 dark:text-dark-ink/70">
                     <span
                       class="w-4 h-px border-t-2 border-dashed shrink-0"
                       [style.borderColor]="epicOriginalColor()"
                     ></span>
                     {{ 'transforms.dft.epicycles.layerOriginal' | transloco }}
                   </span>
-                  <span class="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                  <span class="flex items-center gap-1.5 text-ink/70 dark:text-dark-ink/70">
                     <span
                       class="inline-block w-4 h-0.5 rounded shrink-0"
                       [style.background]="epicApproxColor()"
                     ></span>
                     {{ 'transforms.dft.epicycles.layerApprox' | transloco }}
                   </span>
-                  <span class="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                  <span class="flex items-center gap-1.5 text-ink/70 dark:text-dark-ink/70">
                     <span
                       class="inline-block w-4 h-0.5 rounded shrink-0"
                       [style.background]="epicTraceColor()"
@@ -1183,6 +935,93 @@
                 </div>
               }
             </div>
+
+            <!-- Mobile < lg (non-fullscreen): inline below epicycles canvas -->
+            @if (showEpicSettings() && epicResult() && !isFullscreen()) {
+              <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
+                <ng-container *ngTemplateOutlet="epicPanelContent" />
+              </div>
+            }
+
+            <ng-template #epicPanelContent>
+              <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+                <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">{{ 'transforms.panelSettings' | transloco }}</span>
+                <button type="button" (click)="showEpicSettings.set(false)" class="w-5 h-5 flex items-center justify-center rounded text-ink/50 hover:text-ink dark:text-dark-ink/50 dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-base leading-none" [title]="'transforms.closePanel' | transloco">×</button>
+              </div>
+              <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1 text-[11px] font-mono">
+                <!-- Animation controls -->
+                <section class="px-5 py-4 flex flex-col gap-3">
+                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.dft.epicycles.animate' | transloco }}</p>
+                  <div class="flex flex-wrap gap-1.5">
+                    @if (epicIsAnimating()) {
+                      <button type="button" (click)="epicToggleAnimation()" class="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono bg-indigo-100 dark:bg-indigo-950/40 border border-indigo-400 text-indigo-700 dark:text-indigo-300 cursor-pointer transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+                        {{ 'transforms.dft.epicycles.pause' | transloco }}
+                      </button>
+                    } @else {
+                      <button type="button" (click)="epicToggleAnimation()" class="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+                        {{ 'transforms.dft.epicycles.animate' | transloco }}
+                      </button>
+                    }
+                    <button type="button" (click)="epicResetAnimation()" class="px-3 py-1.5 rounded text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer">
+                      {{ 'transforms.dft.epicycles.reset' | transloco }}
+                    </button>
+                  </div>
+                </section>
+                <!-- Top-K -->
+                <section class="px-5 py-4 flex flex-col gap-3">
+                  <div class="flex items-center justify-between">
+                    <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.dft.epicycles.topK' | transloco: { k: epicTopK(), max: epicMaxTopK() } }}</p>
+                    <span class="text-accent text-xs font-mono">{{ epicCoverage().toFixed(1) }}%</span>
+                  </div>
+                  <input type="range" min="1" [max]="epicMaxTopK()" [value]="epicTopK()" (input)="epicTopK.set(+$any($event.target).value)" class="w-full accent-accent cursor-pointer h-1.5" />
+                  <div class="flex gap-1.5">
+                    <button type="button" (click)="epicCoeffOrder.set('amplitude')" [class]="epicCoeffOrder() === 'amplitude' ? 'flex-1 py-1 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent cursor-pointer text-xs' : 'flex-1 py-1 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer text-xs'">{{ 'transforms.dft.epicycles.orderAmp' | transloco }}</button>
+                    <button type="button" (click)="epicCoeffOrder.set('frequency')" [class]="epicCoeffOrder() === 'frequency' ? 'flex-1 py-1 rounded-lg border border-accent bg-accent/10 dark:bg-accent/15 text-accent cursor-pointer text-xs' : 'flex-1 py-1 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer text-xs'">{{ 'transforms.dft.epicycles.orderFreq' | transloco }}</button>
+                  </div>
+                </section>
+                <!-- Speed -->
+                <section class="px-5 py-4 flex flex-col gap-3">
+                  <div class="flex items-center justify-between">
+                    <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.dft.epicycles.speed' | transloco }}</p>
+                    <span class="text-ink dark:text-dark-ink text-xs font-mono">{{ epicSpeed().toFixed(3) }}</span>
+                  </div>
+                  <input type="range" min="0.005" max="0.14" step="0.001" [value]="epicSpeed()" (input)="epicSpeed.set(+$any($event.target).value)" class="w-full accent-accent cursor-pointer h-1.5" />
+                </section>
+                <!-- Layers -->
+                <section class="px-5 py-4 flex flex-col gap-3">
+                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.dft.layersShow' | transloco }}</p>
+                  <div class="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                    <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink text-xs"><input type="checkbox" [checked]="epicShowOriginal()" (change)="epicShowOriginal.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer" />{{ 'transforms.dft.epicycles.layerOriginal' | transloco }}</label>
+                    <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink text-xs"><input type="checkbox" [checked]="epicShowApprox()" (change)="epicShowApprox.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer" />{{ 'transforms.dft.epicycles.layerApprox' | transloco }}</label>
+                    <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink text-xs"><input type="checkbox" [checked]="epicShowTrace()" (change)="epicShowTrace.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer" />{{ 'transforms.dft.epicycles.layerTrace' | transloco }}</label>
+                    <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink text-xs"><input type="checkbox" [checked]="epicShowSampled()" (change)="epicShowSampled.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer" />{{ 'transforms.dft.epicycles.layerSampled' | transloco }}</label>
+                    <label class="flex items-center gap-1.5 cursor-pointer text-ink dark:text-dark-ink text-xs"><input type="checkbox" [checked]="epicShowChains()" (change)="epicShowChains.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer" />{{ 'transforms.dft.epicycles.layerChains' | transloco }}</label>
+                  </div>
+                </section>
+                <!-- Normalization info -->
+                @if (epicNormInfo(); as info) {
+                  <section class="px-5 py-4 flex flex-col gap-2">
+                    <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.dft.epicycles.autoNorm' | transloco }}</p>
+                    <p class="text-[10px] text-accent font-mono">{{ 'transforms.dft.epicycles.normApplied' | transloco: { scale: info.scale.toExponential(3) } }}</p>
+                  </section>
+                }
+                <!-- Colors -->
+                <section class="px-5 py-4 flex flex-col gap-3">
+                  <div class="flex items-center justify-between">
+                    <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.lineStyle' | transloco }}</p>
+                    <button type="button" (click)="resetEpicColors()" class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer">{{ 'transforms.reset' | transloco }}</button>
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2"><input type="color" [value]="epicOriginalColor()" (input)="onEpicOriginalColorInput($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" /><span class="text-muted dark:text-dark-muted flex-1 text-xs">{{ 'transforms.dft.epicycles.layerOriginal' | transloco }}</span></div>
+                    <div class="flex items-center gap-2"><input type="color" [value]="epicApproxColor()" (input)="onEpicApproxColorInput($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" /><span class="text-muted dark:text-dark-muted flex-1 text-xs">{{ 'transforms.dft.epicycles.layerApprox' | transloco }}</span></div>
+                    <div class="flex items-center gap-2"><input type="color" [value]="epicTraceColor()" (input)="onEpicTraceColorInput($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" /><span class="text-muted dark:text-dark-muted flex-1 text-xs">{{ 'transforms.dft.epicycles.layerTrace' | transloco }}</span></div>
+                    <div class="flex items-center gap-2"><input type="color" [value]="epicSampledColor()" (input)="onEpicSampledColorInput($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" /><span class="text-muted dark:text-dark-muted flex-1 text-xs">{{ 'transforms.dft.epicycles.layerSampled' | transloco }}</span></div>
+                  </div>
+                </section>
+              </div>
+            </ng-template>
           </section>
 
           <!-- Favorite name dialog — shown between canvas and coefficients table -->
@@ -1200,7 +1039,7 @@
                 (keydown.enter)="confirmFavorite()"
                 (keydown.escape)="cancelFavoriteDialog()"
                 autofocus
-                class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 text-ink dark:text-dark-ink outline-none focus:border-amber-500"
+                class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink outline-none focus:border-amber-500"
               />
               <button
                 type="button"
@@ -1340,7 +1179,8 @@
               />
 
               <!-- Overlay buttons top-left: fullscreen → settings → download → share → favorites -->
-              <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
+              <div class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
+                   [style.left]="showCanvasSettings() && result() && !isMobile() && !isFullscreen() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
                 @if (result()) {
                   <button
                     type="button"
@@ -1351,7 +1191,7 @@
                     [attr.aria-label]="
                       (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco
                     "
-                    class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer"
+                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
                   >
                     @if (isFullscreen()) {
                       <svg
@@ -1395,7 +1235,7 @@
                     [class]="
                       showCanvasSettings()
                         ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
-                        : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer'
+                        : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'
                     "
                   >
                     <svg
@@ -1419,7 +1259,7 @@
                     (click)="downloadCanvas(signalWrapperRef(), 'dft-signal.png')"
                     [title]="'results.downloadImage' | transloco"
                     [attr.aria-label]="'results.downloadImage' | transloco"
-                    class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer"
+                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -1441,7 +1281,7 @@
                     (click)="openShareDialog()"
                     [title]="'transforms.shareLink' | transloco"
                     [attr.aria-label]="'transforms.shareLink' | transloco"
-                    class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer"
+                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -1477,7 +1317,7 @@
                       [class]="
                         latestHistoryEntry()?.isFavorite
                           ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center cursor-pointer'
-                          : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'
+                          : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/60 dark:text-dark-ink/60 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'
                       "
                     >
                       @if (favoriteLoading()) {
@@ -1505,194 +1345,97 @@
                 }
               </div>
 
-              <!-- Legend overlay top-right (only after compute) -->
-              @if (result()) {
-                <div
-                  class="absolute top-2 right-2 flex items-center gap-3 text-[10px] font-mono pointer-events-none px-2 py-1 rounded border border-border/40 dark:border-dark-border/40 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-                >
-                  <span class="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
-                    <span
-                      class="w-2.5 h-2.5 rounded-full shrink-0"
-                      [style.background]="samplesColor()"
-                    ></span>
-                    {{ 'transforms.dft.samplesLabel' | transloco }}
-                  </span>
-                  <span class="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
-                    <span
-                      class="inline-block w-4 h-0.5 rounded shrink-0"
-                      [style.background]="reconstructionColor()"
-                    ></span>
-                    IDFT
-                  </span>
+
+              <!-- Desktop lg+ (non-fullscreen): slide-in from left -->
+              @if (showCanvasSettings() && !isFullscreen()) {
+                <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+                  <ng-container *ngTemplateOutlet="signalPanelContent" />
                 </div>
               }
-
-              <!-- Settings panel overlay -->
-              @if (showCanvasSettings()) {
-                <div
-                  class="absolute top-11 left-2 right-2 sm:right-auto sm:w-80 z-20 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow flex flex-col gap-3 text-[11px] font-mono max-h-[calc(100%-3.5rem)] overflow-y-auto"
-                >
-                  <section class="flex flex-col gap-2">
-                    <div class="flex items-center justify-between">
-                      <h4
-                        class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                      >
-                        {{ 'transforms.dft.layersShow' | transloco }}
-                      </h4>
-                      <button
-                        type="button"
-                        (click)="resetSignalColors()"
-                        class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer"
-                      >
-                        {{ 'transforms.reset' | transloco }}
-                      </button>
-                    </div>
-                    <div class="flex flex-wrap gap-2 items-center">
-                      <button
-                        type="button"
-                        (click)="showSamples.set(!showSamples())"
-                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
-                        [style.borderColor]="showSamples() ? samplesColor() : null"
-                        [style.color]="showSamples() ? samplesColor() : null"
-                        [style.backgroundColor]="showSamples() ? samplesColor() + '1A' : null"
-                        [class]="
-                          showSamples()
-                            ? ''
-                            : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'
-                        "
-                      >
-                        <span
-                          class="w-2 h-2 rounded-full shrink-0"
-                          [style.background]="showSamples() ? samplesColor() : 'currentColor'"
-                        ></span>
-                        {{ 'transforms.dft.showSamples' | transloco }}
-                      </button>
-                      <button
-                        type="button"
-                        (click)="showReconstruction.set(!showReconstruction())"
-                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
-                        [style.borderColor]="showReconstruction() ? reconstructionColor() : null"
-                        [style.color]="showReconstruction() ? reconstructionColor() : null"
-                        [style.backgroundColor]="
-                          showReconstruction() ? reconstructionColor() + '1A' : null
-                        "
-                        [class]="
-                          showReconstruction()
-                            ? ''
-                            : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'
-                        "
-                      >
-                        <span
-                          class="w-2 h-2 rounded-full shrink-0"
-                          [style.background]="
-                            showReconstruction() ? reconstructionColor() : 'currentColor'
-                          "
-                        ></span>
-                        IDFT
-                      </button>
-                    </div>
-                  </section>
-                  <div class="border-t border-border dark:border-dark-border"></div>
-                  <section class="flex flex-col gap-2">
-                    <h4
-                      class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                    >
-                      {{ 'transforms.lineStyle' | transloco }}
-                    </h4>
-                    <div class="flex flex-wrap gap-3 items-center">
-                      <div class="flex items-center gap-2">
-                        <span class="text-muted dark:text-dark-muted">{{
-                          'transforms.dft.showSamples' | transloco
-                        }}</span>
-                        <input
-                          type="color"
-                          [value]="samplesColor()"
-                          (input)="onSamplesColorInput($any($event.target).value)"
-                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                        />
-                        <input
-                          type="number"
-                          [value]="samplesRadius()"
-                          min="1"
-                          max="6"
-                          step="0.5"
-                          (input)="samplesRadius.set(+$any($event.target).value)"
-                          class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
-                        />
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <span class="text-muted dark:text-dark-muted">IDFT</span>
-                        <input
-                          type="color"
-                          [value]="reconstructionColor()"
-                          (input)="onReconColorInput($any($event.target).value)"
-                          class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                        />
-                        <input
-                          type="number"
-                          [value]="reconstructionLineWidth()"
-                          min="0.5"
-                          max="5"
-                          step="0.5"
-                          (input)="reconstructionLineWidth.set(+$any($event.target).value)"
-                          class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
-                        />
-                      </div>
-                    </div>
-                  </section>
-                  <div class="border-t border-border dark:border-dark-border"></div>
-                  <section class="flex flex-col gap-2">
-                    <h4
-                      class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                    >
-                      {{ 'transforms.axisAndUnits' | transloco }}
-                    </h4>
-                    <div class="flex items-center gap-2">
-                      <span class="text-muted dark:text-dark-muted">{{
-                        'transforms.axisX' | transloco
-                      }}</span>
-                      <div
-                        class="flex rounded border border-border dark:border-dark-border overflow-hidden"
-                      >
-                        <button
-                          type="button"
-                          (click)="signalXAxisFormat.set('pi')"
-                          [class]="
-                            signalXAxisFormat() === 'pi'
-                              ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
-                              : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'
-                          "
-                        >
-                          π
-                        </button>
-                        <button
-                          type="button"
-                          (click)="signalXAxisFormat.set('e')"
-                          [class]="
-                            signalXAxisFormat() === 'e'
-                              ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
-                              : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'
-                          "
-                        >
-                          e
-                        </button>
-                        <button
-                          type="button"
-                          (click)="signalXAxisFormat.set('integer')"
-                          [class]="
-                            signalXAxisFormat() === 'integer'
-                              ? 'px-2 py-0.5 bg-accent text-white cursor-pointer'
-                              : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'
-                          "
-                        >
-                          1,2
-                        </button>
-                      </div>
-                    </div>
-                  </section>
+              <!-- Fullscreen (any size): bottom sheet -->
+              @if (showCanvasSettings() && isFullscreen()) {
+                <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex flex-col max-h-64 border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+                  <ng-container *ngTemplateOutlet="signalPanelContent" />
                 </div>
               }
             </div>
+
+            <!-- Mobile < lg (non-fullscreen): inline below canvas -->
+            @if (showCanvasSettings() && !isFullscreen()) {
+              <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
+                <ng-container *ngTemplateOutlet="signalPanelContent" />
+              </div>
+            }
+
+            <ng-template #signalPanelContent>
+              <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+                <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">{{ 'transforms.panelSettings' | transloco }}</span>
+                <button type="button" (click)="showCanvasSettings.set(false)" class="w-5 h-5 flex items-center justify-center rounded text-ink/50 hover:text-ink dark:text-dark-ink/50 dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-base leading-none" [title]="'transforms.closePanel' | transloco">×</button>
+              </div>
+              <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1 text-[11px] font-mono">
+                <!-- Layers / legend -->
+                <section class="px-5 py-4 flex flex-col gap-3">
+                  <div class="flex items-center justify-between">
+                    <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.dft.layersShow' | transloco }}</p>
+                    <button type="button" (click)="resetSignalColors()" class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer">{{ 'transforms.reset' | transloco }}</button>
+                  </div>
+                  <div class="flex flex-wrap gap-2 items-center">
+                    <button
+                      type="button"
+                      (click)="showSamples.set(!showSamples())"
+                      class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
+                      [style.borderColor]="showSamples() ? samplesColor() : null"
+                      [style.color]="showSamples() ? samplesColor() : null"
+                      [style.backgroundColor]="showSamples() ? samplesColor() + '1A' : null"
+                      [class]="showSamples() ? '' : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'"
+                    >
+                      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showSamples() ? samplesColor() : 'currentColor'"></span>
+                      {{ 'transforms.dft.showSamples' | transloco }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="showReconstruction.set(!showReconstruction())"
+                      class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors"
+                      [style.borderColor]="showReconstruction() ? reconstructionColor() : null"
+                      [style.color]="showReconstruction() ? reconstructionColor() : null"
+                      [style.backgroundColor]="showReconstruction() ? reconstructionColor() + '1A' : null"
+                      [class]="showReconstruction() ? '' : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent'"
+                    >
+                      <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showReconstruction() ? reconstructionColor() : 'currentColor'"></span>
+                      IDFT
+                    </button>
+                  </div>
+                </section>
+                <!-- Line style -->
+                <section class="px-5 py-4 flex flex-col gap-3">
+                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.lineStyle' | transloco }}</p>
+                  <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted text-xs flex-1">{{ 'transforms.dft.showSamples' | transloco }}</span>
+                      <input type="color" [value]="samplesColor()" (input)="onSamplesColorInput($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
+                      <input type="number" [value]="samplesRadius()" min="1" max="6" step="0.5" (input)="samplesRadius.set(+$any($event.target).value)" class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center text-xs" />
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted text-xs flex-1">IDFT</span>
+                      <input type="color" [value]="reconstructionColor()" (input)="onReconColorInput($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
+                      <input type="number" [value]="reconstructionLineWidth()" min="0.5" max="5" step="0.5" (input)="reconstructionLineWidth.set(+$any($event.target).value)" class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center text-xs" />
+                    </div>
+                  </div>
+                </section>
+                <!-- Axis -->
+                <section class="px-5 py-4 flex flex-col gap-3">
+                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.axisAndUnits' | transloco }}</p>
+                  <div class="flex items-center gap-2">
+                    <span class="text-muted dark:text-dark-muted text-xs">{{ 'transforms.axisX' | transloco }}</span>
+                    <div class="flex rounded border border-border dark:border-dark-border overflow-hidden">
+                      <button type="button" (click)="signalXAxisFormat.set('pi')" [class]="signalXAxisFormat() === 'pi' ? 'px-2 py-0.5 bg-accent text-white cursor-pointer text-xs' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-xs'">π</button>
+                      <button type="button" (click)="signalXAxisFormat.set('e')" [class]="signalXAxisFormat() === 'e' ? 'px-2 py-0.5 bg-accent text-white cursor-pointer text-xs' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-xs'">e</button>
+                      <button type="button" (click)="signalXAxisFormat.set('integer')" [class]="signalXAxisFormat() === 'integer' ? 'px-2 py-0.5 bg-accent text-white cursor-pointer text-xs' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:invoke:bg-dark-surface2 transition-colors cursor-pointer text-xs'">1,2</button>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </ng-template>
           </section>
 
           @if (result(); as res) {
@@ -1779,7 +1522,8 @@
                 />
 
                 <!-- Action buttons overlay top-left: fullscreen → settings → download → share -->
-                <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
+                <div class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
+                     [style.left]="showSpecSettings() && !isMobile() && !isFullscreen() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
                   @if (result()) {
                     <button
                       type="button"
@@ -1792,7 +1536,7 @@
                         (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen')
                           | transloco
                       "
-                      class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer"
+                      class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
                     >
                       @if (isFullscreen()) {
                         <svg
@@ -1836,7 +1580,7 @@
                       [class]="
                         showSpecSettings()
                           ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
-                          : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer'
+                          : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'
                       "
                     >
                       <svg
@@ -1860,7 +1604,7 @@
                       (click)="downloadCanvas(specWrapperRef(), 'dft-spectrum.png')"
                       [title]="'results.downloadImage' | transloco"
                       [attr.aria-label]="'results.downloadImage' | transloco"
-                      class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer"
+                      class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1882,7 +1626,7 @@
                       (click)="openShareDialog()"
                       [title]="'transforms.shareLink' | transloco"
                       [attr.aria-label]="'transforms.shareLink' | transloco"
-                      class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center cursor-pointer"
+                      class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1904,31 +1648,6 @@
                   }
                 </div>
 
-                <!-- Mode pills top-right -->
-                <div class="absolute top-2 right-2 flex gap-1 pointer-events-none">
-                  <button
-                    type="button"
-                    (click)="specMode.set('amplitude')"
-                    [class]="
-                      specMode() === 'amplitude'
-                        ? 'pointer-events-auto px-2.5 py-1 rounded border border-violet-400 bg-violet-50/90 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[10px] font-mono font-semibold cursor-pointer backdrop-blur-sm'
-                        : 'pointer-events-auto px-2.5 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-[10px] font-mono text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer backdrop-blur-sm'
-                    "
-                  >
-                    |X[k]|
-                  </button>
-                  <button
-                    type="button"
-                    (click)="specMode.set('phase')"
-                    [class]="
-                      specMode() === 'phase'
-                        ? 'pointer-events-auto px-2.5 py-1 rounded border border-emerald-400 bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-semibold cursor-pointer backdrop-blur-sm'
-                        : 'pointer-events-auto px-2.5 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 text-[10px] font-mono text-gray-600 dark:text-gray-300 hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer backdrop-blur-sm'
-                    "
-                  >
-                    ∠X[k]
-                  </button>
-                </div>
 
                 <!-- Hover tooltip -->
                 @if (hoveredCoeff(); as hov) {
@@ -1959,79 +1678,86 @@
                   </div>
                 }
 
-                <!-- Spectrum settings panel overlay -->
-                @if (showSpecSettings()) {
-                  <div
-                    class="absolute top-11 left-2 z-20 w-72 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow flex flex-col gap-3 text-[11px] font-mono"
-                  >
-                    <div class="flex items-center justify-between">
-                      <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          [checked]="fftShift()"
-                          (change)="fftShift.set($any($event.target).checked)"
-                          class="accent-accent w-3.5 h-3.5 cursor-pointer"
-                        />
-                        <span class="text-ink dark:text-dark-ink text-xs">{{
-                          'transforms.dft.fftShift' | transloco
-                        }}</span>
-                        <span class="text-muted dark:text-dark-muted text-[10px]"
-                          >(k &lt; 0 = {{ 'transforms.dft.negFreq' | transloco }})</span
-                        >
-                      </label>
-                      <button
-                        type="button"
-                        (click)="resetSpecColors()"
-                        class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer"
-                      >
-                        {{ 'transforms.reset' | transloco }}
-                      </button>
-                    </div>
-                    <div class="border-t border-border dark:border-dark-border"></div>
-                    <section class="flex flex-col gap-2">
-                      <h4
-                        class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted"
-                      >
-                        {{ 'transforms.lineStyle' | transloco }}
-                      </h4>
-                      <div class="flex flex-wrap gap-3 items-center">
-                        <div class="flex items-center gap-2">
-                          <span class="text-muted dark:text-dark-muted">|X[k]|</span>
-                          <input
-                            type="color"
-                            [value]="specAmplitudeColor()"
-                            (input)="onSpecAmpColorInput($any($event.target).value)"
-                            class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                          />
-                        </div>
-                        <div class="flex items-center gap-2">
-                          <span class="text-muted dark:text-dark-muted">∠X[k]</span>
-                          <input
-                            type="color"
-                            [value]="specPhaseColor()"
-                            (input)="onSpecPhaseColorInput($any($event.target).value)"
-                            class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5"
-                          />
-                        </div>
-                        <div class="flex items-center gap-2">
-                          <span class="text-muted dark:text-dark-muted">{{
-                            'transforms.dft.stemWidth' | transloco
-                          }}</span>
-                          <input
-                            type="number"
-                            [value]="specStemWidth()"
-                            min="0.5"
-                            max="4"
-                            step="0.5"
-                            (input)="specStemWidth.set(+$any($event.target).value)"
-                            class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center"
-                          />
-                        </div>
-                      </div>
-                    </section>
+                <!-- Desktop lg+ (non-fullscreen): slide-in from left -->
+                @if (showSpecSettings() && !isFullscreen()) {
+                  <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+                    <ng-container *ngTemplateOutlet="specPanelContent" />
+                  </div>
+                }
+                <!-- Fullscreen (any size): bottom sheet -->
+                @if (showSpecSettings() && isFullscreen()) {
+                  <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex flex-col max-h-64 border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+                    <ng-container *ngTemplateOutlet="specPanelContent" />
                   </div>
                 }
               </div>
+
+              <!-- Mobile < lg (non-fullscreen): inline below canvas -->
+              @if (showSpecSettings() && !isFullscreen()) {
+                <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
+                  <ng-container *ngTemplateOutlet="specPanelContent" />
+                </div>
+              }
+
+              <ng-template #specPanelContent>
+                <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+                  <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">{{ 'transforms.panelSettings' | transloco }}</span>
+                  <button type="button" (click)="showSpecSettings.set(false)" class="w-5 h-5 flex items-center justify-center rounded text-ink/50 hover:text-ink dark:text-dark-ink/50 dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-base leading-none" [title]="'transforms.closePanel' | transloco">×</button>
+                </div>
+                <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1 text-[11px] font-mono">
+                  <!-- Vista (mode selector) -->
+                  <section class="px-5 py-4 flex flex-col gap-3">
+                    <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.dft.specMode' | transloco }}</p>
+                    <div class="flex gap-1.5">
+                      <button
+                        type="button"
+                        (click)="specMode.set('amplitude')"
+                        [class]="specMode() === 'amplitude' ? 'flex-1 py-2 px-2 rounded-lg border border-violet-400 bg-violet-50/90 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 cursor-pointer flex flex-col items-center gap-0.5' : 'flex-1 py-2 px-2 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
+                      >
+                        <span class="text-xs font-mono font-semibold">|X[k]|</span>
+                        <span class="text-[9px] font-sans font-normal opacity-70 leading-tight text-center">{{ 'transforms.dft.specModeAmplitude' | transloco }}</span>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="specMode.set('phase')"
+                        [class]="specMode() === 'phase' ? 'flex-1 py-2 px-2 rounded-lg border border-emerald-400 bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 cursor-pointer flex flex-col items-center gap-0.5' : 'flex-1 py-2 px-2 rounded-lg border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer flex flex-col items-center gap-0.5'"
+                      >
+                        <span class="text-xs font-mono font-semibold">∠X[k]</span>
+                        <span class="text-[9px] font-sans font-normal opacity-70 leading-tight text-center">{{ 'transforms.dft.specModePhase' | transloco }}</span>
+                      </button>
+                    </div>
+                  </section>
+                  <!-- FFT Shift -->
+                  <section class="px-5 py-4 flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" [checked]="fftShift()" (change)="fftShift.set($any($event.target).checked)" class="accent-accent w-3.5 h-3.5 cursor-pointer" />
+                        <span class="text-ink dark:text-dark-ink text-xs">{{ 'transforms.dft.fftShift' | transloco }}</span>
+                        <span class="text-muted dark:text-dark-muted text-[10px]">(k &lt; 0 = {{ 'transforms.dft.negFreq' | transloco }})</span>
+                      </label>
+                      <button type="button" (click)="resetSpecColors()" class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted hover:text-ink hover:border-accent transition-colors cursor-pointer">{{ 'transforms.reset' | transloco }}</button>
+                    </div>
+                  </section>
+                  <!-- Line style -->
+                  <section class="px-5 py-4 flex flex-col gap-3">
+                    <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'transforms.lineStyle' | transloco }}</p>
+                    <div class="flex flex-col gap-2">
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted dark:text-dark-muted text-xs flex-1">|X[k]|</span>
+                        <input type="color" [value]="specAmplitudeColor()" (input)="onSpecAmpColorInput($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted dark:text-dark-muted text-xs flex-1">∠X[k]</span>
+                        <input type="color" [value]="specPhaseColor()" (input)="onSpecPhaseColorInput($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted dark:text-dark-muted text-xs flex-1">{{ 'transforms.dft.stemWidth' | transloco }}</span>
+                        <input type="number" [value]="specStemWidth()" min="0.5" max="4" step="0.5" (input)="specStemWidth.set(+$any($event.target).value)" class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center text-xs" />
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </ng-template>
               <p
                 class="px-4 py-2 text-[10px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border"
               >
