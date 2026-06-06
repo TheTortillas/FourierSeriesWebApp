@@ -4,14 +4,16 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { SurveyRequest } from '../../../domain';
+import { UserStore } from '../auth/user.store';
 
 const DONE_KEY = 'fwc_survey_done';
 
 @Injectable({ providedIn: 'root' })
 export class SurveyService {
-  private readonly http = inject(HttpClient);
-  private readonly platform = inject(PLATFORM_ID);
-  private readonly base = environment.apiUrl;
+  private readonly http      = inject(HttpClient);
+  private readonly platform  = inject(PLATFORM_ID);
+  private readonly store     = inject(UserStore);
+  private readonly base      = environment.apiUrl;
 
   readonly promptOpen  = signal(false);
   readonly submitting  = signal(false);
@@ -19,6 +21,9 @@ export class SurveyService {
 
   hasDone(): boolean {
     if (!isPlatformBrowser(this.platform)) return true;
+    // Usuarios autenticados: la fuente de verdad es el servidor (via UserStore).
+    if (this.store.isAuthenticated()) return this.store.hasDoneSurvey();
+    // Usuarios anónimos: localStorage es el único mecanismo disponible.
     return localStorage.getItem(DONE_KEY) === 'true';
   }
 
@@ -37,6 +42,9 @@ export class SurveyService {
         if (isPlatformBrowser(this.platform)) {
           localStorage.setItem(DONE_KEY, 'true');
         }
+        // Actualiza el store inmediatamente para que hasDone() refleje el cambio
+        // en la misma sesión sin necesidad de un nuevo request al servidor.
+        this.store.markSurveyDone();
         this.submitted.set(true);
         this.submitting.set(false);
         this.promptOpen.set(false);

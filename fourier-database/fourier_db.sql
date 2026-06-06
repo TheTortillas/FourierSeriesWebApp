@@ -91,19 +91,21 @@ CREATE TABLE persons (
 -- USERS
 -- -------------------------------------------------------
 CREATE TABLE users (
-    id              TEXT PRIMARY KEY DEFAULT gen_ulid(),
-    person_id       TEXT NOT NULL REFERENCES persons(id),
-    email           VARCHAR(320) NOT NULL,
-    email_verified  BOOLEAN NOT NULL DEFAULT FALSE,
-    password_hash   TEXT,
-    role            user_role NOT NULL DEFAULT 'user',
-    tier            user_tier NOT NULL DEFAULT 'free',
-    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_login_at   TIMESTAMPTZ,
+    id                  TEXT PRIMARY KEY DEFAULT gen_ulid(),
+    person_id           TEXT NOT NULL REFERENCES persons(id),
+    email               VARCHAR(320) NOT NULL,
+    email_verified      BOOLEAN NOT NULL DEFAULT FALSE,
+    password_hash       TEXT,
+    role                user_role NOT NULL DEFAULT 'user',
+    tier                user_tier NOT NULL DEFAULT 'free',
+    is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_login_at       TIMESTAMPTZ,
     deleted_at          TIMESTAMPTZ,
     deleted_email_hash  TEXT,
+    has_done_survey     BOOLEAN NOT NULL DEFAULT FALSE,
+    has_done_feedback   BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT users_email_unique  UNIQUE (email),
     CONSTRAINT users_person_unique UNIQUE (person_id)
 );
