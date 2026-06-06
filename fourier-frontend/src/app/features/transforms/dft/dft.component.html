@@ -495,12 +495,12 @@
             <p class="text-xs text-muted dark:text-dark-muted font-mono">
               {{ 'transforms.dft.epicycles.presetsLabel' | transloco }}
             </p>
-            <div class="flex flex-wrap gap-1.5">
+            <div class="grid grid-cols-3 gap-2">
               @for (preset of epicPresets; track preset.id) {
                 <button
                   type="button"
                   (click)="epicLoadPreset(preset.id)"
-                  class="px-3 py-1 rounded-lg border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors cursor-pointer"
+                  class="px-2 py-2 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-xs font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-accent hover:bg-accent/5 dark:hover:bg-accent/10 transition-colors cursor-pointer text-center leading-tight"
                 >
                   {{ preset.label | transloco }}
                 </button>

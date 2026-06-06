@@ -58,18 +58,66 @@ const TOP_LIMIT = 256;
 /** Identifiers that are never free symbols: math functions, Maxima constants, keywords. */
 const KNOWN_IDENTIFIERS = new Set([
   // Maxima constants (after stripping %)
-  'pi', 'e', 'i', 'inf', 'minf', 'true', 'false',
+  'pi',
+  'e',
+  'i',
+  'inf',
+  'minf',
+  'true',
+  'false',
   // Maxima keywords
-  'if', 'then', 'else', 'elseif', 'and', 'or', 'not',
+  'if',
+  'then',
+  'else',
+  'elseif',
+  'and',
+  'or',
+  'not',
   // Standard math functions
-  'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2',
-  'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
-  'cot', 'sec', 'csc', 'acot', 'asec', 'acsc',
-  'sqrt', 'exp', 'log', 'log2', 'log10', 'abs',
-  'floor', 'ceiling', 'round', 'truncate', 'max', 'min',
-  'sign', 'sgn', 'signum',
+  'sin',
+  'cos',
+  'tan',
+  'asin',
+  'acos',
+  'atan',
+  'atan2',
+  'sinh',
+  'cosh',
+  'tanh',
+  'asinh',
+  'acosh',
+  'atanh',
+  'cot',
+  'sec',
+  'csc',
+  'acot',
+  'asec',
+  'acsc',
+  'sqrt',
+  'exp',
+  'log',
+  'log2',
+  'log10',
+  'abs',
+  'floor',
+  'ceiling',
+  'round',
+  'truncate',
+  'max',
+  'min',
+  'sign',
+  'sgn',
+  'signum',
   // Special functions supported by the frontend
-  'u', 'rect', 'tri', 'sinc', 'delta', 'gamma', 'factorial', 'erf', 'erfc',
+  'u',
+  'rect',
+  'tri',
+  'sinc',
+  'delta',
+  'gamma',
+  'factorial',
+  'erf',
+  'erfc',
 ]);
 
 /**
@@ -92,17 +140,25 @@ function extractFreeSymbols(expr: string, intVar: string): string[] {
   return [...found];
 }
 
+import { CAT_PRESET, TREX_PRESET, HOMER_PRESET } from './presets';
+
 // ── Epicycles helpers ──────────────────────────────────────────────────────────
 
 const TAU = Math.PI * 2;
 
-interface EpicyclePreset { id: string; label: string; points: DftPoint[] }
+interface EpicyclePreset {
+  id: string;
+  label: string;
+  points: DftPoint[];
+}
 
 interface EpicycleState {
   color: string;
   selected: boolean;
-  centerX: number; centerY: number;
-  endX: number;    endY: number;
+  centerX: number;
+  centerY: number;
+  endX: number;
+  endY: number;
   radius: number;
 }
 
@@ -162,13 +218,27 @@ interface DftColorPreset {
 
 function getDftPreset(isDark: boolean): DftColorPreset {
   return isDark
-    ? { samples: '#fb923c', reconstruction: '#818cf8', specAmplitude: '#a78bfa', specPhase: '#6ee7b7' }
-    : { samples: '#ea580c', reconstruction: '#6366f1', specAmplitude: '#7c3aed', specPhase: '#059669' };
+    ? {
+        samples: '#fb923c',
+        reconstruction: '#818cf8',
+        specAmplitude: '#a78bfa',
+        specPhase: '#6ee7b7',
+      }
+    : {
+        samples: '#ea580c',
+        reconstruction: '#6366f1',
+        specAmplitude: '#7c3aed',
+        specPhase: '#059669',
+      };
 }
 
 // ── Manual mode presets ────────────────────────────────────────────────────────
 
-function makePreset(name: string, fn: (n: number, N: number) => number, N: number): { name: string; values: number[] } {
+function makePreset(
+  name: string,
+  fn: (n: number, N: number) => number,
+  N: number,
+): { name: string; values: number[] } {
   return { name, values: Array.from({ length: N }, (_, i) => fn(i, N)) };
 }
 
@@ -188,27 +258,27 @@ function makePreset(name: string, fn: (n: number, N: number) => number, N: numbe
   ],
 })
 export class DftComponent implements OnInit, OnDestroy {
-  private readonly seo        = inject(SeoService);
-  private readonly api        = inject(ApiService);
-  private readonly theme      = inject(ThemeService);
-  private readonly du         = inject(DrawingUtilsService);
-  private readonly coords     = inject(CoordinateTransformService);
-  private readonly plotter    = inject(PlottingService);
-  private readonly mathUtils  = inject(MathUtilsService);
-  private readonly dftCompute  = inject(DftComputeService);
-  private readonly route       = inject(ActivatedRoute);
-  private readonly router      = inject(Router);
-  private readonly destroyRef  = inject(DestroyRef);
-  readonly mqs                 = inject(MathquillService);
-  readonly userStore           = inject(UserStore);
-  private readonly csvExport   = inject(CsvExportService);
-  private readonly transloco   = inject(TranslocoService);
+  private readonly seo = inject(SeoService);
+  private readonly api = inject(ApiService);
+  private readonly theme = inject(ThemeService);
+  private readonly du = inject(DrawingUtilsService);
+  private readonly coords = inject(CoordinateTransformService);
+  private readonly plotter = inject(PlottingService);
+  private readonly mathUtils = inject(MathUtilsService);
+  private readonly dftCompute = inject(DftComputeService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly mqs = inject(MathquillService);
+  readonly userStore = inject(UserStore);
+  private readonly csvExport = inject(CsvExportService);
+  private readonly transloco = inject(TranslocoService);
 
-  readonly signalPlotRef    = viewChild<FunctionPlotComponent>('signalPlot');
-  readonly spectrumPlotRef  = viewChild<FunctionPlotComponent>('spectrumPlot');
-  readonly specWrapperRef   = viewChild<ElementRef<HTMLDivElement>>('spectrumWrapper');
+  readonly signalPlotRef = viewChild<FunctionPlotComponent>('signalPlot');
+  readonly spectrumPlotRef = viewChild<FunctionPlotComponent>('spectrumPlot');
+  readonly specWrapperRef = viewChild<ElementRef<HTMLDivElement>>('spectrumWrapper');
   readonly signalWrapperRef = viewChild<ElementRef<HTMLDivElement>>('signalWrapper');
-  readonly epicWrapperRef   = viewChild<ElementRef<HTMLDivElement>>('epicWrapper');
+  readonly epicWrapperRef = viewChild<ElementRef<HTMLDivElement>>('epicWrapper');
 
   // ── Mode / algorithm ────────────────────────────────────────────────────────
   readonly inputMode = signal<DftInputMode>('function');
@@ -216,18 +286,16 @@ export class DftComponent implements OnInit, OnDestroy {
 
   // ── Function-mode form state ─────────────────────────────────────────────────
   readonly segments = signal<TransformSegmentDraft[]>([defaultSegment()]);
-  readonly intVar   = signal('x');
-  readonly N        = signal(128);
+  readonly intVar = signal('x');
+  readonly N = signal(128);
   readonly nOptions = N_OPTIONS;
-  readonly intVars  = INT_VARS;
+  readonly intVars = INT_VARS;
 
   /** Custom N for DFT naive (any value, not limited to powers of 2). */
   readonly dftCustomN = signal(128);
 
   /** N used for computation — power-of-2 for FFT, free value for DFT. */
-  readonly effectiveN = computed(() =>
-    this.algorithm() === 'fft' ? this.N() : this.dftCustomN(),
-  );
+  readonly effectiveN = computed(() => (this.algorithm() === 'fft' ? this.N() : this.dftCustomN()));
 
   /** Free symbolic identifiers found across all segment expressions and endpoints. */
   readonly freeSymbolsInDft = computed<string[]>(() => {
@@ -243,8 +311,8 @@ export class DftComponent implements OnInit, OnDestroy {
   });
 
   // ── Manual-mode state ────────────────────────────────────────────────────────
-  readonly manualRaw  = signal<string>('1, 0, 0, 0, 0, 0, 0, 0');
-  readonly manualN    = signal(8);
+  readonly manualRaw = signal<string>('1, 0, 0, 0, 0, 0, 0, 0');
+  readonly manualN = signal(8);
   readonly manualNOpts = [4, 8, 16, 32];
 
   readonly parsedManual = computed<number[]>(() => {
@@ -270,7 +338,7 @@ export class DftComponent implements OnInit, OnDestroy {
     { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
     { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
     { label: 'rect(□)', writeWithCursor: '\\operatorname{rect}\\left(\\right)' },
-    { label: 'tri(□)',  writeWithCursor: '\\operatorname{tri}\\left(\\right)'  },
+    { label: 'tri(□)', writeWithCursor: '\\operatorname{tri}\\left(\\right)' },
     { label: 'sinc(□)', writeWithCursor: '\\operatorname{sinc}\\left(\\right)' },
     { label: 'π', typedText: 'pi' },
   ];
@@ -288,10 +356,10 @@ export class DftComponent implements OnInit, OnDestroy {
       { label: 'asin', typedText: 'asin(' },
       { label: 'acos', typedText: 'acos(' },
       { label: 'atan', typedText: 'atan(' },
-      { label: 'u(□)',    writeWithCursor: '\\operatorname{u}\\left(\\right)'    },
-      { label: 'sgn(□)',  writeWithCursor: '\\operatorname{sgn}\\left(\\right)'  },
+      { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+      { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
       { label: 'rect(□)', writeWithCursor: '\\operatorname{rect}\\left(\\right)' },
-      { label: 'tri(□)',  writeWithCursor: '\\operatorname{tri}\\left(\\right)'  },
+      { label: 'tri(□)', writeWithCursor: '\\operatorname{tri}\\left(\\right)' },
       { label: 'sinc(□)', writeWithCursor: '\\operatorname{sinc}\\left(\\right)' },
     ],
     [
@@ -311,15 +379,15 @@ export class DftComponent implements OnInit, OnDestroy {
 
   // ── Request state ──────────────────────────────────────────────────────────
   readonly loading = signal(false);
-  readonly error   = signal<string | null>(null);
-  readonly result  = signal<LocalDftResult | null>(null);
+  readonly error = signal<string | null>(null);
+  readonly result = signal<LocalDftResult | null>(null);
 
   // ── UI toggles ─────────────────────────────────────────────────────────────
-  readonly showSamples         = signal(true);
-  readonly showReconstruction  = signal(true);
-  readonly showCanvasSettings  = signal(false);
-  readonly showSpecSettings    = signal(false);
-  readonly isFullscreen        = signal(false);
+  readonly showSamples = signal(true);
+  readonly showReconstruction = signal(true);
+  readonly showCanvasSettings = signal(false);
+  readonly showSpecSettings = signal(false);
+  readonly isFullscreen = signal(false);
 
   // ── Spectrum mode ──────────────────────────────────────────────────────────
   readonly specMode = signal<'amplitude' | 'phase'>('amplitude');
@@ -329,34 +397,34 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly dftSortByAmplitude = signal(false);
 
   // ── Canvas colors ──────────────────────────────────────────────────────────
-  readonly samplesColor            = signal('#ea580c');
-  readonly reconstructionColor     = signal('#6366f1');
-  readonly specAmplitudeColor      = signal('#7c3aed');
-  readonly specPhaseColor          = signal('#059669');
+  readonly samplesColor = signal('#ea580c');
+  readonly reconstructionColor = signal('#6366f1');
+  readonly specAmplitudeColor = signal('#7c3aed');
+  readonly specPhaseColor = signal('#059669');
   readonly reconstructionLineWidth = signal(1.8);
-  readonly samplesRadius           = signal(2.2);
-  readonly specStemWidth           = signal(1.6);
+  readonly samplesRadius = signal(2.2);
+  readonly specStemWidth = signal(1.6);
 
-  private _customSamplesColor        = false;
+  private _customSamplesColor = false;
   private _customReconstructionColor = false;
-  private _customSpecAmpColor        = false;
-  private _customSpecPhaseColor      = false;
+  private _customSpecAmpColor = false;
+  private _customSpecPhaseColor = false;
 
   // ── Hover / selection ──────────────────────────────────────────────────────
-  readonly hoveredCoeff  = signal<DftCoefficient | null>(null);
+  readonly hoveredCoeff = signal<DftCoefficient | null>(null);
   readonly selectedCoeff = signal<DftCoefficient | null>(null);
 
   private _lastSpecVp: CanvasViewport | null = null;
 
   // ── Share / URL ─────────────────────────────────────────────────────────────
-  readonly showShareDialog  = signal(false);
-  readonly urlCopied        = signal(false);
-  private urlPopulated      = false;
+  readonly showShareDialog = signal(false);
+  readonly urlCopied = signal(false);
+  private urlPopulated = false;
 
   // ── Favorites ──────────────────────────────────────────────────────────────
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly showFavoriteDialog = signal(false);
-  readonly favoriteLoading    = signal(false);
+  readonly favoriteLoading = signal(false);
   favoriteName = '';
 
   // ── Signal canvas X-axis format ─────────────────────────────────────────────
@@ -366,58 +434,67 @@ export class DftComponent implements OnInit, OnDestroy {
   private _epicTimerId: ReturnType<typeof setInterval> | null = null;
 
   readonly epicPresets: EpicyclePreset[] = [
-    { id: 'circle',    label: 'transforms.dft.epicycles.presetCircle',    points: epicCirclePreset() },
-    { id: 'star',      label: 'transforms.dft.epicycles.presetStar',      points: epicStarPreset() },
+    { id: 'circle',    label: 'transforms.dft.epicycles.presetCircle',    points: epicCirclePreset()    },
+    { id: 'star',      label: 'transforms.dft.epicycles.presetStar',      points: epicStarPreset()      },
     { id: 'lissajous', label: 'transforms.dft.epicycles.presetLissajous', points: epicLissajousPreset() },
+    { id: 'cat',       label: 'transforms.dft.epicycles.presetCat',       points: CAT_PRESET            },
+    { id: 'trex',      label: 'transforms.dft.epicycles.presetTrex',      points: TREX_PRESET           },
+    { id: 'homer',     label: 'transforms.dft.epicycles.presetHomer',     points: HOMER_PRESET          },
   ];
 
-  readonly epicRawPoints      = signal('');
-  readonly epicLoading        = signal(false);
-  readonly epicError          = signal<string | null>(null);
-  readonly epicResult         = signal<DftResponse | null>(null);
-  readonly epicSourcePoints   = signal<DftPoint[]>([]);
+  readonly epicRawPoints = signal('');
+  readonly epicLoading = signal(false);
+  readonly epicError = signal<string | null>(null);
+  readonly epicResult = signal<DftResponse | null>(null);
+  readonly epicSourcePoints = signal<DftPoint[]>([]);
 
-  readonly epicTopK           = signal(18);
-  readonly epicCoeffOrder     = signal<EpicCoeffOrder>('amplitude');
-  readonly epicSpeed          = signal(0.03);
-  readonly epicTime           = signal(0);
-  readonly epicFrameTick      = signal(0);
-  readonly epicIsAnimating    = signal(false);
+  readonly epicTopK = signal(18);
+  readonly epicCoeffOrder = signal<EpicCoeffOrder>('amplitude');
+  readonly epicSpeed = signal(0.03);
+  readonly epicTime = signal(0);
+  readonly epicFrameTick = signal(0);
+  readonly epicIsAnimating = signal(false);
 
-  readonly epicShowOriginal   = signal(true);
-  readonly epicShowApprox     = signal(true);
-  readonly epicShowTrace      = signal(false);
-  readonly epicShowSampled    = signal(false);
-  readonly epicShowChains     = signal(true);
-  readonly epicSelectedK      = signal<number | null>(null);
+  readonly epicShowOriginal = signal(true);
+  readonly epicShowApprox = signal(true);
+  readonly epicShowTrace = signal(false);
+  readonly epicShowSampled = signal(false);
+  readonly epicShowChains = signal(true);
+  readonly epicSelectedK = signal<number | null>(null);
 
-  readonly epicAutoNormalize  = signal(true);
-  readonly epicCenterScale    = signal(true);
-  readonly epicNormInfo       = signal<{ applied: boolean; centered: boolean; centerX: number; centerY: number; scale: number } | null>(null);
+  readonly epicAutoNormalize = signal(true);
+  readonly epicCenterScale = signal(true);
+  readonly epicNormInfo = signal<{
+    applied: boolean;
+    centered: boolean;
+    centerX: number;
+    centerY: number;
+    scale: number;
+  } | null>(null);
 
-  readonly epicPhaseUnit      = signal<'pi' | 'deg'>('pi');
+  readonly epicPhaseUnit = signal<'pi' | 'deg'>('pi');
 
   /** Exact points restored from history — bypass textarea parsing to preserve float precision for deduplication. Cleared after first use. */
   private _epicRestoredPoints: DftPoint[] | null = null;
 
-  readonly epicTrace          = signal<DftPoint[]>([]);
+  readonly epicTrace = signal<DftPoint[]>([]);
 
-  readonly showEpicSettings   = signal(false);
-  readonly epicUrlTooLarge    = signal(false);
+  readonly showEpicSettings = signal(false);
+  readonly epicUrlTooLarge = signal(false);
 
   // ── Epicycles canvas colors ────────────────────────────────────────────────
-  readonly epicOriginalColor  = signal('#6b7280');
-  readonly epicApproxColor    = signal('#22c55e');
-  readonly epicTraceColor     = signal('#60a5fa');
-  readonly epicSampledColor   = signal('#f59e0b');
+  readonly epicOriginalColor = signal('#6b7280');
+  readonly epicApproxColor = signal('#22c55e');
+  readonly epicTraceColor = signal('#60a5fa');
+  readonly epicSampledColor = signal('#f59e0b');
 
   private _customEpicOriginalColor = false;
-  private _customEpicSampledColor  = false;
+  private _customEpicSampledColor = false;
 
   // Draw dialog
   readonly epicDrawDialogOpen = signal(false);
-  readonly epicDrawPoints     = signal<DftPoint[]>([]);
-  private _epicDrawing        = false;
+  readonly epicDrawPoints = signal<DftPoint[]>([]);
+  private _epicDrawing = false;
   private _epicDrawCtx: CanvasRenderingContext2D | null = null;
 
   readonly epicNormalizedCoeffs = computed<EpicRenderCoeff[]>(() => {
@@ -427,32 +504,54 @@ export class DftComponent implements OnInit, OnDestroy {
     const withAmp = res.coefficients.map((c) => {
       const re = this._epicFinite(c.re);
       const im = this._epicFinite(c.im);
-      const amp = Number.isFinite(c.amplitude) && c.amplitude > 0
-        ? this._epicFinite(c.amplitude) : Math.hypot(re, im);
+      const amp =
+        Number.isFinite(c.amplitude) && c.amplitude > 0
+          ? this._epicFinite(c.amplitude)
+          : Math.hypot(re, im);
       const kSigned = c.k > n / 2 ? c.k - n : c.k;
-      const phase = amp < 1e-12 ? 0 : (this._epicFinite(c.phase) || Math.atan2(im, re));
-      return { ...c, re, im, kSigned, amplitudeSafe: amp, amplitudePercentSafe: 0, phaseSafe: phase, phaseInPiSafe: this._epicPiLabel(phase) };
+      const phase = amp < 1e-12 ? 0 : this._epicFinite(c.phase) || Math.atan2(im, re);
+      return {
+        ...c,
+        re,
+        im,
+        kSigned,
+        amplitudeSafe: amp,
+        amplitudePercentSafe: 0,
+        phaseSafe: phase,
+        phaseInPiSafe: this._epicPiLabel(phase),
+      };
     });
     const total = withAmp.reduce((s, c) => s + c.amplitudeSafe, 0);
-    return withAmp.map((c) => ({ ...c, amplitudePercentSafe: total > 0 ? (c.amplitudeSafe / total) * 100 : 0 }));
+    return withAmp.map((c) => ({
+      ...c,
+      amplitudePercentSafe: total > 0 ? (c.amplitudeSafe / total) * 100 : 0,
+    }));
   });
 
   readonly epicOrderedCoeffs = computed<EpicRenderCoeff[]>(() => {
     const c = this.epicNormalizedCoeffs();
     if (this.epicCoeffOrder() === 'frequency') {
-      return [...c].sort((a, b) => { const d = Math.abs(a.kSigned) - Math.abs(b.kSigned); return d !== 0 ? d : a.kSigned - b.kSigned; });
+      return [...c].sort((a, b) => {
+        const d = Math.abs(a.kSigned) - Math.abs(b.kSigned);
+        return d !== 0 ? d : a.kSigned - b.kSigned;
+      });
     }
-    return [...c].sort((a, b) => { const d = b.amplitudeSafe - a.amplitudeSafe; return d !== 0 ? d : Math.abs(a.kSigned) - Math.abs(b.kSigned); });
+    return [...c].sort((a, b) => {
+      const d = b.amplitudeSafe - a.amplitudeSafe;
+      return d !== 0 ? d : Math.abs(a.kSigned) - Math.abs(b.kSigned);
+    });
   });
 
-  readonly epicMaxTopK     = computed(() => this.epicOrderedCoeffs().length);
+  readonly epicMaxTopK = computed(() => this.epicOrderedCoeffs().length);
   readonly epicVisibleCoeffs = computed(() => this.epicOrderedCoeffs());
   readonly epicSelectedCoeffs = computed(() => {
     const c = this.epicOrderedCoeffs();
     return c.slice(0, Math.max(1, Math.min(this.epicTopK(), c.length || 1)));
   });
-  readonly epicCoverage    = computed(() => this.epicSelectedCoeffs().reduce((s, c) => s + c.amplitudePercentSafe, 0));
-  readonly epicEndpoint    = computed(() => {
+  readonly epicCoverage = computed(() =>
+    this.epicSelectedCoeffs().reduce((s, c) => s + c.amplitudePercentSafe, 0),
+  );
+  readonly epicEndpoint = computed(() => {
     const states = this.epicStates();
     if (!states.length) return null;
     const last = states[states.length - 1];
@@ -463,18 +562,25 @@ export class DftComponent implements OnInit, OnDestroy {
     if (!coeffs.length) return [];
     return Array.from({ length: 421 }, (_, i) => this._epicEvalPoint(coeffs, (i / 420) * TAU));
   });
-  readonly epicStates      = computed<EpicycleState[]>(() => this._epicComputeStates(this.epicSelectedCoeffs(), this.epicTime()));
+  readonly epicStates = computed<EpicycleState[]>(() =>
+    this._epicComputeStates(this.epicSelectedCoeffs(), this.epicTime()),
+  );
 
-  readonly epicPlotLayers  = computed<PlotLayer[]>(() => {
+  readonly epicPlotLayers = computed<PlotLayer[]>(() => {
     void this.epicFrameTick();
     void this.epicStates();
     const original = this.epicSourcePoints();
-    const approx   = this.epicApproxCurve();
-    const trace    = this.epicTrace();
+    const approx = this.epicApproxCurve();
+    const trace = this.epicTrace();
     const curves: Curve[] = [];
 
     if (this.epicShowOriginal() && original.length > 1) {
-      curves.push({ points: this._epicClose(original), color: this.epicOriginalColor(), lineWidth: 1.2, dashed: true });
+      curves.push({
+        points: this._epicClose(original),
+        color: this.epicOriginalColor(),
+        lineWidth: 1.2,
+        dashed: true,
+      });
     }
     if (this.epicShowApprox() && approx.length > 1) {
       curves.push({ points: approx, color: this.epicApproxColor(), lineWidth: 2 });
@@ -496,7 +602,10 @@ export class DftComponent implements OnInit, OnDestroy {
       return `f(${v}) = ${s.expressionTex || '\\square'}, \\quad ${s.fromTex || '\\square'} \\leq ${v} \\leq ${s.toTex || '\\square'}`;
     }
     const rows = segs
-      .map((s) => `${s.expressionTex || '\\square'}, & ${s.fromTex || '\\square'} \\leq ${v} \\leq ${s.toTex || '\\square'}`)
+      .map(
+        (s) =>
+          `${s.expressionTex || '\\square'}, & ${s.fromTex || '\\square'} \\leq ${v} \\leq ${s.toTex || '\\square'}`,
+      )
       .join(' \\\\ ');
     return `f(${v}) = \\begin{cases} ${rows} \\end{cases}`;
   });
@@ -506,68 +615,91 @@ export class DftComponent implements OnInit, OnDestroy {
   // ── Computed canvas layers ─────────────────────────────────────────────────
 
   readonly signalLayers = computed<PlotLayer[]>(() => {
-    const res   = this.result();
+    const res = this.result();
     if (!res) return [];
     const showS = this.showSamples();
     const showR = this.showReconstruction();
     const sColor = this.samplesColor();
     const rColor = this.reconstructionColor();
-    const rLW    = this.reconstructionLineWidth();
-    const sRad   = this.samplesRadius();
+    const rLW = this.reconstructionLineWidth();
+    const sRad = this.samplesRadius();
     void this.theme.isDark;
 
-    return [{
-      curves: [],
-      onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
-        if (showR) this._drawReconstruction(ctx, vp, res, rColor, rLW);
-        if (showS) this.du.drawPoints(ctx, vp, res.sampledPoints, sColor, sRad);
+    return [
+      {
+        curves: [],
+        onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
+          if (showR) this._drawReconstruction(ctx, vp, res, rColor, rLW);
+          if (showS) this.du.drawPoints(ctx, vp, res.sampledPoints, sColor, sRad);
+        },
       },
-    }];
+    ];
   });
 
   readonly spectrumLayers = computed<PlotLayer[]>(() => {
     const res = this.result();
     if (!res) return [];
-    const mode     = this.specMode();
-    const shift    = this.fftShift();
-    const color    = mode === 'amplitude' ? this.specAmplitudeColor() : this.specPhaseColor();
-    const lw       = this.specStemWidth();
-    const hovered  = this.hoveredCoeff();
+    const mode = this.specMode();
+    const shift = this.fftShift();
+    const color = mode === 'amplitude' ? this.specAmplitudeColor() : this.specPhaseColor();
+    const lw = this.specStemWidth();
+    const hovered = this.hoveredCoeff();
     const selected = this.selectedCoeff();
     void this.theme.isDark;
 
-    return [{
-      curves: [],
-      onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
-        this._lastSpecVp = vp;
-        for (const c of res.coefficients) {
-          const kDisplay = shift ? (c.k <= res.N / 2 ? c.k : c.k - res.N) : c.k;
-          const val = mode === 'amplitude' ? c.amplitude : c.phase;
-          const highlighted = hovered?.k === c.k || selected?.k === c.k;
-          this.du.drawStem(
-            ctx, vp, kDisplay, val,
-            highlighted ? (this.theme.isDark ? '#fbbf24' : '#d97706') : color,
-            highlighted ? lw * 2 : lw,
-            highlighted ? 5 : 3,
-          );
-        }
+    return [
+      {
+        curves: [],
+        onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
+          this._lastSpecVp = vp;
+          for (const c of res.coefficients) {
+            const kDisplay = shift ? (c.k <= res.N / 2 ? c.k : c.k - res.N) : c.k;
+            const val = mode === 'amplitude' ? c.amplitude : c.phase;
+            const highlighted = hovered?.k === c.k || selected?.k === c.k;
+            this.du.drawStem(
+              ctx,
+              vp,
+              kDisplay,
+              val,
+              highlighted ? (this.theme.isDark ? '#fbbf24' : '#d97706') : color,
+              highlighted ? lw * 2 : lw,
+              highlighted ? 5 : 3,
+            );
+          }
+        },
       },
-    }];
+    ];
   });
 
   // ── Phase unit (shared toggle for function/manual table) ─────────────────
   readonly dftPhaseUnit = signal<'pi' | 'deg'>('deg');
 
   dftTogglePhaseUnit(): void {
-    this.dftPhaseUnit.update((u) => u === 'deg' ? 'pi' : 'deg');
+    this.dftPhaseUnit.update((u) => (u === 'deg' ? 'pi' : 'deg'));
   }
 
   dftPhaseDisplay(phase: number): string {
     if (this.dftPhaseUnit() === 'pi') {
       const r = phase / Math.PI;
       if (!Number.isFinite(r)) return '0π';
-      const table: [number, string][] = [[0,'0'],[1,'1'],[-1,'-1'],[0.5,'1/2'],[-0.5,'-1/2'],[1/3,'1/3'],[-1/3,'-1/3'],[2/3,'2/3'],[-2/3,'-2/3'],[1/4,'1/4'],[-1/4,'-1/4'],[3/4,'3/4'],[-3/4,'-3/4']];
-      for (const [t, l] of table) { if (Math.abs(r - t) < 1e-4) return `${l}π`; }
+      const table: [number, string][] = [
+        [0, '0'],
+        [1, '1'],
+        [-1, '-1'],
+        [0.5, '1/2'],
+        [-0.5, '-1/2'],
+        [1 / 3, '1/3'],
+        [-1 / 3, '-1/3'],
+        [2 / 3, '2/3'],
+        [-2 / 3, '-2/3'],
+        [1 / 4, '1/4'],
+        [-1 / 4, '-1/4'],
+        [3 / 4, '3/4'],
+        [-3 / 4, '-3/4'],
+      ];
+      for (const [t, l] of table) {
+        if (Math.abs(r - t) < 1e-4) return `${l}π`;
+      }
       return `${Number(r.toFixed(4))}π`;
     }
     return `${this.phaseInDeg(phase)}°`;
@@ -602,12 +734,12 @@ export class DftComponent implements OnInit, OnDestroy {
     const res = this.result();
     if (!res) return null;
     return {
-      N:             res.N,
-      algorithm:     res.algorithm,
-      rmsError:      res.rmsError,
+      N: res.N,
+      algorithm: res.algorithm,
+      rmsError: res.rmsError,
       computeTimeMs: res.computeTimeMs,
       samplingTimeMs: res.samplingTimeMs,
-      interval:      res.interval,
+      interval: res.interval,
     };
   });
 
@@ -633,16 +765,18 @@ export class DftComponent implements OnInit, OnDestroy {
     const values = this.parsedManual();
     if (values.length === 0) return [];
     const color = this.samplesColor();
-    const lw    = this.specStemWidth();
+    const lw = this.specStemWidth();
     void this.theme.isDark;
-    return [{
-      curves: [],
-      onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
-        for (let n = 0; n < values.length; n++) {
-          this.du.drawStem(ctx, vp, n, values[n] ?? 0, color, lw, 3);
-        }
+    return [
+      {
+        curves: [],
+        onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
+          for (let n = 0; n < values.length; n++) {
+            this.du.drawStem(ctx, vp, n, values[n] ?? 0, color, lw, 3);
+          }
+        },
       },
-    }];
+    ];
   });
 
   /** Live curve preview of the piecewise function (function mode, before compute). */
@@ -655,24 +789,33 @@ export class DftComponent implements OnInit, OnDestroy {
     const plotter = this.plotter;
     const mathUtils = this.mathUtils;
     const parseLimit = this._parseLimit.bind(this);
-    return [{
-      curves: [],
-      onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
-        for (const seg of segs) {
-          const fn = mathUtils.compile(seg.expression, v);
-          const from = parseLimit(seg.from);
-          const to = parseLimit(seg.to);
-          if (!fn || !isFinite(from) || !isFinite(to)) continue;
-          plotter.plotFnRange(ctx, fn, from, to, 400, vp, { color, lineWidth: 1.8 });
-        }
+    return [
+      {
+        curves: [],
+        onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
+          for (const seg of segs) {
+            const fn = mathUtils.compile(seg.expression, v);
+            const from = parseLimit(seg.from);
+            const to = parseLimit(seg.to);
+            if (!fn || !isFinite(from) || !isFinite(to)) continue;
+            plotter.plotFnRange(ctx, fn, from, to, 400, vp, { color, lineWidth: 1.8 });
+          }
+        },
       },
-    }];
+    ];
   });
 
   private _parseLimit(s: string): number {
     if (!s.trim()) return NaN;
     const fn = this.mathUtils.compile(s, '_');
-    if (fn) { try { const r = fn(0); if (isFinite(r)) return r; } catch { /* */ } }
+    if (fn) {
+      try {
+        const r = fn(0);
+        if (isFinite(r)) return r;
+      } catch {
+        /* */
+      }
+    }
     return this.mathUtils.evaluate(s, 0, '_');
   }
 
@@ -680,11 +823,11 @@ export class DftComponent implements OnInit, OnDestroy {
 
   manualPresets(N: number) {
     return [
-      makePreset('δ[n]',    (_n) => _n === 0 ? 1 : 0,                        N),
-      makePreset('u[n]',    () => 1,                                          N),
-      makePreset('□',       (_n) => _n < N / 2 ? 1 : -1,                     N),
-      makePreset('cos',     (_n) => Math.cos(2 * Math.PI * _n / N),          N),
-      makePreset('sin',     (_n) => Math.sin(2 * Math.PI * _n / N),          N),
+      makePreset('δ[n]', (_n) => (_n === 0 ? 1 : 0), N),
+      makePreset('u[n]', () => 1, N),
+      makePreset('□', (_n) => (_n < N / 2 ? 1 : -1), N),
+      makePreset('cos', (_n) => Math.cos((2 * Math.PI * _n) / N), N),
+      makePreset('sin', (_n) => Math.sin((2 * Math.PI * _n) / N), N),
     ];
   }
 
@@ -705,12 +848,14 @@ export class DftComponent implements OnInit, OnDestroy {
   constructor() {
     effect(() => {
       const preset = getDftPreset(this.theme.isDark);
-      if (!this._customSamplesColor)        this.samplesColor.set(preset.samples);
+      if (!this._customSamplesColor) this.samplesColor.set(preset.samples);
       if (!this._customReconstructionColor) this.reconstructionColor.set(preset.reconstruction);
-      if (!this._customSpecAmpColor)        this.specAmplitudeColor.set(preset.specAmplitude);
-      if (!this._customSpecPhaseColor)      this.specPhaseColor.set(preset.specPhase);
-      if (!this._customEpicOriginalColor)   this.epicOriginalColor.set(this.theme.isDark ? '#9ca3af' : '#6b7280');
-      if (!this._customEpicSampledColor)    this.epicSampledColor.set(this.theme.isDark ? '#fbbf24' : '#d97706');
+      if (!this._customSpecAmpColor) this.specAmplitudeColor.set(preset.specAmplitude);
+      if (!this._customSpecPhaseColor) this.specPhaseColor.set(preset.specPhase);
+      if (!this._customEpicOriginalColor)
+        this.epicOriginalColor.set(this.theme.isDark ? '#9ca3af' : '#6b7280');
+      if (!this._customEpicSampledColor)
+        this.epicSampledColor.set(this.theme.isDark ? '#fbbf24' : '#d97706');
       this.signalPlotRef()?.redraw();
       this.spectrumPlotRef()?.redraw();
     });
@@ -760,7 +905,11 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.seo.setPage('seo.dft.title', 'seo.dft.description', 'DFT calculator, discrete Fourier transform, FFT, epicycles, spectrum analyzer, calculadora DFT');
+    this.seo.setPage(
+      'seo.dft.title',
+      'seo.dft.description',
+      'DFT calculator, discrete Fourier transform, FFT, epicycles, spectrum analyzer, calculadora DFT',
+    );
     const encoded = this.route.snapshot.queryParamMap.get('s');
     if (encoded) {
       void this._restoreState(encoded).then((ok) => {
@@ -797,7 +946,7 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   phaseInDeg(phase: number): string {
-    return (phase * 180 / Math.PI).toFixed(1);
+    return ((phase * 180) / Math.PI).toFixed(1);
   }
 
   /** Format a decimal with up to 10 significant digits, trimming trailing zeros. */
@@ -820,7 +969,7 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   epicTogglePhaseUnit(): void {
-    this.epicPhaseUnit.update((u) => u === 'pi' ? 'deg' : 'pi');
+    this.epicPhaseUnit.update((u) => (u === 'pi' ? 'deg' : 'pi'));
   }
 
   setDftCustomN(raw: number): void {
@@ -835,7 +984,15 @@ export class DftComponent implements OnInit, OnDestroy {
     const last = this.segments().at(-1);
     this.segments.update((s) => [
       ...s,
-      { id: mkId(), expression: '0', expressionTex: '0', from: last?.to ?? '0', fromTex: last?.toTex ?? '0', to: '1', toTex: '1' },
+      {
+        id: mkId(),
+        expression: '0',
+        expressionTex: '0',
+        from: last?.to ?? '0',
+        fromTex: last?.toTex ?? '0',
+        to: '1',
+        toTex: '1',
+      },
     ]);
   }
 
@@ -854,7 +1011,9 @@ export class DftComponent implements OnInit, OnDestroy {
     this.intVar.set(v);
   }
 
-  setN(n: number): void { this.N.set(n); }
+  setN(n: number): void {
+    this.N.set(n);
+  }
 
   // ── Compute ────────────────────────────────────────────────────────────────
 
@@ -883,9 +1042,8 @@ export class DftComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const alg = this.algorithm();
-    const { coefficients, timeMs } = alg === 'fft'
-      ? this.dftCompute.computeFft(values)
-      : this.dftCompute.computeDft(values);
+    const { coefficients, timeMs } =
+      alg === 'fft' ? this.dftCompute.computeFft(values) : this.dftCompute.computeDft(values);
 
     const topCoefficients = this.dftCompute.topCoefficients(coefficients, TOP_LIMIT);
     const sampledPoints = values.map((y, x) => ({ x, y }));
@@ -911,7 +1069,8 @@ export class DftComponent implements OnInit, OnDestroy {
     this.showSpecSettings.set(true);
 
     // Track quota on backend (manual compute is client-side, so we fire a lightweight call)
-    this.api.calculateDFT({ points: sampledPoints, mode: 'signal' })
+    this.api
+      .calculateDFT({ points: sampledPoints, mode: 'signal' })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -922,7 +1081,9 @@ export class DftComponent implements OnInit, OnDestroy {
           // 429 = quota exhausted — roll back the result so it doesn't appear as "computed"
           if (err?.status === 429) {
             this.result.set(null);
-            this.error.set(err?.error?.error ?? this.transloco.translate('transforms.dft.errorWeeklyLimit'));
+            this.error.set(
+              err?.error?.error ?? this.transloco.translate('transforms.dft.errorWeeklyLimit'),
+            );
             this.userStore.refreshQuota();
           }
         },
@@ -949,12 +1110,15 @@ export class DftComponent implements OnInit, OnDestroy {
       next: (sample) => {
         const ys = sample.sampledPoints.map((p) => p.y);
         const alg = this.algorithm();
-        const { coefficients, timeMs } = alg === 'fft'
-          ? this.dftCompute.computeFft(ys)
-          : this.dftCompute.computeDft(ys);
+        const { coefficients, timeMs } =
+          alg === 'fft' ? this.dftCompute.computeFft(ys) : this.dftCompute.computeDft(ys);
 
         const topCoefficients = this.dftCompute.topCoefficients(coefficients, TOP_LIMIT);
-        const reconstructed = this.dftCompute.reconstruct(coefficients, sample.sampledPoints.length, sample.sampledPoints.map((p) => p.x));
+        const reconstructed = this.dftCompute.reconstruct(
+          coefficients,
+          sample.sampledPoints.length,
+          sample.sampledPoints.map((p) => p.x),
+        );
         const rmsError = this.dftCompute.rmsError(ys, reconstructed);
 
         this.result.set({
@@ -981,7 +1145,9 @@ export class DftComponent implements OnInit, OnDestroy {
         if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       },
       error: (err) => {
-        this.error.set(err?.error?.error ?? this.transloco.translate('transforms.dft.errorEvalFunction'));
+        this.error.set(
+          err?.error?.error ?? this.transloco.translate('transforms.dft.errorEvalFunction'),
+        );
         this.loading.set(false);
       },
     });
@@ -1001,10 +1167,22 @@ export class DftComponent implements OnInit, OnDestroy {
 
   // ── Color controls ─────────────────────────────────────────────────────────
 
-  onSamplesColorInput(v: string): void   { this._customSamplesColor = true;        this.samplesColor.set(v); }
-  onReconColorInput(v: string): void     { this._customReconstructionColor = true;  this.reconstructionColor.set(v); }
-  onSpecAmpColorInput(v: string): void   { this._customSpecAmpColor = true;         this.specAmplitudeColor.set(v); }
-  onSpecPhaseColorInput(v: string): void { this._customSpecPhaseColor = true;       this.specPhaseColor.set(v); }
+  onSamplesColorInput(v: string): void {
+    this._customSamplesColor = true;
+    this.samplesColor.set(v);
+  }
+  onReconColorInput(v: string): void {
+    this._customReconstructionColor = true;
+    this.reconstructionColor.set(v);
+  }
+  onSpecAmpColorInput(v: string): void {
+    this._customSpecAmpColor = true;
+    this.specAmplitudeColor.set(v);
+  }
+  onSpecPhaseColorInput(v: string): void {
+    this._customSpecPhaseColor = true;
+    this.specPhaseColor.set(v);
+  }
 
   resetSignalColors(): void {
     const p = getDftPreset(this.theme.isDark);
@@ -1020,10 +1198,20 @@ export class DftComponent implements OnInit, OnDestroy {
     this.specPhaseColor.set(p.specPhase);
   }
 
-  onEpicOriginalColorInput(v: string): void { this._customEpicOriginalColor = true; this.epicOriginalColor.set(v); }
-  onEpicApproxColorInput(v: string): void   { this.epicApproxColor.set(v); }
-  onEpicTraceColorInput(v: string): void    { this.epicTraceColor.set(v); }
-  onEpicSampledColorInput(v: string): void  { this._customEpicSampledColor = true; this.epicSampledColor.set(v); }
+  onEpicOriginalColorInput(v: string): void {
+    this._customEpicOriginalColor = true;
+    this.epicOriginalColor.set(v);
+  }
+  onEpicApproxColorInput(v: string): void {
+    this.epicApproxColor.set(v);
+  }
+  onEpicTraceColorInput(v: string): void {
+    this.epicTraceColor.set(v);
+  }
+  onEpicSampledColorInput(v: string): void {
+    this._customEpicSampledColor = true;
+    this.epicSampledColor.set(v);
+  }
 
   resetEpicColors(): void {
     this._customEpicOriginalColor = this._customEpicSampledColor = false;
@@ -1043,7 +1231,7 @@ export class DftComponent implements OnInit, OnDestroy {
     const mathX = this.coords.cssToMathX(event.clientX - rect.left, vp);
     const mathY = this.coords.cssToMathY(event.clientY - rect.top, vp);
     const shift = this.fftShift();
-    const mode  = this.specMode();
+    const mode = this.specMode();
 
     // Stem width in math units — half a unit gap between stems
     const xTol = 0.35;
@@ -1065,7 +1253,9 @@ export class DftComponent implements OnInit, OnDestroy {
     this.hoveredCoeff.set(hit);
   }
 
-  onSpecMouseLeave(): void { this.hoveredCoeff.set(null); }
+  onSpecMouseLeave(): void {
+    this.hoveredCoeff.set(null);
+  }
 
   selectCoeff(c: DftCoefficient): void {
     this.selectedCoeff.set(this.selectedCoeff()?.k === c.k ? null : c);
@@ -1104,30 +1294,37 @@ export class DftComponent implements OnInit, OnDestroy {
       state = {
         mode,
         alg: this.algorithm(),
-        v:   this.intVar(),
-        N:   this.N(),
-        dN:  this.dftCustomN(),
+        v: this.intVar(),
+        N: this.N(),
+        dN: this.dftCustomN(),
         seg: this.segments().map((s) => ({
-          e: s.expression, et: s.expressionTex,
-          f: s.from, ft: s.fromTex,
-          t: s.to, tt: s.toTex,
+          e: s.expression,
+          et: s.expressionTex,
+          f: s.from,
+          ft: s.fromTex,
+          t: s.to,
+          tt: s.toTex,
         })),
         mr: mode === 'manual' ? this.manualRaw() : undefined,
-        mN: mode === 'manual' ? this.manualN()   : undefined,
+        mN: mode === 'manual' ? this.manualN() : undefined,
       };
     }
 
     try {
-      const json  = JSON.stringify(state);
+      const json = JSON.stringify(state);
       const bytes = new TextEncoder().encode(json);
-      const cs    = new CompressionStream('deflate-raw');
+      const cs = new CompressionStream('deflate-raw');
       const writer = cs.writable.getWriter();
       void writer.write(bytes);
       void writer.close();
       const compressed = await new Response(cs.readable).arrayBuffer();
       return btoa(String.fromCharCode(...new Uint8Array(compressed)))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    } catch { return ''; }
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    } catch {
+      return '';
+    }
   }
 
   private async _restoreState(encoded: string): Promise<boolean> {
@@ -1135,7 +1332,7 @@ export class DftComponent implements OnInit, OnDestroy {
       // Support both legacy plain-base64 and new deflate-raw+base64url
       const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
       const binary = atob(b64);
-      const bytes  = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
 
       let json: string;
       try {
@@ -1147,14 +1344,26 @@ export class DftComponent implements OnInit, OnDestroy {
         json = await new Response(ds.readable).text();
       } catch {
         // Fall back to legacy plain UTF-8 base64
-        json = decodeURIComponent(binary.split('').map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
+        json = decodeURIComponent(
+          binary
+            .split('')
+            .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+            .join(''),
+        );
       }
 
       const s = JSON.parse(json) as {
-        mode?: string; alg?: string; v?: string; N?: number; dN?: number;
+        mode?: string;
+        alg?: string;
+        v?: string;
+        N?: number;
+        dN?: number;
         seg?: Array<{ e: string; et: string; f: string; ft: string; t: string; tt: string }>;
-        mr?: string; mN?: number;
-        pts?: string; aN?: boolean; cS?: boolean;
+        mr?: string;
+        mN?: number;
+        pts?: string;
+        aN?: boolean;
+        cS?: boolean;
       };
 
       if (s.mode === 'function' || s.mode === 'manual' || s.mode === 'epicycles') {
@@ -1165,12 +1374,17 @@ export class DftComponent implements OnInit, OnDestroy {
       if (s.N && N_OPTIONS.includes(s.N)) this.N.set(s.N);
       if (s.dN && s.dN >= 4 && s.dN <= 4096) this.dftCustomN.set(s.dN);
       if (Array.isArray(s.seg) && s.seg.length) {
-        this.segments.set(s.seg.map((seg) => ({
-          id: mkId(),
-          expression: seg.e ?? '', expressionTex: seg.et ?? '',
-          from: seg.f ?? '', fromTex: seg.ft ?? '',
-          to: seg.t ?? '', toTex: seg.tt ?? '',
-        })));
+        this.segments.set(
+          s.seg.map((seg) => ({
+            id: mkId(),
+            expression: seg.e ?? '',
+            expressionTex: seg.et ?? '',
+            from: seg.f ?? '',
+            fromTex: seg.ft ?? '',
+            to: seg.t ?? '',
+            toTex: seg.tt ?? '',
+          })),
+        );
       }
       if (s.mr !== undefined) this.manualRaw.set(s.mr);
       if (s.mN !== undefined) this.manualN.set(s.mN);
@@ -1178,12 +1392,16 @@ export class DftComponent implements OnInit, OnDestroy {
         this.epicRawPoints.set(s.pts);
         try {
           this._epicRestoredPoints = this._epicParsePoints(s.pts);
-        } catch { this._epicRestoredPoints = null; }
+        } catch {
+          this._epicRestoredPoints = null;
+        }
         this.epicAutoNormalize.set(s.aN ?? false);
         if (s.cS !== undefined) this.epicCenterScale.set(s.cS);
       }
       return true;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
 
   // ── Share ──────────────────────────────────────────────────────────────────
@@ -1192,14 +1410,18 @@ export class DftComponent implements OnInit, OnDestroy {
     return typeof window !== 'undefined' ? window.location.href : '';
   }
 
-  openShareDialog(): void { this.showShareDialog.set(true); }
+  openShareDialog(): void {
+    this.showShareDialog.set(true);
+  }
 
   async copyShareUrl(): Promise<void> {
     try {
       await navigator.clipboard.writeText(window.location.href);
       this.urlCopied.set(true);
       setTimeout(() => this.urlCopied.set(false), 2000);
-    } catch { /* clipboard unavailable */ }
+    } catch {
+      /* clipboard unavailable */
+    }
   }
 
   // ── Fullscreen ─────────────────────────────────────────────────────────────
@@ -1227,7 +1449,14 @@ export class DftComponent implements OnInit, OnDestroy {
     const coeffs = this.allCoeffs();
     if (!coeffs.length) return;
     const phaseUnit = this.dftPhaseUnit();
-    const header = ['k', '|X[k]|', 'amplitude_%', 'Re', 'Im', phaseUnit === 'deg' ? 'phase_deg' : 'phase_pi'];
+    const header = [
+      'k',
+      '|X[k]|',
+      'amplitude_%',
+      'Re',
+      'Im',
+      phaseUnit === 'deg' ? 'phase_deg' : 'phase_pi',
+    ];
     const rows = coeffs.map((c) => [
       String(this.kDisplay(c)),
       String(c.amplitude),
@@ -1316,7 +1545,11 @@ export class DftComponent implements OnInit, OnDestroy {
     const preset = this.epicPresets.find((p) => p.id === id);
     if (!preset) return;
     this.epicRawPoints.set(this._epicFormatPoints(preset.points));
-    this.epicSourcePoints.set(preset.points);
+    // Normalise for preview so large-coordinate presets appear centred on canvas
+    const previewPts = this.epicAutoNormalize()
+      ? this._epicNormalizePoints(preset.points).points
+      : preset.points;
+    this.epicSourcePoints.set(previewPts);
     this.epicResult.set(null);
     this.epicError.set(null);
     this.epicTrace.set([]);
@@ -1346,7 +1579,9 @@ export class DftComponent implements OnInit, OnDestroy {
 
     this.epicLoading.set(true);
     try {
-      const res = await firstValueFrom(this.api.calculateDFT({ points: effectivePts, mode: 'epicycles' }));
+      const res = await firstValueFrom(
+        this.api.calculateDFT({ points: effectivePts, mode: 'epicycles' }),
+      );
       this.epicSourcePoints.set(effectivePts);
       this.epicResult.set(res);
       this.epicTopK.set(Math.min(22, Math.max(1, res.coefficients.length)));
@@ -1366,11 +1601,17 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   epicToggleAnimation(): void {
-    if (this.epicIsAnimating()) { this._epicStopAnimation(); return; }
+    if (this.epicIsAnimating()) {
+      this._epicStopAnimation();
+      return;
+    }
     if (typeof window === 'undefined' || !this.epicResult()) return;
     this.epicIsAnimating.set(true);
     this._epicTimerId = setInterval(() => {
-      this.epicTime.update((t) => { const n = t + this.epicSpeed(); return n >= TAU ? n - TAU : n; });
+      this.epicTime.update((t) => {
+        const n = t + this.epicSpeed();
+        return n >= TAU ? n - TAU : n;
+      });
       this.epicFrameTick.update((v) => v + 1);
       const end = this.epicEndpoint();
       if (end && this.epicShowTrace()) {
@@ -1406,7 +1647,10 @@ export class DftComponent implements OnInit, OnDestroy {
 
   epicConfirmDraw(): void {
     const pts = this.epicDrawPoints();
-    if (pts.length < 3) { this.epicError.set(this.transloco.translate('transforms.dft.errorMinPoints')); return; }
+    if (pts.length < 3) {
+      this.epicError.set(this.transloco.translate('transforms.dft.errorMinPoints'));
+      return;
+    }
     this.epicRawPoints.set(this._epicFormatPoints(pts));
     this.epicDrawDialogOpen.set(false);
     this._epicDrawCtx = null;
@@ -1417,7 +1661,9 @@ export class DftComponent implements OnInit, OnDestroy {
   epicClearDrawCanvas(canvas: HTMLCanvasElement): void {
     this.epicDrawPoints.set([]);
     const ctx = canvas.getContext('2d');
-    if (ctx) { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    if (ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
   }
 
   epicStopAnimation(): void {
@@ -1468,15 +1714,23 @@ export class DftComponent implements OnInit, OnDestroy {
 
   private _epicStopAnimation(): void {
     this.epicIsAnimating.set(false);
-    if (this._epicTimerId !== null) { clearInterval(this._epicTimerId); this._epicTimerId = null; }
+    if (this._epicTimerId !== null) {
+      clearInterval(this._epicTimerId);
+      this._epicTimerId = null;
+    }
   }
 
-  private _epicDrawOnCanvas(offsetX: number, offsetY: number, canvas: HTMLCanvasElement, isStart: boolean): void {
+  private _epicDrawOnCanvas(
+    offsetX: number,
+    offsetY: number,
+    canvas: HTMLCanvasElement,
+    isStart: boolean,
+  ): void {
     const ctx = this._epicDrawCtx ?? canvas.getContext('2d');
     if (!ctx) return;
 
     // Normalize to [-1, 1] centered
-    const nx = (offsetX / canvas.width)  * 2 - 1;
+    const nx = (offsetX / canvas.width) * 2 - 1;
     const ny = (1 - offsetY / canvas.height) * 2 - 1;
 
     this.epicDrawPoints.update((pts) => {
@@ -1500,13 +1754,18 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   private _epicParsePoints(raw: string): DftPoint[] {
-    const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const lines = raw
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
     if (lines.length < 3) throw new Error('At least 3 x,y points required.');
     return lines.map((line, i) => {
       const parts = line.split(/[\s,;]+/).filter(Boolean);
       if (parts.length < 2) throw new Error(`Line ${i + 1}: use x,y format.`);
-      const x = Number(parts[0]), y = Number(parts[1]);
-      if (!Number.isFinite(x) || !Number.isFinite(y)) throw new Error(`Line ${i + 1}: invalid numbers.`);
+      const x = Number(parts[0]),
+        y = Number(parts[1]);
+      if (!Number.isFinite(x) || !Number.isFinite(y))
+        throw new Error(`Line ${i + 1}: invalid numbers.`);
       return { x, y };
     });
   }
@@ -1516,7 +1775,8 @@ export class DftComponent implements OnInit, OnDestroy {
   }
 
   private _epicEvalPoint(coeffs: EpicRenderCoeff[], time: number): DftPoint {
-    let x = 0, y = 0;
+    let x = 0,
+      y = 0;
     for (const c of coeffs) {
       const a = c.kSigned * time;
       x += c.re * Math.cos(a) - c.im * Math.sin(a);
@@ -1529,15 +1789,25 @@ export class DftComponent implements OnInit, OnDestroy {
     const states: EpicycleState[] = [];
     const selK = this.epicSelectedK();
     const total = Math.max(1, coeffs.length);
-    let cx = 0, cy = 0;
+    let cx = 0,
+      cy = 0;
     for (let i = 0; i < coeffs.length; i++) {
       const c = coeffs[i];
       if (!c) continue;
       const a = c.kSigned * time;
       const vx = c.re * Math.cos(a) - c.im * Math.sin(a);
       const vy = c.re * Math.sin(a) + c.im * Math.cos(a);
-      states.push({ color: this._epicHarmonicColor(i, total), selected: selK === c.k, centerX: cx, centerY: cy, endX: cx + vx, endY: cy + vy, radius: c.amplitudeSafe });
-      cx += vx; cy += vy;
+      states.push({
+        color: this._epicHarmonicColor(i, total),
+        selected: selK === c.k,
+        centerX: cx,
+        centerY: cy,
+        endX: cx + vx,
+        endY: cy + vy,
+        radius: c.amplitudeSafe,
+      });
+      cx += vx;
+      cy += vy;
     }
     return states;
   }
@@ -1554,46 +1824,124 @@ export class DftComponent implements OnInit, OnDestroy {
     const pxPerUnit = vp.unit * ((vp.scaleX + vp.scaleY) / 2);
     const hasSel = states.some((s) => s.selected);
     for (const s of states) {
-      const cx = toX(s.centerX), cy = toY(s.centerY), ex = toX(s.endX), ey = toY(s.endY);
+      const cx = toX(s.centerX),
+        cy = toY(s.centerY),
+        ex = toX(s.endX),
+        ey = toY(s.endY);
       const dimmed = hasSel && !s.selected;
-      this.du.drawCircle(ctx, cx, cy, Math.max(1.5, s.radius * pxPerUnit), this.du.withAlpha(s.color, s.selected ? 0.42 : dimmed ? 0.12 : 0.28), 1);
-      this.du.drawLine(ctx, cx, cy, ex, ey, this.du.withAlpha(s.color, s.selected ? 1 : dimmed ? 0.22 : 0.88), s.selected ? 2.4 : 1.5);
-      this.du.drawArrowHead(ctx, cx, cy, ex, ey, this.du.withAlpha(s.color, s.selected ? 1 : dimmed ? 0.26 : 0.9), s.selected ? 8 : 6);
+      this.du.drawCircle(
+        ctx,
+        cx,
+        cy,
+        Math.max(1.5, s.radius * pxPerUnit),
+        this.du.withAlpha(s.color, s.selected ? 0.42 : dimmed ? 0.12 : 0.28),
+        1,
+      );
+      this.du.drawLine(
+        ctx,
+        cx,
+        cy,
+        ex,
+        ey,
+        this.du.withAlpha(s.color, s.selected ? 1 : dimmed ? 0.22 : 0.88),
+        s.selected ? 2.4 : 1.5,
+      );
+      this.du.drawArrowHead(
+        ctx,
+        cx,
+        cy,
+        ex,
+        ey,
+        this.du.withAlpha(s.color, s.selected ? 1 : dimmed ? 0.26 : 0.9),
+        s.selected ? 8 : 6,
+      );
     }
     const last = states[states.length - 1];
-    if (last) this.du.drawCircle(ctx, toX(last.endX), toY(last.endY), 3.1, null, 1, hasSel ? this.du.withAlpha('#f8fafc', 0.95) : '#f59e0b');
+    if (last)
+      this.du.drawCircle(
+        ctx,
+        toX(last.endX),
+        toY(last.endY),
+        3.1,
+        null,
+        1,
+        hasSel ? this.du.withAlpha('#f8fafc', 0.95) : '#f59e0b',
+      );
   }
 
-  private _epicNormalizePoints(pts: DftPoint[]): { points: DftPoint[]; info: { applied: boolean; centered: boolean; centerX: number; centerY: number; scale: number } } {
-    if (!pts.length) return { points: pts, info: { applied: false, centered: this.epicCenterScale(), centerX: 0, centerY: 0, scale: 1 } };
+  private _epicNormalizePoints(pts: DftPoint[]): {
+    points: DftPoint[];
+    info: { applied: boolean; centered: boolean; centerX: number; centerY: number; scale: number };
+  } {
+    if (!pts.length)
+      return {
+        points: pts,
+        info: {
+          applied: false,
+          centered: this.epicCenterScale(),
+          centerX: 0,
+          centerY: 0,
+          scale: 1,
+        },
+      };
     const centered = this.epicCenterScale();
-    let sumX = 0, sumY = 0;
-    for (const p of pts) { sumX += p.x; sumY += p.y; }
+    let sumX = 0,
+      sumY = 0;
+    for (const p of pts) {
+      sumX += p.x;
+      sumY += p.y;
+    }
     const cx = centered ? sumX / pts.length : 0;
     const cy = centered ? sumY / pts.length : 0;
     let maxR = 0;
-    for (const p of pts) { const r = Math.hypot(p.x - cx, p.y - cy); if (r > maxR) maxR = r; }
+    for (const p of pts) {
+      const r = Math.hypot(p.x - cx, p.y - cy);
+      if (r > maxR) maxR = r;
+    }
     const scale = maxR > 0 ? 1 / maxR : 1;
-    return { points: pts.map((p) => ({ x: (p.x - cx) * scale, y: (p.y - cy) * scale })), info: { applied: true, centered, centerX: cx, centerY: cy, scale } };
+    return {
+      points: pts.map((p) => ({ x: (p.x - cx) * scale, y: (p.y - cy) * scale })),
+      info: { applied: true, centered, centerX: cx, centerY: cy, scale },
+    };
   }
 
   private _epicClose(pts: DftPoint[]): DftPoint[] {
     if (pts.length < 2) return pts;
-    const f = pts[0], l = pts[pts.length - 1];
+    const f = pts[0],
+      l = pts[pts.length - 1];
     return f.x === l.x && f.y === l.y ? pts : [...pts, f];
   }
 
   private _epicFinite(v: unknown): number {
     if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
-    if (typeof v === 'string') { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; }
+    if (typeof v === 'string') {
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : 0;
+    }
     return 0;
   }
 
   private _epicPiLabel(phase: number): string {
     const r = phase / Math.PI;
     if (!Number.isFinite(r)) return '0';
-    const table: [number, string][] = [[0,'0'],[1,'1'],[-1,'-1'],[0.5,'1/2'],[-0.5,'-1/2'],[1/3,'1/3'],[-1/3,'-1/3'],[2/3,'2/3'],[-2/3,'-2/3'],[1/4,'1/4'],[-1/4,'-1/4'],[3/4,'3/4'],[-3/4,'-3/4']];
-    for (const [t, l] of table) { if (Math.abs(r - t) < 1e-4) return l; }
+    const table: [number, string][] = [
+      [0, '0'],
+      [1, '1'],
+      [-1, '-1'],
+      [0.5, '1/2'],
+      [-0.5, '-1/2'],
+      [1 / 3, '1/3'],
+      [-1 / 3, '-1/3'],
+      [2 / 3, '2/3'],
+      [-2 / 3, '-2/3'],
+      [1 / 4, '1/4'],
+      [-1 / 4, '-1/4'],
+      [3 / 4, '3/4'],
+      [-3 / 4, '-3/4'],
+    ];
+    for (const [t, l] of table) {
+      if (Math.abs(r - t) < 1e-4) return l;
+    }
     return Number(r.toFixed(4)).toString();
   }
 
@@ -1619,7 +1967,10 @@ export class DftComponent implements OnInit, OnDestroy {
     for (const p of pts) {
       const sx = this.coords.mathToScreenX(p.x, vp) / vp.dpr;
       const sy = this.coords.mathToScreenY(p.y, vp) / vp.dpr;
-      if (first) { ctx.moveTo(sx, sy); first = false; } else ctx.lineTo(sx, sy);
+      if (first) {
+        ctx.moveTo(sx, sy);
+        first = false;
+      } else ctx.lineTo(sx, sy);
     }
     ctx.stroke();
     ctx.restore();
