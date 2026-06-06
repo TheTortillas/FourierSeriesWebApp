@@ -555,12 +555,10 @@
           <button
             type="button"
             (click)="setTab(tab.id)"
-            class="relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-t transition-all shrink-0"
-            [class]="
-              activeTab() === tab.id
-                ? 'text-accent border-b-2 border-accent -mb-px bg-accent/5 dark:bg-accent/10'
-                : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-black/5 dark:hover:bg-white/5'
-            "
+            class="relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-t transition-colors shrink-0 cursor-pointer"
+            [ngClass]="activeTab() === tab.id
+              ? 'text-accent border-b-2 border-accent -mb-px bg-accent/5 dark:bg-accent/10'
+              : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-black/5 dark:hover:bg-white/5'"
           >
             <!-- Icon -->
             <svg

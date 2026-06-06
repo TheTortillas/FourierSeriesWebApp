@@ -8,7 +8,7 @@ import {
   ElementRef,
   viewChild,
 } from '@angular/core';
-import { DecimalPipe, LowerCasePipe, NgTemplateOutlet } from '@angular/common';
+import { DecimalPipe, LowerCasePipe, NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -125,6 +125,7 @@ function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorP
     DecimalPipe,
     LowerCasePipe,
     NgTemplateOutlet,
+    NgClass,
     FunctionPlotComponent,
     MathjaxDirective,
     FormsModule,
