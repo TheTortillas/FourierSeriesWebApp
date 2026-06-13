@@ -938,6 +938,14 @@ adminRouter.get(
         AND ($2::timestamptz IS NULL OR c.created_at <= $2)
       `;
 
+      // execution_log es la fuente de verdad para conteos: cada fila = 1 ejecución real.
+      // dateFilter sobre execution_log.executed_at para summary/byType/authSplit/topCalcs.
+      // daily usa executed_at directamente con fallback de 30 días.
+      const elDateFilter = `
+        ($1::timestamptz IS NULL OR el.executed_at >= $1)
+        AND ($2::timestamptz IS NULL OR el.executed_at <= $2)
+      `;
+
       const [summaryRes, byTypeRes, dailyRes, authSplitRes, topCalcsRes] =
         await Promise.all([
           db.query<{
@@ -947,13 +955,14 @@ adminRouter.get(
             avg_execution_ms: number | null;
           }>(
             `SELECT
-              COALESCE(SUM(ce.count), 0)::int       AS total_executions,
+              COUNT(el.id)::int                     AS total_executions,
               COUNT(DISTINCT c.id)::int             AS unique_calcs,
               COUNT(DISTINCT ce.user_id)::int       AS unique_users,
               ROUND(AVG(ce.execution_ms))::int      AS avg_execution_ms
-            FROM calculations c
-            JOIN calculation_events ce ON ce.calculation_id = c.id
-            WHERE ${dateFilter}`,
+            FROM execution_log el
+            JOIN calculation_events ce ON ce.id = el.event_id
+            JOIN calculations c        ON c.id  = ce.calculation_id
+            WHERE ${elDateFilter}`,
             params,
           ),
 
@@ -966,13 +975,14 @@ adminRouter.get(
           }>(
             `SELECT
               c.type::text,
-              COALESCE(SUM(ce.count), 0)::int  AS total_executions,
+              COUNT(el.id)::int                AS total_executions,
               COUNT(DISTINCT c.id)::int        AS unique_calcs,
               COUNT(DISTINCT ce.user_id)::int  AS unique_users,
               ROUND(AVG(ce.execution_ms))::int AS avg_execution_ms
-            FROM calculations c
-            JOIN calculation_events ce ON ce.calculation_id = c.id
-            WHERE ${dateFilter}
+            FROM execution_log el
+            JOIN calculation_events ce ON ce.id = el.event_id
+            JOIN calculations c        ON c.id  = ce.calculation_id
+            WHERE ${elDateFilter}
             GROUP BY c.type
             ORDER BY total_executions DESC`,
             params,
@@ -980,16 +990,17 @@ adminRouter.get(
 
           db.query<{ day: string; executions: number; unique_calcs: number }>(
             `SELECT
-              to_char(DATE(ce.last_calculated_at), 'YYYY-MM-DD') AS day,
-              COALESCE(SUM(ce.count), 0)::int     AS executions,
-              COUNT(DISTINCT c.id)::int           AS unique_calcs
-            FROM calculation_events ce
-            JOIN calculations c ON c.id = ce.calculation_id
+              to_char(DATE(el.executed_at), 'YYYY-MM-DD') AS day,
+              COUNT(el.id)::int                           AS executions,
+              COUNT(DISTINCT c.id)::int                   AS unique_calcs
+            FROM execution_log el
+            JOIN calculation_events ce ON ce.id = el.event_id
+            JOIN calculations c        ON c.id  = ce.calculation_id
             WHERE
-              ce.last_calculated_at >= COALESCE($1, NOW() - INTERVAL '30 days')
-              AND ($2::timestamptz IS NULL OR ce.last_calculated_at <= $2)
-            GROUP BY DATE(ce.last_calculated_at)
-            ORDER BY DATE(ce.last_calculated_at)`,
+              el.executed_at >= COALESCE($1, NOW() - INTERVAL '30 days')
+              AND ($2::timestamptz IS NULL OR el.executed_at <= $2)
+            GROUP BY DATE(el.executed_at)
+            ORDER BY DATE(el.executed_at)`,
             params,
           ),
 
@@ -999,12 +1010,13 @@ adminRouter.get(
             unique_actors: number;
           }>(
             `SELECT
-              (ce.user_id IS NOT NULL)                              AS is_authenticated,
-              COALESCE(SUM(ce.count), 0)::int                       AS executions,
-              COUNT(DISTINCT COALESCE(ce.user_id, ce.ip_address::text))::int AS unique_actors
-            FROM calculation_events ce
-            JOIN calculations c ON c.id = ce.calculation_id
-            WHERE ${dateFilter}
+              (ce.user_id IS NOT NULL)                                          AS is_authenticated,
+              COUNT(el.id)::int                                                 AS executions,
+              COUNT(DISTINCT COALESCE(ce.user_id, ce.ip_address::text))::int   AS unique_actors
+            FROM execution_log el
+            JOIN calculation_events ce ON ce.id = el.event_id
+            JOIN calculations c        ON c.id  = ce.calculation_id
+            WHERE ${elDateFilter}
             GROUP BY (ce.user_id IS NOT NULL)`,
             params,
           ),
@@ -1022,11 +1034,12 @@ adminRouter.get(
               c.type::text,
               c.input,
               c.created_at,
-              COALESCE(SUM(ce.count), 0)::int        AS total_executions,
-              COUNT(DISTINCT ce.user_id)::int        AS unique_users
-            FROM calculations c
-            JOIN calculation_events ce ON ce.calculation_id = c.id
-            WHERE ${dateFilter}
+              COUNT(el.id)::int               AS total_executions,
+              COUNT(DISTINCT ce.user_id)::int AS unique_users
+            FROM execution_log el
+            JOIN calculation_events ce ON ce.id = el.event_id
+            JOIN calculations c        ON c.id  = ce.calculation_id
+            WHERE ${elDateFilter}
             GROUP BY c.id, c.type, c.input, c.created_at
             ORDER BY total_executions DESC
             LIMIT $3`,

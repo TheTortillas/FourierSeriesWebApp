@@ -137,6 +137,12 @@ export class HistoryRepository implements IHistoryRepository {
       eventRow = r.rows[0]!;
     }
 
+    // ── Paso 3: Registrar la ejecución en el log append-only ───────────────────
+    // execution_log es la fuente de verdad para métricas temporales. No lanzamos
+    // error si falla — es telemetría, no datos de negocio críticos.
+    const eventId = (eventRow as { id: string }).id;
+    db.query(`INSERT INTO execution_log (event_id) VALUES ($1)`, [eventId]).catch(() => {});
+
     // Completamos con type e input que ya tenemos del paso 1.
     return { ...eventRow, type: input.type, input: input.input } as HistoryRecord;
   }

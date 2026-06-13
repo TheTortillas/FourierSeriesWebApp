@@ -263,6 +263,23 @@ CREATE INDEX idx_event_ip        ON calculation_events (ip_address)
     WHERE ip_address IS NOT NULL;
 
 -- -------------------------------------------------------
+-- EXECUTION LOG
+-- Registro append-only de cada ejecución real.
+-- Fuente de verdad para métricas temporales (tendencias por
+-- día, semana, tipo, actor). A diferencia del contador
+-- acumulado en calculation_events.count, esta tabla conserva
+-- el timestamp exacto de cada llamada.
+-- -------------------------------------------------------
+CREATE TABLE execution_log (
+    id          BIGSERIAL    PRIMARY KEY,
+    event_id    TEXT         NOT NULL REFERENCES calculation_events(id) ON DELETE CASCADE,
+    executed_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_execution_log_executed_at ON execution_log (executed_at);
+CREATE INDEX idx_execution_log_event_id    ON execution_log (event_id);
+
+-- -------------------------------------------------------
 -- USER CALCULATION COUNTERS
 -- Contador semanal para límite de cálculos por tier
 -- -------------------------------------------------------
