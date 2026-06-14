@@ -155,7 +155,7 @@ export class DftComputeService {
 
   private buildCoefficients(raw: Complex[], N: number, normalize: boolean): DftCoefficient[] {
     const divisor = normalize ? N : 1;
-    const totalAmp = raw.reduce((s, c) => s + Math.hypot(c.re, c.im) / N, 0);
+    const totalAmp = raw.reduce((s, c) => s + Math.hypot(c.re, c.im) / divisor, 0);
     return raw.map((c, k) => {
       const re = cleanFloat(c.re / divisor);
       const im = cleanFloat(c.im / divisor);
