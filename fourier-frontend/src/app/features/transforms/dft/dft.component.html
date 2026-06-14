@@ -162,6 +162,19 @@
             <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
               {{ 'transforms.dft.algorithmNote' | transloco }}
             </p>
+            <!-- Normalization toggle -->
+            <label class="flex items-center gap-2 cursor-pointer select-none mt-1">
+              <input
+                type="checkbox"
+                [checked]="normalize()"
+                (change)="normalize.set($any($event.target).checked)"
+                class="accent-accent w-3.5 h-3.5 cursor-pointer"
+              />
+              <span class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                {{ 'transforms.dft.normalizeToggle' | transloco }}
+                <span class="opacity-60">(÷N)</span>
+              </span>
+            </label>
           </section>
 
           <div
@@ -375,6 +388,19 @@
                 DFT <span class="opacity-60 font-normal text-[10px]">O(N²)</span>
               </button>
             </div>
+            <!-- Normalization toggle -->
+            <label class="flex items-center gap-2 cursor-pointer select-none mt-1">
+              <input
+                type="checkbox"
+                [checked]="normalize()"
+                (change)="normalize.set($any($event.target).checked)"
+                class="accent-accent w-3.5 h-3.5 cursor-pointer"
+              />
+              <span class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                {{ 'transforms.dft.normalizeToggle' | transloco }}
+                <span class="opacity-60">(÷N)</span>
+              </span>
+            </label>
           </section>
 
           <div
@@ -1761,7 +1787,7 @@
               <p
                 class="px-4 py-2 text-[10px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border"
               >
-                {{ 'transforms.dft.spectrumNote' | transloco }}
+                {{ (normalize() ? 'transforms.dft.spectrumNoteNorm' : 'transforms.dft.spectrumNoteRaw') | transloco }}
               </p>
             </section>
 

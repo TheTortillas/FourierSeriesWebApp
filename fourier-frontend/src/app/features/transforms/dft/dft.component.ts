@@ -285,9 +285,10 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly signalWrapperRef = viewChild<ElementRef<HTMLDivElement>>('signalWrapper');
   readonly epicWrapperRef = viewChild<ElementRef<HTMLDivElement>>('epicWrapper');
 
-  // ── Mode / algorithm ────────────────────────────────────────────────────────
+  // ── Mode / algorithm / normalization ────────────────────────────────────────
   readonly inputMode = signal<DftInputMode>('function');
   readonly algorithm = signal<DftAlgorithm>('fft');
+  readonly normalize = signal(true);
 
   // ── Function-mode form state ─────────────────────────────────────────────────
   readonly segments = signal<TransformSegmentDraft[]>([defaultSegment()]);
@@ -1065,12 +1066,13 @@ export class DftComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const alg = this.algorithm();
+    const norm = this.normalize();
     const { coefficients, timeMs } =
-      alg === 'fft' ? this.dftCompute.computeFft(values) : this.dftCompute.computeDft(values);
+      alg === 'fft' ? this.dftCompute.computeFft(values, norm) : this.dftCompute.computeDft(values, norm);
 
     const topCoefficients = this.dftCompute.topCoefficients(coefficients, TOP_LIMIT);
     const sampledPoints = values.map((y, x) => ({ x, y }));
-    const reconstructed = this.dftCompute.reconstruct(coefficients, N);
+    const reconstructed = this.dftCompute.reconstruct(coefficients, N, undefined, norm);
     const rmsError = this.dftCompute.rmsError(values, reconstructed);
 
     this.result.set({
@@ -1133,14 +1135,16 @@ export class DftComponent implements OnInit, OnDestroy {
       next: (sample) => {
         const ys = sample.sampledPoints.map((p) => p.y);
         const alg = this.algorithm();
+        const norm = this.normalize();
         const { coefficients, timeMs } =
-          alg === 'fft' ? this.dftCompute.computeFft(ys) : this.dftCompute.computeDft(ys);
+          alg === 'fft' ? this.dftCompute.computeFft(ys, norm) : this.dftCompute.computeDft(ys, norm);
 
         const topCoefficients = this.dftCompute.topCoefficients(coefficients, TOP_LIMIT);
         const reconstructed = this.dftCompute.reconstruct(
           coefficients,
           sample.sampledPoints.length,
           sample.sampledPoints.map((p) => p.x),
+          norm,
         );
         const rmsError = this.dftCompute.rmsError(ys, reconstructed);
 
