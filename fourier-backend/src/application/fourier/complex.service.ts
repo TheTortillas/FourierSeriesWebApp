@@ -19,6 +19,7 @@ import {
   buildQuadWithSingularities,
   getRemovableSingularities,
 } from "./quadHelper";
+import { expandAbsSegments } from "./absExpander";
 
 const COMPLEX_MARKERS = [
   "__C0_MAXIMA__",
@@ -71,10 +72,11 @@ export class ComplexService {
     }
 
     const script = await loadScript("complex", "complex.mac");
-    const funcInput = this.buildFuncInput(input.segments);
+    const segments = expandAbsSegments(input.segments, intVar);
+    const funcInput = this.buildFuncInput(segments);
 
     const quadIntegralC0 = buildQuadWithSingularities(
-      input.segments,
+      segments,
       intVar,
       removableSingularities,
       "(1/T)",
@@ -182,10 +184,11 @@ kill(all)$
     }
 
     const script = await loadScript("complex", "complex_coeffs.mac");
-    const funcInput = this.buildFuncInput(input.segments);
+    const segments = expandAbsSegments(input.segments, intVar);
+    const funcInput = this.buildFuncInput(segments);
 
     const quadCos = buildQuadWithSingularities(
-      input.segments,
+      segments,
       intVar,
       removableSingularities,
       "(2/T)",
@@ -193,7 +196,7 @@ kill(all)$
     );
 
     const quadSin = buildQuadWithSingularities(
-      input.segments,
+      segments,
       intVar,
       removableSingularities,
       "(2/T)",

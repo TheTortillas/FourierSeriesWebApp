@@ -19,6 +19,7 @@ import {
   buildQuadWithSingularities,
   getRemovableSingularities,
 } from "./quadHelper";
+import { expandAbsSegments } from "./absExpander";
 
 const HALF_RANGE_MARKERS = [
   "__A0RAW_MAXIMA__",
@@ -80,10 +81,11 @@ export class HalfRangeService {
     }
 
     const script = await loadScript("halfRange", "halfRange.mac");
-    const funcInput = this.buildFuncInput(input.segments);
+    const segments = expandAbsSegments(input.segments, intVar);
+    const funcInput = this.buildFuncInput(segments);
 
     const quadIntegralA0 = buildQuadWithSingularities(
-      input.segments,
+      segments,
       intVar,
       removableSingularities,
       "(2/T)",
@@ -186,11 +188,12 @@ kill(all)$
     }
 
     const script = await loadScript("halfRange", "halfRange_coeffs.mac");
-    const funcInput = this.buildFuncInput(input.segments);
-    const intervalStart = this.getIntervalStart(input.segments);
+    const segments = expandAbsSegments(input.segments, intVar);
+    const funcInput = this.buildFuncInput(segments);
+    const intervalStart = this.getIntervalStart(segments);
 
     const quadIntegralAn = buildQuadWithSingularities(
-      input.segments,
+      segments,
       intVar,
       removableSingularities,
       "(2/T)",
@@ -198,7 +201,7 @@ kill(all)$
     );
 
     const quadIntegralBn = buildQuadWithSingularities(
-      input.segments,
+      segments,
       intVar,
       removableSingularities,
       "(2/T)",
