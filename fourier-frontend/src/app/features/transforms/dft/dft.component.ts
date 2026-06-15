@@ -285,9 +285,10 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly signalWrapperRef = viewChild<ElementRef<HTMLDivElement>>('signalWrapper');
   readonly epicWrapperRef = viewChild<ElementRef<HTMLDivElement>>('epicWrapper');
 
-  // ── Mode / algorithm ────────────────────────────────────────────────────────
+  // ── Mode / algorithm / normalization ────────────────────────────────────────
   readonly inputMode = signal<DftInputMode>('function');
   readonly algorithm = signal<DftAlgorithm>('fft');
+  readonly normalize = signal(true);
 
   // ── Function-mode form state ─────────────────────────────────────────────────
   readonly segments = signal<TransformSegmentDraft[]>([defaultSegment()]);
@@ -791,20 +792,53 @@ export class DftComponent implements OnInit, OnDestroy {
     const segs = this.segments();
     const v = this.intVar();
     const color = this.samplesColor();
+    const N = this.effectiveN();
+    const lw = this.specStemWidth();
     void this.theme.isDark;
     const plotter = this.plotter;
     const mathUtils = this.mathUtils;
+    const du = this.du;
     const parseLimit = this._parseLimit.bind(this);
     return [
       {
         curves: [],
         onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
-          for (const seg of segs) {
+          // Resolve all segments and their compiled functions + limits
+          const compiled = segs.flatMap((seg) => {
             const fn = mathUtils.compile(seg.expression, v);
             const from = parseLimit(seg.from);
             const to = parseLimit(seg.to);
-            if (!fn || !isFinite(from) || !isFinite(to)) continue;
-            plotter.plotFnRange(ctx, fn, from, to, 400, vp, { color, lineWidth: 1.8 });
+            if (!fn || !isFinite(from) || !isFinite(to)) return [];
+            return [{ fn, from, to }];
+          });
+
+          if (compiled.length === 0) return;
+
+          // Draw continuous curve(s)
+          for (const { fn, from, to } of compiled) {
+            plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
+              color: color + '55', // slightly transparent so stems stand out
+              lineWidth: 1.5,
+            });
+          }
+
+          // Draw N uniformly-spaced sample stems across the full interval
+          const globalFrom = compiled[0]!.from;
+          const globalTo = compiled[compiled.length - 1]!.to;
+          const step = (globalTo - globalFrom) / N;
+
+          for (let n = 0; n < N; n++) {
+            const x = globalFrom + n * step;
+            // Evaluate x against whichever segment covers it
+            let y = NaN;
+            for (const { fn, from, to } of compiled) {
+              if (x >= from - 1e-10 && x <= to + 1e-10) {
+                try { y = fn(x); } catch { /* */ }
+                break;
+              }
+            }
+            if (!isFinite(y)) continue;
+            du.drawStem(ctx, vp, x, y, color, lw, 3);
           }
         },
       },
@@ -1065,12 +1099,13 @@ export class DftComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const alg = this.algorithm();
+    const norm = this.normalize();
     const { coefficients, timeMs } =
-      alg === 'fft' ? this.dftCompute.computeFft(values) : this.dftCompute.computeDft(values);
+      alg === 'fft' ? this.dftCompute.computeFft(values, norm) : this.dftCompute.computeDft(values, norm);
 
     const topCoefficients = this.dftCompute.topCoefficients(coefficients, TOP_LIMIT);
     const sampledPoints = values.map((y, x) => ({ x, y }));
-    const reconstructed = this.dftCompute.reconstruct(coefficients, N);
+    const reconstructed = this.dftCompute.reconstruct(coefficients, N, undefined, norm);
     const rmsError = this.dftCompute.rmsError(values, reconstructed);
 
     this.result.set({
@@ -1133,14 +1168,16 @@ export class DftComponent implements OnInit, OnDestroy {
       next: (sample) => {
         const ys = sample.sampledPoints.map((p) => p.y);
         const alg = this.algorithm();
+        const norm = this.normalize();
         const { coefficients, timeMs } =
-          alg === 'fft' ? this.dftCompute.computeFft(ys) : this.dftCompute.computeDft(ys);
+          alg === 'fft' ? this.dftCompute.computeFft(ys, norm) : this.dftCompute.computeDft(ys, norm);
 
         const topCoefficients = this.dftCompute.topCoefficients(coefficients, TOP_LIMIT);
         const reconstructed = this.dftCompute.reconstruct(
           coefficients,
           sample.sampledPoints.length,
           sample.sampledPoints.map((p) => p.x),
+          norm,
         );
         const rmsError = this.dftCompute.rmsError(ys, reconstructed);
 
