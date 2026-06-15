@@ -220,43 +220,6 @@ export function containsAbs(expression: string): boolean {
   return /\babs\s*\(/.test(expression);
 }
 
-/**
- * Extract the inner expression string from the FIRST abs(...) occurrence,
- * correctly handling nested parentheses.
- */
-function extractAbsInner(expr: string): string | null {
-  const match = /\babs\s*\(/.exec(expr);
-  if (!match) return null;
-  let depth = 1, i = match.index + match[0].length;
-  while (i < expr.length && depth > 0) {
-    if (expr[i] === "(") depth++;
-    else if (expr[i] === ")") depth--;
-    i++;
-  }
-  return expr.slice(match.index + match[0].length, i - 1);
-}
-
-/**
- * Replace ALL abs(…) occurrences in expr with (inner) when sign=+1,
- * or (-(inner)) when sign=-1. Handles nested parentheses correctly.
- */
-function replaceAbs(expression: string, sign: 1 | -1): string {
-  let result = expression;
-  let safety = 0;
-  while (/\babs\s*\(/.test(result) && safety++ < 20) {
-    const match = /\babs\s*\(/.exec(result)!;
-    let depth = 1, i = match.index + match[0].length;
-    while (i < result.length && depth > 0) {
-      if (result[i] === "(") depth++;
-      else if (result[i] === ")") depth--;
-      i++;
-    }
-    const inner = result.slice(match.index + match[0].length, i - 1);
-    const replacement = sign === 1 ? `(${inner})` : `(-(${inner}))`;
-    result = result.slice(0, match.index) + replacement + result.slice(i);
-  }
-  return result;
-}
 
 // ── Numeric → Maxima literal ──────────────────────────────────────────────────
 
@@ -291,84 +254,126 @@ function toMaximaLiteral(value: number): string {
   return value.toPrecision(15);
 }
 
+// ── Single-abs expansion (one abs at a time) ──────────────────────────────────
+
+/**
+ * Expand ONE abs() occurrence (the first one found) in a single segment.
+ * Returns an array of sub-segments where that abs() is replaced by +g or -g.
+ * If expansion is not possible (parse failure, infinite bounds, etc.), returns
+ * the original segment unchanged so the caller can skip it.
+ */
+function expandOneAbs(
+  seg: PiecewiseSegment,
+  varName: string,
+): PiecewiseSegment[] {
+  const a = evalBound(seg.from);
+  const b = evalBound(seg.to);
+
+  if (isNaN(a) || isNaN(b) || !isFinite(a) || !isFinite(b) || a >= b) {
+    return [seg];
+  }
+
+  // Find the FIRST abs(g) in the expression
+  const match = /\babs\s*\(/.exec(seg.expression);
+  if (!match) return [seg];
+
+  // Extract its inner expression g with balanced parens
+  let depth = 1;
+  let i = match.index + match[0].length;
+  while (i < seg.expression.length && depth > 0) {
+    if (seg.expression[i] === "(") depth++;
+    else if (seg.expression[i] === ")") depth--;
+    i++;
+  }
+  const innerExpr = seg.expression.slice(match.index + match[0].length, i - 1);
+
+  const innerFn = compile(innerExpr, varName);
+  if (!innerFn) return [seg];
+
+  // Find zeros of g in (a, b)
+  const zeros = findZeros(innerFn, a, b);
+  const breakpoints = [a, ...zeros, b];
+
+  const subSegments: PiecewiseSegment[] = [];
+
+  for (let j = 0; j < breakpoints.length - 1; j++) {
+    const lo = breakpoints[j]!;
+    const hi = breakpoints[j + 1]!;
+    if (hi - lo < 1e-12) continue;
+
+    // Determine sign of g on (lo, hi) — try multiple sample points to handle
+    // functions with removable singularities (e.g. sin(x)/x at 0)
+    const candidates = [(lo + hi) / 2, lo + (hi - lo) * 0.25, lo + (hi - lo) * 0.75];
+    let signVal = NaN;
+    for (const c of candidates) {
+      const v = safeEval(innerFn, c);
+      if (!isNaN(v)) { signVal = v; break; }
+    }
+    if (isNaN(signVal)) continue;
+
+    const sign: 1 | -1 = signVal >= 0 ? 1 : -1;
+
+    // Replace ONLY this abs() occurrence (the first one) with (g) or (-(g))
+    const replacement = sign === 1 ? `(${innerExpr})` : `(-(${innerExpr}))`;
+    const newExpr =
+      seg.expression.slice(0, match.index) +
+      replacement +
+      seg.expression.slice(i);
+
+    subSegments.push({
+      expression: newExpr,
+      from: toMaximaLiteral(lo),
+      to: toMaximaLiteral(hi),
+    });
+  }
+
+  return subSegments.length > 0 ? subSegments : [seg];
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 /**
- * Expand any segment whose expression contains abs() into multiple plain
- * segments by splitting at the zeros of the inner function.
+ * Expand all abs() occurrences in each segment into plain sub-segments.
  *
- * Segments without abs() are returned unchanged.
- * If parsing or numeric root-finding fails, the segment is returned as-is
- * (Maxima will fall back to numeric quadrature as before).
+ * Works recursively: each pass expands the first remaining abs() in every
+ * segment. The process repeats until no abs() remains anywhere — correctly
+ * handling any number of distinct abs() terms (e.g. abs(sin(x)) + abs(cos(x))).
+ *
+ * Segments without abs() pass through unchanged.
+ * If expansion of any abs() fails (parse error, infinite bounds, etc.) that
+ * segment is kept as-is so Maxima falls back to numeric quadrature as before.
+ *
+ * Safety: the loop is bounded by MAX_PASSES so it cannot run forever even if
+ * replaceAbs somehow reintroduces abs() (it doesn't, but belt-and-suspenders).
  */
 export function expandAbsSegments(
   segments: PiecewiseSegment[],
   varName: string,
 ): PiecewiseSegment[] {
-  const result: PiecewiseSegment[] = [];
+  const MAX_PASSES = 20;
+  let current = segments;
 
-  for (const seg of segments) {
-    if (!containsAbs(seg.expression)) {
-      result.push(seg);
-      continue;
-    }
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    // Check if any segment still contains abs()
+    if (!current.some((s) => containsAbs(s.expression))) break;
 
-    const a = evalBound(seg.from);
-    const b = evalBound(seg.to);
-
-    if (isNaN(a) || isNaN(b) || !isFinite(a) || !isFinite(b) || a >= b) {
-      result.push(seg);
-      continue;
-    }
-
-    const innerExpr = extractAbsInner(seg.expression);
-    if (!innerExpr) {
-      result.push(seg);
-      continue;
-    }
-
-    const innerFn = compile(innerExpr, varName);
-    if (!innerFn) {
-      result.push(seg);
-      continue;
-    }
-
-    const zeros = findZeros(innerFn, a, b);
-    const breakpoints = [a, ...zeros, b];
-    let expanded = false;
-
-    for (let i = 0; i < breakpoints.length - 1; i++) {
-      const lo = breakpoints[i]!;
-      const hi = breakpoints[i + 1]!;
-      if (hi - lo < 1e-12) continue;
-
-      // Sample sign at multiple midpoints to handle functions that return NaN
-      // near the midpoint (e.g. sin(x)/x near 0)
-      const candidates = [
-        (lo + hi) / 2,
-        lo + (hi - lo) * 0.25,
-        lo + (hi - lo) * 0.75,
-      ];
-      let signVal = NaN;
-      for (const c of candidates) {
-        const v = safeEval(innerFn, c);
-        if (!isNaN(v)) { signVal = v; break; }
+    // Expand one abs per segment per pass
+    const next: PiecewiseSegment[] = [];
+    for (const seg of current) {
+      if (!containsAbs(seg.expression)) {
+        next.push(seg);
+      } else {
+        next.push(...expandOneAbs(seg, varName));
       }
-      if (isNaN(signVal)) continue;
-
-      const sign: 1 | -1 = signVal >= 0 ? 1 : -1;
-      const newExpr = replaceAbs(seg.expression, sign);
-
-      result.push({
-        expression: newExpr,
-        from: toMaximaLiteral(lo),
-        to: toMaximaLiteral(hi),
-      });
-      expanded = true;
     }
 
-    if (!expanded) result.push(seg);
+    // Safety: if nothing changed (all expansions returned [seg] unchanged), stop
+    if (next.length === current.length && next.every((s, idx) => s === current[idx])) break;
+
+    current = next;
   }
 
-  return result;
+  // Final safety: if any abs() still remains after all passes, those segments
+  // pass through as-is (Maxima numeric quadrature handles them)
+  return current;
 }
