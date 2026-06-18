@@ -1275,6 +1275,38 @@ export class ContinuousTransformComponent implements OnInit {
     return !!seg && !!main && seg.replace(/\s+/g, '') === main;
   });
 
+  /** True when outputRealPartPositive is identical to outputRealPart (no new info). */
+  readonly iftRealPosEqMain = computed(() => {
+    const ift = this.iftResult();
+    const pos  = ift?.outputRealPartPositive?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputRealPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!pos && !!main && pos === main;
+  });
+
+  /** True when outputRealPartNegative is identical to outputRealPart. */
+  readonly iftRealNegEqMain = computed(() => {
+    const ift = this.iftResult();
+    const neg  = ift?.outputRealPartNegative?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputRealPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!neg && !!main && neg === main;
+  });
+
+  /** True when outputImagPartPositive is identical to outputImagPart. */
+  readonly iftImagPosEqMain = computed(() => {
+    const ift = this.iftResult();
+    const pos  = ift?.outputImagPartPositive?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputImagPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!pos && !!main && pos === main;
+  });
+
+  /** True when outputImagPartNegative is identical to outputImagPart. */
+  readonly iftImagNegEqMain = computed(() => {
+    const ift = this.iftResult();
+    const neg  = ift?.outputImagPartNegative?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputImagPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!neg && !!main && neg === main;
+  });
+
   toggleAltForms(mode: 'ft' | 'ift'): void {
     if (mode === 'ft') {
       const nowOpen = !this.altFormsOpenFt();
