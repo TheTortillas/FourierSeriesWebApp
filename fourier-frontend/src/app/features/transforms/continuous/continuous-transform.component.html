@@ -1399,16 +1399,9 @@
                         {{ 'transforms.reFt' | transloco: { v: intVar() } }}
                       </span>
                       <div class="flex items-center gap-2">
-                        <span #ftInputRealPrimaryEl [mathjax]="display(inputRealPiecewiseTex())" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
-                        <app-export-button [tex]="inputRealPiecewiseTex()" [maxima]="res.inputRealPart!.maxima" [mathEl]="ftInputRealPrimaryEl" filename="ft-input-real" [label]="'Re f(' + intVar() + ')'" />
+                        <span #ftInputRealPrimaryEl [mathjax]="display(res.inputRealPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                        <app-export-button [tex]="res.inputRealPart!.tex" [maxima]="res.inputRealPart!.maxima" [mathEl]="ftInputRealPrimaryEl" filename="ft-input-real" [label]="'Re f(' + intVar() + ')'" />
                       </div>
-                      <details class="mt-1">
-                        <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formGlobal' | transloco }}</summary>
-                        <div class="flex items-center gap-2 mt-1">
-                          <span #ftInputRealEl [mathjax]="display(res.inputRealPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
-                          <app-export-button [tex]="res.inputRealPart!.tex" [maxima]="res.inputRealPart!.maxima" [mathEl]="ftInputRealEl" filename="ft-input-real-global" [label]="'Re f(' + intVar() + ') — global'" />
-                        </div>
-                      </details>
                     </div>
                   }
                   @if (res.inputImagPart?.tex) {
@@ -1515,7 +1508,7 @@
                      - Si hay fCombined → desglosar en u(t) y/o tramos
                      - Si hay fOutUForm pero no fCombined → mostrar tramos (t>0, t<0)
                      - Si hay solo tramos pero también fOutUForm → mostrar forma u(t) -->
-                @if (res.fCombined && (res.fOutUForm || res.fPositive || res.fNegative)) {
+                @if (res.fCombined && ((res.fOutUForm && !iftUFormEqMain()) || (res.fPositive && !iftPosEqMain()) || (res.fNegative && !iftNegEqMain()))) {
                   <details class="border-t border-border dark:border-dark-border pt-2">
                     <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formPiecewise' | transloco }}</summary>
                     <div class="flex flex-col gap-3 mt-2">
@@ -1623,7 +1616,7 @@
                       }
                     </div>
                   </details>
-                } @else if (res.fOutUForm && (res.fPositive || res.fNegative)) {
+                } @else if (res.fOutUForm && ((res.fPositive && !iftPosEqMain()) || (res.fNegative && !iftNegEqMain()))) {
                   <details class="border-t border-border dark:border-dark-border pt-2">
                     <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formPiecewise' | transloco }}</summary>
                     <div class="flex flex-col gap-3 mt-2">
@@ -1833,7 +1826,7 @@
                         <span #iftOutputRealEl [mathjax]="display(res.outputRealPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
                         <app-export-button [tex]="res.outputRealPart!.tex" [maxima]="res.outputRealPart!.maxima" [mathEl]="iftOutputRealEl" filename="ift-output-real" [label]="'Re f(' + resultVarDisplay() + ')'" />
                       </div>
-                      @if (res.outputRealUForm?.tex || res.outputRealPartPositive?.tex || res.outputRealPartNegative?.tex) {
+                      @if (res.outputRealUForm?.tex || (res.outputRealPartPositive?.tex && !iftRealPosEqMain()) || (res.outputRealPartNegative?.tex && !iftRealNegEqMain())) {
                         <details class="border-t border-border dark:border-dark-border pt-2">
                           <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formPiecewise' | transloco }}</summary>
                           <div class="flex flex-col gap-2 mt-2">
@@ -1904,7 +1897,7 @@
                         <span #iftOutputImagEl [mathjax]="display(res.outputImagPart!.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
                         <app-export-button [tex]="res.outputImagPart!.tex" [maxima]="res.outputImagPart!.maxima" [mathEl]="iftOutputImagEl" filename="ift-output-imag" [label]="'Im f(' + resultVarDisplay() + ')'" />
                       </div>
-                      @if (res.outputImagUForm?.tex || res.outputImagPartPositive?.tex || res.outputImagPartNegative?.tex) {
+                      @if (res.outputImagUForm?.tex || (res.outputImagPartPositive?.tex && !iftImagPosEqMain()) || (res.outputImagPartNegative?.tex && !iftImagNegEqMain())) {
                         <details class="border-t border-border dark:border-dark-border pt-2">
                           <summary class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none">{{ 'transforms.formPiecewise' | transloco }}</summary>
                           <div class="flex flex-col gap-2 mt-2">
@@ -1917,7 +1910,7 @@
                                 </div>
                               </div>
                             }
-                            @if (res.outputImagPartPositive?.tex) {
+                            @if (res.outputImagPartPositive?.tex && !iftImagPosEqMain()) {
                               <div class="flex flex-col gap-0.5">
                                 <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &gt; 0</span>
                                 <div class="flex items-center gap-2">
@@ -1926,7 +1919,7 @@
                                 </div>
                               </div>
                             }
-                            @if (res.outputImagPartNegative?.tex) {
+                            @if (res.outputImagPartNegative?.tex && !iftImagNegEqMain()) {
                               <div class="flex flex-col gap-0.5">
                                 <span class="text-[10px] font-mono text-accent">{{ resultVarDisplay() }} &lt; 0</span>
                                 <div class="flex items-center gap-2">

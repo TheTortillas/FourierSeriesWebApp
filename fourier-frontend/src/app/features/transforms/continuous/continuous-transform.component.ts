@@ -388,19 +388,6 @@ export class ContinuousTransformComponent implements OnInit {
     this.paramValues.update(pv => ({ ...pv, [p]: v }));
   }
 
-  /** TeX for the piecewise Re f(t) primary display — used in results section. */
-  readonly inputRealPiecewiseTex = computed<string>(() => {
-    const segs = this.segments();
-    const v = this.intVar();
-    if (segs.length === 0) return '';
-    if (segs.length === 1) return segs[0].expressionTex;
-    return (
-      '\\begin{cases}' +
-      segs.map((s) => s.expressionTex + ',&' + s.fromTex + '<' + v + '<' + s.toTex).join('\\\\') +
-      '\\end{cases}'
-    );
-  });
-
   /** LaTeX preview of the piecewise input function, mirroring calculator's previewLatex. */
   readonly previewLatex = computed<string | null>(() => {
     const segs = this.segments();
@@ -1273,6 +1260,38 @@ export class ContinuousTransformComponent implements OnInit {
     const seg = this.iftResult()?.fOutUForm?.tex ?? '';
     const main = this._iftNormMain();
     return !!seg && !!main && seg.replace(/\s+/g, '') === main;
+  });
+
+  /** True when outputRealPartPositive is identical to outputRealPart (no new info). */
+  readonly iftRealPosEqMain = computed(() => {
+    const ift = this.iftResult();
+    const pos  = ift?.outputRealPartPositive?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputRealPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!pos && !!main && pos === main;
+  });
+
+  /** True when outputRealPartNegative is identical to outputRealPart. */
+  readonly iftRealNegEqMain = computed(() => {
+    const ift = this.iftResult();
+    const neg  = ift?.outputRealPartNegative?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputRealPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!neg && !!main && neg === main;
+  });
+
+  /** True when outputImagPartPositive is identical to outputImagPart. */
+  readonly iftImagPosEqMain = computed(() => {
+    const ift = this.iftResult();
+    const pos  = ift?.outputImagPartPositive?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputImagPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!pos && !!main && pos === main;
+  });
+
+  /** True when outputImagPartNegative is identical to outputImagPart. */
+  readonly iftImagNegEqMain = computed(() => {
+    const ift = this.iftResult();
+    const neg  = ift?.outputImagPartNegative?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputImagPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!neg && !!main && neg === main;
   });
 
   toggleAltForms(mode: 'ft' | 'ift'): void {

@@ -850,9 +850,7 @@ $$F(\omega) = \frac{\pi}{2^{n-1}}\sum_{k=0}^{(n-1)/2}\dbinom{n}{k}\bigl[\delta(\
 | $\sin^2(t)$ | 2, par | — | $\pi\binom{2}{1}/2 = \pi$ | $k=0$: $(-1)^1\binom{2}{0}= -1$ → $-\pi[\delta(\omega-2)+\delta(\omega+2)]/2$ |
 | $\cos^2(t)$ | 2, par | — | $\pi$ | $k=0$: $+\binom{2}{0}=1$ → $+\pi[\delta(\omega-2)+\delta(\omega+2)]/2$ |
 | $\sin^3(t)$ | 3, impar | — | sin DC | $k=0,1$: coef $(-1)^1\binom{3}{0}=-1$, $(-1)^0\binom{3}{1}=3$ |
-| $\cos^3(t)$ | 3, impar | — | sin DC | $k=0,1$: coef $\binom{3}{0}=1$, $\binom{3}{1}=3$ |
-
----
+| $\cos^3(t)$ | 3, impar | — | sin DC | $k=0,1$: coef $\binom{3}{0}=1$, $\binom{3}{1}=3$ |---
 
 ## 20. Función bilateral impar: $k\omega / (a^2 + \omega^2)$ — pares #27b–27c
 
@@ -1110,7 +1108,6 @@ Las siguientes familias fueron verificadas en Wolfram Alpha y LibreTexts. Todas 
 | TH-7 | $k\,\operatorname{csch}^2(bt)$ | $\frac{-2k\pi\omega}{b^2}\coth(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b>0$ |
 | TH-8 | $k\,\operatorname{sech}^n(t)$ | polinomio$(\omega^2)\cdot\pi\operatorname{sech}(\frac{\pi\omega}{2})$ | **⚠ ✗ No implementado** | $n\geq2$, ver 24b.5 |
 | TH-9 | $k\,\tanh^m(t)\operatorname{sech}^n(t)$ | mixto sech/tanh·sech | **⚠ ✗ No implementado** | ver 24b.5 |
-
 ---
 
 ## 25. Arquitectura de display: formas principales y alternativas
@@ -1383,7 +1380,6 @@ Si se encuentra una fórmula general, reemplazar el bloque `if/else` en `FT_trip
 - `FT_tripow_formula(a, b, n, w_var)` — tabla $n=1..4$ con desplazamiento $e^{-i\omega t_0}$
 - Conectado en `FT_pattern_lookup` **antes** del matcher $n=1$ para que `tri^2` no caiga al handler lineal
 - Conectado en `IFT_pattern_lookup` con escala $1/(2\pi)$ y modulación $e^{i\omega_0 t}$
-
 ---
 
 ## 31. FT de $k\,e^{-at}\sin^n(bt)\,u(t)$ y $k\,e^{-at}\cos^n(bt)\,u(t)$ — decaimiento con potencias de trig
@@ -1619,3 +1615,160 @@ Por la misma dualidad de la sección 30, la IFT hereda el límite:
 $$\mathcal{F}^{-1}\{\text{tri}(\omega)^n\}(t) = \frac{1}{2\pi}\,\text{FT}[\text{tri}^n]\big|_{\omega \to t}$$
 
 lo que significa que extender `FT_tripow_formula` cubre automáticamente ambas direcciones.
+
+---
+
+## 36. IFT de $k/\omega^n$ — polo de orden $n$ en el origen (valor principal de Cauchy)
+
+### Motivación
+
+Los pares #38 y #38b cubren $k/(i\omega)$ (primer orden). Para potencias $n \geq 2$ la singularidad en $\omega = 0$ es de orden superior y su transformada inversa requiere un tratamiento distribucional basado en el valor principal de Cauchy.
+
+### Fórmula general
+
+$$\boxed{\mathcal{F}^{-1}\!\left\{\frac{k}{\omega^n}\right\}(t) = \begin{cases} \dfrac{k\,i^n}{2\,(n-1)!}\,|t|^{n-1} & n \text{ par} \\[8pt] \dfrac{k\,i^n}{2\,(n-1)!}\,|t|^{n-1}\,\operatorname{sgn}(t) & n \text{ impar} \end{cases}, \qquad n \geq 1 \text{ entero}}$$
+
+> **Convención**: valor principal de Cauchy en la integral inversa. El resultado es una distribución temperada para todo $n \geq 1$.
+
+**Verificación para $n = 1$** (par #38): $i^1/(2 \cdot 0!) \cdot \operatorname{sgn}(t) = i\,\operatorname{sgn}(t)/2$, que es exactamente $\mathcal{F}^{-1}\{1/\omega\}$.
+
+**Verificación para $n = 2$** (par #49 invertido): $i^2/(2 \cdot 1!) \cdot |t| = -|t|/2$, que coincide con la derivación directa.
+
+**Derivación** (propiedad de diferenciación en frecuencia): partiendo de $\mathcal{F}^{-1}\{1/\omega\} = i\,\operatorname{sgn}(t)/2$ y usando la propiedad $\mathcal{F}^{-1}\{F'(\omega)\}(t) = -it\,f(t)$:
+
+$$\mathcal{F}^{-1}\!\left\{\frac{d}{d\omega}\frac{1}{\omega^{n-1}}\right\} = \mathcal{F}^{-1}\!\left\{\frac{-(n-1)}{\omega^n}\right\} = -it\,\mathcal{F}^{-1}\!\left\{\frac{1}{\omega^{n-1}}\right\}$$
+
+que conduce a la recurrencia $\mathcal{F}^{-1}\{1/\omega^n\} = \frac{-it}{n-1}\,\mathcal{F}^{-1}\{1/\omega^{n-1}\}$. Aplicada desde $n=1$ produce la fórmula par/impar de la caja.
+
+### Tabla de casos
+
+| $n$ | $\mathcal{F}^{-1}\{k/\omega^n\}$ | Paridad |
+|-----|-----------------------------------|---------|
+| 1 | $\dfrac{ki}{2}\,\operatorname{sgn}(t)$ | impar |
+| 2 | $-\dfrac{k}{2}\,|t|$ | par |
+| 3 | $-\dfrac{ki}{4}\,t^2\,\operatorname{sgn}(t)$ | impar |
+| 4 | $\dfrac{k}{12}\,t^2\,|t|$ | par |
+| 5 | $\dfrac{ki}{48}\,t^4\,\operatorname{sgn}(t)$ | impar |
+| 6 | $-\dfrac{k}{240}\,t^4\,|t|$ | par |
+| $n$ par | $\dfrac{k\,i^n}{2(n-1)!}\,|t|^{n-1}$ | — |
+| $n$ impar | $\dfrac{k\,i^n}{2(n-1)!}\,|t|^{n-1}\,\operatorname{sgn}(t)$ | — |
+
+> **Patrón**: $n$ par → resultado par (solo $|t|^{n-1}$); $n$ impar → resultado impar (lleva $\operatorname{sgn}(t)$).
+
+### Variante desplazada en tiempo
+
+$$\mathcal{F}^{-1}\!\left\{\frac{k\,e^{-i\omega t_0}}{\omega^n}\right\}(t) = \mathcal{F}^{-1}\!\left\{\frac{k}{\omega^n}\right\}(t - t_0)$$
+
+El detector en `IFT_pattern_lookup` extrae el exponencial y aplica el desplazamiento sobre el resultado base.
+
+### Implementación
+
+Handler `k/wⁿ` en `fourier_transforms.mac` (dentro de `IFT_pattern_lookup`):
+- Prueba $n = 2, 3, \ldots, 12$ en bucle via `ratsimp(e * w_var^n)`
+- Si `freeof(w_var, k·wⁿ)` y el producto es no nulo, identifica $n$ y $k$
+- Resultado: `ratsimp(k * iⁿ/(2*(n-1)!) * |t|^{n-1} * (sgn(t) si n impar))`
+- Variante desplazada: detecta además factor $e^{-i\omega t_0}$ en el numerador y aplica shift
+- Límite actual: $n \leq 12$ (suficiente para uso práctico; extensible aumentando el límite del bucle)
+
+**Combinación con fracciones parciales:** la familia $1/(\omega^n(i\omega+a))$ se resuelve automáticamente via `partfrac`:
+
+$$\frac{1}{\omega^2(i\omega+a)} = \frac{1/a^2}{i\omega+a} - \frac{i/a}{\omega} + \frac{1/a}{\omega^2}$$
+
+Cada término tiene su handler propio y la linealidad los combina.
+
+---
+
+## 37. Familia $k/[( i\omega+a)(i\omega+b)]$ — dos polos reales simples
+
+### Motivación
+
+El handler de fracciones parciales (sección 16) cubre automáticamente este caso. Sin embargo, es útil documentar la forma cerrada explícita ya que es uno de los resultados más frecuentes en circuitos RC y sistemas de primer orden en serie.
+
+### Fórmula
+
+Para $a \neq b$, $a, b > 0$:
+
+$$\boxed{\mathcal{F}^{-1}\!\left\{\frac{k}{(i\omega+a)(i\omega+b)}\right\}(t) = \frac{k}{b-a}\!\left(e^{-at} - e^{-bt}\right)u(t)}$$
+
+**Derivación** por fracciones parciales:
+
+$$\frac{1}{(i\omega+a)(i\omega+b)} = \frac{1}{b-a}\!\left(\frac{1}{i\omega+a} - \frac{1}{i\omega+b}\right)$$
+
+Aplicando el par #40 ($k/(i\omega+a) \to k\,e^{-at}u(t)$) a cada término:
+
+$$\mathcal{F}^{-1}\{\cdot\} = \frac{k}{b-a}\left(e^{-at} - e^{-bt}\right)u(t)$$
+
+### Tabla de variantes
+
+| $F(\omega)$ | $f(t)$ | Condiciones |
+|-------------|---------|-------------|
+| $\dfrac{k}{(i\omega+a)(i\omega+b)}$ | $\dfrac{k}{b-a}(e^{-at}-e^{-bt})u(t)$ | $a\neq b$, $a,b>0$ |
+| $\dfrac{k}{(i\omega+a)^2}$ | $k\,t\,e^{-at}\,u(t)$ | polo doble, par #41 |
+| $\dfrac{k}{i\omega^2+4i\omega+3}$ | mismo que $(i\omega+1)(i\omega+3)$ | denominador expandido |
+| $\dfrac{k}{(i\omega+1)(i\omega+3)}$ | $\dfrac{k}{2}(e^{-t}-e^{-3t})u(t)$ | $a=1, b=3$ |
+| $\dfrac{k}{(i\omega+1)(i\omega+5)}$ | $\dfrac{k}{4}(e^{-t}-e^{-5t})u(t)$ | $a=1, b=5$ |
+
+> **Denominador como polinomio:** $-\omega^2 + 4i\omega + 3 = (i\omega+1)(i\omega+3)$. El handler `partfrac` de Maxima lo factoriza automáticamente antes de aplicar los patrones.
+
+### Nota sobre convención Wolfram vs. ingeniería
+
+Wolfram Alpha usa la convención simétrica con factor $1/\sqrt{2\pi}$ en ambas direcciones. Para $1/((i\omega+1)(i\omega+3))$ Wolfram da $e^{-3t}/(2\sqrt{2\pi}) - e^{-t}/(2\sqrt{2\pi})$ (para $t > 0$), que con el factor de escala de la convención de ingeniería se convierte en $\frac{1}{2}(e^{-t}-e^{-3t})u(t)$. El signo de la diferencia depende del orden de los polos — ambas formas son equivalentes.
+
+### Implementación
+
+Resuelto completamente por el handler `partfrac` (sección 16, par #56). No hay handler directo para este patrón; la descomposición en fracciones simples más el par #40 cubre toda la familia.
+
+---
+
+## 38. BUG-4 — detección fiable de `exists` en IFT
+
+### El problema (heurística rota)
+
+Antes de la corrección, el campo `exists` en la respuesta del backend se calculaba con la heurística:
+
+```typescript
+exists: fPosMaxima !== "" || fNegMaxima !== ""
+```
+
+Esta heurística marcaba `exists = true` cuando Maxima devolvía una integral sin evaluar (p.ej. `integrate(exp(w^2)*exp(i*w*t), w, -inf, inf)`), porque el string no era vacío aunque no fuera una forma cerrada.
+
+### Solución: sentinel `__IFT_EXISTS__`
+
+El script Maxima `inverse_fourier_transform.mac` emite explícitamente el sentinel antes de los datos:
+
+```maxima
+print("__IFT_EXISTS__")$
+print(string(is(
+    (has_combined or f_pos # false or f_neg # false)
+    and freeof('integrate, f_combined)
+    and freeof('integrate, f_pos)
+    and freeof('integrate, f_neg))))$
+```
+
+El servicio TypeScript lee `iftExists` entre los sentinels `__IFT_EXISTS__` y `__F_POS_MAXIMA__` y lo usa directamente:
+
+```typescript
+const iftExists =
+  this.extractBetween(raw, "__IFT_EXISTS__", "__F_POS_MAXIMA__").trim() === "true";
+// ...
+exists: iftExists
+```
+
+### Condiciones para `exists = true`
+
+Todas deben cumplirse simultáneamente:
+
+1. Al menos un resultado no es `false`: `has_combined OR f_pos ≠ false OR f_neg ≠ false`
+2. El resultado combinado no contiene integrales sin evaluar: `freeof('integrate, f_combined)`
+3. Las partes positiva y negativa tampoco: `freeof('integrate, f_pos) AND freeof('integrate, f_neg)`
+
+> La condición `freeof('integrate, ...)` es la clave: Maxima puede devolver una expresión de la forma `integrate(g(w)*exp(i*t*w), w, -inf, inf)` cuando no sabe cómo resolver la integral, y esa expresión es no vacía aunque no sea una forma cerrada.
+
+### Casos de regresión
+
+| Test | Entrada | `exists` esperado | Motivo |
+|------|---------|-------------------|--------|
+| BG04a | $e^{\omega^2}$ | `false` | Maxima devuelve integral sin evaluar |
+| BG04b | $1/\log(1+\omega^2)$ | `false` | Sin patrón tabla; integral no resuelta |
+| PF04 | $1/\omega^2$ | `true` | Patrón `k/wⁿ` con $n=2$: $-|t|/2$ |
+| KX04 | $1/(\omega^2(i\omega+1))$ | `true` | Partfrac + patrón `k/wⁿ`: $\text{sgn}(t)/2 - |t|/2 - e^{-t}u(t)$ |

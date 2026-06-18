@@ -65,6 +65,26 @@ texput(sinc, "\\operatorname{sinc}")$
    BLOQUE 2 — Auxiliares de reconocimiento
    ════════════════════════════════════════════════════════════════════ */
 
+/* ── FT_apply_scale: multiply result by a normalization scalar without
+   letting ratsimp fuse delta terms with rational terms.
+   When delta is present, ratsimp(sc * (delta(t) + f(t))) absorbs f(t)
+   into the delta coefficient, producing an unreadable fused fraction.
+   Instead we split addends, ratsimp the rational part and the scalar
+   separately, then reassemble — preserving the table form. ── */
+FT_apply_scale(e, sc) := block([_terms, _dt, _rt, _r],
+    if e = false then return(false),
+    if freeof('delta, e) then return(ratsimp(sc * e)),
+    if sc = 1 then return(e),
+    _terms : if atom(e) or not is(op(e) = "+") then [e] else args(e),
+    _dt : [], _rt : [],
+    for _t in _terms do (
+        if freeof('delta, _t) then _rt : cons(_t, _rt)
+        else _dt : cons(_t, _dt)
+    ),
+    _r : if _rt = [] then 0 else ratsimp(sc * apply("+", _rt)),
+    _r + ratsimp(sc) * apply("+", _dt)
+)$
+
 FT_is_minf(x) := is(x = minf) or is(x = -inf)$
 FT_is_inf(x)  := is(x = inf)  or is(x = +inf)$
 
@@ -1603,6 +1623,50 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k*abs(t)^m  y  k*abs(t)^m*sgn(t)  ->  FT distribucional, dual de IFT[1/w^n] ──
+       Dual exacto del patrón IFT k/w^n (§36 FOURIER_TABLES). Estrategia:
+       para m=1..12 intentar dividir e entre abs(t)^m y entre abs(t)^m*sgn(t_var);
+       si el cociente es libre de t_var, aplicar la fórmula:
+         FT[k*|t|^m]        = k * 2*m! * (-i)^(m+1) / w^(m+1)  (m impar, n=m+1 par)
+         FT[k*|t|^m*sgn(t)] = k * 2*m! * (-i)^(m+1) / w^(m+1)  (m par,   n=m+1 impar)
+       Solo aplica para abs(t_var) exacto — sin desplazamiento. */
+    if is(res = false) then block(
+        [_ab_m, _ab_k, _ab_has_sgn, _ab_n, _ab_prod, _ab_quot],
+        _ab_m: false, _ab_k: false, _ab_has_sgn: false,
+        /* Try m=1..12. Test with sgn first (covers even m), then without (odd m). */
+        for _ab_try: 1 thru 12 while is(_ab_m = false) do (
+            /* Test: e / (abs(t_var)^_ab_try * sgn(t_var)) — m even, n odd */
+            if evenp(_ab_try) then (
+                _ab_prod: errcatch(ratsimp(e / (abs(t_var)^_ab_try * sgn(t_var)))),
+                if _ab_prod # [] then (
+                    _ab_quot: first(_ab_prod),
+                    if freeof(t_var, _ab_quot) and not equal(_ab_quot, 0)
+                       and freeof('abs, _ab_quot) and freeof('sgn, _ab_quot) then (
+                        _ab_m: _ab_try, _ab_k: _ab_quot, _ab_has_sgn: true
+                    )
+                )
+            ),
+            /* Test: e / abs(t_var)^_ab_try — m odd, n even */
+            if is(_ab_m = false) and oddp(_ab_try) then (
+                _ab_prod: errcatch(ratsimp(e / abs(t_var)^_ab_try)),
+                if _ab_prod # [] then (
+                    _ab_quot: first(_ab_prod),
+                    if freeof(t_var, _ab_quot) and not equal(_ab_quot, 0)
+                       and freeof('abs, _ab_quot) and freeof('sgn, _ab_quot) then (
+                        _ab_m: _ab_try, _ab_k: _ab_quot, _ab_has_sgn: false
+                    )
+                )
+            )
+        ),
+        if is(_ab_m # false) then (
+            _ab_n: _ab_m + 1,
+            res: [ratsimp(_ab_k * 2 * factorial(_ab_m) * (-%i)^_ab_n / w_var^_ab_n),
+                  concat("k*abs(t)^m[*sgn(t)]->2m!*(-i)^n/w^n, m=",
+                         string(_ab_m), ", sgn=", string(_ab_has_sgn),
+                         ", k=", string(_ab_k))]
+        )
+    ),
+
     /* ── k/t^n -> k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w))  (n >= 1, entero) ──
        Transformada distribucional (valor principal de Cauchy).
        n=1: k/t -> -i*pi*k*sgn(w)
@@ -2256,6 +2320,18 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
            and freeof(t_var, part(e, 1))
            and not atom(part(e, 2)) and is(op(part(e, 2)) = 'cosh)
         then (_se_coef: part(e, 1), _se_cosh: part(e, 2))
+        /* Case 2b: e = k/(c*cosh(b*t))  →  op="/", denominator is a product containing cosh.
+           expand() turns 1/(2*cosh(πt/2)) into 1/(2*cosh(πt/2)) with op="/" and den=2*cosh(...).
+           Mirrors the same extraction already used in the IFT single-sech handler. */
+        else if not atom(e) and is(op(e) = "/")
+           and freeof(t_var, part(e, 1))
+           and not atom(part(e, 2)) and is(op(part(e, 2)) = "*") then (
+            _se_coef: part(e, 1),
+            for _s in args(part(e, 2)) do (
+                if not atom(_s) and is(op(_s) = 'cosh) then _se_cosh: _s
+                else if freeof(t_var, _s) then _se_coef: _se_coef / _s
+            )
+        )
         /* Case 3: e = k * (1/cosh(b*t))  →  op="*", one factor is 1/cosh */
         else if not atom(e) and is(op(e) = "*") then (
             for _s in args(e) do (
@@ -2875,21 +2951,83 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── k/wⁿ  (n ≥ 2 entero)  — forma compacta
+       IFT[1/wⁿ] = iⁿ / (2*(n-1)!) * sgn(t) * |t|^{n-1}
+       Válida en sentido distribucional (valor principal de Cauchy en w=0).
+       Verificado: n=1→i*sgn(t)/2, n=2→-|t|/2, n=3→-i*t*|t|/4, n=4→t²*|t|/12.
+       El handler itera n=2..8; si ratsimp(e*wⁿ) es libre de w, activa.
+       También cubre k*exp(-iw*t0)/wⁿ por desplazamiento temporal.        ── */
+    if is(res = false) then block(
+        [_wn_n, _wn_k, _wn_val, _wn_ef, _wn_er, _wn_t0, _wn_prod, _wn_s],
+        /* IFT[1/w^n] en tiempo tv.
+           Par n=2m:   iⁿ/(2(n-1)!) * |tv|^(n-1)           (resultado par, sin sgn)
+           Impar n=2m+1: iⁿ/(2(n-1)!) * |tv|^(n-1) * sgn(tv) (resultado impar, con sgn) */
+        _wn_f: lambda([n, tv],
+            ratsimp(if evenp(n)
+                then  %i^n / (2*(n-1)!) * abs(tv)^(n-1)
+                else  %i^n / (2*(n-1)!) * abs(tv)^(n-1) * sgn(tv))),
+        /* detectar exponente n: ratsimp(e * w^n) libre de w */
+        _wn_n: false,
+        for _wn_try: 2 thru 12 while is(_wn_n = false) do (
+            _wn_prod: errcatch(ratsimp(e * w_var^_wn_try)),
+            if _wn_prod # [] then (
+                _wn_prod: first(_wn_prod),
+                if freeof(w_var, _wn_prod) and _wn_prod # 0
+                then (_wn_n: _wn_try, _wn_k: _wn_prod)
+            )
+        ),
+        if is(_wn_n # false) then
+            res: [ratsimp(_wn_k * _wn_f(_wn_n, t_var)),
+                  concat("k/w^n, n=", string(_wn_n), ", k=", string(_wn_k))]
+        else (
+            /* k*exp(-iw*t0)/w^n — extraer factor exponencial */
+            _wn_ef: false, _wn_er: 1, _wn_n: false,
+            for _wn_try: 2 thru 12 while is(_wn_n = false) do (
+                _wn_prod: errcatch(ratsimp(e * w_var^_wn_try)),
+                if _wn_prod # [] then (
+                    _wn_prod: first(_wn_prod),
+                    if not atom(_wn_prod) and is(op(_wn_prod) = "*") then (
+                        _wn_ef: false, _wn_er: 1,
+                        for _wn_s in args(_wn_prod) do (
+                            if not atom(_wn_s) and is(op(_wn_s) = "^")
+                               and not freeof(%i, _wn_s) and not freeof(w_var, _wn_s)
+                            then _wn_ef: _wn_s
+                            else _wn_er: _wn_er * _wn_s
+                        ),
+                        if is(_wn_ef # false) and freeof(w_var, _wn_er) and _wn_er # 0
+                        then _wn_n: _wn_try
+                    ) else if not atom(_wn_prod) and is(op(_wn_prod) = "^")
+                               and not freeof(%i, _wn_prod)
+                    then (_wn_ef: _wn_prod, _wn_er: 1, _wn_n: _wn_try)
+                )
+            ),
+            if is(_wn_n # false) and is(_wn_ef # false) then (
+                _wn_t0: ratsimp(part(_wn_ef, 2) / (-%i * w_var)),
+                if freeof(w_var, _wn_t0) and not equal(_wn_t0, 0) then
+                    res: [ratsimp(_wn_er * _wn_f(_wn_n, t_var - _wn_t0)),
+                          concat("k*exp(-iwt0)/w^n, n=", string(_wn_n),
+                                 ", t0=", string(_wn_t0))]
+            )
+        )
+    ),
+
     /* ── exp(-i*w*t0) -> delta(t-t0)  y  exp(+i*w*t0) -> delta(t+t0) ──
-    Cubre: exp(-i*w*t0), k*exp(-i*w*t0), exp(i*w*t0), k*exp(i*w*t0)  */
+    Cubre: exp(-i*w*t0), k*exp(-i*w*t0), exp(i*w*t0), k*exp(i*w*t0)
+    Guard: t0 must be real — a complex t0 (e.g. exp((i+1)*w) gives t0=-1+i)
+    would produce delta with a complex argument, which is meaningless. */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "^") then block(
             [exp_arg, t0],
             exp_arg: part(e, 2),
             /* caso exp(-i*w*t0) -> delta(t-t0) */
             t0: ratsimp(exp_arg / (-%i * w_var)),
-            if freeof(w_var, t0) then
+            if freeof(w_var, t0) and is(ratsimp(imagpart(t0)) = 0) then
                 res: [delta(t_var - t0),
                     concat("exp(-i*w*t0) -> delta(t-t0), t0=", string(t0))]
             else (
                 /* caso exp(+i*w*t0) -> delta(t+t0) */
                 t0: ratsimp(exp_arg / (%i * w_var)),
-                if freeof(w_var, t0) then
+                if freeof(w_var, t0) and is(ratsimp(imagpart(t0)) = 0) then
                     res: [delta(t_var + t0),
                         concat("exp(i*w*t0) -> delta(t+t0), t0=", string(t0))]
             )
@@ -2912,13 +3050,13 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                 exp_arg: part(exp_part, 2),
                 /* caso k*exp(-i*w*t0) -> k*delta(t-t0) */
                 t0: ratsimp(exp_arg / (-%i * w_var)),
-                if freeof(w_var, t0) then
+                if freeof(w_var, t0) and is(ratsimp(imagpart(t0)) = 0) then
                     res: [coef_k * delta(t_var - t0),
                         concat("k*exp(-i*w*t0) -> k*delta(t-t0), t0=", string(t0))]
                 else (
                     /* caso k*exp(+i*w*t0) -> k*delta(t+t0) */
                     t0: ratsimp(exp_arg / (%i * w_var)),
-                    if freeof(w_var, t0) then
+                    if freeof(w_var, t0) and is(ratsimp(imagpart(t0)) = 0) then
                         res: [coef_k * delta(t_var + t0),
                             concat("k*exp(i*w*t0) -> k*delta(t+t0), t0=", string(t0))]
                 )
@@ -3984,6 +4122,69 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                            + subst(t_var = t_var - _b_cm, _f_ift_cm[1])) / 2,
                           concat("cos(bw)*F(w)->(f(t+b)+f(t-b))/2, b=",
                                  string(_b_cm), ", IFT[F]=", _f_ift_cm[2])]
+            )
+        )
+    ),
+
+    /* ── k*exp(c*w)*(1-u(w)) -> k/(2π(c+it))  (Re(c)>0) ──
+       Soportado en w<0; decaimiento garantizado por Re(c)>0.
+       Estrategia de detección: división directa.
+         expand(e) da A - A*u(w). Tomamos los dos términos de op="+".
+         El término sin u(w) es el "plain"; el otro tiene -(•)*u(w).
+         Verificamos: plain_term + (plain_term * u(w_var)) = plain + plain*u = 0? No.
+       Enfoque más robusto: intentar factorizar (1-u(w)) directamente.
+         Probe: quot = errcatch(ratsimp(e / (1 - u(w_var)))).
+         Si quot no contiene w_var y contiene exp, extraer c.              */
+    if is(res = false) then block(
+        [_eu_quot, _eu_k, _eu_exp_part, _eu_c, _eu_re_c, _eu_facs],
+        _eu_quot: errcatch(ratsimp(e / (1 - u(w_var)))),
+        if _eu_quot # [] then (
+            _eu_quot: first(_eu_quot),
+            /* quot must be of the form k*exp(c*w): freeof u, contains exp, freeof t_var */
+            if freeof('u, _eu_quot) and freeof(t_var, _eu_quot)
+               and not freeof('%e, _eu_quot) then (
+                /* Extract k (scalar) and exp(c*w) from quot.
+                   Normalize first: absorb unary minus and k/n fraction forms. */
+                _eu_k: 1, _eu_exp_part: false,
+                block([_eu_inner],
+                    _eu_inner: _eu_quot,
+                    /* -(expr) → k=-1, inner=expr */
+                    if not atom(_eu_inner) and is(op(_eu_inner) = "-") then (
+                        _eu_k: -1, _eu_inner: first(args(_eu_inner))
+                    ),
+                    /* expr/n → k=1/n, inner=expr  (n freeof w) */
+                    if not atom(_eu_inner) and is(op(_eu_inner) = "/")
+                       and freeof(w_var, part(_eu_inner, 2)) then (
+                        _eu_k: _eu_k / part(_eu_inner, 2),
+                        _eu_inner: part(_eu_inner, 1)
+                    ),
+                    _eu_facs: if not atom(_eu_inner) and is(op(_eu_inner) = "*")
+                              then args(_eu_inner) else [_eu_inner]
+                ),
+                for _eu_f in _eu_facs do (
+                    if not atom(_eu_f) and is(op(_eu_f) = "^")
+                       and ratsimp(part(_eu_f,1) - %e) = 0
+                    then _eu_exp_part: _eu_f
+                    else if freeof(w_var, _eu_f)
+                    then _eu_k: _eu_k * _eu_f
+                    else _eu_k: false  /* unexpected w-dependence — bail */
+                ),
+                if is(_eu_k # false) and is(_eu_exp_part # false) then (
+                    /* exp_part = %e^arg; extract c = arg/w_var */
+                    _eu_c: errcatch(ratsimp(part(_eu_exp_part, 2) / w_var)),
+                    if _eu_c # [] then (
+                        _eu_c: first(_eu_c),
+                        if freeof(w_var, _eu_c)
+                           and ratsimp(part(_eu_exp_part, 2) - _eu_c*w_var) = 0 then (
+                            /* Guard: Re(c) > 0 ensures ∫_{-inf}^{0} e^{(c+it)w} dw converges */
+                            _eu_re_c: errcatch(ratsimp(realpart(_eu_c))),
+                            if _eu_re_c # [] and is(first(_eu_re_c) > 0) then
+                                res: [_eu_k / (2*%pi*(_eu_c + %i*t_var)),
+                                      concat("k*exp(c*w)*(1-u(w))->k/(2pi(c+it)), c=",
+                                             string(_eu_c), ", k=", string(_eu_k))]
+                        )
+                    )
+                )
             )
         )
     ),

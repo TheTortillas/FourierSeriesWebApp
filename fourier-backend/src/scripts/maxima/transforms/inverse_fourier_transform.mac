@@ -24,15 +24,34 @@ if not(boundp('IFT_SCALE)) then IFT_SCALE: 1$
 
 result : IFT_bilateral(FUNC_INPUT, INTVAR, TRANSVAR)$
 
-f_pos       : if result[1] # false then ratsimp(IFT_SCALE * result[1]) else false$
-f_neg       : if result[2] # false then ratsimp(IFT_SCALE * result[2]) else false$
-f_combined  : if result[3] # false then ratsimp(IFT_SCALE * result[3]) else false$
+/* FT_apply_scale (defined in fourier_transforms.mac) applies IFT_SCALE
+   without letting ratsimp fuse delta+rational addends into a single fraction.
+   Also guards against false values from IFT_bilateral. */
+f_pos       : FT_apply_scale(result[1], IFT_SCALE)$
+f_neg       : FT_apply_scale(result[2], IFT_SCALE)$
+f_combined  : FT_apply_scale(result[3], IFT_SCALE)$
 free_params : result[4]$
 
 has_combined : is(f_combined # false)$
 
-/* Always compute the u(t) combined form for display */
-f_out_u_form : ratsimp(f_pos*u(TRANSVAR) + f_neg*u(-TRANSVAR))$
+/* Compute the u(t) piecewise form only when it adds information beyond
+   f_combined.  When f_combined already encodes bilateral structure via
+   u(), abs(), or sgn(), the u(t) form f_pos*u(t)+f_neg*u(-t) reduces to
+   f_combined*(u(t)+u(-t)) = f_combined — identical and useless.
+   We suppress it in that case to avoid showing a redundant "forma u(t)". */
+block([_fp, _fn, _candidate],
+    _fp : if f_pos = false then 0 else f_pos,
+    _fn : if f_neg = false then 0 else f_neg,
+    _candidate : ratsimp(_fp * u(TRANSVAR) + _fn * u(-TRANSVAR)),
+    f_out_u_form :
+        if f_combined = false then false
+        else if not freeof('u,   f_combined) then false
+        else if not freeof('abs, f_combined) then false
+        else if not freeof('sgn, f_combined) then false
+        else if ratsimp(_candidate - f_combined) = 0 then false
+        /* u(t)+u(-t)=1 is not known to ratsimp: catch f_pos=f_neg case explicitly */
+        else if ratsimp(_fp - _fn) = 0 then false
+        else _candidate)$
 f_out_expr   : if has_combined then f_combined else f_out_u_form$
 
 /* ── Real / imaginary parts of the input F(w) for plotting ── */
@@ -113,6 +132,11 @@ f_neg_real_disp : if f_neg_real_disp = [] then f_neg_real else first(f_neg_real_
 f_neg_imag_disp : errcatch(FT_pick_display_expr_algebraic(f_neg_imag))$
 f_neg_imag_disp : if f_neg_imag_disp = [] then f_neg_imag else first(f_neg_imag_disp)$
 
+print("__IFT_EXISTS__")$        print(string(is(
+    (has_combined or f_pos # false or f_neg # false)
+    and freeof('integrate, f_combined)
+    and freeof('integrate, f_pos)
+    and freeof('integrate, f_neg))))$
 print("__F_POS_MAXIMA__")$      print(string(f_pos))$
 print("__F_POS_TEX__")$         tex(f_pos)$
 print("__F_NEG_MAXIMA__")$      print(string(f_neg))$
