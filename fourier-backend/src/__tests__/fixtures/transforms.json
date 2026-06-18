@@ -8732,5 +8732,27 @@
     "description": "FT(3·|t|) = -6/w² — escalar positivo, verifica signo correcto",
     "input": { "segments": [{ "expression": "3*abs(t)", "from": "minf", "to": "inf" }], "intVar": "t", "transVar": "w" },
     "expected": { "F": "-(6/w^2)", "exists": true }
+  },
+  {
+    "id": "BG05",
+    "type": "ift",
+    "description": "REGRESIÓN BUG-5: IFT(exp(iw+w)*(1-u(w))) — exponente complejo no debe producir delta(t-complejo)",
+    "input": {
+      "segments": [{ "expression": "exp(%i*w+w)*(1-u(w))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": { "exists": false }
+  },
+  {
+    "id": "BG05b",
+    "type": "ift",
+    "description": "REGRESIÓN BUG-5: IFT(exp(iw+w)) — exp con parte real ≠0 no es delta con argumento complejo",
+    "input": {
+      "segments": [{ "expression": "exp(%i*w+w)", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": { "exists": false }
   }
 ]

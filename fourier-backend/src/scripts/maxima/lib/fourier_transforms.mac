@@ -3012,20 +3012,22 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
     ),
 
     /* ── exp(-i*w*t0) -> delta(t-t0)  y  exp(+i*w*t0) -> delta(t+t0) ──
-    Cubre: exp(-i*w*t0), k*exp(-i*w*t0), exp(i*w*t0), k*exp(i*w*t0)  */
+    Cubre: exp(-i*w*t0), k*exp(-i*w*t0), exp(i*w*t0), k*exp(i*w*t0)
+    Guard: t0 must be real — a complex t0 (e.g. exp((i+1)*w) gives t0=-1+i)
+    would produce delta with a complex argument, which is meaningless. */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "^") then block(
             [exp_arg, t0],
             exp_arg: part(e, 2),
             /* caso exp(-i*w*t0) -> delta(t-t0) */
             t0: ratsimp(exp_arg / (-%i * w_var)),
-            if freeof(w_var, t0) then
+            if freeof(w_var, t0) and is(ratsimp(imagpart(t0)) = 0) then
                 res: [delta(t_var - t0),
                     concat("exp(-i*w*t0) -> delta(t-t0), t0=", string(t0))]
             else (
                 /* caso exp(+i*w*t0) -> delta(t+t0) */
                 t0: ratsimp(exp_arg / (%i * w_var)),
-                if freeof(w_var, t0) then
+                if freeof(w_var, t0) and is(ratsimp(imagpart(t0)) = 0) then
                     res: [delta(t_var + t0),
                         concat("exp(i*w*t0) -> delta(t+t0), t0=", string(t0))]
             )
@@ -3048,13 +3050,13 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                 exp_arg: part(exp_part, 2),
                 /* caso k*exp(-i*w*t0) -> k*delta(t-t0) */
                 t0: ratsimp(exp_arg / (-%i * w_var)),
-                if freeof(w_var, t0) then
+                if freeof(w_var, t0) and is(ratsimp(imagpart(t0)) = 0) then
                     res: [coef_k * delta(t_var - t0),
                         concat("k*exp(-i*w*t0) -> k*delta(t-t0), t0=", string(t0))]
                 else (
                     /* caso k*exp(+i*w*t0) -> k*delta(t+t0) */
                     t0: ratsimp(exp_arg / (%i * w_var)),
-                    if freeof(w_var, t0) then
+                    if freeof(w_var, t0) and is(ratsimp(imagpart(t0)) = 0) then
                         res: [coef_k * delta(t_var + t0),
                             concat("k*exp(i*w*t0) -> k*delta(t+t0), t0=", string(t0))]
                 )
