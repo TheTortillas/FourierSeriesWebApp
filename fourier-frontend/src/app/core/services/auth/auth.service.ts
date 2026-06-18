@@ -60,11 +60,14 @@ export class AuthService {
   }
 
   logout(): void {
-    // Fire-and-forget: el servidor revoca la familia de tokens via cookie.
-    this.api.logout().subscribe({ error: () => {} });
-    this.clearTokens();
     const lang = this.transloco.getActiveLang();
-    this.router.navigate([`/${lang}/home`]);
+    this.clearTokens();
+    // Wait for the server to revoke the token family before navigating so
+    // that initFromStorage() on the next page cannot recover the session.
+    this.api.logout().subscribe({
+      error: () => {},
+      complete: () => this.router.navigate([`/${lang}/home`]),
+    });
   }
 
   /** Recarga los datos del usuario desde la DB y actualiza el store. */

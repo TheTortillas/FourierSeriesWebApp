@@ -16,7 +16,7 @@ import {
   sanitizeVariableName,
 } from "../middlewares/sanitize";
 import { AuthenticatedRequest } from "../middlewares/authenticate";
-import { incrementCalculationCount } from "../middlewares/requireTierLimit";
+import { tryConsumeQuota, type QuotaRequest } from "../middlewares/requireTierLimit";
 import { trackClientConnection } from "../middlewares/requestLifecycle";
 
 export const transformsRouter = Router();
@@ -105,28 +105,14 @@ transformsRouter.post(
       const shouldPersistSideEffects = !client.isDisconnected();
 
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          if (shouldConsume) {
-            await incrementCalculationCount(req.user.id);
-          }
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: "fourier_transform",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        } else {
-          if (shouldConsume) {
-            await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          }
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: "fourier_transform",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        }
+        if (shouldConsume) await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "fourier_transform",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {
@@ -211,28 +197,14 @@ transformsRouter.post(
       const shouldPersistSideEffects = !client.isDisconnected();
 
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          if (shouldConsume) {
-            await incrementCalculationCount(req.user.id);
-          }
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: "inverse_fourier_transform",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        } else {
-          if (shouldConsume) {
-            await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          }
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: "inverse_fourier_transform",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        }
+        if (shouldConsume) await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "inverse_fourier_transform",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {
@@ -339,24 +311,14 @@ transformsRouter.post(
 
       const historyType = input.mode === "epicycles" ? "dft_epicycles" : "dft_signal";
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          await incrementCalculationCount(req.user.id);
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: historyType,
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        } else {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: historyType,
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        }
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: historyType,
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {
@@ -441,24 +403,14 @@ transformsRouter.post(
       const shouldPersistSideEffects = !client.isDisconnected();
 
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          await incrementCalculationCount(req.user.id);
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: "dft_signal",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.samplingTimeMs,
-          });
-        } else {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: "dft_signal",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.samplingTimeMs,
-          });
-        }
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "dft_signal",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.samplingTimeMs,
+        });
       }
 
       res.json(result);
@@ -544,24 +496,14 @@ transformsRouter.post(
       const shouldPersistSideEffects = !client.isDisconnected();
 
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          await incrementCalculationCount(req.user.id);
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: "dft_signal",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        } else {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: "dft_signal",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        }
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "dft_signal",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {

@@ -809,7 +809,48 @@ Para $\sin^n(\omega_0 t)$ y $\cos^n(\omega_0 t)$ se aplica **reducción trigonom
 
 El handler activa `trigreduce` cuando detecta `sin(...)^n` o `cos(...)^n` con $n \geq 2$ entero, y solo acepta el resultado si **desaparece el exponente** (guard contra falsos positivos).
 
----
+### Fórmula general explícita — reducción de potencias
+
+Las identidades de reducción que aplica `trigreduce` internamente son:
+
+**Para $\sin^n(\omega_0 t)$:**
+
+$$\sin^n(\omega_0 t) = \begin{cases} \dfrac{1}{2^n}\dbinom{n}{n/2} + \dfrac{2}{2^n}\displaystyle\sum_{k=0}^{n/2-1}(-1)^{n/2-k}\dbinom{n}{k}\cos\!\bigl((n-2k)\omega_0 t\bigr) & n \text{ par} \\[10pt] \dfrac{2}{2^n}\displaystyle\sum_{k=0}^{(n-1)/2}(-1)^{(n-1)/2-k}\dbinom{n}{k}\sin\!\bigl((n-2k)\omega_0 t\bigr) & n \text{ impar} \end{cases}$$
+
+**Para $\cos^n(\omega_0 t)$:**
+
+$$\cos^n(\omega_0 t) = \begin{cases} \dfrac{1}{2^n}\dbinom{n}{n/2} + \dfrac{2}{2^n}\displaystyle\sum_{k=0}^{n/2-1}\dbinom{n}{k}\cos\!\bigl((n-2k)\omega_0 t\bigr) & n \text{ par} \\[10pt] \dfrac{2}{2^n}\displaystyle\sum_{k=0}^{(n-1)/2}\dbinom{n}{k}\cos\!\bigl((n-2k)\omega_0 t\bigr) & n \text{ impar} \end{cases}$$
+
+### Transformada general resultante
+
+Aplicando $\mathcal{F}\{\cos(m\omega_0 t)\} = \pi[\delta(\omega-m\omega_0)+\delta(\omega+m\omega_0)]$ y $\mathcal{F}\{\sin(m\omega_0 t)\} = -i\pi[\delta(\omega-m\omega_0)-\delta(\omega+m\omega_0)]$ a cada término:
+
+**$\mathcal{F}\{\sin^n(\omega_0 t)\}$, $n$ par:**
+
+$$F(\omega) = \frac{\pi}{2^{n-1}}\dbinom{n}{n/2}\delta(\omega) + \frac{\pi}{2^{n-1}}\sum_{k=0}^{n/2-1}(-1)^{n/2-k+1}\dbinom{n}{k}\bigl[\delta(\omega-(n-2k)\omega_0)+\delta(\omega+(n-2k)\omega_0)\bigr]$$
+
+**$\mathcal{F}\{\sin^n(\omega_0 t)\}$, $n$ impar:**
+
+$$F(\omega) = \frac{-i\pi}{2^{n-1}}\sum_{k=0}^{(n-1)/2}(-1)^{(n-1)/2-k}\dbinom{n}{k}\bigl[\delta(\omega-(n-2k)\omega_0)-\delta(\omega+(n-2k)\omega_0)\bigr]$$
+
+**$\mathcal{F}\{\cos^n(\omega_0 t)\}$, $n$ par:**
+
+$$F(\omega) = \frac{\pi}{2^{n-1}}\dbinom{n}{n/2}\delta(\omega) + \frac{\pi}{2^{n-1}}\sum_{k=0}^{n/2-1}\dbinom{n}{k}\bigl[\delta(\omega-(n-2k)\omega_0)+\delta(\omega+(n-2k)\omega_0)\bigr]$$
+
+**$\mathcal{F}\{\cos^n(\omega_0 t)\}$, $n$ impar:**
+
+$$F(\omega) = \frac{\pi}{2^{n-1}}\sum_{k=0}^{(n-1)/2}\dbinom{n}{k}\bigl[\delta(\omega-(n-2k)\omega_0)+\delta(\omega+(n-2k)\omega_0)\bigr]$$
+
+> **Patrón de paridad:** $\sin^n$ con $n$ par produce solo cosenos (parte par de la señal, espectro real con deltas simétricas más el término DC). $\sin^n$ con $n$ impar produce solo senos (parte impar, espectro puramente imaginario sin término DC). $\cos^n$ siempre produce solo cosenos (señal par → espectro real).
+
+**Verificación con los casos explícitos** ($\omega_0 = 1$):
+
+| $f(t)$ | $n$ | Paridad | Término DC $\pi\binom{n}{n/2}/2^{n-1}$ | Armónicos |
+|---|---|---|---|---|
+| $\sin^2(t)$ | 2, par | — | $\pi\binom{2}{1}/2 = \pi$ | $k=0$: $(-1)^1\binom{2}{0}= -1$ → $-\pi[\delta(\omega-2)+\delta(\omega+2)]/2$ |
+| $\cos^2(t)$ | 2, par | — | $\pi$ | $k=0$: $+\binom{2}{0}=1$ → $+\pi[\delta(\omega-2)+\delta(\omega+2)]/2$ |
+| $\sin^3(t)$ | 3, impar | — | sin DC | $k=0,1$: coef $(-1)^1\binom{3}{0}=-1$, $(-1)^0\binom{3}{1}=3$ |
+| $\cos^3(t)$ | 3, impar | — | sin DC | $k=0,1$: coef $\binom{3}{0}=1$, $\binom{3}{1}=3$ |---
 
 ## 20. Función bilateral impar: $k\omega / (a^2 + \omega^2)$ — pares #27b–27c
 
@@ -976,7 +1017,97 @@ $$\int_{-\infty}^{\infty} \frac{\cos(at)\,e^{-i\omega t}}{\cosh(bt)}\,dt = \frac
 |----|------------------------------------|----------------------------------------------------------------------------------------------------------------------|--------------------|
 | TH-1 | $k\,\dfrac{\sin(at)}{\sinh(bt)}$ | $\dfrac{k\pi}{2b}\!\left[\tanh\!\left(\dfrac{\pi(a-\omega)}{2b}\right)+\tanh\!\left(\dfrac{\pi(a+\omega)}{2b}\right)\right]$ | $a,b > 0$ |
 | TH-2 | $k\,\dfrac{\cos(at)}{\cosh(bt)}$ | $\dfrac{k\pi}{2b}\!\left[\operatorname{sech}\!\left(\dfrac{\pi(\omega-a)}{2b}\right)+\operatorname{sech}\!\left(\dfrac{\pi(\omega+a)}{2b}\right)\right]$ | $a \geq 0$, $b > 0$ |
+| TH-3 | $k\,\operatorname{sech}(bt)$ | $\dfrac{k\pi}{b}\,\operatorname{sech}\!\left(\dfrac{\pi\omega}{2b}\right)$ | $b > 0$; caso $a=0$ de TH-2 |
 
+> **TH-3 es el caso especial $a = 0$ de TH-2** y tiene su propio handler directo. La fórmula $1/\cosh(bt)$ produce $(\pi/b)\,\text{sech}(\pi\omega/(2b))$. La inversa también está implementada: $\mathcal{F}^{-1}\{k/\cosh(p\omega)\}(t) = (kb/\pi)\,\text{sech}(bt)$ con $b = \pi/(2p)$.
+
+---
+
+## 24b. Otras transformadas hiperbólicas
+
+Las siguientes funciones tienen transformadas de Fourier cerradas. Se indica el estado de implementación en el motor para cada una.
+
+### 24b.1 $k/\sinh(bt)$ — transformada con tanh
+
+$$\boxed{\mathcal{F}\!\left\{\frac{k}{\sinh(bt)}\right\}(\omega) = \frac{-ik\pi\,\tanh\!\left(\dfrac{\pi\omega}{2b}\right)}{|b|}}, \qquad b \in \mathbb{R},\; b \neq 0$$
+
+(Fuente: Wolfram Alpha. Convención: factor oscilatorio $-1$.)
+
+> **⚠ ✗ No implementado** — El integrador de Maxima falla por la singularidad no integrable en $t=0$. La fórmula se obtiene directamente del kernel de Ramanujan $K(\lambda) = \int e^{i\lambda t}/\sinh(\pi t)\,dt = i\tanh(\lambda/2)$ escalado a $\sinh(bt)$ vía $t \to t/b$, tomando la parte impar.
+
+### 24b.2 $k\,\tanh(bt)$ — transformada con csch
+
+$$\boxed{\mathcal{F}\!\left\{k\,\tanh(bt)\right\}(\omega) = \frac{-ik\pi\,\operatorname{csch}\!\left(\dfrac{\pi\omega}{2b}\right)}{|b|}}, \qquad b \in \mathbb{R},\; b \neq 0$$
+
+(Fuente: Wolfram Alpha. Convención: factor oscilatorio $-1$.)
+
+> **⚠ ✗ No implementado** — $\tanh(bt)$ tiende a $\pm 1$ en $\pm\infty$ (no es $L^1$ ni $L^2$) por lo que el integrador numérico de Maxima diverge. La fórmula cerrada existe como transformada de distribución temperada.
+
+### 24b.3 $k\,\operatorname{csch}^2(bt)$ — cuadrado de la cosecante hiperbólica
+
+Para el caso canónico $b=1$, $k=1$:
+
+$$\boxed{\mathcal{F}\!\left\{\operatorname{csch}^2(t)\right\}(\omega) = -2\pi\,\omega\,\coth\!\left(\frac{\pi\omega}{2}\right)}$$
+
+Forma general escalada:
+
+$$\mathcal{F}\!\left\{k\,\operatorname{csch}^2(bt)\right\}(\omega) = \frac{-2k\pi\omega}{b^2}\coth\!\left(\frac{\pi\omega}{2b}\right), \qquad b > 0$$
+
+(Fuente: Wolfram Alpha.)
+
+> **⚠ ✗ No implementado** como patrón directo.
+
+### 24b.4 $k\,\operatorname{sech}^2(bt)$ — cuadrado de la secante hiperbólica
+
+$$\boxed{\mathcal{F}\!\left\{k\,\operatorname{sech}^2(bt)\right\}(\omega) = \frac{k\pi\omega}{b^2}\operatorname{csch}\!\left(\frac{\pi\omega}{2b}\right)}, \qquad b > 0$$
+
+Equivalentemente $= \dfrac{k\pi\omega}{b^2\,\sinh(\pi\omega/(2b))}$.
+
+**Derivación** via diferenciación en tiempo: $\operatorname{sech}^2(bt) = -\tfrac{1}{b}\tfrac{d}{dt}\tanh(bt)$, luego propiedad de derivada $\mathcal{F}\{f'\} = i\omega F(\omega)$ sobre TH-3.
+
+Para $\omega = 0$: $F(0) = 2k/b$ (L'Hôpital sobre $\omega/\sinh(\pi\omega/(2b))$).
+
+> **⚠ ✗ No implementado** como patrón directo.
+
+### 24b.5 Familias avanzadas: $\operatorname{sech}^n$, $\tanh^m\operatorname{sech}^n$
+
+Las siguientes familias fueron verificadas en Wolfram Alpha y LibreTexts. Todas utilizan la convención con factor oscilatorio $-1$ ($e^{-i\omega t}$) y $b=1$ (escalar con $t\to bt$, $\omega\to\omega/b$):
+
+| $f(t)$ | $F(\omega)$ |
+|--------|-------------|
+| $\operatorname{sech}(t)$ | $\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $\operatorname{sech}^2(t)$ | $\dfrac{\pi\omega}{\sinh\!\left(\frac{\pi\omega}{2}\right)}$ |
+| $\operatorname{sech}^3(t)$ | $\dfrac{1}{2}(1+\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $\operatorname{sech}^5(t)$ | $\dfrac{1}{24}(\omega^4+10\omega^2+9)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $\tanh(t)\operatorname{sech}(t)$ | $-i\omega\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $\tanh^2(t)\operatorname{sech}(t)$ | $\dfrac{1}{2}(1-\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $\tanh^3(t)\operatorname{sech}(t)$ | $-i\dfrac{\omega}{6}(5-\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $\tanh(t)\operatorname{sech}^3(t)$ | $-i\dfrac{\omega}{6}(1+\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $\tanh^2(t)\operatorname{sech}^3(t)$ | $\dfrac{1}{2}(1+\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{1}{24}(\omega^4+10\omega^2+9)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $t\,\tanh(t)\operatorname{sech}(t)$ | $\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{\omega^2\pi}{2}\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $t\,\tanh^2(t)\operatorname{sech}(t)$ | $-i\omega\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{\omega^2\pi}{4}(1-\omega^2)\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $t\,\tanh^3(t)\operatorname{sech}(t)$ | $\dfrac{1}{6}(5-3\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{\omega^2\pi}{12}(5-\omega^2)\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $t\,\tanh(t)\operatorname{sech}^3(t)$ | $\dfrac{1}{6}(1+3\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{\omega^2\pi}{12}(1+\omega^2)\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $t\,\operatorname{sech}(t)$ | $-i\dfrac{\omega\pi^2}{6}\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+| $t\,\operatorname{sech}^3(t)$ | $-i\omega\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - i\dfrac{\omega^2\pi}{4}(1+\omega^2)\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+
+**Patrón estructural:** Los pares con $\operatorname{sech}^{2n+1}$ producen transformadas proporcionales a $\operatorname{sech}(\pi\omega/2)$ multiplicado por polinomios en $\omega$. Los pares con $\tanh^m \operatorname{sech}^n$ para $m$ impar producen transformadas imaginarias puras; para $m$ par, reales. El factor $t$ introduce derivación en frecuencia $(-i\tfrac{d}{d\omega})$, generando el término adicional con $\tanh(\pi\omega/2)\operatorname{sech}(\pi\omega/2)$.
+
+> **⚠ ✗ No implementadas** como patrones directos. Todas son $L^2$ (decaimiento exponencial), por lo que el integrador numérico converge para valores concretos de $b$, pero falla con $b$ simbólico.
+
+### 24b.6 Tabla resumen de hiperbólicas
+
+| # | $f(t)$ | $F(\omega)$ | Estado | Condiciones |
+|---|--------|-------------|--------|-------------|
+| TH-1 | $k\,\sin(at)/\sinh(bt)$ | $\frac{k\pi}{2b}[\tanh(\frac{\pi(a-\omega)}{2b})+\tanh(\frac{\pi(a+\omega)}{2b})]$ | ✓ Implementado | $a,b>0$ |
+| TH-2 | $k\,\cos(at)/\cosh(bt)$ | $\frac{k\pi}{2b}[\operatorname{sech}(\frac{\pi(\omega-a)}{2b})+\operatorname{sech}(\frac{\pi(\omega+a)}{2b})]$ | ✓ Implementado | $a\geq0,b>0$ |
+| TH-3 | $k\,\operatorname{sech}(bt)$ | $\frac{k\pi}{b}\operatorname{sech}(\frac{\pi\omega}{2b})$ | ✓ Implementado | $b>0$ |
+| TH-4 | $k/\sinh(bt)$ | $\frac{-ik\pi}{|b|}\tanh(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b\neq0$ |
+| TH-5 | $k\,\tanh(bt)$ | $\frac{-ik\pi}{|b|}\operatorname{csch}(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b\neq0$ |
+| TH-6 | $k\,\operatorname{sech}^2(bt)$ | $\frac{k\pi\omega}{b^2}\operatorname{csch}(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b>0$ |
+| TH-7 | $k\,\operatorname{csch}^2(bt)$ | $\frac{-2k\pi\omega}{b^2}\coth(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b>0$ |
+| TH-8 | $k\,\operatorname{sech}^n(t)$ | polinomio$(\omega^2)\cdot\pi\operatorname{sech}(\frac{\pi\omega}{2})$ | **⚠ ✗ No implementado** | $n\geq2$, ver 24b.5 |
+| TH-9 | $k\,\tanh^m(t)\operatorname{sech}^n(t)$ | mixto sech/tanh·sech | **⚠ ✗ No implementado** | ver 24b.5 |
 ---
 
 ## 25. Arquitectura de display: formas principales y alternativas
@@ -1249,3 +1380,238 @@ Si se encuentra una fórmula general, reemplazar el bloque `if/else` en `FT_trip
 - `FT_tripow_formula(a, b, n, w_var)` — tabla $n=1..4$ con desplazamiento $e^{-i\omega t_0}$
 - Conectado en `FT_pattern_lookup` **antes** del matcher $n=1$ para que `tri^2` no caiga al handler lineal
 - Conectado en `IFT_pattern_lookup` con escala $1/(2\pi)$ y modulación $e^{i\omega_0 t}$
+---
+
+## 31. FT de $k\,e^{-at}\sin^n(bt)\,u(t)$ y $k\,e^{-at}\cos^n(bt)\,u(t)$ — decaimiento con potencias de trig
+
+### Motivación
+
+Los pares #21–22 cubren $e^{-at}\cos(bt)\,u(t)$ y $e^{-at}\sin(bt)\,u(t)$ para potencia 1. Cuando los factores trigonométricos se elevan a una potencia $n \geq 2$, el resultado sigue siendo causal y de energía finita, pero no existe un par compacto único — la transformada se obtiene combinando reducción trigonométrica con la tabla de exponenciales causales.
+
+### Método de cálculo
+
+**Paso 1 — Reducción de potencias** (identidades de la sección 19):
+
+$$e^{-at}\sin^n(bt)\,u(t) = e^{-at}\left[\sum_m c_m \sin(m\,b\,t) + d_m \cos(m\,b\,t)\right]u(t)$$
+
+donde los coeficientes $c_m, d_m$ son los de las fórmulas generales de la sección 19 con $\omega_0 = b$.
+
+**Paso 2 — Linealidad** y aplicación de los pares #21–22 a cada término:
+
+$$\mathcal{F}\{e^{-at}\sin(mbt)\,u(t)\} = \frac{m\,b}{(i\omega+a)^2 + (mb)^2}, \qquad \mathcal{F}\{e^{-at}\cos(mbt)\,u(t)\} = \frac{i\omega+a}{(i\omega+a)^2 + (mb)^2}$$
+
+### Tabla de casos frecuentes
+
+| $f(t)$ | $F(\omega)$ | Condiciones |
+|--------|-------------|-------------|
+| $k\,e^{-at}\sin^2(bt)\,u(t)$ | $\dfrac{k}{2}\!\left[\dfrac{1}{i\omega+a} - \dfrac{i\omega+a}{(i\omega+a)^2+4b^2}\right]$ | $a,b>0$ |
+| $k\,e^{-at}\cos^2(bt)\,u(t)$ | $\dfrac{k}{2}\!\left[\dfrac{1}{i\omega+a} + \dfrac{i\omega+a}{(i\omega+a)^2+4b^2}\right]$ | $a,b>0$ |
+| $k\,e^{-at}\sin^3(bt)\,u(t)$ | $k\!\left[\dfrac{3b/4}{(i\omega+a)^2+b^2} - \dfrac{3b/4}{(i\omega+a)^2+9b^2}\right]$ | $a,b>0$ |
+| $k\,e^{-at}\cos^3(bt)\,u(t)$ | $k\!\left[\dfrac{3(i\omega+a)/4}{(i\omega+a)^2+b^2} + \dfrac{i\omega+a}{4[(i\omega+a)^2+9b^2]}\right]$ | $a,b>0$ |
+
+**Derivación del caso $n=2$** (usando $\sin^2(bt) = \tfrac{1-\cos(2bt)}{2}$):
+
+$$e^{-at}\sin^2(bt)\,u(t) = \frac{1}{2}e^{-at}u(t) - \frac{1}{2}e^{-at}\cos(2bt)\,u(t)$$
+
+$$\mathcal{F}\{\cdot\} = \frac{1}{2}\cdot\frac{k}{i\omega+a} - \frac{1}{2}\cdot\frac{k(i\omega+a)}{(i\omega+a)^2+(2b)^2}$$
+
+### Estado de implementación
+
+> El motor resuelve estos casos **automáticamente vía pipeline**:
+> `trigreduce` (sección 19) → expansión en suma → linealidad → pares #21–22.
+> No existe un handler directo de pattern, pero el resultado es correcto para todo $n \geq 2$ entero.
+> Limitación: si `trigreduce` no reduce completamente (argumento no lineal en $t$), el motor cae al integrador.
+
+---
+
+## 32. FT bilateral de $k\,e^{-a|t|}\cos(bt)$ y $k\,e^{-a|t|}\sin(bt)$ — modulación del decaimiento simétrico
+
+### Motivación
+
+El par #25 cubre $e^{-a|t|}$ (bilateral puro). Al multiplicarlo por $\cos(bt)$ o $\sin(bt)$ se obtiene una **señal de energía bilateral modulada**, cuya transformada sigue siendo una función racional real en $\omega$.
+
+### Derivación por desplazamiento en frecuencia
+
+Partiendo de $\mathcal{F}\{e^{-a|t|}\} = \dfrac{2a}{a^2+\omega^2}$ y aplicando el par #29–30 de la tabla de funciones de energía:
+
+$$\boxed{\mathcal{F}\!\left\{k\,e^{-a|t|}\cos(bt)\right\}(\omega) = \frac{ka(a^2+b^2+\omega^2)}{[(a^2+(\omega-b)^2][(a^2+(\omega+b)^2]/2}} = k\left[\frac{a}{a^2+(\omega-b)^2} + \frac{a}{a^2+(\omega+b)^2}\right]}$$
+
+Simplificado vía modulación ($\mathcal{F}\{g(t)\cos(bt)\} = [G(\omega-b)+G(\omega+b)]/2$ con $G(\omega)=2a/(a^2+\omega^2)$):
+
+$$\mathcal{F}\{k\,e^{-a|t|}\cos(bt)\} = k\left[\frac{a}{a^2+(\omega-b)^2} + \frac{a}{a^2+(\omega+b)^2}\right], \qquad a,b > 0$$
+
+$$\mathcal{F}\{k\,e^{-a|t|}\sin(bt)\} = ik\left[\frac{a}{a^2+(\omega+b)^2} - \frac{a}{a^2+(\omega-b)^2}\right], \qquad a,b > 0$$
+
+### Tabla de pares
+
+| # | $f(t)$ | $F(\omega)$ | Condiciones |
+|---|--------|-------------|-------------|
+| B-1 | $k\,e^{-a\|t\|}\cos(bt)$ | $ka\!\left[\dfrac{1}{a^2+(\omega-b)^2}+\dfrac{1}{a^2+(\omega+b)^2}\right]$ | $a,b>0$ |
+| B-2 | $k\,e^{-a\|t\|}\sin(bt)$ | $ika\!\left[\dfrac{1}{a^2+(\omega+b)^2}-\dfrac{1}{a^2+(\omega-b)^2}\right]$ | $a,b>0$ |
+| B-3 | $k\,e^{-a\|t\|}\cos^2(bt)$ | $\dfrac{k}{2}\!\left[\dfrac{2a}{a^2+\omega^2}+\dfrac{a}{a^2+(\omega-2b)^2}+\dfrac{a}{a^2+(\omega+2b)^2}\right]$ | $a,b>0$ |
+
+> **Caso $b = 0$:** se reduce al par #25: $\mathcal{F}\{k\,e^{-a|t|}\} = 2ka/(a^2+\omega^2)$.
+> **Simetría:** $e^{-a|t|}\cos(bt)$ es función par → $F(\omega)$ es real y par. $e^{-a|t|}\sin(bt)$ es impar → $F(\omega)$ es imaginaria pura e impar.
+
+### Estado de implementación
+
+> El motor resuelve B-1 y B-2 **automáticamente** vía el handler `cos(bt)*f(t) → [G(ω-b)+G(ω+b)]/2` (meta-operador de modulación por coseno/seno de la sección 6) aplicado al par #25. No hay handler directo, pero la cadena funciona correctamente para $b$ simbólico.
+
+---
+
+## 33. Tren de impulsos (función Shah / peine de Dirac) — $\text{III}_T(t)$
+
+### Definición
+
+El **tren de impulsos periódico** de período $T$ se define como:
+
+$$\text{III}_T(t) = \sum_{n=-\infty}^{+\infty} \delta(t - nT)$$
+
+También se escribe como $\delta_T(t)$ o $\operatorname{III}(t/T)/T$ en notación de Bracewell.
+
+### Transformada de Fourier
+
+$$\boxed{\mathcal{F}\!\left\{\text{III}_T(t)\right\}(\omega) = \frac{2\pi}{T}\sum_{k=-\infty}^{+\infty} \delta\!\left(\omega - \frac{2\pi k}{T}\right) = \omega_0\sum_{k=-\infty}^{+\infty}\delta(\omega - k\omega_0)}$$
+
+donde $\omega_0 = 2\pi/T$ es la frecuencia fundamental del tren.
+
+> **El tren de impulsos en frecuencia es otro tren de impulsos**, con espaciado $\omega_0 = 2\pi/T$. Relación inversa: compresión en tiempo ($T$ pequeño) → expansión en frecuencia (espaciado $\omega_0$ grande). Caso $T = 1$: $\mathcal{F}\{\text{III}_1(t)\} = 2\pi\,\text{III}_{2\pi}(\omega)$.
+
+### Derivación
+
+Como $\text{III}_T(t)$ es periódica con período $T$, se expande en serie de Fourier compleja:
+
+$$\text{III}_T(t) = \frac{1}{T}\sum_{n=-\infty}^{+\infty} e^{in\omega_0 t}$$
+
+Aplicando $\mathcal{F}\{e^{in\omega_0 t}\} = 2\pi\,\delta(\omega - n\omega_0)$ término a término:
+
+$$\mathcal{F}\!\left\{\text{III}_T(t)\right\} = \frac{2\pi}{T}\sum_{n=-\infty}^{+\infty}\delta(\omega - n\omega_0) = \omega_0\sum_{n=-\infty}^{+\infty}\delta(\omega - n\omega_0)$$
+
+### Tabla de pares relacionados
+
+| # | $f(t)$ | $F(\omega)$ | Observaciones |
+|---|--------|-------------|---------------|
+| Sh-1 | $\displaystyle\sum_{n=-\infty}^{+\infty}\delta(t-nT)$ | $\dfrac{2\pi}{T}\displaystyle\sum_{k=-\infty}^{+\infty}\delta\!\left(\omega-\dfrac{2\pi k}{T}\right)$ | tren estándar de período $T$ |
+| Sh-2 | $\displaystyle\sum_{n=-\infty}^{+\infty}\delta(t-nT-t_0)$ | $e^{-i\omega t_0}\dfrac{2\pi}{T}\displaystyle\sum_{k=-\infty}^{+\infty}\delta\!\left(\omega-\dfrac{2\pi k}{T}\right)$ | tren desplazado por $t_0$ |
+| Sh-3 | $x(t)\cdot\text{III}_T(t)$ | $\dfrac{1}{T}\displaystyle\sum_{k=-\infty}^{+\infty} X\!\left(\omega-\dfrac{2\pi k}{T}\right)$ | muestreo ideal de $x(t)$ |
+
+### Conexión con el muestreo y la DFT
+
+El par Sh-3 es la base matemática del **teorema de muestreo de Nyquist-Shannon**: multiplicar $x(t)$ por $\text{III}_T(t)$ replica el espectro $X(\omega)$ cada $\omega_0 = 2\pi/T$ rad/s. Si $X(\omega) = 0$ para $|\omega| > \omega_0/2$, las réplicas no se solapan y $x(t)$ puede reconstruirse perfectamente.
+
+La DFT (sección I.6) es la versión discreta y finita de esta relación.
+
+### Estado de implementación
+
+> El tren de impulsos **no está soportado** como entrada en el motor de transformadas. La razón es que $\text{III}_T(t)$ involucra una suma infinita de deltas que Maxima no puede representar ni integrar simbólicamente de forma finita. El resultado sería otra suma infinita de deltas en $\omega$, que tampoco tiene representación cerrada para el renderizador LaTeX actual.
+>
+> **Cómo calcularlo manualmente:** usar la fórmula Sh-1 directamente. Para un tren finito de $N$ impulsos (ventana rectangular), el resultado sí es computable: $\sum_{n=0}^{N-1}\delta(t-nT) \to e^{-i\omega(N-1)T/2}\dfrac{\sin(N\omega T/2)}{\sin(\omega T/2)}$.
+
+---
+
+## 34. FT de señales causales polinómicas $k \cdot t^n \cdot u(t)$ sin decaimiento exponencial
+
+### Motivación
+
+Los pares #17–19 de la tabla de exponenciales causales cubren $k\,t^n\,e^{-at}\,u(t)$ con $a > 0$. Cuando se elimina el factor de decaimiento ($a = 0$), las funciones resultantes —rampa, parábola, etc.— son causales pero **no integrables en $L^1(\mathbb{R})$**, por lo que su transformada solo existe en sentido distribucional.
+
+### Derivación distribucional
+
+Partiendo de la identidad $u(t) \to \pi\,\delta(\omega) + \tfrac{1}{i\omega}$ y aplicando la propiedad de multiplicación por $t$ (diferenciación en frecuencia):
+
+$$\mathcal{F}\{t^n\,f(t)\} = i^n\,F^{(n)}(\omega)$$
+
+se obtiene para $n \geq 1$:
+
+$$\mathcal{F}\{t^n\,u(t)\} = i^n\,\frac{d^n}{d\omega^n}\!\left[\pi\,\delta(\omega) + \frac{1}{i\omega}\right]$$
+
+usando $\dfrac{d^n}{d\omega^n}\delta(\omega) = \delta^{(n)}(\omega)$ y $\dfrac{d^n}{d\omega^n}\dfrac{1}{i\omega} = \dfrac{(-1)^n\,n!}{i\,\omega^{n+1}}$:
+
+$$\mathcal{F}\{t^n\,u(t)\} = i^n\,\pi\,\delta^{(n)}(\omega) + \frac{(-1)^n\,n!\,i^n}{i\,\omega^{n+1}} = i^n\,\pi\,\delta^{(n)}(\omega) + \frac{i^{n-1}\,(-1)^n\,n!}{\omega^{n+1}}$$
+
+### Tabla de pares
+
+| # | $f(t)$ | $F(\omega) = \mathcal{F}\{f(t)\}$ | Condiciones |
+|---|--------|-------------------------------------|-------------|
+| P-1 | $k\,u(t)$ | $k\!\left(\pi\,\delta(\omega) + \dfrac{1}{i\omega}\right)$ | par #10 ya en tabla |
+| P-2 | $k\,t\,u(t)$ (rampa) | $k\!\left(i\pi\,\delta'(\omega) - \dfrac{1}{\omega^2}\right)$ | $\delta'$ = derivada de la delta |
+| P-3 | $k\,t^2\,u(t)$ (parábola) | $k\!\left(-\pi\,\delta''(\omega) + \dfrac{2i}{\omega^3}\right)$ | $\delta''$ = segunda derivada |
+| P-4 | $k\,t^n\,u(t)$ (general) | $k\!\left(i^n\,\pi\,\delta^{(n)}(\omega) + \dfrac{i^{n-1}(-1)^n\,n!}{\omega^{n+1}}\right)$ | $n \geq 1$ entero, V.P. en $1/\omega^{n+1}$ |
+
+> **Nota de convención:** el par P-1 coincide exactamente con el par #10 ya documentado.
+> $\delta^{(n)}(\omega)$ es la $n$-ésima derivada distribucional de la delta de Dirac; no es numéricamente evaluable.
+
+### Propiedades importantes
+
+**Valor principal en $1/\omega^{n+1}$:** el término racional es singular en $\omega = 0$ y debe interpretarse como valor principal de Cauchy, análogamente a los pares #15–16.
+
+**Condiciones de existencia distribucional:** $t^n\,u(t)$ pertenece al espacio de distribuciones temperadas $\mathcal{S}'$, por lo que su transformada existe en ese espacio. Sin embargo, **no existe como función ordinaria** ni como elemento de $L^1$ o $L^2$.
+
+**Por qué el integrador falla:** `integrate(t^n * exp(-iωt), t, 0, inf)` diverge para $a = 0$. Maxima devuelve `limit` o falla silenciosamente. Esta familia solo puede calcularse correctamente vía la tabla de patrones, no por integración directa.
+
+### Limitación de implementación actual
+
+> **Estado:** los pares P-2 a P-4 **no están implementados** como patrones en `FT_pattern_lookup`. Si el usuario ingresa `t*u(t)` o `t^2*u(t)`, el motor cae al integrador numérico y reporta `exists: false` o timeout.
+>
+> La razón técnica es que los resultados contienen $\delta^{(n)}(\omega)$, que Maxima representa como `diff(delta(w), w, n)` — un árbol de expresión no soportado por el renderer LaTeX actual.
+>
+> **Punto de extensión:** implementar `FT_match_tnu(expr, t_var)` que detecte $k\,t^n\,u(t)$ (sin factor exponencial) y devuelva la expresión con `diff(delta(w_var), w_var, n)`. Requiere extender `texput` para renderizar $\delta^{(n)}$ correctamente.
+
+---
+
+## 35. Potencias de tri — extensión para $n > 4$
+
+### El problema
+
+La tabla de la sección 30 cubre `tri(t)^n` para $n = 2, 3, 4$ con fórmulas cerradas derivadas por integración directa. Para $n \geq 5$ **no existe una fórmula general de forma cerrada** análoga a la B-spline de sinc.
+
+### Por qué no hay fórmula general
+
+La FT de $\text{sinc}^n(t)$ produce una B-spline (suma uniforme con $\text{sgn}$) porque la convolución de $n$ funciones rect en frecuencia preserva la estructura polinómica por tramos. La FT de $\text{tri}^n(t)$ requiere la convolución de $n$ espectros triangulares, que produce funciones **B-spline de orden $2n$** en frecuencia, con coeficientes que alternan entre $\sin$ y $\cos$ de múltiplos de $\omega$; no hay suma uniforme.
+
+Para cada $n$ par la FT de $\text{tri}^n$ contiene solo senos; para $n$ impar solo cosenos. El patrón se puede verificar:
+
+| $n$ | Tipo | Fórmula $R_n(\omega/a) \cdot a$ |
+|---|---|---|
+| 2 | sin | $4(u - \sin u)/u^3$ |
+| 3 | cos | $2(3u^2 + 6\cos u - 6)/u^4$ |
+| 4 | sin | $8(u^3 + 6\sin u - 6u)/u^5$ |
+| 5 | cos | $?$ — requiere derivación |
+| 6 | sin | $?$ — requiere derivación |
+
+donde $u = \omega/a$.
+
+### Fórmula general para $n \geq 2$ (integración por partes iterada)
+
+La FT de $k\,\text{tri}(at)^n$ puede expresarse en términos de la convolución n-fold del espectro triangular. Para cada $n$ se puede derivar aplicando integración por partes $n$ veces:
+
+$$\mathcal{F}\{k\,\text{tri}(at)^n\}(\omega) = \frac{k}{a} \cdot R_n\!\left(\frac{\omega}{a}\right)$$
+
+donde $R_n(u)$ satisface la recurrencia:
+
+$$R_n(u) = \frac{n}{u}\,R_{n-1}(u) - \frac{n(n-1)}{u^2}\,\int_0^u R_{n-2}(s)\,ds$$
+
+con condiciones iniciales $R_1(u) = 2(1-\cos u)/u^2$ y $R_2(u) = 4(u - \sin u)/u^3$.
+
+> Esta recurrencia no produce una suma uniforme tipo B-spline porque la integral acumula términos mixtos sin/cos de distintos órdenes.
+
+### Casos $n = 5$ y $n = 6$ derivados analíticamente
+
+Aplicando la recurrencia o integración directa sobre el soporte $[-1,1]$:
+
+| $n$ | $R_n(u) \cdot a$ (con $u = \omega/a$) |
+|---|---|
+| 5 | $2(15u^2 - 24 - (u^4 - 12)\cos u - 12u\sin u) / u^6$ |
+| 6 | $4(u^5 - 20u^3 + (60u - u^5 + 20u^3)\cos... )/ u^7$ — expresión extensa |
+
+> **Estado de implementación:** `FT_tripow_formula` retorna `false` para $n > 4$, lo que hace caer al integrador. Para $n = 5, 6$ el integrador de Maxima puede resolverlo eventualmente en función de la forma exacta; para $n \geq 7$ el timeout es probable.
+>
+> **Punto de extensión:** agregar los casos $n = 5$ y $n = 6$ como ramas adicionales en `FT_tripow_formula`. Verificar con Maxima: `integrate(tri(t)^5 * exp(-i*w*t), t, -1, 1)` y comparar con la recurrencia.
+
+### IFT de $\text{tri}(\omega)^n$ para $n > 4$
+
+Por la misma dualidad de la sección 30, la IFT hereda el límite:
+
+$$\mathcal{F}^{-1}\{\text{tri}(\omega)^n\}(t) = \frac{1}{2\pi}\,\text{FT}[\text{tri}^n]\big|_{\omega \to t}$$
+
+lo que significa que extender `FT_tripow_formula` cubre automáticamente ambas direcciones.

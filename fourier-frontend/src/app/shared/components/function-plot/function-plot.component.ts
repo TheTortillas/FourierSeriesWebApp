@@ -182,6 +182,8 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   private raf: number | null = null;
   private dragging = false;
   private lastPointer = { x: 0, y: 0 };
+  private activePointers = new Map<number, PointerEvent>();
+  private lastPinchDist = 0;
   private resizeObserver: ResizeObserver | null = null;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -337,16 +339,40 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   }
 
   onPointerDown(e: PointerEvent): void {
-    this.dragging = true;
-    this.lastPointer = { x: e.clientX, y: e.clientY };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    this.activePointers.set(e.pointerId, e);
+    if (this.activePointers.size === 2) {
+      this.dragging = false;
+      const [a, b] = [...this.activePointers.values()];
+      this.lastPinchDist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+    } else {
+      this.dragging = true;
+      this.lastPointer = { x: e.clientX, y: e.clientY };
+    }
   }
 
   onPointerMove(e: PointerEvent): void {
+    this.activePointers.set(e.pointerId, e);
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     const cssX  = e.clientX - rect.left;
     const cssY  = e.clientY - rect.top;
     const vp    = this.vp();
+
+    // Pinch-to-zoom (two fingers)
+    if (this.activePointers.size === 2) {
+      const [a, b] = [...this.activePointers.values()];
+      const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+      if (this.lastPinchDist > 0) {
+        const factor = dist / this.lastPinchDist;
+        const midCss = {
+          x: (a.clientX + b.clientX) / 2 - rect.left,
+          y: (a.clientY + b.clientY) / 2 - rect.top,
+        };
+        this.zoom(factor, midCss);
+      }
+      this.lastPinchDist = dist;
+      return;
+    }
 
     // Always emit math coordinates (even while dragging, so parent tooltips update)
     this.mathPointerMove.emit({
@@ -372,11 +398,20 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   }
 
   onPointerUp(e: PointerEvent): void {
-    this.dragging = false;
+    this.activePointers.delete(e.pointerId);
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    this.lastPinchDist = 0;
+    this.dragging = this.activePointers.size === 1;
+    if (this.dragging) {
+      const remaining = [...this.activePointers.values()][0];
+      this.lastPointer = { x: remaining.clientX, y: remaining.clientY };
+    }
   }
 
   onPointerLeave(): void {
+    this.activePointers.clear();
+    this.dragging = false;
+    this.lastPinchDist = 0;
     this.mathPointerMove.emit(null);
   }
 

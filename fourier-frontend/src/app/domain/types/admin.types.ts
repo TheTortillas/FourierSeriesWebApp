@@ -157,9 +157,10 @@ export interface FeedbackStats {
 }
 
 export interface SurveyStats {
-  total:        number;
-  byRole:       { role: string;        count: number }[];
-  topCountries: { country: string;     count: number }[];
+  total:           number;
+  byRole:          { role: string;           count: number }[];
+  byAcademicLevel: { academic_level: string; count: number }[];
+  topCountries:    { country: string;        count: number }[];
   byHowFound:   { how_found: string;   count: number }[];
   byPurpose:    { purpose: string;     count: number }[];
   byFeature:    { feature: string;     count: number }[];

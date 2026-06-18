@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import type { ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
 import { TranslocoService } from '@jsverse/transloco';
 import { forkJoin, Observable } from 'rxjs';
 import { ApiService } from '../../../core/services/api/api.service';
@@ -79,6 +80,9 @@ export class CalculatorStore {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly result = signal<CalculatorResult | null>(null);
+
+  // ── Free-parameter slider values (shared between form panel and canvas) ───
+  readonly paramValues = signal<ParamValues>({});
 
   // ── Derived ────────────────────────────────────────────────────────────────
   readonly segmentErrors = computed(() =>
@@ -190,6 +194,7 @@ export class CalculatorStore {
     this.intVar.set('x');
     this.result.set(null);
     this.error.set(null);
+    this.paramValues.set({});
   }
 
   /** Clears computed Fourier outputs but keeps the current piecewise function inputs. */
@@ -197,6 +202,7 @@ export class CalculatorStore {
     this.loading.set(false);
     this.result.set(null);
     this.error.set(null);
+    this.paramValues.set({});
   }
 
   // ── API calls ──────────────────────────────────────────────────────────────

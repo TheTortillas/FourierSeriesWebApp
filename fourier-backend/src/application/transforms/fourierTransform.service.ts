@@ -43,6 +43,18 @@ export class FourierTransformService {
     input: FourierTransformInput,
   ): Promise<FourierTransformResult> {
     const startTime = Date.now();
+    // KNOWN LIMITATION: using "n" as the integration variable causes silent
+    // failures (exists=false / "divergent integral") in the Maxima engine.
+    // Root cause: tex2max's tokenizer matches the regex /(d)[A-z]/ to detect
+    // the end of an integral (e.g. "dx", "dt"). When the variable is "n", the
+    // substring "dn" anywhere in the expression is consumed as an
+    // INTEGRATION_END token instead of being parsed as the variable — this
+    // corrupts the expression before it ever reaches Maxima.
+    // A proper fix would require either patching tex2max (GPL v2, non-trivial)
+    // or adding a preprocess step that temporarily renames "n" to a safe alias
+    // (e.g. "nv") before conversion and restores it afterwards. Left as future
+    // work because "n" conventionally denotes a discrete index, not a
+    // continuous integration variable.
     const intVar = input.intVar ?? "t";
     const transVar = input.transVar ?? "w";
     const convention = input.convention ?? "engineering";

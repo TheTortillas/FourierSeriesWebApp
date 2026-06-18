@@ -1,8 +1,9 @@
-import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { effect, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { ApiService } from '../api/api.service';
 import { FeedbackRequest } from '../../../domain';
+import { UserStore } from '../auth/user.store';
 
 // 'fwc_feedback_done'  → 'true' when user submitted: never show again
 // 'fwc_feedback_shown' → timestamp when dismissed without submitting: 14-day cooldown
@@ -12,15 +13,30 @@ const COOLDOWN_MS  = 14 * 24 * 60 * 60 * 1000;
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
-  private readonly api = inject(ApiService);
+  private readonly api      = inject(ApiService);
   private readonly platform = inject(PLATFORM_ID);
+  private readonly store    = inject(UserStore);
 
   readonly modalOpen  = signal(false);
   readonly submitting = signal(false);
   readonly submitted  = signal(false);
 
+  constructor() {
+    // Re-evaluate visibility whenever auth state changes (login or logout).
+    effect(() => {
+      if (!this.store.initialized()) return;
+      if (!this.store.isAuthenticated() || this.store.hasDoneFeedback()) {
+        this.modalOpen.set(false);
+        this.submitted.set(false);
+      }
+    });
+  }
+
   canShowModal(): boolean {
     if (!isPlatformBrowser(this.platform)) return false;
+    // Usuarios autenticados: la fuente de verdad es el servidor (via UserStore).
+    if (this.store.isAuthenticated()) return !this.store.hasDoneFeedback();
+    // Usuarios anónimos: localStorage con cooldown de 14 días.
     if (localStorage.getItem(DONE_KEY) === 'true') return false;
     const last = localStorage.getItem(COOLDOWN_KEY);
     if (!last) return true;
@@ -48,11 +64,11 @@ export class FeedbackService {
     this.submitting.set(true);
     return this.api.submitFeedback(req).pipe(
       tap(() => {
-        // Mark permanently done immediately on success — not on close
         if (isPlatformBrowser(this.platform)) {
           localStorage.setItem(DONE_KEY, 'true');
           localStorage.removeItem(COOLDOWN_KEY);
         }
+        this.store.markFeedbackDone();
         this.submitted.set(true);
         this.submitting.set(false);
       }),

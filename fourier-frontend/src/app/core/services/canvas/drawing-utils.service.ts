@@ -33,8 +33,9 @@ export class DrawingUtilsService {
   /**
    * Draws a vertical stem from the x-axis (y = 0) to the point (mathX, mathY).
    *
-   * @param markerRadius  Radius of the filled circle drawn at the tip.
-   *                      Pass 0 (default) to omit the marker.
+   * @param markerRadius  Radius of the marker drawn at the tip. Pass 0 to omit.
+   * @param markerStyle   'filled' (default) = solid circle; 'open' = hollow circle;
+   *                      'square' = solid square; 'diamond' = rotated square.
    */
   drawStem(
     ctx: CanvasRenderingContext2D,
@@ -44,6 +45,7 @@ export class DrawingUtilsService {
     color: string,
     lineWidth: number,
     markerRadius = 0,
+    markerStyle: 'filled' | 'open' | 'square' | 'diamond' = 'filled',
   ): void {
     const x  = this.coords.mathToScreenX(mathX, vp) / vp.dpr;
     const y0 = this.coords.mathToScreenY(0,     vp) / vp.dpr;
@@ -54,15 +56,46 @@ export class DrawingUtilsService {
     ctx.fillStyle   = color;
     ctx.lineWidth   = lineWidth;
 
-    ctx.beginPath();
-    ctx.moveTo(x, y0);
-    ctx.lineTo(x, y1);
-    ctx.stroke();
+    if (markerRadius > 0 && markerStyle !== 'filled') {
+      // For hollow/open markers, stop the stem at the marker edge so it doesn't
+      // bleed through the transparent interior of the circle/square/diamond.
+      const dir = y1 < y0 ? 1 : -1; // +1 = tip is above baseline, stem goes up
+      const yStop = y1 + dir * markerRadius;
+      ctx.beginPath();
+      ctx.moveTo(x, y0);
+      ctx.lineTo(x, yStop);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(x, y0);
+      ctx.lineTo(x, y1);
+      ctx.stroke();
+    }
 
     if (markerRadius > 0) {
-      ctx.beginPath();
-      ctx.arc(x, y1, markerRadius, 0, TAU);
-      ctx.fill();
+      const r = markerRadius;
+      if (markerStyle === 'filled') {
+        ctx.beginPath();
+        ctx.arc(x, y1, r, 0, TAU);
+        ctx.fill();
+      } else if (markerStyle === 'open') {
+        ctx.lineWidth = Math.max(1, lineWidth * 0.85);
+        ctx.beginPath();
+        ctx.arc(x, y1, r, 0, TAU);
+        ctx.stroke();
+      } else if (markerStyle === 'square') {
+        ctx.beginPath();
+        ctx.rect(x - r, y1 - r, r * 2, r * 2);
+        ctx.fill();
+      } else if (markerStyle === 'diamond') {
+        ctx.beginPath();
+        ctx.moveTo(x,     y1 - r * 1.3);
+        ctx.lineTo(x + r, y1);
+        ctx.lineTo(x,     y1 + r * 1.3);
+        ctx.lineTo(x - r, y1);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
 
     ctx.restore();

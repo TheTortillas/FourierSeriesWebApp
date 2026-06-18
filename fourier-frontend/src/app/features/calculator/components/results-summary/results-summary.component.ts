@@ -8,6 +8,7 @@ import {
   ElementRef,
   viewChild,
 } from '@angular/core';
+import { DecimalPipe, LowerCasePipe, NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -28,7 +29,6 @@ import { MathjaxDirective } from '../../../../shared/directives/mathjax.directiv
 import { ApiService } from '../../../../core/services/api/api.service';
 import { UserStore } from '../../../../core/services/auth/user.store';
 import { ThemeService } from '../../../../core/services/theme/theme.service';
-import { ParamSlidersComponent } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SpectrumChartComponent } from '../../../../shared/components/spectrum-chart/spectrum-chart.component';
 import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
@@ -122,10 +122,13 @@ function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorP
 @Component({
   selector: 'app-results-summary',
   imports: [
+    DecimalPipe,
+    LowerCasePipe,
+    NgTemplateOutlet,
+    NgClass,
     FunctionPlotComponent,
     MathjaxDirective,
     FormsModule,
-    ParamSlidersComponent,
     SpectrumChartComponent,
     TranslocoPipe,
     ExportButtonComponent,
@@ -133,6 +136,7 @@ function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorP
   templateUrl: './results-summary.component.html',
 })
 export class ResultsSummaryComponent {
+  readonly Math = Math;
   readonly store = inject(CalculatorStore);
   private readonly transloco = inject(TranslocoService);
   readonly reconstruction = inject(FourierReconstructionService);
@@ -144,9 +148,13 @@ export class ResultsSummaryComponent {
   readonly destroyRef = inject(DestroyRef);
   private readonly csvExport = inject(CsvExportService);
 
+  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
+
   // ── Free-parameter sliders ────────────────────────────────────────────────
-  readonly paramValues = signal<ParamValues>({});
   readonly activeParams = computed<string[]>(() => this.store.result()?.data.params ?? []);
+
+  /** Lives in the store so the left-panel sliders and the canvas share the same values. */
+  readonly paramValues = this.store.paramValues;
 
   /** Parameters used for numeric evaluation on canvas (default = 1 for missing sliders). */
   readonly evaluationParams = computed<ParamValues>(() => {
@@ -184,7 +192,31 @@ export class ResultsSummaryComponent {
   readonly customApproxColor = signal(false);
   readonly originalLineWidth = signal(2.5);
   readonly approxLineWidth = signal(1.75);
-  readonly showCanvasSettings = signal(true);
+  readonly originalDashed = signal(false);
+  readonly approxDashed = signal(false);
+  readonly showCanvasSettings = signal(false);
+  readonly showSpectrumSettings = signal(false);
+
+  // ── Per-param slider ranges (editable in side panel) ─────────────────────
+  readonly paramRanges = signal<Record<string, { min: number; max: number }>>({});
+
+  paramSliderMin(name: string): number { return this.paramRanges()[name]?.min ?? -5; }
+  paramSliderMax(name: string): number { return this.paramRanges()[name]?.max ?? 5; }
+
+  setParamMin(name: string, value: number): void {
+    if (!isFinite(value)) return;
+    this.paramRanges.update(r => ({ ...r, [name]: { min: value, max: r[name]?.max ?? 5 } }));
+  }
+
+  setParamMax(name: string, value: number): void {
+    if (!isFinite(value)) return;
+    this.paramRanges.update(r => ({ ...r, [name]: { min: r[name]?.min ?? -5, max: value } }));
+  }
+
+  onParamSliderInput(name: string, value: number): void {
+    if (!isFinite(value)) return;
+    this.store.paramValues.update(pv => ({ ...pv, [name]: value }));
+  }
   readonly canvasNTerms = signal(10);
   readonly hadResult = signal(false);
   readonly isFullscreen = signal(false);
@@ -199,7 +231,6 @@ export class ResultsSummaryComponent {
 
   // ── Canvas wrapper ref (for Fullscreen API) ───────────────────────────────
   readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
-  readonly paramSliders = viewChild(ParamSlidersComponent);
 
   // ── Simplify state ──────────────────────────────────────────────────────────
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
@@ -358,6 +389,8 @@ export class ResultsSummaryComponent {
     const harmonicColors = this.harmonicColors();
     const origWidth = this.originalLineWidth();
     const approxWidth = this.approxLineWidth();
+    const origDashed = this.originalDashed();
+    const approxDashed = this.approxDashed();
     const isHarmonicEnabled = (n: number) => !controlHarmonics || enabledHarmonics.has(n);
 
     // If free params are set, re-compile the original segments with those values
@@ -391,6 +424,7 @@ export class ResultsSummaryComponent {
                 plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
                   color: origColor,
                   lineWidth: origWidth,
+                  dashed: origDashed,
                 });
               }
             }
@@ -562,12 +596,13 @@ export class ResultsSummaryComponent {
               plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
                 color: origColor,
                 lineWidth: origWidth,
+                dashed: origDashed,
               });
             }
           }
           // Fourier approximation (fills visible range)
           if (localApprox) {
-            plotter.plotFn(ctx, localApprox, vp, { color: approxColorVal, lineWidth: approxWidth });
+            plotter.plotFn(ctx, localApprox, vp, { color: approxColorVal, lineWidth: approxWidth, dashed: approxDashed });
           }
         },
       },
@@ -1301,14 +1336,43 @@ export class ResultsSummaryComponent {
   });
 
   /** Typed tabs array so the template gets literal types */
-  readonly tabs: { id: 'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval'; labelKey: string }[] =
-    [
-      { id: 'coefficients', labelKey: 'settingsCanvas.tabCoefficients' },
-      { id: 'terms', labelKey: 'settingsCanvas.tabTerms' },
-      { id: 'spectrum', labelKey: 'settingsCanvas.tabSpectrum' },
-      { id: 'validation', labelKey: 'settingsCanvas.tabValidation' },
-      { id: 'parseval', labelKey: 'settingsCanvas.tabParseval' },
-    ];
+  readonly tabs: {
+    id: 'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval';
+    labelKey: string;
+    descKey: string;
+    icon: string; // SVG path d=""
+  }[] = [
+    {
+      id: 'coefficients',
+      labelKey: 'settingsCanvas.tabCoefficients',
+      descKey: 'settingsCanvas.tabCoefficientsDesc',
+      icon: 'M4 6h16M4 10h10M4 14h7M4 18h5',
+    },
+    {
+      id: 'terms',
+      labelKey: 'settingsCanvas.tabTerms',
+      descKey: 'settingsCanvas.tabTermsDesc',
+      icon: 'M3 17l3-8 3 4 3-6 3 10 3-6',
+    },
+    {
+      id: 'spectrum',
+      labelKey: 'settingsCanvas.tabSpectrum',
+      descKey: 'settingsCanvas.tabSpectrumDesc',
+      icon: 'M4 20v-4M8 20v-8M12 20V8M16 20v-6M20 20v-10',
+    },
+    {
+      id: 'validation',
+      labelKey: 'settingsCanvas.tabValidation',
+      descKey: 'settingsCanvas.tabValidationDesc',
+      icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
+    },
+    {
+      id: 'parseval',
+      labelKey: 'settingsCanvas.tabParseval',
+      descKey: 'settingsCanvas.tabParsevalDesc',
+      icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+    },
+  ];
 
   /** Context for the terms tab — trig / half-range branch */
   readonly termsTrigCtx = computed(() => {
@@ -1352,17 +1416,31 @@ export class ResultsSummaryComponent {
   }
 
   // ── Profile selector options ────────────────────────────────────────────────
-  readonly profileOptions: { value: SimplifyProfile; labelKey: string }[] = [
-    { value: 'raw', labelKey: 'settingsCanvas.profileRaw' },
-    { value: 'integer', labelKey: 'settingsCanvas.profileInteger' },
-    { value: 'trigonometric', labelKey: 'settingsCanvas.profileTrig' },
-    { value: 'exponential', labelKey: 'settingsCanvas.profileExp' },
-    { value: 'complete', labelKey: 'settingsCanvas.profileComplete' },
+  readonly profileOptions: { value: SimplifyProfile; labelKey: string; descKey: string }[] = [
+    { value: 'raw',           labelKey: 'settingsCanvas.profileRaw',      descKey: 'simplify.profileRawDesc' },
+    { value: 'integer',       labelKey: 'settingsCanvas.profileInteger',  descKey: 'simplify.profileIntegerDesc' },
+    { value: 'trigonometric', labelKey: 'settingsCanvas.profileTrig',     descKey: 'simplify.profileTrigDesc' },
+    { value: 'exponential',   labelKey: 'settingsCanvas.profileExp',      descKey: 'simplify.profileExpDesc' },
+    { value: 'complete',      labelKey: 'settingsCanvas.profileComplete', descKey: 'simplify.profileCompleteDesc' },
   ];
+
+  readonly activeProfileDescKey = computed(
+    () => this.profileOptions.find(o => o.value === this.simplifyProfile())?.descKey ?? '',
+  );
+
+  readonly activeParsevalProfileDescKey = computed(
+    () => this.profileOptions.find(o => o.value === this.parsevalSimplifyProfile())?.descKey ?? '',
+  );
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   constructor() {
+    if (typeof window !== 'undefined') {
+      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
+      window.addEventListener('resize', onResize);
+      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
+    }
+
     effect(() => {
       void this.theme.theme();
       void this.theme.palette();
@@ -1388,6 +1466,7 @@ export class ResultsSummaryComponent {
         this.showGammaNotation.set(false);
         this.simplifyProfile.set('raw');
         this.showCanvasSettings.set(true);
+        this.showSpectrumSettings.set(true);
         this.declareNInteger.set(true);
         this.toHyperbolic.set(false);
         this.halfRangeMode.set('cosine');
@@ -1428,11 +1507,12 @@ export class ResultsSummaryComponent {
         return;
       }
       if (this.hadResult()) {
-        // User pressed Nuevo calculo: close settings panel and clear selected state.
         this.showCanvasSettings.set(false);
+        this.showSpectrumSettings.set(false);
+        this.paramRanges.set({});
+        this.originalDashed.set(false);
+        this.approxDashed.set(false);
         this.hadResult.set(false);
-        this.paramValues.set({});
-        this.paramSliders()?.reset();
       }
     });
 

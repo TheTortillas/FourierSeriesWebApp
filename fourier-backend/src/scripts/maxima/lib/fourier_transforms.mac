@@ -2256,6 +2256,18 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
            and freeof(t_var, part(e, 1))
            and not atom(part(e, 2)) and is(op(part(e, 2)) = 'cosh)
         then (_se_coef: part(e, 1), _se_cosh: part(e, 2))
+        /* Case 2b: e = k/(c*cosh(b*t))  →  op="/", denominator is a product containing cosh.
+           expand() turns 1/(2*cosh(πt/2)) into 1/(2*cosh(πt/2)) with op="/" and den=2*cosh(...).
+           Mirrors the same extraction already used in the IFT single-sech handler. */
+        else if not atom(e) and is(op(e) = "/")
+           and freeof(t_var, part(e, 1))
+           and not atom(part(e, 2)) and is(op(part(e, 2)) = "*") then (
+            _se_coef: part(e, 1),
+            for _s in args(part(e, 2)) do (
+                if not atom(_s) and is(op(_s) = 'cosh) then _se_cosh: _s
+                else if freeof(t_var, _s) then _se_coef: _se_coef / _s
+            )
+        )
         /* Case 3: e = k * (1/cosh(b*t))  →  op="*", one factor is 1/cosh */
         else if not atom(e) and is(op(e) = "*") then (
             for _s in args(e) do (
