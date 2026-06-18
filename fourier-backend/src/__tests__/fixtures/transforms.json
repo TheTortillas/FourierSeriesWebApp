@@ -3941,7 +3941,7 @@
   {
     "id": "KX04",
     "type": "ift",
-    "description": "IFT de 1/(w²·(iw+1)) — doble polo en origen, no está en tabla de patrones, debe devolver exists=false",
+    "description": "IFT de 1/(w²·(iw+1)) — polo doble en origen + polo en iw=-1, vía partfrac + 1/w² nuevo patrón",
     "input": {
       "segments": [
         {
@@ -3954,7 +3954,8 @@
       "transVar": "t"
     },
     "expected": {
-      "exists": false
+      "fCombined": "-(abs(t)/2)-%e^(-t)*u(t)+sgn(t)/2",
+      "exists": true
     }
   },
   {
@@ -8498,6 +8499,105 @@
     }
   },
   {
+    "id": "PF01",
+    "type": "ift",
+    "description": "IFT(1/((iw+1)(iw+3))) — fracciones parciales dos polos reales distintos",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/((%i*w+1)*(%i*w+3))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "fCombined": "(%e^(-t)*u(t))/2 - (%e^(-(3*t))*u(t))/2",
+      "exists": true
+    }
+  },
+  {
+    "id": "PF02",
+    "type": "ift",
+    "description": "IFT(1/(-w²+4iw+3)) — mismo denominador como polinomio expandido",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/(-w^2+4*%i*w+3)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true
+    }
+  },
+  {
+    "id": "PF03",
+    "type": "ift",
+    "description": "IFT(1/((iw+1)(iw+5))) — variante con separación mayor entre polos",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/((%i*w+1)*(%i*w+5))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "fCombined": "(%e^(-t)*u(t))/4 - (%e^(-(5*t))*u(t))/4",
+      "exists": true
+    }
+  },
+  {
+    "id": "PF04",
+    "type": "ift",
+    "description": "REGRESIÓN 1/w²: IFT(1/w²) = -|t|/2 — nuevo patrón polo doble en origen",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/w^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "fCombined": "-(abs(t)/2)",
+      "exists": true
+    }
+  },
+  {
+    "id": "PF05",
+    "type": "ift",
+    "description": "REGRESIÓN KX04: IFT(1/(w²(iw+1))) = sgn(t)/2 - |t|/2 - e^{-t}u(t) — partfrac con polo en origen",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/(w^2*(%i*w+1))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "fCombined": "-(abs(t)/2)-%e^(-t)*u(t)+sgn(t)/2",
+      "exists": true
+    }
+  },
+  {
     "id": "BG04a",
     "type": "ift",
     "description": "REGRESIÓN BUG-4: IFT(exp(w²)) — integral sin evaluar debe devolver exists=false",
@@ -8534,5 +8634,61 @@
     "expected": {
       "exists": false
     }
+  },
+  {
+    "id": "WN01",
+    "type": "ift",
+    "description": "IFT(1/w⁴) = |t|³/12 — potencia par n=4",
+    "input": { "segments": [{ "expression": "1/w^4", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
+    "expected": { "fCombined": "(t^2*abs(t))/12", "exists": true }
+  },
+  {
+    "id": "WN02",
+    "type": "ift",
+    "description": "IFT(1/w⁵) = i·t⁴·sgn(t)/48 — potencia impar n=5",
+    "input": { "segments": [{ "expression": "1/w^5", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
+    "expected": { "fCombined": "(%i*t^4*sgn(t))/48", "exists": true }
+  },
+  {
+    "id": "WN03",
+    "type": "ift",
+    "description": "IFT(3/w⁴) = 3·|t|³/12 — escalar con potencia par",
+    "input": { "segments": [{ "expression": "3/w^4", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
+    "expected": { "fCombined": "(t^2*abs(t))/4", "exists": true }
+  },
+  {
+    "id": "WN04",
+    "type": "ift",
+    "description": "IFT(2/w³) = -i·t²·sgn(t)/2 — escalar con potencia impar",
+    "input": { "segments": [{ "expression": "2/w^3", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
+    "expected": { "fCombined": "-((%i*t^2*sgn(t))/2)", "exists": true }
+  },
+  {
+    "id": "WN05",
+    "type": "ift",
+    "description": "IFT(1/w⁹) = i·t⁸·sgn(t)/80640 — potencia impar n=9 (límite extendido)",
+    "input": { "segments": [{ "expression": "1/w^9", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
+    "expected": { "fCombined": "(%i*t^8*sgn(t))/80640", "exists": true }
+  },
+  {
+    "id": "WN06",
+    "type": "ift",
+    "description": "IFT(1/w¹⁰) = -t⁸·|t|/725760 — potencia par n=10 (límite extendido)",
+    "input": { "segments": [{ "expression": "1/w^10", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
+    "expected": { "fCombined": "-((t^8*abs(t))/725760)", "exists": true }
+  },
+  {
+    "id": "WN07",
+    "type": "ift",
+    "description": "IFT(1/(w²(iw+2))) — polo doble en origen + polo en iw=-2, partfrac",
+    "input": { "segments": [{ "expression": "1/(w^2*(%i*w+2))", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
+    "expected": { "fCombined": "-(abs(t)/4)-(%e^(-(2*t))*u(t))/4+sgn(t)/8", "exists": true }
+  },
+  {
+    "id": "WN08",
+    "type": "ift",
+    "description": "IFT(1/(w²(iw+3))) — polo doble en origen + polo en iw=-3, partfrac",
+    "input": { "segments": [{ "expression": "1/(w^2*(%i*w+3))", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
+    "expected": { "fCombined": "-(abs(t)/6)-(%e^(-(3*t))*u(t))/9+sgn(t)/18", "exists": true }
   }
 ]

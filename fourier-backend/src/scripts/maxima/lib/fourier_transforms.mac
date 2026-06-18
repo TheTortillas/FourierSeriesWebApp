@@ -2907,6 +2907,66 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── k/wⁿ  (n ≥ 2 entero)  — forma compacta
+       IFT[1/wⁿ] = iⁿ / (2*(n-1)!) * sgn(t) * |t|^{n-1}
+       Válida en sentido distribucional (valor principal de Cauchy en w=0).
+       Verificado: n=1→i*sgn(t)/2, n=2→-|t|/2, n=3→-i*t*|t|/4, n=4→t²*|t|/12.
+       El handler itera n=2..8; si ratsimp(e*wⁿ) es libre de w, activa.
+       También cubre k*exp(-iw*t0)/wⁿ por desplazamiento temporal.        ── */
+    if is(res = false) then block(
+        [_wn_n, _wn_k, _wn_val, _wn_ef, _wn_er, _wn_t0, _wn_prod, _wn_s],
+        /* IFT[1/w^n] en tiempo tv.
+           Par n=2m:   iⁿ/(2(n-1)!) * |tv|^(n-1)           (resultado par, sin sgn)
+           Impar n=2m+1: iⁿ/(2(n-1)!) * |tv|^(n-1) * sgn(tv) (resultado impar, con sgn) */
+        _wn_f: lambda([n, tv],
+            ratsimp(if evenp(n)
+                then  %i^n / (2*(n-1)!) * abs(tv)^(n-1)
+                else  %i^n / (2*(n-1)!) * abs(tv)^(n-1) * sgn(tv))),
+        /* detectar exponente n: ratsimp(e * w^n) libre de w */
+        _wn_n: false,
+        for _wn_try: 2 thru 12 while is(_wn_n = false) do (
+            _wn_prod: errcatch(ratsimp(e * w_var^_wn_try)),
+            if _wn_prod # [] then (
+                _wn_prod: first(_wn_prod),
+                if freeof(w_var, _wn_prod) and _wn_prod # 0
+                then (_wn_n: _wn_try, _wn_k: _wn_prod)
+            )
+        ),
+        if is(_wn_n # false) then
+            res: [ratsimp(_wn_k * _wn_f(_wn_n, t_var)),
+                  concat("k/w^n, n=", string(_wn_n), ", k=", string(_wn_k))]
+        else (
+            /* k*exp(-iw*t0)/w^n — extraer factor exponencial */
+            _wn_ef: false, _wn_er: 1, _wn_n: false,
+            for _wn_try: 2 thru 12 while is(_wn_n = false) do (
+                _wn_prod: errcatch(ratsimp(e * w_var^_wn_try)),
+                if _wn_prod # [] then (
+                    _wn_prod: first(_wn_prod),
+                    if not atom(_wn_prod) and is(op(_wn_prod) = "*") then (
+                        _wn_ef: false, _wn_er: 1,
+                        for _wn_s in args(_wn_prod) do (
+                            if not atom(_wn_s) and is(op(_wn_s) = "^")
+                               and not freeof(%i, _wn_s) and not freeof(w_var, _wn_s)
+                            then _wn_ef: _wn_s
+                            else _wn_er: _wn_er * _wn_s
+                        ),
+                        if is(_wn_ef # false) and freeof(w_var, _wn_er) and _wn_er # 0
+                        then _wn_n: _wn_try
+                    ) else if not atom(_wn_prod) and is(op(_wn_prod) = "^")
+                               and not freeof(%i, _wn_prod)
+                    then (_wn_ef: _wn_prod, _wn_er: 1, _wn_n: _wn_try)
+                )
+            ),
+            if is(_wn_n # false) and is(_wn_ef # false) then (
+                _wn_t0: ratsimp(part(_wn_ef, 2) / (-%i * w_var)),
+                if freeof(w_var, _wn_t0) and not equal(_wn_t0, 0) then
+                    res: [ratsimp(_wn_er * _wn_f(_wn_n, t_var - _wn_t0)),
+                          concat("k*exp(-iwt0)/w^n, n=", string(_wn_n),
+                                 ", t0=", string(_wn_t0))]
+            )
+        )
+    ),
+
     /* ── exp(-i*w*t0) -> delta(t-t0)  y  exp(+i*w*t0) -> delta(t+t0) ──
     Cubre: exp(-i*w*t0), k*exp(-i*w*t0), exp(i*w*t0), k*exp(i*w*t0)  */
     if is(res = false) then (
