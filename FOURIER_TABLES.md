@@ -1108,6 +1108,57 @@ Las siguientes familias fueron verificadas en Wolfram Alpha y LibreTexts. Todas 
 | TH-7 | $k\,\operatorname{csch}^2(bt)$ | $\frac{-2k\pi\omega}{b^2}\coth(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b>0$ |
 | TH-8 | $k\,\operatorname{sech}^n(t)$ | polinomio$(\omega^2)\cdot\pi\operatorname{sech}(\frac{\pi\omega}{2})$ | **⚠ ✗ No implementado** | $n\geq2$, ver 24b.5 |
 | TH-9 | $k\,\tanh^m(t)\operatorname{sech}^n(t)$ | mixto sech/tanh·sech | **⚠ ✗ No implementado** | ver 24b.5 |
+
+---
+
+## 24c. Familia gaussiana — $k\,e^{-at^2}\cdot\text{trig}$
+
+La **gaussiana** $e^{-at^2}$ ($a > 0$) es su propia transformada de Fourier (auto-dual). Es la única función $L^2$ que conserva forma gaussiana bajo la TF.
+
+**Fórmula base:**
+
+$$\boxed{\mathcal{F}\!\left\{k\,e^{-at^2}\right\}(\omega) = k\sqrt{\frac{\pi}{a}}\,e^{-\omega^2/(4a)}}, \qquad a > 0$$
+
+**Con modulación coseno** (uso de propiedad de desplazamiento en frecuencia):
+
+$$\boxed{\mathcal{F}\!\left\{k\,e^{-at^2}\cos(bt)\right\}(\omega) = k\sqrt{\frac{\pi}{a}}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\cos\!\left(\frac{b\omega}{2a}\right)}, \qquad a>0$$
+
+**Con modulación seno:**
+
+$$\boxed{\mathcal{F}\!\left\{k\,e^{-at^2}\sin(bt)\right\}(\omega) = -ik\sqrt{\frac{\pi}{a}}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\sin\!\left(\frac{b\omega}{2a}\right)}, \qquad a>0$$
+
+**Con fase** $\theta$ en el argumento trigonométrico:
+
+$$\mathcal{F}\!\left\{k\,e^{-at^2}\cos(bt+\theta)\right\}(\omega) = \frac{k}{2}\sqrt{\frac{\pi}{a}}\left[e^{i\theta}\,e^{-(\omega-b)^2/(4a)} + e^{-i\theta}\,e^{-(\omega+b)^2/(4a)}\right]$$
+
+**Derivación** por la propiedad de modulación $\mathcal{F}\{f(t)e^{i\omega_0 t}\}(\omega) = F(\omega-\omega_0)$:
+
+$$\mathcal{F}\{e^{-at^2}\cos(bt)\} = \tfrac{1}{2}\bigl[F(\omega-b) + F(\omega+b)\bigr], \quad F(\omega) = \sqrt{\pi/a}\,e^{-\omega^2/(4a)}$$
+
+$$= \tfrac{1}{2}\sqrt{\pi/a}\bigl[e^{-(\omega-b)^2/(4a)} + e^{-(\omega+b)^2/(4a)}\bigr] = \sqrt{\pi/a}\,e^{-(\omega^2+b^2)/(4a)}\cosh\!\left(\tfrac{b\omega}{2a}\right)$$
+
+La última igualdad usa $e^{-(\omega-b)^2/(4a)} + e^{-(\omega+b)^2/(4a)} = 2e^{-(\omega^2+b^2)/(4a)}\cosh(b\omega/(2a))$.
+
+### 24c.1 Tabla de pares gaussianos
+
+| # | $f(t)$ | $F(\omega)$ | Estado |
+|---|--------|-------------|--------|
+| G-0 | $k\,e^{-at^2}$ | $k\sqrt{\pi/a}\,e^{-\omega^2/(4a)}$ | ✓ Implementado |
+| G-1 | $k\,e^{-at^2}\cos(bt)$ | $k\sqrt{\pi/a}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\cos\!\left(\frac{b\omega}{2a}\right)$ | ✓ Implementado |
+| G-2 | $k\,e^{-at^2}\sin(bt)$ | $-ik\sqrt{\pi/a}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\sin\!\left(\frac{b\omega}{2a}\right)$ | ✓ Implementado |
+| G-3 | $k\,e^{-at^2}\cos(bt+\theta)$ | $\frac{k}{2}\sqrt{\pi/a}\!\left[e^{i\theta}e^{-(\omega-b)^2/(4a)}+e^{-i\theta}e^{-(\omega+b)^2/(4a)}\right]$ | ✓ Implementado |
+| G-4 | $k\,e^{-at^2}\sin(bt+\theta)$ | $\frac{k}{2i}\sqrt{\pi/a}\!\left[e^{i\theta}e^{-(\omega-b)^2/(4a)}-e^{-i\theta}e^{-(\omega+b)^2/(4a)}\right]$ | ✓ Implementado |
+
+**Casos canónicos** ($a = 1/2$, convención normalizada $e^{-t^2/2}$):
+
+| $f(t)$ | $F(\omega)$ |
+|--------|-------------|
+| $e^{-t^2/2}$ | $\sqrt{2\pi}\,e^{-\omega^2/2}$ |
+| $e^{-t^2/2}\cos(\omega_0 t)$ | $\sqrt{2\pi}\,e^{-\omega_0^2/2}\,e^{-\omega^2/2}\cos(\omega_0\omega)$ |
+| $e^{-t^2/2}\sin(\omega_0 t)$ | $-i\sqrt{2\pi}\,e^{-\omega_0^2/2}\,e^{-\omega^2/2}\sin(\omega_0\omega)$ |
+
+**Nota técnica:** Antes de este handler, `FT_is_periodic_nondecaying` clasificaba incorrectamente `e^{-at^2}\cos(bt)` como "integral divergente" porque la detección de decay solo cubría el caso lineal $e^{-at}$. Se extendió para reconocer el caso cuadrático $e^{-at^2}$.
+
 ---
 
 ## 25. Arquitectura de display: formas principales y alternativas

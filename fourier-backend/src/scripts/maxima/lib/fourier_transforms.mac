@@ -1747,6 +1747,116 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k*exp(-a*t^2)*trig(b*t+theta) — familia gaussiana ──────────────────
+       FT[e^{-at²}] = √(π/a) · e^{-ω²/(4a)}                (par #G0)
+       FT[e^{-at²}·cos(bt+θ)] = √(π/a)·e^{-(ω-b)²/(4a)/2 ...}
+       Fórmula general por modulación (shift en frecuencia):
+         FT[e^{-at²}·cos(bt+θ)] = (√(π/a)/2)·e^{iθ}·e^{-(ω-b)²/(4a)}
+                                 + (√(π/a)/2)·e^{-iθ}·e^{-(ω+b)²/(4a)}
+         FT[e^{-at²}·sin(bt+θ)] = (√(π/a)/(2i))·e^{iθ}·e^{-(ω-b)²/(4a)}
+                                 - (√(π/a)/(2i))·e^{-iθ}·e^{-(ω+b)²/(4a)}
+       Para θ=0:
+         FT[e^{-at²}·cos(bt)] = √(π/a)·e^{-b²/(4a)}·e^{-ω²/(4a)}·cosh(bω/(2a))
+         FT[e^{-at²}·sin(bt)] = √(π/a)·e^{-b²/(4a)}·e^{-ω²/(4a)}·sinh(bω/(2a))·i⁻¹·(−i)
+         (forma compacta usada abajo)
+       Matches: k*exp(-a*t^2), k*exp(-a*t^2)*cos(b*t+theta),
+                k*exp(-a*t^2)*sin(b*t+theta).  a>0 required for convergence. */
+    if is(res = false) then block(
+        [_gg_k, _gg_a, _gg_b, _gg_theta, _gg_trig_op, _gg_exp, _gg_facs,
+         _gg_base, _gg_exparg, _gg_cn, _gg_found_exp, _gg_trig, _gg_targ,
+         _gg_amplitude, _gg_result],
+        _gg_k: 1, _gg_a: false, _gg_b: 0, _gg_theta: 0,
+        _gg_trig_op: false, _gg_found_exp: false,
+        if not atom(e) then (
+            _gg_facs: if is(op(e) = "*") then args(e) else [e],
+            for _gg_f in _gg_facs do (
+                if not atom(_gg_f) and is(op(_gg_f) = "^")
+                   and is(part(_gg_f, 1) = %e) then (
+                    _gg_exparg: part(_gg_f, 2),
+                    /* exparg must be -a*t^2: check exparg/t^2 = -a (negative const) */
+                    _gg_cn: errcatch(ratsimp(_gg_exparg / t_var^2)),
+                    if _gg_cn # [] and freeof(t_var, first(_gg_cn))
+                       and is(first(_gg_cn) < 0)
+                       and ratsimp(_gg_exparg - first(_gg_cn)*t_var^2) = 0 then (
+                        _gg_a: -first(_gg_cn),  /* a > 0 */
+                        _gg_found_exp: true
+                    )
+                ) else if not atom(_gg_f)
+                   and (is(op(_gg_f) = 'sin) or is(op(_gg_f) = 'cos)) then (
+                    _gg_trig: _gg_f,
+                    _gg_trig_op: op(_gg_f)
+                ) else if freeof(t_var, _gg_f) then
+                    _gg_k: _gg_k * _gg_f
+            )
+        ) else if not atom(e) and is(op(e) = "^") and is(part(e, 1) = %e) then (
+            /* bare e^{-at^2} with no coefficient */
+            _gg_exparg: part(e, 2),
+            _gg_cn: errcatch(ratsimp(_gg_exparg / t_var^2)),
+            if _gg_cn # [] and freeof(t_var, first(_gg_cn))
+               and is(first(_gg_cn) < 0)
+               and ratsimp(_gg_exparg - first(_gg_cn)*t_var^2) = 0 then (
+                _gg_a: -first(_gg_cn),
+                _gg_found_exp: true
+            )
+        ),
+        if _gg_found_exp and freeof(t_var, _gg_k) then (
+            /* extract b and theta from trig argument: arg = b*t + theta */
+            if is(_gg_trig_op # false) then (
+                _gg_targ: part(_gg_trig, 1),
+                _gg_theta: errcatch(ratsimp(subst(t_var=0, _gg_targ))),
+                _gg_theta: if _gg_theta # [] then first(_gg_theta) else false,
+                if is(_gg_theta # false) then
+                    _gg_b: errcatch(ratsimp((_gg_targ - _gg_theta) / t_var))
+                else _gg_b: [],
+                _gg_b: if _gg_b # [] then first(_gg_b) else false
+            ),
+            if freeof(t_var, _gg_b) and freeof(t_var, _gg_theta)
+               and is(_gg_a > 0) then (
+                _gg_amplitude: _gg_k * sqrt(%pi / _gg_a),
+                if is(_gg_trig_op = false) then (
+                    /* k*e^{-at^2} → k*√(π/a)*e^{-ω²/(4a)} */
+                    res: [_gg_amplitude * exp(-w_var^2 / (4*_gg_a)),
+                          concat("k*exp(-a*t^2)->k*sqrt(pi/a)*exp(-w^2/(4a)), a=",
+                                 string(_gg_a))]
+                ) else if is(_gg_trig_op = 'cos) then (
+                    /* k*e^{-at^2}*cos(bt+θ)
+                       Compact form (θ=0): amplitude * e^{-b^2/(4a)} * e^{-w^2/(4a)} * cos(bw/(2a))
+                       General (θ≠0): (amplitude/2)*(e^{iθ}*e^{-(w-b)^2/(4a)} + e^{-iθ}*e^{-(w+b)^2/(4a)}) */
+                    if is(_gg_theta = 0) then
+                        _gg_result: _gg_amplitude
+                                    * exp(-_gg_b^2/(4*_gg_a))
+                                    * exp(-w_var^2/(4*_gg_a))
+                                    * cos(_gg_b*w_var/(2*_gg_a))
+                    else
+                        _gg_result: (_gg_amplitude/2) * (
+                            exp(%i*_gg_theta) * exp(-(w_var-_gg_b)^2/(4*_gg_a))
+                          + exp(-%i*_gg_theta) * exp(-(w_var+_gg_b)^2/(4*_gg_a))),
+                    res: [_gg_result,
+                          concat("k*exp(-a*t^2)*cos(bt+theta)->gaussian*cos-shift, a=",
+                                 string(_gg_a), ", b=", string(_gg_b),
+                                 ", theta=", string(_gg_theta))]
+                ) else ( /* sin */
+                    /* k*e^{-at^2}*sin(bt+θ)
+                       Compact form (θ=0): -i * amplitude * e^{-b^2/(4a)} * e^{-w^2/(4a)} * sin(bw/(2a))
+                       General (θ≠0): (amplitude/(2i))*(e^{iθ}*e^{-(w-b)^2/(4a)} - e^{-iθ}*e^{-(w+b)^2/(4a)}) */
+                    if is(_gg_theta = 0) then
+                        _gg_result: -%i * _gg_amplitude
+                                    * exp(-_gg_b^2/(4*_gg_a))
+                                    * exp(-w_var^2/(4*_gg_a))
+                                    * sin(_gg_b*w_var/(2*_gg_a))
+                    else
+                        _gg_result: (_gg_amplitude/(2*%i)) * (
+                            exp(%i*_gg_theta) * exp(-(w_var-_gg_b)^2/(4*_gg_a))
+                          - exp(-%i*_gg_theta) * exp(-(w_var+_gg_b)^2/(4*_gg_a))),
+                    res: [_gg_result,
+                          concat("k*exp(-a*t^2)*sin(bt+theta)->gaussian*sin-shift, a=",
+                                 string(_gg_a), ", b=", string(_gg_b),
+                                 ", theta=", string(_gg_theta))]
+                )
+            )
+        )
+    ),
+
     /* ── k*sin(at)/(pi*t) -> k*(u(w+a)-u(w-a))  (a > 0) ── */
     if is(res = false) then block(
         [num_s, den_s, sin_part, kk2, sin_arg, aa, den_coef],
@@ -4688,7 +4798,7 @@ FT_is_periodic_nondecaying(expr, t_var) := block(
                 _trig_uses_t: true
         ),
     if not _trig_uses_t then return(false),
-    /* Check for exponential decay: e^{-a*t} or e^{-a*abs(t)} with a > 0.
+    /* Check for exponential decay: e^{-a*t}, e^{-a*abs(t)}, or e^{-a*t^2} with a > 0.
        All vars declared at block level to avoid scope issues with return(). */
     _has_decay: false,
     _facs: if not atom(_numer) and is(op(_numer) = "*") then args(_numer) else [_numer],
@@ -4702,6 +4812,15 @@ FT_is_periodic_nondecaying(expr, t_var) := block(
                 if _coeff # [] and freeof(t_var, first(_coeff)) then (
                     _sgn: errcatch(is(first(_coeff) < 0)),
                     if _sgn # [] and first(_sgn) = true then _has_decay: true
+                ),
+                /* e^{-a*t^2}: exparg/t_var^2 is a negative constant (gaussian) */
+                if not _has_decay then (
+                    _coeff: errcatch(ratsimp(_exparg / t_var^2)),
+                    if _coeff # [] and freeof(t_var, first(_coeff))
+                       and ratsimp(_exparg - first(_coeff)*t_var^2) = 0 then (
+                        _sgn: errcatch(is(first(_coeff) < 0)),
+                        if _sgn # [] and first(_sgn) = true then _has_decay: true
+                    )
                 ),
                 /* e^{-a*abs(t)}: exparg/abs(t_var) is a negative constant */
                 if not _has_decay and not freeof('abs, _exparg) then (
