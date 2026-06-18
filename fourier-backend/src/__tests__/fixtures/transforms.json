@@ -8393,5 +8393,108 @@
     "expected": {
       "exists": true
     }
+  },
+  {
+    "id": "SE11",
+    "type": "ft",
+    "description": "REGRESIÓN BUG-1: FT(1/(2*cosh(πt/2))) = 1/cosh(ω) — constante en denominador de cosh",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/(2*cosh(%pi*t/2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "F": "1/cosh(w)",
+      "exists": true
+    }
+  },
+  {
+    "id": "SE12",
+    "type": "ft",
+    "description": "REGRESIÓN BUG-1: FT(3/(5*cosh(2t))) = (3π/10)/cosh(πω/4) — escalar/constante·cosh",
+    "input": {
+      "segments": [
+        {
+          "expression": "3/(5*cosh(2*t))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "F": "3*%pi/(10*cosh(%pi*w/4))",
+      "exists": true
+    }
+  },
+  {
+    "id": "SE13",
+    "type": "ift",
+    "description": "REGRESIÓN BUG-1 roundtrip: IFT(1/cosh(ω)) = 1/(2*cosh(πt/2))",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/cosh(w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "fCombined": "1/(2*cosh(%pi*t/2))",
+      "exists": true
+    }
+  },
+  {
+    "id": "BG01",
+    "type": "ift",
+    "description": "REGRESIÓN BUG-2: IFT(1+1/(a²+ω²)) — delta(t)+e^{-a|t|}/(2a) no debe estar fusionado en una fracción",
+    "input": {
+      "segments": [
+        {
+          "expression": "1+1/(a^2+w^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "fCombined": "delta(t) + %e^(-a*abs(t))/(2*a)",
+      "exists": true,
+      "params": [
+        "a"
+      ]
+    }
+  },
+  {
+    "id": "BG02",
+    "type": "ift",
+    "description": "REGRESIÓN BUG-2: IFT(1+1/(4+ω²)) — delta(t)+e^{-2|t|}/4 no fusionado",
+    "input": {
+      "segments": [
+        {
+          "expression": "1+1/(4+w^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "fCombined": "delta(t) + %e^(-2*abs(t))/4",
+      "exists": true
+    }
   }
 ]
