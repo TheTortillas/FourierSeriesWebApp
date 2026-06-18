@@ -65,6 +65,26 @@ texput(sinc, "\\operatorname{sinc}")$
    BLOQUE 2 — Auxiliares de reconocimiento
    ════════════════════════════════════════════════════════════════════ */
 
+/* ── FT_apply_scale: multiply result by a normalization scalar without
+   letting ratsimp fuse delta terms with rational terms.
+   When delta is present, ratsimp(sc * (delta(t) + f(t))) absorbs f(t)
+   into the delta coefficient, producing an unreadable fused fraction.
+   Instead we split addends, ratsimp the rational part and the scalar
+   separately, then reassemble — preserving the table form. ── */
+FT_apply_scale(e, sc) := block([_terms, _dt, _rt, _r],
+    if e = false then return(false),
+    if freeof('delta, e) then return(ratsimp(sc * e)),
+    if sc = 1 then return(e),
+    _terms : if atom(e) or not is(op(e) = "+") then [e] else args(e),
+    _dt : [], _rt : [],
+    for _t in _terms do (
+        if freeof('delta, _t) then _rt : cons(_t, _rt)
+        else _dt : cons(_t, _dt)
+    ),
+    _r : if _rt = [] then 0 else ratsimp(sc * apply("+", _rt)),
+    _r + ratsimp(sc) * apply("+", _dt)
+)$
+
 FT_is_minf(x) := is(x = minf) or is(x = -inf)$
 FT_is_inf(x)  := is(x = inf)  or is(x = +inf)$
 

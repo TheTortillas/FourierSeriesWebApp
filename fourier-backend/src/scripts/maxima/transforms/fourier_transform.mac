@@ -21,24 +21,8 @@ if not(boundp('FT_SCALE)) then FT_SCALE: 1$
 
 result : FT(FUNC_INPUT, INTVAR, TRANSVAR)$
 
-/* Apply FT_SCALE and ratsimp.
-   When delta is present, ratsimp merges rational+delta addends into a single
-   fraction.  Instead, apply ratsimp separately to the rational part and scale
-   the delta terms by ratsimp(FT_SCALE) to keep the table-form display. */
-FT_apply_scale(e, sc) := block([_terms, _dt, _rt, _r],
-    if e = false then return(false),
-    if freeof('delta, e) then return(ratsimp(sc * e)),
-    if sc = 1 then return(e),
-    _terms : if atom(e) or not is(op(e) = "+") then [e] else args(e),
-    _dt : [], _rt : [],
-    for _t in _terms do (
-        if freeof('delta, _t) then _rt : cons(_t, _rt)
-        else _dt : cons(_t, _dt)
-    ),
-    _r : if _rt = [] then 0 else ratsimp(sc * apply("+", _rt)),
-    _r + ratsimp(sc) * apply("+", _dt)
-)$
-
+/* FT_apply_scale is defined in fourier_transforms.mac (loaded above).
+   Applies FT_SCALE without letting ratsimp fuse delta+rational terms. */
 F      : FT_apply_scale(result[1], FT_SCALE)$
 F_real : FT_apply_scale(result[2], FT_SCALE)$
 F_imag : FT_apply_scale(result[3], FT_SCALE)$
