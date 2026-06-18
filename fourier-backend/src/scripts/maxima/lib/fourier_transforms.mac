@@ -1623,6 +1623,50 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── k*abs(t)^m  y  k*abs(t)^m*sgn(t)  ->  FT distribucional, dual de IFT[1/w^n] ──
+       Dual exacto del patrón IFT k/w^n (§36 FOURIER_TABLES). Estrategia:
+       para m=1..12 intentar dividir e entre abs(t)^m y entre abs(t)^m*sgn(t_var);
+       si el cociente es libre de t_var, aplicar la fórmula:
+         FT[k*|t|^m]        = k * 2*m! * (-i)^(m+1) / w^(m+1)  (m impar, n=m+1 par)
+         FT[k*|t|^m*sgn(t)] = k * 2*m! * (-i)^(m+1) / w^(m+1)  (m par,   n=m+1 impar)
+       Solo aplica para abs(t_var) exacto — sin desplazamiento. */
+    if is(res = false) then block(
+        [_ab_m, _ab_k, _ab_has_sgn, _ab_n, _ab_prod, _ab_quot],
+        _ab_m: false, _ab_k: false, _ab_has_sgn: false,
+        /* Try m=1..12. Test with sgn first (covers even m), then without (odd m). */
+        for _ab_try: 1 thru 12 while is(_ab_m = false) do (
+            /* Test: e / (abs(t_var)^_ab_try * sgn(t_var)) — m even, n odd */
+            if evenp(_ab_try) then (
+                _ab_prod: errcatch(ratsimp(e / (abs(t_var)^_ab_try * sgn(t_var)))),
+                if _ab_prod # [] then (
+                    _ab_quot: first(_ab_prod),
+                    if freeof(t_var, _ab_quot) and not equal(_ab_quot, 0)
+                       and freeof('abs, _ab_quot) and freeof('sgn, _ab_quot) then (
+                        _ab_m: _ab_try, _ab_k: _ab_quot, _ab_has_sgn: true
+                    )
+                )
+            ),
+            /* Test: e / abs(t_var)^_ab_try — m odd, n even */
+            if is(_ab_m = false) and oddp(_ab_try) then (
+                _ab_prod: errcatch(ratsimp(e / abs(t_var)^_ab_try)),
+                if _ab_prod # [] then (
+                    _ab_quot: first(_ab_prod),
+                    if freeof(t_var, _ab_quot) and not equal(_ab_quot, 0)
+                       and freeof('abs, _ab_quot) and freeof('sgn, _ab_quot) then (
+                        _ab_m: _ab_try, _ab_k: _ab_quot, _ab_has_sgn: false
+                    )
+                )
+            )
+        ),
+        if is(_ab_m # false) then (
+            _ab_n: _ab_m + 1,
+            res: [ratsimp(_ab_k * 2 * factorial(_ab_m) * (-%i)^_ab_n / w_var^_ab_n),
+                  concat("k*abs(t)^m[*sgn(t)]->2m!*(-i)^n/w^n, m=",
+                         string(_ab_m), ", sgn=", string(_ab_has_sgn),
+                         ", k=", string(_ab_k))]
+        )
+    ),
+
     /* ── k/t^n -> k*(-iw)^(n-1)/((n-1)!)*(-i*pi*sgn(w))  (n >= 1, entero) ──
        Transformada distribucional (valor principal de Cauchy).
        n=1: k/t -> -i*pi*k*sgn(w)

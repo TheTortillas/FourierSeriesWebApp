@@ -8690,5 +8690,47 @@
     "description": "IFT(1/(w²(iw+3))) — polo doble en origen + polo en iw=-3, partfrac",
     "input": { "segments": [{ "expression": "1/(w^2*(%i*w+3))", "from": "minf", "to": "inf" }], "intVar": "w", "transVar": "t" },
     "expected": { "fCombined": "-(abs(t)/6)-(%e^(-(3*t))*u(t))/9+sgn(t)/18", "exists": true }
+  },
+  {
+    "id": "AB01",
+    "type": "ft",
+    "description": "FT(-|t|/2) = 1/w² — round-trip de IFT(1/w²), potencia par n=2",
+    "input": { "segments": [{ "expression": "-(abs(t)/2)", "from": "minf", "to": "inf" }], "intVar": "t", "transVar": "w" },
+    "expected": { "F": "1/w^2", "exists": true }
+  },
+  {
+    "id": "AB02",
+    "type": "ft",
+    "description": "FT(-i·t²·sgn(t)/4) = 1/w³ — round-trip de IFT(1/w³), potencia impar n=3",
+    "input": { "segments": [{ "expression": "-((%i*t^2*sgn(t))/4)", "from": "minf", "to": "inf" }], "intVar": "t", "transVar": "w" },
+    "expected": { "F": "1/w^3", "exists": true }
+  },
+  {
+    "id": "AB03",
+    "type": "ft",
+    "description": "FT(t²·|t|/12) = 1/w⁴ — round-trip de IFT(1/w⁴), potencia par n=4",
+    "input": { "segments": [{ "expression": "(t^2*abs(t))/12", "from": "minf", "to": "inf" }], "intVar": "t", "transVar": "w" },
+    "expected": { "F": "1/w^4", "exists": true }
+  },
+  {
+    "id": "AB04",
+    "type": "ft",
+    "description": "FT(i·t⁴·sgn(t)/48) = 1/w⁵ — round-trip de IFT(1/w⁵), potencia impar n=5",
+    "input": { "segments": [{ "expression": "(%i*t^4*sgn(t))/48", "from": "minf", "to": "inf" }], "intVar": "t", "transVar": "w" },
+    "expected": { "F": "1/w^5", "exists": true }
+  },
+  {
+    "id": "AB05",
+    "type": "ft",
+    "description": "FT(-3·|t|/2) = 3/w² — escalar negativo con abs(t)",
+    "input": { "segments": [{ "expression": "-(3*abs(t)/2)", "from": "minf", "to": "inf" }], "intVar": "t", "transVar": "w" },
+    "expected": { "F": "3/w^2", "exists": true }
+  },
+  {
+    "id": "AB06",
+    "type": "ft",
+    "description": "FT(3·|t|) = -6/w² — escalar positivo, verifica signo correcto",
+    "input": { "segments": [{ "expression": "3*abs(t)", "from": "minf", "to": "inf" }], "intVar": "t", "transVar": "w" },
+    "expected": { "F": "-(6/w^2)", "exists": true }
   }
 ]
