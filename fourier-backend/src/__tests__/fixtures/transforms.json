@@ -828,7 +828,7 @@
   {
     "id": "J01",
     "type": "ift",
-    "description": "IFT de e^{-w²}/(w²+1) — el backend no detecta 'sin forma cerrada', devuelve exists:true con integral sin evaluar",
+    "description": "REGRESIÓN BUG-4: IFT(e^{-w²}/(w²+1)) — integral sin forma cerrada debe devolver exists=false",
     "input": {
       "segments": [
         {
@@ -841,7 +841,7 @@
       "transVar": "t"
     },
     "expected": {
-      "exists": true
+      "exists": false
     }
   },
   {
@@ -3941,7 +3941,7 @@
   {
     "id": "KX04",
     "type": "ift",
-    "description": "IFT de 1/(w²·(iw+1)) → existe (doble polo en origen)",
+    "description": "IFT de 1/(w²·(iw+1)) — doble polo en origen, no está en tabla de patrones, debe devolver exists=false",
     "input": {
       "segments": [
         {
@@ -3954,7 +3954,7 @@
       "transVar": "t"
     },
     "expected": {
-      "exists": true
+      "exists": false
     }
   },
   {
@@ -8495,6 +8495,44 @@
     "expected": {
       "fCombined": "delta(t) + %e^(-2*abs(t))/4",
       "exists": true
+    }
+  },
+  {
+    "id": "BG04a",
+    "type": "ift",
+    "description": "REGRESIÓN BUG-4: IFT(exp(w²)) — integral sin evaluar debe devolver exists=false",
+    "input": {
+      "segments": [
+        {
+          "expression": "exp(w^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": false
+    }
+  },
+  {
+    "id": "BG04b",
+    "type": "ift",
+    "description": "REGRESIÓN BUG-4: IFT(1/log(1+w²)) — función sin patrón tabla debe devolver exists=false",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/log(1+w^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": false
     }
   }
 ]

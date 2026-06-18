@@ -272,6 +272,9 @@ kill(all)$
 
     const raw = result.raw;
 
+    const iftExists =
+      this.extractBetween(raw, "__IFT_EXISTS__", "__F_POS_MAXIMA__").trim() ===
+      "true";
     const fPosMaxima = this.extractBetween(
       raw,
       "__F_POS_MAXIMA__",
@@ -495,7 +498,7 @@ kill(all)$
 
     return {
       input,
-      exists: fPosMaxima !== "" || fNegMaxima !== "",
+      exists: iftExists,
       fPositive: this.toSymbolic(fPosMaxima, displayFPosTex || fPosTex),
       fNegative: this.toSymbolic(fNegMaxima, displayFNegTex || fNegTex),
       fCombined:

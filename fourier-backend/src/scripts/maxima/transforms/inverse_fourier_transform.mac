@@ -132,6 +132,11 @@ f_neg_real_disp : if f_neg_real_disp = [] then f_neg_real else first(f_neg_real_
 f_neg_imag_disp : errcatch(FT_pick_display_expr_algebraic(f_neg_imag))$
 f_neg_imag_disp : if f_neg_imag_disp = [] then f_neg_imag else first(f_neg_imag_disp)$
 
+print("__IFT_EXISTS__")$        print(string(is(
+    (has_combined or f_pos # false or f_neg # false)
+    and freeof('integrate, f_combined)
+    and freeof('integrate, f_pos)
+    and freeof('integrate, f_neg))))$
 print("__F_POS_MAXIMA__")$      print(string(f_pos))$
 print("__F_POS_TEX__")$         tex(f_pos)$
 print("__F_NEG_MAXIMA__")$      print(string(f_neg))$
