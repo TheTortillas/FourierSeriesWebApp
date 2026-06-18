@@ -905,7 +905,7 @@
       "rect": {
         "name": "Rectangular pulse",
         "notation": "rect(t)",
-        "aka": "Gate function",
+        "aka": "Rectangular pulse",
         "def": "Equals 1 for |t| < ½, ½ at the edges and 0 outside. Use rect(t/T) for a pulse of width T, or rect((t − t₀)/T) to shift it in time.",
         "latex": "\\operatorname{rect}(t) = \\begin{cases} 1 & |t| < \\tfrac{1}{2} \\\\ \\tfrac{1}{2} & |t| = \\tfrac{1}{2} \\\\ 0 & |t| > \\tfrac{1}{2} \\end{cases}",
         "ft": "\\mathcal{F}\\{\\operatorname{rect}(t/T)\\} = T\\,\\operatorname{sinc}\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
@@ -913,7 +913,7 @@
       "tri": {
         "name": "Triangular pulse",
         "notation": "tri(t)",
-        "aka": "Hat function",
+        "aka": "Triangular pulse",
         "def": "A pyramid of base 2 and height 1 — the normalised self-convolution of rect. Use tri(t/T) to scale the base to 2T. Its transform is sinc², making it useful for spectral window design.",
         "latex": "\\operatorname{tri}(t) = \\begin{cases} 1 - |t| & |t| < 1 \\\\ 0 & |t| \\ge 1 \\end{cases}",
         "ft": "\\mathcal{F}\\{\\operatorname{tri}(t/T)\\} = T\\,\\operatorname{sinc}^2\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"

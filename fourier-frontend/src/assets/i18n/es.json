@@ -905,7 +905,7 @@
       "rect": {
         "name": "Pulso rectangular",
         "notation": "rect(t)",
-        "aka": "Función puerta",
+        "aka": "Pulso rectangular",
         "def": "Vale 1 cuando |t| < ½, ½ en los bordes y 0 fuera. Usa rect(t/T) para un pulso de ancho T, o rect((t − t₀)/T) para desplazarlo en el tiempo.",
         "latex": "\\operatorname{rect}(t) = \\begin{cases} 1 & |t| < \\tfrac{1}{2} \\\\ \\tfrac{1}{2} & |t| = \\tfrac{1}{2} \\\\ 0 & |t| > \\tfrac{1}{2} \\end{cases}",
         "ft": "\\mathcal{F}\\{\\operatorname{rect}(t/T)\\} = T\\,\\operatorname{sinc}\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
@@ -913,7 +913,7 @@
       "tri": {
         "name": "Pulso triangular",
         "notation": "tri(t)",
-        "aka": "Función sombrero",
+        "aka": "Pulso triangular",
         "def": "Una pirámide de base 2 y altura 1 — la autoconvolución normalizada de rect. Usa tri(t/T) para escalar la base a 2T. Su transformada es sinc², lo que lo hace útil en diseño de ventanas espectrales.",
         "latex": "\\operatorname{tri}(t) = \\begin{cases} 1 - |t| & |t| < 1 \\\\ 0 & |t| \\ge 1 \\end{cases}",
         "ft": "\\mathcal{F}\\{\\operatorname{tri}(t/T)\\} = T\\,\\operatorname{sinc}^2\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
