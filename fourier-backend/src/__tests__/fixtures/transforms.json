@@ -8736,20 +8736,64 @@
   {
     "id": "BG05",
     "type": "ift",
-    "description": "REGRESIÓN BUG-5: IFT(exp(iw+w)*(1-u(w))) — exponente complejo no debe producir delta(t-complejo)",
+    "description": "k*exp(c*w)*(1-u(w)) handler: IFT(exp((i+1)w)*(1-u(w))) = 1/(2π(1+i(t+1)))",
     "input": {
       "segments": [{ "expression": "exp(%i*w+w)*(1-u(w))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": { "exists": true, "combined": "1/(2*%pi*(%i*t+%i+1))" }
+  },
+  {
+    "id": "BG05b",
+    "type": "ift",
+    "description": "REGRESIÓN BUG-5: IFT(exp(iw+w)) sin (1-u(w)) — no existe (no converge en todo ℝ)",
+    "input": {
+      "segments": [{ "expression": "exp(%i*w+w)", "from": "minf", "to": "inf" }],
       "intVar": "w",
       "transVar": "t"
     },
     "expected": { "exists": false }
   },
   {
-    "id": "BG05b",
+    "id": "EU01",
     "type": "ift",
-    "description": "REGRESIÓN BUG-5: IFT(exp(iw+w)) — exp con parte real ≠0 no es delta con argumento complejo",
+    "description": "k*exp(c*w)*(1-u(w)) handler: IFT(3*exp((2+i)w)*(1-u(w))) = 3/(2π(2+i(t+1)))",
     "input": {
-      "segments": [{ "expression": "exp(%i*w+w)", "from": "minf", "to": "inf" }],
+      "segments": [{ "expression": "3*exp((2+%i)*w)*(1-u(w))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": { "exists": true, "combined": "3/(2*%pi*(%i*t+%i+2))" }
+  },
+  {
+    "id": "EU02",
+    "type": "ift",
+    "description": "k*exp(c*w)*(1-u(w)) handler: IFT(exp(2w)*(1-u(w))) = 1/(2π(2+it)) — c real positivo",
+    "input": {
+      "segments": [{ "expression": "exp(2*w)*(1-u(w))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": { "exists": true, "combined": "1/(2*%pi*(2+%i*t))" }
+  },
+  {
+    "id": "EU03",
+    "type": "ift",
+    "description": "k*exp(c*w)*(1-u(w)) handler: k negativo k=-2 → -2/(2π(1+i(t+1)))",
+    "input": {
+      "segments": [{ "expression": "-2*exp((1+%i)*w)*(1-u(w))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": { "exists": true, "combined": "-(1/(%pi*(%i*t+%i+1)))" }
+  },
+  {
+    "id": "EU04",
+    "type": "ift",
+    "description": "k*exp(c*w)*(1-u(w)) handler: Re(c)≤0 no debe existir — IFT(exp(-w)*(1-u(w)))",
+    "input": {
+      "segments": [{ "expression": "exp(-w)*(1-u(w))", "from": "minf", "to": "inf" }],
       "intVar": "w",
       "transVar": "t"
     },

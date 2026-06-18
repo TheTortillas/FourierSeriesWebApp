@@ -4126,6 +4126,69 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
         )
     ),
 
+    /* ── k*exp(c*w)*(1-u(w)) -> k/(2π(c+it))  (Re(c)>0) ──
+       Soportado en w<0; decaimiento garantizado por Re(c)>0.
+       Estrategia de detección: división directa.
+         expand(e) da A - A*u(w). Tomamos los dos términos de op="+".
+         El término sin u(w) es el "plain"; el otro tiene -(•)*u(w).
+         Verificamos: plain_term + (plain_term * u(w_var)) = plain + plain*u = 0? No.
+       Enfoque más robusto: intentar factorizar (1-u(w)) directamente.
+         Probe: quot = errcatch(ratsimp(e / (1 - u(w_var)))).
+         Si quot no contiene w_var y contiene exp, extraer c.              */
+    if is(res = false) then block(
+        [_eu_quot, _eu_k, _eu_exp_part, _eu_c, _eu_re_c, _eu_facs],
+        _eu_quot: errcatch(ratsimp(e / (1 - u(w_var)))),
+        if _eu_quot # [] then (
+            _eu_quot: first(_eu_quot),
+            /* quot must be of the form k*exp(c*w): freeof u, contains exp, freeof t_var */
+            if freeof('u, _eu_quot) and freeof(t_var, _eu_quot)
+               and not freeof('%e, _eu_quot) then (
+                /* Extract k (scalar) and exp(c*w) from quot.
+                   Normalize first: absorb unary minus and k/n fraction forms. */
+                _eu_k: 1, _eu_exp_part: false,
+                block([_eu_inner],
+                    _eu_inner: _eu_quot,
+                    /* -(expr) → k=-1, inner=expr */
+                    if not atom(_eu_inner) and is(op(_eu_inner) = "-") then (
+                        _eu_k: -1, _eu_inner: first(args(_eu_inner))
+                    ),
+                    /* expr/n → k=1/n, inner=expr  (n freeof w) */
+                    if not atom(_eu_inner) and is(op(_eu_inner) = "/")
+                       and freeof(w_var, part(_eu_inner, 2)) then (
+                        _eu_k: _eu_k / part(_eu_inner, 2),
+                        _eu_inner: part(_eu_inner, 1)
+                    ),
+                    _eu_facs: if not atom(_eu_inner) and is(op(_eu_inner) = "*")
+                              then args(_eu_inner) else [_eu_inner]
+                ),
+                for _eu_f in _eu_facs do (
+                    if not atom(_eu_f) and is(op(_eu_f) = "^")
+                       and ratsimp(part(_eu_f,1) - %e) = 0
+                    then _eu_exp_part: _eu_f
+                    else if freeof(w_var, _eu_f)
+                    then _eu_k: _eu_k * _eu_f
+                    else _eu_k: false  /* unexpected w-dependence — bail */
+                ),
+                if is(_eu_k # false) and is(_eu_exp_part # false) then (
+                    /* exp_part = %e^arg; extract c = arg/w_var */
+                    _eu_c: errcatch(ratsimp(part(_eu_exp_part, 2) / w_var)),
+                    if _eu_c # [] then (
+                        _eu_c: first(_eu_c),
+                        if freeof(w_var, _eu_c)
+                           and ratsimp(part(_eu_exp_part, 2) - _eu_c*w_var) = 0 then (
+                            /* Guard: Re(c) > 0 ensures ∫_{-inf}^{0} e^{(c+it)w} dw converges */
+                            _eu_re_c: errcatch(ratsimp(realpart(_eu_c))),
+                            if _eu_re_c # [] and is(first(_eu_re_c) > 0) then
+                                res: [_eu_k / (2*%pi*(_eu_c + %i*t_var)),
+                                      concat("k*exp(c*w)*(1-u(w))->k/(2pi(c+it)), c=",
+                                             string(_eu_c), ", k=", string(_eu_k))]
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── scalar: k*F(w) -> k*IFT(F(w))  (k constante en w) ── */
     if is(res = false) and not atom(e) and is(op(e) = "*") then block(
         [_factors, _const_k, _w_parts, _ift_core],
