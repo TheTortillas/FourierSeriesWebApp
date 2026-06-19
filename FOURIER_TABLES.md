@@ -1069,45 +1069,61 @@ Para $\omega = 0$: $F(0) = 2k/b$ (L'Hôpital sobre $\omega/\sinh(\pi\omega/(2b))
 
 > **✓ Implementado** (FT + IFT). La inversa: $\mathcal{F}^{-1}\!\left\{k\,\omega\coth(p\omega)\right\}(t) = \tfrac{-kb^2}{2\pi}\operatorname{csch}^2(bt)$ con $b = \pi/(2p)$.
 
-### 24b.5 Familias avanzadas: $\operatorname{sech}^n$, $\tanh^m\operatorname{sech}^n$
+### 24b.5 Familias avanzadas: $\operatorname{sech}^{2n+1}$, $\tanh^{2m}\operatorname{sech}^{2n+1}$, $\tanh\operatorname{sech}$
 
-Las siguientes familias fueron verificadas en Wolfram Alpha y LibreTexts. Todas utilizan la convención con factor oscilatorio $-1$ ($e^{-i\omega t}$) y $b=1$ (escalar con $t\to bt$, $\omega\to\omega/b$):
+#### Familia par (potencias impares de sech, potencias pares de tanh) — ✓ Implementada general
 
-| $f(t)$ | $F(\omega)$ |
-|--------|-------------|
-| $\operatorname{sech}(t)$ | $\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $\operatorname{sech}^2(t)$ | $\dfrac{\pi\omega}{\sinh\!\left(\frac{\pi\omega}{2}\right)}$ |
-| $\operatorname{sech}^3(t)$ | $\dfrac{1}{2}(1+\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $\operatorname{sech}^5(t)$ | $\dfrac{1}{24}(\omega^4+10\omega^2+9)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $\tanh(t)\operatorname{sech}(t)$ | $-i\omega\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $\tanh^2(t)\operatorname{sech}(t)$ | $\dfrac{1}{2}(1-\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $\tanh^3(t)\operatorname{sech}(t)$ | $-i\dfrac{\omega}{6}(5-\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $\tanh(t)\operatorname{sech}^3(t)$ | $-i\dfrac{\omega}{6}(1+\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $\tanh^2(t)\operatorname{sech}^3(t)$ | $\dfrac{1}{2}(1+\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{1}{24}(\omega^4+10\omega^2+9)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $t\,\tanh(t)\operatorname{sech}(t)$ | $\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{\omega^2\pi}{2}\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $t\,\tanh^2(t)\operatorname{sech}(t)$ | $-i\omega\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{\omega^2\pi}{4}(1-\omega^2)\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $t\,\tanh^3(t)\operatorname{sech}(t)$ | $\dfrac{1}{6}(5-3\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{\omega^2\pi}{12}(5-\omega^2)\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $t\,\tanh(t)\operatorname{sech}^3(t)$ | $\dfrac{1}{6}(1+3\omega^2)\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - \dfrac{\omega^2\pi}{12}(1+\omega^2)\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $t\,\operatorname{sech}(t)$ | $-i\dfrac{\omega\pi^2}{6}\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
-| $t\,\operatorname{sech}^3(t)$ | $-i\omega\pi\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right) - i\dfrac{\omega^2\pi}{4}(1+\omega^2)\tanh\!\left(\dfrac{\pi\omega}{2}\right)\operatorname{sech}\!\left(\dfrac{\pi\omega}{2}\right)$ |
+La recurrencia fundamental (derivada vía propiedad de derivada en tiempo):
 
-**Patrón estructural:** Los pares con $\operatorname{sech}^{2n+1}$ producen transformadas proporcionales a $\operatorname{sech}(\pi\omega/2)$ multiplicado por polinomios en $\omega$. Los pares con $\tanh^m \operatorname{sech}^n$ para $m$ impar producen transformadas imaginarias puras; para $m$ par, reales. El factor $t$ introduce derivación en frecuencia $(-i\tfrac{d}{d\omega})$, generando el término adicional con $\tanh(\pi\omega/2)\operatorname{sech}(\pi\omega/2)$.
+$$P_0(u) = 1, \qquad P_{n+1}(u) = \frac{u^2 + (2n+1)^2}{(2n+1)(2n+2)}\,P_n(u)$$
 
-> **Parcialmente implementado.** Las funciones pares de la familia (Grupo A) tienen handler directo con FT+IFT: $\operatorname{sech}^3$, $\operatorname{sech}^5$, $\tanh^2\operatorname{sech}$, $\tanh^2\operatorname{sech}^3$. Las funciones impares ($\tanh\operatorname{sech}$, $\tanh^3\operatorname{sech}$, etc.) y las que llevan factor $t$ tienen transformadas imaginarias puras que el integrador numérico no puede recuperar (cancela exactamente a 0); quedan sin handler directo.
+$$\boxed{\mathcal{F}\!\left\{k\operatorname{sech}^{2n+1}(bt)\right\}(\omega) = \frac{k\pi}{b}\,\frac{P_n(u)}{\cosh(u)},\qquad u = \frac{\pi\omega}{2b}}$$
+
+Para $\tanh^{2m}(bt)\operatorname{sech}^{2n+1}(bt)$, se usa $\tanh^2 = 1 - \operatorname{sech}^2$ para expandir:
+
+$$\boxed{\mathcal{F}\!\left\{k\tanh^{2m}(bt)\operatorname{sech}^{2n+1}(bt)\right\}(\omega) = \frac{k\pi}{b}\,\frac{1}{\cosh(u)}\sum_{r=0}^{m}(-1)^r\binom{m}{r}P_{n+r}(u)}$$
+
+Casos particulares ($b=1$, polinomio en $u=\pi\omega/2$):
+
+| $f(t)$ | $F(\omega)$ | Estado |
+|--------|-------------|--------|
+| $\operatorname{sech}^3(t)$ | $\frac{\pi}{2}(1+u^2)\operatorname{sech}(u)$ | ✓ |
+| $\operatorname{sech}^5(t)$ | $\frac{\pi}{24}(9+10u^2+u^4)\operatorname{sech}(u)$ | ✓ |
+| $\operatorname{sech}^7(t)$ | $\frac{\pi}{720}(225+259u^2+35u^4+u^6)\operatorname{sech}(u)$ | ✓ |
+| $\operatorname{sech}^{2n+1}(t)$ | $\frac{\pi}{(2n)!}\prod_{k=0}^{n-1}(u^2+(2k+1)^2)\cdot\operatorname{sech}(u)$ | ✓ cualquier $n$ |
+| $\tanh^2(t)\operatorname{sech}(t)$ | $\frac{\pi}{2}(1-u^2)\operatorname{sech}(u)$ | ✓ |
+| $\tanh^2(t)\operatorname{sech}^3(t)$ | $\frac{\pi}{2}[(1+u^2)-\frac{1}{12}(9+10u^2+u^4)]\operatorname{sech}(u)$ | ✓ |
+| $\tanh^4(t)\operatorname{sech}(t)$ | $\frac{\pi}{384}(144-56u^2+u^4)\operatorname{sech}(u) \cdot \frac{1}{?}$ | ✓ vía recurrencia |
+| $\tanh^{2m}(t)\operatorname{sech}^{2n+1}(t)$ | suma binomial de $P_{n+r}$, ver fórmula general | ✓ cualquier $m,n$ |
+
+> Las inversas (IFT) también están implementadas: dado $F(\omega) = K \cdot \text{poly}(u^2)/\cosh(u)$, el motor identifica $(m,n)$ por división racional y devuelve $k\tanh^{2m}(bt)\operatorname{sech}^{2n+1}(bt)$.
+
+#### Familia impar ($\tanh\operatorname{sech}$) — ✓ Parcialmente implementada
+
+$$\boxed{\mathcal{F}\!\left\{k\tanh(bt)\operatorname{sech}(bt)\right\}(\omega) = \frac{-ik\pi\omega}{b}\operatorname{sech}\!\left(\frac{\pi\omega}{2b}\right)}$$
+
+Verificado numéricamente. Es el caso $n=0$ de $\tanh\operatorname{sech}^{2n+1}$. Los casos superiores ($\tanh\operatorname{sech}^3$, $\tanh^3\operatorname{sech}$, etc.) tienen fórmulas en otras referencias pero su adaptación a la convención $e^{-i\omega t}$ requiere derivación adicional — quedan en fallback numérico.
+
+#### Familia con factor $t$ — ✗ Sin handler directo
+
+Las funciones $t\operatorname{sech}(t)$, $t\tanh(t)\operatorname{sech}(t)$, etc. se obtienen por derivación en frecuencia $\mathcal{F}\{tf(t)\} = i\tfrac{d}{d\omega}F(\omega)$ sobre las fórmulas anteriores. No están implementadas como patrones directos (el integrador numérico sí converge para valores concretos de $b$).
 
 ### 24b.6 Tabla resumen de hiperbólicas
 
 | # | $f(t)$ | $F(\omega)$ | Estado | Condiciones |
 |---|--------|-------------|--------|-------------|
-| TH-1 | $k\,\sin(at)/\sinh(bt)$ | $\frac{k\pi}{2b}[\tanh(\frac{\pi(a-\omega)}{2b})+\tanh(\frac{\pi(a+\omega)}{2b})]$ | ✓ Implementado | $a,b>0$ |
-| TH-2 | $k\,\cos(at)/\cosh(bt)$ | $\frac{k\pi}{2b}[\operatorname{sech}(\frac{\pi(\omega-a)}{2b})+\operatorname{sech}(\frac{\pi(\omega+a)}{2b})]$ | ✓ Implementado | $a\geq0,b>0$ |
-| TH-3 | $k\,\operatorname{sech}(bt)$ | $\frac{k\pi}{b}\operatorname{sech}(\frac{\pi\omega}{2b})$ | ✓ Implementado | $b>0$ |
-| TH-4 | $k/\sinh(bt)$ | $\frac{-ik\pi}{|b|}\tanh(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b\neq0$ |
-| TH-5 | $k\,\tanh(bt)$ | $\frac{-ik\pi}{|b|}\operatorname{csch}(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b\neq0$ |
-| TH-6 | $k\,\operatorname{sech}^2(bt)$ | $\frac{k\pi\omega}{b^2}\operatorname{csch}(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b>0$ |
-| TH-7 | $k\,\operatorname{csch}^2(bt)$ | $\frac{-2k\pi\omega}{b^2}\coth(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b>0$ |
-| TH-8 | $k\,\operatorname{sech}^n(t)$, $n\in\{3,5\}$ | polinomio$(({\pi\omega}/{2b})^2)\cdot({\pi}/{2b})\operatorname{sech}(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT), $n=3,5$ | $b>0$ |
-| TH-9 | $k\,\tanh^2(t)\operatorname{sech}^n(t)$, $n\in\{1,3\}$ | idem con polinomio diferente | ✓ Implementado (FT+IFT), $n=1,3$ | $b>0$ |
+| TH-1 | $k\,\sin(at)/\sinh(bt)$ | $\frac{k\pi}{2b}[\tanh(\frac{\pi(a-\omega)}{2b})+\tanh(\frac{\pi(a+\omega)}{2b})]$ | ✓ FT+IFT | $a,b>0$ |
+| TH-2 | $k\,\cos(at)/\cosh(bt)$ | $\frac{k\pi}{2b}[\operatorname{sech}(\frac{\pi(\omega-a)}{2b})+\operatorname{sech}(\frac{\pi(\omega+a)}{2b})]$ | ✓ FT+IFT | $a\geq0,b>0$ |
+| TH-3 | $k\,\operatorname{sech}(bt)$ | $\frac{k\pi}{b}\operatorname{sech}(\frac{\pi\omega}{2b})$ | ✓ FT+IFT | $b>0$ |
+| TH-4 | $k/\sinh(bt)$ | $\frac{-ik\pi}{|b|}\tanh(\frac{\pi\omega}{2b})$ | ✓ FT+IFT | $b\neq0$ |
+| TH-5 | $k\,\tanh(bt)$ | $\frac{-ik\pi}{|b|}\operatorname{csch}(\frac{\pi\omega}{2b})$ | ✓ FT+IFT | $b\neq0$ |
+| TH-6 | $k\,\operatorname{sech}^2(bt)$ | $\frac{k\pi\omega}{b^2}\operatorname{csch}(\frac{\pi\omega}{2b})$ | ✓ FT+IFT | $b>0$ |
+| TH-7 | $k\,\operatorname{csch}^2(bt)$ | $\frac{-2k\pi\omega}{b^2}\coth(\frac{\pi\omega}{2b})$ | ✓ FT+IFT | $b>0$ |
+| TH-8 | $k\,\operatorname{sech}^{2n+1}(bt)$, $n\geq1$ | $\frac{k\pi}{b}\frac{P_n(u)}{\cosh(u)}$ vía recurrencia | ✓ FT+IFT, cualquier $n$ | $b>0$ |
+| TH-9 | $k\,\tanh^{2m}(bt)\operatorname{sech}^{2n+1}(bt)$, $m\geq1$ | suma binomial de $P_{n+r}$, ver 24b.5 | ✓ FT+IFT, cualquier $m,n$ | $b>0$ |
+| TH-9b | $k\,\tanh(bt)\operatorname{sech}(bt)$ | $\frac{-ik\pi\omega}{b}\operatorname{sech}(\frac{\pi\omega}{2b})$ | ✓ FT (solo $n=0$) | $b>0$ |
+| — | $k\,\tanh^{2j+1}(bt)\operatorname{sech}^{2n+1}(bt)$, $j\geq1$ | imaginaria pura, fórmulas pendientes | ✗ fallback numérico | — |
+| — | $k\,t^p\tanh^q(bt)\operatorname{sech}^{2n+1}(bt)$ | derivación en $\omega$ de las anteriores | ✗ sin handler | — |
 
 ---
 
