@@ -1033,7 +1033,7 @@ $$\boxed{\mathcal{F}\!\left\{\frac{k}{\sinh(bt)}\right\}(\omega) = \frac{-ik\pi\
 
 (Fuente: Wolfram Alpha. Convención: factor oscilatorio $-1$.)
 
-> **⚠ ✗ No implementado** — El integrador de Maxima falla por la singularidad no integrable en $t=0$. La fórmula se obtiene directamente del kernel de Ramanujan $K(\lambda) = \int e^{i\lambda t}/\sinh(\pi t)\,dt = i\tanh(\lambda/2)$ escalado a $\sinh(bt)$ vía $t \to t/b$, tomando la parte impar.
+> **✓ Implementado** (FT + IFT). La fórmula se obtiene del kernel de Ramanujan $K(\lambda) = \int e^{i\lambda t}/\sinh(\pi t)\,dt = i\tanh(\lambda/2)$ escalado a $\sinh(bt)$ vía $t \to t/b$. La inversa: $\mathcal{F}^{-1}\!\left\{k\,\tanh(p\omega)\right\}(t) = \tfrac{ik|b|}{\pi\sinh(bt)}$ con $b = \pi/(2p)$.
 
 ### 24b.2 $k\,\tanh(bt)$ — transformada con csch
 
@@ -1041,7 +1041,7 @@ $$\boxed{\mathcal{F}\!\left\{k\,\tanh(bt)\right\}(\omega) = \frac{-ik\pi\,\opera
 
 (Fuente: Wolfram Alpha. Convención: factor oscilatorio $-1$.)
 
-> **⚠ ✗ No implementado** — $\tanh(bt)$ tiende a $\pm 1$ en $\pm\infty$ (no es $L^1$ ni $L^2$) por lo que el integrador numérico de Maxima diverge. La fórmula cerrada existe como transformada de distribución temperada.
+> **✓ Implementado** (FT + IFT). $\tanh(bt)$ no es $L^1$ ni $L^2$ — la fórmula existe como transformada de distribución temperada. La inversa: $\mathcal{F}^{-1}\!\left\{k/\sinh(p\omega)\right\}(t) = \tfrac{ik|b|}{\pi}\tanh(bt)$ con $b = \pi/(2p)$.
 
 ### 24b.3 $k\,\operatorname{csch}^2(bt)$ — cuadrado de la cosecante hiperbólica
 
@@ -1055,7 +1055,7 @@ $$\mathcal{F}\!\left\{k\,\operatorname{csch}^2(bt)\right\}(\omega) = \frac{-2k\p
 
 (Fuente: Wolfram Alpha.)
 
-> **⚠ ✗ No implementado** como patrón directo.
+> **✓ Implementado** (FT + IFT). La inversa: $\mathcal{F}^{-1}\!\left\{k\,\omega/\sinh(p\omega)\right\}(t) = \tfrac{kb^2}{\pi}\operatorname{sech}^2(bt)$ con $b = \pi/(2p)$.
 
 ### 24b.4 $k\,\operatorname{sech}^2(bt)$ — cuadrado de la secante hiperbólica
 
@@ -1067,7 +1067,7 @@ Equivalentemente $= \dfrac{k\pi\omega}{b^2\,\sinh(\pi\omega/(2b))}$.
 
 Para $\omega = 0$: $F(0) = 2k/b$ (L'Hôpital sobre $\omega/\sinh(\pi\omega/(2b))$).
 
-> **⚠ ✗ No implementado** como patrón directo.
+> **✓ Implementado** (FT + IFT). La inversa: $\mathcal{F}^{-1}\!\left\{k\,\omega\coth(p\omega)\right\}(t) = \tfrac{-kb^2}{2\pi}\operatorname{csch}^2(bt)$ con $b = \pi/(2p)$.
 
 ### 24b.5 Familias avanzadas: $\operatorname{sech}^n$, $\tanh^m\operatorname{sech}^n$
 
@@ -1102,10 +1102,10 @@ Las siguientes familias fueron verificadas en Wolfram Alpha y LibreTexts. Todas 
 | TH-1 | $k\,\sin(at)/\sinh(bt)$ | $\frac{k\pi}{2b}[\tanh(\frac{\pi(a-\omega)}{2b})+\tanh(\frac{\pi(a+\omega)}{2b})]$ | ✓ Implementado | $a,b>0$ |
 | TH-2 | $k\,\cos(at)/\cosh(bt)$ | $\frac{k\pi}{2b}[\operatorname{sech}(\frac{\pi(\omega-a)}{2b})+\operatorname{sech}(\frac{\pi(\omega+a)}{2b})]$ | ✓ Implementado | $a\geq0,b>0$ |
 | TH-3 | $k\,\operatorname{sech}(bt)$ | $\frac{k\pi}{b}\operatorname{sech}(\frac{\pi\omega}{2b})$ | ✓ Implementado | $b>0$ |
-| TH-4 | $k/\sinh(bt)$ | $\frac{-ik\pi}{|b|}\tanh(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b\neq0$ |
-| TH-5 | $k\,\tanh(bt)$ | $\frac{-ik\pi}{|b|}\operatorname{csch}(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b\neq0$ |
-| TH-6 | $k\,\operatorname{sech}^2(bt)$ | $\frac{k\pi\omega}{b^2}\operatorname{csch}(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b>0$ |
-| TH-7 | $k\,\operatorname{csch}^2(bt)$ | $\frac{-2k\pi\omega}{b^2}\coth(\frac{\pi\omega}{2b})$ | **⚠ ✗ No implementado** | $b>0$ |
+| TH-4 | $k/\sinh(bt)$ | $\frac{-ik\pi}{|b|}\tanh(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b\neq0$ |
+| TH-5 | $k\,\tanh(bt)$ | $\frac{-ik\pi}{|b|}\operatorname{csch}(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b\neq0$ |
+| TH-6 | $k\,\operatorname{sech}^2(bt)$ | $\frac{k\pi\omega}{b^2}\operatorname{csch}(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b>0$ |
+| TH-7 | $k\,\operatorname{csch}^2(bt)$ | $\frac{-2k\pi\omega}{b^2}\coth(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b>0$ |
 | TH-8 | $k\,\operatorname{sech}^n(t)$ | polinomio$(\omega^2)\cdot\pi\operatorname{sech}(\frac{\pi\omega}{2})$ | **⚠ ✗ No implementado** | $n\geq2$, ver 24b.5 |
 | TH-9 | $k\,\tanh^m(t)\operatorname{sech}^n(t)$ | mixto sech/tanh·sech | **⚠ ✗ No implementado** | ver 24b.5 |
 
