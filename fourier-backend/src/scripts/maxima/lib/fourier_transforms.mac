@@ -1820,36 +1820,39 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                                  string(_gg_a))]
                 ) else if is(_gg_trig_op = 'cos) then (
                     /* k*e^{-at^2}*cos(bt+θ)
-                       Compact form (θ=0): amplitude * e^{-b^2/(4a)} * e^{-w^2/(4a)} * cos(bw/(2a))
+                       Via Euler: cos(bt)=(e^{ibt}+e^{-ibt})/2
+                       FT[e^{-at^2}*e^{ibt}] = sqrt(pi/a)*e^{-(w-b)^2/(4a)}
+                       Sum → amplitude*e^{-b^2/(4a)}*e^{-w^2/(4a)}*cosh(bw/(2a))
                        General (θ≠0): (amplitude/2)*(e^{iθ}*e^{-(w-b)^2/(4a)} + e^{-iθ}*e^{-(w+b)^2/(4a)}) */
                     if is(_gg_theta = 0) then
                         _gg_result: _gg_amplitude
                                     * exp(-_gg_b^2/(4*_gg_a))
                                     * exp(-w_var^2/(4*_gg_a))
-                                    * cos(_gg_b*w_var/(2*_gg_a))
+                                    * cosh(_gg_b*w_var/(2*_gg_a))
                     else
                         _gg_result: (_gg_amplitude/2) * (
                             exp(%i*_gg_theta) * exp(-(w_var-_gg_b)^2/(4*_gg_a))
                           + exp(-%i*_gg_theta) * exp(-(w_var+_gg_b)^2/(4*_gg_a))),
                     res: [_gg_result,
-                          concat("k*exp(-a*t^2)*cos(bt+theta)->gaussian*cos-shift, a=",
+                          concat("k*exp(-a*t^2)*cos(bt+theta)->gaussian*cosh-shift, a=",
                                  string(_gg_a), ", b=", string(_gg_b),
                                  ", theta=", string(_gg_theta))]
                 ) else ( /* sin */
                     /* k*e^{-at^2}*sin(bt+θ)
-                       Compact form (θ=0): -i * amplitude * e^{-b^2/(4a)} * e^{-w^2/(4a)} * sin(bw/(2a))
+                       Via Euler: sin(bt)=(e^{ibt}-e^{-ibt})/(2i)
+                       Diff → -i*amplitude*e^{-b^2/(4a)}*e^{-w^2/(4a)}*sinh(bw/(2a))
                        General (θ≠0): (amplitude/(2i))*(e^{iθ}*e^{-(w-b)^2/(4a)} - e^{-iθ}*e^{-(w+b)^2/(4a)}) */
                     if is(_gg_theta = 0) then
                         _gg_result: -%i * _gg_amplitude
                                     * exp(-_gg_b^2/(4*_gg_a))
                                     * exp(-w_var^2/(4*_gg_a))
-                                    * sin(_gg_b*w_var/(2*_gg_a))
+                                    * sinh(_gg_b*w_var/(2*_gg_a))
                     else
                         _gg_result: (_gg_amplitude/(2*%i)) * (
                             exp(%i*_gg_theta) * exp(-(w_var-_gg_b)^2/(4*_gg_a))
                           - exp(-%i*_gg_theta) * exp(-(w_var+_gg_b)^2/(4*_gg_a))),
                     res: [_gg_result,
-                          concat("k*exp(-a*t^2)*sin(bt+theta)->gaussian*sin-shift, a=",
+                          concat("k*exp(-a*t^2)*sin(bt+theta)->gaussian*sinh-shift, a=",
                                  string(_gg_a), ", b=", string(_gg_b),
                                  ", theta=", string(_gg_theta))]
                 )
@@ -4683,6 +4686,149 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                         res: [_sc_kk * cos(_sc_aa * t_var) / cosh(_sc_bb * t_var),
                               concat("IFT sech-pair -> k*cos(at)/cosh(bt), a=",
                                      string(_sc_aa), ", b=", string(_sc_bb))]
+                )
+            )
+        )
+    ),
+
+    /* ── IFT gaussiana: k·e^{-p·w²}·{1, cos(b·w), sin(b·w)} → gaussiana en t ──
+       Inversa de los pares G-0…G-2 del handler FT gaussiano.
+       IFT[k·e^{-p·w²+c}·trig(b·w)] con p>0, trig∈{1,cos,sin}.
+         IFT[k·e^{-pw²}]         = (k/2π)·√(π/p)·e^{-t²/(4p)}
+         IFT[k·e^{-pw²}·cos(bw)] = (k/2π)·√(π/p)·e^{-t²/(4p)}·cos(bt/(2p))
+         IFT[k·e^{-pw²}·sin(bw)] = (k/2π)·√(π/p)·e^{-t²/(4p)}·sin(bt/(2p))
+       La constante c en el exponente y factores libres de w se absorben en k.
+       Opera sobre F_expr (sin expand) para preservar la estructura "*".
+       También maneja el prefactor -i del caso sin (FT par G-2). */
+    if is(res = false) then block(
+        [_ig_e, _ig_k, _ig_p, _ig_b, _ig_trig_op, _ig_trig,
+         _ig_facs, _ig_f, _ig_exparg, _ig_cn, _ig_cst, _ig_found,
+         _ig_amplitude, _ig_result],
+        /* Normalize: unwrap unary minus → k factor of -1 */
+        _ig_e: F_expr,
+        _ig_k: 1,
+        if not atom(_ig_e) and is(op(_ig_e) = "-") then (
+            _ig_k: -1, _ig_e: first(args(_ig_e))
+        ),
+        /* Unwrap sqrt(x/y) = sqrt(x)/sqrt(y) division at top level */
+        if not atom(_ig_e) and is(op(_ig_e) = "/") then (
+            _ig_k: _ig_k * part(_ig_e, 1),
+            _ig_e: part(_ig_e, 2)
+            /* _ig_e is now denominator; swap intent — actually handle as k/denom form below */
+        ),
+        /* Reset and work on a normalized form of F_expr */
+        _ig_k: 1, _ig_p: false, _ig_b: 0,
+        _ig_trig_op: false, _ig_found: false,
+        /* Normalize F_expr to a flat "*" product by expanding.
+           expand() handles -(A*B) and may leave "/" only when both parts contain w;
+           we also handle top-level "/" with w-free denominator first. */
+        _ig_e: F_expr,
+        /* Unwrap top-level negation before expand so -(...) becomes (-1)*(...) in args */
+        if not atom(_ig_e) and is(op(_ig_e) = "-") then
+            _ig_e: (-1) * first(args(_ig_e)),
+        _ig_e: expand(_ig_e),
+        /* expand may still leave "-" or "/" at top level — resolve both */
+        if not atom(_ig_e) and is(op(_ig_e) = "-") then (
+            _ig_k: _ig_k * (-1), _ig_e: expand(first(args(_ig_e)))
+        ),
+        if not atom(_ig_e) and is(op(_ig_e) = "/")
+           and freeof(w_var, part(_ig_e, 2)) then (
+            _ig_k: _ig_k / part(_ig_e, 2),
+            _ig_e: expand(part(_ig_e, 1))
+        ),
+        /* Flatten: treat -(...) as (-1)*(...) and a/b as a*(1/b) is complex;
+           Instead walk the full product tree of F_expr using ratsimp to extract p */
+        block([_ig_test, _ig_wo_trig, _ig_targ],
+            /* Step 1: extract trig factor from expanded form */
+            _ig_wo_trig: _ig_e,
+            if not atom(_ig_e) and is(op(_ig_e) = "*") then (
+                for _ig_f in args(_ig_e) do (
+                    if not atom(_ig_f) and
+                       (is(op(_ig_f) = 'sin) or is(op(_ig_f) = 'cos)) and
+                       not freeof(w_var, _ig_f) then (
+                        _ig_trig: _ig_f,
+                        _ig_trig_op: op(_ig_f),
+                        _ig_wo_trig: ratsimp(_ig_e / _ig_f)
+                    )
+                )
+            ),
+            /* Step 2: find e^{-p*w^2 + c} factor in the remaining product */
+            _ig_test: _ig_wo_trig,
+            if not atom(_ig_test) and is(op(_ig_test) = "*") then (
+                for _ig_f in args(_ig_test) do (
+                    if not atom(_ig_f) and is(op(_ig_f) = "^")
+                       and is(part(_ig_f, 1) = %e) then (
+                        _ig_exparg: part(_ig_f, 2),
+                        _ig_cn: errcatch(ratsimp(coeff(expand(_ig_exparg), w_var, 2))),
+                        if _ig_cn # [] and freeof(w_var, first(_ig_cn))
+                           and is(first(_ig_cn) < 0) then (
+                            _ig_p: -first(_ig_cn),
+                            _ig_cst: ratsimp(_ig_exparg - first(_ig_cn)*w_var^2),
+                            if freeof(w_var, _ig_cst) then (
+                                /* k = outer_k * (everything in wo_trig except e^{-pw²}) * e^{c}
+                                   where c is the constant offset in the exponent */
+                                _ig_k: _ig_k
+                                       * ratsimp(_ig_wo_trig / exp(_ig_exparg))
+                                       * exp(_ig_cst),
+                                if freeof(w_var, _ig_k) then _ig_found: true
+                            )
+                        )
+                    )
+                )
+            ) else if not atom(_ig_test) and is(op(_ig_test) = "^")
+                      and is(part(_ig_test, 1) = %e) then (
+                _ig_exparg: part(_ig_test, 2),
+                _ig_cn: errcatch(ratsimp(coeff(expand(_ig_exparg), w_var, 2))),
+                if _ig_cn # [] and freeof(w_var, first(_ig_cn))
+                   and is(first(_ig_cn) < 0) then (
+                    _ig_p: -first(_ig_cn),
+                    _ig_cst: ratsimp(_ig_exparg - first(_ig_cn)*w_var^2),
+                    if freeof(w_var, _ig_cst) then (
+                        _ig_k: _ig_k * ratsimp(_ig_wo_trig / exp(_ig_exparg)) * exp(_ig_cst),
+                        if freeof(w_var, _ig_k) then _ig_found: true
+                    )
+                )
+            )
+        ),
+        if _ig_found and is(_ig_p > 0) then (
+            /* Extract b from trig argument: arg = b*w (no offset expected) */
+            if is(_ig_trig_op # false) then (
+                _ig_targ: errcatch(ratsimp(part(_ig_trig, 1) / w_var)),
+                _ig_b: if _ig_targ # [] and freeof(w_var, first(_ig_targ))
+                       then first(_ig_targ) else false
+            ),
+            if is(_ig_b # false) and freeof(w_var, _ig_b) then (
+                /* IFT[k·e^{-pw²}·trig(bw)] using duality with FT gaussian:
+                   amplitude = (k/(2π))·√(π/p); time variable a=1/(4p) */
+                _ig_amplitude: (_ig_k / (2*%pi)) * sqrt(%pi / _ig_p),
+                if is(_ig_trig_op = false) then (
+                    res: [ratsimp(_ig_amplitude * exp(-t_var^2 / (4*_ig_p))),
+                          concat("IFT k*e^{-pw^2}->gaussian, p=", string(_ig_p))]
+                ) else if is(_ig_trig_op = 'cos) then (
+                    /* IFT[k·e^{-pw²}·cos(bw)]
+                       Via modulación: cos(bw)=(e^{ibw}+e^{-ibw})/2
+                         → (1/2)[IFT[k·e^{-pw²+ibw}] + IFT[k·e^{-pw²-ibw}]]
+                       Completando cuadrado: -pw²+ibw = -p(w-ib/(2p))² - b²/(4p)
+                       IFT[e^{-p(w-ib/(2p))²-b²/(4p)}] = (√(π/p)/2π)·e^{-b²/(4p)}·e^{-t²/(4p)}·e^{±bt/(2p)}
+                       Sumando: amplitude · e^{-b²/(4p)} · e^{-t²/(4p)} · cosh(bt/(2p)) */
+                    _ig_result: ratsimp(_ig_amplitude
+                                * exp(-_ig_b^2 / (4*_ig_p))
+                                * exp(-t_var^2 / (4*_ig_p))
+                                * cosh(_ig_b * t_var / (2*_ig_p))),
+                    res: [_ig_result,
+                          concat("IFT k*e^{-pw^2}*cos(bw)->gaussian*cosh, p=",
+                                 string(_ig_p), ", b=", string(_ig_b))]
+                ) else (
+                    /* IFT[k·e^{-pw²}·sin(bw)]
+                       Via modulación: sin(bw)=(e^{ibw}-e^{-ibw})/(2i)
+                       Restando: i·amplitude · e^{-b²/(4p)} · e^{-t²/(4p)} · sinh(bt/(2p)) */
+                    _ig_result: ratsimp(%i * _ig_amplitude
+                                * exp(-_ig_b^2 / (4*_ig_p))
+                                * exp(-t_var^2 / (4*_ig_p))
+                                * sinh(_ig_b * t_var / (2*_ig_p))),
+                    res: [_ig_result,
+                          concat("IFT k*e^{-pw^2}*sin(bw)->gaussian*sinh, p=",
+                                 string(_ig_p), ", b=", string(_ig_b))]
                 )
             )
         )

@@ -1121,11 +1121,11 @@ $$\boxed{\mathcal{F}\!\left\{k\,e^{-at^2}\right\}(\omega) = k\sqrt{\frac{\pi}{a}
 
 **Con modulación coseno** (uso de propiedad de desplazamiento en frecuencia):
 
-$$\boxed{\mathcal{F}\!\left\{k\,e^{-at^2}\cos(bt)\right\}(\omega) = k\sqrt{\frac{\pi}{a}}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\cos\!\left(\frac{b\omega}{2a}\right)}, \qquad a>0$$
+$$\boxed{\mathcal{F}\!\left\{k\,e^{-at^2}\cos(bt)\right\}(\omega) = k\sqrt{\frac{\pi}{a}}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\cosh\!\left(\frac{b\omega}{2a}\right)}, \qquad a>0$$
 
 **Con modulación seno:**
 
-$$\boxed{\mathcal{F}\!\left\{k\,e^{-at^2}\sin(bt)\right\}(\omega) = -ik\sqrt{\frac{\pi}{a}}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\sin\!\left(\frac{b\omega}{2a}\right)}, \qquad a>0$$
+$$\boxed{\mathcal{F}\!\left\{k\,e^{-at^2}\sin(bt)\right\}(\omega) = -ik\sqrt{\frac{\pi}{a}}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\sinh\!\left(\frac{b\omega}{2a}\right)}, \qquad a>0$$
 
 **Con fase** $\theta$ en el argumento trigonométrico:
 
@@ -1144,8 +1144,8 @@ La última igualdad usa $e^{-(\omega-b)^2/(4a)} + e^{-(\omega+b)^2/(4a)} = 2e^{-
 | # | $f(t)$ | $F(\omega)$ | Estado |
 |---|--------|-------------|--------|
 | G-0 | $k\,e^{-at^2}$ | $k\sqrt{\pi/a}\,e^{-\omega^2/(4a)}$ | ✓ Implementado |
-| G-1 | $k\,e^{-at^2}\cos(bt)$ | $k\sqrt{\pi/a}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\cos\!\left(\frac{b\omega}{2a}\right)$ | ✓ Implementado |
-| G-2 | $k\,e^{-at^2}\sin(bt)$ | $-ik\sqrt{\pi/a}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\sin\!\left(\frac{b\omega}{2a}\right)$ | ✓ Implementado |
+| G-1 | $k\,e^{-at^2}\cos(bt)$ | $k\sqrt{\pi/a}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\cosh\!\left(\frac{b\omega}{2a}\right)$ | ✓ Implementado |
+| G-2 | $k\,e^{-at^2}\sin(bt)$ | $-ik\sqrt{\pi/a}\,e^{-b^2/(4a)}\,e^{-\omega^2/(4a)}\sinh\!\left(\frac{b\omega}{2a}\right)$ | ✓ Implementado |
 | G-3 | $k\,e^{-at^2}\cos(bt+\theta)$ | $\frac{k}{2}\sqrt{\pi/a}\!\left[e^{i\theta}e^{-(\omega-b)^2/(4a)}+e^{-i\theta}e^{-(\omega+b)^2/(4a)}\right]$ | ✓ Implementado |
 | G-4 | $k\,e^{-at^2}\sin(bt+\theta)$ | $\frac{k}{2i}\sqrt{\pi/a}\!\left[e^{i\theta}e^{-(\omega-b)^2/(4a)}-e^{-i\theta}e^{-(\omega+b)^2/(4a)}\right]$ | ✓ Implementado |
 
@@ -1154,8 +1154,8 @@ La última igualdad usa $e^{-(\omega-b)^2/(4a)} + e^{-(\omega+b)^2/(4a)} = 2e^{-
 | $f(t)$ | $F(\omega)$ |
 |--------|-------------|
 | $e^{-t^2/2}$ | $\sqrt{2\pi}\,e^{-\omega^2/2}$ |
-| $e^{-t^2/2}\cos(\omega_0 t)$ | $\sqrt{2\pi}\,e^{-\omega_0^2/2}\,e^{-\omega^2/2}\cos(\omega_0\omega)$ |
-| $e^{-t^2/2}\sin(\omega_0 t)$ | $-i\sqrt{2\pi}\,e^{-\omega_0^2/2}\,e^{-\omega^2/2}\sin(\omega_0\omega)$ |
+| $e^{-t^2/2}\cos(\omega_0 t)$ | $\sqrt{2\pi}\,e^{-\omega_0^2/2}\,e^{-\omega^2/2}\cosh(\omega_0\omega)$ |
+| $e^{-t^2/2}\sin(\omega_0 t)$ | $-i\sqrt{2\pi}\,e^{-\omega_0^2/2}\,e^{-\omega^2/2}\sinh(\omega_0\omega)$ |
 
 **Nota técnica:** Antes de este handler, `FT_is_periodic_nondecaying` clasificaba incorrectamente `e^{-at^2}\cos(bt)` como "integral divergente" porque la detección de decay solo cubría el caso lineal $e^{-at}$. Se extendió para reconocer el caso cuadrático $e^{-at^2}$.
 

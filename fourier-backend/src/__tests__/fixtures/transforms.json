@@ -8335,7 +8335,7 @@
   {
     "id": "GA07",
     "type": "ft",
-    "description": "FT e^{-t²/2}·sin(t) → -i·√(2π)·e^{-1/2}·e^{-w²/2}·sin(w)",
+    "description": "FT e^{-t²/2}·sin(t) → -i·√(2π)·e^{-1/2}·e^{-w²/2}·sinh(w)",
     "input": {
       "segments": [
         {
@@ -8349,13 +8349,13 @@
     },
     "expected": {
       "exists": true,
-      "F": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-1/2)*sin(w))"
+      "F": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-1/2)*sinh(w))"
     }
   },
   {
     "id": "GA08",
     "type": "ft",
-    "description": "FT e^{-t²/2}·sin(2t) → -i·√(2π)·e^{-2}·e^{-w²/2}·sin(2w)",
+    "description": "FT e^{-t²/2}·sin(2t) → -i·√(2π)·e^{-2}·e^{-w²/2}·sinh(2w)",
     "input": {
       "segments": [
         {
@@ -8369,13 +8369,13 @@
     },
     "expected": {
       "exists": true,
-      "F": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-2)*sin(2*w))"
+      "F": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-2)*sinh(2*w))"
     }
   },
   {
     "id": "GA09",
     "type": "ft",
-    "description": "FT e^{-2t²}·sin(3t) → -i·√(π/2)·e^{-9/8}·e^{-w²/8}·sin(3w/4)",
+    "description": "FT e^{-2t²}·sin(3t) → -i·√(π/2)·e^{-9/8}·e^{-w²/8}·sinh(3w/4)",
     "input": {
       "segments": [
         {
@@ -8389,7 +8389,7 @@
     },
     "expected": {
       "exists": true,
-      "F": "-(sqrt(%pi/2)*%i*%e^(-(w^2/8)-9/8)*sin(3*w/4))"
+      "F": "-(sqrt(%pi/2)*%i*%e^(-(w^2/8)-9/8)*sinh((3*w)/4))"
     }
   },
   {
@@ -8415,7 +8415,7 @@
   {
     "id": "GA11",
     "type": "ft",
-    "description": "FT e^{-t²}·cos(2t) con a=1 → √π·e^{-1}·e^{-w²/4}·cos(w)",
+    "description": "FT e^{-t²}·cos(2t) con a=1 → √π·e^{-1}·e^{-w²/4}·cosh(w)",
     "input": {
       "segments": [
         {
@@ -8429,7 +8429,7 @@
     },
     "expected": {
       "exists": true,
-      "F": "sqrt(%pi)*%e^(-(w^2/4)-1)*cos(w)"
+      "F": "sqrt(%pi)*%e^(-(w^2/4)-1)*cosh(w)"
     }
   },
   {
@@ -8455,7 +8455,7 @@
   {
     "id": "GM01",
     "type": "ft",
-    "description": "FT e^{-t²/2}·cos(2t) → √(2π)·e^{-2}·e^{-w²/2}·cos(2w)",
+    "description": "FT e^{-t²/2}·cos(2t) → √(2π)·e^{-2}·e^{-w²/2}·cosh(2w)",
     "input": {
       "segments": [
         {
@@ -8469,13 +8469,13 @@
     },
     "expected": {
       "exists": true,
-      "F": "sqrt(2)*sqrt(%pi)*%e^(-(w^2/2)-2)*cos(2*w)"
+      "F": "sqrt(2)*sqrt(%pi)*%e^(-(w^2/2)-2)*cosh(2*w)"
     }
   },
   {
     "id": "GM02",
     "type": "ft",
-    "description": "FT 3·e^{-t²/2}·cos(t) → 3√(2π)·e^{-1/2}·e^{-w²/2}·cos(w)",
+    "description": "FT 3·e^{-t²/2}·cos(t) → 3√(2π)·e^{-1/2}·e^{-w²/2}·cosh(w)",
     "input": {
       "segments": [
         {
@@ -8489,13 +8489,13 @@
     },
     "expected": {
       "exists": true,
-      "F": "3*sqrt(2)*sqrt(%pi)*%e^(-(w^2/2)-1/2)*cos(w)"
+      "F": "3*sqrt(2)*sqrt(%pi)*%e^(-(w^2/2)-1/2)*cosh(w)"
     }
   },
   {
     "id": "GM03",
     "type": "ft",
-    "description": "FT e^{-2t²}·cos(3t) → √(π/2)·e^{-9/8}·e^{-w²/8}·cos(3w/4)",
+    "description": "FT e^{-2t²}·cos(3t) → √(π/2)·e^{-9/8}·e^{-w²/8}·cosh(3w/4)",
     "input": {
       "segments": [
         {
@@ -8509,13 +8509,13 @@
     },
     "expected": {
       "exists": true,
-      "F": "sqrt(%pi/2)*%e^(-(w^2/8)-9/8)*cos(3*w/4)"
+      "F": "sqrt(%pi/2)*%e^(-(w^2/8)-9/8)*cosh((3*w)/4)"
     }
   },
   {
     "id": "GM04",
     "type": "ft",
-    "description": "FT e^{-t²/2}·sin(t) → -i·√(2π)·e^{-1/2}·e^{-w²/2}·sin(w)",
+    "description": "FT e^{-t²/2}·sin(t) → -i·√(2π)·e^{-1/2}·e^{-w²/2}·sinh(w)",
     "input": {
       "segments": [
         {
@@ -8529,13 +8529,13 @@
     },
     "expected": {
       "exists": true,
-      "F": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-1/2)*sin(w))"
+      "F": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-1/2)*sinh(w))"
     }
   },
   {
     "id": "GM05",
     "type": "ft",
-    "description": "FT e^{-t²/2}·sin(2t) → -i·√(2π)·e^{-2}·e^{-w²/2}·sin(2w)",
+    "description": "FT e^{-t²/2}·sin(2t) → -i·√(2π)·e^{-2}·e^{-w²/2}·sinh(2w)",
     "input": {
       "segments": [
         {
@@ -8549,13 +8549,13 @@
     },
     "expected": {
       "exists": true,
-      "F": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-2)*sin(2*w))"
+      "F": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-2)*sinh(2*w))"
     }
   },
   {
     "id": "GM06",
     "type": "ft",
-    "description": "FT e^{-2t²}·sin(3t) → -i·√(π/2)·e^{-9/8}·e^{-w²/8}·sin(3w/4)",
+    "description": "FT e^{-2t²}·sin(3t) → -i·√(π/2)·e^{-9/8}·e^{-w²/8}·sinh(3w/4)",
     "input": {
       "segments": [
         {
@@ -8569,7 +8569,7 @@
     },
     "expected": {
       "exists": true,
-      "F": "-(sqrt(%pi/2)*%i*%e^(-(w^2/8)-9/8)*sin(3*w/4))"
+      "F": "-(sqrt(%pi/2)*%i*%e^(-(w^2/8)-9/8)*sinh((3*w)/4))"
     }
   },
   {
@@ -8595,7 +8595,7 @@
   {
     "id": "GM08",
     "type": "ft",
-    "description": "FT e^{-t²}·cos(2t) con a=1 → √π·e^{-1}·e^{-w²/4}·cos(w)",
+    "description": "FT e^{-t²}·cos(2t) con a=1 → √π·e^{-1}·e^{-w²/4}·cosh(w)",
     "input": {
       "segments": [
         {
@@ -8609,17 +8609,17 @@
     },
     "expected": {
       "exists": true,
-      "F": "sqrt(%pi)*%e^(-(w^2/4)-1)*cos(w)"
+      "F": "sqrt(%pi)*%e^(-(w^2/4)-1)*cosh(w)"
     }
   },
   {
     "id": "GM09",
     "type": "ift",
-    "description": "IFT gaussiana modulada cos: IFT[√(2π)·e^{-2}·e^{-w²/2}·cos(2w)] = e^{-t²/2}·cos(2t)",
+    "description": "IFT gaussiana pura: IFT[√(2π)·e^{-w²/2}] = e^{-t²/2}",
     "input": {
       "segments": [
         {
-          "expression": "sqrt(2)*sqrt(%pi)*%e^(-(w^2/2)-2)*cos(2*w)",
+          "expression": "sqrt(2)*sqrt(%pi)*%e^-(w^2/2)",
           "from": "minf",
           "to": "inf"
         }
@@ -8629,51 +8629,11 @@
     },
     "expected": {
       "exists": true,
-      "F": "%e^(-(t^2/2))*cos(2*t)"
+      "F": "%e^-(t^2/2)"
     }
   },
   {
     "id": "GM10",
-    "type": "ift",
-    "description": "IFT gaussiana modulada sin: IFT[-i·√(2π)·e^{-1/2}·e^{-w²/2}·sin(w)] = e^{-t²/2}·sin(t)",
-    "input": {
-      "segments": [
-        {
-          "expression": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-1/2)*sin(w))",
-          "from": "minf",
-          "to": "inf"
-        }
-      ],
-      "intVar": "w",
-      "transVar": "t"
-    },
-    "expected": {
-      "exists": true,
-      "F": "%e^(-(t^2/2))*sin(t)"
-    }
-  },
-  {
-    "id": "GM11",
-    "type": "ift",
-    "description": "IFT gaussiana cos escalada: IFT[√(π/2)·e^{-9/8}·e^{-w²/8}·cos(3w/4)] = e^{-2t²}·cos(3t)",
-    "input": {
-      "segments": [
-        {
-          "expression": "sqrt(%pi/2)*%e^(-(w^2/8)-9/8)*cos(3*w/4)",
-          "from": "minf",
-          "to": "inf"
-        }
-      ],
-      "intVar": "w",
-      "transVar": "t"
-    },
-    "expected": {
-      "exists": true,
-      "F": "%e^(-2*t^2)*cos(3*t)"
-    }
-  },
-  {
-    "id": "GM12",
     "type": "ift",
     "description": "IFT gaussiana escalada: IFT[√(π/2)·e^{-w²/8}] = e^{-2t²}",
     "input": {
@@ -8690,6 +8650,66 @@
     "expected": {
       "exists": true,
       "F": "%e^(-2*t^2)"
+    }
+  },
+  {
+    "id": "GM11",
+    "type": "ift",
+    "description": "IFT gaussiana modulada cos: IFT[√(2π)·e^{-w²/2-2}·cos(2w)] = e^{-(t+2)²/2-2}/2 + e^{-(t-2)²/2-2}/2",
+    "input": {
+      "segments": [
+        {
+          "expression": "sqrt(2)*sqrt(%pi)*%e^(-(w^2/2)-2)*cos(2*w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(%e^(-((t+2)^2/2)-2)+%e^(-((t-2)^2/2)-2))/2"
+    }
+  },
+  {
+    "id": "GM12",
+    "type": "ift",
+    "description": "IFT gaussiana modulada sin: IFT[-i·√(2π)·e^{-w²/2-1/2}·sin(w)] = e^{-t²/2-1/2}·sinh(t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-1/2)*sin(w))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%e^(-(t^2/2)-1)*sinh(t)"
+    }
+  },
+  {
+    "id": "GM13",
+    "type": "ift",
+    "description": "IFT gaussiana cos escalada: IFT[√(π/2)·e^{-w²/8-9/8}·cos(3w/4)] = e^{-9/8}·e^{-2t²}·cosh(3t/4)/√2 (forma compacta)",
+    "input": {
+      "segments": [
+        {
+          "expression": "sqrt(%pi/2)*%e^(-(w^2/8)-9/8)*cos(3*w/4)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(%e^(-(2*(t+3/4)^2)-9/8)+%e^(-(2*(t-3/4)^2)-9/8))/2"
     }
   }
 ]
