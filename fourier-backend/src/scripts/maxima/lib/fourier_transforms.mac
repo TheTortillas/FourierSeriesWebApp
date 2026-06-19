@@ -2560,6 +2560,186 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── TH-4: k/sinh(bt) -> -ik*pi*tanh(pi*w/(2b))/|b|  ───────────────────
+       1/sinh has non-integrable singularity at t=0; formula via Ramanujan kernel.
+       After FT_normalize_hyp: csch(bt) -> 1/sinh(bt), so we match op="/".
+       Matches: k/sinh(b*t) or k*(1/sinh(b*t)). */
+    if is(res = false) then block(
+        [_th4_k, _th4_b, _th4_e, _th4_facs, _th4_f, _th4_found],
+        _th4_k: 1, _th4_b: false, _th4_found: false,
+        _th4_e: e,
+        /* Direct: op="/"  →  numerator free of t, denominator is sinh(b*t) */
+        if not atom(_th4_e) and is(op(_th4_e) = "/") then block(
+            [_n: part(_th4_e,1), _d: part(_th4_e,2)],
+            if freeof(t_var, _n) and not atom(_d) and is(op(_d) = 'sinh) then block(
+                [_arg: part(_d,1), _cn],
+                _cn: errcatch(ratsimp(_arg / t_var)),
+                if _cn # [] and freeof(t_var, first(_cn)) then (
+                    _th4_k: _n,
+                    _th4_b: first(_cn),
+                    _th4_found: true
+                )
+            )
+        ),
+        /* Product: op="*", one factor is 1/sinh(b*t) */
+        if not _th4_found and not atom(_th4_e) and is(op(_th4_e) = "*") then (
+            _th4_facs: args(_th4_e),
+            for _th4_f in _th4_facs do (
+                if not atom(_th4_f) and is(op(_th4_f) = "/")
+                   and is(part(_th4_f,1) = 1)
+                   and not atom(part(_th4_f,2)) and is(op(part(_th4_f,2)) = 'sinh) then block(
+                    [_arg: part(part(_th4_f,2),1), _cn],
+                    _cn: errcatch(ratsimp(_arg / t_var)),
+                    if _cn # [] and freeof(t_var, first(_cn)) then (
+                        _th4_b: first(_cn),
+                        _th4_k: ratsimp(_th4_e * sinh(_arg)),
+                        _th4_found: true
+                    )
+                )
+            )
+        ),
+        if _th4_found and freeof(t_var, _th4_k) and freeof(t_var, _th4_b)
+           and is(_th4_b # 0) then
+            res: [-%i * _th4_k * %piexact * tanh(%piexact * w_var / (2 * _th4_b)) / abs(_th4_b),
+                  concat("k/sinh(bt)->-ik*pi*tanh(pi*w/(2b))/|b|, b=", string(_th4_b))]
+    ),
+
+    /* ── TH-5: k*tanh(bt) -> -ik*pi*csch(pi*w/(2b))/|b|  ──────────────────
+       tanh(bt) → ±1 at ±∞; formula via distributional FT (Ramanujan kernel + linearity).
+       After FT_normalize_hyp: tanh(bt) stays as tanh (not rewritten).
+       Matches: k*tanh(b*t). */
+    if is(res = false) then block(
+        [_th5_k, _th5_b, _th5_e, _th5_facs, _th5_f, _th5_found],
+        _th5_k: 1, _th5_b: false, _th5_found: false,
+        _th5_e: e,
+        /* Lone tanh(b*t) */
+        if not atom(_th5_e) and is(op(_th5_e) = 'tanh) then block(
+            [_arg: part(_th5_e,1), _cn],
+            _cn: errcatch(ratsimp(_arg / t_var)),
+            if _cn # [] and freeof(t_var, first(_cn)) then (
+                _th5_b: first(_cn), _th5_found: true
+            )
+        ),
+        /* k * tanh(b*t) */
+        if not _th5_found and not atom(_th5_e) and is(op(_th5_e) = "*") then (
+            _th5_facs: args(_th5_e),
+            for _th5_f in _th5_facs do (
+                if not atom(_th5_f) and is(op(_th5_f) = 'tanh) then block(
+                    [_arg: part(_th5_f,1), _cn],
+                    _cn: errcatch(ratsimp(_arg / t_var)),
+                    if _cn # [] and freeof(t_var, first(_cn)) then (
+                        _th5_b: first(_cn),
+                        _th5_k: ratsimp(_th5_e / _th5_f),
+                        _th5_found: true
+                    )
+                )
+            )
+        ),
+        if _th5_found and freeof(t_var, _th5_k) and freeof(t_var, _th5_b)
+           and is(_th5_b # 0) then
+            res: [-%i * _th5_k * %piexact / (abs(_th5_b) * sinh(%piexact * w_var / (2 * _th5_b))),
+                  concat("k*tanh(bt)->-ik*pi*csch(pi*w/(2b))/|b|, b=", string(_th5_b))]
+    ),
+
+    /* ── TH-6: k*sech²(bt) -> k*pi*w*csch(pi*w/(2b))/b²  ──────────────────
+       After FT_normalize_hyp: sech(bt)^2 → 1/cosh(bt)^2 which Maxima represents
+       as op="/" with num=1, den=cosh(bt)^2.
+       Matches: k*(1/cosh(bt)^2) — direct or in a product. */
+    if is(res = false) then block(
+        [_th6_k, _th6_b, _th6_e, _th6_facs, _th6_f, _th6_found, _th6_den],
+        _th6_k: 1, _th6_b: false, _th6_found: false,
+        _th6_e: e,
+        /* Helper: try to extract b from cosh(bt)^2 in denominator */
+        block([_try_den],
+            _try_den: lambda([_d],
+                if not atom(_d) and is(op(_d) = "^") and is(part(_d,2) = 2)
+                   and not atom(part(_d,1)) and is(op(part(_d,1)) = 'cosh) then block(
+                    [_arg: part(part(_d,1),1), _cn],
+                    _cn: errcatch(ratsimp(_arg / t_var)),
+                    if _cn # [] and freeof(t_var, first(_cn)) then first(_cn) else false
+                ) else false
+            ),
+            /* Direct: op="/", num=constant, den=cosh(bt)^2 */
+            if not atom(_th6_e) and is(op(_th6_e) = "/") then block(
+                [_n: part(_th6_e,1), _d: part(_th6_e,2), _b],
+                if freeof(t_var, _n) then (
+                    _b: apply(_try_den, [_d]),
+                    if is(_b # false) then (
+                        _th6_k: _n, _th6_b: _b, _th6_found: true
+                    )
+                )
+            ),
+            /* Product: one factor is 1/cosh(bt)^2 */
+            if not _th6_found and not atom(_th6_e) and is(op(_th6_e) = "*") then (
+                _th6_facs: args(_th6_e),
+                for _th6_f in _th6_facs do (
+                    if not atom(_th6_f) and is(op(_th6_f) = "/")
+                       and is(part(_th6_f,1) = 1) then block(
+                        [_b: apply(_try_den, [part(_th6_f,2)])],
+                        if is(_b # false) then (
+                            _th6_b: _b,
+                            _th6_k: ratsimp(_th6_e / _th6_f),
+                            _th6_found: true
+                        )
+                    )
+                )
+            )
+        ),
+        if _th6_found and freeof(t_var, _th6_k) and freeof(t_var, _th6_b)
+           and is(_th6_b > 0) then
+            res: [_th6_k * %piexact * w_var / (_th6_b^2 * sinh(%piexact * w_var / (2 * _th6_b))),
+                  concat("k*sech^2(bt)->k*pi*w*csch(pi*w/(2b))/b^2, b=", string(_th6_b))]
+    ),
+
+    /* ── TH-7: k*csch²(bt) -> -2k*pi*w*coth(pi*w/(2b))/b²  ────────────────
+       After FT_normalize_hyp: csch(bt)^2 → 1/sinh(bt)^2 which Maxima represents
+       as op="/" with num=1, den=sinh(bt)^2.
+       Matches: k*(1/sinh(bt)^2) — direct or in a product. */
+    if is(res = false) then block(
+        [_th7_k, _th7_b, _th7_e, _th7_facs, _th7_f, _th7_found],
+        _th7_k: 1, _th7_b: false, _th7_found: false,
+        _th7_e: e,
+        block([_try_den],
+            _try_den: lambda([_d],
+                if not atom(_d) and is(op(_d) = "^") and is(part(_d,2) = 2)
+                   and not atom(part(_d,1)) and is(op(part(_d,1)) = 'sinh) then block(
+                    [_arg: part(part(_d,1),1), _cn],
+                    _cn: errcatch(ratsimp(_arg / t_var)),
+                    if _cn # [] and freeof(t_var, first(_cn)) then first(_cn) else false
+                ) else false
+            ),
+            /* Direct: op="/", num=constant, den=sinh(bt)^2 */
+            if not atom(_th7_e) and is(op(_th7_e) = "/") then block(
+                [_n: part(_th7_e,1), _d: part(_th7_e,2), _b],
+                if freeof(t_var, _n) then (
+                    _b: apply(_try_den, [_d]),
+                    if is(_b # false) then (
+                        _th7_k: _n, _th7_b: _b, _th7_found: true
+                    )
+                )
+            ),
+            /* Product: one factor is 1/sinh(bt)^2 */
+            if not _th7_found and not atom(_th7_e) and is(op(_th7_e) = "*") then (
+                _th7_facs: args(_th7_e),
+                for _th7_f in _th7_facs do (
+                    if not atom(_th7_f) and is(op(_th7_f) = "/")
+                       and is(part(_th7_f,1) = 1) then block(
+                        [_b: apply(_try_den, [part(_th7_f,2)])],
+                        if is(_b # false) then (
+                            _th7_b: _b,
+                            _th7_k: ratsimp(_th7_e / _th7_f),
+                            _th7_found: true
+                        )
+                    )
+                )
+            )
+        ),
+        if _th7_found and freeof(t_var, _th7_k) and freeof(t_var, _th7_b)
+           and is(_th7_b > 0) then
+            res: [-2 * _th7_k * %piexact * w_var * coth(%piexact * w_var / (2 * _th7_b)) / _th7_b^2,
+                  concat("k*csch^2(bt)->-2k*pi*w*coth(pi*w/(2b))/b^2, b=", string(_th7_b))]
+    ),
+
     /* ── f(t)/c -> FT(f(t))/c  (c constante en t, op="/") ──
        Handles Maxima's representation of k/c * f(t) as (k*f(t))/c.
        Delegates to FT_pattern_lookup on the numerator. */
@@ -4517,6 +4697,174 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
             res: [_raw_tri_ift,
                   concat("k*tri(a*w+b)->k*W*sinc²(Wt/2)/(2pi)*exp(iw0t), W=", string(_tW),
                          ", w0=", string(_tw0))]
+        )
+    ),
+
+    /* ── IFT TH-5: k/sinh(p*w) → i*k*b/pi*tanh(bt)  ──────────────────────
+       IFT[-i*pi/|b|/sinh(pi*w/(2b))] = tanh(bt)  (duality from FT[tanh(bt)])
+       Strategy: find sinh(p*w) subexpression, then k = F_expr*sinh(p*w). */
+    if is(res = false) then block(
+        [_it5_k, _it5_p, _it5_b],
+        _it5_k: false, _it5_p: false,
+        block([_scan],
+            _scan: lambda([_x],
+                if atom(_x) then false
+                else if is(op(_x) = 'sinh) then block(
+                    [_arg: part(_x,1), _cn],
+                    _cn: errcatch(ratsimp(_arg / w_var)),
+                    if _cn # [] and freeof(w_var, first(_cn)) and is(first(_cn) # 0)
+                    then first(_cn) else false
+                ) else block([_r: false],
+                    for _sub in args(_x) while is(_r = false) do
+                        _r: apply(_scan, [_sub]),
+                    _r
+                )
+            ),
+            _it5_p: apply(_scan, [F_expr])
+        ),
+        if is(_it5_p # false) then block(
+            [_it5_b_val, _kc],
+            _kc: errcatch(ratsimp(F_expr * sinh(_it5_p * w_var))),
+            /* k must be w-free AND must not contain w_var (i.e. sinh fully cancels) */
+            if _kc # [] and freeof(w_var, first(_kc)) then (
+                _it5_k: first(_kc),
+                _it5_b_val: errcatch(ratsimp(%pi / (2 * _it5_p))),
+                if _it5_b_val # [] and is(first(_it5_b_val) > 0) then (
+                    _it5_b: first(_it5_b_val),
+                    /* FT[tanh(bt)] = -i*pi/b/sinh(pi*w/(2b))
+                       => IFT[k/sinh(pw)] = i*k*b/pi * tanh(bt) */
+                    res: [ratsimp(%i * _it5_k * _it5_b / %pi) * tanh(_it5_b * t_var),
+                          concat("IFT k/sinh(pw)->i*k*b/pi*tanh(bt), p=", string(_it5_p),
+                                 ", b=", string(_it5_b))]
+                )
+            )
+        )
+    ),
+
+    /* ── IFT TH-6: k*w/sinh(p*w) → k*b²/pi * sech²(bt)  ──────────────────
+       IFT[pi*w/b²/sinh(pi*w/(2b))] = sech²(bt).
+       Strategy: find sinh(p*w), compute k = F_expr*sinh(p*w)/w_var. */
+    if is(res = false) then block(
+        [_it6_k, _it6_p, _it6_b],
+        _it6_k: false, _it6_p: false,
+        block([_scan],
+            _scan: lambda([_x],
+                if atom(_x) then false
+                else if is(op(_x) = 'sinh) then block(
+                    [_arg: part(_x,1), _cn],
+                    _cn: errcatch(ratsimp(_arg / w_var)),
+                    if _cn # [] and freeof(w_var, first(_cn)) and is(first(_cn) # 0)
+                    then first(_cn) else false
+                ) else block([_r: false],
+                    for _sub in args(_x) while is(_r = false) do
+                        _r: apply(_scan, [_sub]),
+                    _r
+                )
+            ),
+            _it6_p: apply(_scan, [F_expr])
+        ),
+        if is(_it6_p # false) then block(
+            [_it6_b_val, _kc],
+            /* k = F_expr * sinh(p*w) / w_var — must be w-free */
+            _kc: errcatch(ratsimp(F_expr * sinh(_it6_p * w_var) / w_var)),
+            if _kc # [] and freeof(w_var, first(_kc)) then (
+                _it6_k: first(_kc),
+                _it6_b_val: errcatch(ratsimp(%pi / (2 * _it6_p))),
+                if _it6_b_val # [] and is(first(_it6_b_val) > 0) then (
+                    _it6_b: first(_it6_b_val),
+                    /* FT[sech²(bt)] = pi*w/b²/sinh(pi*w/(2b))
+                       => IFT[k*w/sinh(pw)] = k*b²/pi * sech²(bt) */
+                    res: [ratsimp(_it6_k * _it6_b^2 / %pi) / cosh(_it6_b * t_var)^2,
+                          concat("IFT k*w/sinh(pw)->k*b^2/pi*sech^2(bt), p=", string(_it6_p),
+                                 ", b=", string(_it6_b))]
+                )
+            )
+        )
+    ),
+
+    /* ── IFT TH-4: k*tanh(p*w) → i*k*b/pi * 1/sinh(bt)  ───────────────────
+       IFT[-i*pi*tanh(pi*w/(2b))/|b|] = 1/sinh(bt) (distributional).
+       Strategy: find any tanh(p*w) subexpression, extract p, then compute
+       k = F_expr / tanh(p*w).  Works for all scalar multiples / fractions. */
+    if is(res = false) and not freeof('tanh, F_expr) then block(
+        [_it4_k, _it4_p, _it4_b, _it4_found, _it4_tanh_arg],
+        _it4_k: false, _it4_p: false, _it4_found: false,
+        /* Walk F_expr to find a tanh(linear in w) subexpression */
+        block([_scan],
+            _scan: lambda([_x],
+                if atom(_x) then false
+                else if is(op(_x) = 'tanh) then block(
+                    [_arg: part(_x,1), _cn],
+                    _cn: errcatch(ratsimp(_arg / w_var)),
+                    if _cn # [] and freeof(w_var, first(_cn)) and is(first(_cn) # 0)
+                    then first(_cn) else false
+                ) else (
+                    block([_r: false],
+                        for _sub in args(_x) while is(_r = false) do
+                            _r: apply(_scan, [_sub]),
+                        _r
+                    )
+                )
+            ),
+            _it4_p: apply(_scan, [F_expr])
+        ),
+        if is(_it4_p # false) then block(
+            [_it4_b_val, _kc],
+            _kc: errcatch(ratsimp(F_expr / tanh(_it4_p * w_var))),
+            if _kc # [] and freeof(w_var, first(_kc)) then (
+                _it4_k: first(_kc),
+                _it4_b_val: errcatch(ratsimp(%pi / (2 * _it4_p))),
+                if _it4_b_val # [] and is(first(_it4_b_val) > 0) then (
+                    _it4_b: first(_it4_b_val),
+                    res: [ratsimp(%i * _it4_k * _it4_b / %pi) / sinh(_it4_b * t_var),
+                          concat("IFT k*tanh(pw)->i*k*b/(pi*sinh(bt)), p=", string(_it4_p),
+                                 ", b=", string(_it4_b))]
+                )
+            )
+        )
+    ),
+
+    /* ── IFT TH-7: k*w*coth(p*w) → -k*b²/(2pi) * 1/sinh²(bt)  ────────────
+       IFT[-2*pi*w*coth(pi*w/(2b))/b²] = csch²(bt) (distributional).
+       FT_normalize_hyp converts coth(u) → cosh(u)/sinh(u), so F_expr arrives as
+       k*w*cosh(p*w)/sinh(p*w).  Strategy: find sinh(p*w), then compute
+       k = F_expr * sinh(p*w) / (w * cosh(p*w)). */
+    if is(res = false) then block(
+        [_it7_k, _it7_p, _it7_b],
+        _it7_k: false, _it7_p: false,
+        /* Scan for sinh(linear in w) */
+        block([_scan],
+            _scan: lambda([_x],
+                if atom(_x) then false
+                else if is(op(_x) = 'sinh) then block(
+                    [_arg: part(_x,1), _cn],
+                    _cn: errcatch(ratsimp(_arg / w_var)),
+                    if _cn # [] and freeof(w_var, first(_cn)) and is(first(_cn) # 0)
+                    then first(_cn) else false
+                ) else block([_r: false],
+                    for _sub in args(_x) while is(_r = false) do
+                        _r: apply(_scan, [_sub]),
+                    _r
+                )
+            ),
+            _it7_p: apply(_scan, [F_expr])
+        ),
+        if is(_it7_p # false) then block(
+            [_it7_b_val, _kc],
+            /* k = F_expr * sinh(pw) / (w * cosh(pw)) — must be w-free */
+            _kc: errcatch(ratsimp(F_expr * sinh(_it7_p * w_var) / (w_var * cosh(_it7_p * w_var)))),
+            if _kc # [] and freeof(w_var, first(_kc)) then (
+                _it7_k: first(_kc),
+                _it7_b_val: errcatch(ratsimp(%pi / (2 * _it7_p))),
+                if _it7_b_val # [] and is(first(_it7_b_val) > 0) then (
+                    _it7_b: first(_it7_b_val),
+                    /* FT[csch²(bt)] = -2*pi*w*coth(pi*w/(2b))/b²
+                       => IFT[k*w*cosh(pw)/sinh(pw)] = -k*b²/(2*pi) * 1/sinh²(bt) */
+                    res: [ratsimp(-_it7_k * _it7_b^2 / (2 * %pi)) / sinh(_it7_b * t_var)^2,
+                          concat("IFT k*w*coth(pw)->-k*b^2/(2pi*sinh^2(bt)), p=", string(_it7_p),
+                                 ", b=", string(_it7_b))]
+                )
+            )
         )
     ),
 

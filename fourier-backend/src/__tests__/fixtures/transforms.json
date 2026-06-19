@@ -4641,6 +4641,326 @@
     }
   },
   {
+    "id": "TH07",
+    "type": "ft",
+    "description": "FT TH-4: FT[1/sinh(t)] = -i*π*tanh(πω/2)",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/sinh(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-%i*%pi*tanh((%pi*w)/2)"
+    }
+  },
+  {
+    "id": "TH08",
+    "type": "ft",
+    "description": "FT TH-4 scaled: FT[2/sinh(3t)] = -2iπ*tanh(πω/6)/3",
+    "input": {
+      "segments": [
+        {
+          "expression": "2/sinh(3*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(2*%i*%pi*tanh((%pi*w)/6))/3"
+    }
+  },
+  {
+    "id": "TH09",
+    "type": "ft",
+    "description": "FT TH-5: FT[tanh(t)] = -iπ/sinh(πω/2)",
+    "input": {
+      "segments": [
+        {
+          "expression": "tanh(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-%i*%pi/sinh((%pi*w)/2)"
+    }
+  },
+  {
+    "id": "TH10",
+    "type": "ft",
+    "description": "FT TH-5 scaled: FT[3*tanh(2t)] = -3iπ/(2*sinh(πω/4))",
+    "input": {
+      "segments": [
+        {
+          "expression": "3*tanh(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(3*%i*%pi)/(2*sinh((%pi*w)/4))"
+    }
+  },
+  {
+    "id": "TH11",
+    "type": "ft",
+    "description": "FT TH-6: FT[sech²(t)] = πω/sinh(πω/2)",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/cosh(t)^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "%pi*w/sinh((%pi*w)/2)"
+    }
+  },
+  {
+    "id": "TH12",
+    "type": "ft",
+    "description": "FT TH-6 scaled: FT[2*sech²(3t)] = 2πω/(9*sinh(πω/6))",
+    "input": {
+      "segments": [
+        {
+          "expression": "2/cosh(3*t)^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(2*%pi*w)/(9*sinh((%pi*w)/6))"
+    }
+  },
+  {
+    "id": "TH13",
+    "type": "ft",
+    "description": "FT TH-7: FT[csch²(t)] = -2πω*coth(πω/2)",
+    "input": {
+      "segments": [
+        {
+          "expression": "1/sinh(t)^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-2*%pi*w*coth((%pi*w)/2)"
+    }
+  },
+  {
+    "id": "TH14",
+    "type": "ft",
+    "description": "FT TH-7 scaled: FT[2*csch²(3t)] = -4πω*coth(πω/6)/9",
+    "input": {
+      "segments": [
+        {
+          "expression": "2/sinh(3*t)^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(4*%pi*w*coth((%pi*w)/6))/9"
+    }
+  },
+  {
+    "id": "TH15",
+    "type": "ift",
+    "description": "IFT TH-4: IFT[-iπ*tanh(πω/2)] = 1/sinh(t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "-%i*%pi*tanh((%pi*w)/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "1/sinh(t)"
+    }
+  },
+  {
+    "id": "TH16",
+    "type": "ift",
+    "description": "IFT TH-4 scaled: IFT[-2iπ*tanh(πω/6)/3] = 2/sinh(3t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "-(2*%i*%pi*tanh((%pi*w)/6))/3",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "2/sinh(3*t)"
+    }
+  },
+  {
+    "id": "TH17",
+    "type": "ift",
+    "description": "IFT TH-5: IFT[-iπ/sinh(πω/2)] = tanh(t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "-%i*%pi/sinh((%pi*w)/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "tanh(t)"
+    }
+  },
+  {
+    "id": "TH18",
+    "type": "ift",
+    "description": "IFT TH-5 scaled: IFT[-3iπ/(2*sinh(πω/4))] = 3*tanh(2t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "-(3*%i*%pi)/(2*sinh((%pi*w)/4))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "3*tanh(2*t)"
+    }
+  },
+  {
+    "id": "TH19",
+    "type": "ift",
+    "description": "IFT TH-6: IFT[πω/sinh(πω/2)] = sech²(t) = 1/cosh(t)²",
+    "input": {
+      "segments": [
+        {
+          "expression": "%pi*w/sinh((%pi*w)/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "1/cosh(t)^2"
+    }
+  },
+  {
+    "id": "TH20",
+    "type": "ift",
+    "description": "IFT TH-6 scaled: IFT[2πω/(9*sinh(πω/6))] = 2/cosh(3t)²",
+    "input": {
+      "segments": [
+        {
+          "expression": "(2*%pi*w)/(9*sinh((%pi*w)/6))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "2/cosh(3*t)^2"
+    }
+  },
+  {
+    "id": "TH21",
+    "type": "ift",
+    "description": "IFT TH-7: IFT[-2πω*coth(πω/2)] = csch²(t) = 1/sinh(t)²",
+    "input": {
+      "segments": [
+        {
+          "expression": "-2*%pi*w*coth((%pi*w)/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "1/sinh(t)^2"
+    }
+  },
+  {
+    "id": "TH22",
+    "type": "ift",
+    "description": "IFT TH-7 scaled: IFT[-4πω*coth(πω/6)/9] = 2/sinh(3t)²",
+    "input": {
+      "segments": [
+        {
+          "expression": "-(4*%pi*w*coth((%pi*w)/6))/9",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "2/sinh(3*t)^2"
+    }
+  },
+  {
     "id": "SE01",
     "type": "ft",
     "description": "FT sech auto-dual numérico: FT(1/cosh(t)) = π·sech(πω/2) = π/cosh(πω/2)",
