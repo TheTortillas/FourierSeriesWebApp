@@ -4961,6 +4961,258 @@
     }
   },
   {
+    "id": "TH23",
+    "type": "ft",
+    "description": "FT TH-8: FT[sech³(t)] = (π/2)(1+(πω/2)²)·sech(πω/2)",
+    "input": {
+      "segments": [{ "expression": "1/cosh(t)^3", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(%pi*((%pi^2*w^2)/4+1))/(2*cosh((%pi*w)/2))"
+    }
+  },
+  {
+    "id": "TH24",
+    "type": "ft",
+    "description": "FT TH-8: FT[sech⁵(t)] = (π/24)(9+10(πω/2)²+(πω/2)⁴)·sech(πω/2)",
+    "input": {
+      "segments": [{ "expression": "1/cosh(t)^5", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(%pi*((%pi^4*w^4)/16+(5*%pi^2*w^2)/2+9))/(24*cosh((%pi*w)/2))"
+    }
+  },
+  {
+    "id": "TH25",
+    "type": "ft",
+    "description": "FT TH-9: FT[tanh²(t)·sech(t)] = (π/2)(1-(πω/2)²)·sech(πω/2)",
+    "input": {
+      "segments": [{ "expression": "tanh(t)^2/cosh(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(%pi*(1-(%pi^2*w^2)/4))/(2*cosh((%pi*w)/2))"
+    }
+  },
+  {
+    "id": "TH26",
+    "type": "ft",
+    "description": "FT TH-9: FT[tanh²(t)·sech³(t)] = (π/2)[(1+(πω/2)²)-(1/12)(9+10(πω/2)²+(πω/2)⁴)]·sech(πω/2)",
+    "input": {
+      "segments": [{ "expression": "tanh(t)^2/cosh(t)^3", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(%pi*(-(((%pi^4*w^4)/16+(5*%pi^2*w^2)/2+9)/12)+(%pi^2*w^2)/4+1))/(2*cosh((%pi*w)/2))"
+    }
+  },
+  {
+    "id": "TH39",
+    "type": "ft",
+    "description": "FT TH-9odd: FT[tanh(t)·sech(t)] = -iπω·sech(πω/2)",
+    "input": {
+      "segments": [{ "expression": "tanh(t)/cosh(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((%i*%pi*w)/cosh((%pi*w)/2))"
+    }
+  },
+  {
+    "id": "TH40",
+    "type": "ft",
+    "description": "FT TH-9odd scaled: FT[2·tanh(3t)·sech(3t)] = -2iπω/(3·cosh(πω/6))",
+    "input": {
+      "segments": [{ "expression": "2*tanh(3*t)/cosh(3*t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(2*%i*%pi*w)/(3*cosh((%pi*w)/6))"
+    }
+  },
+  {
+    "id": "TH31",
+    "type": "ft",
+    "description": "FT TH-8 general: FT[sech⁷(t)] — recurrence n=3",
+    "input": {
+      "segments": [{ "expression": "1/cosh(t)^7", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(%pi*(%pi^6*w^6+140*%pi^4*w^4+4144*%pi^2*w^2+14400))/(46080*cosh((%pi*w)/2))"
+    }
+  },
+  {
+    "id": "TH32",
+    "type": "ift",
+    "description": "IFT TH-8 general: IFT[FT[sech⁷(t)]] = sech⁷(t)",
+    "input": {
+      "segments": [{ "expression": "(%pi*(%pi^6*w^6+140*%pi^4*w^4+4144*%pi^2*w^2+14400))/(46080*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "1/cosh(t)^7"
+    }
+  },
+  {
+    "id": "TH33",
+    "type": "ft",
+    "description": "FT TH-9 general: FT[tanh⁴(t)·sech(t)] — binomial m=2, n=0",
+    "input": {
+      "segments": [{ "expression": "tanh(t)^4/cosh(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(%pi*(%pi^4*w^4-56*%pi^2*w^2+144))/(384*cosh((%pi*w)/2))"
+    }
+  },
+  {
+    "id": "TH34",
+    "type": "ift",
+    "description": "IFT TH-9 general: IFT[FT[tanh⁴(t)·sech(t)]] = tanh⁴(t)·sech(t)",
+    "input": {
+      "segments": [{ "expression": "(%pi*(%pi^4*w^4-56*%pi^2*w^2+144))/(384*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "tanh(t)^4/cosh(t)"
+    }
+  },
+  {
+    "id": "TH35",
+    "type": "ft",
+    "description": "FT TH-9 general: FT[tanh²(t)·sech⁵(t)] — binomial m=1, n=2",
+    "input": {
+      "segments": [{ "expression": "tanh(t)^2/cosh(t)^5", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((%pi*(%pi^6*w^6+20*%pi^4*w^4-656*%pi^2*w^2-2880))/(46080*cosh((%pi*w)/2)))"
+    }
+  },
+  {
+    "id": "TH36",
+    "type": "ift",
+    "description": "IFT TH-9 general: IFT[FT[tanh²(t)·sech⁵(t)]] = tanh²(t)·sech⁵(t)",
+    "input": {
+      "segments": [{ "expression": "-((%pi*(%pi^6*w^6+20*%pi^4*w^4-656*%pi^2*w^2-2880))/(46080*cosh((%pi*w)/2)))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "tanh(t)^2/cosh(t)^5"
+    }
+  },
+  {
+    "id": "TH37",
+    "type": "ft",
+    "description": "FT TH-9 general: FT[tanh⁴(t)·sech³(t)] — binomial m=2, n=1",
+    "input": {
+      "segments": [{ "expression": "tanh(t)^4/cosh(t)^3", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(%pi*(%pi^6*w^6-100*%pi^4*w^4+304*%pi^2*w^2+2880))/(46080*cosh((%pi*w)/2))"
+    }
+  },
+  {
+    "id": "TH38",
+    "type": "ift",
+    "description": "IFT TH-9 general: IFT[FT[tanh⁴(t)·sech³(t)]] = tanh⁴(t)·sech³(t)",
+    "input": {
+      "segments": [{ "expression": "(%pi*(%pi^6*w^6-100*%pi^4*w^4+304*%pi^2*w^2+2880))/(46080*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "tanh(t)^4/cosh(t)^3"
+    }
+  },
+  {
+    "id": "TH30",
+    "type": "ift",
+    "description": "IFT TH-9: IFT of FT[tanh²(t)·sech³(t)] = tanh²(t)·sech³(t)",
+    "input": {
+      "segments": [{ "expression": "(%pi*(-(((%pi^4*w^4)/16+(5*%pi^2*w^2)/2+9)/12)+(%pi^2*w^2)/4+1))/(2*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "tanh(t)^2/cosh(t)^3"
+    }
+  },
+  {
+    "id": "TH27",
+    "type": "ift",
+    "description": "IFT TH-8: IFT[(π/2)(1+(πω/2)²)·sech(πω/2)] = sech³(t)",
+    "input": {
+      "segments": [{ "expression": "(%pi*((%pi^2*w^2)/4+1))/(2*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "1/cosh(t)^3"
+    }
+  },
+  {
+    "id": "TH28",
+    "type": "ift",
+    "description": "IFT TH-8: IFT[(π/24)(9+10(πω/2)²+(πω/2)⁴)·sech(πω/2)] = sech⁵(t)",
+    "input": {
+      "segments": [{ "expression": "(%pi*((%pi^4*w^4)/16+(5*%pi^2*w^2)/2+9))/(24*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "1/cosh(t)^5"
+    }
+  },
+  {
+    "id": "TH29",
+    "type": "ift",
+    "description": "IFT TH-9: IFT[(π/2)(1-(πω/2)²)·sech(πω/2)] = tanh²(t)·sech(t)",
+    "input": {
+      "segments": [{ "expression": "(%pi*(1-(%pi^2*w^2)/4))/(2*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "tanh(t)^2/cosh(t)"
+    }
+  },
+  {
     "id": "SE01",
     "type": "ft",
     "description": "FT sech auto-dual numérico: FT(1/cosh(t)) = π·sech(πω/2) = π/cosh(πω/2)",

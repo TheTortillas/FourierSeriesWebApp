@@ -1093,7 +1093,7 @@ Las siguientes familias fueron verificadas en Wolfram Alpha y LibreTexts. Todas 
 
 **Patrón estructural:** Los pares con $\operatorname{sech}^{2n+1}$ producen transformadas proporcionales a $\operatorname{sech}(\pi\omega/2)$ multiplicado por polinomios en $\omega$. Los pares con $\tanh^m \operatorname{sech}^n$ para $m$ impar producen transformadas imaginarias puras; para $m$ par, reales. El factor $t$ introduce derivación en frecuencia $(-i\tfrac{d}{d\omega})$, generando el término adicional con $\tanh(\pi\omega/2)\operatorname{sech}(\pi\omega/2)$.
 
-> **⚠ ✗ No implementadas** como patrones directos. Todas son $L^2$ (decaimiento exponencial), por lo que el integrador numérico converge para valores concretos de $b$, pero falla con $b$ simbólico.
+> **Parcialmente implementado.** Las funciones pares de la familia (Grupo A) tienen handler directo con FT+IFT: $\operatorname{sech}^3$, $\operatorname{sech}^5$, $\tanh^2\operatorname{sech}$, $\tanh^2\operatorname{sech}^3$. Las funciones impares ($\tanh\operatorname{sech}$, $\tanh^3\operatorname{sech}$, etc.) y las que llevan factor $t$ tienen transformadas imaginarias puras que el integrador numérico no puede recuperar (cancela exactamente a 0); quedan sin handler directo.
 
 ### 24b.6 Tabla resumen de hiperbólicas
 
@@ -1106,8 +1106,8 @@ Las siguientes familias fueron verificadas en Wolfram Alpha y LibreTexts. Todas 
 | TH-5 | $k\,\tanh(bt)$ | $\frac{-ik\pi}{|b|}\operatorname{csch}(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b\neq0$ |
 | TH-6 | $k\,\operatorname{sech}^2(bt)$ | $\frac{k\pi\omega}{b^2}\operatorname{csch}(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b>0$ |
 | TH-7 | $k\,\operatorname{csch}^2(bt)$ | $\frac{-2k\pi\omega}{b^2}\coth(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT) | $b>0$ |
-| TH-8 | $k\,\operatorname{sech}^n(t)$ | polinomio$(\omega^2)\cdot\pi\operatorname{sech}(\frac{\pi\omega}{2})$ | **⚠ ✗ No implementado** | $n\geq2$, ver 24b.5 |
-| TH-9 | $k\,\tanh^m(t)\operatorname{sech}^n(t)$ | mixto sech/tanh·sech | **⚠ ✗ No implementado** | ver 24b.5 |
+| TH-8 | $k\,\operatorname{sech}^n(t)$, $n\in\{3,5\}$ | polinomio$(({\pi\omega}/{2b})^2)\cdot({\pi}/{2b})\operatorname{sech}(\frac{\pi\omega}{2b})$ | ✓ Implementado (FT+IFT), $n=3,5$ | $b>0$ |
+| TH-9 | $k\,\tanh^2(t)\operatorname{sech}^n(t)$, $n\in\{1,3\}$ | idem con polinomio diferente | ✓ Implementado (FT+IFT), $n=1,3$ | $b>0$ |
 
 ---
 

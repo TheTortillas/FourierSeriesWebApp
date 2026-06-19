@@ -2691,6 +2691,175 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                   concat("k*sech^2(bt)->k*pi*w*csch(pi*w/(2b))/b^2, b=", string(_th6_b))]
     ),
 
+    /* ── TH-9odd: k*tanh(bt)*sech(bt) → -ik*π*ω*sech(πω/(2b))/b  ──────────────
+       FT[tanh(bt)·sech(bt)] = -iω·FT[sech(bt)] = -iω·(π/b)·sech(πω/(2b)).
+       Verified numerically. Matches k*tanh(bt)/cosh(bt) after FT_normalize_hyp.
+       NOTE: tanh·sech^{2n+1} for n≥1 has a different formula not yet derived
+       in our convention — only n=0 (tanh·sech) is handled here. */
+    if is(res = false) then block(
+        [_ts_k, _ts_b, _ts_e],
+        _ts_k: 1, _ts_b: false,
+        _ts_e: e,
+        if not atom(_ts_e) and is(op(_ts_e) = "-") then (
+            _ts_k: -1, _ts_e: first(args(_ts_e))
+        ),
+        /* After FT_normalize_hyp: tanh(bt)*sech(bt) → tanh(bt)/cosh(bt), op="/" */
+        if not atom(_ts_e) and is(op(_ts_e) = "/") then block(
+            [_num: part(_ts_e,1), _den: part(_ts_e,2)],
+            /* Denominator must be cosh(bt)^1 */
+            if not atom(_den) and is(op(_den) = 'cosh) then block(
+                [_bb: errcatch(ratsimp(part(_den,1)/t_var))],
+                if _bb # [] and freeof(t_var, first(_bb)) and is(first(_bb) > 0) then (
+                    _ts_b: first(_bb),
+                    /* Numerator must be k*tanh(bt) or tanh(bt) */
+                    if not atom(_num) and is(op(_num) = 'tanh) then block(
+                        [_bb2: errcatch(ratsimp(part(_num,1)/t_var))],
+                        if _bb2 # [] and is(ratsimp(first(_bb2) - _ts_b) = 0) then
+                            true  /* k stays 1 */
+                        else _ts_b: false
+                    ) else if not atom(_num) and is(op(_num) = "*") then block(
+                        [_found_tanh: false],
+                        for _f in args(_num) do (
+                            if freeof(t_var, _f) then _ts_k: _ts_k * _f
+                            else if not atom(_f) and is(op(_f) = 'tanh) then block(
+                                [_bb2: errcatch(ratsimp(part(_f,1)/t_var))],
+                                if _bb2 # [] and is(ratsimp(first(_bb2) - _ts_b) = 0) then
+                                    _found_tanh: true
+                                else _ts_b: false
+                            ) else _ts_b: false
+                        ),
+                        if not _found_tanh then _ts_b: false
+                    ) else _ts_b: false
+                )
+            )
+        ),
+        if is(_ts_b # false) and freeof(t_var, _ts_k) and is(_ts_b > 0) then
+            res: [-%i * _ts_k * %piexact * w_var / (_ts_b * cosh(%piexact * w_var / (2*_ts_b))),
+                  concat("k*tanh(bt)*sech(bt)->-ik*pi*w/b/cosh(pi*w/(2b)), b=", string(_ts_b))]
+    ),
+
+    /* ── TH-8/9: k*tanh^{2m}(bt)*sech^{2n+1}(bt) — general Ramanujan sech family ──
+       All real-valued (even in t), FT involves poly(u²)·sech(u), u=πω/(2b).
+
+       THEORY (from recurrence derivation):
+         F_n(ω) = FT[sech^{2n+1}(bt)] = (π/b) * P_n(u) / cosh(u),  u = πω/(2b)
+         where P_n is built by the recurrence:
+           P_0(u) = 1  (sech^1, already handled by TH-3)
+           P_{n+1}(u) = (u² + (2n+1)²) / ((2n+1)(2n+2)) * P_n(u)
+         Equivalently:  P_n(u) = ∏_{k=0}^{n-1} (u²+(2k+1)²) / (2n)!
+
+         For tanh^{2m}·sech^{2n+1}: use tanh² = 1-sech² to expand as
+           Σ_{r=0}^{m} (-1)^r C(m,r) sech^{2(n+r)+1}
+         giving FT = (π/b) * Σ_{r=0}^{m} (-1)^r C(m,r) P_{n+r}(u) / cosh(u).
+
+       MATCHING: after FT_normalize_hyp, expression arrives as k*tanh(bt)^{2m}/cosh(bt)^{2n+1}.
+       Requires: cosh power is odd ≥ 3, tanh power is even ≥ 0, same b. */
+    if is(res = false) then block(
+        [_t8_k, _t8_b, _t8_m, _t8_n, _t8_found],
+        _t8_k: 1, _t8_b: false, _t8_m: 0, _t8_n: false, _t8_found: false,
+        block([_t8_e: e],
+            if not atom(_t8_e) and is(op(_t8_e) = "-") then (
+                _t8_k: -1, _t8_e: first(args(_t8_e))
+            ),
+            if not atom(_t8_e) and is(op(_t8_e) = "/") then block(
+                [_num: part(_t8_e,1), _den: part(_t8_e,2)],
+                /* Denominator: cosh(bt)^n_cosh or cosh(bt) */
+                block([_cosh_base, _cn_pow],
+                    if not atom(_den) and is(op(_den) = "^")
+                       and not atom(part(_den,1)) and is(op(part(_den,1)) = 'cosh) then (
+                        _cosh_base: part(_den,1), _cn_pow: part(_den,2)
+                    ) else if not atom(_den) and is(op(_den) = 'cosh) then (
+                        _cosh_base: _den, _cn_pow: 1
+                    ) else (_cosh_base: false, _cn_pow: 0),
+                    if is(_cosh_base # false) then block(
+                        [_bb: errcatch(ratsimp(part(_cosh_base,1)/t_var))],
+                        if _bb # [] and freeof(t_var, first(_bb)) and is(first(_bb) > 0)
+                           /* cosh power must be odd and ≥ 1 (n ≥ 0);
+                              but n=0 (sech^1) is already handled by TH-3, so require ≥ 1
+                              ONLY when tanh_pow=0; with tanh factor any odd power is new */
+                           and is(integerp(_cn_pow)) and is(mod(_cn_pow, 2) = 1)
+                           and is(_cn_pow >= 1) then (
+                            _t8_b: first(_bb),
+                            /* n in sech^{2n+1}: n = (cosh_power - 1)/2 */
+                            _t8_n: (_cn_pow - 1) / 2
+                        )
+                    )
+                ),
+                /* Numerator: scalar, tanh^{2m} (even power ≥ 2 only), or scalar*tanh^{2m}.
+                   Any odd tanh power → NOT this family (odd functions, imaginary FT) → reject. */
+                if is(_t8_b # false) then block(
+                    [_scalar_part: 1, _tanh_pow: 0, _has_odd_tanh: false],
+                    if freeof(t_var, _num) then (
+                        _scalar_part: _num, _tanh_pow: 0
+                    ) else if not atom(_num) and is(op(_num) = "^")
+                            and not atom(part(_num,1)) and is(op(part(_num,1)) = 'tanh) then block(
+                        [_tp: part(_num,2),
+                         _bb2: errcatch(ratsimp(part(part(_num,1),1)/t_var))],
+                        if _bb2 # [] and freeof(t_var, first(_bb2))
+                           and is(ratsimp(first(_bb2) - _t8_b) = 0) then (
+                            if is(integerp(_tp)) and is(mod(_tp, 2) = 0) then
+                                _tanh_pow: _tp
+                            else
+                                _has_odd_tanh: true  /* odd power → reject */
+                        )
+                    ) else if not atom(_num) and is(op(_num) = 'tanh) then (
+                        /* tanh(bt)^1 — odd, always reject */
+                        _has_odd_tanh: true
+                    ) else if not atom(_num) and is(op(_num) = "*") then (
+                        for _f in args(_num) do (
+                            if freeof(t_var, _f) then _scalar_part: _scalar_part * _f
+                            else if not atom(_f) and is(op(_f) = 'tanh) then
+                                _has_odd_tanh: true  /* tanh^1 factor → odd → reject */
+                            else if not atom(_f) and is(op(_f) = "^")
+                                    and not atom(part(_f,1)) and is(op(part(_f,1)) = 'tanh) then block(
+                                [_tp: part(_f,2),
+                                 _bb2: errcatch(ratsimp(part(part(_f,1),1)/t_var))],
+                                if _bb2 # [] and freeof(t_var, first(_bb2))
+                                   and is(ratsimp(first(_bb2) - _t8_b) = 0) then (
+                                    if is(integerp(_tp)) and is(mod(_tp, 2) = 0) then
+                                        _tanh_pow: _tp
+                                    else
+                                        _has_odd_tanh: true
+                                )
+                            )
+                        )
+                    ) else (
+                        /* Unknown t-dependent numerator — reject */
+                        _has_odd_tanh: true
+                    ),
+                    if not _has_odd_tanh then (
+                        _t8_k: _t8_k * _scalar_part,
+                        _t8_m: _tanh_pow / 2,
+                        _t8_found: true
+                    ) else
+                        _t8_b: false  /* signal rejection */
+                )
+            )
+        ),
+        if _t8_found and is(_t8_b # false) and freeof(t_var, _t8_k) and is(_t8_b > 0) then block(
+            [_u, _P, _poly, _binom_r, _ncr],
+            _u: %piexact * w_var / (2 * _t8_b),
+            /* Compute P_n(u) via recurrence: P_0=1, P_{j+1} = (u²+(2j+1)²)/((2j+1)(2j+2)) * P_j */
+            _P: lambda([_nn],
+                block([_pv: 1],
+                    for _j: 0 thru _nn-1 do
+                        _pv: ratsimp(_pv * (_u^2 + (2*_j+1)^2) / ((2*_j+1)*(2*_j+2))),
+                    _pv
+                )
+            ),
+            /* FT[tanh^{2m}·sech^{2n+1}] = Σ_{r=0}^{m} (-1)^r C(m,r) P_{n+r}(u) * (π/b) / cosh(u) */
+            _poly: 0,
+            for _r: 0 thru _t8_m do (
+                _ncr: binomial(_t8_m, _r),
+                _poly: _poly + (-1)^_r * _ncr * apply(_P, [_t8_n + _r])
+            ),
+            _poly: ratsimp(_poly),
+            res: [_t8_k * (%piexact / _t8_b) * _poly / cosh(_u),
+                  concat("k*tanh^{2m}*sech^{2n+1}->P(u)*pi/b/cosh(u), m=",
+                         string(_t8_m), ", n=", string(_t8_n), ", b=", string(_t8_b))]
+        )
+    ),
+
     /* ── TH-7: k*csch²(bt) -> -2k*pi*w*coth(pi*w/(2b))/b²  ────────────────
        After FT_normalize_hyp: csch(bt)^2 → 1/sinh(bt)^2 which Maxima represents
        as op="/" with num=1, den=sinh(bt)^2.
@@ -4937,6 +5106,87 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                                      string(_th_aa), ", b=", string(_th_bb))]
                 )
             )
+        )
+    ),
+
+    /* ── IFT TH-8/9: poly(u²)/cosh(u) → k*tanh^{2m}(bt)*sech^{2n+1}(bt)  ───────
+       F_expr has form k*(π/b)*Poly(u²)/cosh(u), u=πω/(2b).
+       Strategy:
+         1. Find p from cosh(p*w), compute b=π/(2p), u=p*w.
+         2. Extract K = F_expr * cosh(u) * b/π  (should be k*Poly(u²), w-free after subst).
+         3. Try candidate (m,n) pairs by computing the expected polynomial from the
+            recurrence P_n and binomial expansion for tanh^{2m}, then check K/poly = const.
+       We try pairs (m,n) in increasing order of degree = 2n + 2*m (= degree of poly). */
+    if is(res = false) and not freeof(cosh, F_expr) then block(
+        [_i8_p, _i8_b, _i8_K, _i8_found, _i8_m, _i8_n, _i8_k],
+        _i8_p: false, _i8_found: false,
+        /* Scan for cosh(p*w) */
+        block([_scan],
+            _scan: lambda([_x],
+                if atom(_x) then false
+                else if is(op(_x) = 'cosh) then block(
+                    [_arg: part(_x,1), _cn],
+                    _cn: errcatch(ratsimp(_arg / w_var)),
+                    if _cn # [] and freeof(w_var, first(_cn)) and is(first(_cn) # 0)
+                    then first(_cn) else false
+                ) else block([_r: false],
+                    for _sub in args(_x) while is(_r = false) do
+                        _r: apply(_scan, [_sub]),
+                    _r
+                )
+            ),
+            _i8_p: apply(_scan, [F_expr])
+        ),
+        if is(_i8_p # false) then block(
+            [_i8_b_val],
+            _i8_b_val: errcatch(ratsimp(%pi / (2 * _i8_p))),
+            if _i8_b_val # [] and is(first(_i8_b_val) > 0) then (
+                _i8_b: first(_i8_b_val),
+                /* K = F * cosh(p*w) * b/π  — the polynomial factor */
+                block([_kc: errcatch(ratsimp(F_expr * cosh(_i8_p * w_var) * _i8_b / %pi))],
+                    if _kc # [] then _i8_K: first(_kc)
+                )
+            )
+        ),
+        if is(_i8_K # false) then block(
+            [_u: _i8_p * w_var,
+             /* P_n recurrence */
+             _Prec: lambda([_nn],
+                 block([_pv: 1],
+                     for _j: 0 thru _nn-1 do
+                         _pv: ratsimp(_pv * (_u^2 + (2*_j+1)^2) / ((2*_j+1)*(2*_j+2))),
+                     _pv
+                 )
+             )],
+            /* Try (m,n) pairs in order of increasing polynomial degree (2n + 2m).
+               Max degree we attempt: 8 (covers sech^9, tanh^4*sech^5, ...) */
+            for _deg: 2 thru 8 step 2 while not _i8_found do (
+                for _mm: 0 thru _deg/2 while not _i8_found do block(
+                    [_nn: _deg/2 - _mm, _poly_mn: 0, _r],
+                    /* Skip (m=0,n=0): sech^1 already handled by TH-3 */
+                    if not (is(_mm = 0) and is(_nn = 0)) then (
+                        /* Poly for (m,n) = Σ_{r=0}^{m} (-1)^r C(m,r) P_{n+r}(u) */
+                        for _r: 0 thru _mm do
+                            _poly_mn: _poly_mn + (-1)^_r * binomial(_mm,_r) * apply(_Prec,[_nn+_r]),
+                        _poly_mn: ratsimp(_poly_mn),
+                        /* Check: K / poly_mn should be w-free and nonzero */
+                        block([_chk: errcatch(ratsimp(_i8_K / _poly_mn))],
+                            if _chk # [] and freeof(w_var, first(_chk))
+                               and is(first(_chk) # 0) then (
+                                _i8_k: first(_chk),
+                                _i8_m: _mm, _i8_n: _nn,
+                                _i8_found: true
+                            )
+                        )
+                    )
+                )
+            )
+        ),
+        if _i8_found then block(
+            [_bt: _i8_b * t_var, _cosh_pow: 2*_i8_n + 1],
+            res: [_i8_k * tanh(_bt)^(2*_i8_m) / cosh(_bt)^_cosh_pow,
+                  concat("IFT poly/cosh(pw)->k*tanh^{2m}*sech^{2n+1}(bt), m=",
+                         string(_i8_m), ", n=", string(_i8_n), ", b=", string(_i8_b))]
         )
     ),
 
