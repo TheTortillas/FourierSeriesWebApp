@@ -13,6 +13,7 @@ import {
 } from '../../shared/components/function-plot/function-plot.component';
 import { ParamSlidersComponent, ParamValues } from '../../shared/components/param-sliders/param-sliders.component';
 import { PlottingService } from '../../core/services/canvas/plotting.service';
+import { DrawingUtilsService } from '../../core/services/canvas/drawing-utils.service';
 import { MathUtilsService } from '../../core/services/math/math-utils.service';
 import { MathquillService, KeyBtn } from '../../core/services/math/mathquill.service';
 import { CoordinateTransformService } from '../../core/services/canvas/coordinate-transform.service';
@@ -211,10 +212,11 @@ function drawFilledCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number,
   imports: [NavComponent, GrapherExpressionComponent, FunctionPlotComponent, ParamSlidersComponent, DecimalPipe, TranslocoPipe],
 })
 export class GrapherComponent {
-  private readonly plotter   = inject(PlottingService);
-  private readonly mathUtils = inject(MathUtilsService);
-  private readonly mqs       = inject(MathquillService);
-  private readonly coords    = inject(CoordinateTransformService);
+  private readonly plotter      = inject(PlottingService);
+  private readonly drawingUtils = inject(DrawingUtilsService);
+  private readonly mathUtils    = inject(MathUtilsService);
+  private readonly mqs          = inject(MathquillService);
+  private readonly coords       = inject(CoordinateTransformService);
 
   readonly expressions    = signal<GraphExpression[]>([newExpr(0)]);
   readonly paramValues    = signal<ParamValues>({});
@@ -259,6 +261,8 @@ export class GrapherComponent {
     const math     = this.mathUtils;
     const coords   = this.coords;
 
+    const drawing = this.drawingUtils;
+
     return [{
       curves: [],
       onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
@@ -266,6 +270,12 @@ export class GrapherComponent {
 
         for (const e of exprs) {
           if (!e.visible || !e.maxima) continue;
+
+          // Draw Dirac delta impulses before the regular curve pass
+          for (const { pos, weight } of math.parseDeltaTerms(e.maxima, 'x', params)) {
+            drawing.drawImpulse(ctx, vp, pos, weight, e.color, e.lineWidth);
+          }
+
           const fn = math.compile(e.maxima, 'x', params);
           if (!fn) continue;
           compiled.push({ fn, expr: e });
