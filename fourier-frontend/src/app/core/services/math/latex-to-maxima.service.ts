@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, of, catchError, map } from 'rxjs';
 import { ApiService } from '../api/api.service';
+import { FUNCTION_REGISTRY, LATEX_TO_MAXIMA, CLIENT_SIDE_LATEX_NAMES } from './function-registry';
 
 export interface ConversionResult {
   maxima: string;
@@ -8,46 +9,21 @@ export interface ConversionResult {
   error?: string;
 }
 
-// ── Special-function client-side translator ───────────────────────────────────
+// ── Derived maps from registry ────────────────────────────────────────────────
 //
-// tex2max (GPL v2, server-side) doesn't know Si, Ci, Shi, Chi, Ei, E1, li,
-// erf, erfc. When the raw LaTeX contains any of these names we translate the
-// entire expression client-side and skip the backend call entirely.
-// All other expressions are handled by the backend as usual.
+// These replace the former hand-written STD_FN / SPECIAL_FN / SPECIAL_FN_RE
+// literals. Adding a new function to FUNCTION_REGISTRY automatically updates
+// all three without any change here.
 
-const SPECIAL_FN: Record<string, string> = {
-  Shi:  'expintegral_shi',
-  Chi:  'expintegral_chi',
-  Si:   'expintegral_si',
-  Ci:   'expintegral_ci',
-  Ei:   'expintegral_ei',
-  E1:   'expintegral_e1',
-  li:   'expintegral_li',
-  erfc: 'erfc',
-  erf:  'erf',
-};
+// Regex that matches any latexName marked clientSideOnly in the registry.
+// Longer names are listed first so alternation matches 'Shi' before 'Si', etc.
+const CLIENT_SIDE_RE = new RegExp(
+  `\\b(${[...CLIENT_SIDE_LATEX_NAMES]
+    .sort((a, b) => b.length - a.length || a.localeCompare(b))
+    .join('|')})\\b`,
+);
 
-// Longer names listed first so the alternation matches Shi before Si, etc.
-const SPECIAL_FN_RE = new RegExp(`\\b(${Object.keys(SPECIAL_FN).join('|')})\\b`);
-
-const STD_FN: Record<string, string> = {
-  // Trig
-  sin: 'sin', cos: 'cos', tan: 'tan', cot: 'cot', sec: 'sec', csc: 'csc',
-  // Inverse trig
-  asin: 'asin', acos: 'acos', atan: 'atan', acot: 'acot', asec: 'asec', acsc: 'acsc',
-  arcsin: 'asin', arccos: 'acos', arctan: 'atan', arccot: 'acot', arcsec: 'asec', arccsc: 'acsc',
-  // Hyperbolic
-  sinh: 'sinh', cosh: 'cosh', tanh: 'tanh', coth: 'coth', sech: 'sech', csch: 'csch',
-  // Inverse hyperbolic
-  asinh: 'asinh', acosh: 'acosh', atanh: 'atanh', acoth: 'acoth', asech: 'asech', acsch: 'acsch',
-  // Exp / log
-  ln: 'log', log: 'log', exp: 'exp',
-  // Misc
-  sqrt: 'sqrt', abs: 'abs',
-  gamma: 'gamma', factorial: 'factorial',
-  // Spanish aliases
-  sen: 'sin', tg: 'tan', senh: 'sinh',
-};
+// ── Tokeniser ─────────────────────────────────────────────────────────────────
 
 type Token =
   | { t: 'num';    v: string }
@@ -89,12 +65,15 @@ function tokenise(src: string): Token[] {
       out.push({ t: 'ident', v: name });
       continue;
     }
-    if (/[+\-*/^_,|]/.test(ch)) { out.push({ t: 'op', v: ch }); i++; continue; }
+    if (/[+\-*/^_|]/.test(ch)) { out.push({ t: 'op', v: ch }); i++; continue; }
+    if (ch === ',') { out.push({ t: 'op', v: ',' }); i++; continue; }
     i++;
   }
   out.push({ t: 'end' });
   return out;
 }
+
+// ── Parser ────────────────────────────────────────────────────────────────────
 
 class Parser {
   private pos = 0;
@@ -151,7 +130,8 @@ class Parser {
     if (tok.t === 'ident') {
       this.eat();
       const name = tok.v;
-      const mx = SPECIAL_FN[name] ?? STD_FN[name];
+      // Look up in registry (covers both clientSideOnly and standard functions)
+      const mx = LATEX_TO_MAXIMA.get(name);
       if (mx) return `${mx}(${this.funcArg()})`;
       if (this.is('lp')) return `${name}(${this.funcArg()})`;
       if (this.is('op', '_')) { this.eat(); this.braceOrAtom(); }
@@ -176,9 +156,10 @@ class Parser {
           name += 'v' in t ? (t as { v: string }).v : '';
         }
         if (this.is('rbrace')) this.eat();
-        return `${SPECIAL_FN[name] ?? name}(${this.funcArg()})`;
+        const mx = LATEX_TO_MAXIMA.get(name);
+        return `${mx ?? name}(${this.funcArg()})`;
       }
-      const mx = SPECIAL_FN[cmd] ?? STD_FN[cmd];
+      const mx = LATEX_TO_MAXIMA.get(cmd);
       if (mx) return `${mx}(${this.funcArg()})`;
       return cmd;
     }
@@ -208,7 +189,23 @@ class Parser {
   }
 
   private funcArg(): string {
-    if (this.is('lp'))     { this.eat(); const a = this.addSub(); if (this.is('rp')) this.eat(); return a; }
+    // \left( ... \right) — MathQuill wraps multi-arg calls in \left(\right)
+    if (this.is('cmd', 'left')) {
+      this.eat();           // consume 'left'
+      if (this.is('lp')) this.eat(); // consume '('
+      const args: string[] = [this.addSub()];
+      while (this.is('op', ',')) { this.eat(); args.push(this.addSub()); }
+      // consume \right)
+      if (this.is('cmd', 'right')) { this.eat(); if (this.is('rp')) this.eat(); }
+      return args.join(',');
+    }
+    if (this.is('lp')) {
+      this.eat();
+      const args: string[] = [this.addSub()];
+      while (this.is('op', ',')) { this.eat(); args.push(this.addSub()); }
+      if (this.is('rp')) this.eat();
+      return args.join(',');
+    }
     if (this.is('lbrace')) return this.braceGroup();
     return this.atom();
   }
@@ -240,8 +237,12 @@ function clientTranslate(latex: string): string | null {
  * Converts LaTeX math expressions to Maxima CAS syntax.
  *
  * Standard expressions are sent to the backend (tex2max, GPL v2, server-side).
- * Expressions containing special functions (Si, Ci, erf…) are translated
- * client-side via `convertWithSpecialFns` so every MathQuill field supports them.
+ * Expressions containing client-side-only functions (erf, erfc, Si, Ci, …)
+ * are translated locally via the client parser so every MathQuill field
+ * supports them without a backend round-trip.
+ *
+ * The set of client-side-only functions is derived from FUNCTION_REGISTRY
+ * (entries with clientSideOnly: true) — no hardcoded list here.
  */
 @Injectable({ providedIn: 'root' })
 export class LatexToMaximaService {
@@ -259,14 +260,14 @@ export class LatexToMaximaService {
 
   /**
    * Preferred method for MathQuill fields.
-   * Intercepts special functions (Si, Ci, Shi, Chi, Ei, E1, li, erf, erfc)
-   * and translates them client-side; everything else goes to the backend.
+   * Intercepts client-side-only functions and translates them locally;
+   * everything else goes to the backend.
    *
    * @param mode  'series' for the calculator, 'transform' for everything else.
    */
   convertWithSpecialFns(latex: string, mode: 'series' | 'transform' = 'transform'): Observable<ConversionResult> {
     if (!latex.trim()) return of({ maxima: '', ok: false, error: 'Expresión vacía' });
-    if (SPECIAL_FN_RE.test(latex)) {
+    if (CLIENT_SIDE_RE.test(latex)) {
       const maxima = clientTranslate(latex);
       if (maxima) return of({ ok: true, maxima });
     }
@@ -306,3 +307,7 @@ export class LatexToMaximaService {
     );
   }
 }
+
+// Re-export registry for consumers that need it (e.g. keyboard components)
+export { FUNCTION_REGISTRY } from './function-registry';
+export type { FunctionDef, FunctionCategory } from './function-registry';

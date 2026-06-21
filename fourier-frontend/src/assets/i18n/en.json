@@ -70,6 +70,19 @@
       "showIntersections": "Intersections (function-function)",
       "xAxis": "X-axis format",
       "zoom": "Initial zoom"
+    },
+    "style": {
+      "lineStyle": "Line style",
+      "color": "Color",
+      "width": "Width",
+      "dash": "Style",
+      "customColor": "Custom color",
+      "solid": "Solid",
+      "dashed": "Dashed",
+      "dotted": "Dotted",
+      "show": "Show",
+      "hide": "Hide",
+      "remove": "Remove"
     }
   },
   "home": {

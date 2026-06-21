@@ -52,74 +52,22 @@ import type {
 } from '../../../domain/types/dft.types';
 import type { DftSegment } from '../../../domain/types/dft.types';
 import type { CanvasViewport, Curve } from '../../../core/services/canvas/canvas.types';
+import { FUNCTION_REGISTRY } from '../../../core/services/math/function-registry';
 
 const N_OPTIONS = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
 const INT_VARS = ['x', 't', 'u', 's'];
 const TOP_LIMIT = 256;
 
 /** Identifiers that are never free symbols: math functions, Maxima constants, keywords. */
-const KNOWN_IDENTIFIERS = new Set([
+const KNOWN_IDENTIFIERS: ReadonlySet<string> = new Set([
   // Maxima constants (after stripping %)
-  'pi',
-  'e',
-  'i',
-  'inf',
-  'minf',
-  'true',
-  'false',
+  'pi', 'e', 'i', 'inf', 'minf', 'true', 'false',
   // Maxima keywords
-  'if',
-  'then',
-  'else',
-  'elseif',
-  'and',
-  'or',
-  'not',
-  // Standard math functions
-  'sin',
-  'cos',
-  'tan',
-  'asin',
-  'acos',
-  'atan',
-  'atan2',
-  'sinh',
-  'cosh',
-  'tanh',
-  'asinh',
-  'acosh',
-  'atanh',
-  'cot',
-  'sec',
-  'csc',
-  'acot',
-  'asec',
-  'acsc',
-  'sqrt',
-  'exp',
-  'log',
-  'log2',
-  'log10',
-  'abs',
-  'floor',
-  'ceiling',
-  'round',
-  'truncate',
-  'max',
-  'min',
-  'sign',
-  'sgn',
-  'signum',
-  // Special functions supported by the frontend
-  'u',
-  'rect',
-  'tri',
-  'sinc',
-  'delta',
-  'gamma',
-  'factorial',
-  'erf',
-  'erfc',
+  'if', 'then', 'else', 'elseif', 'and', 'or', 'not',
+  // Extra Maxima names not in registry
+  'sqrt', 'abs', 'max', 'min', 'signum', 'log', 'log2', 'log10',
+  // All Maxima function names from registry (covers current + future functions)
+  ...FUNCTION_REGISTRY.map((f) => f.maxima),
 ]);
 
 /**

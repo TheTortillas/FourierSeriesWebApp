@@ -13,10 +13,23 @@ import {
 } from '../../shared/components/function-plot/function-plot.component';
 import { ParamSlidersComponent, ParamValues } from '../../shared/components/param-sliders/param-sliders.component';
 import { PlottingService } from '../../core/services/canvas/plotting.service';
+import { DrawingUtilsService } from '../../core/services/canvas/drawing-utils.service';
 import { MathUtilsService } from '../../core/services/math/math-utils.service';
 import { MathquillService, KeyBtn } from '../../core/services/math/mathquill.service';
 import { CoordinateTransformService } from '../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport, MathPoint } from '../../core/services/canvas/canvas.types';
+import { FUNCTION_REGISTRY } from '../../core/services/math/function-registry';
+
+// Single-letter Maxima names that are functions or constants, not free parameters.
+// Built from the registry so adding a new function (e.g. besselj) updates this automatically.
+const RESERVED_SYMBOLS: ReadonlySet<string> = new Set([
+  'x', 'X',          // plot variable
+  'e', 'E',          // Euler's number (%e) — may appear bare before backend responds
+  'i', 'I',          // imaginary unit (%i)
+  ...FUNCTION_REGISTRY
+    .flatMap((f) => f.latexNames)
+    .filter((n) => n.length === 1),
+]);
 
 export interface FnGroup {
   label: string;
@@ -113,7 +126,16 @@ export const FN_GROUPS: FnGroup[] = [
     keys: [
       { label: 'erf',  typedText: 'erf'  },
       { label: 'erfc', typedText: 'erfc' },
-      { label: 'Γ',    write: '\\Gamma'  },
+      { label: 'Γ(z)', write: '\\Gamma'  },
+    ],
+  },
+  {
+    label: 'Gamma incompleta / Beta',
+    keys: [
+      { label: 'GammaU', typedText: 'GammaU' },
+      { label: 'GammaL', typedText: 'GammaL' },
+      { label: 'GammaQ', typedText: 'GammaQ' },
+      { label: 'Beta',   typedText: 'Beta'   },
     ],
   },
 ];
@@ -141,6 +163,7 @@ function newExpr(colorIdx = 0): GraphExpression {
     color: GRAPH_PALETTE[colorIdx % GRAPH_PALETTE.length],
     visible: true,
     lineWidth: 2,
+    lineDash: 'solid',
   };
 }
 
@@ -189,10 +212,11 @@ function drawFilledCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number,
   imports: [NavComponent, GrapherExpressionComponent, FunctionPlotComponent, ParamSlidersComponent, DecimalPipe, TranslocoPipe],
 })
 export class GrapherComponent {
-  private readonly plotter   = inject(PlottingService);
-  private readonly mathUtils = inject(MathUtilsService);
-  private readonly mqs       = inject(MathquillService);
-  private readonly coords    = inject(CoordinateTransformService);
+  private readonly plotter      = inject(PlottingService);
+  private readonly drawingUtils = inject(DrawingUtilsService);
+  private readonly mathUtils    = inject(MathUtilsService);
+  private readonly mqs          = inject(MathquillService);
+  private readonly coords       = inject(CoordinateTransformService);
 
   readonly expressions    = signal<GraphExpression[]>([newExpr(0)]);
   readonly paramValues    = signal<ParamValues>({});
@@ -222,8 +246,8 @@ export class GrapherComponent {
     const seen = new Set<string>();
     for (const e of this.expressions()) {
       if (!e.visible || !e.maxima) continue;
-      for (const m of e.maxima.matchAll(/\b([a-wyzA-WYZ])\b/g)) {
-        seen.add(m[1]);
+      for (const m of e.maxima.matchAll(/\b([a-zA-Z])\b/g)) {
+        if (!RESERVED_SYMBOLS.has(m[1])) seen.add(m[1]);
       }
     }
     return [...seen].sort();
@@ -237,6 +261,8 @@ export class GrapherComponent {
     const math     = this.mathUtils;
     const coords   = this.coords;
 
+    const drawing = this.drawingUtils;
+
     return [{
       curves: [],
       onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
@@ -244,10 +270,21 @@ export class GrapherComponent {
 
         for (const e of exprs) {
           if (!e.visible || !e.maxima) continue;
+
+          // Draw Dirac delta impulses before the regular curve pass
+          for (const { pos, weight } of math.parseDeltaTerms(e.maxima, 'x', params)) {
+            drawing.drawImpulse(ctx, vp, pos, weight, e.color, e.lineWidth);
+          }
+
           const fn = math.compile(e.maxima, 'x', params);
           if (!fn) continue;
           compiled.push({ fn, expr: e });
-          plotter.plotFn(ctx, fn, vp, { color: e.color, lineWidth: e.lineWidth });
+          plotter.plotFn(ctx, fn, vp, {
+            color: e.color,
+            lineWidth: e.lineWidth,
+            dashed: e.lineDash !== 'solid',
+            dashPattern: e.lineDash === 'dotted' ? [2, 4] : [8, 5],
+          });
         }
 
         if (compiled.length === 0) return;

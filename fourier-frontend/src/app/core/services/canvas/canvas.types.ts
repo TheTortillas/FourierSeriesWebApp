@@ -73,6 +73,8 @@ export interface Curve {
   lineWidth: number;
   /** If true, render as dashed line */
   dashed?: boolean;
+  /** Custom dash pattern passed to setLineDash. Defaults to [6,4] when dashed is true. */
+  dashPattern?: number[];
   /**
    * How to render known discontinuities. Defaults to `'none'` (pen lifted,
    * nothing drawn at the jump). Set to `'solid'` or `'dashed'` to draw a

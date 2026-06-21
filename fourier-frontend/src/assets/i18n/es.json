@@ -70,6 +70,19 @@
       "showIntersections": "Intersecciones (función-función)",
       "xAxis": "Formato eje X",
       "zoom": "Zoom inicial"
+    },
+    "style": {
+      "lineStyle": "Estilo de línea",
+      "color": "Color",
+      "width": "Grosor",
+      "dash": "Estilo",
+      "customColor": "Color personalizado",
+      "solid": "Sólida",
+      "dashed": "Discontinua",
+      "dotted": "Punteada",
+      "show": "Mostrar",
+      "hide": "Ocultar",
+      "remove": "Eliminar"
     }
   },
   "home": {
