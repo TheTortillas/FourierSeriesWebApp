@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { MathquillService, MathField } from '../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../core/services/math/latex-to-maxima.service';
 
@@ -36,7 +37,7 @@ export const GRAPH_PALETTE = [
 @Component({
   selector: 'app-grapher-expression',
   templateUrl: './grapher-expression.component.html',
-  imports: [],
+  imports: [TranslocoPipe],
 })
 export class GrapherExpressionComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mqExpr') mqExprRef!: ElementRef<HTMLElement>;

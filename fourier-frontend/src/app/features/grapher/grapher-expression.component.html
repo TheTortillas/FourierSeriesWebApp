@@ -12,7 +12,7 @@
       [class.border-white]="!styleOpen()"
       [class.dark:border-dark-surface]="!styleOpen()"
       [class.border-accent]="styleOpen()"
-      title="Estilo de línea"
+      [title]="'grapher.style.lineStyle' | transloco"
     ></button>
 
     <!-- MathQuill input -->
@@ -39,7 +39,7 @@
       type="button"
       (click)="toggleVisible()"
       class="text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors focus:outline-none"
-      [title]="expr().visible ? 'Ocultar' : 'Mostrar'"
+      [title]="(expr().visible ? 'grapher.style.hide' : 'grapher.style.show') | transloco"
     >
       @if (expr().visible) {
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -61,7 +61,7 @@
         type="button"
         (click)="remove()"
         class="text-muted dark:text-dark-muted hover:text-red-400 transition-colors focus:outline-none opacity-0 group-hover:opacity-100"
-        title="Eliminar"
+        [title]="'grapher.style.remove' | transloco"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"/>
@@ -78,7 +78,9 @@
 
       <!-- Color picker row -->
       <div class="flex items-center gap-2">
-        <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted w-14 shrink-0">Color</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted w-14 shrink-0">
+          {{ 'grapher.style.color' | transloco }}
+        </span>
 
         <!-- Palette swatches -->
         <div class="flex gap-1.5 flex-1">
@@ -96,7 +98,7 @@
         </div>
 
         <!-- Native color picker for custom color -->
-        <label class="cursor-pointer" title="Color personalizado">
+        <label class="cursor-pointer" [title]="'grapher.style.customColor' | transloco">
           <input
             type="color"
             class="sr-only"
@@ -113,7 +115,9 @@
 
       <!-- Line width row -->
       <div class="flex items-center gap-2">
-        <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted w-14 shrink-0">Grosor</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted w-14 shrink-0">
+          {{ 'grapher.style.width' | transloco }}
+        </span>
         <input
           type="range"
           min="1" max="6" step="0.5"
@@ -126,14 +130,16 @@
 
       <!-- Line dash row -->
       <div class="flex items-center gap-2">
-        <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted w-14 shrink-0">Estilo</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted w-14 shrink-0">
+          {{ 'grapher.style.dash' | transloco }}
+        </span>
         <div class="flex gap-1.5">
 
           <!-- Solid -->
           <button
             type="button"
             (click)="setLineDash('solid')"
-            title="Sólida"
+            [title]="'grapher.style.solid' | transloco"
             class="px-2.5 py-1.5 rounded border transition-colors focus:outline-none"
             [class.border-accent]="expr().lineDash === 'solid'"
             [class.bg-accent/10]="expr().lineDash === 'solid'"
@@ -149,7 +155,7 @@
           <button
             type="button"
             (click)="setLineDash('dashed')"
-            title="Discontinua"
+            [title]="'grapher.style.dashed' | transloco"
             class="px-2.5 py-1.5 rounded border transition-colors focus:outline-none"
             [class.border-accent]="expr().lineDash === 'dashed'"
             [class.bg-accent/10]="expr().lineDash === 'dashed'"
@@ -165,7 +171,7 @@
           <button
             type="button"
             (click)="setLineDash('dotted')"
-            title="Punteada"
+            [title]="'grapher.style.dotted' | transloco"
             class="px-2.5 py-1.5 rounded border transition-colors focus:outline-none"
             [class.border-accent]="expr().lineDash === 'dotted'"
             [class.bg-accent/10]="expr().lineDash === 'dotted'"
