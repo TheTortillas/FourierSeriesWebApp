@@ -125,7 +125,16 @@ export const FN_GROUPS: FnGroup[] = [
     keys: [
       { label: 'erf',  typedText: 'erf'  },
       { label: 'erfc', typedText: 'erfc' },
-      { label: 'Γ',    write: '\\Gamma'  },
+      { label: 'Γ(z)', write: '\\Gamma'  },
+    ],
+  },
+  {
+    label: 'Gamma incompleta / Beta',
+    keys: [
+      { label: 'GammaU', typedText: 'GammaU' },
+      { label: 'GammaL', typedText: 'GammaL' },
+      { label: 'GammaQ', typedText: 'GammaQ' },
+      { label: 'Beta',   typedText: 'Beta'   },
     ],
   },
 ];

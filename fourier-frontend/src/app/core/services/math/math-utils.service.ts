@@ -674,5 +674,59 @@ export class MathUtilsService {
       return (_Ei(x) - _E1(x)) / 2;
     }
     function _li(x) { return x <= 0 ? NaN : _Ei(Math.log(x)); }
+
+    // ── Incomplete gamma (series + continued-fraction) ─────────────────────────
+    // Lower incomplete gamma γ(a,x) via power series — converges for all x when a>0
+    function _gamma_lower_series(a, x) {
+      if (x <= 0) return 0;
+      let term = 1 / a, s = term;
+      for (let n = 1; n <= 200; n++) {
+        term *= x / (a + n);
+        s += term;
+        if (Math.abs(term) < 1e-13 * Math.abs(s)) break;
+      }
+      return Math.exp(-x + a * Math.log(x)) * s;
+    }
+    // Upper incomplete gamma Γ(a,x) via Lentz continued fraction — converges for large x
+    function _gamma_upper_cf(a, x) {
+      let f = x + 1 - a, C = f, D = 0, delta;
+      if (Math.abs(f) < 1e-30) f = 1e-30;
+      C = f; D = 0;
+      for (let n = 1; n <= 200; n++) {
+        const an = n * (a - n), bn = x + 2 * n + 1 - a;
+        D = bn + an * D; if (Math.abs(D) < 1e-30) D = 1e-30; D = 1 / D;
+        C = bn + an / C; if (Math.abs(C) < 1e-30) C = 1e-30;
+        delta = C * D;
+        f *= delta;
+        if (Math.abs(delta - 1) < 1e-13) break;
+      }
+      return Math.exp(-x + a * Math.log(x)) / f;
+    }
+    // gamma_incomplete_lower(a, x) = γ(a, x)  [Maxima: gamma_incomplete_lower]
+    function _gamma_incomplete_lower(a, x) {
+      if (a <= 0 || x < 0) return NaN;
+      if (x === 0) return 0;
+      return (x < a + 1) ? _gamma_lower_series(a, x)
+                         : _gamma(a) - _gamma_upper_cf(a, x);
+    }
+    // gamma_incomplete(a, x) = Γ(a, x)  [Maxima: gamma_incomplete — upper]
+    function _gamma_incomplete(a, x) {
+      if (a <= 0 || x < 0) return NaN;
+      if (x === 0) return _gamma(a);
+      return (x < a + 1) ? _gamma(a) - _gamma_lower_series(a, x)
+                         : _gamma_upper_cf(a, x);
+    }
+    // gamma_incomplete_regularized(a, x) = Q(a,x) = Γ(a,x)/Γ(a)  [Maxima: gamma_incomplete_regularized]
+    function _gamma_incomplete_regularized(a, x) {
+      if (a <= 0 || x < 0) return NaN;
+      return _gamma_incomplete(a, x) / _gamma(a);
+    }
+
+    // ── Beta function ──────────────────────────────────────────────────────────
+    // beta(a, b) = Γ(a)Γ(b)/Γ(a+b)
+    function _beta(a, b) {
+      if (a <= 0 || b <= 0) return NaN;
+      return _gamma(a) * _gamma(b) / _gamma(a + b);
+    }
   `;
 }

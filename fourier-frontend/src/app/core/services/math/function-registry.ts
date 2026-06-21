@@ -131,8 +131,16 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   { maxima: 'round',    latexNames: ['round'],    js: { kind: 'Math', method: 'round' }, category: 'rounding' },
   { maxima: 'truncate', latexNames: ['truncate'], js: { kind: 'Math', method: 'trunc' }, category: 'rounding' },
 
-  // ── Combinatorial ──────────────────────────────────────────────────────────
-  { maxima: 'gamma',     latexNames: ['gamma'],     js: { kind: 'helper', name: '_gamma'     }, category: 'combinatorial', autoOperatorNames: ['gamma'] },
+  // ── Combinatorial / Gamma family ───────────────────────────────────────────
+  // gamma_incomplete_* and beta are too long to type freely — no autoOperatorNames.
+  // They are inserted via the function keyboard only.
+  { maxima: 'gamma',                        latexNames: ['gamma'],                                          js: { kind: 'helper', name: '_gamma'                        }, category: 'combinatorial', autoOperatorNames: ['gamma'] },
+  // Incomplete gamma & beta: typed as GammaU/GammaL/GammaQ/Beta (no underscores — MathQuill treats _ as subscript)
+  // clientSideOnly: tex2max can't handle multi-argument functions with commas
+  { maxima: 'gamma_incomplete',             latexNames: ['GammaU', 'GammaInc'],                            js: { kind: 'helper', name: '_gamma_incomplete'             }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['GammaU', 'GammaInc'] },
+  { maxima: 'gamma_incomplete_lower',       latexNames: ['GammaL', 'GammaIncLower'],                       js: { kind: 'helper', name: '_gamma_incomplete_lower'       }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['GammaL', 'GammaIncLower'] },
+  { maxima: 'gamma_incomplete_regularized', latexNames: ['GammaQ', 'GammaReg', 'GammaIncReg'],             js: { kind: 'helper', name: '_gamma_incomplete_regularized' }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['GammaQ', 'GammaReg'] },
+  { maxima: 'beta',                         latexNames: ['Beta'],                                           js: { kind: 'helper', name: '_beta'                         }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['Beta'] },
   { maxima: 'factorial', latexNames: ['factorial'], js: { kind: 'helper', name: '_factorial' }, category: 'combinatorial', autoOperatorNames: ['factorial'] },
 
   // ── Error functions ────────────────────────────────────────────────────────

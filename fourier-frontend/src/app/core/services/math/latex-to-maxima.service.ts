@@ -65,7 +65,8 @@ function tokenise(src: string): Token[] {
       out.push({ t: 'ident', v: name });
       continue;
     }
-    if (/[+\-*/^_,|]/.test(ch)) { out.push({ t: 'op', v: ch }); i++; continue; }
+    if (/[+\-*/^_|]/.test(ch)) { out.push({ t: 'op', v: ch }); i++; continue; }
+    if (ch === ',') { out.push({ t: 'op', v: ',' }); i++; continue; }
     i++;
   }
   out.push({ t: 'end' });
@@ -188,7 +189,23 @@ class Parser {
   }
 
   private funcArg(): string {
-    if (this.is('lp'))     { this.eat(); const a = this.addSub(); if (this.is('rp')) this.eat(); return a; }
+    // \left( ... \right) — MathQuill wraps multi-arg calls in \left(\right)
+    if (this.is('cmd', 'left')) {
+      this.eat();           // consume 'left'
+      if (this.is('lp')) this.eat(); // consume '('
+      const args: string[] = [this.addSub()];
+      while (this.is('op', ',')) { this.eat(); args.push(this.addSub()); }
+      // consume \right)
+      if (this.is('cmd', 'right')) { this.eat(); if (this.is('rp')) this.eat(); }
+      return args.join(',');
+    }
+    if (this.is('lp')) {
+      this.eat();
+      const args: string[] = [this.addSub()];
+      while (this.is('op', ',')) { this.eat(); args.push(this.addSub()); }
+      if (this.is('rp')) this.eat();
+      return args.join(',');
+    }
     if (this.is('lbrace')) return this.braceGroup();
     return this.atom();
   }
