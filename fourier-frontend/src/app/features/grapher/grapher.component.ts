@@ -153,6 +153,7 @@ function newExpr(colorIdx = 0): GraphExpression {
     color: GRAPH_PALETTE[colorIdx % GRAPH_PALETTE.length],
     visible: true,
     lineWidth: 2,
+    lineDash: 'solid',
   };
 }
 
@@ -259,7 +260,12 @@ export class GrapherComponent {
           const fn = math.compile(e.maxima, 'x', params);
           if (!fn) continue;
           compiled.push({ fn, expr: e });
-          plotter.plotFn(ctx, fn, vp, { color: e.color, lineWidth: e.lineWidth });
+          plotter.plotFn(ctx, fn, vp, {
+            color: e.color,
+            lineWidth: e.lineWidth,
+            dashed: e.lineDash !== 'solid',
+            dashPattern: e.lineDash === 'dotted' ? [2, 4] : [8, 5],
+          });
         }
 
         if (compiled.length === 0) return;

@@ -1,67 +1,186 @@
-<div class="flex items-center gap-2 px-3 py-2 border-b border-border dark:border-dark-border group">
+<div class="border-b border-border dark:border-dark-border">
 
-  <!-- Color swatch -->
-  <button
-    type="button"
-    (click)="cycleColor()"
-    class="w-5 h-5 rounded-full shrink-0 border-2 border-white dark:border-dark-surface transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-accent"
-    [style.background-color]="expr().color"
-    [title]="'grapher.changeColor' | transloco"
-  ></button>
+  <!-- Main row -->
+  <div class="flex items-center gap-2 px-3 py-2 group">
 
-  <!-- MathQuill input -->
-  <div
-    class="flex-1 min-w-0 min-h-8 px-2 py-1 rounded border text-sm cursor-text
-           bg-paper2 dark:bg-dark-surface2
-           border-border dark:border-dark-border
-           focus-within:border-accent focus-within:ring-1 focus-within:ring-accent
-           transition-colors"
-    [class.opacity-50]="!expr().visible"
-    (click)="field?.focus()"
-    (focusin)="onFocus()"
-  >
-    <span #mqExpr class="block min-h-5"></span>
-  </div>
-
-  <!-- Conversion error indicator -->
-  @if (conversionError) {
-    <span class="text-red-400 text-xs shrink-0" [title]="conversionError">!</span>
-  }
-
-  <!-- Visibility toggle -->
-  <button
-    type="button"
-    (click)="toggleVisible()"
-    class="text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors focus:outline-none"
-    [title]="(expr().visible ? 'grapher.hide' : 'grapher.show') | transloco"
-  >
-    @if (expr().visible) {
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-        <circle cx="12" cy="12" r="3"/>
-      </svg>
-    } @else {
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-        <line x1="1" y1="1" x2="23" y2="23"/>
-      </svg>
-    }
-  </button>
-
-  <!-- Delete (hidden until row is hovered, not shown when it's the only expression) -->
-  @if (!isOnly()) {
+    <!-- Color swatch — opens style panel -->
     <button
       type="button"
-      (click)="remove()"
-      class="text-muted dark:text-dark-muted hover:text-red-400 transition-colors focus:outline-none opacity-0 group-hover:opacity-100"
-      [title]="'grapher.remove' | transloco"
+      (click)="toggleStyle()"
+      class="w-5 h-5 rounded-full shrink-0 border-2 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-accent"
+      [style.background-color]="expr().color"
+      [class.border-white]="!styleOpen()"
+      [class.dark:border-dark-surface]="!styleOpen()"
+      [class.border-accent]="styleOpen()"
+      title="Estilo de línea"
+    ></button>
+
+    <!-- MathQuill input -->
+    <div
+      class="flex-1 min-w-0 min-h-8 px-2 py-1 rounded border text-sm cursor-text
+             bg-paper2 dark:bg-dark-surface2
+             border-border dark:border-dark-border
+             focus-within:border-accent focus-within:ring-1 focus-within:ring-accent
+             transition-colors"
+      [class.opacity-50]="!expr().visible"
+      (click)="field?.focus()"
+      (focusin)="onFocus()"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
+      <span #mqExpr class="block min-h-5"></span>
+    </div>
+
+    <!-- Conversion error indicator -->
+    @if (conversionError) {
+      <span class="text-red-400 text-xs shrink-0" [title]="conversionError">!</span>
+    }
+
+    <!-- Visibility toggle -->
+    <button
+      type="button"
+      (click)="toggleVisible()"
+      class="text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors focus:outline-none"
+      [title]="expr().visible ? 'Ocultar' : 'Mostrar'"
+    >
+      @if (expr().visible) {
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+      }
     </button>
+
+    <!-- Delete -->
+    @if (!isOnly()) {
+      <button
+        type="button"
+        (click)="remove()"
+        class="text-muted dark:text-dark-muted hover:text-red-400 transition-colors focus:outline-none opacity-0 group-hover:opacity-100"
+        title="Eliminar"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    }
+
+  </div>
+
+  <!-- Style panel (collapsible) -->
+  @if (styleOpen()) {
+    <div class="px-3 pb-3 space-y-2.5 bg-paper2 dark:bg-dark-surface2">
+
+      <!-- Color picker row -->
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted w-14 shrink-0">Color</span>
+
+        <!-- Palette swatches -->
+        <div class="flex gap-1.5 flex-1">
+          @for (c of palette; track c) {
+            <button
+              type="button"
+              (click)="setColor(c)"
+              class="w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 focus:outline-none"
+              [style.background-color]="c"
+              [class.border-ink]="expr().color === c"
+              [class.dark:border-dark-ink]="expr().color === c"
+              [class.border-transparent]="expr().color !== c"
+            ></button>
+          }
+        </div>
+
+        <!-- Native color picker for custom color -->
+        <label class="cursor-pointer" title="Color personalizado">
+          <input
+            type="color"
+            class="sr-only"
+            [value]="expr().color"
+            (input)="setColor($any($event.target).value)"
+          />
+          <span class="w-5 h-5 rounded-full border-2 border-dashed border-muted dark:border-dark-muted flex items-center justify-center hover:border-accent transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-muted dark:text-dark-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </span>
+        </label>
+      </div>
+
+      <!-- Line width row -->
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted w-14 shrink-0">Grosor</span>
+        <input
+          type="range"
+          min="1" max="6" step="0.5"
+          class="flex-1 accent-accent cursor-pointer"
+          [value]="expr().lineWidth"
+          (input)="setLineWidth(+$any($event.target).value)"
+        />
+        <span class="w-6 text-right text-xs font-mono text-muted dark:text-dark-muted">{{ expr().lineWidth }}</span>
+      </div>
+
+      <!-- Line dash row -->
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted w-14 shrink-0">Estilo</span>
+        <div class="flex gap-1.5">
+
+          <!-- Solid -->
+          <button
+            type="button"
+            (click)="setLineDash('solid')"
+            title="Sólida"
+            class="px-2.5 py-1.5 rounded border transition-colors focus:outline-none"
+            [class.border-accent]="expr().lineDash === 'solid'"
+            [class.bg-accent/10]="expr().lineDash === 'solid'"
+            [class.border-border]="expr().lineDash !== 'solid'"
+            [class.dark:border-dark-border]="expr().lineDash !== 'solid'"
+          >
+            <svg width="28" height="4" viewBox="0 0 28 4">
+              <line x1="0" y1="2" x2="28" y2="2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+
+          <!-- Dashed -->
+          <button
+            type="button"
+            (click)="setLineDash('dashed')"
+            title="Discontinua"
+            class="px-2.5 py-1.5 rounded border transition-colors focus:outline-none"
+            [class.border-accent]="expr().lineDash === 'dashed'"
+            [class.bg-accent/10]="expr().lineDash === 'dashed'"
+            [class.border-border]="expr().lineDash !== 'dashed'"
+            [class.dark:border-dark-border]="expr().lineDash !== 'dashed'"
+          >
+            <svg width="28" height="4" viewBox="0 0 28 4">
+              <line x1="0" y1="2" x2="28" y2="2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6 4"/>
+            </svg>
+          </button>
+
+          <!-- Dotted -->
+          <button
+            type="button"
+            (click)="setLineDash('dotted')"
+            title="Punteada"
+            class="px-2.5 py-1.5 rounded border transition-colors focus:outline-none"
+            [class.border-accent]="expr().lineDash === 'dotted'"
+            [class.bg-accent/10]="expr().lineDash === 'dotted'"
+            [class.border-border]="expr().lineDash !== 'dotted'"
+            [class.dark:border-dark-border]="expr().lineDash !== 'dotted'"
+          >
+            <svg width="28" height="4" viewBox="0 0 28 4">
+              <line x1="0" y1="2" x2="28" y2="2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="2 4"/>
+            </svg>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
   }
 
 </div>

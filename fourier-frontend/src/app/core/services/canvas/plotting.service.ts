@@ -153,7 +153,7 @@ export class PlottingService {
     ctx.lineCap     = 'round';
 
     if (curve.dashed) {
-      ctx.setLineDash([6, 4]);
+      ctx.setLineDash(curve.dashPattern ?? [6, 4]);
     }
 
     const jumpStyle = curve.jumpStyle ?? 'none';
@@ -239,7 +239,7 @@ export class PlottingService {
     ctx: CanvasRenderingContext2D,
     fn: (x: number) => number,
     vp: CanvasViewport,
-    style: { color: string; lineWidth: number; dashed?: boolean; jumpStyle?: 'none' | 'solid' | 'dashed' },
+    style: { color: string; lineWidth: number; dashed?: boolean; dashPattern?: number[]; jumpStyle?: 'none' | 'solid' | 'dashed' },
     config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
   ): void {
     const points = this.sampleVisible(fn, vp, undefined, config);
@@ -258,7 +258,7 @@ export class PlottingService {
     to: number,
     steps: number,
     vp: CanvasViewport,
-    style: { color: string; lineWidth: number; dashed?: boolean; jumpStyle?: 'none' | 'solid' | 'dashed' },
+    style: { color: string; lineWidth: number; dashed?: boolean; dashPattern?: number[]; jumpStyle?: 'none' | 'solid' | 'dashed' },
     config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
   ): void {
     const points = this.sampleRange(fn, from, to, steps);
@@ -290,7 +290,7 @@ export class PlottingService {
     ctx: CanvasRenderingContext2D,
     pieces: { fn: (x: number) => number; from: number; to: number }[],
     vp: CanvasViewport,
-    style: { color: string; lineWidth: number; dashed?: boolean; jumpStyle?: 'none' | 'solid' | 'dashed' },
+    style: { color: string; lineWidth: number; dashed?: boolean; dashPattern?: number[]; jumpStyle?: 'none' | 'solid' | 'dashed' },
     config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
   ): void {
     const finite = pieces.filter(p => isFinite(p.from) && isFinite(p.to));

@@ -7,8 +7,8 @@ import {
   inject,
   input,
   output,
+  signal,
 } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { MathquillService, MathField } from '../../core/services/math/mathquill.service';
@@ -21,6 +21,7 @@ export interface GraphExpression {
   color: string;
   visible: boolean;
   lineWidth: number;
+  lineDash: 'solid' | 'dashed' | 'dotted';
 }
 
 export const GRAPH_PALETTE = [
@@ -35,7 +36,7 @@ export const GRAPH_PALETTE = [
 @Component({
   selector: 'app-grapher-expression',
   templateUrl: './grapher-expression.component.html',
-  imports: [TranslocoPipe],
+  imports: [],
 })
 export class GrapherExpressionComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mqExpr') mqExprRef!: ElementRef<HTMLElement>;
@@ -50,9 +51,12 @@ export class GrapherExpressionComponent implements AfterViewInit, OnDestroy {
   readonly changed = output<GraphExpression>();
   readonly removed = output<string>();
 
+  readonly palette = GRAPH_PALETTE;
+
   field: MathField | null = null;
   private _syncing = false;
   conversionError: string | null = null;
+  readonly styleOpen = signal(false);
 
   private readonly _editSubject = new Subject<string>();
   private readonly _subs = new Subscription();
@@ -111,10 +115,20 @@ export class GrapherExpressionComponent implements AfterViewInit, OnDestroy {
     if (this.mqExprRef?.nativeElement) this.mqExprRef.nativeElement.innerHTML = '';
   }
 
-  cycleColor(): void {
-    const idx = GRAPH_PALETTE.indexOf(this.expr().color as (typeof GRAPH_PALETTE)[number]);
-    const next = GRAPH_PALETTE[(idx + 1) % GRAPH_PALETTE.length];
-    this.emit({ color: next });
+  toggleStyle(): void {
+    this.styleOpen.update(v => !v);
+  }
+
+  setColor(color: string): void {
+    this.emit({ color });
+  }
+
+  setLineWidth(w: number): void {
+    this.emit({ lineWidth: w });
+  }
+
+  setLineDash(lineDash: GraphExpression['lineDash']): void {
+    this.emit({ lineDash });
   }
 
   toggleVisible(): void {
