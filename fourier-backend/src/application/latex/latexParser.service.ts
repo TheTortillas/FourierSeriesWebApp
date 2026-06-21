@@ -60,33 +60,80 @@ export class LatexParserService {
   private preProcess(latex: string): string {
     let s = latex
       .replace(/\\cdot\s*/g, " ")
+      // Spanish aliases
       .replace(/\\operatorname\{sen\}/g, "\\sin")
       .replace(/\\operatorname\{tg\}/g, "\\tan")
       .replace(/\\operatorname\{senh\}/g, "\\sinh")
       .replace(/\\operatorname\{ctg\}/g, "\\cot")
+      // Inverse trig — \arcXXX commands and \operatorname{arcXXX} → \operatorname{aXXX}
       .replace(/\\arcsin/g, "\\operatorname{asin}")
       .replace(/\\arccos/g, "\\operatorname{acos}")
       .replace(/\\arctan/g, "\\operatorname{atan}")
       .replace(/\\operatorname\{arcsin\}/g, "\\operatorname{asin}")
       .replace(/\\operatorname\{arccos\}/g, "\\operatorname{acos}")
       .replace(/\\operatorname\{arctan\}/g, "\\operatorname{atan}")
+      .replace(/\\operatorname\{arccot\}/g, "\\operatorname{acot}")
+      .replace(/\\operatorname\{arcsec\}/g, "\\operatorname{asec}")
+      .replace(/\\operatorname\{arccsc\}/g, "\\operatorname{acsc}")
+      // Inverse trig a-forms — pass through as bare words (tex2max unknown; handled in postProcess)
+      .replace(/\\operatorname\{asin\}/g, "asin")
+      .replace(/\\operatorname\{acos\}/g, "acos")
+      .replace(/\\operatorname\{atan\}/g, "atan")
+      .replace(/\\operatorname\{acot\}/g, "acot")
+      .replace(/\\operatorname\{asec\}/g, "asec")
+      .replace(/\\operatorname\{acsc\}/g, "acsc")
+      // Inverse hyperbolic arc* aliases → a* forms, then pass through as bare words
+      .replace(/\\operatorname\{arcsinh\}/g, "asinh")
+      .replace(/\\operatorname\{arccosh\}/g, "acosh")
+      .replace(/\\operatorname\{arctanh\}/g, "atanh")
+      .replace(/\\operatorname\{arccoth\}/g, "acoth")
+      .replace(/\\operatorname\{arcsech\}/g, "asech")
+      .replace(/\\operatorname\{arccsch\}/g, "acsch")
+      // Spanish arc* aliases (arcsenh, arcctgh, arctgh, arcctgh)
+      .replace(/\\operatorname\{arcsenh\}/g, "asinh")
+      .replace(/\\operatorname\{arctgh\}/g, "atanh")
+      .replace(/\\operatorname\{arcctgh\}/g, "acoth")
+      // Inverse hyperbolic a* forms — pass through as bare words
+      .replace(/\\operatorname\{asinh\}/g, "asinh")
+      .replace(/\\operatorname\{acosh\}/g, "acosh")
+      .replace(/\\operatorname\{atanh\}/g, "atanh")
+      .replace(/\\operatorname\{acoth\}/g, "acoth")
+      .replace(/\\operatorname\{asech\}/g, "asech")
+      .replace(/\\operatorname\{acsch\}/g, "acsch")
+      // Logarithms
       .replace(/\\operatorname\{ln\}/g, "\\log")
       .replace(/\\ln\b/g, "\\log")
+      .replace(/\\operatorname\{log2\}/g, "log2")
+      .replace(/\\operatorname\{log10\}/g, "log10")
+      // Exponential
       .replace(/\\exp\b/g, "\\operatorname{exp}")
       .replace(/\\operatorname\{exp\}\s*\\left\s*\(/g, "\\operatorname{exp}(")
       .replace(/\\operatorname\{exp\}\s*\(/g, "\\operatorname{exp}(")
+      // Hyperbolic reciprocals — tex2max knows \sech etc. as literal commands
       .replace(/\\operatorname\{sech\}/g, "\\sech")
       .replace(/\\operatorname\{csch\}/g, "\\csch")
       .replace(/\\operatorname\{coth\}/g, "\\coth")
+      // Rounding — pass through as bare words
+      .replace(/\\operatorname\{floor\}/g, "floor")
+      .replace(/\\operatorname\{ceiling\}/g, "ceiling")
+      .replace(/\\operatorname\{round\}/g, "round")
+      .replace(/\\operatorname\{truncate\}/g, "truncate")
+      // Misc
+      .replace(/\\operatorname\{sign\}/g, "sgn")
       .replace(/\\operatorname\{sgn\}/g, "sgn")
+      .replace(/\\operatorname\{abs\}/g, "\\left|")   // tex2max handles \left|...\right|
+      // Signal functions
+      .replace(/\\operatorname\{u\}/g, "u")
       .replace(/\\operatorname\{rect\}/g, "rect")
       .replace(/\\operatorname\{tri\}/g, "tri")
       .replace(/\\operatorname\{sinc\}/g, "sinc")
       .replace(/\\operatorname\{delta\}/g, " TMDELTA")
       .replace(/\\delta\b/g, " TMDELTA")
+      // Combinatorial
       .replace(/\\operatorname\{gamma\}/g, "TMGAMMA")
       .replace(/\\operatorname\{factorial\}/g, "TMFACTORIAL")
       .replace(/\\Gamma\b/g, "TMGAMMA")
+      // Misc LaTeX
       .replace(/\\mathrm\{i\}/g, "\\operatorname{imagunit}")
       .replace(/-\s*\\infty/g, "TMMINF")
       .replace(/\\infty/g, "TMINF");
@@ -123,8 +170,19 @@ export class LatexParserService {
       "arcsec", "arcsech", "arcsin", "arcsinh", "arctan", "arctanh",
       "cos", "cosh", "cot", "coth", "csc", "csch",
       "sec", "sech", "sin", "sinh", "tan", "tanh",
-      // Our domain functions (passed through as bare words after \operatorname substitution)
-      "sgn", "rect", "tri", "sinc", "imagunit",
+      // Inverse trig a-forms (passed through by preProcess as bare words)
+      "asin", "acos", "atan", "acot", "asec", "acsc",
+      // Inverse hyperbolic (passed through by preProcess as bare words)
+      "asinh", "acosh", "atanh", "acoth", "asech", "acsch",
+      // arc* aliases (in case they reach splitBareIdentifiers before substitution)
+      "arcsinh", "arccosh", "arctanh", "arccoth", "arcsech", "arccsch",
+      "arcsenh", "arctgh", "arcctgh",
+      // Rounding (passed through by preProcess as bare words)
+      "floor", "ceiling", "round", "truncate",
+      // Logarithms base 2/10 (passed through by preProcess as bare words)
+      "log2", "log10",
+      // Domain / signal functions (passed through as bare words after \operatorname substitution)
+      "sgn", "sign", "u", "rect", "tri", "sinc", "imagunit",
       // Internal markers injected before this step
       "TMDELTA", "TMINF", "TMMINF", "TMGAMMA", "TMFACTORIAL",
     ]);
@@ -260,7 +318,7 @@ export class LatexParserService {
       .replace(/\bTMDELTA\b/g, "delta")
       .replace(/\bTMGAMMA\b/g, "gamma")
       .replace(/\bTMFACTORIAL\b/g, "factorial")
-      .replace(/\b(u|sgn|delta|rect|tri|sinc|gamma|factorial|exp|sech|csch|coth)\s*\*\s*\(/g, "$1(");
+      .replace(/\b(u|sgn|sign|delta|rect|tri|sinc|gamma|factorial|exp|sech|csch|coth|asin|acos|atan|acot|asec|acsc|asinh|acosh|atanh|acoth|asech|acsch|floor|ceiling|round|truncate|log2|log10)\s*\*\s*\(/g, "$1(");
 
     return this.normalizePostfixFactorial(normalized);
   }

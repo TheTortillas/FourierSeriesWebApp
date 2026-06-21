@@ -1,16 +1,14 @@
 import { Injectable } from '@angular/core';
+import { REGISTRY_FOR_JS, FUNCTION_REGISTRY } from './function-registry';
 
 export type JsFunction = (x: number) => number;
 
 /**
  * Translates a Maxima expression string into an evaluable JS function.
  *
- * Supports the subset of Maxima syntax used by the Fourier backend:
- *   - Arithmetic: +, -, *, /, ^
- *   - Maxima constants: %pi, %e
- *   - Trig: sin, cos, tan, asin, acos, atan
- *   - Hyperbolic: sinh, cosh, tanh
- *   - Other: sqrt, exp, log, abs, floor, ceiling
+ * Supported functions are derived from FUNCTION_REGISTRY in function-registry.ts.
+ * Adding a new function to the registry automatically extends support here
+ * without any changes to this file (unless a new _helper implementation is needed).
  *
  * SSR-safe: no DOM dependencies.
  */
@@ -155,63 +153,28 @@ export class MathUtilsService {
     // Fix both -IDENTIFIER** and -(expr)** before any further substitutions touch them.
     s = this._fixUnaryMinusPow(s);
 
-    s = s
-      // Functions — order matters (longer names first to avoid partial matches)
-      .replace(/\basinh\b/g, 'Math.asinh')
-      .replace(/\bacosh\b/g, 'Math.acosh')
-      .replace(/\batanh\b/g, 'Math.atanh')
-      .replace(/\basin\b/g, 'Math.asin')
-      .replace(/\bacos\b/g, 'Math.acos')
-      .replace(/\batan2\b/g, 'Math.atan2')
-      .replace(/\batan\b/g, 'Math.atan')
-      // Reciprocal inverses (no JS native — express via Math.asin/acos/atan)
-      .replace(/\bacot\b/g, '_acot')
-      .replace(/\basec\b/g, '_asec')
-      .replace(/\bacsc\b/g, '_acsc')
-      // Hyperbolic reciprocals: sech(x)=1/cosh(x), csch(x)=1/sinh(x), coth(x)=cosh(x)/sinh(x)
-      // Must come BEFORE the plain sinh/cosh/tanh replacements (longer names first)
-      .replace(/\bsech\b/g, '_sech')
-      .replace(/\bcsch\b/g, '_csch')
-      .replace(/\bcoth\b/g, '_coth')
-      .replace(/\bsinh\b/g, 'Math.sinh')
-      .replace(/\bcosh\b/g, 'Math.cosh')
-      .replace(/\btanh\b/g, 'Math.tanh')
-      .replace(/\bsin\b/g, 'Math.sin')
-      .replace(/\bcos\b/g, 'Math.cos')
-      .replace(/\btan\b/g, 'Math.tan')
-      // Reciprocals (no JS native — express via sin/cos/tan)
-      .replace(/\bcot\b/g, '_cot')
-      .replace(/\bsec\b/g, '_sec')
-      .replace(/\bcsc\b/g, '_csc')
-      .replace(/\bsqrt\b/g, 'Math.sqrt')
-      .replace(/\bexp\b/g, 'Math.exp')
-      .replace(/\blog2\b/g, 'Math.log2')
-      .replace(/\blog10\b/g, 'Math.log10')
-      .replace(/\blog\b/g, 'Math.log')   // Maxima log = natural log
-      .replace(/\babs\b/g, 'Math.abs')
-      .replace(/\bfloor\b/g, 'Math.floor')
-      .replace(/\bceiling\b/g, 'Math.ceil')
-      .replace(/\bround\b/g, 'Math.round')
-      .replace(/\btruncate\b/g, 'Math.trunc')
-      .replace(/\bmax\b/g, 'Math.max')
-      .replace(/\bmin\b/g, 'Math.min')
-      .replace(/\bsign\b/g, 'Math.sign')
-      .replace(/\bsgn\b\s*\(/g, 'Math.sign(')             // signum
-      // Combinatorial / special functions
-      .replace(/\bgamma\b/g, '_gamma')
-      .replace(/\bfactorial\b/g, '_factorial')
-      // Error functions — approximate via Horner series
-      .replace(/\berfc\b/g, '_erfc')
-      .replace(/\berf\b/g, '_erf')
-      // Exponential / trigonometric integral functions (Maxima names → JS helpers)
-      // Longer names first to avoid partial matches (shi before si, chi before ci)
-      .replace(/\bexpintegral_shi\b/g, '_Shi')
-      .replace(/\bexpintegral_chi\b/g, '_Chi')
-      .replace(/\bexpintegral_si\b/g, '_Si')
-      .replace(/\bexpintegral_ci\b/g, '_Ci')
-      .replace(/\bexpintegral_e1\b/g, '_E1')
-      .replace(/\bexpintegral_ei\b/g, '_Ei')
-      .replace(/\bexpintegral_li\b/g, '_li');
+    // sgn is a Maxima alias for sign — normalize before the registry loop runs.
+    s = s.replace(/\bsgn\b\s*\(/g, 'sign(');
+
+    // Apply all function translations from REGISTRY_FOR_JS (sorted longest-first
+    // so 'asinh' matches before 'sinh', 'atanh' before 'tanh', etc.)
+    for (const fn of REGISTRY_FOR_JS) {
+      const re = new RegExp(`\\b${fn.maxima}\\b`, 'g');
+      const { js } = fn;
+      if (js.kind === 'Math') {
+        s = s.replace(re, `Math.${js.method}`);
+      } else if (js.kind === 'helper') {
+        s = s.replace(re, js.name);
+      } else if (js.kind === 'inline') {
+        // Inline replacements need paren-aware matching; handled after the loop.
+        // Skip here — _applyInlineReplacements() handles them.
+      }
+      // kind === 'stub': signal functions handled separately by _replaceNestedFn below.
+    }
+
+    // Apply inline replacements (acoth, asech, acsch) using paren-aware matching
+    // so nested args like acoth(x+1) expand correctly.
+    s = this._applyInlineReplacements(s);
 
     // Maxima if(cond, then, else) → JS ternary.  Must run before nested-fn replacements.
     s = this._replaceMathIf(s);
@@ -236,6 +199,21 @@ export class MathUtilsService {
     // (e.g. Math.E**(-t**2+2*t-1)).  Convert all Math.E**(...) to Math.exp(...).
     s = this._replaceMathEPow(s);
 
+    return s;
+  }
+
+  /**
+   * Applies registry entries with kind:'inline' using paren-aware matching.
+   * The $arg placeholder in the inline JS template is replaced with the actual
+   * argument string, correctly handling nested parentheses.
+   */
+  private _applyInlineReplacements(expr: string): string {
+    let s = expr;
+    for (const fn of REGISTRY_FOR_JS) {
+      if (fn.js.kind !== 'inline') continue;
+      const template = fn.js.js;
+      s = this._replaceNestedFn(s, fn.maxima, (arg) => template.replace(/\$arg/g, arg));
+    }
     return s;
   }
 
@@ -301,28 +279,36 @@ export class MathUtilsService {
    * changing the generated JS for all expressions. The whitelist approach is
    * simpler, easier to audit, and sufficient for the backend's Maxima output.
    */
-  private _stubUnknownFunctions(expr: string): string {
-    const known = new Set([
+  // Whitelist built once from the registry + JS built-ins. Any identifier
+  // produced by the pipeline that isn't in this set gets stubbed to NaN.
+  private static readonly _KNOWN_IDENTIFIERS: ReadonlySet<string> = (() => {
+    const s = new Set<string>([
       // JS keywords / globals that appear in generated code
       'Math', 'function', 'return', 'NaN', 'Infinity', 'typeof', 'void',
       'true', 'false', 'null', 'undefined', 'isFinite', 'isNaN',
       'parseInt', 'parseFloat', 'String', 'Number', 'Boolean', 'Array',
-      // Math static methods (all of them, to future-proof)
+      // All Math static methods (future-proof)
       'abs', 'acos', 'acosh', 'asin', 'asinh', 'atan', 'atan2', 'atanh',
       'cbrt', 'ceil', 'clz32', 'cos', 'cosh', 'exp', 'expm1', 'floor',
       'fround', 'hypot', 'imul', 'log', 'log10', 'log1p', 'log2', 'max',
       'min', 'pow', 'random', 'round', 'sign', 'sin', 'sinh', 'sqrt',
       'tan', 'tanh', 'trunc',
-      // _helpers defined in this service
-      '_cot', '_sec', '_csc', '_acot', '_asec', '_acsc',
-      '_sech', '_csch', '_coth',
-      '_gamma', '_factorial', '_erf', '_erfc',
-      '_Si', '_Ci', '_Shi', '_Chi', '_Ei', '_E1', '_li',
-      '_fAux', '_gAux',               // internal helpers used by _Si/_Ci
-      // Special-function JS replacements (already handled by _replaceNestedFn
-      // before this step runs, but kept here as safety net)
-      'rect', 'tri', 'sinc', 'delta', 'u',
+      // Internal helpers for Si/Ci asymptotic expansions
+      '_fAux', '_gAux',
     ]);
+    // Add every JS target produced by the registry translation pipeline
+    for (const fn of FUNCTION_REGISTRY) {
+      const { js } = fn;
+      if (js.kind === 'Math')   s.add(js.method);
+      if (js.kind === 'helper') s.add(js.name);
+      // signal stubs: add the maxima name so it isn't stubbed before _replaceNestedFn runs
+      if (js.kind === 'stub')   s.add(fn.maxima);
+    }
+    return s;
+  })();
+
+  private _stubUnknownFunctions(expr: string): string {
+    const known = MathUtilsService._KNOWN_IDENTIFIERS;
     // Collect unknown function calls using nested-paren-aware finder.
     // Negative lookbehind (?<!\.) ensures we don't match Math.sin as "sin".
     const re = /(?<!\.)(\b[a-zA-Z_][a-zA-Z0-9_]*\b)\s*\(/g;

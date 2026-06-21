@@ -17,6 +17,18 @@ import { MathUtilsService } from '../../core/services/math/math-utils.service';
 import { MathquillService, KeyBtn } from '../../core/services/math/mathquill.service';
 import { CoordinateTransformService } from '../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport, MathPoint } from '../../core/services/canvas/canvas.types';
+import { FUNCTION_REGISTRY } from '../../core/services/math/function-registry';
+
+// Single-letter Maxima names that are functions or constants, not free parameters.
+// Built from the registry so adding a new function (e.g. besselj) updates this automatically.
+const RESERVED_SYMBOLS: ReadonlySet<string> = new Set([
+  'x', 'X',          // plot variable
+  'e', 'E',          // Euler's number (%e) — may appear bare before backend responds
+  'i', 'I',          // imaginary unit (%i)
+  ...FUNCTION_REGISTRY
+    .flatMap((f) => f.latexNames)
+    .filter((n) => n.length === 1),
+]);
 
 export interface FnGroup {
   label: string;
@@ -222,8 +234,8 @@ export class GrapherComponent {
     const seen = new Set<string>();
     for (const e of this.expressions()) {
       if (!e.visible || !e.maxima) continue;
-      for (const m of e.maxima.matchAll(/\b([a-wyzA-WYZ])\b/g)) {
-        seen.add(m[1]);
+      for (const m of e.maxima.matchAll(/\b([a-zA-Z])\b/g)) {
+        if (!RESERVED_SYMBOLS.has(m[1])) seen.add(m[1]);
       }
     }
     return [...seen].sort();
