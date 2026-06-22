@@ -582,7 +582,8 @@ export class MathUtilsService {
     const _EG = 0.5772156649015329;
     function _Ei(x) {
       if (x === 0) return -Infinity;
-      if (x > 0 && x < 6) {
+      if (x < 0) return -_E1(-x);
+      if (x < 6) {
         let s = 0, t = x;
         for (let n = 1; n <= 50; n++) {
           s += t;
@@ -592,12 +593,9 @@ export class MathUtilsService {
         }
         return _EG + Math.log(x) + s;
       }
-      if (x > 0) {
-        let s = 1, t = 1;
-        for (let n = 1; n <= 25; n++) { const tn = t * (n / x); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
-        return Math.exp(x) / x * s;
-      }
-      return NaN;
+      let s = 1, t = 1;
+      for (let n = 1; n <= 25; n++) { const tn = t * (n / x); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
+      return Math.exp(x) / x * s;
     }
     function _E1(x) {
       if (x <= 0) return NaN;

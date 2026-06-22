@@ -100,9 +100,23 @@ class Parser {
 
   private mulDiv(): string {
     let s = this.power();
-    while (this.is('op', '*') || this.is('op', '/')) {
-      const op = (this.eat() as { t: 'op'; v: string }).v;
-      s = `(${s}${op}${this.power()})`;
+    for (;;) {
+      if (this.is('op', '*') || this.is('op', '/')) {
+        const op = (this.eat() as { t: 'op'; v: string }).v;
+        s = `(${s}${op}${this.power()})`;
+      } else if (this.is('cmd', 'cdot') || this.is('cmd', 'times')) {
+        this.eat(); // consume \cdot or \times, treat as explicit *
+        s = `(${s}*${this.power()})`;
+      } else if (
+        this.is('num') ||
+        this.is('ident') ||
+        this.is('lp') ||
+        (this.is('cmd') && !this.is('cmd', 'right'))
+      ) {
+        s = `(${s}*${this.power()})`;
+      } else {
+        break;
+      }
     }
     return s;
   }
@@ -143,7 +157,18 @@ class Parser {
       const cmd = tok.v;
       if (cmd === 'frac')  return `(${this.braceGroup()})/(${this.braceGroup()})`;
       if (cmd === 'sqrt')  return `sqrt(${this.braceGroup()})`;
-      if (cmd === 'left' || cmd === 'right') { this.eat(); return this.addSub(); }
+      if (cmd === 'left' || cmd === 'right') {
+        const delim = this.peek();
+        this.eat(); // consume the delimiter token
+        // \left|...\right| → abs(...)
+        if (delim.t === 'op' && (delim as { t: 'op'; v: string }).v === '|') {
+          const inner = this.addSub();
+          if (this.is('cmd', 'right')) { this.eat(); if (this.is('op', '|')) this.eat(); }
+          return `abs(${inner})`;
+        }
+        // \left(...\right) and other delimiters — parse content only
+        return this.addSub();
+      }
       if (cmd === 'cdot' || cmd === 'times') return '*';
       if (cmd === 'pi')    return '%pi';
       if (cmd === 'theta') return 'theta';

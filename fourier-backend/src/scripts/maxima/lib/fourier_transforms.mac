@@ -1747,6 +1747,66 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── GCONV-1 FT: k·e^{-a·t²}/(t²+b²) → closed form in erfc  (a,b>0) ──────
+       FT[k·e^{-at²}/(t²+b²)](ω) = (k·e^{ab²})/(2b) ·
+         [e^{-bω}·erfc((2ab−ω)/(2√a))  +  e^{bω}·erfc((2ab+ω)/(2√a))]    (ω>0)
+       Result is real and even (imaginary part vanishes by symmetry of integrand).
+       Derived via frequency convolution:
+         FT[f·g] = (1/2π)·FT[f](*) FT[g]
+         FT[e^{-at²}]=√(π/a)·e^{-ω²/(4a)},  FT[1/(t²+b²)]=π/b·e^{-b|ω|}
+       Uses f_expr (pre-expand) because expand() inverts the fraction. */
+    if is(res = false) and not freeof(t_var, f_expr) then block(
+        [_gf_k, _gf_a, _gf_b, _gf_expr],
+        _gf_k: false, _gf_a: false, _gf_b: false,
+        _gf_expr: f_expr,
+        /* strip overall unary minus */
+        if not atom(_gf_expr) and is(op(_gf_expr) = "-") then (
+            _gf_k: -1, _gf_expr: first(args(_gf_expr))
+        ),
+        if not atom(_gf_expr) and is(op(_gf_expr) = "/") then block(
+            [_nm: part(_gf_expr,1), _dn: part(_gf_expr,2)],
+            /* denominator: t²+b² → b² = dn - t² */
+            block([_bc: errcatch(ratsimp(_dn - t_var^2))],
+                if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then
+                    _gf_b: sqrt(first(_bc))
+            ),
+            if is(_gf_b # false) then block(
+                /* numerator: k·%e^{-a·t²}  (op="^", base=%e, exp=-a*t²) */
+                [_nk: 1, _na: false],
+                _gf_is_gauss_t: lambda([_x],
+                    not atom(_x) and is(op(_x) = "^")
+                    and is(part(_x,1) = %e)
+                    and block([_ex: errcatch(ratsimp(part(_x,2) / (-t_var^2)))],
+                        _ex # [] and freeof(t_var, first(_ex)) and is(first(_ex) > 0)
+                    )
+                ),
+                _gf_get_a: lambda([_x],
+                    first(errcatch(ratsimp(part(_x,2) / (-t_var^2))))
+                ),
+                if _gf_is_gauss_t(_nm) then (
+                    _na: _gf_get_a(_nm)
+                ) else if not atom(_nm) and is(op(_nm) = "*") then (
+                    for _f in args(_nm) do (
+                        if _gf_is_gauss_t(_f) then _na: _gf_get_a(_f)
+                        else if freeof(t_var, _f) then _nk: _nk * _f
+                    )
+                ) else if not atom(_nm) and is(op(_nm) = "-") then block(
+                    [_in: first(args(_nm))],
+                    if _gf_is_gauss_t(_in) then (_na: _gf_get_a(_in), _nk: -1)
+                ),
+                if is(_na # false) then
+                    _gf_k: if _gf_k = false then _nk else _gf_k * _nk,
+                _gf_a: _na
+            )
+        ),
+        if is(_gf_k # false) and is(_gf_a # false) and is(_gf_b # false)
+           and freeof(t_var, _gf_k) and is(_gf_a > 0) and is(_gf_b > 0) then
+            res: [_gf_k * %pi * exp(_gf_a * _gf_b^2) / (2 * _gf_b) *
+                  (exp(-_gf_b * w_var) * erfc((2*_gf_a*_gf_b - w_var) / (2*sqrt(_gf_a)))
+                   + exp( _gf_b * w_var) * erfc((2*_gf_a*_gf_b + w_var) / (2*sqrt(_gf_a)))),
+                  concat("FT k*exp(-at^2)/(t^2+b^2)->erfc form, a=", string(_gf_a), ", b=", string(_gf_b))]
+    ),
+
     /* ── k*exp(-a*t^2)*trig(b*t+theta) — familia gaussiana ──────────────────
        FT[e^{-at²}] = √(π/a) · e^{-ω²/(4a)}                (par #G0)
        FT[e^{-at²}·cos(bt+θ)] = √(π/a)·e^{-(ω-b)²/(4a)/2 ...}
@@ -2909,6 +2969,226 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                   concat("k*csch^2(bt)->-2k*pi*w*coth(pi*w/(2b))/b^2, b=", string(_th7_b))]
     ),
 
+    /* ── AT-1: k*arctan(b*t) → -ik*π/(b*ω)*e^{-|ω|/b}  (b>0) ──────────────
+       FT of arctan is distributional; formula from derivative property:
+       d/dt[arctan(bt)] = b/(1+b²t²) whose FT = π*e^{-|ω|/b}·sgn(ω)/i,
+       so FT[arctan(bt)] = π*e^{-|ω|/b}·sgn(ω)/(i·iω) = -iπ·e^{-|ω|/b}/(b·ω). */
+    if is(res = false) and not freeof('atan, e) then block(
+        [_at_k, _at_b, _at_e],
+        _at_k: 1, _at_b: false, _at_e: e,
+        /* strip leading minus */
+        if not atom(_at_e) and is(op(_at_e) = "-") then (
+            _at_k: -1, _at_e: first(args(_at_e))
+        ),
+        /* case: atan(b*t) alone */
+        if not atom(_at_e) and is(op(_at_e) = 'atan) then block(
+            [_arg: part(_at_e, 1), _bc],
+            _bc: errcatch(ratsimp(_arg / t_var)),
+            if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then
+                _at_b: first(_bc)
+        )
+        /* case: k*atan(b*t) — scalar handler covers this, but handle direct product too */
+        else if not atom(_at_e) and is(op(_at_e) = "*") then block(
+            [_found_at: false],
+            for _f in args(_at_e) do (
+                if not atom(_f) and is(op(_f) = 'atan) then block(
+                    [_bc: errcatch(ratsimp(part(_f,1) / t_var))],
+                    if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then (
+                        _at_b: first(_bc), _found_at: true
+                    )
+                ) else if freeof(t_var, _f) then
+                    _at_k: _at_k * _f
+                else
+                    _at_b: false   /* t-dep factor other than atan — reject */
+            ),
+            if not _found_at then _at_b: false
+        ),
+        if is(_at_b # false) and freeof(t_var, _at_k) and is(_at_b > 0) then
+            res: [-%i * _at_k * %piexact * exp(-abs(w_var) / _at_b) / (_at_b * w_var),
+                  concat("k*arctan(bt)->-ik*pi*exp(-|w|/b)/(b*w), b=", string(_at_b))]
+    ),
+
+    /* ── ERFC-1: k*erfc(b*t) → 2kπ·δ(ω) - 2ik/ω·e^{-ω²/(4b²)}  (b>0) ──────────
+       erfc(bt) = 1 - erf(bt), so FT = FT[1] - FT[erf(bt)] = 2π·δ(ω) - 2i/ω·e^{-ω²/(4b²)}.
+       Must run BEFORE ERF-1 to avoid erf matching erfc. */
+    if is(res = false) and not freeof('erfc, e) then block(
+        [_ec_k, _ec_b, _ec_e],
+        _ec_k: 1, _ec_b: false, _ec_e: e,
+        if not atom(_ec_e) and is(op(_ec_e) = "-") then (
+            _ec_k: -1, _ec_e: first(args(_ec_e))
+        ),
+        if not atom(_ec_e) and is(op(_ec_e) = 'erfc) then block(
+            [_bc: errcatch(ratsimp(part(_ec_e,1) / t_var))],
+            if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then
+                _ec_b: first(_bc)
+        ) else if not atom(_ec_e) and is(op(_ec_e) = "*") then block(
+            [_found: false],
+            for _f in args(_ec_e) do (
+                if not atom(_f) and is(op(_f) = 'erfc) then block(
+                    [_bc: errcatch(ratsimp(part(_f,1) / t_var))],
+                    if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then (
+                        _ec_b: first(_bc), _found: true
+                    ) else _ec_b: false
+                ) else if freeof(t_var, _f) then
+                    _ec_k: _ec_k * _f
+                else
+                    _ec_b: false
+            ),
+            if not _found then _ec_b: false
+        ),
+        if is(_ec_b # false) and freeof(t_var, _ec_k) and is(_ec_b > 0) then
+            res: [2 * _ec_k * %piexact * delta(w_var)
+                  - 2 * _ec_k * %i * exp(-w_var^2 / (4 * _ec_b^2)) / w_var,
+                  concat("k*erfc(bt)->2k*pi*delta(w)-2ik*exp(-w^2/(4b^2))/w, b=",
+                         string(_ec_b))]
+    ),
+
+    /* ── ERF-1: k*erf(b*t) → 2k/(iω)·e^{-ω²/(4b²)}  (b>0) ────────────────────
+       erf is odd → purely imaginary FT. Detects erf(b*t) or k*erf(b*t). */
+    if is(res = false) and not freeof('erf, e) then block(
+        [_ef_k, _ef_b, _ef_e],
+        _ef_k: 1, _ef_b: false, _ef_e: e,
+        if not atom(_ef_e) and is(op(_ef_e) = "-") then (
+            _ef_k: -1, _ef_e: first(args(_ef_e))
+        ),
+        if not atom(_ef_e) and is(op(_ef_e) = 'erf) then block(
+            [_bc: errcatch(ratsimp(part(_ef_e,1) / t_var))],
+            if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then
+                _ef_b: first(_bc)
+        ) else if not atom(_ef_e) and is(op(_ef_e) = "*") then block(
+            [_found: false],
+            for _f in args(_ef_e) do (
+                if not atom(_f) and is(op(_f) = 'erf) then block(
+                    [_bc: errcatch(ratsimp(part(_f,1) / t_var))],
+                    if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then (
+                        _ef_b: first(_bc), _found: true
+                    ) else _ef_b: false
+                ) else if freeof(t_var, _f) then
+                    _ef_k: _ef_k * _f
+                else
+                    _ef_b: false
+            ),
+            if not _found then _ef_b: false
+        ),
+        if is(_ef_b # false) and freeof(t_var, _ef_k) and is(_ef_b > 0) then
+            res: [2 * _ef_k * exp(-w_var^2 / (4 * _ef_b^2)) / (%i * w_var),
+                  concat("k*erf(bt)->2k*exp(-w^2/(4b^2))/(i*w), b=", string(_ef_b))]
+    ),
+
+    /* ── AT-4: k*arctan(b*t)/t → -kπ·Ei(-|ω|/b)  (b>0) ────────────────────────
+       Derived via division-by-t property and FT[arctan(bt)]:
+       FT[arctan(bt)/t](ω) = π·∫_{|ω|}^∞ e^{-ξ/b}/(b·ξ) dξ = π·E₁(|ω|/b) = -π·Ei(-|ω|/b).
+       Detects atan(b*t)/t or k*atan(b*t)/t (Maxima: op="/", num contains atan, den contains t). */
+    if is(res = false) and not freeof('atan, e) then block(
+        [_at4_k, _at4_b, _at4_e, _at4_sign],
+        _at4_k: false, _at4_b: false, _at4_sign: 1,
+        _at4_e: e,
+        if not atom(_at4_e) and is(op(_at4_e) = "-") then (
+            _at4_sign: -1, _at4_e: first(args(_at4_e))
+        ),
+        if not atom(_at4_e) and is(op(_at4_e) = "/") then block(
+            [_nm: part(_at4_e,1), _dn: part(_at4_e,2)],
+            /* denominator must be c*t (c constant) */
+            block([_dc: errcatch(ratsimp(_dn / t_var))],
+                if _dc # [] and freeof(t_var, first(_dc)) and is(first(_dc) # 0) then block(
+                    [_dconst: first(_dc), _nm2, _km: 1],
+                    /* numerator: k*atan(b*t) */
+                    _nm2: _nm,
+                    if not atom(_nm2) and is(op(_nm2) = 'atan) then block(
+                        [_bc: errcatch(ratsimp(part(_nm2,1) / t_var))],
+                        if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then (
+                            _at4_b: first(_bc), _at4_k: 1 / _dconst
+                        )
+                    ) else if not atom(_nm2) and is(op(_nm2) = "*") then block(
+                        [_found: false],
+                        for _f in args(_nm2) do (
+                            if not atom(_f) and is(op(_f) = 'atan) then block(
+                                [_bc: errcatch(ratsimp(part(_f,1) / t_var))],
+                                if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then (
+                                    _at4_b: first(_bc), _found: true
+                                ) else _at4_b: false
+                            ) else if freeof(t_var, _f) then
+                                _km: _km * _f
+                            else
+                                _at4_b: false
+                        ),
+                        if _found and is(_at4_b # false) then
+                            _at4_k: _km / _dconst
+                        else
+                            _at4_b: false
+                    )
+                )
+            )
+        ),
+        if is(_at4_b # false) and is(_at4_k # false)
+           and freeof(t_var, _at4_k) and is(_at4_b > 0) then
+            res: [-%piexact * _at4_sign * _at4_k * expintegral_ei(-abs(w_var) / _at4_b),
+                  concat("k*arctan(bt)/t->-k*pi*Ei(-|w|/b), b=", string(_at4_b))]
+    ),
+
+    /* ── AT-2: k*arctan(1/(b*t)) → ikπ/ω·(e^{-|ω|/b}/b − 1)  (b>0) ──────────
+       Identity: arctan(1/(bt)) = π/2·sgn(t) − arctan(bt)  for t≠0.
+       By linearity: FT = FT[π/2·sgn(t)] − FT[arctan(bt)]
+                       = -iπ/ω − (−iπ·e^{-|ω|/b}/(b·ω))
+                       = iπ/ω·(e^{-|ω|/b}/b − 1).
+       Detects atan(c/t) or atan(1/(b*t)) where c = 1/b. */
+    if is(res = false) and not freeof('atan, e) then block(
+        [_at2_k, _at2_b, _at2_e],
+        _at2_k: 1, _at2_b: false, _at2_e: e,
+        if not atom(_at2_e) and is(op(_at2_e) = "-") then (
+            _at2_k: -1, _at2_e: first(args(_at2_e))
+        ),
+        /* extract scalar * atan(expr) */
+        if not atom(_at2_e) and is(op(_at2_e) = 'atan) then block(
+            [_arg: part(_at2_e, 1)],
+            /* arg must be c/t or 1/(b*t): c/t → b=1/c */
+            if not atom(_arg) and is(op(_arg) = "/") then block(
+                [_num_a: part(_arg,1), _den_a: part(_arg,2)],
+                if freeof(t_var, _num_a) and is(_den_a = t_var) then block(
+                    [_bc: errcatch(ratsimp(1 / _num_a))],
+                    if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then
+                        _at2_b: first(_bc)
+                ) else if freeof(t_var, _num_a) and not atom(_den_a)
+                          and is(op(_den_a) = "*") then block(
+                    /* den = b*t: extract b */
+                    [_bc2: errcatch(ratsimp(_den_a / t_var))],
+                    if _bc2 # [] and freeof(t_var, first(_bc2)) and is(first(_bc2) > 0) then block(
+                        [_bv: first(_bc2), _cv: errcatch(ratsimp(_num_a / first(_bc2)))],
+                        if _cv # [] and is(first(_cv) = 1) then
+                            _at2_b: _bv
+                        /* else: atan(c/(b*t)) with c≠1 — absorb into k */
+                        else if _cv # [] and freeof(t_var, first(_cv)) then (
+                            _at2_k: _at2_k * first(_cv), _at2_b: _bv
+                        )
+                    )
+                )
+            )
+        ) else if not atom(_at2_e) and is(op(_at2_e) = "*") then block(
+            [_found_at2: false],
+            for _f in args(_at2_e) do (
+                if not atom(_f) and is(op(_f) = 'atan) then block(
+                    [_arg: part(_f,1)],
+                    if not atom(_arg) and is(op(_arg) = "/") then block(
+                        [_num_a: part(_arg,1), _den_a: part(_arg,2)],
+                        if freeof(t_var, _num_a) and is(_den_a = t_var) then block(
+                            [_bc: errcatch(ratsimp(1/_num_a))],
+                            if _bc # [] and freeof(t_var, first(_bc)) and is(first(_bc) > 0) then (
+                                _at2_b: first(_bc), _found_at2: true
+                            )
+                        )
+                    ) else _at2_b: false
+                ) else if freeof(t_var, _f) then
+                    _at2_k: _at2_k * _f
+                else
+                    _at2_b: false
+            ),
+            if not _found_at2 then _at2_b: false
+        ),
+        if is(_at2_b # false) and freeof(t_var, _at2_k) and is(_at2_b > 0) then
+            res: [%i * _at2_k * %piexact * (exp(-abs(w_var)/_at2_b)/_at2_b - 1) / w_var,
+                  concat("k*arctan(1/(bt))->ik*pi*(exp(-|w|/b)/b-1)/w, b=", string(_at2_b))]
+    ),
+
     /* ── f(t)/c -> FT(f(t))/c  (c constante en t, op="/") ──
        Handles Maxima's representation of k/c * f(t) as (k*f(t))/c.
        Delegates to FT_pattern_lookup on the numerator. */
@@ -3992,6 +4272,205 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                             )
                         )
                     )
+                )
+            )
+        )
+    ),
+
+    /* ── ERFC-1 IFT: 2kπ·δ(ω) - 2ik·e^{-ω²/(4b²)}/ω → k·erfc(bt)  (b>0) ──────
+       F = 2kπδ(ω) + erf_FT_term where erf_FT_term = FT[-k·erf(bt)].
+       Strategy: find delta term and erf-type term in sum.
+       Run ERF-1 IFT on erf_term: it returns -k·erf(bt) (since erf_term is negative).
+       Then result = k + (-k·erf(bt)) = k·erfc(bt). Verify delta coeff = k·pi. */
+    if is(res = false) and not freeof('delta, e) and not freeof(w_var, e) then block(
+        [_eci_dt, _eci_et],
+        _eci_dt: false, _eci_et: false,
+        if not atom(e) and is(op(e) = "+") then block(
+            for _term in args(e) do (
+                if not freeof('delta, _term) then _eci_dt: _term
+                else if freeof('delta, _term) then _eci_et: _term
+            )
+        ) else if not atom(e) and is(op(e) = "-") then block(
+            /* -erfc case: Maxima writes erf_term - delta_term */
+            [_inner: first(args(e))],
+            if not atom(_inner) and is(op(_inner) = "+") then
+                for _term in args(_inner) do (
+                    if not freeof('delta, _term) then _eci_dt: _term
+                    else _eci_et: _term
+                )
+        ),
+        if is(_eci_dt # false) and is(_eci_et # false) then block(
+            /* Extract k from delta term: 2k*pi*delta(w) → k = coef/(2*pi) */
+            [_eci_k: false, _eci_b: false],
+            /* strip overall minus from delta term if present */
+            [_eci_dt2: _eci_dt, _eci_dsign: 1],
+            if not atom(_eci_dt) and is(op(_eci_dt) = "-") then (
+                _eci_dsign: -1, _eci_dt2: first(args(_eci_dt))
+            ),
+            if not atom(_eci_dt2) and is(op(_eci_dt2) = "*") then block(
+                [_rem: 1, _has_d: false],
+                for _f in args(_eci_dt2) do (
+                    if not atom(_f) and is(op(_f) = 'delta) then _has_d: true
+                    else if freeof(w_var, _f) and _f # %piexact and _f # %pi then
+                        _rem: _rem * _f
+                    /* absorb pi silently */
+                ),
+                if _has_d then _eci_k: ratsimp(_eci_dsign * _rem / 2)
+            ) else if not atom(_eci_dt2) and is(op(_eci_dt2) = 'delta) then
+                _eci_k: ratsimp(_eci_dsign / (2*%piexact)),
+            /* Run ERF-1 IFT on the erf term: should give -k*erf(bt) */
+            if is(_eci_k # false) then block(
+                [_ei: IFT_pattern_lookup(_eci_et, w_var, t_var)],
+                if is(_ei # false) then block(
+                    [_eif: _ei[1], _kf, _bf],
+                    /* eif should be -k*erf(bt) or erf(bt) with sign from ERFC */
+                    /* Extract b from erf argument, k from coefficient */
+                    if not atom(_eif) and is(op(_eif) = 'erf) then (
+                        _bf: errcatch(ratsimp(part(_eif,1)/t_var)),
+                        if _bf # [] and freeof(t_var, first(_bf)) and is(first(_bf) > 0) then (
+                            _eci_b: first(_bf), _kf: -1
+                        )
+                    ) else if not atom(_eif) and is(op(_eif) = "-") then block(
+                        [_inner: first(args(_eif))],
+                        if not atom(_inner) and is(op(_inner) = 'erf) then (
+                            _bf: errcatch(ratsimp(part(_inner,1)/t_var)),
+                            if _bf # [] and freeof(t_var, first(_bf)) and is(first(_bf) > 0) then (
+                                _eci_b: first(_bf), _kf: 1
+                            )
+                        )
+                    ) else if not atom(_eif) and is(op(_eif) = "*") then block(
+                        [_km: 1, _bm: false],
+                        for _f in args(_eif) do (
+                            if not atom(_f) and is(op(_f) = 'erf) then block(
+                                [_bc: errcatch(ratsimp(part(_f,1)/t_var))],
+                                if _bc # [] and freeof(t_var, first(_bc)) then _bm: first(_bc)
+                            ) else if freeof(t_var, _f) then _km: _km * _f
+                        ),
+                        if is(_bm # false) then (_eci_b: _bm, _kf: -_km)
+                    ),
+                    /* _kf is the coefficient of erf in eif; erfc coeff = -_kf */
+                    if is(_eci_b # false) and freeof(t_var, _eci_k) then block(
+                        [_k_actual: ratsimp(-_kf)],
+                        if freeof(w_var, _k_actual) and is(_k_actual > 0 or _k_actual < 0) then
+                            res: [_k_actual * erfc(_eci_b * t_var),
+                                  concat("IFT 2k*pi*delta-2ik*exp(-w^2/(4b^2))/w->k*erfc(bt), b=",
+                                         string(_eci_b))]
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── ERF-1 IFT: 2k·e^{-ω²/(4b²)}/(iω) → k·erf(bt)  (b>0) ─────────────────
+       FT[k·erf(bt)] = 2k/(iω)·e^{-ω²/(4b²)} = -(2k·%i/ω)·e^{-ω²/(4b²)}
+       Maxima: op="-", inner op="/", num = 2k·%i·e^{-w²/(4b²)}, den = c·w.
+       Strategy: strip sign, split num/den, check den = c*w,
+       parse num for %i and e^{-w²/p} (p = 4b² → b = 1/(2√p)... simpler: b = √(1/p)*1/2).
+       Actually from exp arg: -w²/p → p = 4b² → b = √(p)/2. */
+    if is(res = false) and not freeof('erf, e) = false   /* never — erf not in F */
+       /* always false guard; real check below */
+       then false,
+    if is(res = false) then block(
+        [_efi_e, _efi_sign, _efi_k, _efi_b, _efi_has_i, _efi_p],
+        _efi_e: e, _efi_sign: 1, _efi_k: 1,
+        _efi_has_i: false, _efi_b: false, _efi_p: false,
+        /* strip overall minus */
+        if not atom(_efi_e) and is(op(_efi_e) = "-") then (
+            _efi_sign: -1, _efi_e: first(args(_efi_e))
+        ),
+        /* must be num/den */
+        if not atom(_efi_e) and is(op(_efi_e) = "/") then block(
+            [_dn: part(_efi_e,2), _nm: part(_efi_e,1), _dc],
+            _dc: errcatch(ratsimp(_dn / w_var)),
+            if _dc # [] and freeof(w_var, first(_dc)) and is(first(_dc) # 0) then block(
+                [_dconst: first(_dc), _rem_k: 1],
+                /* parse numerator factors: %i, k, exp(-w²/p) */
+                block([_nf: if not atom(_nm) and is(op(_nm)="*") then args(_nm) else [_nm]],
+                    for _f in _nf do (
+                        if is(_f = %i) then _efi_has_i: true
+                        else if is(_f = -%i) then (_efi_has_i: true, _efi_sign: -_efi_sign)
+                        else if not atom(_f) and is(op(_f) = "^") then block(
+                            [_base: part(_f,1), _exp: part(_f,2)],
+                            if is(_base = %e) and freeof('abs, _exp)
+                               and not freeof(w_var, _exp) then block(
+                                /* exp(-w²/p): _exp = -w²/p */
+                                [_pc: errcatch(ratsimp(-_exp / w_var^2))],
+                                if _pc # [] and freeof(w_var, first(_pc))
+                                   and is(first(_pc) > 0) then
+                                    _efi_p: first(_pc)
+                                else _efi_b: false
+                            ) else _rem_k: _rem_k * _f
+                        ) else if freeof(w_var, _f) then
+                            _rem_k: _rem_k * _f
+                        else
+                            _efi_b: false
+                    )
+                ),
+                if _efi_has_i and is(_efi_p # false) and is(_efi_b # false) = false then block(
+                    /* p = 1/(4b²) → b = 1/(2√p); check _rem_k/_dconst = 2k */
+                    [_b_val: ratsimp(1 / (2 * sqrt(_efi_p))),
+                     _k_actual],
+                    _k_actual: ratsimp(-_efi_sign * _rem_k / _dconst / 2),
+                    if freeof(w_var, _k_actual) and freeof(w_var, _b_val)
+                       and is(_b_val > 0) then
+                        res: [_k_actual * erf(_b_val * t_var),
+                              concat("IFT 2k*exp(-w^2/(4b^2))/(i*w)->k*erf(bt), b=",
+                                     string(_b_val))]
+                )
+            )
+        )
+    ),
+
+    /* ── AT-1 IFT: -ik*π*e^{-|w|/b}/(b*w) → k*arctan(b*t)  (b>0) ──────────
+       Maxima writes FT[arctan(bt)] as -(k*%i*%pi*%e^{-|w|/b}/(b*w)).
+       Structure: op="-", inner op="/", num = k*%i*%pi*%e^{-|w|/b}, den = b*w.
+       Strategy: strip "-", split num/den, check den=c*w, parse num for %i, pi, exp(-|w|/b). */
+    if is(res = false) and not freeof('abs, e) then block(
+        [_ai_e, _ai_sign, _ai_num, _ai_den, _ai_p, _ai_k, _ai_has_i],
+        _ai_sign: 1, _ai_e: e, _ai_p: false, _ai_has_i: false, _ai_k: 1,
+        /* strip overall minus */
+        if not atom(_ai_e) and is(op(_ai_e) = "-") then (
+            _ai_sign: -1, _ai_e: first(args(_ai_e))
+        ),
+        /* must be num/den */
+        if not atom(_ai_e) and is(op(_ai_e) = "/") then block(
+            [_dn: part(_ai_e, 2), _nm: part(_ai_e, 1), _dc],
+            /* denominator: c*w or just w */
+            _dc: errcatch(ratsimp(_dn / w_var)),
+            if _dc # [] and freeof(w_var, first(_dc)) and is(first(_dc) # 0) then block(
+                [_dconst: first(_dc)],   /* _dn = _dconst * w */
+                /* numerator: product containing %i (or -%i), %pi/%piexact, exp(-|w|/b) */
+                [_nm_factors: if not atom(_nm) and is(op(_nm) = "*") then args(_nm) else [_nm]],
+                for _f in _nm_factors do (
+                    if is(_f = %i) then _ai_has_i: true
+                    else if is(_f = -%i) then (_ai_has_i: true, _ai_sign: -_ai_sign)
+                    else if is(_f = %piexact) or is(_f = %pi) then true  /* absorb */
+                    else if not atom(_f) and is(op(_f) = "^") then block(
+                        [_base: part(_f,1), _exp: part(_f,2)],
+                        if is(_base = %e) and not freeof('abs, _exp) then block(
+                            [_pc: errcatch(ratsimp(-_exp / abs(w_var)))],
+                            if _pc # [] and freeof(w_var, first(_pc)) and is(first(_pc) > 0) then
+                                _ai_p: first(_pc)
+                            else _ai_p: false
+                        ) else _ai_k: _ai_k * _f
+                    ) else if freeof(w_var, _f) then
+                        _ai_k: _ai_k * _f
+                    else
+                        _ai_p: false
+                ),
+                if _ai_has_i and is(_ai_p # false) and is(_ai_p > 0) then block(
+                    /* Formula: FT[k*arctan(bt)] = -i*pi*k/(b*w)*exp(-|w|/b)
+                       So: e = _ai_sign * (_ai_k * %i * %pi * exp(-|w|/b)) / (_dconst * w)
+                       Matching: -i*pi*k/(b*w)*exp(-|w|/b)
+                         → _ai_sign * _ai_k / _dconst = -k
+                         → k = -_ai_sign * _ai_k / _dconst
+                       b = 1/_ai_p */
+                    [_b_val: ratsimp(1/_ai_p),
+                     _k_actual: ratsimp(-_ai_sign * _ai_k * ratsimp(1/_ai_p) / _dconst)],
+                    if freeof(w_var, _k_actual) then
+                        res: [_k_actual * atan(_b_val * t_var),
+                              concat("IFT -ik*pi*exp(-|w|/b)/(b*w)->k*arctan(bt), b=",
+                                     string(_b_val))]
                 )
             )
         )
@@ -5287,6 +5766,63 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                 )
             )
         )
+    ),
+
+    /* ── GCONV-1 IFT: k·e^{-a·ω²}/(ω²+b²) → closed form in erfc  (a,b>0) ──────
+       IFT[k·e^{-aω²}/(ω²+b²)](t) = (k·e^{ab²})/(2b) ·
+         [e^{-bt}·erfc((2ab−t)/(2√a))  +  e^{bt}·erfc((2ab+t)/(2√a))]
+       Same formula as FT by duality (t↔ω).
+       Pattern: op="/" with numerator k·%e^{-a·ω²} and denominator ω²+b² (a,b>0). */
+    if is(res = false) and not freeof(w_var, F_expr) then block(
+        [_gi_k, _gi_a, _gi_b, _gi_expr],
+        _gi_k: false, _gi_a: false, _gi_b: false,
+        _gi_expr: F_expr,
+        /* strip overall unary minus */
+        if not atom(_gi_expr) and is(op(_gi_expr) = "-") then (
+            _gi_k: -1, _gi_expr: first(args(_gi_expr))
+        ),
+        if not atom(_gi_expr) and is(op(_gi_expr) = "/") then block(
+            [_nm: part(_gi_expr,1), _dn: part(_gi_expr,2)],
+            /* denominator: ω²+b² → b² = dn - ω² */
+            block([_bc: errcatch(ratsimp(_dn - w_var^2))],
+                if _bc # [] and freeof(w_var, first(_bc)) and is(first(_bc) > 0) then
+                    _gi_b: sqrt(first(_bc))
+            ),
+            if is(_gi_b # false) then block(
+                /* numerator: k·%e^{-a·ω²}  (Maxima: op="^", base=%e, exp=-a*w²) */
+                [_nk: 1, _na: false],
+                _gi_is_gauss_w: lambda([_x],
+                    not atom(_x) and is(op(_x) = "^")
+                    and is(part(_x,1) = %e)
+                    and block([_ex: errcatch(ratsimp(part(_x,2) / (-w_var^2)))],
+                        _ex # [] and freeof(w_var, first(_ex)) and is(first(_ex) > 0)
+                    )
+                ),
+                _gi_get_a: lambda([_x],
+                    first(errcatch(ratsimp(part(_x,2) / (-w_var^2))))
+                ),
+                if _gi_is_gauss_w(_nm) then (
+                    _na: _gi_get_a(_nm)
+                ) else if not atom(_nm) and is(op(_nm) = "*") then (
+                    for _f in args(_nm) do (
+                        if _gi_is_gauss_w(_f) then _na: _gi_get_a(_f)
+                        else if freeof(w_var, _f) then _nk: _nk * _f
+                    )
+                ) else if not atom(_nm) and is(op(_nm) = "-") then block(
+                    [_in: first(args(_nm))],
+                    if _gi_is_gauss_w(_in) then (_na: _gi_get_a(_in), _nk: -1)
+                ),
+                if is(_na # false) then
+                    _gi_k: if _gi_k = false then _nk else _gi_k * _nk,
+                _gi_a: _na
+            )
+        ),
+        if is(_gi_k # false) and is(_gi_a # false) and is(_gi_b # false)
+           and freeof(w_var, _gi_k) and is(_gi_a > 0) and is(_gi_b > 0) then
+            res: [_gi_k * exp(_gi_a * _gi_b^2) / (2 * _gi_b) *
+                  (exp(-_gi_b * t_var) * erfc((2*_gi_a*_gi_b - t_var) / (2*sqrt(_gi_a)))
+                   + exp( _gi_b * t_var) * erfc((2*_gi_a*_gi_b + t_var) / (2*sqrt(_gi_a)))),
+                  concat("IFT k*exp(-aw^2)/(w^2+b^2)->erfc form, a=", string(_gi_a), ", b=", string(_gi_b))]
     ),
 
     /* ── IFT gaussiana: k·e^{-p·w²}·{1, cos(b·w), sin(b·w)} → gaussiana en t ──

@@ -1177,6 +1177,133 @@ La última igualdad usa $e^{-(\omega-b)^2/(4a)} + e^{-(\omega+b)^2/(4a)} = 2e^{-
 
 ---
 
+## 24d. Familia arctan — $k\,\arctan(bt)$ y variantes
+
+La función arctan no es $L^1(\mathbb{R})$ (tiende a $\pm\pi/2$ en infinito), por lo que su transformada de Fourier es **distribucional**. Los cuatro pares implementados se derivan de propiedades conocidas del toolbox de TF (derivada en tiempo, división por $t$, identidades trigonométricas).
+
+### AT-1: $k\cdot\arctan(bt)$ — caso base ✓ FT + IFT
+
+$$\boxed{\mathcal{F}\!\left\{k\,\arctan(bt)\right\}(\omega) = \frac{-ik\pi}{b\omega}\,e^{-|\omega|/b}}, \qquad b > 0$$
+
+**Derivación:** $\frac{d}{dt}\arctan(bt) = \frac{b}{1+b^2t^2}$, cuya TF es $\pi\,e^{-|\omega|/b}\operatorname{sgn}(\omega)$. Integrando en frecuencia (propiedad de derivada en tiempo $\mathcal{F}[f'] = i\omega F$):
+
+$$F(\omega) = \frac{\pi\,e^{-|\omega|/b}\operatorname{sgn}(\omega)}{i\omega} = \frac{-i\pi\,e^{-|\omega|/b}}{b\omega}$$
+
+**Inversa:** dada $F(\omega) = -ik\pi\,e^{-|\omega|/b}/(b\omega)$, el motor extrae $b$ del exponente y $k$ del coeficiente restante.
+
+**Casos automáticos por teoremas:**
+- Desplazamiento temporal: $\arctan(bt - t_0) \to F(\omega)\,e^{-i\omega t_0}$ (teorema de traslación)
+- Diferencia: $\arctan(\alpha t) - \arctan(\beta t) \to F_\alpha(\omega) - F_\beta(\omega)$ (linealidad)
+
+### AT-2: $k\cdot\arctan\!\left(\dfrac{1}{bt}\right)$ — solo FT ✓
+
+$$\boxed{\mathcal{F}\!\left\{k\,\arctan\!\left(\frac{1}{bt}\right)\right\}(\omega) = \frac{ik\pi}{\omega}\!\left(\frac{e^{-|\omega|/b}}{b} - 1\right)}, \qquad b > 0$$
+
+**Derivación:** identidad $\arctan(1/x) = \tfrac{\pi}{2}\operatorname{sgn}(x) - \arctan(x)$ para $x \neq 0$, luego linealidad:
+
+$$\mathcal{F}\!\left[\frac{\pi}{2}\operatorname{sgn}(t)\right] = \frac{\pi}{i\omega}, \qquad \mathcal{F}[-\arctan(bt)] = \frac{i\pi\,e^{-|\omega|/b}}{b\omega}$$
+
+No tiene IFT directo (la expresión en frecuencia no es de forma estándar invertible con los patrones actuales).
+
+### AT-3: diferencia $\arctan(\alpha t) - \arctan(\beta t)$ — automático
+
+$$\mathcal{F}\!\left\{\arctan(\alpha t) - \arctan(\beta t)\right\}(\omega) = \frac{-i\pi}{\omega}\!\left(\frac{e^{-|\omega|/\alpha}}{\alpha} - \frac{e^{-|\omega|/\beta}}{\beta}\right)$$
+
+Cubierto por **linealidad** sobre AT-1. Resultado que Maxima devuelve en forma factorizada equivalente.
+
+### AT-4: $k\cdot\arctan(bt)/t$ — solo FT ✓
+
+$$\boxed{\mathcal{F}\!\left\{\frac{k\,\arctan(bt)}{t}\right\}(\omega) = -k\pi\,\operatorname{Ei}(-|\omega|/b)}, \qquad b > 0$$
+
+**Derivación:** propiedad de división por $t$: $\mathcal{F}[f(t)/t](\omega) = i\int_\omega^\infty F(\xi)\,d\xi$ (para $f$ impar). Sustituyendo $F(\xi) = -i\pi e^{-|\xi|/b}/(b\xi)$:
+
+$$i \int_{|\omega|}^\infty \frac{-i\pi\,e^{-\xi/b}}{b\xi}\,d\xi = \pi\int_{|\omega|/b}^\infty \frac{e^{-u}}{u}\,du = \pi\,E_1(|\omega|/b) = -\pi\,\operatorname{Ei}(-|\omega|/b)$$
+
+Verificado numéricamente con integral regularizada $\int_0^\infty \arctan(bt)\,e^{-\varepsilon t}\cos(\omega t)\,dt \xrightarrow{\varepsilon\to 0} -\pi\operatorname{Ei}(-|\omega|/b)/2$.
+
+### Tabla resumen arctan
+
+| # | $f(t)$ | $F(\omega)$ | FT | IFT |
+|---|--------|-------------|-----|-----|
+| AT-1 | $k\,\arctan(bt)$ | $\dfrac{-ik\pi}{b\omega}\,e^{-|\omega|/b}$ | ✓ | ✓ |
+| AT-1t | $k\,\arctan(b(t-t_0))$ | $F_{\text{AT-1}}(\omega)\,e^{-i\omega t_0}$ | ✓ auto | ✗ |
+| AT-2 | $k\,\arctan\!\left(\tfrac{1}{bt}\right)$ | $\dfrac{ik\pi}{\omega}\!\left(\tfrac{e^{-|\omega|/b}}{b}-1\right)$ | ✓ | ✗ |
+| AT-3 | $\arctan(\alpha t)-\arctan(\beta t)$ | $\dfrac{-i\pi}{\omega}\!\left(\tfrac{e^{-|\omega|/\alpha}}{\alpha}-\tfrac{e^{-|\omega|/\beta}}{\beta}\right)$ | ✓ auto | ✗ |
+| AT-4 | $k\,\arctan(bt)/t$ | $-k\pi\,\operatorname{Ei}(-|\omega|/b)$ | ✓ | ✗ |
+
+---
+
+## 24e. Función error — $k\,\operatorname{erf}(bt)$
+
+La función error $\operatorname{erf}(t) = \tfrac{2}{\sqrt{\pi}}\int_0^t e^{-u^2}\,du$ es impar y acotada ($\to \pm 1$ en infinito), no $L^1$. Su TF es distribucional pero tiene forma cerrada limpia gracias a la gaussiana.
+
+### ERF-1: $k\cdot\operatorname{erf}(bt)$ — ✓ FT + IFT
+
+$$\boxed{\mathcal{F}\!\left\{k\,\operatorname{erf}(bt)\right\}(\omega) = \frac{-2ik}{\omega}\,e^{-\omega^2/(4b^2)}}, \qquad b > 0$$
+
+**Derivación:** $\frac{d}{dt}\operatorname{erf}(bt) = \frac{2b}{\sqrt{\pi}}\,e^{-b^2t^2}$, cuya TF es $\frac{2b}{\sqrt{\pi}}\cdot\sqrt{\pi/b^2}\,e^{-\omega^2/(4b^2)} = 2\,e^{-\omega^2/(4b^2)}$. Por la propiedad de derivada en tiempo $\mathcal{F}[f'] = i\omega F$:
+
+$$F(\omega) = \frac{2\,e^{-\omega^2/(4b^2)}}{i\omega} = \frac{-2i}{\omega}\,e^{-\omega^2/(4b^2)}$$
+
+Verificado numéricamente con regularización $e^{-\varepsilon t}$: converge a $-2i\,e^{-\omega^2/4}/\omega$ para $b=1$.
+
+**Inversa:** dada $F(\omega) = -2ik/\omega\cdot e^{-\omega^2/(4b^2)}$, el motor extrae $b = 1/(2\sqrt{p})$ donde $p$ es el coeficiente de $\omega^2$ en el exponente, y $k$ del coeficiente restante.
+
+### Nota sobre erfc
+
+$\operatorname{erfc}(bt) = 1 - \operatorname{erf}(bt)$, por lo que por linealidad:
+
+$$\mathcal{F}\!\left\{\operatorname{erfc}(bt)\right\}(\omega) = 2\pi\,\delta(\omega) - \frac{2i}{\omega}\,e^{-\omega^2/(4b^2)}$$
+
+Implementado con handler directo: el FT handler reconoce `erfc(bt)` y construye la suma; el IFT handler detecta la suma `2kπδ(ω) + erf_term` (en cualquier orden) y reconstruye `k·erfc(bt)`. Funciona para `k` positivo, negativo y escalado.
+
+### Tabla resumen erf/erfc
+
+| # | $f(t)$ | $F(\omega)$ | FT | IFT |
+|---|--------|-------------|-----|-----|
+| ERF-1 | $k\,\operatorname{erf}(bt)$ | $\dfrac{-2ik}{\omega}\,e^{-\omega^2/(4b^2)}$ | ✓ | ✓ |
+| ERF-1t | $k\,\operatorname{erf}(b(t-t_0))$ | $F_{\text{ERF-1}}(\omega)\,e^{-i\omega t_0}$ | ✓ auto | ✗ |
+| ERFC-1 | $k\,\operatorname{erfc}(bt)$ | $2k\pi\,\delta(\omega) - \dfrac{2ik}{\omega}\,e^{-\omega^2/(4b^2)}$ | ✓ | ✓ |
+
+---
+
+## 24f. Familia gaussiana-Lorentziana — $k\,e^{-at^2}/(t^2+b^2)$
+
+### Derivación
+
+Esta familia se resuelve por **convolución en frecuencia** (producto en tiempo → convolución en frecuencia):
+
+$$\mathcal{F}\!\left\{f(t)\cdot g(t)\right\} = \frac{1}{2\pi}\,F(\omega)*G(\omega)$$
+
+Con $f(t)=e^{-at^2}$ y $g(t)=1/(t^2+b^2)$:
+- $\mathcal{F}\{e^{-at^2}\} = \sqrt{\pi/a}\,e^{-\omega^2/(4a)}$
+- $\mathcal{F}\{1/(t^2+b^2)\} = (\pi/b)\,e^{-b|\omega|}$
+
+La convolución de la gaussiana $e^{-\omega^2/(4a)}$ con el decaimiento exponencial $e^{-b|\omega|}$ tiene forma cerrada en erfc.
+
+### Resultados
+
+$$\boxed{\mathcal{F}\!\left\{\frac{k\,e^{-at^2}}{t^2+b^2}\right\}(\omega) = \frac{k\pi\,e^{ab^2}}{2b}\left[e^{-b\omega}\,\operatorname{erfc}\!\left(\frac{2ab-\omega}{2\sqrt{a}}\right) + e^{b\omega}\,\operatorname{erfc}\!\left(\frac{2ab+\omega}{2\sqrt{a}}\right)\right]}$$
+
+$$\boxed{\mathcal{F}^{-1}\!\left\{\frac{k\,e^{-a\omega^2}}{\omega^2+b^2}\right\}(t) = \frac{k\,e^{ab^2}}{2b}\left[e^{-bt}\,\operatorname{erfc}\!\left(\frac{2ab-t}{2\sqrt{a}}\right) + e^{bt}\,\operatorname{erfc}\!\left(\frac{2ab+t}{2\sqrt{a}}\right)\right]}$$
+
+Las dos fórmulas son **idénticas en estructura** (dualidad $t \leftrightarrow \omega$), salvo el factor $\pi$ en la FT proveniente de la convención $\hat{f}(\omega) = \int f e^{-i\omega t}\,dt$.
+
+El caso particular $a=1,\,b=1$ corresponde al resultado clásico de ejercicios:
+
+$$\mathcal{F}^{-1}\!\left\{\frac{e^{-\omega^2}}{\omega^2+1}\right\} = \frac{e}{2}\left[e^{-t}\,\operatorname{erfc}\!\left(\frac{2-t}{2}\right) + e^{t}\,\operatorname{erfc}\!\left(\frac{2+t}{2}\right)\right]$$
+
+### Tabla resumen GCONV-1
+
+| # | Dirección | $a$ | $b$ | $k$ | FT/IFT |
+|---|-----------|-----|-----|-----|--------|
+| GCONV-1 FT | $\mathcal{F}\{k\,e^{-at^2}/(t^2+b^2)\}$ | libre | libre | libre | ✓ |
+| GCONV-1 IFT | $\mathcal{F}^{-1}\{k\,e^{-a\omega^2}/(\omega^2+b^2)\}$ | libre | libre | libre | ✓ |
+
+Handler implementado en `fourier_transforms.mac`. Usa `f_expr` pre-`expand()` porque Maxima invierte la fracción al expandir. Verificado numéricamente para $a \in \{1,2,3\}$, $b \in \{1,2\}$, $k \in \{1,2,-1\}$.
+
+---
+
 ## 25. Arquitectura de display: formas principales y alternativas
 
 La calculadora separa internamente las representaciones de **evaluación** (usadas por el plotter) y de **display** (mostradas en la UI), para que cada resultado tenga la forma más limpia posible en pantalla sin sacrificar la capacidad de evaluación numérica.
