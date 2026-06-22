@@ -404,9 +404,12 @@ export class ApiService {
   getAllComments(
     limit: number = 50,
     offset: number = 0,
+    source?: 'feedback' | 'survey',
   ): Observable<import('../../../domain').UnifiedCommentsResponse> {
+    let params = new HttpParams().set('limit', limit).set('offset', offset);
+    if (source) params = params.set('source', source);
     return this.http.get<import('../../../domain').UnifiedCommentsResponse>(
-      `${this.base}/admin/comments/all?limit=${limit}&offset=${offset}`,
+      `${this.base}/admin/comments/all`, { params },
     );
   }
 

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { ApiService } from '../../../core/services/api/api.service';
-import { SurveyStats } from '../../../domain';
+import { SurveyStats, UnifiedCommentsResponse } from '../../../domain';
 
 Chart.register(...registerables);
 
@@ -95,6 +95,10 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
   error   = false;
   stats: SurveyStats | null = null;
 
+  loadingComments = false;
+  errorComments   = false;
+  commentsList: UnifiedCommentsResponse | null = null;
+
   dateFrom = '';
   dateTo   = '';
 
@@ -105,6 +109,7 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
   ];
 
   private charts: Chart[] = [];
+  readonly Math = Math;
 
   readonly otherFieldLabel = (f: string) => OTHER_FIELD_LABEL[f] ?? f;
 
@@ -123,7 +128,7 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
     }));
   }
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); this.loadComments(); }
   ngOnDestroy(): void { this.charts.forEach((c) => c.destroy()); }
 
   // ── Period shortcuts ────────────────────────────────────────────────────────
@@ -145,6 +150,40 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
       if (this.dateFrom === dateNDaysAgo(p.days)) return p.days;
     }
     return null;
+  }
+
+  // ── Comments ────────────────────────────────────────────────────────────────
+
+  loadComments(limit = 50, offset = 0): void {
+    this.loadingComments = true;
+    this.errorComments   = false;
+    this.api.getAllComments(limit, offset, 'survey').subscribe({
+      next: (data) => { this.commentsList = data; this.loadingComments = false; this.cdr.detectChanges(); },
+      error: () => { this.errorComments = true; this.loadingComments = false; this.cdr.detectChanges(); },
+    });
+  }
+
+  loadNextComments(): void {
+    if (!this.commentsList) return;
+    this.loadComments(this.commentsList.limit, this.commentsList.offset + this.commentsList.limit);
+  }
+
+  loadPrevComments(): void {
+    if (!this.commentsList) return;
+    this.loadComments(this.commentsList.limit, Math.max(0, this.commentsList.offset - this.commentsList.limit));
+  }
+
+  formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now   = new Date();
+    const mins  = Math.floor((now.getTime() - date.getTime()) / 60000);
+    if (mins < 1)   return 'Ahora';
+    if (mins < 60)  return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs  < 24)  return `${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    if (days <  7)  return `${days}d`;
+    return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
   }
 
   // ── Load ────────────────────────────────────────────────────────────────────

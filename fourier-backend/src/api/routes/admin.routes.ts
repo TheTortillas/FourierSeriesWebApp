@@ -833,77 +833,41 @@ adminRouter.get(
   "/comments/all",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
+      const limit  = Math.min(parseInt(req.query.limit  as string) || 50, 500);
       const offset = parseInt(req.query.offset as string) || 0;
+      const source = req.query.source as "feedback" | "survey" | undefined;
+
+      const feedbackBlock = `
+        SELECT 'feedback' AS source, id, user_id, email, category::text AS type,
+               message AS content, created_at, rating
+        FROM feedback
+        WHERE message IS NOT NULL AND message <> ''`;
+
+      const surveyBlock = `
+        SELECT 'survey' AS source, id, user_id, NULL::VARCHAR AS email,
+               'bug' AS type, bug_description AS content, created_at, NULL::SMALLINT AS rating
+        FROM survey_responses WHERE bug_description IS NOT NULL AND bug_description <> ''
+        UNION ALL
+        SELECT 'survey', id, user_id, NULL::VARCHAR,
+               'comment', general_comments, created_at, NULL::SMALLINT
+        FROM survey_responses WHERE general_comments IS NOT NULL AND general_comments <> ''
+        UNION ALL
+        SELECT 'survey', id, user_id, NULL::VARCHAR,
+               'regression', regressions, created_at, NULL::SMALLINT
+        FROM survey_responses WHERE regressions IS NOT NULL AND regressions <> ''`;
+
+      const unionParts = source === 'feedback' ? feedbackBlock
+                       : source === 'survey'   ? surveyBlock
+                       : `${feedbackBlock} UNION ALL ${surveyBlock}`;
 
       const query = `
-        WITH all_comments AS (
-          SELECT
-            'feedback' AS source,
-            id,
-            user_id,
-            email,
-            category::text AS type,
-            message AS content,
-            created_at,
-            rating
-          FROM feedback
-          WHERE message IS NOT NULL AND message <> ''
-          UNION ALL
-          SELECT
-            'survey' AS source,
-            id,
-            user_id,
-            NULL::VARCHAR AS email,
-            'bug' AS type,
-            bug_description AS content,
-            created_at,
-            NULL::SMALLINT AS rating
-          FROM survey_responses
-          WHERE bug_description IS NOT NULL AND bug_description <> ''
-          UNION ALL
-          SELECT
-            'survey' AS source,
-            id,
-            user_id,
-            NULL::VARCHAR AS email,
-            'comment' AS type,
-            general_comments AS content,
-            created_at,
-            NULL::SMALLINT AS rating
-          FROM survey_responses
-          WHERE general_comments IS NOT NULL AND general_comments <> ''
-          UNION ALL
-          SELECT
-            'survey' AS source,
-            id,
-            user_id,
-            NULL::VARCHAR AS email,
-            'regression' AS type,
-            regressions AS content,
-            created_at,
-            NULL::SMALLINT AS rating
-          FROM survey_responses
-          WHERE regressions IS NOT NULL AND regressions <> ''
-        )
         SELECT source, id, user_id, email, type, content, created_at, rating
-        FROM all_comments
+        FROM (${unionParts}) all_comments
         ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2
-      `;
+        LIMIT $1 OFFSET $2`;
 
       const countQuery = `
-        SELECT COUNT(*)::int AS total
-        FROM (
-          SELECT id FROM feedback WHERE message IS NOT NULL AND message <> ''
-          UNION ALL
-          SELECT id FROM survey_responses WHERE bug_description IS NOT NULL AND bug_description <> ''
-          UNION ALL
-          SELECT id FROM survey_responses WHERE general_comments IS NOT NULL AND general_comments <> ''
-          UNION ALL
-          SELECT id FROM survey_responses WHERE regressions IS NOT NULL AND regressions <> ''
-        ) AS c
-      `;
+        SELECT COUNT(*)::int AS total FROM (${unionParts}) c`;
 
       interface CommentRow {
         source: "feedback" | "survey";
@@ -1184,12 +1148,16 @@ adminRouter.get(
         db.query<{ rating: number; usefulness: number; ease: number; vs_other: number; recommend: number }>(
           `SELECT
              r AS rating,
-             COUNT(*) FILTER (WHERE usefulness_rating    = r)::int AS usefulness,
-             COUNT(*) FILTER (WHERE ease_of_use_rating   = r)::int AS ease,
+             COUNT(*) FILTER (WHERE usefulness_rating     = r)::int AS usefulness,
+             COUNT(*) FILTER (WHERE ease_of_use_rating    = r)::int AS ease,
              COUNT(*) FILTER (WHERE vs_other_tools_rating = r)::int AS vs_other,
-             COUNT(*) FILTER (WHERE recommend_rating     = r)::int AS recommend
-           FROM survey_responses, generate_series(1,5) AS r
-           WHERE ${dateFilter}
+             COUNT(*) FILTER (WHERE recommend_rating      = r)::int AS recommend
+           FROM generate_series(1,5) AS r
+           CROSS JOIN LATERAL (
+             SELECT usefulness_rating, ease_of_use_rating, vs_other_tools_rating, recommend_rating
+             FROM survey_responses
+             WHERE ${dateFilter}
+           ) sr
            GROUP BY r ORDER BY r`, params,
         ),
         // Tendencia diaria con timezone del cliente
@@ -1204,28 +1172,39 @@ adminRouter.get(
         ),
         // Campos "otro" — textos libres no vacíos agrupados por campo
         db.query<{ field: string; value: string; count: number }>(
-          `SELECT 'role'         AS field, role_other           AS value, COUNT(*)::int AS count FROM survey_responses WHERE role_other           IS NOT NULL AND role_other           <> '' AND ${dateFilter} GROUP BY role_other           ORDER BY count DESC
-           UNION ALL
-           SELECT 'academic'     AS field, academic_level_other  AS value, COUNT(*)::int AS count FROM survey_responses WHERE academic_level_other  IS NOT NULL AND academic_level_other  <> '' AND ${dateFilter} GROUP BY academic_level_other  ORDER BY count DESC
-           UNION ALL
-           SELECT 'how_found'    AS field, how_found_other       AS value, COUNT(*)::int AS count FROM survey_responses WHERE how_found_other       IS NOT NULL AND how_found_other       <> '' AND ${dateFilter} GROUP BY how_found_other       ORDER BY count DESC
-           UNION ALL
-           SELECT 'purpose'      AS field, purpose_other         AS value, COUNT(*)::int AS count FROM survey_responses WHERE purpose_other         IS NOT NULL AND purpose_other         <> '' AND ${dateFilter} GROUP BY purpose_other         ORDER BY count DESC
-           UNION ALL
-           SELECT 'improvements' AS field, improvements_other    AS value, COUNT(*)::int AS count FROM survey_responses WHERE improvements_other    IS NOT NULL AND improvements_other    <> '' AND ${dateFilter} GROUP BY improvements_other    ORDER BY count DESC`,
+          `SELECT field, value, COUNT(*)::int AS count
+           FROM (
+             SELECT 'role'         AS field, role_other          AS value FROM survey_responses WHERE role_other          IS NOT NULL AND role_other          <> '' AND ${dateFilter}
+             UNION ALL
+             SELECT 'academic',             academic_level_other           FROM survey_responses WHERE academic_level_other IS NOT NULL AND academic_level_other <> '' AND ${dateFilter}
+             UNION ALL
+             SELECT 'how_found',            how_found_other                FROM survey_responses WHERE how_found_other      IS NOT NULL AND how_found_other      <> '' AND ${dateFilter}
+             UNION ALL
+             SELECT 'purpose',              purpose_other                  FROM survey_responses WHERE purpose_other        IS NOT NULL AND purpose_other        <> '' AND ${dateFilter}
+             UNION ALL
+             SELECT 'improvements',         improvements_other             FROM survey_responses WHERE improvements_other   IS NOT NULL AND improvements_other   <> '' AND ${dateFilter}
+           ) t
+           GROUP BY field, value
+           ORDER BY field, count DESC`,
           params,
         ),
         // Instituciones y carreras más mencionadas (top 15 de cada una)
         db.query<{ type: string; value: string; count: number }>(
-          `SELECT 'institution' AS type, institution AS value, COUNT(*)::int AS count
-           FROM survey_responses
-           WHERE institution IS NOT NULL AND institution <> '' AND ${dateFilter}
-           GROUP BY institution ORDER BY count DESC LIMIT 15
+          `SELECT type, value, count FROM (
+             SELECT 'institution' AS type, institution AS value, COUNT(*)::int AS count
+             FROM survey_responses
+             WHERE institution IS NOT NULL AND institution <> '' AND ${dateFilter}
+             GROUP BY institution
+             ORDER BY count DESC LIMIT 15
+           ) inst
            UNION ALL
-           SELECT 'career' AS type, career AS value, COUNT(*)::int AS count
-           FROM survey_responses
-           WHERE career IS NOT NULL AND career <> '' AND ${dateFilter}
-           GROUP BY career ORDER BY count DESC LIMIT 15`,
+           SELECT type, value, count FROM (
+             SELECT 'career' AS type, career AS value, COUNT(*)::int AS count
+             FROM survey_responses
+             WHERE career IS NOT NULL AND career <> '' AND ${dateFilter}
+             GROUP BY career
+             ORDER BY count DESC LIMIT 15
+           ) car`,
           params,
         ),
       ]);
