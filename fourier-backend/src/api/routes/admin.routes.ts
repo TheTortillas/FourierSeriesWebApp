@@ -134,10 +134,16 @@ adminRouter.get(
         ),
       ]);
 
-      // Construir blockedByBucket con los 3 buckets siempre presentes
+      // Construir blockedByBucket con los 3 buckets siempre presentes.
+      // 'general' se acumula dentro de 'auth' porque ambos cubren tráfico
+      // no clasificado como compute ni parse (bots, swagger scanners, etc.).
       const buckets: Record<string, number> = { compute: 0, parse: 0, auth: 0 };
       for (const row of bucketRes.rows) {
-        if (row.bucket in buckets) buckets[row.bucket] = row.blocked;
+        if (row.bucket === 'general') {
+          buckets['auth'] += row.blocked;
+        } else if (row.bucket in buckets) {
+          buckets[row.bucket] += row.blocked;
+        }
       }
 
       const blockedByLimiter: Record<string, number> = {};
