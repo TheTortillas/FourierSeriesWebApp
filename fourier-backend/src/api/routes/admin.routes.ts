@@ -709,34 +709,53 @@ adminRouter.get(
 
 adminRouter.get(
   "/feedback/stats",
-  async (_req, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      const dateFrom = req.query["dateFrom"] ? new Date(req.query["dateFrom"] as string) : null;
+      const dateTo   = req.query["dateTo"]   ? new Date(req.query["dateTo"]   as string) : null;
+      const rawTz    = req.query["tz"] as string | undefined;
+      let clientTz = "UTC";
+      if (rawTz) { try { Intl.DateTimeFormat(undefined, { timeZone: rawTz }); clientTz = rawTz; } catch { clientTz = "UTC"; } }
+
+      const params = [dateFrom, dateTo];
+      const dateFilter = `
+        ($1::timestamptz IS NULL OR created_at >= $1)
+        AND ($2::timestamptz IS NULL OR created_at <= $2)
+      `;
+
       const [catRes, ratingRes, dayRes, totalRes] = await Promise.all([
         db.query<{ category: string; count: number }>(
           `SELECT category::text, COUNT(*)::int AS count
-         FROM feedback GROUP BY category ORDER BY count DESC`,
+           FROM feedback WHERE ${dateFilter}
+           GROUP BY category ORDER BY count DESC`,
+          params,
         ),
         db.query<{ rating: number; count: number }>(
           `SELECT rating, COUNT(*)::int AS count
-         FROM feedback WHERE rating IS NOT NULL
-         GROUP BY rating ORDER BY rating`,
+           FROM feedback WHERE rating IS NOT NULL AND ${dateFilter}
+           GROUP BY rating ORDER BY rating`,
+          params,
         ),
         db.query<{ day: string; count: number }>(
-          `SELECT to_char(DATE(created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
-         FROM feedback
-         WHERE created_at >= NOW() - INTERVAL '30 days'
-         GROUP BY DATE(created_at) ORDER BY DATE(created_at)`,
+          `SELECT to_char(DATE(created_at AT TIME ZONE $3), 'YYYY-MM-DD') AS day,
+                  COUNT(*)::int AS count
+           FROM feedback
+           WHERE ${dateFilter}
+           GROUP BY DATE(created_at AT TIME ZONE $3)
+           ORDER BY DATE(created_at AT TIME ZONE $3)`,
+          [...params, clientTz],
         ),
         db.query<{ total: number }>(
-          `SELECT COUNT(*)::int AS total FROM feedback`,
+          `SELECT COUNT(*)::int AS total FROM feedback WHERE ${dateFilter}`,
+          params,
         ),
       ]);
 
       res.json({
-        total: totalRes.rows[0]?.total ?? 0,
+        total:      totalRes.rows[0]?.total ?? 0,
         byCategory: catRes.rows,
-        byRating: ratingRes.rows,
-        byDay: dayRes.rows,
+        byRating:   ratingRes.rows,
+        byDay:      dayRes.rows,
       });
     } catch (err) {
       next(err);
@@ -1082,105 +1101,152 @@ adminRouter.get(
 
 adminRouter.get(
   "/survey/stats",
-  async (_req, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      const dateFrom = req.query["dateFrom"] ? new Date(req.query["dateFrom"] as string) : null;
+      const dateTo   = req.query["dateTo"]   ? new Date(req.query["dateTo"]   as string) : null;
+      const rawTz    = req.query["tz"] as string | undefined;
+      let clientTz = "UTC";
+      if (rawTz) { try { Intl.DateTimeFormat(undefined, { timeZone: rawTz }); clientTz = rawTz; } catch { clientTz = "UTC"; } }
+
+      const params = [dateFrom, dateTo];
+      const dateFilter = `
+        ($1::timestamptz IS NULL OR created_at >= $1)
+        AND ($2::timestamptz IS NULL OR created_at <= $2)
+      `;
+
       const [
-        totalRes,
-        roleRes,
-        academicLevelRes,
-        countryRes,
-        howFoundRes,
-        purposeRes,
-        featureRes,
-        deviceRes,
-        prevRes,
-        improvRes,
-        ratingsRes,
-        dayRes,
+        totalRes, roleRes, academicLevelRes, countryRes, howFoundRes,
+        purposeRes, featureRes, deviceRes, prevRes, improvRes,
+        ratingsRes, ratingDistRes, dayRes, otherTextsRes, institutionRes,
       ] = await Promise.all([
         db.query<{ total: number }>(
-          `SELECT COUNT(*)::int AS total FROM survey_responses`,
+          `SELECT COUNT(*)::int AS total FROM survey_responses WHERE ${dateFilter}`, params,
         ),
         db.query<{ role: string; count: number }>(
           `SELECT role::text, COUNT(*)::int AS count
-         FROM survey_responses GROUP BY role ORDER BY count DESC`,
+           FROM survey_responses WHERE ${dateFilter}
+           GROUP BY role ORDER BY count DESC`, params,
         ),
         db.query<{ academic_level: string; count: number }>(
           `SELECT academic_level::text, COUNT(*)::int AS count
-         FROM survey_responses GROUP BY academic_level ORDER BY count DESC`,
+           FROM survey_responses WHERE ${dateFilter}
+           GROUP BY academic_level ORDER BY count DESC`, params,
         ),
         db.query<{ country: string; count: number }>(
           `SELECT country, COUNT(*)::int AS count
-         FROM survey_responses GROUP BY country ORDER BY count DESC LIMIT 10`,
+           FROM survey_responses WHERE ${dateFilter}
+           GROUP BY country ORDER BY count DESC LIMIT 10`, params,
         ),
         db.query<{ how_found: string; count: number }>(
           `SELECT how_found::text, COUNT(*)::int AS count
-         FROM survey_responses GROUP BY how_found ORDER BY count DESC`,
+           FROM survey_responses WHERE ${dateFilter}
+           GROUP BY how_found ORDER BY count DESC`, params,
         ),
         db.query<{ purpose: string; count: number }>(
           `SELECT p AS purpose, COUNT(*)::int AS count
-         FROM survey_responses, unnest(purpose) AS p
-         GROUP BY p ORDER BY count DESC`,
+           FROM survey_responses, unnest(purpose) AS p
+           WHERE ${dateFilter}
+           GROUP BY p ORDER BY count DESC`, params,
         ),
         db.query<{ feature: string; count: number }>(
           `SELECT f AS feature, COUNT(*)::int AS count
-         FROM survey_responses, unnest(features_used) AS f
-         GROUP BY f ORDER BY count DESC`,
+           FROM survey_responses, unnest(features_used) AS f
+           WHERE ${dateFilter}
+           GROUP BY f ORDER BY count DESC`, params,
         ),
         db.query<{ device: string; count: number }>(
           `SELECT d AS device, COUNT(*)::int AS count
-         FROM survey_responses, unnest(device) AS d
-         GROUP BY d ORDER BY count DESC`,
+           FROM survey_responses, unnest(device) AS d
+           WHERE ${dateFilter}
+           GROUP BY d ORDER BY count DESC`, params,
         ),
         db.query<{ used_previous: boolean; count: number }>(
           `SELECT used_previous, COUNT(*)::int AS count
-         FROM survey_responses GROUP BY used_previous`,
+           FROM survey_responses WHERE ${dateFilter}
+           GROUP BY used_previous`, params,
         ),
         db.query<{ improvement: string; count: number }>(
           `SELECT i AS improvement, COUNT(*)::int AS count
-         FROM survey_responses, unnest(improvements) AS i
-         WHERE used_previous = true
-         GROUP BY i ORDER BY count DESC`,
+           FROM survey_responses, unnest(improvements) AS i
+           WHERE used_previous = true AND ${dateFilter}
+           GROUP BY i ORDER BY count DESC`, params,
         ),
-        db.query<{
-          usefulness: number;
-          ease: number;
-          vs_other: number;
-          recommend: number;
-        }>(
+        db.query<{ usefulness: number; ease: number; vs_other: number; recommend: number }>(
           `SELECT
-           ROUND(AVG(usefulness_rating)::numeric,    2)::float AS usefulness,
-           ROUND(AVG(ease_of_use_rating)::numeric,   2)::float AS ease,
-           ROUND(AVG(vs_other_tools_rating)::numeric,2)::float AS vs_other,
-           ROUND(AVG(recommend_rating)::numeric,     2)::float AS recommend
-         FROM survey_responses`,
+             ROUND(AVG(usefulness_rating)::numeric,    2)::float AS usefulness,
+             ROUND(AVG(ease_of_use_rating)::numeric,   2)::float AS ease,
+             ROUND(AVG(vs_other_tools_rating)::numeric,2)::float AS vs_other,
+             ROUND(AVG(recommend_rating)::numeric,     2)::float AS recommend
+           FROM survey_responses WHERE ${dateFilter}`, params,
         ),
+        // Distribución completa de ratings (1–5) por cada dimensión
+        db.query<{ rating: number; usefulness: number; ease: number; vs_other: number; recommend: number }>(
+          `SELECT
+             r AS rating,
+             COUNT(*) FILTER (WHERE usefulness_rating    = r)::int AS usefulness,
+             COUNT(*) FILTER (WHERE ease_of_use_rating   = r)::int AS ease,
+             COUNT(*) FILTER (WHERE vs_other_tools_rating = r)::int AS vs_other,
+             COUNT(*) FILTER (WHERE recommend_rating     = r)::int AS recommend
+           FROM survey_responses, generate_series(1,5) AS r
+           WHERE ${dateFilter}
+           GROUP BY r ORDER BY r`, params,
+        ),
+        // Tendencia diaria con timezone del cliente
         db.query<{ day: string; count: number }>(
-          `SELECT to_char(DATE(created_at), 'YYYY-MM-DD') AS day, COUNT(*)::int AS count
-         FROM survey_responses
-         WHERE created_at >= NOW() - INTERVAL '30 days'
-         GROUP BY DATE(created_at) ORDER BY DATE(created_at)`,
+          `SELECT to_char(DATE(created_at AT TIME ZONE $3), 'YYYY-MM-DD') AS day,
+                  COUNT(*)::int AS count
+           FROM survey_responses
+           WHERE ${dateFilter}
+           GROUP BY DATE(created_at AT TIME ZONE $3)
+           ORDER BY DATE(created_at AT TIME ZONE $3)`,
+          [...params, clientTz],
+        ),
+        // Campos "otro" — textos libres no vacíos agrupados por campo
+        db.query<{ field: string; value: string; count: number }>(
+          `SELECT 'role'         AS field, role_other           AS value, COUNT(*)::int AS count FROM survey_responses WHERE role_other           IS NOT NULL AND role_other           <> '' AND ${dateFilter} GROUP BY role_other           ORDER BY count DESC
+           UNION ALL
+           SELECT 'academic'     AS field, academic_level_other  AS value, COUNT(*)::int AS count FROM survey_responses WHERE academic_level_other  IS NOT NULL AND academic_level_other  <> '' AND ${dateFilter} GROUP BY academic_level_other  ORDER BY count DESC
+           UNION ALL
+           SELECT 'how_found'    AS field, how_found_other       AS value, COUNT(*)::int AS count FROM survey_responses WHERE how_found_other       IS NOT NULL AND how_found_other       <> '' AND ${dateFilter} GROUP BY how_found_other       ORDER BY count DESC
+           UNION ALL
+           SELECT 'purpose'      AS field, purpose_other         AS value, COUNT(*)::int AS count FROM survey_responses WHERE purpose_other         IS NOT NULL AND purpose_other         <> '' AND ${dateFilter} GROUP BY purpose_other         ORDER BY count DESC
+           UNION ALL
+           SELECT 'improvements' AS field, improvements_other    AS value, COUNT(*)::int AS count FROM survey_responses WHERE improvements_other    IS NOT NULL AND improvements_other    <> '' AND ${dateFilter} GROUP BY improvements_other    ORDER BY count DESC`,
+          params,
+        ),
+        // Instituciones y carreras más mencionadas (top 15 de cada una)
+        db.query<{ type: string; value: string; count: number }>(
+          `SELECT 'institution' AS type, institution AS value, COUNT(*)::int AS count
+           FROM survey_responses
+           WHERE institution IS NOT NULL AND institution <> '' AND ${dateFilter}
+           GROUP BY institution ORDER BY count DESC LIMIT 15
+           UNION ALL
+           SELECT 'career' AS type, career AS value, COUNT(*)::int AS count
+           FROM survey_responses
+           WHERE career IS NOT NULL AND career <> '' AND ${dateFilter}
+           GROUP BY career ORDER BY count DESC LIMIT 15`,
+          params,
         ),
       ]);
 
       res.json({
-        total: totalRes.rows[0]?.total ?? 0,
-        byRole: roleRes.rows,
+        total:           totalRes.rows[0]?.total ?? 0,
+        byRole:          roleRes.rows,
         byAcademicLevel: academicLevelRes.rows,
-        topCountries: countryRes.rows,
-        byHowFound: howFoundRes.rows,
-        byPurpose: purposeRes.rows,
-        byFeature: featureRes.rows,
-        byDevice: deviceRes.rows,
-        usedPrevious: prevRes.rows,
-        improvements: improvRes.rows,
-        avgRatings: ratingsRes.rows[0] ?? {
-          usefulness: 0,
-          ease: 0,
-          vs_other: 0,
-          recommend: 0,
-        },
-        byDay: dayRes.rows,
+        topCountries:    countryRes.rows,
+        byHowFound:      howFoundRes.rows,
+        byPurpose:       purposeRes.rows,
+        byFeature:       featureRes.rows,
+        byDevice:        deviceRes.rows,
+        usedPrevious:    prevRes.rows,
+        improvements:    improvRes.rows,
+        avgRatings:      ratingsRes.rows[0] ?? { usefulness: 0, ease: 0, vs_other: 0, recommend: 0 },
+        ratingDist:      ratingDistRes.rows,
+        byDay:           dayRes.rows,
+        otherTexts:      otherTextsRes.rows,
+        institutions:    institutionRes.rows.filter((r) => r.type === 'institution'),
+        careers:         institutionRes.rows.filter((r) => r.type === 'career'),
       });
     } catch (err) {
       next(err);

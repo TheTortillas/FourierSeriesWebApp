@@ -161,14 +161,18 @@ export interface SurveyStats {
   byRole:          { role: string;           count: number }[];
   byAcademicLevel: { academic_level: string; count: number }[];
   topCountries:    { country: string;        count: number }[];
-  byHowFound:   { how_found: string;   count: number }[];
-  byPurpose:    { purpose: string;     count: number }[];
-  byFeature:    { feature: string;     count: number }[];
-  byDevice:     { device: string;      count: number }[];
-  usedPrevious: { used_previous: boolean; count: number }[];
-  improvements: { improvement: string; count: number }[];
-  avgRatings:   { usefulness: number; ease: number; vs_other: number; recommend: number };
-  byDay:        { day: string;         count: number }[];
+  byHowFound:      { how_found: string;      count: number }[];
+  byPurpose:       { purpose: string;        count: number }[];
+  byFeature:       { feature: string;        count: number }[];
+  byDevice:        { device: string;         count: number }[];
+  usedPrevious:    { used_previous: boolean; count: number }[];
+  improvements:    { improvement: string;    count: number }[];
+  avgRatings:      { usefulness: number; ease: number; vs_other: number; recommend: number };
+  ratingDist:      { rating: number; usefulness: number; ease: number; vs_other: number; recommend: number }[];
+  byDay:           { day: string; count: number }[];
+  otherTexts:      { field: string; value: string; count: number }[];
+  institutions:    { type: string; value: string; count: number }[];
+  careers:         { type: string; value: string; count: number }[];
 }
 
 export const CALC_TYPE_LABEL: Record<string, string> = {

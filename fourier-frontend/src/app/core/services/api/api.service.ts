@@ -383,10 +383,12 @@ export class ApiService {
     );
   }
 
-  getFeedbackStats(): Observable<import('../../../domain').FeedbackStats> {
-    return this.http.get<import('../../../domain').FeedbackStats>(
-      `${this.base}/admin/feedback/stats`,
-    );
+  getFeedbackStats(query?: { dateFrom?: string; dateTo?: string; tz?: string }): Observable<import('../../../domain').FeedbackStats> {
+    let params = new HttpParams();
+    if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
+    if (query?.dateTo)   params = params.set('dateTo',   query.dateTo);
+    if (query?.tz)       params = params.set('tz',       query.tz);
+    return this.http.get<import('../../../domain').FeedbackStats>(`${this.base}/admin/feedback/stats`, { params });
   }
 
   getFeedbackList(
@@ -408,8 +410,12 @@ export class ApiService {
     );
   }
 
-  getSurveyStats(): Observable<import('../../../domain').SurveyStats> {
-    return this.http.get<import('../../../domain').SurveyStats>(`${this.base}/admin/survey/stats`);
+  getSurveyStats(query?: { dateFrom?: string; dateTo?: string; tz?: string }): Observable<import('../../../domain').SurveyStats> {
+    let params = new HttpParams();
+    if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
+    if (query?.dateTo)   params = params.set('dateTo',   query.dateTo);
+    if (query?.tz)       params = params.set('tz',       query.tz);
+    return this.http.get<import('../../../domain').SurveyStats>(`${this.base}/admin/survey/stats`, { params });
   }
 
   getCalcStats(query?: { dateFrom?: string; dateTo?: string; topN?: number; tz?: string }): Observable<import('../../../domain').CalcStats> {

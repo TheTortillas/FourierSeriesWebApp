@@ -1,5 +1,6 @@
 <div class="p-6 flex flex-col gap-6 max-w-5xl">
-  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+
+  <!-- ── Header ─────────────────────────────────────────────────────────────── -->
   <div>
     <h1 class="font-display text-xl text-ink dark:text-dark-ink">Encuesta</h1>
     <p class="text-xs text-muted dark:text-dark-muted font-mono mt-0.5">
@@ -7,51 +8,75 @@
     </p>
   </div>
 
-  <!-- ── Error ────────────────────────────────────────────────────────────── -->
+  <!-- ── Filters ────────────────────────────────────────────────────────────── -->
+  <div class="flex flex-wrap gap-2 items-end">
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Período rápido</label>
+      <div class="flex gap-1">
+        @for (p of quickPeriods; track p.days) {
+          <button
+            (click)="setQuickPeriod(p.days)"
+            [ngClass]="activeQuickDays() === p.days
+              ? 'bg-accent text-white border-accent'
+              : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+            class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer border transition-colors"
+          >{{ p.label }}</button>
+        }
+        <button
+          (click)="clearDates()"
+          [ngClass]="!hasFilter
+            ? 'bg-accent text-white border-accent'
+            : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+          class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer border transition-colors"
+        >Todo</button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Desde</label>
+      <input type="date" [(ngModel)]="dateFrom" (change)="applyDates()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Hasta</label>
+      <input type="date" [(ngModel)]="dateTo" (change)="applyDates()" [min]="dateFrom"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+    </div>
+
+    @if (hasFilter) {
+      <button (click)="clearDates()"
+        class="mb-0.5 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted hover:text-red-500 hover:border-red-400 transition-colors self-end">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+          <path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z"/>
+        </svg>
+        Limpiar
+      </button>
+    }
+  </div>
+
+  <!-- ── Error ──────────────────────────────────────────────────────────────── -->
   @if (error) {
-    <div
-      class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-        class="w-4 h-4 shrink-0"
-      >
-        <path
-          fill-rule="evenodd"
-          d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
-          clip-rule="evenodd"
-        />
+    <div class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 shrink-0">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
       </svg>
       No se pudieron cargar las estadísticas de la encuesta.
     </div>
   }
 
-  <!-- ── Skeleton ─────────────────────────────────────────────────────────── -->
+  <!-- ── Skeleton ───────────────────────────────────────────────────────────── -->
   @if (loading && !stats) {
     <div class="flex flex-col gap-4 animate-pulse">
-      <div
-        class="h-10 w-32 rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
-      ></div>
+      <div class="h-10 w-32 rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
       <div class="grid grid-cols-2 gap-4">
-        <div
-          class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
-        ></div>
-        <div
-          class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
-        ></div>
+        <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+        <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
       </div>
-      <div
-        class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
-      ></div>
+      <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
       <div class="grid grid-cols-2 gap-4">
-        <div
-          class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
-        ></div>
-        <div
-          class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
-        ></div>
+        <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+        <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
       </div>
     </div>
   }
@@ -59,256 +84,238 @@
   @if (stats) {
     <!-- Total badge -->
     <div class="flex items-center gap-2">
-      <span class="font-mono text-3xl font-bold text-ink dark:text-dark-ink">{{
-        stats.total
-      }}</span>
-      <span class="text-sm text-muted dark:text-dark-muted font-mono">respuestas en total</span>
+      <span class="font-mono text-3xl font-bold text-ink dark:text-dark-ink">{{ stats.total }}</span>
+      <span class="text-sm text-muted dark:text-dark-muted font-mono">respuestas en el período</span>
     </div>
 
-    <!-- ── Perfil ─────────────────────────────────────────────────────────── -->
-    <h2
-      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
-    >
+    <!-- ════════════════════════════════════════════════════════════════════════
+         PERFIL DEL USUARIO
+         ════════════════════════════════════════════════════════════════════════ -->
+    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
       Perfil del usuario
     </h2>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Role -->
-      <section
-        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-      >
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-            >Rol académico</span
-          >
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Rol académico</span>
         </div>
-        <div class="p-4" style="height: 200px; position: relative">
-          <canvas id="svRole"></canvas>
-        </div>
+        <div class="p-4" style="height:200px;position:relative"><canvas id="svRole"></canvas></div>
       </section>
 
-      <!-- Academic level -->
       @if (stats.byAcademicLevel.length) {
-        <section
-          class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-        >
+        <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
           <div class="px-4 py-3 border-b border-border dark:border-dark-border">
             <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Nivel académico</span>
           </div>
-          <div class="p-4" style="height: 200px; position: relative">
-            <canvas id="svAcademicLevel"></canvas>
-          </div>
+          <div class="p-4" style="height:200px;position:relative"><canvas id="svAcademicLevel"></canvas></div>
         </section>
       }
 
-      <!-- How found -->
-      <section
-        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-      >
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-            >¿Cómo encontraron la app?</span
-          >
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">¿Cómo encontraron la app?</span>
         </div>
-        <div class="p-4" style="height: 200px; position: relative">
-          <canvas id="svHowFound"></canvas>
-        </div>
+        <div class="p-4" style="height:200px;position:relative"><canvas id="svHowFound"></canvas></div>
       </section>
     </div>
 
-    <!-- Countries -->
-    <section
-      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-    >
+    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
       <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-          >Países (top 10)</span
-        >
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Países (top 10)</span>
       </div>
-      <div class="p-4" style="height: 260px; position: relative">
-        <canvas id="svCountry"></canvas>
-      </div>
+      <div class="p-4" style="height:260px;position:relative"><canvas id="svCountry"></canvas></div>
     </section>
 
-    <!-- ── Uso ───────────────────────────────────────────────────────────── -->
-    <h2
-      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
-    >
+    <!-- Institución y carrera -->
+    @if (stats.institutions.length || stats.careers.length) {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @if (stats.institutions.length) {
+          <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+              <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Instituciones (top 15)</span>
+            </div>
+            <div class="divide-y divide-border dark:divide-dark-border">
+              @for (row of stats.institutions; track row.value; let i = $index) {
+                <div class="px-4 py-2 flex items-center justify-between gap-2">
+                  <span class="text-xs font-mono text-ink dark:text-dark-ink truncate" [title]="row.value">
+                    <span class="text-muted dark:text-dark-muted mr-1.5">{{ i + 1 }}.</span>{{ row.value }}
+                  </span>
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{ row.count }}</span>
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        @if (stats.careers.length) {
+          <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+              <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Carreras (top 15)</span>
+            </div>
+            <div class="divide-y divide-border dark:divide-dark-border">
+              @for (row of stats.careers; track row.value; let i = $index) {
+                <div class="px-4 py-2 flex items-center justify-between gap-2">
+                  <span class="text-xs font-mono text-ink dark:text-dark-ink truncate" [title]="row.value">
+                    <span class="text-muted dark:text-dark-muted mr-1.5">{{ i + 1 }}.</span>{{ row.value }}
+                  </span>
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{ row.count }}</span>
+                </div>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    }
+
+    <!-- Campos "otro" -->
+    @if (otherByField.length) {
+      <details class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden group">
+        <summary class="px-4 py-3 cursor-pointer flex items-center justify-between select-none list-none">
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">
+            Respuestas libres "Otro"
+          </span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
+            class="w-4 h-4 text-muted dark:text-dark-muted transition-transform group-open:rotate-180">
+            <path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/>
+          </svg>
+        </summary>
+        <div class="border-t border-border dark:border-dark-border divide-y divide-border dark:divide-dark-border">
+          @for (group of otherByField; track group.field) {
+            <div class="px-4 py-3">
+              <p class="text-[11px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide mb-2">{{ group.label }}</p>
+              <div class="flex flex-col gap-1">
+                @for (entry of group.entries; track entry.value) {
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-mono text-ink dark:text-dark-ink">{{ entry.value }}</span>
+                    <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{ entry.count }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </details>
+    }
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         USO DE LA APLICACIÓN
+         ════════════════════════════════════════════════════════════════════════ -->
+    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
       Uso de la aplicación
     </h2>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Purpose -->
-      <section
-        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-      >
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-            >Propósito de uso</span
-          >
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Propósito de uso</span>
         </div>
-        <div class="p-4" style="height: 220px; position: relative">
-          <canvas id="svPurpose"></canvas>
-        </div>
+        <div class="p-4" style="height:220px;position:relative"><canvas id="svPurpose"></canvas></div>
       </section>
 
-      <!-- Features -->
-      <section
-        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-      >
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-            >Funcionalidades usadas</span
-          >
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Funcionalidades usadas</span>
         </div>
-        <div class="p-4" style="height: 220px; position: relative">
-          <canvas id="svFeature"></canvas>
-        </div>
+        <div class="p-4" style="height:220px;position:relative"><canvas id="svFeature"></canvas></div>
       </section>
     </div>
 
-    <!-- ── Dispositivo & Versión anterior ────────────────────────────────── -->
-    <h2
-      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
-    >
+    <!-- ════════════════════════════════════════════════════════════════════════
+         DISPOSITIVO Y VERSIÓN ANTERIOR
+         ════════════════════════════════════════════════════════════════════════ -->
+    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
       Dispositivo y versión anterior
     </h2>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Device -->
-      <section
-        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-      >
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
           <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Dispositivo</span>
         </div>
-        <div class="p-4" style="height: 220px; position: relative">
-          <canvas id="svDevice"></canvas>
-        </div>
+        <div class="p-4" style="height:220px;position:relative"><canvas id="svDevice"></canvas></div>
       </section>
 
-      <!-- Used previous -->
-      <section
-        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-      >
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-            >¿Usó versión anterior?</span
-          >
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">¿Usó versión anterior?</span>
         </div>
-        <div class="p-4" style="height: 220px; position: relative">
-          <canvas id="svUsedPrev"></canvas>
-        </div>
+        <div class="p-4" style="height:220px;position:relative"><canvas id="svUsedPrev"></canvas></div>
       </section>
     </div>
 
-    <!-- Improvements -->
-    <section
-      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-    >
+    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
       <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-          >Mejoras solicitadas</span
-        >
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Mejoras solicitadas</span>
       </div>
       @if (stats.improvements.length === 0) {
-        <div class="px-4 py-6 text-center text-sm font-mono text-muted dark:text-dark-muted">
-          Sin datos todavía
-        </div>
+        <div class="px-4 py-6 text-center text-sm font-mono text-muted dark:text-dark-muted">Sin datos todavía</div>
       } @else {
-        <div class="p-4" style="height: 220px; position: relative">
-          <canvas id="svImprove"></canvas>
-        </div>
+        <div class="p-4" style="height:220px;position:relative"><canvas id="svImprove"></canvas></div>
       }
     </section>
 
-    <!-- ── Calidad ────────────────────────────────────────────────────────── -->
-    <h2
-      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
-    >
+    <!-- ════════════════════════════════════════════════════════════════════════
+         CALIDAD PERCIBIDA
+         ════════════════════════════════════════════════════════════════════════ -->
+    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
       Calidad percibida
     </h2>
 
-    <section
-      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-    >
+    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
       <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-          >Promedios de calificación (escala 1–5)</span
-        >
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Promedios (escala 1–5)</span>
       </div>
-
-      <!-- Avg rating pills -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 pt-4">
-        <div
-          class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border"
-        >
-          <span
-            class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide"
-            >Utilidad</span
-          >
-          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{
-            stats.avgRatings.usefulness | number: '1.1-1'
-          }}</span>
+        <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border">
+          <span class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide">Utilidad</span>
+          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{ stats.avgRatings.usefulness | number:'1.1-1' }}</span>
         </div>
-        <div
-          class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border"
-        >
-          <span
-            class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide"
-            >Facilidad</span
-          >
-          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{
-            stats.avgRatings.ease | number: '1.1-1'
-          }}</span>
+        <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border">
+          <span class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide">Facilidad</span>
+          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{ stats.avgRatings.ease | number:'1.1-1' }}</span>
         </div>
-        <div
-          class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border"
-        >
-          <span
-            class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide"
-            >vs Otras herram.</span
-          >
-          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{
-            stats.avgRatings.vs_other | number: '1.1-1'
-          }}</span>
+        <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border">
+          <span class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide">vs Otras herram.</span>
+          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{ stats.avgRatings.vs_other | number:'1.1-1' }}</span>
         </div>
-        <div
-          class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border"
-        >
-          <span
-            class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide"
-            >Recomendaría</span
-          >
-          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{
-            stats.avgRatings.recommend | number: '1.1-1'
-          }}</span>
+        <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border">
+          <span class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide">Recomendaría</span>
+          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{ stats.avgRatings.recommend | number:'1.1-1' }}</span>
         </div>
       </div>
-
-      <div class="p-4" style="height: 180px; position: relative">
-        <canvas id="svRatings"></canvas>
-      </div>
+      <div class="p-4" style="height:180px;position:relative"><canvas id="svRatings"></canvas></div>
     </section>
 
-    <!-- ── Actividad ──────────────────────────────────────────────────────── -->
-    <h2
-      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
-    >
+    <!-- Distribución de ratings -->
+    @if (stats.ratingDist.length) {
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-border dark:border-dark-border">
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Distribución de calificaciones por estrella</span>
+          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">Cuántos usuarios dieron cada puntuación en cada dimensión</p>
+        </div>
+        <div class="p-4" style="height:240px;position:relative"><canvas id="svRatingDist"></canvas></div>
+      </section>
+    }
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         ACTIVIDAD
+         ════════════════════════════════════════════════════════════════════════ -->
+    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
       Actividad
     </h2>
 
-    <section
-      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-    >
-      <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-          >Respuestas — últimos 30 días</span
-        >
+    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Tendencia de respuestas</span>
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">
+          @if (dateFrom && dateTo) { De {{ dateFrom }} a {{ dateTo }} }
+          @else if (dateFrom)      { Desde {{ dateFrom }} }
+          @else if (dateTo)        { Hasta {{ dateTo }} }
+          @else                    { Todo el historial }
+        </span>
       </div>
-      <div class="p-4" style="height: 220px; position: relative">
-        <canvas id="svDay"></canvas>
-      </div>
+      <div class="p-4" style="height:220px;position:relative"><canvas id="svDay"></canvas></div>
     </section>
   }
 </div>
