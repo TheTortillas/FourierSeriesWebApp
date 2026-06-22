@@ -931,6 +931,19 @@ adminRouter.get(
         100,
       );
 
+      // Timezone del navegador del cliente para agrupar días correctamente.
+      // Se valida contra Intl para rechazar valores arbitrarios.
+      const rawTz = req.query["tz"] as string | undefined;
+      let clientTz = "UTC";
+      if (rawTz) {
+        try {
+          Intl.DateTimeFormat(undefined, { timeZone: rawTz });
+          clientTz = rawTz;
+        } catch {
+          clientTz = "UTC";
+        }
+      }
+
       const params: (Date | null)[] = [dateFrom, dateTo];
 
       const dateFilter = `
@@ -990,18 +1003,16 @@ adminRouter.get(
 
           db.query<{ day: string; executions: number; unique_calcs: number }>(
             `SELECT
-              to_char(DATE(el.executed_at), 'YYYY-MM-DD') AS day,
-              COUNT(el.id)::int                           AS executions,
-              COUNT(DISTINCT c.id)::int                   AS unique_calcs
+              to_char(DATE(el.executed_at AT TIME ZONE $3), 'YYYY-MM-DD') AS day,
+              COUNT(el.id)::int                                            AS executions,
+              COUNT(DISTINCT c.id)::int                                    AS unique_calcs
             FROM execution_log el
             JOIN calculation_events ce ON ce.id = el.event_id
             JOIN calculations c        ON c.id  = ce.calculation_id
-            WHERE
-              el.executed_at >= COALESCE($1, NOW() - INTERVAL '30 days')
-              AND ($2::timestamptz IS NULL OR el.executed_at <= $2)
-            GROUP BY DATE(el.executed_at)
-            ORDER BY DATE(el.executed_at)`,
-            params,
+            WHERE ${elDateFilter}
+            GROUP BY DATE(el.executed_at AT TIME ZONE $3)
+            ORDER BY DATE(el.executed_at AT TIME ZONE $3)`,
+            [...params, clientTz],
           ),
 
           db.query<{

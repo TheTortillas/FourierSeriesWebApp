@@ -412,11 +412,12 @@ export class ApiService {
     return this.http.get<import('../../../domain').SurveyStats>(`${this.base}/admin/survey/stats`);
   }
 
-  getCalcStats(query?: { dateFrom?: string; dateTo?: string; topN?: number }): Observable<import('../../../domain').CalcStats> {
+  getCalcStats(query?: { dateFrom?: string; dateTo?: string; topN?: number; tz?: string }): Observable<import('../../../domain').CalcStats> {
     let params = new HttpParams();
     if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
     if (query?.dateTo)   params = params.set('dateTo',   query.dateTo);
     if (query?.topN)     params = params.set('topN',     query.topN);
+    if (query?.tz)       params = params.set('tz',       query.tz);
     return this.http.get<import('../../../domain').CalcStats>(`${this.base}/admin/calculations/stats`, { params });
   }
 
