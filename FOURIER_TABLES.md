@@ -1346,6 +1346,55 @@ El handler detecta `k·tⁿ·e^{-at²}` con $n\geq 1$ entero, $a>0$, $k$ libre. 
 
 ---
 
+## §24h. Familia TPOW: $k\,\theta(t)\,t^p$ — potencias de $t$ causales
+
+### Fórmula cerrada (distribucional)
+
+$$\boxed{\mathcal{F}\bigl[k\,\theta(t)\,t^p\bigr](\omega)
+= k\,\Gamma(p+1)\,|\omega|^{-(p+1)}\left(\cos\tfrac{\pi(p+1)}{2} - i\,\mathrm{sgn}(\omega)\sin\tfrac{\pi(p+1)}{2}\right)}$$
+
+**Condición de convergencia:** $p > -1$ (para que $t^p$ sea integrable en $t=0$; la oscilación de $e^{-i\omega t}$ garantiza convergencia en $\infty$).
+
+### Derivación
+
+Se parte de la integral de Laplace regularizada:
+
+$$\int_0^\infty t^p\,e^{-(\varepsilon+i\omega)t}\,dt = \frac{\Gamma(p+1)}{(\varepsilon+i\omega)^{p+1}}, \quad \varepsilon > 0.$$
+
+Tomando $\varepsilon\to 0^+$ en el sentido distribucional:
+
+$$\mathcal{F}[\theta(t)\,t^p](\omega) = \frac{\Gamma(p+1)}{(i\omega)^{p+1}}$$
+
+donde $(i\omega)^{p+1} = |\omega|^{p+1}\,e^{i\pi(p+1)/2\,\mathrm{sgn}(\omega)}$, por lo que:
+
+$$\mathcal{F}[\theta(t)\,t^p](\omega) = \Gamma(p+1)\,|\omega|^{-(p+1)}\,e^{-i\pi(p+1)/2\,\mathrm{sgn}(\omega)}.$$
+
+### Casos especiales importantes
+
+| $p$ | $f(t)=\theta(t)\,t^p$ | $\Gamma(p+1)$ | $F(\omega)$ |
+|-----|-----------------------|---------------|-------------|
+| $-1/2$ | $\theta(t)/\sqrt{t}$ | $\sqrt{\pi}$ | $\sqrt{\pi/|\omega|}\,e^{-i\pi/4\,\mathrm{sgn}(\omega)}$ |
+| $1/3$ | $\theta(t)\,t^{1/3}$ | $\Gamma(4/3)$ | $\Gamma(4/3)\,|\omega|^{-4/3}\,e^{-i2\pi/3\,\mathrm{sgn}(\omega)}$ |
+| $1/2$ | $\theta(t)\sqrt{t}$ | $\sqrt{\pi}/2$ | $\frac{\sqrt{\pi}}{2|\omega|^{3/2}}\,e^{-3i\pi/4\,\mathrm{sgn}(\omega)}$ |
+
+**Condición:** $p > -1$ y $p \notin \mathbb{Z}$. Para enteros $p \geq 0$, la FT incluye derivadas de la delta de Dirac ($\delta^{(n)}$) que el método de regularización de Laplace no captura — esos casos retornan FALLBACK.
+
+### Implementación
+
+- Handler: **TPOW** en `FT_pattern_lookup`, antes del bloque `u(t)`.
+- Detecta: tramos `[0, ∞)` con expresión `k·t^p` (sin factores de otro tipo).
+- Identifica el exponente `p` via `log(f)/log(t_var)` para manejar `sqrt(t)`, `t^(1/3)`, etc.
+- Rechaza automáticamente `p ≤ -1` (verificación `is(p > -1)`).
+- **No hay IFT handler:** la FT inversa de $\Gamma(a)\,|\omega|^{-a}\,e^{-i\pi a/2\cdot\text{sgn}}$ es la función de Heaviside causal original — no se implementa por ser poco frecuente en esa dirección.
+
+### Tabla resumen TPOW
+
+| # | $f(t)$ | $F(\omega)$ | FT | IFT |
+|---|--------|-------------|-----|-----|
+| TPOW | $k\,\theta(t)\,t^p\;(p>-1)$ | $k\,\Gamma(p+1)\,\|\omega\|^{-(p+1)}\,e^{-i\pi(p+1)/2\cdot\mathrm{sgn}(\omega)}$ | ✓ | ✗ |
+
+---
+
 ## 25. Arquitectura de display: formas principales y alternativas
 
 La calculadora separa internamente las representaciones de **evaluación** (usadas por el plotter) y de **display** (mostradas en la UI), para que cada resultado tenga la forma más limpia posible en pantalla sin sacrificar la capacidad de evaluación numérica.

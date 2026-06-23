@@ -293,6 +293,7 @@ FT_match_u(expr, t_var) := block(
                 u_arg: part(part(e,1), 1),
                 u_coef: ratsimp(u_arg / t_var),
                 if freeof(t_var, u_coef) and is(u_coef > 0)
+                   and freeof(t_var, 1/part(e,2))  /* denominator must be const */
                 then res: [1/part(e,2)]
             )
             else if not atom(part(e,1)) and is(op(part(e,1)) = "*") then block(
@@ -1371,6 +1372,81 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                                             - exp(-%i*_theta)*delta(w_var+_w0)),
                     concat("k*sin(w0t+theta) -> k*(-i*pi)[...], k=", string(_k),
                            ", w0=", string(_w0), ", theta=", string(_theta))]
+        )
+    ),
+
+    /* ── TPOW: k·t^p·u(t) → k·Γ(p+1)·|ω|^{-(p+1)}·(cos(π(p+1)/2) - i·sgn(ω)·sin(π(p+1)/2))
+       (p > -1 for convergence at 0, oscillatory decay at ∞)
+       Must run BEFORE the generic k*u(t) handler.
+       Helper extracts exponent from t, t^n, sqrt(t), 1/sqrt(t), etc. via log ratio.
+       Three structural cases for e: op="*", op="/", op=u (bare u(t), p=0). */
+    if is(res = false) then block(
+        [_tp_k, _tp_p, _tp_u, _tp_bad, _tp_facs],
+        /* Returns exponent p such that f = t_var^p, or false */
+        block([_tpow_get_exp],
+            _tpow_get_exp: lambda([_f],
+                if is(_f = t_var) then 1
+                else if not atom(_f) and is(op(_f) = "^")
+                        and is(part(_f,1) = t_var) then block(
+                    [_ep: errcatch(ratsimp(part(_f,2)))],
+                    if _ep # [] and freeof(t_var, first(_ep)) then first(_ep) else false
+                ) else block(
+                    [_lp: errcatch(block([logexpand:super], ratsimp(log(_f) / log(t_var))))],
+                    if _lp # [] and freeof(t_var, first(_lp)) then first(_lp) else false
+                )
+            ),
+            _tp_k: 1, _tp_p: false, _tp_u: false, _tp_bad: false,
+            /* Case: unary minus */
+            if not atom(e) and is(op(e) = "-") then (
+                _tp_k: -1,
+                _tp_facs: if not atom(first(args(e))) and is(op(first(args(e))) = "*")
+                          then args(first(args(e))) else [first(args(e))]
+            )
+            /* Case: product k*t^p*u(t) */
+            else if not atom(e) and is(op(e) = "*") then
+                _tp_facs: args(e)
+            /* Case: ratio k*u(t)/t^q — numerator is u(t) or k*u(t), den is t^q */
+            else if not atom(e) and is(op(e) = "/") then block(
+                [_num: part(e,1), _den: part(e,2), _den_exp],
+                /* extract -exponent from denominator */
+                _den_exp: _tpow_get_exp(_den),
+                if is(_den_exp # false) then (
+                    _tp_p: -_den_exp,
+                    /* numerator factors */
+                    _tp_facs: if not atom(_num) and is(op(_num) = "*") then args(_num)
+                              else [_num]
+                ) else _tp_bad: true
+            )
+            /* Case: bare u(t) → p=0, handled by k*u(t) handler below; skip */
+            else
+                _tp_facs: [e],
+            if not _tp_bad then
+                for _tp_f in _tp_facs do (
+                    if not atom(_tp_f) and is(op(_tp_f) = 'u) then (
+                        if is(ratsimp(part(_tp_f,1) - t_var) = 0) then _tp_u: true
+                        else _tp_bad: true
+                    ) else block(
+                        [_pp: _tpow_get_exp(_tp_f)],
+                        if is(_pp # false) then
+                            _tp_p: if _tp_p = false then _pp else _tp_p + _pp
+                        else if freeof(t_var, _tp_f) then
+                            _tp_k: _tp_k * _tp_f
+                        else
+                            _tp_bad: true
+                    )
+                )
+        ),
+        /* Valid only for non-integer p: for integer p≥0, FT has delta-derivative terms
+           that the Laplace regularization formula misses. Those cases fall through to
+           the integration engine which handles them or returns FALLBACK correctly. */
+        if is(_tp_u = true) and is(_tp_p # false) and not _tp_bad
+           and freeof(t_var, _tp_k) and is(_tp_p > -1)
+           and not integerp(_tp_p) then block(
+            [_a: _tp_p + 1],
+            res: [_tp_k * gamma(_a) * abs(w_var)^(-_a) *
+                  (cos(%pi*_a/2) - %i*sgn(w_var)*sin(%pi*_a/2)),
+                  concat("FT k*t^p*u(t)->k*Gamma(p+1)*|w|^{-(p+1)}*cos-sin form, p=",
+                         string(_tp_p))]
         )
     ),
 

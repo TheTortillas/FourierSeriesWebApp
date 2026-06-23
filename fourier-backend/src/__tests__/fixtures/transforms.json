@@ -1014,6 +1014,216 @@
     }
   },
   {
+    "id": "EG01",
+    "type": "ft",
+    "description": "Gaussiana·cos: FT[e^{-t²}·cos(2t)] — desplazamiento en frecuencia",
+    "input": {
+      "segments": [{ "expression": "%e^(-t^2)*cos(2*t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "sqrt(%pi)*%e^(-(w^2/4)-1)*cosh(w)"
+    }
+  },
+  {
+    "id": "EG02",
+    "type": "ft",
+    "description": "Gaussiana·sin: FT[e^{-t²}·sin(t)] — resultado imaginario impar",
+    "input": {
+      "segments": [{ "expression": "%e^(-t^2)*sin(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(sqrt(%pi)*%i*sinh(w/2)*%e^(-(w^2/4)-1/4))"
+    }
+  },
+  {
+    "id": "EG03",
+    "type": "ft",
+    "description": "Gaussiana·cos con k=2: FT[2·e^{-t²}·cos(t)]",
+    "input": {
+      "segments": [{ "expression": "2*%e^(-t^2)*cos(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "2*sqrt(%pi)*cosh(w/2)*%e^(-(w^2/4)-1/4)"
+    }
+  },
+  {
+    "id": "EG04",
+    "type": "ft",
+    "description": "Gaussiana·cos a=2,b=3: FT[e^{-2t²}·cos(3t)]",
+    "input": {
+      "segments": [{ "expression": "%e^(-2*t^2)*cos(3*t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(sqrt(%pi)*cosh((3*w)/4)*%e^(-(w^2/8)-9/8))/sqrt(2)"
+    }
+  },
+  {
+    "id": "EG05",
+    "type": "ft",
+    "description": "Gaussiana·sin k=3,b=2: FT[3·e^{-t²}·sin(2t)]",
+    "input": {
+      "segments": [{ "expression": "3*%e^(-t^2)*sin(2*t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(3*sqrt(%pi)*%i*%e^(-(w^2/4)-1)*sinh(w))"
+    }
+  },
+  {
+    "id": "EG06",
+    "type": "ft",
+    "description": "Gaussiana·sin a=1/2: FT[e^{-t²/2}·sin(2t)]",
+    "input": {
+      "segments": [{ "expression": "%e^(-(t^2/2))*sin(2*t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(sqrt(2)*sqrt(%pi)*%i*%e^(-(w^2/2)-2)*sinh(2*w))"
+    }
+  },
+  {
+    "id": "EG07",
+    "type": "ft",
+    "description": "Exponencial bilateral: FT[e^{-|t|}] = 2/(w²+1)",
+    "input": {
+      "segments": [{ "expression": "%e^(-abs(t))", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "2/(w^2+1)"
+    }
+  },
+  {
+    "id": "EG08",
+    "type": "ft",
+    "description": "Exponencial bilateral k=2,a=3: FT[2·e^{-3|t|}] = 12/(w²+9)",
+    "input": {
+      "segments": [{ "expression": "2*%e^(-3*abs(t))", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "12/(w^2+9)"
+    }
+  },
+  {
+    "id": "EG09",
+    "type": "ft",
+    "description": "TGAUSS a=1/4: FT[t·e^{-t²/4}] — a no entero",
+    "input": {
+      "segments": [{ "expression": "t*%e^(-(t^2/4))", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(4*sqrt(%pi)*%i*w*%e^-w^2)"
+    }
+  },
+  {
+    "id": "EG10",
+    "type": "ft",
+    "description": "TGAUSS n=2,a=2: FT[t²·e^{-2t²}]",
+    "input": {
+      "segments": [{ "expression": "t^2*%e^(-2*t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((sqrt(%pi)*(sqrt(2)*w^2-2^(5/2))*%e^-(w^2/8))/32)"
+    }
+  },
+  {
+    "id": "TP01",
+    "type": "ft",
+    "description": "TPOW p=-1/2: FT[θ(t)/√t] = √π·|w|^{-1/2}·e^{-iπ/4·sgn(w)}",
+    "input": {
+      "segments": [{ "expression": "t^(-1/2)", "from": "0", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((sqrt(%pi)*(sqrt(2)*%i*sgn(w)-sqrt(2)))/(2*sqrt(abs(w))))"
+    }
+  },
+  {
+    "id": "TP02",
+    "type": "ft",
+    "description": "TPOW p=1/2: FT[θ(t)·√t] = (√π/2)·|w|^{-3/2}·e^{-3iπ/4·sgn(w)}",
+    "input": {
+      "segments": [{ "expression": "t^(1/2)", "from": "0", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((sqrt(%pi)*(sqrt(2)*%i*sgn(w)+sqrt(2)))/(4*abs(w)^(3/2)))"
+    }
+  },
+  {
+    "id": "TP03",
+    "type": "ft",
+    "description": "TPOW p=1/3: FT[θ(t)·t^{1/3}] = Γ(4/3)·|w|^{-4/3}·e^{-i2π/3·sgn(w)}",
+    "input": {
+      "segments": [{ "expression": "t^(1/3)", "from": "0", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((sqrt(3)*%i*gamma(1/3)*sgn(w)+gamma(1/3))/(6*w^(4/3)))"
+    }
+  },
+  {
+    "id": "TP04",
+    "type": "ft",
+    "description": "TPOW coef: FT[3·θ(t)/√t] = 3√π·|w|^{-1/2}·e^{-iπ/4·sgn(w)}",
+    "input": {
+      "segments": [{ "expression": "3*t^(-1/2)", "from": "0", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((sqrt(%pi)*(3*sqrt(2)*%i*sgn(w)-3*sqrt(2)))/(2*sqrt(abs(w))))"
+    }
+  },
+  {
+    "id": "TP05",
+    "type": "ft",
+    "description": "TPOW negativo: FT[-θ(t)·√t]",
+    "input": {
+      "segments": [{ "expression": "-t^(1/2)", "from": "0", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(sqrt(%pi)*(sqrt(2)*%i*sgn(w)+sqrt(2)))/(4*abs(w)^(3/2))"
+    }
+  },
+  {
     "id": "K01",
     "type": "ift",
     "description": "IFT de 1 → δ(t)",
