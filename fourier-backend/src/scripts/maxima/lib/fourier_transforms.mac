@@ -1381,68 +1381,65 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
        Helper extracts exponent from t, t^n, sqrt(t), 1/sqrt(t), etc. via log ratio.
        Three structural cases for e: op="*", op="/", op=u (bare u(t), p=0). */
     if is(res = false) then block(
-        [_tp_k, _tp_p, _tp_u, _tp_bad, _tp_facs],
-        /* Returns exponent p such that f = t_var^p, or false */
-        block([_tpow_get_exp],
-            _tpow_get_exp: lambda([_f],
-                if is(_f = t_var) then 1
-                else if not atom(_f) and is(op(_f) = "^")
-                        and is(part(_f,1) = t_var) then block(
-                    [_ep: errcatch(ratsimp(part(_f,2)))],
-                    if _ep # [] and freeof(t_var, first(_ep)) then first(_ep) else false
-                ) else block(
-                    [_lp: errcatch(block([logexpand:super], ratsimp(log(_f) / log(t_var))))],
-                    if _lp # [] and freeof(t_var, first(_lp)) then first(_lp) else false
+        [_tp_k, _tp_p, _tp_u, _tp_bad, _tp_facs, _tp_f, _tp_pp, _tp_ep, _tp_lp,
+         _tp_num, _tp_den, _tp_den_exp, _a],
+        /* Returns exponent p such that f = t_var^p, or false.
+           Handles: t, t^n, sqrt(t), cbrt(t), t^(p/q) via log ratio. */
+        _tp_get_exp: lambda([_f],
+            if is(_f = t_var) then 1
+            else if not atom(_f) and is(op(_f) = "^")
+                    and is(part(_f,1) = t_var) then block(
+                [_ep2: errcatch(ratsimp(part(_f,2)))],
+                if _ep2 # [] and freeof(t_var, first(_ep2)) then first(_ep2) else false
+            ) else block(
+                [_lp2: errcatch(block([logexpand:super],
+                                      ratsimp(log(_f) / log(t_var))))],
+                if _lp2 # [] and freeof(t_var, first(_lp2)) then first(_lp2) else false
+            )
+        ),
+        _tp_k: 1, _tp_p: false, _tp_u: false, _tp_bad: false,
+        /* Determine factor list from structural form of e */
+        if not atom(e) and is(op(e) = "-") then (
+            _tp_k: -1,
+            _tp_facs: if not atom(first(args(e))) and is(op(first(args(e))) = "*")
+                      then args(first(args(e))) else [first(args(e))]
+        )
+        else if not atom(e) and is(op(e) = "*") then
+            _tp_facs: args(e)
+        else if not atom(e) and is(op(e) = "/") then (
+            _tp_num: part(e,1),
+            _tp_den: part(e,2),
+            _tp_den_exp: _tp_get_exp(_tp_den),
+            if is(_tp_den_exp # false) then (
+                _tp_p: -_tp_den_exp,
+                _tp_facs: if not atom(_tp_num) and is(op(_tp_num) = "*")
+                          then args(_tp_num) else [_tp_num]
+            ) else _tp_bad: true
+        )
+        else
+            _tp_facs: [e],
+        /* Classify each factor: u(t), t^p, or scalar constant */
+        if not _tp_bad then
+            for _tp_f in _tp_facs do (
+                if not atom(_tp_f) and is(op(_tp_f) = 'u) then (
+                    if is(ratsimp(part(_tp_f,1) - t_var) = 0) then _tp_u: true
+                    else _tp_bad: true
+                ) else (
+                    _tp_pp: _tp_get_exp(_tp_f),
+                    if is(_tp_pp # false) then
+                        _tp_p: if _tp_p = false then _tp_pp else _tp_p + _tp_pp
+                    else if freeof(t_var, _tp_f) then
+                        _tp_k: _tp_k * _tp_f
+                    else
+                        _tp_bad: true
                 )
             ),
-            _tp_k: 1, _tp_p: false, _tp_u: false, _tp_bad: false,
-            /* Case: unary minus */
-            if not atom(e) and is(op(e) = "-") then (
-                _tp_k: -1,
-                _tp_facs: if not atom(first(args(e))) and is(op(first(args(e))) = "*")
-                          then args(first(args(e))) else [first(args(e))]
-            )
-            /* Case: product k*t^p*u(t) */
-            else if not atom(e) and is(op(e) = "*") then
-                _tp_facs: args(e)
-            /* Case: ratio k*u(t)/t^q — numerator is u(t) or k*u(t), den is t^q */
-            else if not atom(e) and is(op(e) = "/") then block(
-                [_num: part(e,1), _den: part(e,2), _den_exp],
-                /* extract -exponent from denominator */
-                _den_exp: _tpow_get_exp(_den),
-                if is(_den_exp # false) then (
-                    _tp_p: -_den_exp,
-                    /* numerator factors */
-                    _tp_facs: if not atom(_num) and is(op(_num) = "*") then args(_num)
-                              else [_num]
-                ) else _tp_bad: true
-            )
-            /* Case: bare u(t) → p=0, handled by k*u(t) handler below; skip */
-            else
-                _tp_facs: [e],
-            if not _tp_bad then
-                for _tp_f in _tp_facs do (
-                    if not atom(_tp_f) and is(op(_tp_f) = 'u) then (
-                        if is(ratsimp(part(_tp_f,1) - t_var) = 0) then _tp_u: true
-                        else _tp_bad: true
-                    ) else block(
-                        [_pp: _tpow_get_exp(_tp_f)],
-                        if is(_pp # false) then
-                            _tp_p: if _tp_p = false then _pp else _tp_p + _pp
-                        else if freeof(t_var, _tp_f) then
-                            _tp_k: _tp_k * _tp_f
-                        else
-                            _tp_bad: true
-                    )
-                )
-        ),
-        /* Valid only for non-integer p: for integer p≥0, FT has delta-derivative terms
-           that the Laplace regularization formula misses. Those cases fall through to
-           the integration engine which handles them or returns FALLBACK correctly. */
+        /* Valid only for non-integer p > -1.
+           Integer p≥0: FT has delta-derivative terms not captured here (fall through). */
         if is(_tp_u = true) and is(_tp_p # false) and not _tp_bad
            and freeof(t_var, _tp_k) and is(_tp_p > -1)
-           and not integerp(_tp_p) then block(
-            [_a: _tp_p + 1],
+           and not integerp(_tp_p) then (
+            _a: _tp_p + 1,
             res: [_tp_k * gamma(_a) * abs(w_var)^(-_a) *
                   (cos(%pi*_a/2) - %i*sgn(w_var)*sin(%pi*_a/2)),
                   concat("FT k*t^p*u(t)->k*Gamma(p+1)*|w|^{-(p+1)}*cos-sin form, p=",
@@ -3379,6 +3376,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     _w0c: errcatch(ratsimp(_earg / (%i * t_var))),
                     if _w0c # [] and freeof(t_var, first(_w0c))
                        and not equal(first(_w0c), 0)
+                       and freeof(%i, first(_w0c))  /* w0 must be real */
                        and ratsimp(_earg - %i * first(_w0c) * t_var) = 0 then (
                         _exp_fac: _fac,
                         _w0: first(_w0c)
