@@ -166,10 +166,11 @@ export class CalcStatsComponent implements OnInit, OnDestroy {
     this.error   = false;
     this.destroyCharts();
 
-    const query: { dateFrom?: string; dateTo?: string; topN?: number } = {};
-    if (this.dateFrom) query.dateFrom = new Date(this.dateFrom).toISOString();
-    if (this.dateTo)   query.dateTo   = new Date(this.dateTo + 'T23:59:59').toISOString();
+    const query: { dateFrom?: string; dateTo?: string; topN?: number; tz?: string } = {};
+    if (this.dateFrom) query.dateFrom = new Date(this.dateFrom + 'T00:00:00').toISOString();
+    if (this.dateTo)   query.dateTo   = new Date(this.dateTo   + 'T23:59:59').toISOString();
     if (this.topN !== 10) query.topN  = this.topN;
+    query.tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     this.api.getCalcStats(query).subscribe({
       next: (data) => {
