@@ -157,17 +157,24 @@ class Parser {
       const cmd = tok.v;
       if (cmd === 'frac')  return `(${this.braceGroup()})/(${this.braceGroup()})`;
       if (cmd === 'sqrt')  return `sqrt(${this.braceGroup()})`;
-      if (cmd === 'left' || cmd === 'right') {
+      if (cmd === 'left') {
         const delim = this.peek();
-        this.eat(); // consume the delimiter token
-        // \left|...\right| → abs(...)
+        this.eat(); // consume the opening delimiter token
         if (delim.t === 'op' && (delim as { t: 'op'; v: string }).v === '|') {
+          // \left|...\right| → abs(...)
           const inner = this.addSub();
           if (this.is('cmd', 'right')) { this.eat(); if (this.is('op', '|')) this.eat(); }
           return `abs(${inner})`;
         }
-        // \left(...\right) and other delimiters — parse content only
-        return this.addSub();
+        // \left(...\right) — parse content and consume closing \right)
+        const inner = this.addSub();
+        if (this.is('cmd', 'right')) { this.eat(); if (this.is('rp')) this.eat(); }
+        return `(${inner})`;
+      }
+      if (cmd === 'right') {
+        // Stray \right — consume its delimiter and return empty
+        this.eat();
+        return '';
       }
       if (cmd === 'cdot' || cmd === 'times') return '*';
       if (cmd === 'pi')    return '%pi';
