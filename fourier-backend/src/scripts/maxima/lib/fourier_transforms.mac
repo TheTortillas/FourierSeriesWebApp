@@ -1807,6 +1807,56 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                   concat("FT k*exp(-at^2)/(t^2+b^2)->erfc form, a=", string(_gf_a), ", b=", string(_gf_b))]
     ),
 
+    /* ── TGAUSS: k·t^n·e^{-a·t²} → (i·d/dω)^n FT[e^{-at²}]  (a>0, n≥1 integer) ──
+       Uses the frequency-derivative property: FT[t·f(t)] = i·d/dω F(ω)
+       By induction: FT[t^n·f(t)] = i^n · d^n/dω^n F(ω)
+       FT[e^{-at²}] = √(π/a)·e^{-ω²/(4a)}, so the result is always a
+       Gaussian times a polynomial in ω (Hermite polynomial family).
+       Pattern: product containing t^n (integer n≥1) and exp(-a·t²). */
+    if is(res = false) then block(
+        [_tg_k, _tg_a, _tg_n, _tg_bad, _tg_facs, _tg_f, _tg_cn, _tg_exparg,
+         _tg_tpow, _tg_base_ft, _tg_result],
+        _tg_k: 1, _tg_a: false, _tg_n: 0, _tg_bad: false,
+        /* strip overall unary minus */
+        if not atom(e) and is(op(e) = "-") then (_tg_k: -1, e: first(args(e))),
+        if not atom(e) then block(
+            _tg_facs: if is(op(e) = "*") then args(e) else [e],
+            for _tg_f in _tg_facs do (
+                if not atom(_tg_f) and is(op(_tg_f) = "^")
+                   and is(part(_tg_f,1) = %e) then block(
+                    /* detect exp(-a*t^2) */
+                    _tg_exparg: part(_tg_f,2),
+                    _tg_cn: errcatch(ratsimp(_tg_exparg / t_var^2)),
+                    if _tg_cn # [] and freeof(t_var, first(_tg_cn))
+                       and is(first(_tg_cn) < 0)
+                       and ratsimp(_tg_exparg - first(_tg_cn)*t_var^2) = 0 then
+                        _tg_a: -first(_tg_cn)
+                    else _tg_bad: true
+                ) else if is(_tg_f = t_var) then
+                    _tg_n: _tg_n + 1
+                else if not atom(_tg_f) and is(op(_tg_f) = "^")
+                   and is(part(_tg_f,1) = t_var) then block(
+                    /* t^n with integer n≥1 */
+                    [_tg_exp: errcatch(ratsimp(part(_tg_f,2)))],
+                    if _tg_exp # [] and integerp(first(_tg_exp)) and is(first(_tg_exp) >= 1) then
+                        _tg_n: _tg_n + first(_tg_exp)
+                    else _tg_bad: true
+                ) else if freeof(t_var, _tg_f) then
+                    _tg_k: _tg_k * _tg_f
+                else
+                    _tg_bad: true
+            )
+        ),
+        if is(_tg_a # false) and is(_tg_n >= 1) and not _tg_bad
+           and freeof(t_var, _tg_k) and is(_tg_a > 0) then block(
+            _tg_base_ft: sqrt(%pi / _tg_a) * exp(-w_var^2 / (4*_tg_a)),
+            _tg_result: ratsimp(_tg_k * (%i)^_tg_n * diff(_tg_base_ft, w_var, _tg_n)),
+            res: [_tg_result,
+                  concat("FT k*t^n*exp(-at^2)->i^n*diff(FT[gauss],w,n), n=",
+                         string(_tg_n), ", a=", string(_tg_a))]
+        )
+    ),
+
     /* ── k*exp(-a*t^2)*trig(b*t+theta) — familia gaussiana ──────────────────
        FT[e^{-at²}] = √(π/a) · e^{-ω²/(4a)}                (par #G0)
        FT[e^{-at²}·cos(bt+θ)] = √(π/a)·e^{-(ω-b)²/(4a)/2 ...}
@@ -1824,9 +1874,9 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
     if is(res = false) then block(
         [_gg_k, _gg_a, _gg_b, _gg_theta, _gg_trig_op, _gg_exp, _gg_facs,
          _gg_base, _gg_exparg, _gg_cn, _gg_found_exp, _gg_trig, _gg_targ,
-         _gg_amplitude, _gg_result],
+         _gg_amplitude, _gg_result, _gg_bad_fac],
         _gg_k: 1, _gg_a: false, _gg_b: 0, _gg_theta: 0,
-        _gg_trig_op: false, _gg_found_exp: false,
+        _gg_trig_op: false, _gg_found_exp: false, _gg_bad_fac: false,
         if not atom(e) then (
             _gg_facs: if is(op(e) = "*") then args(e) else [e],
             for _gg_f in _gg_facs do (
@@ -1847,6 +1897,8 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     _gg_trig_op: op(_gg_f)
                 ) else if freeof(t_var, _gg_f) then
                     _gg_k: _gg_k * _gg_f
+                else
+                    _gg_bad_fac: true  /* t-dependent factor that is not exp/trig → reject */
             )
         ) else if not atom(e) and is(op(e) = "^") and is(part(e, 1) = %e) then (
             /* bare e^{-at^2} with no coefficient */
@@ -1859,7 +1911,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 _gg_found_exp: true
             )
         ),
-        if _gg_found_exp and freeof(t_var, _gg_k) then (
+        if _gg_found_exp and not _gg_bad_fac and freeof(t_var, _gg_k) then (
             /* extract b and theta from trig argument: arg = b*t + theta */
             if is(_gg_trig_op # false) then (
                 _gg_targ: part(_gg_trig, 1),

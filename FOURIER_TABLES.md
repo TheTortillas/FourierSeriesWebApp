@@ -1304,6 +1304,48 @@ Handler implementado en `fourier_transforms.mac`. Usa `f_expr` pre-`expand()` po
 
 ---
 
+## 24g. Familia $k\,t^n\,e^{-at^2}$ — propiedad de derivada en frecuencia
+
+### Fundamento
+
+La **propiedad de derivada en frecuencia** establece que multiplicar por $t$ en tiempo equivale a derivar en frecuencia:
+
+$$\mathcal{F}\{t\cdot f(t)\}(\omega) = i\,\frac{d}{d\omega}\,F(\omega)$$
+
+Por inducción para $n$ entero $\geq 1$:
+
+$$\mathcal{F}\{t^n\cdot f(t)\}(\omega) = i^n\,\frac{d^n}{d\omega^n}\,F(\omega)$$
+
+### Resultado
+
+Partiendo de $\mathcal{F}\{e^{-at^2}\} = \sqrt{\pi/a}\,e^{-\omega^2/(4a)}$:
+
+$$\boxed{\mathcal{F}\!\left\{k\,t^n\,e^{-at^2}\right\}(\omega) = k\cdot i^n\cdot\frac{d^n}{d\omega^n}\!\left[\sqrt{\frac{\pi}{a}}\,e^{-\omega^2/(4a)}\right]}$$
+
+Los primeros casos explícitos:
+
+| $n$ | $\mathcal{F}\{k\,t^n\,e^{-at^2}\}(\omega)$ |
+|-----|----------------------------------------------|
+| 1 | $\displaystyle -\frac{ik\sqrt{\pi/a}}{2a}\,\omega\,e^{-\omega^2/(4a)}$ |
+| 2 | $\displaystyle -\frac{k\sqrt{\pi/a}}{4a^2}\,(\omega^2 - 2a)\,e^{-\omega^2/(4a)}$ |
+| 3 | $\displaystyle \frac{ik\sqrt{\pi/a}}{8a^3}\,(\omega^3 - 6a\omega)\,e^{-\omega^2/(4a)}$ |
+
+El resultado general es una gaussiana multiplicada por el polinomio de Hermite $H_n(\omega/(2\sqrt{a}))$ — función par para $n$ par (transformada real) e impar para $n$ impar (transformada imaginaria pura), consistente con la paridad de $t^n\,e^{-at^2}$.
+
+### Notas de implementación
+
+El handler detecta `k·tⁿ·e^{-at²}` con $n\geq 1$ entero, $a>0$, $k$ libre. Maxima calcula la derivada $n$-ésima simbólicamente — no se hardcodea ninguna fórmula por orden. Funciona para $n=1,2,3,\ldots$ sin código adicional.
+
+**Bug corregido:** el handler gaussiano anterior absorbía silenciosamente factores de $t$ como si fueran escalares, devolviendo $\mathcal{F}\{t\cdot e^{-at^2}\} = \mathcal{F}\{e^{-at^2}\}$ (incorrecto). Ahora cualquier factor dependiente de $t$ que no sea $e^{-at^2}$ o $\sin/\cos$ rechaza el handler.
+
+### Tabla resumen TGAUSS
+
+| # | $f(t)$ | $F(\omega)$ | FT | IFT |
+|---|--------|-------------|-----|-----|
+| TGAUSS | $k\,t^n\,e^{-at^2}$ | $k\cdot i^n\cdot\partial_\omega^n[\sqrt{\pi/a}\,e^{-\omega^2/(4a)}]$ | ✓ | ✗ |
+
+---
+
 ## 25. Arquitectura de display: formas principales y alternativas
 
 La calculadora separa internamente las representaciones de **evaluación** (usadas por el plotter) y de **display** (mostradas en la UI), para que cada resultado tenga la forma más limpia posible en pantalla sin sacrificar la capacidad de evaluación numérica.

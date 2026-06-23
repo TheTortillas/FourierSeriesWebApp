@@ -930,6 +930,90 @@
     }
   },
   {
+    "id": "TG01",
+    "type": "ft",
+    "description": "TGAUSS n=1: FT[t·e^{-t²}] = -i√π·ω/2·e^{-ω²/4}",
+    "input": {
+      "segments": [{ "expression": "t*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((sqrt(%pi)*%i*w*%e^-(w^2/4))/2)"
+    }
+  },
+  {
+    "id": "TG02",
+    "type": "ft",
+    "description": "TGAUSS n=1, a=2: FT[t·e^{-2t²}]",
+    "input": {
+      "segments": [{ "expression": "t*%e^(-2*t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((sqrt(%pi)*%i*w*%e^-(w^2/8))/2^(5/2))"
+    }
+  },
+  {
+    "id": "TG03",
+    "type": "ft",
+    "description": "TGAUSS n=1, k=2: FT[2t·e^{-t²}] — linealidad",
+    "input": {
+      "segments": [{ "expression": "2*t*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(sqrt(%pi)*%i*w*%e^-(w^2/4))"
+    }
+  },
+  {
+    "id": "TG04",
+    "type": "ft",
+    "description": "TGAUSS n=1, k=-1: FT[-t·e^{-t²}] — función impar negada",
+    "input": {
+      "segments": [{ "expression": "-t*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(sqrt(%pi)*%i*w*%e^-(w^2/4))/2"
+    }
+  },
+  {
+    "id": "TG05",
+    "type": "ft",
+    "description": "TGAUSS n=2: FT[t²·e^{-t²}] — función par, resultado real",
+    "input": {
+      "segments": [{ "expression": "t^2*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-((sqrt(%pi)*(w^2-2)*%e^-(w^2/4))/4)"
+    }
+  },
+  {
+    "id": "TG06",
+    "type": "ft",
+    "description": "TGAUSS n=3: FT[t³·e^{-t²}] — función impar, resultado imaginario",
+    "input": {
+      "segments": [{ "expression": "t^3*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(sqrt(%pi)*(%i*w^3-6*%i*w)*%e^-(w^2/4))/8"
+    }
+  },
+  {
     "id": "K01",
     "type": "ift",
     "description": "IFT de 1 → δ(t)",
