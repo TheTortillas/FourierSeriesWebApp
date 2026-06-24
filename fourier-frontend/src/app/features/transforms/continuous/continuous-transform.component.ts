@@ -1481,7 +1481,7 @@ export class ContinuousTransformComponent implements OnInit {
         req: {
           expression: mainExpr,
           profile: 'complete',
-          functions: ['radcan'],
+          functions: ['radcan', 'expand', 'combine'],
           displayFlags: { exponentialize: true },
           convention,
         },

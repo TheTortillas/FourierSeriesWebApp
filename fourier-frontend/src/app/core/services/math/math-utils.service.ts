@@ -149,11 +149,10 @@ export class MathUtilsService {
       // Power operator: ^ → **
       .replace(/\^/g, '**');
 
-    // Early Math.E** → Math.exp() conversion for bare (non-parenthesised) exponents.
-    // Maxima emits e.g. -%e^-t^2 which becomes -Math.E**-t**2 after ^ → **.
-    // _fixUnaryMinusPow can't handle an exponent starting with '-', so convert
-    // Math.E**EXPR to Math.exp(EXPR) here.  The paren-based case Math.E**(...)
-    // is handled again at the end by _replaceMathEPow — safe to apply twice.
+    // Convert Math.E**BARE (non-parenthesised negative exponents like -t**2) to
+    // Math.exp(BARE) before _fixUnaryMinusPow, which cannot handle exponents that
+    // start with '-'. Must run before the registry loop would re-process 'exp';
+    // the registry regex now has (?<!\.) to skip already-prefixed Math.exp calls.
     s = this._convertMathEPowBare(s);
 
     // JS forbids a unary '-' as the direct left operand of '**' (SyntaxError).
@@ -166,7 +165,9 @@ export class MathUtilsService {
     // Apply all function translations from REGISTRY_FOR_JS (sorted longest-first
     // so 'asinh' matches before 'sinh', 'atanh' before 'tanh', etc.)
     for (const fn of REGISTRY_FOR_JS) {
-      const re = new RegExp(`\\b${fn.maxima}\\b`, 'g');
+      // Negative lookbehind (?<!\.) prevents matching method names already prefixed
+      // with 'Math.' (e.g. the 'exp' in 'Math.exp' produced by _convertMathEPowBare).
+      const re = new RegExp(`(?<!\\.)\\b${fn.maxima}\\b`, 'g');
       const { js } = fn;
       if (js.kind === 'Math') {
         s = s.replace(re, `Math.${js.method}`);
@@ -490,7 +491,7 @@ export class MathUtilsService {
         const beforeToken = j;
         while (j < s.length && /[\w.]/.test(s[j])) j++;
         if (j > beforeToken) foundSomething = true;
-        // If followed by '(' it's a function call — collect the argument group
+        // If followed by '(' it's a function call or grouped sub-expression — collect it
         if (s[j] === '(') {
           let depth = 0;
           while (j < s.length) {
@@ -498,6 +499,7 @@ export class MathUtilsService {
             else if (s[j] === ')') { depth--; if (depth === 0) { j++; break; } }
             j++;
           }
+          foundSomething = true;
         }
         // Continue if followed by ** and another token
         if (s.slice(j, j + 2) === '**') {

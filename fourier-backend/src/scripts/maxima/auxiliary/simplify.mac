@@ -127,6 +127,7 @@ for fn in SIMP_FUNCTIONS do (
         [_prev: _result_expr, _r: errcatch(radcan(_result_expr))],
         if _r # [] then _result_expr: _safe_apply(_prev, first(_r))
     )
+    else if fn = "combine"    then _result_expr: _safe_apply(_result_expr, combine(_result_expr))
     else if fn = "rectform"   then _result_expr: _safe_apply(_result_expr, rectform(_result_expr))
     else if fn = "polarform"  then _result_expr: _safe_apply(_result_expr, polarform(_result_expr))
     else if fn = "to_hyper"   then block(
