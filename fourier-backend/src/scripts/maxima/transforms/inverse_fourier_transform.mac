@@ -101,9 +101,9 @@ f_neg_disp : errcatch(FT_pick_display_expr_algebraic(f_neg))$
 f_neg_disp : if f_neg_disp = [] then f_neg else first(f_neg_disp)$
 f_combined_disp : errcatch(FT_pick_display_expr_algebraic(f_combined))$
 f_combined_disp : if f_combined_disp = [] then f_combined else first(f_combined_disp)$
-F_in_real_disp : errcatch(FT_pick_display_expr(F_in_real))$
+F_in_real_disp : errcatch(FT_pick_display_expr(F_in_real, INTVAR))$
 F_in_real_disp : if F_in_real_disp = [] then F_in_real else first(F_in_real_disp)$
-F_in_imag_disp : errcatch(FT_pick_display_expr(F_in_imag))$
+F_in_imag_disp : errcatch(FT_pick_display_expr(F_in_imag, INTVAR))$
 F_in_imag_disp : if F_in_imag_disp = [] then F_in_imag else first(F_in_imag_disp)$
 f_out_real_disp : errcatch(FT_pick_display_expr_algebraic(f_out_real))$
 f_out_real_disp : if f_out_real_disp = [] then f_out_real else first(f_out_real_disp)$

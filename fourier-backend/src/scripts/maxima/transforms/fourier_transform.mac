@@ -103,21 +103,21 @@ F_in_imag : if F_in_imag = [] then false else first(F_in_imag)$
 block([_tmp_fd],
     if F_sech_disp # false then F_disp: F_sech_disp
     else if F_tanh_alt_disp # false then F_disp: F_tanh_alt_disp
-    else (_tmp_fd: errcatch(FT_pick_display_expr(F)),
+    else (_tmp_fd: errcatch(FT_pick_display_expr(F, TRANSVAR)),
           F_disp: if _tmp_fd = [] then F else first(_tmp_fd)))$
 block([_tmp_frd],
     if F_real_sech_disp # false then F_real_disp: F_real_sech_disp
     else if F_real_tanh_alt_disp # false then F_real_disp: F_real_tanh_alt_disp
-    else (_tmp_frd: errcatch(FT_pick_display_expr(F_real)),
+    else (_tmp_frd: errcatch(FT_pick_display_expr(F_real, TRANSVAR)),
           F_real_disp: if _tmp_frd = [] then F_real else first(_tmp_frd)))$
 block([_tmp_fid],
     if F_imag_sech_disp # false then F_imag_disp: F_imag_sech_disp
     else if F_imag_tanh_alt_disp # false then F_imag_disp: F_imag_tanh_alt_disp
-    else (_tmp_fid: errcatch(FT_pick_display_expr(F_imag)),
+    else (_tmp_fid: errcatch(FT_pick_display_expr(F_imag, TRANSVAR)),
           F_imag_disp: if _tmp_fid = [] then F_imag else first(_tmp_fid)))$
-F_in_real_disp : errcatch(FT_pick_display_expr(F_in_real))$
+F_in_real_disp : errcatch(FT_pick_display_expr(F_in_real, INTVAR))$
 F_in_real_disp : if F_in_real_disp = [] then F_in_real else first(F_in_real_disp)$
-F_in_imag_disp : errcatch(FT_pick_display_expr(F_in_imag))$
+F_in_imag_disp : errcatch(FT_pick_display_expr(F_in_imag, INTVAR))$
 F_in_imag_disp : if F_in_imag_disp = [] then F_in_imag else first(F_in_imag_disp)$
 
 print("__EXISTS__")$       print(string(exists))$

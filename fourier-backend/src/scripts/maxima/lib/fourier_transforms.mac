@@ -73,7 +73,13 @@ texput(sinc, "\\operatorname{sinc}")$
    separately, then reassemble — preserving the table form. ── */
 FT_apply_scale(e, sc) := block([_terms, _dt, _rt, _r],
     if e = false then return(false),
-    if freeof('delta, e) then return(ratsimp(sc * e)),
+    if freeof('delta, e) then (
+        /* sc=1: ratsimp(1*e) = ratsimp(e) — skip to avoid expanding compact forms
+           like k/(iw+a)^n into a polynomial denominator. Any needed simplification
+           was already applied by the handler that produced e. */
+        if sc = 1 then return(e),
+        return(ratsimp(sc * e))
+    ),
     if sc = 1 then return(e),
     _terms : if atom(e) or not is(op(e) = "+") then [e] else args(e),
     _dt : [], _rt : [],
@@ -293,6 +299,7 @@ FT_match_u(expr, t_var) := block(
                 u_arg: part(part(e,1), 1),
                 u_coef: ratsimp(u_arg / t_var),
                 if freeof(t_var, u_coef) and is(u_coef > 0)
+                   and freeof(t_var, 1/part(e,2))  /* denominator must be const */
                 then res: [1/part(e,2)]
             )
             else if not atom(part(e,1)) and is(op(part(e,1)) = "*") then block(
@@ -1085,10 +1092,50 @@ IFT_simplify(expr) := block(
     terms over a common denominator, producing ugly combined fractions.
   - Otherwise a light ratsimp pass to cancel obvious algebraic factors.
 */
-FT_pick_display_expr(expr) := block(
-    [tmp, tmp2],
+/* True when expr has the form k/(linear_in_w)^n — ratsimp would expand
+   the denominator into a polynomial, destroying the compact display form.
+   Also accepts -(k/(linear)^n) with a unary-minus wrapper. */
+FT_is_compact_pole_form(expr, w_var) := block(
+    [_num, _den, _base, _exp],
+    if atom(expr) then return(false),
+    /* Strip outer unary minus: -(k/(iw+a)^n) */
+    if is(op(expr) = "-") then
+        return(FT_is_compact_pole_form(first(args(expr)), w_var)),
+    /* Accept a/b or a*b^{-n}: normalise to num/den via op check */
+    if is(op(expr) = "/") then (
+        _num: part(expr, 1),  _den: part(expr, 2)
+    ) else if is(op(expr) = "*") then block(
+        /* k * (%i*w+a)^{-n}: look for a single factor with negative integer power */
+        [_facs: args(expr), _neg_pow: false, _rest: 1],
+        for _f in _facs do (
+            if not atom(_f) and is(op(_f) = "^")
+               and integerp(part(_f,2)) and is(part(_f,2) < 0)
+            then _neg_pow: _f
+            else _rest: _rest * _f
+        ),
+        if is(_neg_pow = false) then return(false),
+        _num: _rest,
+        _den: part(_neg_pow,1)^(-part(_neg_pow,2))
+    ) else return(false),
+    /* den must be (something)^n with integer n >= 2 */
+    if atom(_den) then return(false),
+    if is(op(_den) = "^") then (
+        _base: part(_den,1),  _exp: part(_den,2)
+    ) else (_base: _den, _exp: 1),
+    if not integerp(_exp) or not is(_exp >= 1) then return(false),
+    /* base must be linear in w_var with constant coefficients */
+    if not freeof(w_var, _base) and freeof(w_var, _num)
+       and is(hipow(rat(_base), w_var) = 1) then return(true),
+    false
+)$
+
+FT_pick_display_expr(expr, [opts]) := block(
+    [tmp, tmp2, _wvar],
+    _wvar: if opts # [] then first(opts) else 'w,
     if expr = false then return(false),
     if not freeof('delta, expr) then return(expr),
+    /* Compact pole form k/(iw+a)^n — ratsimp would expand denominator */
+    if FT_is_compact_pole_form(expr, _wvar) then return(expr),
     /* Apply sech rewrite BEFORE ratsimp: ratsimp merges 1/cosh(a)+1/cosh(b)
        into (cosh(a)+cosh(b))/(cosh(a)*cosh(b)), destroying the 1/cosh pattern.
        We rewrite first while the sum-of-fractions structure is still intact. */
@@ -1234,7 +1281,7 @@ FT_sinpow_to_sinc(expr, t_var) := block(
      sin(bt)/(a^2+t^2)  — detecta op="/" y op="*"
    ──────────────────────────────────────────────────────────────── */
 FT_pattern_lookup(f_expr, t_var, w_var) := block(
-    [e, dm, um, sm, k, a, w0, arg, %piexact, res],
+    [e, dm, um, sm, k, a, w0, arg, %piexact, res, _gk],
 
     /* ── loop defensivo PRIMERO, antes de expand/rat ── */
     FT_declare_params(f_expr, [t_var, w_var]),
@@ -1245,6 +1292,18 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
     %piexact: %pi,
     e: expand(f_expr),
     res: false,
+
+    /* ── strip global unary minus: -(f(t)) → process f(t) then negate ──
+       expand(-(A*B*u(t))) gives op="-", not op="*". Handlers that check
+       is(op(e)="*") silently lose the sign. Strip once here and negate at end.
+       All handlers with internal sign handling run on the positive e and
+       produce the correct result for that input; _gk then restores the sign. */
+    _gk: 1,
+    if not atom(e) and is(op(e) = "-") then (
+        _gk: -1,
+        e: first(args(e)),
+        f_expr: first(args(expand(f_expr)))
+    ),
 
     /* ── (sin(bt+c))^n / (dt+e)^n → sinc(bt+c)^n — normalize before matchers ── */
     block([_sinc_rewrite],
@@ -1371,6 +1430,78 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                                             - exp(-%i*_theta)*delta(w_var+_w0)),
                     concat("k*sin(w0t+theta) -> k*(-i*pi)[...], k=", string(_k),
                            ", w0=", string(_w0), ", theta=", string(_theta))]
+        )
+    ),
+
+    /* ── TPOW: k·t^p·u(t) → k·Γ(p+1)·|ω|^{-(p+1)}·(cos(π(p+1)/2) - i·sgn(ω)·sin(π(p+1)/2))
+       (p > -1 for convergence at 0, oscillatory decay at ∞)
+       Must run BEFORE the generic k*u(t) handler.
+       Helper extracts exponent from t, t^n, sqrt(t), 1/sqrt(t), etc. via log ratio.
+       Three structural cases for e: op="*", op="/", op=u (bare u(t), p=0). */
+    if is(res = false) then block(
+        [_tp_k, _tp_p, _tp_u, _tp_bad, _tp_facs, _tp_f, _tp_pp, _tp_ep, _tp_lp,
+         _tp_num, _tp_den, _tp_den_exp, _a],
+        /* Returns exponent p such that f = t_var^p, or false.
+           Handles: t, t^n, sqrt(t), cbrt(t), t^(p/q) via log ratio. */
+        _tp_get_exp: lambda([_f],
+            if is(_f = t_var) then 1
+            else if not atom(_f) and is(op(_f) = "^")
+                    and is(part(_f,1) = t_var) then block(
+                [_ep2: errcatch(ratsimp(part(_f,2)))],
+                if _ep2 # [] and freeof(t_var, first(_ep2)) then first(_ep2) else false
+            ) else block(
+                [_lp2: errcatch(block([logexpand:super],
+                                      ratsimp(log(_f) / log(t_var))))],
+                if _lp2 # [] and freeof(t_var, first(_lp2)) then first(_lp2) else false
+            )
+        ),
+        _tp_k: 1, _tp_p: false, _tp_u: false, _tp_bad: false,
+        /* Determine factor list from structural form of e */
+        if not atom(e) and is(op(e) = "-") then (
+            _tp_k: -1,
+            _tp_facs: if not atom(first(args(e))) and is(op(first(args(e))) = "*")
+                      then args(first(args(e))) else [first(args(e))]
+        )
+        else if not atom(e) and is(op(e) = "*") then
+            _tp_facs: args(e)
+        else if not atom(e) and is(op(e) = "/") then (
+            _tp_num: part(e,1),
+            _tp_den: part(e,2),
+            _tp_den_exp: _tp_get_exp(_tp_den),
+            if is(_tp_den_exp # false) then (
+                _tp_p: -_tp_den_exp,
+                _tp_facs: if not atom(_tp_num) and is(op(_tp_num) = "*")
+                          then args(_tp_num) else [_tp_num]
+            ) else _tp_bad: true
+        )
+        else
+            _tp_facs: [e],
+        /* Classify each factor: u(t), t^p, or scalar constant */
+        if not _tp_bad then
+            for _tp_f in _tp_facs do (
+                if not atom(_tp_f) and is(op(_tp_f) = 'u) then (
+                    if is(ratsimp(part(_tp_f,1) - t_var) = 0) then _tp_u: true
+                    else _tp_bad: true
+                ) else (
+                    _tp_pp: _tp_get_exp(_tp_f),
+                    if is(_tp_pp # false) then
+                        _tp_p: if _tp_p = false then _tp_pp else _tp_p + _tp_pp
+                    else if freeof(t_var, _tp_f) then
+                        _tp_k: _tp_k * _tp_f
+                    else
+                        _tp_bad: true
+                )
+            ),
+        /* Valid only for non-integer p > -1.
+           Integer p≥0: FT has delta-derivative terms not captured here (fall through). */
+        if is(_tp_u = true) and is(_tp_p # false) and not _tp_bad
+           and freeof(t_var, _tp_k) and is(_tp_p > -1)
+           and not integerp(_tp_p) then (
+            _a: _tp_p + 1,
+            res: [_tp_k * gamma(_a) * abs(w_var)^(-_a) *
+                  (cos(%pi*_a/2) - %i*sgn(w_var)*sin(%pi*_a/2)),
+                  concat("FT k*t^p*u(t)->k*Gamma(p+1)*|w|^{-(p+1)}*cos-sin form, p=",
+                         string(_tp_p))]
         )
     ),
 
@@ -1807,6 +1938,58 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                   concat("FT k*exp(-at^2)/(t^2+b^2)->erfc form, a=", string(_gf_a), ", b=", string(_gf_b))]
     ),
 
+    /* ── TGAUSS: k·t^n·e^{-a·t²} → (i·d/dω)^n FT[e^{-at²}]  (a>0, n≥1 integer) ──
+       Uses the frequency-derivative property: FT[t·f(t)] = i·d/dω F(ω)
+       By induction: FT[t^n·f(t)] = i^n · d^n/dω^n F(ω)
+       FT[e^{-at²}] = √(π/a)·e^{-ω²/(4a)}, so the result is always a
+       Gaussian times a polynomial in ω (Hermite polynomial family).
+       Pattern: product containing t^n (integer n≥1) and exp(-a·t²). */
+    if is(res = false) then block(
+        [_tg_k, _tg_a, _tg_n, _tg_bad, _tg_facs, _tg_f, _tg_cn, _tg_exparg,
+         _tg_tpow, _tg_base_ft, _tg_result, _tg_e],
+        _tg_k: 1, _tg_a: false, _tg_n: 0, _tg_bad: false,
+        /* strip overall unary minus into local _tg_e — do NOT modify outer e */
+        if not atom(e) and is(op(e) = "-")
+        then (_tg_k: -1, _tg_e: first(args(e)))
+        else _tg_e: e,
+        if not atom(_tg_e) then block(
+            _tg_facs: if is(op(_tg_e) = "*") then args(_tg_e) else [_tg_e],
+            for _tg_f in _tg_facs do (
+                if not atom(_tg_f) and is(op(_tg_f) = "^")
+                   and is(part(_tg_f,1) = %e) then block(
+                    /* detect exp(-a*t^2) */
+                    _tg_exparg: part(_tg_f,2),
+                    _tg_cn: errcatch(ratsimp(_tg_exparg / t_var^2)),
+                    if _tg_cn # [] and freeof(t_var, first(_tg_cn))
+                       and is(first(_tg_cn) < 0)
+                       and ratsimp(_tg_exparg - first(_tg_cn)*t_var^2) = 0 then
+                        _tg_a: -first(_tg_cn)
+                    else _tg_bad: true
+                ) else if is(_tg_f = t_var) then
+                    _tg_n: _tg_n + 1
+                else if not atom(_tg_f) and is(op(_tg_f) = "^")
+                   and is(part(_tg_f,1) = t_var) then block(
+                    /* t^n with integer n≥1 */
+                    [_tg_exp: errcatch(ratsimp(part(_tg_f,2)))],
+                    if _tg_exp # [] and integerp(first(_tg_exp)) and is(first(_tg_exp) >= 1) then
+                        _tg_n: _tg_n + first(_tg_exp)
+                    else _tg_bad: true
+                ) else if freeof(t_var, _tg_f) then
+                    _tg_k: _tg_k * _tg_f
+                else
+                    _tg_bad: true
+            )
+        ),
+        if is(_tg_a # false) and is(_tg_n >= 1) and not _tg_bad
+           and freeof(t_var, _tg_k) and is(_tg_a > 0) then block(
+            _tg_base_ft: sqrt(%pi / _tg_a) * exp(-w_var^2 / (4*_tg_a)),
+            _tg_result: ratsimp(_tg_k * (%i)^_tg_n * diff(_tg_base_ft, w_var, _tg_n)),
+            res: [_tg_result,
+                  concat("FT k*t^n*exp(-at^2)->i^n*diff(FT[gauss],w,n), n=",
+                         string(_tg_n), ", a=", string(_tg_a))]
+        )
+    ),
+
     /* ── k*exp(-a*t^2)*trig(b*t+theta) — familia gaussiana ──────────────────
        FT[e^{-at²}] = √(π/a) · e^{-ω²/(4a)}                (par #G0)
        FT[e^{-at²}·cos(bt+θ)] = √(π/a)·e^{-(ω-b)²/(4a)/2 ...}
@@ -1824,9 +2007,9 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
     if is(res = false) then block(
         [_gg_k, _gg_a, _gg_b, _gg_theta, _gg_trig_op, _gg_exp, _gg_facs,
          _gg_base, _gg_exparg, _gg_cn, _gg_found_exp, _gg_trig, _gg_targ,
-         _gg_amplitude, _gg_result],
+         _gg_amplitude, _gg_result, _gg_bad_fac],
         _gg_k: 1, _gg_a: false, _gg_b: 0, _gg_theta: 0,
-        _gg_trig_op: false, _gg_found_exp: false,
+        _gg_trig_op: false, _gg_found_exp: false, _gg_bad_fac: false,
         if not atom(e) then (
             _gg_facs: if is(op(e) = "*") then args(e) else [e],
             for _gg_f in _gg_facs do (
@@ -1847,6 +2030,8 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     _gg_trig_op: op(_gg_f)
                 ) else if freeof(t_var, _gg_f) then
                     _gg_k: _gg_k * _gg_f
+                else
+                    _gg_bad_fac: true  /* t-dependent factor that is not exp/trig → reject */
             )
         ) else if not atom(e) and is(op(e) = "^") and is(part(e, 1) = %e) then (
             /* bare e^{-at^2} with no coefficient */
@@ -1859,7 +2044,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 _gg_found_exp: true
             )
         ),
-        if _gg_found_exp and freeof(t_var, _gg_k) then (
+        if _gg_found_exp and not _gg_bad_fac and freeof(t_var, _gg_k) then (
             /* extract b and theta from trig argument: arg = b*t + theta */
             if is(_gg_trig_op # false) then (
                 _gg_targ: part(_gg_trig, 1),
@@ -2068,15 +2253,22 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     _c_mono: ratsimp(_t_mono / t_var^_n),
                     if is(_n >= 1) and freeof(t_var, _c_mono)
                        and ratsimp(_t_mono - _c_mono * t_var^_n) = 0 then (
-                        _sum: 0,
-                        for _j: 0 thru _n do
-                            _sum: _sum + binomial(_n, _j)
-                                       * (if _n - _j = 0 then 1 else _t0^(_n - _j))
-                                       * factorial(_j) / (%i*w_var + _aa)^(_j+1),
-                        res: [_const_k * _c_mono
-                              * exp(-_aa * _t0) * exp(-%i*w_var*_t0) * _sum,
-                              concat("k*t^n*exp(-at)*u(t-t0) n=", string(_n),
-                                     " a=", string(_aa), " t0=", string(_t0))]
+                        if equal(_t0, 0) then (
+                            /* t0=0: closed form k*c*n!/(iw+a)^{n+1} — skip ratsimp */
+                            res: [_const_k * _c_mono * factorial(_n) / (%i*w_var + _aa)^(_n+1),
+                                  concat("k*t^n*exp(-at)*u(t) n=", string(_n),
+                                         " a=", string(_aa))]
+                        ) else (
+                            _sum: 0,
+                            for _j: 0 thru _n do
+                                _sum: _sum + binomial(_n, _j)
+                                           * (if _n - _j = 0 then 1 else _t0^(_n - _j))
+                                           * factorial(_j) / (%i*w_var + _aa)^(_j+1),
+                            res: [_const_k * _c_mono
+                                  * exp(-_aa * _t0) * exp(-%i*w_var*_t0) * _sum,
+                                  concat("k*t^n*exp(-at)*u(t-t0) n=", string(_n),
+                                         " a=", string(_aa), " t0=", string(_t0))]
+                        )
                     )
                 )
             )
@@ -3126,6 +3318,59 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                   concat("k*arctan(bt)/t->-k*pi*Ei(-|w|/b), b=", string(_at4_b))]
     ),
 
+    /* ── AT-5: k*arctan(c/t²) → 2kπ/ω · e^{-|ω|√(c/2)} · sin(ω√(c/2))  (c>0) ──
+       Derived via contour integration of the derivative f'(t) = -2ct/(t⁴+c²).
+       Poles of t⁴+c²=0 in UHP: p₁ = √c·(1+i)/√2, p₂ = √c·(-1+i)/√2.
+       Residues are ±i/2 (independent of c), giving:
+         FT[f'](ω) = 2πi·e^{-|ω|√(c/2)}·sin(ω√(c/2))   (for ω>0, even extended)
+         FT[arctan(c/t²)](ω) = FT[f']/(iω) = 2π·e^{-|ω|β}·sin(ωβ)/ω, β=√(c/2).
+       Note: arctan(1/(b²t²)) = arctan(1/(b²t²)), c = 1/b² → β = 1/(b√2).
+       Detects atan(c/t²) or atan(c/(b·t)²) forms. */
+    if is(res = false) and not freeof('atan, e) then block(
+        [_at5_k, _at5_c, _at5_e, _at5_arg, _at5_num, _at5_den, _at5_beta],
+        _at5_k: 1, _at5_c: false, _at5_e: e,
+        /* strip unary minus */
+        if not atom(_at5_e) and is(op(_at5_e) = "-") then (
+            _at5_k: -1, _at5_e: first(args(_at5_e))
+        ),
+        /* handle k*atan(...) */
+        if not atom(_at5_e) and is(op(_at5_e) = "*") then block(
+            [_found: false, _rest: 1],
+            for _f in args(_at5_e) do (
+                if not atom(_f) and is(op(_f) = 'atan) then (
+                    _at5_e: _f, _found: true
+                ) else if freeof(t_var, _f) then
+                    _rest: _rest * _f
+                else
+                    _at5_c: false   /* t-dep factor other than atan — reject */
+            ),
+            if _found then _at5_k: _at5_k * _rest else _at5_c: false
+        ),
+        /* now _at5_e should be atan(something) */
+        if _at5_c = false and not atom(_at5_e) and is(op(_at5_e) = 'atan) then block(
+            [_arg: part(_at5_e, 1)],
+            /* arg must be c/t² : numerator free of t, denominator = t² or (b*t)^2 */
+            if not atom(_arg) and is(op(_arg) = "/") then block(
+                [_n: part(_arg,1), _d: part(_arg,2)],
+                if freeof(t_var, _n) then block(
+                    /* denominator must be t² */
+                    [_d2: errcatch(ratsimp(_d / t_var^2))],
+                    if _d2 # [] and freeof(t_var, first(_d2)) then block(
+                        [_cv: errcatch(ratsimp(_n / first(_d2)))],
+                        if _cv # [] and freeof(t_var, first(_cv)) and is(first(_cv) > 0) then
+                            _at5_c: first(_cv)
+                    )
+                )
+            )
+        ),
+        if is(_at5_c # false) and freeof(t_var, _at5_k) and is(_at5_c > 0) then block(
+            [_beta: sqrt(_at5_c / 2)],
+            res: [2 * _at5_k * %piexact * exp(-abs(w_var)*_beta) * sin(w_var*_beta) / w_var,
+                  concat("k*arctan(c/t^2)->2kpi*exp(-|w|*sqrt(c/2))*sin(w*sqrt(c/2))/w, c=",
+                         string(_at5_c))]
+        )
+    ),
+
     /* ── AT-2: k*arctan(1/(b*t)) → ikπ/ω·(e^{-|ω|/b}/b − 1)  (b>0) ──────────
        Identity: arctan(1/(bt)) = π/2·sgn(t) − arctan(bt)  for t≠0.
        By linearity: FT = FT[π/2·sgn(t)] − FT[arctan(bt)]
@@ -3251,6 +3496,7 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                     _w0c: errcatch(ratsimp(_earg / (%i * t_var))),
                     if _w0c # [] and freeof(t_var, first(_w0c))
                        and not equal(first(_w0c), 0)
+                       and freeof(%i, first(_w0c))  /* w0 must be real */
                        and ratsimp(_earg - %i * first(_w0c) * t_var) = 0 then (
                         _exp_fac: _fac,
                         _w0: first(_w0c)
@@ -3528,6 +3774,10 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
             res: [_simplified, "linearity: FT(f+g+...) = FT(f)+FT(g)+..."]
         )
     ),
+
+    /* ── restore global sign stripped at entry ── */
+    if is(res # false) and is(_gk = -1) then
+        res: [-res[1], res[2]],
 
     res
 )$
