@@ -9996,6 +9996,62 @@
     }
   },
   {
+    "id": "AT19",
+    "type": "ft",
+    "description": "FT AT-5: FT[arctan(1/(2t²))] = 2π·e^{-|w|/2}·sin(w/2)/w",
+    "input": {
+      "segments": [{ "expression": "atan(1/(2*t^2))", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(2*%pi*sin(w/2)*%e^-(abs(w)/2))/w"
+    }
+  },
+  {
+    "id": "AT20",
+    "type": "ft",
+    "description": "FT AT-5 c=1: FT[arctan(1/t²)] = 2π·e^{-|w|/√2}·sin(w/√2)/w",
+    "input": {
+      "segments": [{ "expression": "atan(1/t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(2*%pi*%e^-(abs(w)/sqrt(2))*sin(w/sqrt(2)))/w"
+    }
+  },
+  {
+    "id": "AT21",
+    "type": "ft",
+    "description": "FT AT-5 con coef: FT[3·arctan(4/t²)] = 6π·e^{-√2|w|}·sin(√2·w)/w",
+    "input": {
+      "segments": [{ "expression": "3*atan(4/t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "(6*%pi*%e^-(sqrt(2)*abs(w))*sin(sqrt(2)*w))/w"
+    }
+  },
+  {
+    "id": "AT22",
+    "type": "ft",
+    "description": "FT AT-5 negativo: FT[-arctan(1/(2t²))] = -2π·e^{-|w|/2}·sin(w/2)/w",
+    "input": {
+      "segments": [{ "expression": "-atan(1/(2*t^2))", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "fCombined": "-(2*%pi*sin(w/2)*%e^-(abs(w)/2))/w"
+    }
+  },
+  {
     "id": "ER01",
     "type": "ft",
     "description": "FT ERF-1: FT[erf(t)] = -2i·e^{-w²/4}/w",

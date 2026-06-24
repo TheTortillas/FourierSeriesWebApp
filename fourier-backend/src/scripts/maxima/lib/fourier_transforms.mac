@@ -3318,6 +3318,59 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                   concat("k*arctan(bt)/t->-k*pi*Ei(-|w|/b), b=", string(_at4_b))]
     ),
 
+    /* ── AT-5: k*arctan(c/t²) → 2kπ/ω · e^{-|ω|√(c/2)} · sin(ω√(c/2))  (c>0) ──
+       Derived via contour integration of the derivative f'(t) = -2ct/(t⁴+c²).
+       Poles of t⁴+c²=0 in UHP: p₁ = √c·(1+i)/√2, p₂ = √c·(-1+i)/√2.
+       Residues are ±i/2 (independent of c), giving:
+         FT[f'](ω) = 2πi·e^{-|ω|√(c/2)}·sin(ω√(c/2))   (for ω>0, even extended)
+         FT[arctan(c/t²)](ω) = FT[f']/(iω) = 2π·e^{-|ω|β}·sin(ωβ)/ω, β=√(c/2).
+       Note: arctan(1/(b²t²)) = arctan(1/(b²t²)), c = 1/b² → β = 1/(b√2).
+       Detects atan(c/t²) or atan(c/(b·t)²) forms. */
+    if is(res = false) and not freeof('atan, e) then block(
+        [_at5_k, _at5_c, _at5_e, _at5_arg, _at5_num, _at5_den, _at5_beta],
+        _at5_k: 1, _at5_c: false, _at5_e: e,
+        /* strip unary minus */
+        if not atom(_at5_e) and is(op(_at5_e) = "-") then (
+            _at5_k: -1, _at5_e: first(args(_at5_e))
+        ),
+        /* handle k*atan(...) */
+        if not atom(_at5_e) and is(op(_at5_e) = "*") then block(
+            [_found: false, _rest: 1],
+            for _f in args(_at5_e) do (
+                if not atom(_f) and is(op(_f) = 'atan) then (
+                    _at5_e: _f, _found: true
+                ) else if freeof(t_var, _f) then
+                    _rest: _rest * _f
+                else
+                    _at5_c: false   /* t-dep factor other than atan — reject */
+            ),
+            if _found then _at5_k: _at5_k * _rest else _at5_c: false
+        ),
+        /* now _at5_e should be atan(something) */
+        if _at5_c = false and not atom(_at5_e) and is(op(_at5_e) = 'atan) then block(
+            [_arg: part(_at5_e, 1)],
+            /* arg must be c/t² : numerator free of t, denominator = t² or (b*t)^2 */
+            if not atom(_arg) and is(op(_arg) = "/") then block(
+                [_n: part(_arg,1), _d: part(_arg,2)],
+                if freeof(t_var, _n) then block(
+                    /* denominator must be t² */
+                    [_d2: errcatch(ratsimp(_d / t_var^2))],
+                    if _d2 # [] and freeof(t_var, first(_d2)) then block(
+                        [_cv: errcatch(ratsimp(_n / first(_d2)))],
+                        if _cv # [] and freeof(t_var, first(_cv)) and is(first(_cv) > 0) then
+                            _at5_c: first(_cv)
+                    )
+                )
+            )
+        ),
+        if is(_at5_c # false) and freeof(t_var, _at5_k) and is(_at5_c > 0) then block(
+            [_beta: sqrt(_at5_c / 2)],
+            res: [2 * _at5_k * %piexact * exp(-abs(w_var)*_beta) * sin(w_var*_beta) / w_var,
+                  concat("k*arctan(c/t^2)->2kpi*exp(-|w|*sqrt(c/2))*sin(w*sqrt(c/2))/w, c=",
+                         string(_at5_c))]
+        )
+    ),
+
     /* ── AT-2: k*arctan(1/(b*t)) → ikπ/ω·(e^{-|ω|/b}/b − 1)  (b>0) ──────────
        Identity: arctan(1/(bt)) = π/2·sgn(t) − arctan(bt)  for t≠0.
        By linearity: FT = FT[π/2·sgn(t)] − FT[arctan(bt)]

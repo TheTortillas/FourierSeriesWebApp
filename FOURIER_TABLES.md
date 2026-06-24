@@ -1221,6 +1221,30 @@ $$i \int_{|\omega|}^\infty \frac{-i\pi\,e^{-\xi/b}}{b\xi}\,d\xi = \pi\int_{|\ome
 
 Verificado numéricamente con integral regularizada $\int_0^\infty \arctan(bt)\,e^{-\varepsilon t}\cos(\omega t)\,dt \xrightarrow{\varepsilon\to 0} -\pi\operatorname{Ei}(-|\omega|/b)/2$.
 
+### AT-5: $k\cdot\arctan\!\left(\dfrac{c}{t^2}\right)$ — solo FT ✓
+
+$$\boxed{\mathcal{F}\!\left\{k\,\arctan\!\left(\frac{c}{t^2}\right)\right\}(\omega) = \frac{2k\pi}{\omega}\,e^{-|\omega|\sqrt{c/2}}\,\sin\!\left(\omega\sqrt{c/2}\right)}, \qquad c > 0$$
+
+**Derivación:** vía integración por contorno de la derivada $f'(t) = -2ct/(t^4+c^2)$.
+
+Las raíces de $t^4+c^2=0$ en el semiplano superior son $p_1 = \sqrt{c}\,\frac{1+i}{\sqrt{2}}$ y $p_2 = \sqrt{c}\,\frac{-1+i}{\sqrt{2}}$. Los residuos de $-2ct/(t^4+c^2)$ en esos polos son:
+
+$$\operatorname{Res}_{p_1} = \frac{-2c\,p_1}{4p_1^3} = \frac{-c}{2p_1^2} = \frac{-c}{2ic} = \frac{i}{2}, \qquad \operatorname{Res}_{p_2} = \frac{-c}{2p_2^2} = \frac{-c}{2(-ic)} = -\frac{i}{2}$$
+
+Los residuos son **siempre $\pm i/2$, independientes de $c$**. Aplicando el teorema del residuo para $\omega > 0$, con $\beta = \sqrt{c/2}$:
+
+$$\mathcal{F}[f'](\omega) = 2\pi i\!\left[\frac{i}{2}\,e^{-i\omega p_1} + \left(-\frac{i}{2}\right)e^{-i\omega p_2}\right] = 2\pi i \cdot \frac{i}{2}\,e^{-\omega\beta}\!\left(e^{-i\omega\beta} - e^{i\omega\beta}\right) = 2\pi i\,e^{-\omega\beta}\,(-i\sin(\omega\beta))$$
+
+$$= 2\pi\,e^{-|\omega|\beta}\,\sin(\omega\beta)$$
+
+Por la propiedad de derivada en tiempo $\mathcal{F}[f'] = i\omega F$:
+
+$$F(\omega) = \frac{2\pi\,e^{-|\omega|\beta}\,\sin(\omega\beta)}{i\omega} \xrightarrow{\text{par real}} \frac{2\pi}{\omega}\,e^{-|\omega|\beta}\,\sin(\omega\beta), \qquad \beta = \sqrt{c/2}$$
+
+Verificado numéricamente con `quad_qagi` para $c=\tfrac{1}{2}, 1, 3$ y $\omega\in\{0.5,1,2\}$.
+
+**Caso de la imagen:** $c=\tfrac{1}{2}$, $\beta=\tfrac{1}{2}$ → $F(\omega)=\pi e^{-|\omega|/2}\dfrac{\sin(\omega/2)}{\omega/2}$.
+
 ### Tabla resumen arctan
 
 | # | $f(t)$ | $F(\omega)$ | FT | IFT |
@@ -1230,6 +1254,7 @@ Verificado numéricamente con integral regularizada $\int_0^\infty \arctan(bt)\,
 | AT-2 | $k\,\arctan\!\left(\tfrac{1}{bt}\right)$ | $\dfrac{ik\pi}{\omega}\!\left(\tfrac{e^{-|\omega|/b}}{b}-1\right)$ | ✓ | ✗ |
 | AT-3 | $\arctan(\alpha t)-\arctan(\beta t)$ | $\dfrac{-i\pi}{\omega}\!\left(\tfrac{e^{-|\omega|/\alpha}}{\alpha}-\tfrac{e^{-|\omega|/\beta}}{\beta}\right)$ | ✓ auto | ✗ |
 | AT-4 | $k\,\arctan(bt)/t$ | $-k\pi\,\operatorname{Ei}(-|\omega|/b)$ | ✓ | ✗ |
+| AT-5 | $k\,\arctan\!\left(\tfrac{c}{t^2}\right)$ | $\dfrac{2k\pi}{\omega}\,e^{-|\omega|\sqrt{c/2}}\,\sin\!\left(\omega\sqrt{c/2}\right)$ | ✓ | ✗ |
 
 ---
 
