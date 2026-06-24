@@ -10204,5 +10204,89 @@
       "exists": true,
       "F": "-erfc(t)"
     }
+  },
+  {
+    "id": "NC01",
+    "type": "ft",
+    "description": "Signo negativo: FT[-e^{-at}·u(t)] = -1/(iw+a) — regresión bug TGAUSS scope",
+    "input": {
+      "segments": [{ "expression": "-%e^(-2*t)*u(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-1/(%i*w+2)"
+    }
+  },
+  {
+    "id": "NC02",
+    "type": "ft",
+    "description": "Signo negativo: FT[-t·e^{-at}·u(t)] = -1/(iw+a)^2 — regresión bug TGAUSS scope",
+    "input": {
+      "segments": [{ "expression": "-t*%e^(-2*t)*u(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-1/(%i*w+2)^2"
+    }
+  },
+  {
+    "id": "NC03",
+    "type": "ft",
+    "description": "Signo negativo: FT[-e^{-at²}] = -√(π/a)·e^{-ω²/(4a)} — regresión bug TGAUSS scope",
+    "input": {
+      "segments": [{ "expression": "-%e^(-2*t^2)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-((sqrt(%pi)*%e^-(w^2/8))/sqrt(2))"
+    }
+  },
+  {
+    "id": "NC04",
+    "type": "ft",
+    "description": "Signo negativo: FT[-e^{-a|t|}] = -2a/(ω²+a²) — handler e^{-a|t|} sigue correcto",
+    "input": {
+      "segments": [{ "expression": "-%e^(-2*abs(t))", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-(4/(w^2+4))"
+    }
+  },
+  {
+    "id": "NC05",
+    "type": "ft",
+    "description": "Signo negativo: FT[-e^{-at}·cos(bt)·u(t)] = -(iw+a)/((iw+a)²+b²) — regresión bug TGAUSS scope",
+    "input": {
+      "segments": [{ "expression": "-%e^(-t)*cos(2*t)*u(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-((%i*w+1)/((%i*w+1)^2+4))"
+    }
+  },
+  {
+    "id": "NC06",
+    "type": "ft",
+    "description": "Signo negativo: FT[-e^{-at}·sin(bt)·u(t)] = -b/((iw+a)²+b²) — regresión bug TGAUSS scope",
+    "input": {
+      "segments": [{ "expression": "-%e^(-t)*sin(2*t)*u(t)", "from": "minf", "to": "inf" }],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-(2/((%i*w+1)^2+4))"
+    }
   }
 ]

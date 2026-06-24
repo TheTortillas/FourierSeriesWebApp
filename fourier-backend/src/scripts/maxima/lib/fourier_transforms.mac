@@ -1235,7 +1235,7 @@ FT_sinpow_to_sinc(expr, t_var) := block(
      sin(bt)/(a^2+t^2)  — detecta op="/" y op="*"
    ──────────────────────────────────────────────────────────────── */
 FT_pattern_lookup(f_expr, t_var, w_var) := block(
-    [e, dm, um, sm, k, a, w0, arg, %piexact, res],
+    [e, dm, um, sm, k, a, w0, arg, %piexact, res, _gk],
 
     /* ── loop defensivo PRIMERO, antes de expand/rat ── */
     FT_declare_params(f_expr, [t_var, w_var]),
@@ -1246,6 +1246,18 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
     %piexact: %pi,
     e: expand(f_expr),
     res: false,
+
+    /* ── strip global unary minus: -(f(t)) → process f(t) then negate ──
+       expand(-(A*B*u(t))) gives op="-", not op="*". Handlers that check
+       is(op(e)="*") silently lose the sign. Strip once here and negate at end.
+       All handlers with internal sign handling run on the positive e and
+       produce the correct result for that input; _gk then restores the sign. */
+    _gk: 1,
+    if not atom(e) and is(op(e) = "-") then (
+        _gk: -1,
+        e: first(args(e)),
+        f_expr: first(args(expand(f_expr)))
+    ),
 
     /* ── (sin(bt+c))^n / (dt+e)^n → sinc(bt+c)^n — normalize before matchers ── */
     block([_sinc_rewrite],
@@ -1888,12 +1900,14 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
        Pattern: product containing t^n (integer n≥1) and exp(-a·t²). */
     if is(res = false) then block(
         [_tg_k, _tg_a, _tg_n, _tg_bad, _tg_facs, _tg_f, _tg_cn, _tg_exparg,
-         _tg_tpow, _tg_base_ft, _tg_result],
+         _tg_tpow, _tg_base_ft, _tg_result, _tg_e],
         _tg_k: 1, _tg_a: false, _tg_n: 0, _tg_bad: false,
-        /* strip overall unary minus */
-        if not atom(e) and is(op(e) = "-") then (_tg_k: -1, e: first(args(e))),
-        if not atom(e) then block(
-            _tg_facs: if is(op(e) = "*") then args(e) else [e],
+        /* strip overall unary minus into local _tg_e — do NOT modify outer e */
+        if not atom(e) and is(op(e) = "-")
+        then (_tg_k: -1, _tg_e: first(args(e)))
+        else _tg_e: e,
+        if not atom(_tg_e) then block(
+            _tg_facs: if is(op(_tg_e) = "*") then args(_tg_e) else [_tg_e],
             for _tg_f in _tg_facs do (
                 if not atom(_tg_f) and is(op(_tg_f) = "^")
                    and is(part(_tg_f,1) = %e) then block(
@@ -3654,6 +3668,10 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
             res: [_simplified, "linearity: FT(f+g+...) = FT(f)+FT(g)+..."]
         )
     ),
+
+    /* ── restore global sign stripped at entry ── */
+    if is(res # false) and is(_gk = -1) then
+        res: [-res[1], res[2]],
 
     res
 )$

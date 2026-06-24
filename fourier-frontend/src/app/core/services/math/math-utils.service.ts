@@ -149,6 +149,13 @@ export class MathUtilsService {
       // Power operator: ^ → **
       .replace(/\^/g, '**');
 
+    // Early Math.E** → Math.exp() conversion for bare (non-parenthesised) exponents.
+    // Maxima emits e.g. -%e^-t^2 which becomes -Math.E**-t**2 after ^ → **.
+    // _fixUnaryMinusPow can't handle an exponent starting with '-', so convert
+    // Math.E**EXPR to Math.exp(EXPR) here.  The paren-based case Math.E**(...)
+    // is handled again at the end by _replaceMathEPow — safe to apply twice.
+    s = this._convertMathEPowBare(s);
+
     // JS forbids a unary '-' as the direct left operand of '**' (SyntaxError).
     // Fix both -IDENTIFIER** and -(expr)** before any further substitutions touch them.
     s = this._fixUnaryMinusPow(s);
@@ -450,6 +457,71 @@ export class MathUtilsService {
   }
 
   /**
+   * Converts `Math.E**BARE_EXPR` (non-parenthesised exponent) to `Math.exp(BARE_EXPR)`.
+   * Handles: Math.E**x, Math.E**-x, Math.E**-x**2, Math.E**-abs(t), Math.E**-2*t.
+   * The parenthesised case Math.E**(...) is left for _replaceMathEPow.
+   * This must run before _fixUnaryMinusPow so that negative bare exponents like
+   * Math.E**-t**2 are converted to Math.exp(-t**2) before the unary-minus fixer
+   * tries to interpret them.
+   */
+  private _convertMathEPowBare(s: string): string {
+    const token = 'Math.E**';
+    let result = '';
+    let i = 0;
+    while (i < s.length) {
+      const idx = s.indexOf(token, i);
+      if (idx === -1) { result += s.slice(i); break; }
+      result += s.slice(i, idx);
+      const after = idx + token.length;
+      if (s[after] === '(') {
+        // Parenthesised — leave for _replaceMathEPow
+        result += token;
+        i = after;
+        continue;
+      }
+      // Bare exponent — scan to collect it, including chains of ** (right-assoc).
+      // Optionally starts with '-'
+      let j = after;
+      if (s[j] === '-') j++;
+      // Collect the base token and any following ** chains
+      let foundSomething = false;
+      while (j < s.length) {
+        // Collect a word token (including dots for Math.PI etc.)
+        const beforeToken = j;
+        while (j < s.length && /[\w.]/.test(s[j])) j++;
+        if (j > beforeToken) foundSomething = true;
+        // If followed by '(' it's a function call — collect the argument group
+        if (s[j] === '(') {
+          let depth = 0;
+          while (j < s.length) {
+            if (s[j] === '(') depth++;
+            else if (s[j] === ')') { depth--; if (depth === 0) { j++; break; } }
+            j++;
+          }
+        }
+        // Continue if followed by ** and another token
+        if (s.slice(j, j + 2) === '**') {
+          j += 2;  // consume **
+          if (s[j] === '-') j++;  // consume optional unary minus in sub-exponent
+          // loop continues to collect next base token
+        } else {
+          break;
+        }
+      }
+      if (!foundSomething) { result += token; i = after; continue; }
+      let exponent = s.slice(after, j);
+      // If exponent starts with '-word**...', wrap the non-sign part in parens
+      // so Math.exp(-t**2) becomes Math.exp(-(t**2)) — valid JS syntax.
+      if (exponent.startsWith('-') && exponent.length > 1) {
+        exponent = `-(${ exponent.slice(1) })`;
+      }
+      result += `Math.exp(${exponent})`;
+      i = j;
+    }
+    return result;
+  }
+
+  /**
    * Converts every `Math.E**(expr)` occurrence to `Math.exp(expr)`, correctly
    * tracking nested parentheses.  Loops until stable to handle nested exponents.
    *
@@ -458,6 +530,7 @@ export class MathUtilsService {
    * is prefixed with `0` so `-t**2` becomes the binary-subtraction `0-t**2`.
    */
   private _replaceMathEPow(expr: string): string {
+    // Replace Math.E**(group) — parenthesised exponent
     const token = 'Math.E**(';
     while (expr.includes(token)) {
       const idx = expr.indexOf(token);
@@ -468,7 +541,9 @@ export class MathUtilsService {
         else if (expr[j] === ')') depth--;
         if (depth > 0) j++;
       }
-      const arg = expr.slice(argStart, j);
+      let arg = expr.slice(argStart, j);
+      // If arg is -EXPR**..., JS requires -(EXPR**...) — wrap to avoid SyntaxError.
+      if (/^-\w/.test(arg) && arg.includes('**')) arg = `-(${arg.slice(1)})`;
       expr = expr.slice(0, idx) + `Math.exp(${arg})` + expr.slice(j + 1);
     }
     return expr;
@@ -530,11 +605,25 @@ export class MathUtilsService {
             // Collect the exponent (grouped or bare token)
             const expStart = afterBase + 2;
             let expEnd: number;
-            if (s[expStart] === '(') expEnd = collectGroup(s, expStart);
-            else expEnd = collectToken(s, expStart);
+            let expStr: string;
+            if (s[expStart] === '(') {
+              expEnd = collectGroup(s, expStart);
+              expStr = s.slice(expStart, expEnd + 1);
+            } else if (s[expStart] === '-' && /[\w(]/.test(s[expStart + 1] ?? '')) {
+              // Negative bare exponent: **-word — wrap in parens so it becomes **(-(word))
+              // This handles %e^-t^2 → Math.E**-t**2 → -(Math.E**(-(t))**2)
+              // A second pass then handles the outer chain correctly.
+              const afterMinus = expStart + 1;
+              if (s[afterMinus] === '(') expEnd = collectGroup(s, afterMinus);
+              else expEnd = collectToken(s, afterMinus);
+              expStr = '(-' + s.slice(afterMinus, expEnd + 1) + ')';
+            } else {
+              expEnd = collectToken(s, expStart);
+              expStr = s.slice(expStart, expEnd + 1);
+            }
 
             // Wrap: -(BASE**EXP)
-            out += '-(' + s.slice(baseStart, expEnd + 1) + ')';
+            out += '-(' + s.slice(baseStart, afterBase + 2) + expStr + ')';
             i = expEnd + 1;
             changed = true;
             continue;
