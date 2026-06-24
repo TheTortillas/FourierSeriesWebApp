@@ -1221,6 +1221,30 @@ $$i \int_{|\omega|}^\infty \frac{-i\pi\,e^{-\xi/b}}{b\xi}\,d\xi = \pi\int_{|\ome
 
 Verificado numéricamente con integral regularizada $\int_0^\infty \arctan(bt)\,e^{-\varepsilon t}\cos(\omega t)\,dt \xrightarrow{\varepsilon\to 0} -\pi\operatorname{Ei}(-|\omega|/b)/2$.
 
+### AT-5: $k\cdot\arctan\!\left(\dfrac{c}{t^2}\right)$ — solo FT ✓
+
+$$\boxed{\mathcal{F}\!\left\{k\,\arctan\!\left(\frac{c}{t^2}\right)\right\}(\omega) = \frac{2k\pi}{\omega}\,e^{-|\omega|\sqrt{c/2}}\,\sin\!\left(\omega\sqrt{c/2}\right)}, \qquad c > 0$$
+
+**Derivación:** vía integración por contorno de la derivada $f'(t) = -2ct/(t^4+c^2)$.
+
+Las raíces de $t^4+c^2=0$ en el semiplano superior son $p_1 = \sqrt{c}\,\frac{1+i}{\sqrt{2}}$ y $p_2 = \sqrt{c}\,\frac{-1+i}{\sqrt{2}}$. Los residuos de $-2ct/(t^4+c^2)$ en esos polos son:
+
+$$\operatorname{Res}_{p_1} = \frac{-2c\,p_1}{4p_1^3} = \frac{-c}{2p_1^2} = \frac{-c}{2ic} = \frac{i}{2}, \qquad \operatorname{Res}_{p_2} = \frac{-c}{2p_2^2} = \frac{-c}{2(-ic)} = -\frac{i}{2}$$
+
+Los residuos son **siempre $\pm i/2$, independientes de $c$**. Aplicando el teorema del residuo para $\omega > 0$, con $\beta = \sqrt{c/2}$:
+
+$$\mathcal{F}[f'](\omega) = 2\pi i\!\left[\frac{i}{2}\,e^{-i\omega p_1} + \left(-\frac{i}{2}\right)e^{-i\omega p_2}\right] = 2\pi i \cdot \frac{i}{2}\,e^{-\omega\beta}\!\left(e^{-i\omega\beta} - e^{i\omega\beta}\right) = 2\pi i\,e^{-\omega\beta}\,(-i\sin(\omega\beta))$$
+
+$$= 2\pi\,e^{-|\omega|\beta}\,\sin(\omega\beta)$$
+
+Por la propiedad de derivada en tiempo $\mathcal{F}[f'] = i\omega F$:
+
+$$F(\omega) = \frac{2\pi\,e^{-|\omega|\beta}\,\sin(\omega\beta)}{i\omega} \xrightarrow{\text{par real}} \frac{2\pi}{\omega}\,e^{-|\omega|\beta}\,\sin(\omega\beta), \qquad \beta = \sqrt{c/2}$$
+
+Verificado numéricamente con `quad_qagi` para $c=\tfrac{1}{2}, 1, 3$ y $\omega\in\{0.5,1,2\}$.
+
+**Caso de la imagen:** $c=\tfrac{1}{2}$, $\beta=\tfrac{1}{2}$ → $F(\omega)=\pi e^{-|\omega|/2}\dfrac{\sin(\omega/2)}{\omega/2}$.
+
 ### Tabla resumen arctan
 
 | # | $f(t)$ | $F(\omega)$ | FT | IFT |
@@ -1230,6 +1254,7 @@ Verificado numéricamente con integral regularizada $\int_0^\infty \arctan(bt)\,
 | AT-2 | $k\,\arctan\!\left(\tfrac{1}{bt}\right)$ | $\dfrac{ik\pi}{\omega}\!\left(\tfrac{e^{-|\omega|/b}}{b}-1\right)$ | ✓ | ✗ |
 | AT-3 | $\arctan(\alpha t)-\arctan(\beta t)$ | $\dfrac{-i\pi}{\omega}\!\left(\tfrac{e^{-|\omega|/\alpha}}{\alpha}-\tfrac{e^{-|\omega|/\beta}}{\beta}\right)$ | ✓ auto | ✗ |
 | AT-4 | $k\,\arctan(bt)/t$ | $-k\pi\,\operatorname{Ei}(-|\omega|/b)$ | ✓ | ✗ |
+| AT-5 | $k\,\arctan\!\left(\tfrac{c}{t^2}\right)$ | $\dfrac{2k\pi}{\omega}\,e^{-|\omega|\sqrt{c/2}}\,\sin\!\left(\omega\sqrt{c/2}\right)$ | ✓ | ✗ |
 
 ---
 
@@ -1301,6 +1326,97 @@ $$\mathcal{F}^{-1}\!\left\{\frac{e^{-\omega^2}}{\omega^2+1}\right\} = \frac{e}{2
 | GCONV-1 IFT | $\mathcal{F}^{-1}\{k\,e^{-a\omega^2}/(\omega^2+b^2)\}$ | libre | libre | libre | ✓ |
 
 Handler implementado en `fourier_transforms.mac`. Usa `f_expr` pre-`expand()` porque Maxima invierte la fracción al expandir. Verificado numéricamente para $a \in \{1,2,3\}$, $b \in \{1,2\}$, $k \in \{1,2,-1\}$.
+
+---
+
+## 24g. Familia $k\,t^n\,e^{-at^2}$ — propiedad de derivada en frecuencia
+
+### Fundamento
+
+La **propiedad de derivada en frecuencia** establece que multiplicar por $t$ en tiempo equivale a derivar en frecuencia:
+
+$$\mathcal{F}\{t\cdot f(t)\}(\omega) = i\,\frac{d}{d\omega}\,F(\omega)$$
+
+Por inducción para $n$ entero $\geq 1$:
+
+$$\mathcal{F}\{t^n\cdot f(t)\}(\omega) = i^n\,\frac{d^n}{d\omega^n}\,F(\omega)$$
+
+### Resultado
+
+Partiendo de $\mathcal{F}\{e^{-at^2}\} = \sqrt{\pi/a}\,e^{-\omega^2/(4a)}$:
+
+$$\boxed{\mathcal{F}\!\left\{k\,t^n\,e^{-at^2}\right\}(\omega) = k\cdot i^n\cdot\frac{d^n}{d\omega^n}\!\left[\sqrt{\frac{\pi}{a}}\,e^{-\omega^2/(4a)}\right]}$$
+
+Los primeros casos explícitos:
+
+| $n$ | $\mathcal{F}\{k\,t^n\,e^{-at^2}\}(\omega)$ |
+|-----|----------------------------------------------|
+| 1 | $\displaystyle -\frac{ik\sqrt{\pi/a}}{2a}\,\omega\,e^{-\omega^2/(4a)}$ |
+| 2 | $\displaystyle -\frac{k\sqrt{\pi/a}}{4a^2}\,(\omega^2 - 2a)\,e^{-\omega^2/(4a)}$ |
+| 3 | $\displaystyle \frac{ik\sqrt{\pi/a}}{8a^3}\,(\omega^3 - 6a\omega)\,e^{-\omega^2/(4a)}$ |
+
+El resultado general es una gaussiana multiplicada por el polinomio de Hermite $H_n(\omega/(2\sqrt{a}))$ — función par para $n$ par (transformada real) e impar para $n$ impar (transformada imaginaria pura), consistente con la paridad de $t^n\,e^{-at^2}$.
+
+### Notas de implementación
+
+El handler detecta `k·tⁿ·e^{-at²}` con $n\geq 1$ entero, $a>0$, $k$ libre. Maxima calcula la derivada $n$-ésima simbólicamente — no se hardcodea ninguna fórmula por orden. Funciona para $n=1,2,3,\ldots$ sin código adicional.
+
+**Bug corregido:** el handler gaussiano anterior absorbía silenciosamente factores de $t$ como si fueran escalares, devolviendo $\mathcal{F}\{t\cdot e^{-at^2}\} = \mathcal{F}\{e^{-at^2}\}$ (incorrecto). Ahora cualquier factor dependiente de $t$ que no sea $e^{-at^2}$ o $\sin/\cos$ rechaza el handler.
+
+### Tabla resumen TGAUSS
+
+| # | $f(t)$ | $F(\omega)$ | FT | IFT |
+|---|--------|-------------|-----|-----|
+| TGAUSS | $k\,t^n\,e^{-at^2}$ | $k\cdot i^n\cdot\partial_\omega^n[\sqrt{\pi/a}\,e^{-\omega^2/(4a)}]$ | ✓ | ✗ |
+
+---
+
+## §24h. Familia TPOW: $k\,\theta(t)\,t^p$ — potencias de $t$ causales
+
+### Fórmula cerrada (distribucional)
+
+$$\boxed{\mathcal{F}\bigl[k\,\theta(t)\,t^p\bigr](\omega)
+= k\,\Gamma(p+1)\,|\omega|^{-(p+1)}\left(\cos\tfrac{\pi(p+1)}{2} - i\,\mathrm{sgn}(\omega)\sin\tfrac{\pi(p+1)}{2}\right)}$$
+
+**Condición de convergencia:** $p > -1$ (para que $t^p$ sea integrable en $t=0$; la oscilación de $e^{-i\omega t}$ garantiza convergencia en $\infty$).
+
+### Derivación
+
+Se parte de la integral de Laplace regularizada:
+
+$$\int_0^\infty t^p\,e^{-(\varepsilon+i\omega)t}\,dt = \frac{\Gamma(p+1)}{(\varepsilon+i\omega)^{p+1}}, \quad \varepsilon > 0.$$
+
+Tomando $\varepsilon\to 0^+$ en el sentido distribucional:
+
+$$\mathcal{F}[\theta(t)\,t^p](\omega) = \frac{\Gamma(p+1)}{(i\omega)^{p+1}}$$
+
+donde $(i\omega)^{p+1} = |\omega|^{p+1}\,e^{i\pi(p+1)/2\,\mathrm{sgn}(\omega)}$, por lo que:
+
+$$\mathcal{F}[\theta(t)\,t^p](\omega) = \Gamma(p+1)\,|\omega|^{-(p+1)}\,e^{-i\pi(p+1)/2\,\mathrm{sgn}(\omega)}.$$
+
+### Casos especiales importantes
+
+| $p$ | $f(t)=\theta(t)\,t^p$ | $\Gamma(p+1)$ | $F(\omega)$ |
+|-----|-----------------------|---------------|-------------|
+| $-1/2$ | $\theta(t)/\sqrt{t}$ | $\sqrt{\pi}$ | $\sqrt{\pi/|\omega|}\,e^{-i\pi/4\,\mathrm{sgn}(\omega)}$ |
+| $1/3$ | $\theta(t)\,t^{1/3}$ | $\Gamma(4/3)$ | $\Gamma(4/3)\,|\omega|^{-4/3}\,e^{-i2\pi/3\,\mathrm{sgn}(\omega)}$ |
+| $1/2$ | $\theta(t)\sqrt{t}$ | $\sqrt{\pi}/2$ | $\frac{\sqrt{\pi}}{2|\omega|^{3/2}}\,e^{-3i\pi/4\,\mathrm{sgn}(\omega)}$ |
+
+**Condición:** $p > -1$ y $p \notin \mathbb{Z}$. Para enteros $p \geq 0$, la FT incluye derivadas de la delta de Dirac ($\delta^{(n)}$) que el método de regularización de Laplace no captura — esos casos retornan FALLBACK.
+
+### Implementación
+
+- Handler: **TPOW** en `FT_pattern_lookup`, antes del bloque `u(t)`.
+- Detecta: tramos `[0, ∞)` con expresión `k·t^p` (sin factores de otro tipo).
+- Identifica el exponente `p` via `log(f)/log(t_var)` para manejar `sqrt(t)`, `t^(1/3)`, etc.
+- Rechaza automáticamente `p ≤ -1` (verificación `is(p > -1)`).
+- **No hay IFT handler:** la FT inversa de $\Gamma(a)\,|\omega|^{-a}\,e^{-i\pi a/2\cdot\text{sgn}}$ es la función de Heaviside causal original — no se implementa por ser poco frecuente en esa dirección.
+
+### Tabla resumen TPOW
+
+| # | $f(t)$ | $F(\omega)$ | FT | IFT |
+|---|--------|-------------|-----|-----|
+| TPOW | $k\,\theta(t)\,t^p\;(p>-1)$ | $k\,\Gamma(p+1)\,\|\omega\|^{-(p+1)}\,e^{-i\pi(p+1)/2\cdot\mathrm{sgn}(\omega)}$ | ✓ | ✗ |
 
 ---
 

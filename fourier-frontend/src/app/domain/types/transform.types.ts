@@ -105,6 +105,7 @@ export type SimplifyFunction =
   | 'radcan'
   | 'rectform'
   | 'polarform'
+  | 'combine'
   | 'to_hyper';
 
 export interface SimplifyRequest {
