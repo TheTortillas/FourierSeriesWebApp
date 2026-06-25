@@ -407,3 +407,50 @@ export interface DFTSampleResult {
   interval: { a: number; b: number };
   samplingTimeMs: number;
 }
+
+// ── Fourier Integral ──────────────────────────────────────────────────────────
+
+export type FourierIntegralVariant = "trigonometric" | "complex" | "cosine" | "sine";
+
+export interface FourierIntegralInput {
+  segments: PiecewiseSegment[];
+  intVar?: string;    // default "v"
+  transVar?: string;  // default "w"
+  variant: FourierIntegralVariant;
+}
+
+export interface FourierIntegralReconstructInput {
+  segments: PiecewiseSegment[];
+  intVar?: string;    // default "v"
+  transVar?: string;  // default "w"
+  variant: FourierIntegralVariant;
+  upperLimit: number; // the "a" in ∫₀ᵃ (slider value)
+  xMin: number;
+  xMax: number;
+  nPoints?: number;   // default 200
+}
+
+export interface FourierIntegralCoefficientsResult {
+  input: FourierIntegralInput;
+  exists: boolean;
+  fourierIntegralTex?: string;  // complete Fourier Integral formula f(x) = ∫...
+  // Trigonometric / cosine / sine variants
+  A?: SymbolicExpression;  // A(w) cosine coefficient
+  B?: SymbolicExpression;  // B(w) sine coefficient
+  // Complex variant
+  C?: SymbolicExpression;  // C(w) complex coefficient
+  // Real/imaginary of C(w) for complex variant
+  realPart?: SymbolicExpression;
+  imagPart?: SymbolicExpression;
+  // Real/imaginary parts of input f
+  inputRealPart?: SymbolicExpression;
+  inputImagPart?: SymbolicExpression;
+  params?: string[];
+  executionTimeMs: number;
+}
+
+export interface FourierIntegralReconstructResult {
+  input: FourierIntegralReconstructInput;
+  points: DFTPoint[];  // reuse existing {x, y} type
+  executionTimeMs: number;
+}

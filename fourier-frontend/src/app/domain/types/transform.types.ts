@@ -90,6 +90,54 @@ export interface InverseFourierTransformResponse {
   executionTimeMs: number;
 }
 
+// ─── Fourier Integral ─────────────────────────────────────────────────────────
+
+export type FourierIntegralVariant = 'trigonometric' | 'complex' | 'cosine' | 'sine';
+
+export interface FourierIntegralRequest {
+  segments: Segment[];
+  intVar?: string;
+  transVar?: string;
+  variant: FourierIntegralVariant;
+}
+
+export interface FourierIntegralReconstructRequest {
+  segments: Segment[];
+  intVar?: string;
+  transVar?: string;
+  variant: FourierIntegralVariant;
+  upperLimit: number;
+  xMin: number;
+  xMax: number;
+  nPoints?: number;
+}
+
+export interface FourierIntegralCoefficientsResponse {
+  input: FourierIntegralRequest;
+  exists: boolean;
+  fourierIntegralTex?: string;
+  A?: SymbolicExpression;
+  B?: SymbolicExpression;
+  C?: SymbolicExpression;
+  realPart?: SymbolicExpression;
+  imagPart?: SymbolicExpression;
+  inputRealPart?: SymbolicExpression;
+  inputImagPart?: SymbolicExpression;
+  params?: string[];
+  executionTimeMs: number;
+}
+
+export interface ReconstructPoint {
+  x: number;
+  y: number;
+}
+
+export interface FourierIntegralReconstructResponse {
+  input: FourierIntegralReconstructRequest;
+  points: ReconstructPoint[];
+  executionTimeMs: number;
+}
+
 // ─── Simplify ─────────────────────────────────────────────────────────────────
 
 export type SimplifyProfile = 'raw' | 'integer' | 'trigonometric' | 'exponential' | 'complete';

@@ -1,0 +1,75 @@
+/* ═══════════════════════════════════════════════════════════════
+   Integral de Fourier — Forma Compleja
+   Input:  FUNC_INPUT  → matrix con tramos [expr, a, b]
+           INTVAR      → variable de integración (default v)
+           TRANSVAR    → variable de transformada (default w)
+
+   C(w) = (1/(2π)) ∫_{-∞}^{∞} f(v) e^{-iwv} dv
+   f(x) = ∫_{-∞}^{∞} C(w) e^{iwx} dw
+
+   Nota: C(w) es la Transformada de Fourier con convención ordinaria.
+   Reutilizamos la librería fourier_transforms.mac (FT con scale 1/(2π)).
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+%iargs: false$
+radexpand: false$
+
+load("CLEAN_INTEGRAL_PATH")$
+load("LIB_PATH")$
+
+/* Scale factor for complex Fourier integral: C(w) = (1/2π) FT[f] */
+FI_SCALE: 1/(2*%pi)$
+
+result: FT(FUNC_INPUT, INTVAR, TRANSVAR)$
+
+C_raw:      FT_apply_scale(result[1], FI_SCALE)$
+C_real_raw: FT_apply_scale(result[2], FI_SCALE)$
+C_imag_raw: FT_apply_scale(result[3], FI_SCALE)$
+exists:      result[4]$
+free_params: result[5]$
+
+C:      if C_raw      # false then (if freeof(gamma_incomplete, C_raw)      then C_raw      else clean_integral(C_raw,      TRANSVAR)) else false$
+C_real: if C_real_raw # false then (if freeof(gamma_incomplete, C_real_raw) then C_real_raw else clean_integral(C_real_raw, TRANSVAR)) else false$
+C_imag: if C_imag_raw # false then (if freeof(gamma_incomplete, C_imag_raw) then C_imag_raw else clean_integral(C_imag_raw, TRANSVAR)) else false$
+
+/* Real / imaginary parts of input for plotting */
+block([_i, _e, _a, _b, _gate],
+  f_in_expr: 0,
+  for _i: 1 thru length(FUNC_INPUT) do (
+    _e: FUNC_INPUT[_i][1],
+    _a: FUNC_INPUT[_i][2],
+    _b: FUNC_INPUT[_i][3],
+    _gate: if FT_is_minf(_a) and FT_is_inf(_b) then 1
+           else if FT_is_minf(_a) then u(_b - INTVAR)
+           else if FT_is_inf(_b)  then u(INTVAR - _a)
+           else (u(INTVAR - _a) - u(INTVAR - _b)),
+    f_in_expr: f_in_expr + _e * _gate
+  )
+)$
+
+F_in_real: if freeof(%i, f_in_expr) then f_in_expr else realpart(f_in_expr)$
+F_in_imag: if freeof(%i, f_in_expr) then 0 else imagpart(f_in_expr)$
+F_in_real: errcatch(ratsimp(F_in_real))$
+F_in_real: if F_in_real = [] then false else first(F_in_real)$
+F_in_imag: errcatch(ratsimp(F_in_imag))$
+F_in_imag: if F_in_imag = [] then false else first(F_in_imag)$
+
+FI_tex: if not exists then ""
+  else sconcat("f(x) = \\int_{-\\infty}^{\\infty}\\left[",
+               if C_raw # false then tex1(C_raw) else "0",
+               "\\right]e^{i\\omega x}\\,d\\omega")$
+
+print("__EXISTS__")$            print(string(exists))$
+print("__FI_TEX__")$            print(FI_tex)$
+print("__C_MAXIMA__")$          print(string(C))$
+print("__C_TEX__")$             if C # false then tex(C) else print("")$
+print("__C_REAL_MAXIMA__")$     print(string(C_real))$
+print("__C_REAL_TEX__")$        if C_real # false then tex(C_real) else print("")$
+print("__C_IMAG_MAXIMA__")$     print(string(C_imag))$
+print("__C_IMAG_TEX__")$        if C_imag # false then tex(C_imag) else print("")$
+print("__INPUT_REAL_MAXIMA__")$ print(string(F_in_real))$
+print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else print("")$
+print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$
+print("__INPUT_IMAG_TEX__")$    if F_in_imag # false then tex(F_in_imag) else print("")$
+print("__PARAMS__")$            print(string(free_params))$

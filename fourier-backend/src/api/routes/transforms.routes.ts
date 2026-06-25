@@ -1,12 +1,15 @@
 import { Router, Request, Response, NextFunction } from "express";
 import {
   fourierTransformService,
+  fourierIntegralService,
   dftService,
   historyRepository,
 } from "../../infrastructure/container";
 import type {
   FourierTransformInput,
   InverseFourierTransformInput,
+  FourierIntegralInput,
+  FourierIntegralReconstructInput,
   DFTInput,
   DFTFunctionInput,
 } from "../../domain/types/fourier.types";
@@ -267,6 +270,119 @@ transformsRouter.post(
  *       500:
  *         description: Error de cálculo
  */
+/**
+ * @openapi
+ * /api/transforms/fourier-integral/coefficients:
+ *   post:
+ *     summary: Calcula los coeficientes de la Integral de Fourier (A(w), B(w) o C(w))
+ *     tags: [Transforms]
+ */
+transformsRouter.post(
+  "/fourier-integral/coefficients",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const client = trackClientConnection(req, res);
+      const input = req.body as FourierIntegralInput;
+
+      if (!input.segments || input.segments.length === 0) {
+        res.status(400).json({ error: "segments is required" });
+        return;
+      }
+
+      const validVariants = ["trigonometric", "complex", "cosine", "sine"];
+      if (!input.variant || !validVariants.includes(input.variant)) {
+        res.status(400).json({ error: `variant must be one of: ${validVariants.join(", ")}` });
+        return;
+      }
+
+      if (input.intVar) {
+        const check = sanitizeVariableName(input.intVar, "intVar");
+        if (!check.valid) { res.status(400).json({ error: check.error }); return; }
+      }
+      if (input.transVar) {
+        const check = sanitizeVariableName(input.transVar, "transVar");
+        if (!check.valid) { res.status(400).json({ error: check.error }); return; }
+      }
+
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
+
+      const result = await fourierIntegralService.coefficients(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (result.exists) await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "fourier_integral",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/transforms/fourier-integral/reconstruct:
+ *   post:
+ *     summary: Reconstruye f(x) numéricamente con límite superior `a` (para el slider)
+ *     tags: [Transforms]
+ */
+transformsRouter.post(
+  "/fourier-integral/reconstruct",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const input = req.body as FourierIntegralReconstructInput;
+
+      if (!input.segments || input.segments.length === 0) {
+        res.status(400).json({ error: "segments is required" });
+        return;
+      }
+
+      const validVariants = ["trigonometric", "complex", "cosine", "sine"];
+      if (!input.variant || !validVariants.includes(input.variant)) {
+        res.status(400).json({ error: `variant must be one of: ${validVariants.join(", ")}` });
+        return;
+      }
+
+      if (typeof input.upperLimit !== "number" || input.upperLimit <= 0) {
+        res.status(400).json({ error: "upperLimit must be a positive number" });
+        return;
+      }
+
+      if (typeof input.xMin !== "number" || typeof input.xMax !== "number" || input.xMin >= input.xMax) {
+        res.status(400).json({ error: "xMin must be less than xMax" });
+        return;
+      }
+
+      if (input.nPoints !== undefined && (input.nPoints < 10 || input.nPoints > 500)) {
+        res.status(400).json({ error: "nPoints must be between 10 and 500" });
+        return;
+      }
+
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
+
+      const result = await fourierIntegralService.reconstruct(input);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 transformsRouter.post(
   "/dft",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

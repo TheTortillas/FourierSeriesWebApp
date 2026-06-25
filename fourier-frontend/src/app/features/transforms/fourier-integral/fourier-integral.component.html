@@ -1,0 +1,196 @@
+<app-nav />
+
+<div class="min-h-screen bg-white dark:bg-neutral-950 pt-16">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Header / Tab nav -->
+    <div class="flex items-center gap-3 mb-6">
+      <nav class="flex gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-1 text-sm">
+        <a routerLink="../continuous" routerLinkActive="bg-white dark:bg-neutral-700 shadow-sm font-semibold"
+           class="px-3 py-1.5 rounded-md transition-colors text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100">
+          {{ 'transforms.continuous' | transloco }}
+        </a>
+        <a routerLink="../fourier-integral" routerLinkActive="bg-white dark:bg-neutral-700 shadow-sm font-semibold"
+           class="px-3 py-1.5 rounded-md transition-colors text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100">
+          {{ 'transforms.fourierIntegral' | transloco }}
+        </a>
+        <a routerLink="../dft" routerLinkActive="bg-white dark:bg-neutral-700 shadow-sm font-semibold"
+           class="px-3 py-1.5 rounded-md transition-colors text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100">
+          {{ 'transforms.dft' | transloco }}
+        </a>
+      </nav>
+    </div>
+
+    <!-- Variant selector -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      @for (v of [['trigonometric','Trigonométrica'],['complex','Compleja'],['cosine','Coseno'],['sine','Seno']]; track v[0]) {
+        <button
+          (click)="setVariant(castVariant(v[0]))"
+          [class.bg-blue-600]="variant() === v[0]"
+          [class.text-white]="variant() === v[0]"
+          [class.bg-neutral-100]="variant() !== v[0]"
+          [class.dark:bg-neutral-800]="variant() !== v[0]"
+          [class.opacity-50]="inputsLocked() && variant() !== v[0]"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          {{ v[1] }}
+        </button>
+      }
+    </div>
+
+    <!-- Input -->
+    <div class="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl p-6 mb-6">
+      <h2 class="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-4">
+        Función de entrada f(v)
+      </h2>
+
+      <div class="space-y-3">
+        @for (seg of segments(); track seg.id; let i = $index) {
+          <app-transform-segment
+            [segment]="seg"
+            [index]="i"
+            [isOnly]="segments().length === 1"
+            (updated)="updateSegment($event.id, $event.changes)"
+            (removed)="removeSegment($event)" />
+        }
+      </div>
+
+      @if (!inputsLocked()) {
+        <button (click)="addSegment()"
+          class="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:underline">
+          + Añadir tramo
+        </button>
+      }
+
+      <div class="mt-4 flex gap-3">
+        @if (!hasResult()) {
+          <button (click)="calculate()" [disabled]="!canCalculate() || loading()"
+            class="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium disabled:opacity-50 hover:bg-blue-700 transition-colors">
+            @if (loading()) { Calculando... } @else { Calcular }
+          </button>
+        } @else {
+          <button (click)="startNewCalculation()"
+            class="px-5 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+            Nueva función
+          </button>
+        }
+      </div>
+
+      @if (errorMsg()) {
+        <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
+      }
+    </div>
+
+    <!-- Results -->
+    @if (coeffResult(); as res) {
+      @if (!res.exists) {
+        <div class="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-6">
+          <p class="text-sm text-amber-800 dark:text-amber-300">
+            No se encontró una forma cerrada para esta función.
+          </p>
+        </div>
+      } @else {
+
+        <!-- Full Fourier Integral formula -->
+        @if (res.fourierIntegralTex) {
+          <div class="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl p-6 mb-6">
+            <h2 class="text-base font-semibold mb-3 text-blue-900 dark:text-blue-100">
+              Integral de Fourier — {{ variantLabel() }}
+            </h2>
+            <div [mathjax]="display(res.fourierIntegralTex)"></div>
+          </div>
+        }
+
+        <!-- Coefficients -->
+        <div class="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl p-6 mb-6">
+          <h2 class="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-4">Coeficientes</h2>
+
+          @if (res.A) {
+            <div class="mb-4">
+              <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-1">
+                A(ω) = (1/π) ∫ f(v) cos(ωv) dv
+              </p>
+              <div [mathjax]="display(res.A.tex)"></div>
+            </div>
+          }
+
+          @if (res.B) {
+            <div class="mb-4">
+              <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-1">
+                B(ω) = (1/π) ∫ f(v) sin(ωv) dv
+              </p>
+              <div [mathjax]="display(res.B.tex)"></div>
+            </div>
+          }
+
+          @if (res.C) {
+            <div class="mb-4">
+              <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-1">
+                C(ω) = (1/2π) ∫ f(v) e<sup>−iωv</sup> dv
+              </p>
+              <div [mathjax]="display(res.C.tex)"></div>
+            </div>
+          }
+
+          @if (res.realPart) {
+            <div class="mb-2">
+              <p class="text-xs text-neutral-400 mb-1">Re C(ω)</p>
+              <div [mathjax]="display(res.realPart.tex)"></div>
+            </div>
+          }
+
+          @if (res.imagPart) {
+            <div class="mb-2">
+              <p class="text-xs text-neutral-400 mb-1">Im C(ω)</p>
+              <div [mathjax]="display(res.imagPart.tex)"></div>
+            </div>
+          }
+        </div>
+
+        <!-- Reconstruction with slider -->
+        @if (showReconstruction()) {
+          <div class="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl p-6 mb-6">
+            <h2 class="text-base font-semibold mb-1">Reconstrucción</h2>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+              Aproximación con límite superior a = {{ upperLimit() }}
+            </p>
+
+            <div [mathjax]="display(reconstructionFormulaTex())"></div>
+
+            <!-- Slider -->
+            <div class="mt-4 flex items-center gap-4">
+              <span class="text-sm text-neutral-500 w-6">{{ upperLimitMin }}</span>
+              <input type="range"
+                [min]="upperLimitMin" [max]="upperLimitMax" [step]="1"
+                [value]="upperLimit()"
+                (input)="onSliderInput(+$any($event.target).value)"
+                class="flex-1 accent-blue-600" />
+              <span class="text-sm text-neutral-500 w-8">{{ upperLimit() }}</span>
+            </div>
+
+            @if (reconstructLoading()) {
+              <p class="text-xs text-neutral-400 mt-2">Calculando reconstrucción...</p>
+            }
+
+            <!-- Canvas -->
+            <div #canvasWrapper class="mt-4 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
+              <app-function-plot [layers]="layers()" />
+            </div>
+
+            <p class="text-xs text-neutral-400 mt-2">
+              Rojo punteado: f(v) original. Azul: reconstrucción con a = {{ upperLimit() }}.
+            </p>
+          </div>
+        }
+
+      }
+    }
+
+  </div>
+</div>
+
+<!-- Mobile keyboard -->
+@if (showKeyboard) {
+  <app-mobile-math-keyboard
+    [extraGroup]="mobileExtraGroup"
+    (close)="showKeyboard = false" />
+}

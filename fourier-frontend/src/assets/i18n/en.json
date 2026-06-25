@@ -284,6 +284,8 @@
     "subtitle": "Compute the continuous or inverse transform of a piecewise-defined function.",
     "continuous": "Continuous",
     "continuousDesc": "f(ω) = ∫f(t)e⁻ⁱωᵗdt",
+    "fourierIntegral": "Fourier Integral",
+    "fourierIntegralDesc": "f(x) = ∫₀^∞ [A(ω)cos(ωx)+B(ω)sin(ωx)]dω",
     "discrete": "Discrete",
     "discreteDesc": "X[k] = Σx[n]e⁻ⁱ²πkn/N",
     "comingSoon": "Coming soon",
@@ -645,6 +647,10 @@
     "dft": {
       "title": "DFT Calculator — Discrete Fourier Transform with Epicycles",
       "description": "Calculate the DFT and FFT with amplitude and phase spectrum visualization. Reconstruct signals with animated epicycles. Perfect for signal processing and frequency analysis."
+    },
+    "fourierIntegral": {
+      "title": "Fourier Integral Calculator — A(ω) and B(ω) Coefficients",
+      "description": "Calculate the trigonometric, complex, cosine, and sine Fourier integral of piecewise-defined functions. Visualize the reconstruction and Gibbs phenomenon with an interactive slider."
     },
     "about": {
       "title": "About Fourier Web Calculator",

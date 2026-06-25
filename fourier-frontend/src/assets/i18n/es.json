@@ -284,6 +284,8 @@
     "subtitle": "Calcula la transformada continua o inversa de una función definida por tramos.",
     "continuous": "Continua",
     "continuousDesc": "f(ω) = ∫f(t)e⁻ⁱωᵗdt",
+    "fourierIntegral": "Integral de Fourier",
+    "fourierIntegralDesc": "f(x) = ∫₀^∞ [A(ω)cos(ωx)+B(ω)sin(ωx)]dω",
     "discrete": "Discreta",
     "discreteDesc": "X[k] = Σx[n]e⁻ⁱ²πkn/N",
     "comingSoon": "Próximamente",
@@ -645,6 +647,10 @@
     "dft": {
       "title": "Calculadora de DFT — Transformada Discreta de Fourier con Epiciclos",
       "description": "Calcula la DFT y la FFT con visualización del espectro de amplitud y fase. Reconstruye señales con epiciclos animados. Ideal para procesamiento de señales y análisis de frecuencias."
+    },
+    "fourierIntegral": {
+      "title": "Integral de Fourier — Representación continua A(ω) y B(ω)",
+      "description": "Calcula la integral de Fourier trigonométrica, compleja, coseno y seno de funciones definidas por tramos. Visualiza la reconstrucción con el fenómeno de Gibbs mediante un slider interactivo."
     },
     "about": {
       "title": "Acerca de Fourier Web Calculator",

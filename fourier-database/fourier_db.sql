@@ -45,7 +45,8 @@ CREATE TYPE calculation_type AS ENUM (
     'inverse_fourier_transform',
     'dft_signal',
     'dft_function',
-    'dft_epicycles'
+    'dft_epicycles',
+    'fourier_integral'
 );
 
 CREATE TYPE feedback_category AS ENUM ('bug', 'suggestion', 'question', 'other', 'rating');

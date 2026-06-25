@@ -1,0 +1,123 @@
+/* ═══════════════════════════════════════════════════════════════
+   Integral de Fourier — Forma Trigonométrica
+   Input:  FUNC_INPUT  → matrix con tramos [expr, a, b]
+           INTVAR      → variable de integración (default v)
+           TRANSVAR    → variable de transformada (default w)
+           VARIANT     → "trigonometric" | "cosine" | "sine"
+
+   Trigonométrica completa:
+     A(w) = (1/π) ∫_{-∞}^{∞} f(v) cos(wv) dv
+     B(w) = (1/π) ∫_{-∞}^{∞} f(v) sin(wv) dv
+     f(x) = ∫₀^∞ [A(w)cos(wx) + B(w)sin(wx)] dw
+
+   Integral coseno (f par):
+     A(w) = (2/π) ∫₀^∞ f(v) cos(wv) dv
+
+   Integral seno (f impar):
+     B(w) = (2/π) ∫₀^∞ f(v) sin(wv) dv
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+%iargs: false$
+radexpand: false$
+
+load("CLEAN_INTEGRAL_PATH")$
+
+/* Scale factors by variant */
+if VARIANT = "cosine" then (
+  A_scale: 2/%pi,
+  B_scale: 2/%pi
+) else if VARIANT = "sine" then (
+  A_scale: 2/%pi,
+  B_scale: 2/%pi
+) else (
+  A_scale: 1/%pi,
+  B_scale: 1/%pi
+)$
+
+/* Integrate each segment separately and accumulate.
+   For cosine/sine variants the user provides f on [0,∞) only,
+   so we integrate exactly over the given [a,b] bounds. */
+
+A_acc: 0$
+B_acc: 0$
+
+block([_i, _e, _a, _b, _Ai, _Bi],
+  for _i: 1 thru length(FUNC_INPUT) do (
+    _e: FUNC_INPUT[_i][1],
+    _a: FUNC_INPUT[_i][2],
+    _b: FUNC_INPUT[_i][3],
+
+    if VARIANT # "sine" then (
+      _Ai: errcatch(integrate(_e * cos(TRANSVAR * INTVAR), INTVAR, _a, _b)),
+      if _Ai # [] then A_acc: A_acc + first(_Ai)
+    ),
+
+    if VARIANT # "cosine" then (
+      _Bi: errcatch(integrate(_e * sin(TRANSVAR * INTVAR), INTVAR, _a, _b)),
+      if _Bi # [] then B_acc: B_acc + first(_Bi)
+    )
+  )
+)$
+
+/* Apply scale and simplify */
+A_raw: if VARIANT = "sine" then false
+  else errcatch(ratsimp(A_scale * A_acc))$
+A_raw: if A_raw = [] then false else first(A_raw)$
+A_raw: if A_raw # false and not freeof(gamma_incomplete, A_raw)
+       then clean_integral(A_raw, TRANSVAR) else A_raw$
+
+B_raw: if VARIANT = "cosine" then false
+  else errcatch(ratsimp(B_scale * B_acc))$
+B_raw: if B_raw = [] then false else first(B_raw)$
+B_raw: if B_raw # false and not freeof(gamma_incomplete, B_raw)
+       then clean_integral(B_raw, TRANSVAR) else B_raw$
+
+exists: (A_raw # false or B_raw # false)$
+
+/* Build f_in_expr for plotting using unit step gates (same as fourier_transform.mac) */
+block([_i, _e, _a, _b, _gate],
+  f_in_expr: 0,
+  for _i: 1 thru length(FUNC_INPUT) do (
+    _e: FUNC_INPUT[_i][1],
+    _a: FUNC_INPUT[_i][2],
+    _b: FUNC_INPUT[_i][3],
+    _gate: if _a = minf and _b = inf then 1
+           else if _a = minf then u(_b - INTVAR)
+           else if _b = inf  then u(INTVAR - _a)
+           else (u(INTVAR - _a) - u(INTVAR - _b)),
+    f_in_expr: f_in_expr + _e * _gate
+  )
+)$
+
+F_in_real: if freeof(%i, f_in_expr) then f_in_expr else realpart(f_in_expr)$
+F_in_imag: if freeof(%i, f_in_expr) then 0 else imagpart(f_in_expr)$
+
+/* Build the full Fourier Integral formula as a TeX string */
+FI_tex: if not exists then ""
+  else if VARIANT = "cosine" then
+    sconcat("f(x) = \\frac{2}{\\pi}\\int_0^{\\infty}\\left[",
+            if A_raw # false then tex1(A_raw) else "0",
+            "\\right]\\cos(\\omega x)\\,d\\omega")
+  else if VARIANT = "sine" then
+    sconcat("f(x) = \\frac{2}{\\pi}\\int_0^{\\infty}\\left[",
+            if B_raw # false then tex1(B_raw) else "0",
+            "\\right]\\sin(\\omega x)\\,d\\omega")
+  else
+    sconcat("f(x) = \\int_0^{\\infty}\\left[",
+            if A_raw # false then tex1(A_raw) else "0",
+            "\\cos(\\omega x)+",
+            if B_raw # false then tex1(B_raw) else "0",
+            "\\sin(\\omega x)\\right]d\\omega")$
+
+print("__EXISTS__")$        print(string(exists))$
+print("__A_MAXIMA__")$      print(string(A_raw))$
+print("__A_TEX__")$         if A_raw # false then tex(A_raw) else print("")$
+print("__B_MAXIMA__")$      print(string(B_raw))$
+print("__B_TEX__")$         if B_raw # false then tex(B_raw) else print("")$
+print("__FI_TEX__")$        print(FI_tex)$
+print("__INPUT_REAL_MAXIMA__")$ print(string(F_in_real))$
+print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else print("")$
+print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$
+print("__INPUT_IMAG_TEX__")$    if F_in_imag # false then tex(F_in_imag) else print("")$
+print("__PARAMS__")$         print(string([]))$
