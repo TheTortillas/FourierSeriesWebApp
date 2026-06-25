@@ -181,19 +181,28 @@
         [routerLink]="'/' + lang() + '/profile'"
         class="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.75"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-3.5 h-3.5 shrink-0"
-        >
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-        </svg>
+        @if (userStore.avatarUrl()) {
+          <img
+            [src]="userStore.avatarUrl()!"
+            [alt]="userStore.displayName() ?? ''"
+            class="w-5 h-5 rounded-full object-cover shrink-0"
+            referrerpolicy="no-referrer"
+          />
+        } @else {
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-3.5 h-3.5 shrink-0"
+          >
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+          </svg>
+        }
         {{ userStore.displayName() }}
       </a>
 

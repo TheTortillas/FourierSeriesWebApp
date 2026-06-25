@@ -12,11 +12,20 @@
 
         <!-- Avatar + name + email -->
         <div class="flex items-start gap-4">
-          <div class="w-14 h-14 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
-            <span class="font-display text-xl text-accent select-none">
-              {{ user.firstName[0] }}{{ user.lastName[0] }}
-            </span>
-          </div>
+          @if (user.avatarUrl) {
+            <img
+              [src]="user.avatarUrl"
+              [alt]="user.firstName + ' ' + user.lastName"
+              class="w-14 h-14 rounded-full object-cover shrink-0 border border-accent/20"
+              referrerpolicy="no-referrer"
+            />
+          } @else {
+            <div class="w-14 h-14 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+              <span class="font-display text-xl text-accent select-none">
+                {{ user.firstName[0] }}{{ user.lastName[0] }}
+              </span>
+            </div>
+          }
 
           <div class="flex-1 min-w-0">
             @if (!editingName()) {
