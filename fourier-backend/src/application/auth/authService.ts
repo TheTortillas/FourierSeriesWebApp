@@ -26,6 +26,8 @@ export interface AuthResult {
     emailVerified: boolean;
     hasDoneSurvey: boolean;
     hasDoneFeedback: boolean;
+    avatarUrl: string | null;
+    providers: ("email" | "google")[];
   };
 }
 
@@ -115,7 +117,8 @@ export class AuthService {
       metadata: { provider: "email" },
     });
 
-    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken, providers);
   }
 
   async login(input: {
@@ -158,7 +161,8 @@ export class AuthService {
       metadata: { provider: "email" },
     });
 
-    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken, providers);
   }
 
   async loginWithGoogle(input: {
@@ -175,6 +179,11 @@ export class AuthService {
     if (!payload?.email || !payload.sub) {
       throw new Error("Invalid Google token");
     }
+
+    // Upgrade Google picture to 200px and strip trailing size param variations.
+    const avatarUrl = payload.picture
+      ? payload.picture.replace(/=s\d+-c$/, "=s200-c")
+      : null;
 
     let user = await this.userRepo.findByGoogleId(payload.sub);
 
@@ -217,6 +226,10 @@ export class AuthService {
       throw new Error("Account is deactivated");
     }
 
+    // Sync avatar on every Google login so photo changes are picked up automatically.
+    await this.userRepo.updateAvatarUrl(user.id, avatarUrl);
+    user = { ...user, avatarUrl };
+
     const tokens = this.tokenService.generateTokenPair(user);
 
     await this.tokenRepo.createRefreshToken({
@@ -237,7 +250,8 @@ export class AuthService {
       metadata: { provider: "google" },
     });
 
-    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken, providers);
   }
 
   async refresh(input: {
@@ -277,7 +291,8 @@ export class AuthService {
       newTokens.expiresAt,
     );
 
-    return this.buildAuthResult(user, newTokens.accessToken, newTokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, newTokens.accessToken, newTokens.refreshToken, providers);
   }
 
   async logout(input: {
@@ -301,6 +316,7 @@ export class AuthService {
     user: ReturnType<typeof Object.assign>,
     accessToken: string,
     refreshToken: string,
+    providers: ("email" | "google")[],
   ): AuthServiceResult {
     return {
       accessToken,
@@ -315,6 +331,8 @@ export class AuthService {
         emailVerified: user.emailVerified,
         hasDoneSurvey: user.hasDoneSurvey ?? false,
         hasDoneFeedback: user.hasDoneFeedback ?? false,
+        avatarUrl: user.avatarUrl ?? null,
+        providers,
       },
     };
   }

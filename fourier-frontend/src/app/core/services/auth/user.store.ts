@@ -28,6 +28,10 @@ export class UserStore {
   readonly isEmailVerified  = computed(() => this._user()?.emailVerified ?? false);
   readonly hasDoneSurvey    = computed(() => this._user()?.hasDoneSurvey ?? false);
   readonly hasDoneFeedback  = computed(() => this._user()?.hasDoneFeedback ?? false);
+  readonly avatarUrl        = computed(() => this._user()?.avatarUrl ?? null);
+  readonly providers        = computed(() => this._user()?.providers ?? []);
+  readonly hasEmailProvider = computed(() => this._user()?.providers.includes("email") ?? false);
+  readonly hasGoogleProvider = computed(() => this._user()?.providers.includes("google") ?? false);
   readonly isQuotaExceeded  = computed(() => {
     const q = this._quota();
     if (!q) return false;
