@@ -317,8 +317,9 @@ authRouter.get(
         res.status(401).json({ error: "User not found" });
         return;
       }
+      const providers = await userRepository.getProviders(req.user!.id);
       const { passwordHash, ...safeUser } = user;
-      res.json({ user: { ...safeUser, hasPassword: passwordHash !== null } });
+      res.json({ user: { ...safeUser, providers } });
     } catch (err) {
       next(err);
     }
@@ -595,8 +596,9 @@ authRouter.patch(
         res.status(404).json({ error: "User not found" });
         return;
       }
+      const providers = await userRepository.getProviders(req.user!.id);
       const { passwordHash, ...safeUser } = user;
-      res.json({ user: { ...safeUser, hasPassword: passwordHash !== null } });
+      res.json({ user: { ...safeUser, providers } });
     } catch (err) {
       next(err);
     }

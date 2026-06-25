@@ -8,7 +8,7 @@ export interface User {
   role: UserRole;
   tier: UserTier;
   emailVerified: boolean;
-  hasPassword: boolean;
+  providers: ("email" | "google")[];
   createdAt: string;
   lastLoginAt: string | null;
   hasDoneSurvey: boolean;

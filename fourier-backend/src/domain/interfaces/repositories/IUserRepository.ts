@@ -65,4 +65,5 @@ export interface IUserRepository {
   markSurveyDone(userId: string): Promise<void>;
   markFeedbackDone(userId: string): Promise<void>;
   updateAvatarUrl(userId: string, avatarUrl: string | null): Promise<void>;
+  getProviders(userId: string): Promise<("email" | "google")[]>;
 }

@@ -506,6 +506,14 @@ export class UserRepository implements IUserRepository {
     await db.query(`UPDATE users SET avatar_url = $1 WHERE id = $2`, [avatarUrl, userId]);
   }
 
+  async getProviders(userId: string): Promise<("email" | "google")[]> {
+    const result = await db.query<{ provider: string }>(
+      `SELECT provider FROM user_auth_providers WHERE user_id = $1`,
+      [userId],
+    );
+    return result.rows.map((r) => r.provider as "email" | "google");
+  }
+
   private _currentWeekStart(): Date {
     const d = new Date();
     d.setHours(0, 0, 0, 0);

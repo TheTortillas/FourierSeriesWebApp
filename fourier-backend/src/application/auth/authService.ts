@@ -27,6 +27,7 @@ export interface AuthResult {
     hasDoneSurvey: boolean;
     hasDoneFeedback: boolean;
     avatarUrl: string | null;
+    providers: ("email" | "google")[];
   };
 }
 
@@ -116,7 +117,8 @@ export class AuthService {
       metadata: { provider: "email" },
     });
 
-    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken, providers);
   }
 
   async login(input: {
@@ -159,7 +161,8 @@ export class AuthService {
       metadata: { provider: "email" },
     });
 
-    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken, providers);
   }
 
   async loginWithGoogle(input: {
@@ -247,7 +250,8 @@ export class AuthService {
       metadata: { provider: "google" },
     });
 
-    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken, providers);
   }
 
   async refresh(input: {
@@ -287,7 +291,8 @@ export class AuthService {
       newTokens.expiresAt,
     );
 
-    return this.buildAuthResult(user, newTokens.accessToken, newTokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, newTokens.accessToken, newTokens.refreshToken, providers);
   }
 
   async logout(input: {
@@ -311,6 +316,7 @@ export class AuthService {
     user: ReturnType<typeof Object.assign>,
     accessToken: string,
     refreshToken: string,
+    providers: ("email" | "google")[],
   ): AuthServiceResult {
     return {
       accessToken,
@@ -326,6 +332,7 @@ export class AuthService {
         hasDoneSurvey: user.hasDoneSurvey ?? false,
         hasDoneFeedback: user.hasDoneFeedback ?? false,
         avatarUrl: user.avatarUrl ?? null,
+        providers,
       },
     };
   }
