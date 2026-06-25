@@ -95,53 +95,56 @@
       {{ 'nav.grapher' | transloco }}
     </a>
 
+    <!-- Acerca de — link directo -->
+    <a
+      [routerLink]="'/' + lang() + '/about'"
+      routerLinkActive="!text-accent"
+      class="hidden sm:flex items-center px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+    >
+      {{ 'nav.about' | transloco }}
+    </a>
+
+    <!-- Engagement: Feedback + Encuesta -->
     <div class="relative hidden sm:block" (focusout)="onMoreMenuFocusOut($event)">
       <button
         type="button"
         (click)="moreMenuOpen.set(!moreMenuOpen())"
         [class]="
           moreMenuOpen()
-            ? 'relative flex items-center px-2 py-1.5 rounded text-xs font-mono text-accent bg-paper2 dark:bg-dark-surface transition-colors cursor-pointer'
-            : 'relative flex items-center px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
+            ? 'relative flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-accent bg-paper2 dark:bg-dark-surface transition-colors cursor-pointer'
+            : 'relative flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
         "
         [title]="'nav.more' | transloco"
       >
         ···
         @if (hasEngagementPending()) {
-          <span
-            class="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"
-          ></span>
+          <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-400 text-white text-[9px] font-bold flex items-center justify-center animate-pulse">!</span>
         }
       </button>
 
       @if (moreMenuOpen()) {
-        <div
-          class="absolute left-0 top-full mt-1 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-36"
-        >
-          <a
-            [routerLink]="'/' + lang() + '/about'"
-            routerLinkActive="!text-accent bg-accent/5"
-            (click)="moreMenuOpen.set(false)"
-            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
-          >
-            {{ 'nav.about' | transloco }}
-          </a>
-          <div class="mx-3 my-0.5 border-t border-border dark:border-dark-border"></div>
+        <div class="absolute left-0 top-full mt-1 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-36">
           <a
             [routerLink]="'/' + lang() + '/feedback'"
             routerLinkActive="!text-accent bg-accent/5"
             (click)="moreMenuOpen.set(false)"
-            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+            class="flex items-center justify-between w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
           >
             {{ 'feedback.nav' | transloco }}
+            @if (hasFeedbackPending()) {
+              <span class="w-4 h-4 rounded-full bg-orange-400 text-white text-[9px] font-bold flex items-center justify-center animate-pulse shrink-0">!</span>
+            }
           </a>
           <a
             [routerLink]="'/' + lang() + '/survey'"
             routerLinkActive="!text-accent bg-accent/5"
             (click)="moreMenuOpen.set(false)"
-            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+            class="flex items-center justify-between w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
           >
             {{ 'survey.nav' | transloco }}
+            @if (hasSurveyPending()) {
+              <span class="w-4 h-4 rounded-full bg-orange-400 text-white text-[9px] font-bold flex items-center justify-center animate-pulse shrink-0">!</span>
+            }
           </a>
         </div>
       }
@@ -275,36 +278,38 @@
 
     <div class="w-px h-4 bg-border dark:bg-dark-border mx-1.5 shrink-0"></div>
 
-    <!-- Grupo 3: Controles de apariencia -->
-
-    <!-- Language dropdown -->
-    <div class="relative" (focusout)="onLangMenuFocusOut($event)">
+    <!-- Grupo 3: Settings de apariencia -->
+    <div class="relative" (focusout)="onSettingsMenuFocusOut($event)">
       <button
         type="button"
-        (click)="langMenuOpen.set(!langMenuOpen())"
-        class="flex items-center gap-0.5 px-2 py-1.5 rounded text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
+        (click)="settingsMenuOpen.set(!settingsMenuOpen())"
+        [title]="'nav.settings' | transloco"
+        class="flex items-center gap-1 p-2 rounded text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
       >
-        {{ lang() }}
-        <!-- Chevron -->
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+        <!-- Sliders icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+          class="w-4 h-4">
+          <line x1="4" y1="6" x2="20" y2="6"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="18" x2="20" y2="18"/>
+          <circle cx="8" cy="6" r="2" fill="currentColor" stroke="none"/>
+          <circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/>
+          <circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"/>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
           class="w-2.5 h-2.5 transition-transform"
-          [class.rotate-180]="langMenuOpen()"
-        >
+          [class.rotate-180]="settingsMenuOpen()">
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
 
-      @if (langMenuOpen()) {
-        <div
-          class="absolute right-0 top-full mt-1 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-30"
-        >
+      @if (settingsMenuOpen()) {
+        <div class="absolute right-0 top-full mt-1 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-44">
+
+          <!-- Idioma -->
+          <p class="px-3 pt-1 pb-0.5 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'nav.settingsLang' | transloco }}</p>
           @for (l of languages; track l.code) {
             <button
               type="button"
@@ -317,60 +322,60 @@
             >
               <span class="w-6 uppercase tracking-wider shrink-0">{{ l.code }}</span>
               <span class="normal-case">{{ l.label }}</span>
+              @if (l.code === lang()) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 ml-auto shrink-0" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              }
             </button>
           }
+
+          <div class="mx-3 my-1 border-t border-border dark:border-dark-border"></div>
+
+          <!-- Paleta -->
+          <p class="px-3 pb-0.5 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'nav.settingsPalette' | transloco }}</p>
+          <button
+            type="button"
+            (click)="theme.togglePalette()"
+            class="flex items-center justify-between w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
+          >
+            <span>{{ theme.isNeutral ? ('nav.paletteNeutral' | transloco) : ('nav.paletteCoffee' | transloco) }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a5 5 0 0 1 5 5c0 5.25-5 11-5 11S7 12.25 7 7a5 5 0 0 1 5-5z"/>
+              <circle cx="12" cy="7" r="2"/>
+            </svg>
+          </button>
+
+          <div class="mx-3 my-1 border-t border-border dark:border-dark-border"></div>
+
+          <!-- Tema claro/oscuro -->
+          <p class="px-3 pb-0.5 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'nav.settingsTheme' | transloco }}</p>
+          <button
+            type="button"
+            (click)="theme.toggle()"
+            class="flex items-center justify-between w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
+          >
+            <span>{{ theme.isDark ? ('nav.themeDark' | transloco) : ('nav.themeLight' | transloco) }}</span>
+            @if (theme.isDark) {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+                class="w-3.5 h-3.5 shrink-0">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+              </svg>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+                class="w-3.5 h-3.5 shrink-0">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            }
+          </button>
         </div>
       }
     </div>
-
-    <button
-      (click)="theme.togglePalette()"
-      type="button"
-      [title]="
-        theme.isNeutral ? ('nav.changeToCoffee' | transloco) : ('nav.changeToNeutral' | transloco)
-      "
-      class="px-2 py-1.5 rounded text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
-    >
-      {{ theme.isNeutral ? ('nav.paletteNeutral' | transloco) : ('nav.paletteCoffee' | transloco) }}
-    </button>
-
-    <button
-      (click)="theme.toggle()"
-      type="button"
-      [title]="'nav.toggleTheme' | transloco"
-      class="p-2 rounded text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
-    >
-      @if (theme.isDark) {
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.75"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-4 h-4"
-        >
-          <circle cx="12" cy="12" r="4" />
-          <path
-            d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
-          />
-        </svg>
-      } @else {
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.75"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-4 h-4"
-        >
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
-      }
-    </button>
   </div>
 </nav>
 

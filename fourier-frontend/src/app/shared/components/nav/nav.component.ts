@@ -29,12 +29,9 @@ export class NavComponent {
   private readonly surveySvc    = inject(SurveyService);
   private readonly feedbackSvc  = inject(FeedbackService);
 
-  /** True while either the survey or the feedback hasn't been completed yet. */
-  readonly hasEngagementPending = computed(() => {
-    this.surveySvc.submitted();
-    this.feedbackSvc.submitted();
-    return !this.surveySvc.hasDone() || this.feedbackSvc.canShowModal();
-  });
+  readonly hasSurveyPending  = computed(() => { this.surveySvc.submitted();  return !this.surveySvc.hasDone(); });
+  readonly hasFeedbackPending = computed(() => { this.feedbackSvc.submitted(); return this.feedbackSvc.canShowModal(); });
+  readonly hasEngagementPending = computed(() => this.hasSurveyPending() || this.hasFeedbackPending());
 
   readonly betaBannerVisible = signal(
     this.platform.getLocalStorageItem(BETA_BANNER_KEY) !== 'true',
@@ -65,6 +62,9 @@ export class NavComponent {
   /** Controls the user account dropdown (profile + logout). */
   readonly userMenuOpen = signal(false);
 
+  /** Controls the appearance settings dropdown (lang, palette, theme). */
+  readonly settingsMenuOpen = signal(false);
+
   /** Regex to match the leading /:lang segment in the current URL. */
   private readonly langSegmentRe = new RegExp(
     `^\\/(${SUPPORTED_LANG_CODES.join('|')})(\\\/|$)`,
@@ -89,6 +89,7 @@ export class NavComponent {
 
   switchToLang(code: string): void {
     this.langMenuOpen.set(false);
+    this.settingsMenuOpen.set(false);
     if (code === this.lang()) return;
     saveLang(code);
     const url = this.router.url.replace(this.langSegmentRe, `/${code}$2`);
@@ -120,6 +121,13 @@ export class NavComponent {
     const wrapper = e.currentTarget as HTMLElement;
     if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
       this.userMenuOpen.set(false);
+    }
+  }
+
+  onSettingsMenuFocusOut(e: FocusEvent): void {
+    const wrapper = e.currentTarget as HTMLElement;
+    if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
+      this.settingsMenuOpen.set(false);
     }
   }
 }
