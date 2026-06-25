@@ -62,6 +62,9 @@ export class NavComponent {
   /** Controls the community/meta dropdown (feedback + survey). */
   readonly moreMenuOpen = signal(false);
 
+  /** Controls the user account dropdown (profile + logout). */
+  readonly userMenuOpen = signal(false);
+
   /** Regex to match the leading /:lang segment in the current URL. */
   private readonly langSegmentRe = new RegExp(
     `^\\/(${SUPPORTED_LANG_CODES.join('|')})(\\\/|$)`,
@@ -110,6 +113,13 @@ export class NavComponent {
     const wrapper = e.currentTarget as HTMLElement;
     if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
       this.moreMenuOpen.set(false);
+    }
+  }
+
+  onUserMenuFocusOut(e: FocusEvent): void {
+    const wrapper = e.currentTarget as HTMLElement;
+    if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
+      this.userMenuOpen.set(false);
     }
   }
 }
