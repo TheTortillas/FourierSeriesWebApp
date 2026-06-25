@@ -20,6 +20,7 @@ export class UserRepository implements IUserRepository {
             u.deleted_at as "deletedAt",
             u.has_done_survey as "hasDoneSurvey",
             u.has_done_feedback as "hasDoneFeedback",
+            u.avatar_url as "avatarUrl",
             p.first_name as "firstName",
             p.last_name as "lastName"
      FROM users u
@@ -43,6 +44,7 @@ export class UserRepository implements IUserRepository {
             u.deleted_at as "deletedAt",
             u.has_done_survey as "hasDoneSurvey",
             u.has_done_feedback as "hasDoneFeedback",
+            u.avatar_url as "avatarUrl",
             p.first_name as "firstName",
             p.last_name as "lastName"
      FROM users u
@@ -66,6 +68,7 @@ export class UserRepository implements IUserRepository {
             u.deleted_at as "deletedAt",
             u.has_done_survey as "hasDoneSurvey",
             u.has_done_feedback as "hasDoneFeedback",
+            u.avatar_url as "avatarUrl",
             p.first_name as "firstName",
             p.last_name as "lastName"
       FROM users u
@@ -497,6 +500,10 @@ export class UserRepository implements IUserRepository {
 
   async markFeedbackDone(userId: string): Promise<void> {
     await db.query(`UPDATE users SET has_done_feedback = TRUE WHERE id = $1`, [userId]);
+  }
+
+  async updateAvatarUrl(userId: string, avatarUrl: string | null): Promise<void> {
+    await db.query(`UPDATE users SET avatar_url = $1 WHERE id = $2`, [avatarUrl, userId]);
   }
 
   private _currentWeekStart(): Date {

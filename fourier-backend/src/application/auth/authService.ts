@@ -26,6 +26,7 @@ export interface AuthResult {
     emailVerified: boolean;
     hasDoneSurvey: boolean;
     hasDoneFeedback: boolean;
+    avatarUrl: string | null;
   };
 }
 
@@ -176,6 +177,11 @@ export class AuthService {
       throw new Error("Invalid Google token");
     }
 
+    // Upgrade Google picture to 200px and strip trailing size param variations.
+    const avatarUrl = payload.picture
+      ? payload.picture.replace(/=s\d+-c$/, "=s200-c")
+      : null;
+
     let user = await this.userRepo.findByGoogleId(payload.sub);
 
     if (!user) {
@@ -216,6 +222,10 @@ export class AuthService {
     if (!user.isActive) {
       throw new Error("Account is deactivated");
     }
+
+    // Sync avatar on every Google login so photo changes are picked up automatically.
+    await this.userRepo.updateAvatarUrl(user.id, avatarUrl);
+    user = { ...user, avatarUrl };
 
     const tokens = this.tokenService.generateTokenPair(user);
 
@@ -315,6 +325,7 @@ export class AuthService {
         emailVerified: user.emailVerified,
         hasDoneSurvey: user.hasDoneSurvey ?? false,
         hasDoneFeedback: user.hasDoneFeedback ?? false,
+        avatarUrl: user.avatarUrl ?? null,
       },
     };
   }

@@ -24,6 +24,7 @@ export interface UserRecord {
   lastName: string;
   hasDoneSurvey: boolean;
   hasDoneFeedback: boolean;
+  avatarUrl: string | null;
 }
 
 export interface IUserRepository {
@@ -63,4 +64,5 @@ export interface IUserRepository {
   updatePassword(userId: string, passwordHash: string): Promise<void>;
   markSurveyDone(userId: string): Promise<void>;
   markFeedbackDone(userId: string): Promise<void>;
+  updateAvatarUrl(userId: string, avatarUrl: string | null): Promise<void>;
 }

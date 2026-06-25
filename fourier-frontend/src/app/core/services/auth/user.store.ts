@@ -28,6 +28,7 @@ export class UserStore {
   readonly isEmailVerified  = computed(() => this._user()?.emailVerified ?? false);
   readonly hasDoneSurvey    = computed(() => this._user()?.hasDoneSurvey ?? false);
   readonly hasDoneFeedback  = computed(() => this._user()?.hasDoneFeedback ?? false);
+  readonly avatarUrl        = computed(() => this._user()?.avatarUrl ?? null);
   readonly isQuotaExceeded  = computed(() => {
     const q = this._quota();
     if (!q) return false;

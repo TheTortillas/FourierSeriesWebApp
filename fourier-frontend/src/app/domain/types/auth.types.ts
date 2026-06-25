@@ -13,6 +13,7 @@ export interface User {
   lastLoginAt: string | null;
   hasDoneSurvey: boolean;
   hasDoneFeedback: boolean;
+  avatarUrl: string | null;
 }
 
 export interface AuthResponse {
