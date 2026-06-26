@@ -14,13 +14,6 @@ export const transformRoutes: Routes = [
       ),
   },
   {
-    path: 'fourier-integral',
-    loadComponent: () =>
-      import('./fourier-integral/fourier-integral.component').then(
-        (m) => m.FourierIntegralComponent,
-      ),
-  },
-  {
     path: 'dft',
     loadComponent: () =>
       import('./dft/dft.component').then((m) => m.DftComponent),

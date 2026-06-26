@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, Subject, switchMap } from 'rxjs';
 
@@ -62,8 +61,6 @@ function defaultSegment(): TransformSegmentDraft {
     FunctionPlotComponent,
     TransformSegmentComponent,
     FormsModule,
-    RouterLink,
-    RouterLinkActive,
     TranslocoPipe,
     MobileMathKeyboardComponent,
   ],
@@ -88,6 +85,37 @@ export class FourierIntegralComponent implements OnInit {
     { label: 'i', typedText: 'i' },
   ];
 
+  readonly keyGroups: KeyBtn[][] = [
+    // Row 1: Trig functions
+    [
+      { label: 'sin(□)', writeWithCursor: '\\sin\\left(\\right)' },
+      { label: 'cos(□)', writeWithCursor: '\\cos\\left(\\right)' },
+      { label: 'sinh(□)', writeWithCursor: '\\sinh\\left(\\right)' },
+      { label: 'cosh(□)', writeWithCursor: '\\cosh\\left(\\right)' },
+      { label: 'e^□' },
+    ],
+    // Row 2: Operators and constants
+    [
+      { label: '□²' },
+      { label: '□^□' },
+      { label: '□/□' },
+      { label: '√□', cmd: '\\sqrt' },
+      { label: '(□)', writeWithCursor: '\\left(\\right)' },
+      { label: 'π', typedText: 'pi' },
+      { label: '∞', write: '\\infty' },
+      { label: '-∞', write: '-\\infty' },
+      { label: '−', write: '-' },
+      { label: '⌫', keystroke: 'Backspace' },
+    ],
+  ];
+
+  /** Variant options list for the template. */
+  readonly variants: { id: string; label: string }[] = [
+    { id: 'trigonometric', label: 'Trigonométrica' },
+    { id: 'complex', label: 'Compleja' },
+    { id: 'cosine', label: 'Integral Coseno' },
+    { id: 'sine', label: 'Integral Seno' },
+  ];
 
   // ── State ──────────────────────────────────────────────────────────────────
 
@@ -128,6 +156,30 @@ export class FourierIntegralComponent implements OnInit {
     return 'Integral Seno';
   });
 
+  /** Live LaTeX preview of the piecewise input function. */
+  readonly previewLatex = computed<string | null>(() => {
+    const res = this.coeffResult();
+    if (res?.fourierIntegralTex) return res.fourierIntegralTex;
+
+    const segs = this.segments();
+    if (segs.length === 0) return null;
+    const hasContent = segs.some((s) => s.expressionTex || s.fromTex || s.toTex);
+    if (!hasContent) return null;
+
+    if (segs.length === 1) {
+      const s = segs[0];
+      return `f(v) = ${s.expressionTex || '\\square'}, \\quad ${s.fromTex || '\\square'} < v < ${s.toTex || '\\square'}`;
+    }
+
+    const rows = segs
+      .map(
+        (s) =>
+          `${s.expressionTex || '\\square'}, & ${s.fromTex || '\\square'} < v < ${s.toTex || '\\square'}`,
+      )
+      .join(' \\\\ ');
+    return `f(v) = \\begin{cases} ${rows} \\end{cases}`;
+  });
+
   readonly reconstructionFormulaTex = computed(() => {
     const v = this.variant();
     const a = this.upperLimit();
@@ -163,16 +215,24 @@ export class FourierIntegralComponent implements OnInit {
     const layer: PlotLayer = {
       curves: [],
       onDraw: (ctx, vp) => {
-        // Draw original function from segments
+        // Draw original function from segments (variable is v)
+        const finitePieces: { fn: (x: number) => number; from: number; to: number }[] = [];
         for (const seg of segs) {
           if (!seg.expression || !seg.from || !seg.to) continue;
-          const from = seg.from === 'minf' ? -Infinity : parseFloat(seg.from);
-          const to = seg.to === 'inf' ? Infinity : parseFloat(seg.to);
-          if (!isFinite(from) && !isFinite(to)) continue;
-          const fn = mathUtils.compile(seg.expression, 'x', {});
+          const from = seg.from === 'minf' || seg.from === '-inf' ? -Infinity : parseFloat(seg.from);
+          const to   = seg.to   === 'inf'                         ? Infinity  : parseFloat(seg.to);
+          const fn = mathUtils.compile(seg.expression, 'v', {});
           if (!fn) continue;
-          const gated = (x: number) => (x >= from && x <= to ? fn(x) : NaN);
-          plotter.plotFn(ctx, gated, vp, { color: originalColor, lineWidth: 2, dashed: true });
+          if (isFinite(from) && isFinite(to)) {
+            finitePieces.push({ fn, from, to });
+          } else {
+            const gated = (x: number) =>
+              (x >= (isFinite(from) ? from : -Infinity) && x <= (isFinite(to) ? to : Infinity)) ? fn(x) : NaN;
+            plotter.plotFn(ctx, gated, vp, { color: originalColor, lineWidth: 2, dashed: true });
+          }
+        }
+        if (finitePieces.length > 0) {
+          plotter.plotPiecewise(ctx, finitePieces, vp, { color: originalColor, lineWidth: 2, dashed: true });
         }
 
         // Draw reconstructed points
@@ -310,6 +370,16 @@ export class FourierIntegralComponent implements OnInit {
   onSliderInput(value: number): void {
     this.upperLimit.set(value);
     this.sliderChange$.next(value);
+  }
+
+  downloadCanvas(): void {
+    const canvas = this.canvasWrapper()?.nativeElement?.querySelector('canvas');
+    if (!canvas) return;
+    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fourier-integral.png';
+    a.click();
   }
 
   private triggerReconstruct(): void {

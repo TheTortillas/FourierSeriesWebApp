@@ -55,6 +55,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'fourier-integral',
+        loadComponent: () =>
+          import('./features/transforms/fourier-integral/fourier-integral.component').then(
+            (m) => m.FourierIntegralComponent,
+          ),
+      },
+      {
         path: 'transforms',
         loadChildren: () =>
           import('./features/transforms/transforms.routes').then(

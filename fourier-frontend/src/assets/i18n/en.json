@@ -34,6 +34,7 @@
     "fourierAnalysis": "Fourier Analysis",
     "series": "Fourier Series",
     "transforms": "Transforms",
+    "fourierIntegral": "Fourier Integral",
     "login": "Log in",
     "register": "Sign up",
     "logout": "Log out",
@@ -953,6 +954,17 @@
         "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
       }
     }
+  },
+  "fourier-integral": {
+    "title": "Fourier Integral",
+    "subtitle": "Integral representation of non-periodic functions",
+    "trigonometric": "Trigonometric",
+    "complex": "Complex",
+    "cosine": "Cosine Integral",
+    "sine": "Sine Integral",
+    "reconstruction": "Reconstruction",
+    "upperLimit": "Upper limit a = {{a}}",
+    "gibbs": "Move the slider to see the Gibbs phenomenon"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",

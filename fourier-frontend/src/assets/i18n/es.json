@@ -34,6 +34,7 @@
     "fourierAnalysis": "Análisis de Fourier",
     "series": "Series de Fourier",
     "transforms": "Transformadas",
+    "fourierIntegral": "Integral de Fourier",
     "login": "Ingresar",
     "register": "Registrarse",
     "logout": "Salir",
@@ -953,6 +954,17 @@
         "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
       }
     }
+  },
+  "fourier-integral": {
+    "title": "Integral de Fourier",
+    "subtitle": "Representación integral de funciones no periódicas",
+    "trigonometric": "Trigonométrica",
+    "complex": "Compleja",
+    "cosine": "Integral Coseno",
+    "sine": "Integral Seno",
+    "reconstruction": "Reconstrucción",
+    "upperLimit": "Límite superior a = {{a}}",
+    "gibbs": "Mueve el slider para ver el fenómeno de Gibbs"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",
