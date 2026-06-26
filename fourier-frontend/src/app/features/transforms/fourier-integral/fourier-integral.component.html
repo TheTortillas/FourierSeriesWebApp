@@ -29,9 +29,17 @@
             class="relative rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto flex items-center justify-center min-h-12"
           >
             <span
+              #previewEl
               class="text-ink dark:text-dark-ink text-base block"
               [mathjax]="'\\[' + previewLatex() + '\\]'"
             ></span>
+            <div class="absolute top-1.5 right-1.5">
+              <app-export-button
+                [tex]="previewLatex() ?? ''"
+                [mathEl]="previewEl"
+                filename="fourier-integral-function"
+              />
+            </div>
           </div>
         }
 
@@ -46,7 +54,7 @@
             <div class="flex items-center justify-between">
               <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
                 {{ 'calculator.piecewiseFunction' | transloco }}
-                <span class="font-normal text-muted dark:text-dark-muted font-mono text-xs ml-1">f(v)</span>
+                <span class="font-normal text-muted dark:text-dark-muted font-mono text-xs ml-1">f({{ intVar() }})</span>
               </h2>
               <!-- Keyboard toggle — desktop only -->
               <button
@@ -82,7 +90,7 @@
                 [segment]="seg"
                 [index]="i"
                 [isOnly]="segments().length === 1"
-                [intVar]="'v'"
+                [intVar]="intVar()"
                 [continuityError]="null"
                 (updated)="updateSegment($event.id, $event.changes)"
                 (removed)="removeSegment($event)"
@@ -121,11 +129,80 @@
             >
               {{ 'transforms.addSegment' | transloco }}
             </button>
+
+            <!-- Variables selector -->
+            <div class="border-t border-border dark:border-dark-border pt-3 flex flex-col gap-3">
+              <p class="text-xs text-muted dark:text-dark-muted font-mono shrink-0">
+                {{ 'transforms.variables' | transloco }}
+              </p>
+              <div class="flex flex-wrap gap-2">
+                @for (pair of varPairs; track pair.id) {
+                  @if (pair.id !== 'custom') {
+                    <button
+                      type="button"
+                      (click)="selectedPairId.set(pair.id)"
+                      [class]="
+                        selectedPairId() === pair.id
+                          ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                          : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
+                      "
+                    >
+                      {{ pair.intDisplay }} → {{ pair.transDisplay }}
+                    </button>
+                  }
+                }
+                <button
+                  type="button"
+                  (click)="selectedPairId.set('custom')"
+                  [class]="
+                    selectedPairId() === 'custom'
+                      ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                      : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
+                  "
+                >
+                  Custom
+                </button>
+              </div>
+
+              @if (selectedPairId() === 'custom') {
+                <div class="flex items-center gap-3 flex-wrap">
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                      {{ 'fourier-integral.intVar' | transloco }}
+                    </label>
+                    <input
+                      type="text"
+                      [ngModel]="customIntVar()"
+                      (ngModelChange)="customIntVar.set($event)"
+                      placeholder="v"
+                      class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <span class="text-muted font-mono mt-4">→</span>
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                      {{ 'fourier-integral.transVar' | transloco }}
+                    </label>
+                    <input
+                      type="text"
+                      [ngModel]="customTransVar()"
+                      (ngModelChange)="customTransVar.set($event)"
+                      placeholder="w"
+                      class="w-16 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-4">
+                    Maxima: <code class="text-accent">nu</code>,
+                    <code class="text-accent">xi</code>, <code class="text-accent">omega</code>…
+                  </p>
+                </div>
+              }
+            </div>
           </section>
 
           <!-- Variant selector -->
           <section class="flex flex-col gap-2">
-            <p class="text-xs text-muted font-mono">Tipo de integral</p>
+            <p class="text-xs text-muted dark:text-dark-muted font-mono">Tipo de integral</p>
             <div class="flex flex-wrap gap-2">
               @for (v of variants; track v.id) {
                 <button
@@ -216,34 +293,286 @@
         >
           <app-function-plot
             [layers]="layers()"
+            [xAxisFormat]="xAxisFormat()"
+            [customConst]="customConst()"
             class="w-full h-full block"
           />
 
-          <!-- Download canvas button -->
+          <!-- Overlay buttons (top-left) -->
           <div class="absolute top-2 left-2 flex gap-1 pointer-events-none">
+
+            <!-- Fullscreen toggle -->
+            <button
+              type="button"
+              (click)="toggleFullscreen()"
+              [title]="isFullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'"
+              class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+            >
+              @if (isFullscreen()) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="4 14 10 14 10 20" />
+                  <polyline points="20 10 14 10 14 4" />
+                  <line x1="10" y1="14" x2="3" y2="21" />
+                  <line x1="21" y1="3" x2="14" y2="10" />
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9" />
+                  <polyline points="9 21 3 21 3 15" />
+                  <line x1="21" y1="3" x2="14" y2="10" />
+                  <line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+              }
+            </button>
+
+            <!-- Settings toggle (only when result exists) -->
+            @if (hasResult()) {
+              <button
+                type="button"
+                (click)="showCanvasSettings.set(!showCanvasSettings())"
+                title="Ajustes del canvas"
+                [class]="
+                  showCanvasSettings()
+                    ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent dark:text-accent transition-colors flex items-center justify-center'
+                    : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center'
+                "
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+                       a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+                       A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
+                       l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                       A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
+                       l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+                       a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
+                       l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+                       a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+              </button>
+            }
+
+            <!-- Download canvas -->
             <button
               type="button"
               (click)="downloadCanvas()"
               title="Descargar imagen"
-              class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center"
+              class="pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-3.5 h-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
             </button>
+
+            <!-- Favorite (only when result exists and user is authenticated) -->
+            @if (hasResult() && userStore.isAuthenticated()) {
+              <button
+                type="button"
+                (click)="openFavoriteDialog()"
+                [title]="latestHistoryEntry()?.isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+                [class]="
+                  latestHistoryEntry()?.isFavorite
+                    ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center'
+                    : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-500 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center'
+                "
+              >
+                @if (favoriteLoading()) {
+                  <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                } @else {
+                  <span class="text-sm leading-none">★</span>
+                }
+              </button>
+            }
+
+            <!-- Share URL (only when result exists) -->
+            @if (hasResult()) {
+              <button
+                type="button"
+                (click)="shareUrl()"
+                [title]="urlCopied() ? 'URL copiada!' : 'Copiar URL'"
+                [class]="
+                  urlCopied()
+                    ? 'pointer-events-auto w-7 h-7 bg-green-100 dark:bg-green-900/30 border border-green-400 rounded text-green-600 dark:text-green-400 transition-colors flex items-center justify-center'
+                    : 'pointer-events-auto w-7 h-7 bg-white/80 dark:bg-gray-800/80 border border-gray-300 dark:border-gray-600 rounded text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center justify-center'
+                "
+              >
+                @if (urlCopied()) {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                }
+              </button>
+            }
           </div>
+
+          <!-- Canvas settings panel -->
+          @if (hasResult() && showCanvasSettings()) {
+            <div
+              class="absolute top-11 left-2 right-2 sm:right-auto sm:w-96 z-20 border border-border dark:border-dark-border rounded p-3 bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow shrink-0 flex flex-col gap-3 text-[11px] font-mono max-h-[calc(100%-3.5rem)] overflow-y-auto"
+            >
+              <!-- Layers -->
+              <section class="flex flex-col gap-2">
+                <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                  Capas
+                </h4>
+                <div class="flex flex-wrap gap-2">
+                  <!-- Original f(v) toggle -->
+                  <button
+                    type="button"
+                    (click)="showOriginal.set(!showOriginal())"
+                    [class]="
+                      showOriginal()
+                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
+                        : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
+                    "
+                    [style.borderColor]="showOriginal() ? originalColor() : null"
+                    [style.color]="showOriginal() ? originalColor() : null"
+                    [style.backgroundColor]="showOriginal() ? originalColor() + '1A' : null"
+                  >
+                    <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showOriginal() ? originalColor() : 'currentColor'"></span>
+                    f({{ intVar() }})
+                  </button>
+                  <!-- Reconstruction toggle -->
+                  <button
+                    type="button"
+                    (click)="showReconstruct.set(!showReconstruct())"
+                    [class]="
+                      showReconstruct()
+                        ? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer'
+                        : 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent transition-colors'
+                    "
+                    [style.borderColor]="showReconstruct() ? reconstructColor() : null"
+                    [style.color]="showReconstruct() ? reconstructColor() : null"
+                    [style.backgroundColor]="showReconstruct() ? reconstructColor() + '1A' : null"
+                  >
+                    <span class="w-2 h-2 rounded-full shrink-0" [style.background]="showReconstruct() ? reconstructColor() : 'currentColor'"></span>
+                    Reconstrucción
+                  </button>
+                </div>
+              </section>
+
+              <div class="border-t border-border dark:border-dark-border"></div>
+
+              <!-- Axis format -->
+              <section class="flex flex-col gap-2">
+                <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                  Eje X
+                </h4>
+                <div class="flex rounded border border-border dark:border-dark-border overflow-hidden w-fit">
+                  <button type="button" (click)="xAxisFormat.set('pi')" [class]="xAxisFormat() === 'pi' ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">π</button>
+                  <button type="button" (click)="xAxisFormat.set('e')" [class]="xAxisFormat() === 'e' ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">e</button>
+                  <button type="button" (click)="xAxisFormat.set('integer')" [class]="xAxisFormat() === 'integer' ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">1,2</button>
+                  @for (p of activeParams(); track p) {
+                    <button type="button" (click)="customConstName.set(p); xAxisFormat.set('custom')" [class]="xAxisFormat() === 'custom' && customConst().symbol === p ? 'px-2 py-0.5 bg-accent text-white cursor-pointer font-mono' : 'px-2 py-0.5 text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer font-mono'">{{ p }}</button>
+                  }
+                </div>
+              </section>
+
+              <div class="border-t border-border dark:border-dark-border"></div>
+
+              <!-- Line styles -->
+              <section class="flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-2">
+                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                    Estilo de línea
+                  </h4>
+                  <button
+                    type="button"
+                    (click)="resetColors()"
+                    class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors cursor-pointer"
+                  >
+                    Restablecer
+                  </button>
+                </div>
+                <!-- Original -->
+                <div class="rounded border border-border dark:border-dark-border p-2.5 space-y-2">
+                  <p class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">f({{ intVar() }})</p>
+                  <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">Color</span>
+                      <input type="color" [value]="originalColor()" (input)="originalColor.set($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">Ancho</span>
+                      <input type="number" [value]="originalLineWidth()" min="0.5" max="5" step="0.5" (input)="originalLineWidth.set(+$any($event.target).value)" class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center" />
+                    </div>
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox" [checked]="originalDashed()" (change)="originalDashed.set($any($event.target).checked)" class="accent-accent" />
+                      <span class="text-muted dark:text-dark-muted">Discontinua</span>
+                    </label>
+                  </div>
+                </div>
+                <!-- Reconstruction -->
+                <div class="rounded border border-border dark:border-dark-border p-2.5 space-y-2">
+                  <p class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">Reconstrucción</p>
+                  <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">Color</span>
+                      <input type="color" [value]="reconstructColor()" (input)="reconstructColor.set($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-muted dark:text-dark-muted">Ancho</span>
+                      <input type="number" [value]="reconstructLineWidth()" min="0.5" max="5" step="0.5" (input)="reconstructLineWidth.set(+$any($event.target).value)" class="w-12 px-1 py-0.5 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center" />
+                    </div>
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox" [checked]="reconstructDashed()" (change)="reconstructDashed.set($any($event.target).checked)" class="accent-accent" />
+                      <span class="text-muted dark:text-dark-muted">Discontinua</span>
+                    </label>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Free params sliders -->
+              @if (activeParams().length) {
+                <div class="border-t border-border dark:border-dark-border"></div>
+                <section class="flex flex-col gap-2">
+                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                    {{ 'transforms.freeParams' | transloco }}
+                  </h4>
+                  <app-param-sliders
+                    [params]="activeParams()"
+                    (valuesChange)="paramValues.set($event)"
+                  />
+                </section>
+              }
+            </div>
+          }
         </div>
+
+        <!-- Favorite name dialog -->
+        @if (showFavoriteDialog()) {
+          <div
+            class="border border-amber-300 dark:border-amber-700 rounded-xl p-3 bg-amber-50/60 dark:bg-amber-950/20 flex items-center gap-2 flex-wrap text-xs font-mono"
+          >
+            <span class="text-amber-700 dark:text-amber-400 shrink-0">
+              {{ 'history.favorite.nameLabel' | transloco }}
+            </span>
+            <input
+              type="text"
+              [(ngModel)]="favoriteName"
+              [placeholder]="'history.favorite.namePlaceholder' | transloco"
+              (keydown.enter)="confirmFavorite()"
+              (keydown.escape)="cancelFavoriteDialog()"
+              autofocus
+              class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 text-ink dark:text-dark-ink outline-none focus:border-amber-500"
+            />
+            <button type="button" (click)="confirmFavorite()" class="px-3 py-1 rounded bg-amber-400 hover:bg-amber-500 text-white transition-colors cursor-pointer">{{ 'common.save' | transloco }}</button>
+            <button type="button" (click)="cancelFavoriteDialog()" class="px-3 py-1 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer">{{ 'common.cancel' | transloco }}</button>
+          </div>
+        }
 
         <!-- Results section -->
         @if (coeffResult(); as res) {
@@ -254,73 +583,100 @@
               </p>
             </div>
           } @else {
+            <!-- Result heading with execution time -->
+            <div class="flex items-center gap-2">
+              <h2 class="font-display text-base text-ink dark:text-dark-ink">
+                {{ 'transforms.result' | transloco }}
+              </h2>
+              @if (res.executionTimeMs) {
+                <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ res.executionTimeMs }} ms</span>
+              }
+            </div>
 
             <!-- Full Fourier Integral formula -->
             @if (res.fourierIntegralTex) {
-              <div class="rounded-xl border border-accent/20 bg-accent/5 px-5 py-4 flex flex-col gap-2">
-                <p class="text-xs font-mono font-semibold text-accent uppercase tracking-wide">
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">
                   Integral de Fourier — {{ variantLabel() }}
-                </p>
-                <div [mathjax]="display(res.fourierIntegralTex)"></div>
+                </span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span #fiFullEl [mathjax]="display(res.fourierIntegralTex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="res.fourierIntegralTex" [mathEl]="fiFullEl" filename="fourier-integral" label="Integral de Fourier" />
+                </div>
               </div>
             }
 
             <!-- Coefficients card -->
-            <div class="rounded-xl border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-5 py-4 flex flex-col gap-4">
-              <p class="text-xs font-mono font-semibold text-ink/60 dark:text-dark-ink/60 uppercase tracking-wide">
+            <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-4">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">
                 Coeficientes
-              </p>
+              </span>
 
               @if (res.A) {
                 <div class="flex flex-col gap-1">
-                  <p class="text-xs text-muted dark:text-dark-muted font-mono">
-                    A(ω) = (1/π) ∫ f(v) cos(ωv) dv
+                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                    A({{ transVar() }}) = (1/π) ∫ f({{ intVar() }}) cos({{ transVar() }}{{ intVar() }}) d{{ intVar() }}
                   </p>
-                  <div [mathjax]="display(res.A.tex)"></div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span #fiAEl [mathjax]="display(res.A.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                    <app-export-button [tex]="res.A.tex" [maxima]="res.A.maxima" [mathEl]="fiAEl" filename="fourier-integral-A" [label]="'A(' + transVar() + ')'" />
+                  </div>
                 </div>
               }
 
               @if (res.B) {
                 <div class="flex flex-col gap-1">
-                  <p class="text-xs text-muted dark:text-dark-muted font-mono">
-                    B(ω) = (1/π) ∫ f(v) sin(ωv) dv
+                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                    B({{ transVar() }}) = (1/π) ∫ f({{ intVar() }}) sin({{ transVar() }}{{ intVar() }}) d{{ intVar() }}
                   </p>
-                  <div [mathjax]="display(res.B.tex)"></div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span #fiBEl [mathjax]="display(res.B.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                    <app-export-button [tex]="res.B.tex" [maxima]="res.B.maxima" [mathEl]="fiBEl" filename="fourier-integral-B" [label]="'B(' + transVar() + ')'" />
+                  </div>
                 </div>
               }
 
               @if (res.C) {
                 <div class="flex flex-col gap-1">
-                  <p class="text-xs text-muted dark:text-dark-muted font-mono">
-                    C(ω) = (1/2π) ∫ f(v) e<sup>−iωv</sup> dv
+                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                    C({{ transVar() }}) = (1/2π) ∫ f({{ intVar() }}) e<sup>−i{{ transVar() }}{{ intVar() }}</sup> d{{ intVar() }}
                   </p>
-                  <div [mathjax]="display(res.C.tex)"></div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span #fiCEl [mathjax]="display(res.C.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                    <app-export-button [tex]="res.C.tex" [maxima]="res.C.maxima" [mathEl]="fiCEl" filename="fourier-integral-C" [label]="'C(' + transVar() + ')'" />
+                  </div>
                 </div>
               }
 
               @if (res.realPart) {
                 <div class="flex flex-col gap-1">
-                  <p class="text-xs text-muted dark:text-dark-muted font-mono">Re C(ω)</p>
-                  <div [mathjax]="display(res.realPart.tex)"></div>
+                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">Re C({{ transVar() }})</p>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span #fiRealEl [mathjax]="display(res.realPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                    <app-export-button [tex]="res.realPart.tex" [maxima]="res.realPart.maxima" [mathEl]="fiRealEl" filename="fourier-integral-real" [label]="'Re C(' + transVar() + ')'" />
+                  </div>
                 </div>
               }
 
               @if (res.imagPart) {
                 <div class="flex flex-col gap-1">
-                  <p class="text-xs text-muted dark:text-dark-muted font-mono">Im C(ω)</p>
-                  <div [mathjax]="display(res.imagPart.tex)"></div>
+                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">Im C({{ transVar() }})</p>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span #fiImagEl [mathjax]="display(res.imagPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                    <app-export-button [tex]="res.imagPart.tex" [maxima]="res.imagPart.maxima" [mathEl]="fiImagEl" filename="fourier-integral-imag" [label]="'Im C(' + transVar() + ')'" />
+                  </div>
                 </div>
               }
             </div>
 
             <!-- Reconstruction section -->
             @if (showReconstruction()) {
-              <div class="rounded-xl border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-5 py-4 flex flex-col gap-3">
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-3">
                 <div>
                   <p class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
                     {{ 'fourier-integral.reconstruction' | transloco }}
                   </p>
-                  <p class="text-xs text-muted font-mono mt-0.5">
+                  <p class="text-xs text-muted dark:text-dark-muted font-mono mt-0.5">
                     {{ 'fourier-integral.upperLimit' | transloco: { a: upperLimit() } }}
                   </p>
                 </div>
