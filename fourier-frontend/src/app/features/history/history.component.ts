@@ -189,6 +189,10 @@ export class HistoryComponent implements OnInit {
       this.router.navigate(['/' + lang + '/transforms/continuous'], {
         state: { restoreInput: { ...inp, type: entry.type } },
       });
+    } else if (entry.type === 'fourier_integral') {
+      this.router.navigate(['/' + lang + '/fourier-integral'], {
+        state: { restoreInput: inp },
+      });
     } else {
       this.router.navigate(['/' + lang + '/calculator'], { state: { restoreInput: inp } });
     }

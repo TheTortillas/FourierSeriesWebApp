@@ -13,8 +13,9 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, map, of, Subject, switchMap, tap } from 'rxjs';
+import { catchError, debounceTime, filter, map, of, Subject, switchMap, take, tap, timer } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { Router, ActivatedRoute } from '@angular/router';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -115,6 +116,8 @@ export class FourierIntegralComponent implements OnInit {
   private readonly transloco = inject(TranslocoService);
   private readonly seo = inject(SeoService);
   private readonly intervalValidator = inject(LatexToMaximaService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly ngZone = inject(NgZone);
   readonly destroyRef = inject(DestroyRef);
 
@@ -382,7 +385,56 @@ export class FourierIntegralComponent implements OnInit {
     }];
   });
 
+  private urlPopulated = false;
+
   constructor() {
+    // ── 1. Restore state from router navigation state or URL ──────────────
+    const navState = this.router.getCurrentNavigation()?.extras.state as
+      | { restoreInput?: Record<string, unknown> }
+      | undefined;
+    const encoded = this.route.snapshot.queryParamMap.get('s');
+    let needsCalculate = false;
+    if (navState?.restoreInput) {
+      this.restoreFromInput(navState.restoreInput);
+      needsCalculate = true;
+    } else if (encoded) {
+      needsCalculate = this.restoreState(encoded);
+    }
+
+    // ── 2. Auto-calculate once auth is initialized ────────────────────────
+    const canCalculate$ = toObservable(this.canCalculate);
+    if (needsCalculate) {
+      toObservable(this.userStore.initialized)
+        .pipe(
+          filter(Boolean),
+          take(1),
+          switchMap(() => timer(0)),
+          switchMap(() => canCalculate$.pipe(filter(Boolean), take(1))),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe(() => this.calculate());
+    }
+
+    // ── 3. Sync result → URL ──────────────────────────────────────────────
+    effect(() => {
+      const res = this.coeffResult();
+      if (res) {
+        this.urlPopulated = true;
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { s: this.encodeState() },
+          replaceUrl: true,
+        });
+      } else if (this.urlPopulated) {
+        this.urlPopulated = false;
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true,
+        });
+      }
+    });
+
     // Riemann reconstruction — re-runs reactively when any input changes,
     // debounced 80ms so continuous slider drag doesn't block the UI thread.
     let _rTimer: ReturnType<typeof setTimeout> | null = null;
@@ -598,8 +650,11 @@ export class FourierIntegralComponent implements OnInit {
       .calculateFourierIntegralCoefficients({
         segments: this.segments().map((s) => ({
           expression: s.expression,
+          expressionTex: s.expressionTex,
           from: s.from,
+          fromTex: s.fromTex,
           to: s.to,
+          toTex: s.toTex,
         })),
         variant: this.variant(),
         intVar: this.intVar(),
@@ -761,5 +816,107 @@ export class FourierIntegralComponent implements OnInit {
 
   display(tex: string): string {
     return `\\[${tex}\\]`;
+  }
+
+  // ── State encode / restore (share URL + history) ──────────────────────────
+
+  encodeState(): string {
+    const state = {
+      v: this.variant(),
+      vp: this.selectedPairId(),
+      civ: this.customIntVar(),
+      ctv: this.customTransVar(),
+      seg: this.segments().map((s) => ({
+        e: s.expression,
+        et: s.expressionTex,
+        f: s.from,
+        ft: s.fromTex,
+        t: s.to,
+        tt: s.toTex,
+      })),
+    };
+    try {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    } catch {
+      return '';
+    }
+  }
+
+  restoreState(encoded: string): boolean {
+    try {
+      const json = decodeURIComponent(escape(atob(encoded)));
+      const s = JSON.parse(json) as {
+        v?: string;
+        vp?: string;
+        civ?: string;
+        ctv?: string;
+        seg: Array<{ e: string; et: string; f: string; ft: string; t: string; tt: string }>;
+      };
+      if (!Array.isArray(s.seg) || !s.seg.length) return false;
+
+      const validVariants: FourierIntegralVariant[] = ['trigonometric', 'complex', 'cosine', 'sine'];
+      if (s.v && validVariants.includes(s.v as FourierIntegralVariant)) {
+        this.variant.set(s.v as FourierIntegralVariant);
+      }
+      if (s.vp) this.selectedPairId.set(s.vp);
+      if (s.civ) this.customIntVar.set(s.civ);
+      if (s.ctv) this.customTransVar.set(s.ctv);
+      this.segments.set(
+        s.seg.map((seg) => ({
+          id: mkId(),
+          expression: seg.e ?? '',
+          expressionTex: seg.et ?? '',
+          from: seg.f ?? '',
+          fromTex: seg.ft ?? '',
+          to: seg.t ?? '',
+          toTex: seg.tt ?? '',
+        })),
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  restoreFromInput(input: Record<string, unknown>): void {
+    const rawSegs = input['segments'] as
+      | Array<{
+          expression: string;
+          expressionTex?: string;
+          from: string;
+          fromTex?: string;
+          to: string;
+          toTex?: string;
+        }>
+      | undefined;
+    if (!rawSegs?.length) return;
+
+    const variant = input['variant'] as FourierIntegralVariant | undefined;
+    if (variant) this.variant.set(variant);
+
+    const intVar = input['intVar'] as string | undefined;
+    const transVar = input['transVar'] as string | undefined;
+    if (intVar && transVar) {
+      const match = FI_VAR_PAIRS.find((p) => p.intVar === intVar && p.transVar === transVar);
+      if (match) {
+        this.selectedPairId.set(match.id);
+      } else {
+        this.selectedPairId.set('custom');
+        this.customIntVar.set(intVar);
+        this.customTransVar.set(transVar);
+      }
+    }
+
+    this.segments.set(
+      rawSegs.map((seg) => ({
+        id: mkId(),
+        expression: seg.expression ?? '',
+        expressionTex: seg.expressionTex ?? seg.expression ?? '',
+        from: seg.from ?? '',
+        fromTex: seg.fromTex ?? seg.from ?? '',
+        to: seg.to ?? '',
+        toTex: seg.toTex ?? seg.to ?? '',
+      })),
+    );
   }
 }
