@@ -198,7 +198,13 @@
     "tabValidation": "Validation",
     "tabValidationDesc": "Convergence & errors",
     "tabParseval": "Parseval",
-    "tabParsevalDesc": "Energy identity"
+    "tabParsevalDesc": "Energy identity",
+    "layers": "Layers",
+    "reconstruction": "Reconstruction",
+    "xAxis": "X axis",
+    "color": "Color",
+    "width": "Width",
+    "dashed": "Dashed"
   },
   "resultPanel": {
     "sine": "Sine",
@@ -965,7 +971,9 @@
     "sine": "Sine Integral",
     "reconstruction": "Reconstruction",
     "upperLimit": "Upper limit a = {{a}}",
-    "gibbs": "Move the slider to see the Gibbs phenomenon"
+    "gibbs": "Move the slider to see the Gibbs phenomenon",
+    "intVar": "Integration variable",
+    "transVar": "Transform variable"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",

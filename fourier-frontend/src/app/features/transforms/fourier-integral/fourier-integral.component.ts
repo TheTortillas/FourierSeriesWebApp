@@ -10,6 +10,7 @@ import {
   viewChild,
   ElementRef,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -24,6 +25,7 @@ import {
   FunctionPlotComponent,
   PlotLayer,
 } from '../../../shared/components/function-plot/function-plot.component';
+import { Curve } from '../../../core/services/canvas/canvas.types';
 import { ApiService } from '../../../core/services/api/api.service';
 import { UserStore } from '../../../core/services/auth/user.store';
 import { formatApiError } from '../../../shared/utils/api-error.utils';
@@ -94,6 +96,7 @@ const FI_VAR_PAIRS: FiVarPair[] = [
   selector: 'app-fourier-integral',
   templateUrl: './fourier-integral.component.html',
   imports: [
+    NgTemplateOutlet,
     NavComponent,
     MathjaxDirective,
     FunctionPlotComponent,
@@ -183,6 +186,7 @@ export class FourierIntegralComponent implements OnInit {
   readonly upperLimitMax = 64;
   readonly showReconstruction = signal(false);
   readonly reconstructPoints = signal<ReconstructPoint[]>([]);
+  readonly reconstructFn = signal<((x: number) => number) | null>(null);
 
   // ── Interval validation ───────────────────────────────────────────────────
   readonly continuityErrors = signal<(string | null)[]>([null]);
@@ -227,9 +231,11 @@ export class FourierIntegralComponent implements OnInit {
     return { symbol: name, value: pv[name] ?? 1 };
   });
 
-  // ── Fullscreen / share / favorite ─────────────────────────────────────────
+  // ── Fullscreen / share / favorite / mobile ────────────────────────────────
+  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
   readonly isFullscreen = signal(false);
   readonly urlCopied = signal(false);
+  readonly showShareDialog = signal(false);
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly favoriteLoading = signal(false);
   readonly showFavoriteDialog = signal(false);
@@ -320,66 +326,50 @@ export class FourierIntegralComponent implements OnInit {
   // ── Canvas layers ─────────────────────────────────────────────────────────
 
   readonly layers = computed<PlotLayer[]>(() => {
-    // Read ALL reactive signals here so the computed tracks them
-    const pts = this.reconstructPoints();
-    const segs = this.segments();
-    const pv = this.evaluationParams();
+    const pts     = this.reconstructPoints();
+    const segs    = this.segments();
+    const pv      = this.evaluationParams();
     const intVariable = this.intVar();
-    const origColor = this.originalColor();
-    const recColor = this.reconstructColor();
-    const showOrig = this.showOriginal();
-    const showRec = this.showReconstruct();
-    const origLW = this.originalLineWidth();
-    const recLW = this.reconstructLineWidth();
+    const origColor  = this.originalColor();
+    const recColor   = this.reconstructColor();
+    const showOrig   = this.showOriginal();
+    const showRec    = this.showReconstruct();
+    const origLW     = this.originalLineWidth();
+    const recLW      = this.reconstructLineWidth();
     const origDashed = this.originalDashed();
-    const recDashed = this.reconstructDashed();
+    const recDashed  = this.reconstructDashed();
 
-    // Snapshot all values so onDraw closure always has fresh data
+    // Pre-sampled MathPoints passed as a Curve: drawCurve converts to screen coords
+    // on every frame so zoom works correctly without recomputing the Riemann sum.
+    const recCurves: Curve[] = (showRec && pts.length >= 2)
+      ? [{ points: pts, color: recColor, lineWidth: recLW, dashed: recDashed }]
+      : [];
+
     return [{
-      curves: [],
+      curves: recCurves,
       onDraw: (ctx, vp) => {
-        // Original function (dashed red)
-        if (showOrig) {
-          const pieces: { fn: (x: number) => number; from: number; to: number }[] = [];
-          for (const seg of segs) {
-            if (!seg.expression || !seg.from || !seg.to) continue;
-            const from = seg.from === 'minf' || seg.from === '-inf'
-              ? -Infinity
-              : this.mathUtils.evaluate(seg.from, 0, '_');
-            const to = seg.to === 'inf'
-              ? Infinity
-              : this.mathUtils.evaluate(seg.to, 0, '_');
-            const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
-            if (!fn) continue;
-            if (isFinite(from) && isFinite(to)) {
-              pieces.push({ fn, from, to });
-            } else {
-              const gated = (x: number) =>
-                x >= (isFinite(from) ? from : -Infinity) && x <= (isFinite(to) ? to : Infinity) ? fn(x) : NaN;
-              this.plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW, dashed: origDashed });
-            }
-          }
-          if (pieces.length > 0) {
-            this.plotter.plotPiecewise(ctx, pieces, vp, { color: origColor, lineWidth: origLW, dashed: origDashed });
+        if (!showOrig) return;
+        const pieces: { fn: (x: number) => number; from: number; to: number }[] = [];
+        for (const seg of segs) {
+          if (!seg.expression || !seg.from || !seg.to) continue;
+          const from = seg.from === 'minf' || seg.from === '-inf'
+            ? -Infinity
+            : this.mathUtils.evaluate(seg.from, 0, '_');
+          const to = seg.to === 'inf'
+            ? Infinity
+            : this.mathUtils.evaluate(seg.to, 0, '_');
+          const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
+          if (!fn) continue;
+          if (isFinite(from) && isFinite(to)) {
+            pieces.push({ fn, from, to });
+          } else {
+            const gated = (x: number) =>
+              x >= (isFinite(from) ? from : -Infinity) && x <= (isFinite(to) ? to : Infinity) ? fn(x) : NaN;
+            this.plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW, dashed: origDashed });
           }
         }
-
-        // Reconstruction (solid blue)
-        if (showRec && pts.length >= 2) {
-          ctx.beginPath();
-          ctx.strokeStyle = recColor;
-          ctx.lineWidth = recLW;
-          ctx.setLineDash(recDashed ? [6, 3] : []);
-          let started = false;
-          for (const pt of pts) {
-            const cx = this.coordTransform.mathToScreenX(pt.x, vp);
-            const cy = this.coordTransform.mathToScreenY(pt.y, vp);
-            if (!isFinite(cy) || Math.abs(cy) > 1e6) { started = false; continue; }
-            if (!started) { ctx.moveTo(cx, cy); started = true; }
-            else ctx.lineTo(cx, cy);
-          }
-          ctx.stroke();
-          ctx.setLineDash([]);
+        if (pieces.length > 0) {
+          this.plotter.plotPiecewise(ctx, pieces, vp, { color: origColor, lineWidth: origLW, dashed: origDashed });
         }
       },
     }];
@@ -450,60 +440,83 @@ export class FourierIntegralComponent implements OnInit {
       if (_rTimer) clearTimeout(_rTimer);
 
       if (!res?.exists || !show) {
+        this.reconstructFn.set(null);
         this.reconstructPoints.set([]);
         return;
       }
 
-      // Run computation outside Zone so Zone.js doesn't trigger extra CD cycles,
-      // then re-enter Zone to set the signal and trigger change detection properly.
+      // Compute a dense table of MathPoints once. drawCurve handles the
+      // math→screen transform on every redraw, so zoom works correctly
+      // without recomputing. NX=1500 gives smooth curves at any resolution.
       this.ngZone.runOutsideAngular(() => {
         _rTimer = setTimeout(() => {
-          const aFn = res.A?.maxima ? this.mathUtils.compile(res.A.maxima, tv, pv) : null;
-          const bFn = res.B?.maxima ? this.mathUtils.compile(res.B.maxima, tv, pv) : null;
+          const aFn   = (variant !== 'sine'   && res.A?.maxima)        ? this.mathUtils.compile(res.A.maxima,        tv, pv) : null;
+          const bFn   = (variant !== 'cosine' && res.B?.maxima)        ? this.mathUtils.compile(res.B.maxima,        tv, pv) : null;
           const cReFn = res.realPart?.maxima ? this.mathUtils.compile(res.realPart.maxima, tv, pv) : null;
           const cImFn = res.imagPart?.maxima ? this.mathUtils.compile(res.imagPart.maxima, tv, pv) : null;
 
-          const evalBound = (v: string) => {
-            const n = this.mathUtils.evaluate(v, 0, '_');
-            return isFinite(n) ? n : NaN;
-          };
-          const segMins = segs.map(s => { const n = evalBound(s.from); return isFinite(n) ? n : -4; });
-          const segMaxs = segs.map(s => { const n = evalBound(s.to);   return isFinite(n) ? n :  4; });
-          const xMin = Math.min(-4, ...segMins) - 2;
-          const xMax = Math.max(4, ...segMaxs) + 2;
-          const NX = 500;
-          const NW = 1000;
-          const dw = limit / NW;
+          const NW  = 600;
+          const NX  = 1500;
 
+          // Precompute w-grid values into typed arrays (evaluated once per coefficient change)
+          let wArr: Float64Array, reA: Float64Array, imA: Float64Array;
+          if (variant === 'complex') {
+            const dw2 = (2 * limit) / NW;
+            wArr = new Float64Array(NW + 1);
+            reA  = new Float64Array(NW + 1);
+            imA  = new Float64Array(NW + 1);
+            for (let j = 0; j <= NW; j++) {
+              const w    = -limit + j * dw2;
+              const absW = Math.abs(w) < 1e-10 ? 1e-10 : Math.abs(w);
+              const wt   = (j === 0 || j === NW) ? dw2 * 0.5 : dw2;
+              wArr[j] = w;
+              reA[j]  = (cReFn ? cReFn(absW) : 0) * wt;
+              imA[j]  = (cImFn ? cImFn(absW) : 0) * Math.sign(w) * wt;
+            }
+          } else {
+            const dw = limit / NW;
+            wArr = new Float64Array(NW + 1);
+            reA  = new Float64Array(NW + 1);
+            imA  = new Float64Array(NW + 1);
+            for (let j = 0; j <= NW; j++) {
+              const w    = j * dw;
+              const wSafe = w === 0 ? 1e-10 : w;
+              const wt   = (j === 0 || j === NW) ? dw * 0.5 : dw;
+              wArr[j] = w;
+              reA[j]  = (aFn ? (aFn(wSafe) || 0) : 0) * wt;
+              imA[j]  = (bFn ? (bFn(wSafe) || 0) : 0) * wt;
+            }
+          }
+
+          // Determine x range from segment bounds
+          const evalB = (v: string) => { const n = this.mathUtils.evaluate(v, 0, '_'); return isFinite(n) ? n : NaN; };
+          const xMins = segs.map(s => { const n = evalB(s.from); return isFinite(n) ? n : -4; });
+          const xMaxs = segs.map(s => { const n = evalB(s.to);   return isFinite(n) ? n :  4; });
+          const xMin  = Math.min(-6, ...xMins) - 2;
+          const xMax  = Math.max( 6, ...xMaxs) + 2;
+
+          // Sample reconstruction at NX evenly-spaced x points
           const points: ReconstructPoint[] = [];
           for (let xi = 0; xi < NX; xi++) {
             const x = xMin + (xi / (NX - 1)) * (xMax - xMin);
             let y = 0;
             if (variant === 'complex') {
-              const dw2 = (2 * limit) / NW;
               for (let j = 0; j <= NW; j++) {
-                const w = -limit + j * dw2;
-                const wt = (j === 0 || j === NW) ? dw2 * 0.5 : dw2;
-                const absW = Math.abs(w) < 1e-10 ? 1e-10 : Math.abs(w);
-                const re = cReFn ? cReFn(absW) : 0;
-                const im = cImFn ? cImFn(absW) : 0;
-                const contrib = (re * Math.cos(w * x) - im * Math.sign(w) * Math.sin(absW * x)) * wt;
-                if (isFinite(contrib)) y += contrib;
+                const w = wArr[j];
+                const c = reA[j] * Math.cos(w * x) - imA[j] * Math.sin(Math.abs(w) * x);
+                if (isFinite(c)) y += c;
               }
             } else {
               for (let j = 0; j <= NW; j++) {
-                const w = j * dw;
-                const wt = (j === 0 || j === NW) ? dw * 0.5 : dw;
-                const a = (variant !== 'sine' && aFn) ? (w === 0 ? (aFn(1e-10) || 0) : aFn(w)) : 0;
-                const b = (variant !== 'cosine' && bFn) ? (w === 0 ? (bFn(1e-10) || 0) : bFn(w)) : 0;
-                const contrib = (a * Math.cos(w * x) + b * Math.sin(w * x)) * wt;
-                if (isFinite(contrib)) y += contrib;
+                const c = reA[j] * Math.cos(wArr[j] * x) + imA[j] * Math.sin(wArr[j] * x);
+                if (isFinite(c)) y += c;
               }
             }
             if (isFinite(y)) points.push({ x, y });
           }
 
           this.ngZone.run(() => {
+            this.reconstructFn.set(null);
             this.reconstructPoints.set(points);
             this.plotComponent()?.redraw();
           });
@@ -584,6 +597,13 @@ export class FourierIntegralComponent implements OnInit {
       document.addEventListener('fullscreenchange', handler);
       this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
     }
+
+    // Track viewport width for mobile panel layout
+    if (typeof window !== 'undefined') {
+      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
+      window.addEventListener('resize', onResize);
+      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
+    }
   }
 
   ngOnInit(): void {
@@ -627,10 +647,12 @@ export class FourierIntegralComponent implements OnInit {
 
   startNewCalculation(): void {
     this.coeffResult.set(null);
+    this.reconstructFn.set(null);
     this.reconstructPoints.set([]);
     this.errorMsg.set(null);
     this.showReconstruction.set(false);
     this.showCanvasSettings.set(false);
+    this.showShareDialog.set(false);
     this.paramValues.set({});
     this.paramSliders()?.reset();
     this.latestHistoryEntry.set(null);
@@ -708,7 +730,16 @@ export class FourierIntegralComponent implements OnInit {
     a.click();
   }
 
-  async shareUrl(): Promise<void> {
+  get shareHref(): string {
+    if (typeof window === 'undefined') return '';
+    return window.location.href;
+  }
+
+  openShareDialog(): void {
+    this.showShareDialog.set(true);
+  }
+
+  async copyShareUrl(): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
       await navigator.clipboard.writeText(window.location.href);
