@@ -184,6 +184,7 @@ export const CALC_TYPE_LABEL: Record<string, string> = {
   dft_signal:                'DFT señal',
   dft_function:              'DFT función',
   dft_epicycles:             'DFT epiciclos',
+  fourier_integral:          'Int. Fourier',
 };
 
 export interface CalcTypeStat {

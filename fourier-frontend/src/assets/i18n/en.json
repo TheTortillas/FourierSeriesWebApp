@@ -504,7 +504,8 @@
       "inverseFourierTransform": "Inv. Transform",
       "dftSignal": "DFT signal",
       "dftFunction": "DFT function",
-      "dftEpicycles": "DFT epicycles"
+      "dftEpicycles": "DFT epicycles",
+      "fourierIntegral": "Fourier Integral"
     }
   },
   "auth": {
