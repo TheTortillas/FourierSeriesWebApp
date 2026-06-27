@@ -94,6 +94,12 @@ kill(all)$
     const inputImagMaxima = this.extractBetween(raw, "__INPUT_IMAG_MAXIMA__", "__INPUT_IMAG_TEX__").replace(/\bfalse\b/g, "").trim();
     const inputImagTex    = this.extractTex(this.extractBetween(raw, "__INPUT_IMAG_TEX__", "__PARAMS__"));
 
+    const paramsSection = this.extractBetween(raw, "__PARAMS__", null);
+    const paramsMatch   = paramsSection.match(/\[([^\]]*)\]/);
+    const params = paramsMatch && paramsMatch[1].trim()
+      ? paramsMatch[1].split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+
     return {
       input,
       exists,
@@ -102,6 +108,7 @@ kill(all)$
       B: exists && input.variant !== "cosine" ? this.toSymbolic(bMaxima, bTex) : undefined,
       inputRealPart: this.toSymbolic(inputRealMaxima, inputRealTex),
       inputImagPart: this.toSymbolic(inputImagMaxima, inputImagTex),
+      params,
       executionTimeMs: Date.now() - startTime,
     };
   }
@@ -133,7 +140,7 @@ kill(all)$
 
     const raw = result.raw;
     const exists =
-      this.extractBetween(raw, "__EXISTS__", "__C_MAXIMA__").replace(/false/g, "").trim() === "true";
+      this.extractBetween(raw, "__EXISTS__", "__FI_TEX__").replace(/false/g, "").trim() === "true";
 
     const fourierIntegralTex = this.extractBetween(raw, "__FI_TEX__", "__C_MAXIMA__").trim();
     const cMaxima     = this.extractBetween(raw, "__C_MAXIMA__",      "__C_TEX__").replace(/false/g, "").trim();

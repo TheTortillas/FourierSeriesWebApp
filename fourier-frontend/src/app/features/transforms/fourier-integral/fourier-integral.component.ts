@@ -13,7 +13,9 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, map, of, switchMap } from 'rxjs';
+import { catchError, debounceTime, map, of, Subject, switchMap, tap } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -55,6 +57,18 @@ function defaultSegment(): TransformSegmentDraft {
     fromTex: '-1',
     to: '1',
     toTex: '1',
+  };
+}
+
+function emptySegment(): TransformSegmentDraft {
+  return {
+    id: mkId(),
+    expression: '',
+    expressionTex: '',
+    from: '',
+    fromTex: '',
+    to: '',
+    toTex: '',
   };
 }
 
@@ -100,6 +114,7 @@ export class FourierIntegralComponent implements OnInit {
   readonly mathUtils = inject(MathUtilsService);
   private readonly transloco = inject(TranslocoService);
   private readonly seo = inject(SeoService);
+  private readonly intervalValidator = inject(LatexToMaximaService);
   private readonly ngZone = inject(NgZone);
   readonly destroyRef = inject(DestroyRef);
 
@@ -166,6 +181,11 @@ export class FourierIntegralComponent implements OnInit {
   readonly showReconstruction = signal(false);
   readonly reconstructPoints = signal<ReconstructPoint[]>([]);
 
+  // ── Interval validation ───────────────────────────────────────────────────
+  readonly continuityErrors = signal<(string | null)[]>([null]);
+  readonly orderErrors = signal<boolean[]>([false]);
+  readonly continuityValidating = signal(false);
+
   // ── Canvas settings ───────────────────────────────────────────────────────
   readonly showCanvasSettings = signal(false);
   readonly showOriginal = signal(true);
@@ -182,6 +202,16 @@ export class FourierIntegralComponent implements OnInit {
   readonly paramValues = signal<ParamValues>({});
 
   readonly activeParams = computed<string[]>(() => this.coeffResult()?.params ?? []);
+
+  readonly evaluationParams = computed<ParamValues>(() => {
+    const names = this.activeParams();
+    const pv = this.paramValues();
+    const merged: ParamValues = { ...pv };
+    for (const name of names) {
+      if (!Number.isFinite(merged[name])) merged[name] = 1;
+    }
+    return merged;
+  });
 
   /** Name of param used for custom axis unit (null = first param). */
   readonly customConstName = signal<string | null>(null);
@@ -223,7 +253,10 @@ export class FourierIntegralComponent implements OnInit {
   readonly transVar = computed(() => this.activePair().transVar);
 
   readonly canCalculate = computed(() =>
-    this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()),
+    this.segments().every((s) => s.expression.trim() && s.from.trim() && s.to.trim()) &&
+    !this.continuityValidating() &&
+    this.continuityErrors().every((e) => e === null) &&
+    this.orderErrors().every((e) => !e),
   );
 
   readonly hasResult = computed(() => this.coeffResult() !== null);
@@ -287,7 +320,7 @@ export class FourierIntegralComponent implements OnInit {
     // Read ALL reactive signals here so the computed tracks them
     const pts = this.reconstructPoints();
     const segs = this.segments();
-    const pv = this.paramValues();
+    const pv = this.evaluationParams();
     const intVariable = this.intVar();
     const origColor = this.originalColor();
     const recColor = this.reconstructColor();
@@ -357,7 +390,7 @@ export class FourierIntegralComponent implements OnInit {
       const res = this.coeffResult();
       const limit = this.upperLimit();
       const show = this.showReconstruction();
-      const pv = this.paramValues();
+      const pv = this.evaluationParams();
       const tv = this.transVar();
       const variant = this.variant();
       const segs = this.segments();
@@ -426,6 +459,59 @@ export class FourierIntegralComponent implements OnInit {
       });
     });
 
+    // ── Interval validation (continuity + order) ─────────────────────────
+    toObservable(this.segments)
+      .pipe(
+        tap((segs) => {
+          if (segs.some((s) => s.from && s.to) || segs.length > 1)
+            this.continuityValidating.set(true);
+        }),
+        debounceTime(600),
+        switchMap((segs) => {
+          const pairIndices: number[] = [];
+          const pairs: Array<{ a: string; b: string }> = [];
+          for (let i = 0; i < segs.length - 1; i++) {
+            if (segs[i].to && segs[i + 1].from) {
+              pairIndices.push(i);
+              pairs.push({ a: segs[i].to, b: segs[i + 1].from });
+            }
+          }
+          const orderIndices: number[] = [];
+          const orderPairs: Array<{ a: string; b: string }> = [];
+          for (let i = 0; i < segs.length; i++) {
+            if (segs[i].from && segs[i].to) {
+              orderIndices.push(i);
+              orderPairs.push({ a: segs[i].from, b: segs[i].to });
+            }
+          }
+          if (pairs.length === 0 && orderPairs.length === 0) {
+            return of({
+              continuity: segs.map(() => null as string | null),
+              order: segs.map(() => false),
+            });
+          }
+          return this.intervalValidator.validateBoundaries({ pairs, orderPairs }).pipe(
+            switchMap((res) => {
+              const continuity: (string | null)[] = segs.map(() => null);
+              res.results.forEach((r, ri) => {
+                if (r === 'different') continuity[pairIndices[ri]] = 'calculator.segment.continuityGap';
+              });
+              const order: boolean[] = segs.map(() => false);
+              res.orderResults.forEach((r, ri) => {
+                if (r === 'invalid') order[orderIndices[ri]] = true;
+              });
+              return of({ continuity, order });
+            }),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ continuity, order }) => {
+        this.continuityErrors.set(continuity);
+        this.orderErrors.set(order);
+        this.continuityValidating.set(false);
+      });
+
     // Sync colors with theme
     effect(() => {
       void this.theme.theme();
@@ -469,7 +555,11 @@ export class FourierIntegralComponent implements OnInit {
     if (this.inputsLocked()) return;
     this.segments.update((segs) => [
       ...segs,
-      { ...defaultSegment(), id: mkId(), from: segs.at(-1)?.to ?? '', fromTex: segs.at(-1)?.toTex ?? '' },
+      {
+        ...emptySegment(),
+        from: segs.at(-1)?.to ?? '',
+        fromTex: segs.at(-1)?.toTex ?? '',
+      },
     ]);
   }
 

@@ -135,4 +135,17 @@ print("__INPUT_REAL_MAXIMA__")$ print(string(F_in_real))$
 print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else print("")$
 print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$
 print("__INPUT_IMAG_TEX__")$    if F_in_imag # false then tex(F_in_imag) else print("")$
-print("__PARAMS__")$         print(string([]))$
+block([_all_vars, _reserved, _params, _s],
+  _reserved: [TRANSVAR, INTVAR],
+  _all_vars: append(
+    if A_raw # false then listofvars(A_raw) else [],
+    if B_raw # false then listofvars(B_raw) else []
+  ),
+  _params: [],
+  for _s in _all_vars do (
+    if not member(_s, _reserved) and not member(_s, _params) then
+      _params: append(_params, [_s])
+  ),
+  free_params: _params
+)$
+print("__PARAMS__")$         print(string(free_params))$
