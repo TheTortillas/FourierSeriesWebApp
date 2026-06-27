@@ -73,7 +73,8 @@ B_raw: if B_raw = [] then false else first(B_raw)$
 B_raw: if B_raw # false and not freeof(gamma_incomplete, B_raw)
        then clean_integral(B_raw, TRANSVAR) else B_raw$
 
-exists: (A_raw # false or B_raw # false)$
+/* exists=true only when at least one non-zero symbolic coefficient was found */
+exists: (A_raw # false and A_raw # 0) or (B_raw # false and B_raw # 0)$
 
 /* Build f_in_expr for plotting using unit step gates (same as fourier_transform.mac) */
 block([_i, _e, _a, _b, _gate],
@@ -93,22 +94,36 @@ block([_i, _e, _a, _b, _gate],
 F_in_real: if freeof(%i, f_in_expr) then f_in_expr else realpart(f_in_expr)$
 F_in_imag: if freeof(%i, f_in_expr) then 0 else imagpart(f_in_expr)$
 
-/* Build the full Fourier Integral formula as a TeX string */
+/* Helpers to detect a truly-zero coefficient */
+_is_zero(expr) := (expr = false or expr = 0 or expr = 0.0)$
+
+/* TeX representations for the integration/transform variables.
+   w and xi get their Unicode symbols; anything else is rendered verbatim. */
+_tv_tex: if TRANSVAR = "w"  then "\\omega"
+         else if TRANSVAR = "xi" then "\\xi"
+         else TRANSVAR$
+_iv_tex: if INTVAR = "xi" then "\\xi" else INTVAR$
+
+/* Build the full Fourier Integral formula as a TeX string.
+   Omit terms whose coefficient is identically zero. */
 FI_tex: if not exists then ""
   else if VARIANT = "cosine" then
-    sconcat("f(x) = \\frac{2}{\\pi}\\int_0^{\\infty}\\left[",
-            if A_raw # false then tex1(A_raw) else "0",
-            "\\right]\\cos(\\omega x)\\,d\\omega")
+    sconcat("f(", _iv_tex, ") = \\frac{2}{\\pi}\\int_0^{\\infty}\\left[",
+            if not _is_zero(A_raw) then tex1(A_raw) else "0",
+            "\\right]\\cos(", _tv_tex, _iv_tex, ")\\,d", _tv_tex)
   else if VARIANT = "sine" then
-    sconcat("f(x) = \\frac{2}{\\pi}\\int_0^{\\infty}\\left[",
-            if B_raw # false then tex1(B_raw) else "0",
-            "\\right]\\sin(\\omega x)\\,d\\omega")
-  else
-    sconcat("f(x) = \\int_0^{\\infty}\\left[",
-            if A_raw # false then tex1(A_raw) else "0",
-            "\\cos(\\omega x)+",
-            if B_raw # false then tex1(B_raw) else "0",
-            "\\sin(\\omega x)\\right]d\\omega")$
+    sconcat("f(", _iv_tex, ") = \\frac{2}{\\pi}\\int_0^{\\infty}\\left[",
+            if not _is_zero(B_raw) then tex1(B_raw) else "0",
+            "\\right]\\sin(", _tv_tex, _iv_tex, ")\\,d", _tv_tex)
+  else block([_A_str, _B_str, _terms],
+    _A_str: if not _is_zero(A_raw) then sconcat(tex1(A_raw), "\\cos(", _tv_tex, _iv_tex, ")") else "",
+    _B_str: if not _is_zero(B_raw) then sconcat(tex1(B_raw), "\\sin(", _tv_tex, _iv_tex, ")") else "",
+    _terms: if _A_str # "" and _B_str # "" then sconcat(_A_str, "+", _B_str)
+            else if _A_str # "" then _A_str
+            else if _B_str # "" then _B_str
+            else "0",
+    sconcat("f(", _iv_tex, ") = \\int_0^{\\infty}\\left[", _terms, "\\right]d", _tv_tex)
+  )$
 
 print("__EXISTS__")$        print(string(exists))$
 print("__A_MAXIMA__")$      print(string(A_raw))$

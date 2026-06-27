@@ -698,17 +698,7 @@
                   <span class="text-xs text-muted font-mono w-8 shrink-0 text-right">{{ upperLimit() }}</span>
                 </div>
 
-                @if (reconstructLoading()) {
-                  <p class="text-xs text-muted dark:text-dark-muted font-mono flex items-center gap-1.5">
-                    <svg class="animate-spin w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
-                    {{ 'common.calculating' | transloco }}
-                  </p>
-                }
-
-                <p class="text-xs text-muted dark:text-dark-muted font-mono">
+<p class="text-xs text-muted dark:text-dark-muted font-mono">
                   {{ 'fourier-integral.gibbs' | transloco }}
                 </p>
               </div>

@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  NgZone,
   computed,
   effect,
   inject,
@@ -12,7 +13,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, map, of, Subject, switchMap } from 'rxjs';
+import { catchError, map, of, switchMap } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -37,7 +38,7 @@ import type { ParamValues } from '../../../shared/components/param-sliders/param
 import type {
   FourierIntegralVariant,
   FourierIntegralCoefficientsResponse,
-  FourierIntegralReconstructResponse,
+
   ReconstructPoint,
 } from '../../../domain/types/transform.types';
 import { HistoryEntry } from '../../../domain';
@@ -99,6 +100,7 @@ export class FourierIntegralComponent implements OnInit {
   readonly mathUtils = inject(MathUtilsService);
   private readonly transloco = inject(TranslocoService);
   private readonly seo = inject(SeoService);
+  private readonly ngZone = inject(NgZone);
   readonly destroyRef = inject(DestroyRef);
 
   showKeyboard = false;
@@ -153,7 +155,7 @@ export class FourierIntegralComponent implements OnInit {
   readonly coeffResult = signal<FourierIntegralCoefficientsResponse | null>(null);
 
   // ── Variable selector ─────────────────────────────────────────────────────
-  readonly selectedPairId = signal<string>('v-w');
+  readonly selectedPairId = signal<string>('t-w');
   readonly customIntVar = signal<string>('v');
   readonly customTransVar = signal<string>('w');
 
@@ -161,11 +163,8 @@ export class FourierIntegralComponent implements OnInit {
   readonly upperLimit = signal(8);
   readonly upperLimitMin = 1;
   readonly upperLimitMax = 64;
-  readonly reconstructPoints = signal<ReconstructPoint[]>([]);
-  readonly reconstructLoading = signal(false);
   readonly showReconstruction = signal(false);
-
-  private readonly sliderChange$ = new Subject<number>();
+  readonly reconstructPoints = signal<ReconstructPoint[]>([]);
 
   // ── Canvas settings ───────────────────────────────────────────────────────
   readonly showCanvasSettings = signal(false);
@@ -238,11 +237,8 @@ export class FourierIntegralComponent implements OnInit {
     return 'Integral Seno';
   });
 
-  /** Live LaTeX preview of the piecewise input function. */
+  /** Live LaTeX preview of the piecewise input function — always shows f(v), never the integral result. */
   readonly previewLatex = computed<string | null>(() => {
-    const res = this.coeffResult();
-    if (res?.fourierIntegralTex) return res.fourierIntegralTex;
-
     const segs = this.segments();
     const iv = this.intVar();
     if (segs.length === 0) return null;
@@ -288,13 +284,11 @@ export class FourierIntegralComponent implements OnInit {
   // ── Canvas layers ─────────────────────────────────────────────────────────
 
   readonly layers = computed<PlotLayer[]>(() => {
+    // Read ALL reactive signals here so the computed tracks them
     const pts = this.reconstructPoints();
     const segs = this.segments();
-    const plotter = this.plotter;
-    const mathUtils = this.mathUtils;
     const pv = this.paramValues();
     const intVariable = this.intVar();
-
     const origColor = this.originalColor();
     const recColor = this.reconstructColor();
     const showOrig = this.showOriginal();
@@ -304,44 +298,46 @@ export class FourierIntegralComponent implements OnInit {
     const origDashed = this.originalDashed();
     const recDashed = this.reconstructDashed();
 
-    const layer: PlotLayer = {
+    // Snapshot all values so onDraw closure always has fresh data
+    return [{
       curves: [],
       onDraw: (ctx, vp) => {
-        // Draw original function from segments
+        // Original function (dashed red)
         if (showOrig) {
-          const finitePieces: { fn: (x: number) => number; from: number; to: number }[] = [];
+          const pieces: { fn: (x: number) => number; from: number; to: number }[] = [];
           for (const seg of segs) {
             if (!seg.expression || !seg.from || !seg.to) continue;
-            const from = seg.from === 'minf' || seg.from === '-inf' ? -Infinity : parseFloat(seg.from);
-            const to = seg.to === 'inf' ? Infinity : parseFloat(seg.to);
-            const fn = mathUtils.compile(seg.expression, intVariable, pv);
+            const from = seg.from === 'minf' || seg.from === '-inf'
+              ? -Infinity
+              : this.mathUtils.evaluate(seg.from, 0, '_');
+            const to = seg.to === 'inf'
+              ? Infinity
+              : this.mathUtils.evaluate(seg.to, 0, '_');
+            const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
             if (!fn) continue;
             if (isFinite(from) && isFinite(to)) {
-              finitePieces.push({ fn, from, to });
+              pieces.push({ fn, from, to });
             } else {
               const gated = (x: number) =>
-                x >= (isFinite(from) ? from : -Infinity) && x <= (isFinite(to) ? to : Infinity)
-                  ? fn(x)
-                  : NaN;
-              plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW, dashed: origDashed });
+                x >= (isFinite(from) ? from : -Infinity) && x <= (isFinite(to) ? to : Infinity) ? fn(x) : NaN;
+              this.plotter.plotFn(ctx, gated, vp, { color: origColor, lineWidth: origLW, dashed: origDashed });
             }
           }
-          if (finitePieces.length > 0) {
-            plotter.plotPiecewise(ctx, finitePieces, vp, { color: origColor, lineWidth: origLW, dashed: origDashed });
+          if (pieces.length > 0) {
+            this.plotter.plotPiecewise(ctx, pieces, vp, { color: origColor, lineWidth: origLW, dashed: origDashed });
           }
         }
 
-        // Draw reconstructed points
+        // Reconstruction (solid blue)
         if (showRec && pts.length >= 2) {
-          const ct = this.coordTransform;
           ctx.beginPath();
           ctx.strokeStyle = recColor;
           ctx.lineWidth = recLW;
           ctx.setLineDash(recDashed ? [6, 3] : []);
           let started = false;
           for (const pt of pts) {
-            const cx = ct.mathToScreenX(pt.x, vp);
-            const cy = ct.mathToScreenY(pt.y, vp);
+            const cx = this.coordTransform.mathToScreenX(pt.x, vp);
+            const cy = this.coordTransform.mathToScreenY(pt.y, vp);
             if (!isFinite(cy) || Math.abs(cy) > 1e6) { started = false; continue; }
             if (!started) { ctx.moveTo(cx, cy); started = true; }
             else ctx.lineTo(cx, cy);
@@ -350,12 +346,86 @@ export class FourierIntegralComponent implements OnInit {
           ctx.setLineDash([]);
         }
       },
-    };
-
-    return [layer];
+    }];
   });
 
   constructor() {
+    // Riemann reconstruction — re-runs reactively when any input changes,
+    // debounced 80ms so continuous slider drag doesn't block the UI thread.
+    let _rTimer: ReturnType<typeof setTimeout> | null = null;
+    effect(() => {
+      const res = this.coeffResult();
+      const limit = this.upperLimit();
+      const show = this.showReconstruction();
+      const pv = this.paramValues();
+      const tv = this.transVar();
+      const variant = this.variant();
+      const segs = this.segments();
+
+      if (_rTimer) clearTimeout(_rTimer);
+
+      if (!res?.exists || !show) {
+        this.reconstructPoints.set([]);
+        return;
+      }
+
+      // Run computation outside Zone so Zone.js doesn't trigger extra CD cycles,
+      // then re-enter Zone to set the signal and trigger change detection properly.
+      this.ngZone.runOutsideAngular(() => {
+        _rTimer = setTimeout(() => {
+          const aFn = res.A?.maxima ? this.mathUtils.compile(res.A.maxima, tv, pv) : null;
+          const bFn = res.B?.maxima ? this.mathUtils.compile(res.B.maxima, tv, pv) : null;
+          const cReFn = res.realPart?.maxima ? this.mathUtils.compile(res.realPart.maxima, tv, pv) : null;
+          const cImFn = res.imagPart?.maxima ? this.mathUtils.compile(res.imagPart.maxima, tv, pv) : null;
+
+          const evalBound = (v: string) => {
+            const n = this.mathUtils.evaluate(v, 0, '_');
+            return isFinite(n) ? n : NaN;
+          };
+          const segMins = segs.map(s => { const n = evalBound(s.from); return isFinite(n) ? n : -4; });
+          const segMaxs = segs.map(s => { const n = evalBound(s.to);   return isFinite(n) ? n :  4; });
+          const xMin = Math.min(-4, ...segMins) - 2;
+          const xMax = Math.max(4, ...segMaxs) + 2;
+          const NX = 500;
+          const NW = 1000;
+          const dw = limit / NW;
+
+          const points: ReconstructPoint[] = [];
+          for (let xi = 0; xi < NX; xi++) {
+            const x = xMin + (xi / (NX - 1)) * (xMax - xMin);
+            let y = 0;
+            if (variant === 'complex') {
+              const dw2 = (2 * limit) / NW;
+              for (let j = 0; j <= NW; j++) {
+                const w = -limit + j * dw2;
+                const wt = (j === 0 || j === NW) ? dw2 * 0.5 : dw2;
+                const absW = Math.abs(w) < 1e-10 ? 1e-10 : Math.abs(w);
+                const re = cReFn ? cReFn(absW) : 0;
+                const im = cImFn ? cImFn(absW) : 0;
+                const contrib = (re * Math.cos(w * x) - im * Math.sign(w) * Math.sin(absW * x)) * wt;
+                if (isFinite(contrib)) y += contrib;
+              }
+            } else {
+              for (let j = 0; j <= NW; j++) {
+                const w = j * dw;
+                const wt = (j === 0 || j === NW) ? dw * 0.5 : dw;
+                const a = (variant !== 'sine' && aFn) ? (w === 0 ? (aFn(1e-10) || 0) : aFn(w)) : 0;
+                const b = (variant !== 'cosine' && bFn) ? (w === 0 ? (bFn(1e-10) || 0) : bFn(w)) : 0;
+                const contrib = (a * Math.cos(w * x) + b * Math.sin(w * x)) * wt;
+                if (isFinite(contrib)) y += contrib;
+              }
+            }
+            if (isFinite(y)) points.push({ x, y });
+          }
+
+          this.ngZone.run(() => {
+            this.reconstructPoints.set(points);
+            this.plotComponent()?.redraw();
+          });
+        }, 80);
+      });
+    });
+
     // Sync colors with theme
     effect(() => {
       void this.theme.theme();
@@ -385,38 +455,7 @@ export class FourierIntegralComponent implements OnInit {
       'Fourier integral, integral de Fourier, A(w), B(w), C(w), cosine integral, sine integral',
     );
 
-    // Debounce slider → reconstruct call
-    this.sliderChange$
-      .pipe(
-        debounceTime(400),
-        switchMap((limit) => {
-          if (!this.coeffResult()?.exists) return [];
-          this.reconstructLoading.set(true);
-          return this.api.calculateFourierIntegralReconstruct({
-            segments: this.segments().map((s) => ({
-              expression: s.expression,
-              from: s.from,
-              to: s.to,
-            })),
-            variant: this.variant(),
-            intVar: this.intVar(),
-            transVar: this.transVar(),
-            upperLimit: limit,
-            xMin: -4,
-            xMax: 4,
-            nPoints: 200,
-          });
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (res: FourierIntegralReconstructResponse) => {
-          this.reconstructPoints.set(res.points);
-          this.reconstructLoading.set(false);
-          this.plotComponent()?.redraw();
-        },
-        error: () => this.reconstructLoading.set(false),
-      });
+    // reconstruction is now a computed signal — no explicit trigger needed
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
@@ -464,7 +503,6 @@ export class FourierIntegralComponent implements OnInit {
     this.loading.set(true);
     this.errorMsg.set(null);
     this.coeffResult.set(null);
-    this.reconstructPoints.set([]);
 
     this.api
       .calculateFourierIntegralCoefficients({
@@ -484,7 +522,7 @@ export class FourierIntegralComponent implements OnInit {
           this.loading.set(false);
           this.showCanvasSettings.set(true);
           this.userStore.refreshQuota();
-          if (res.exists) this.triggerReconstruct();
+          if (res.exists) this.showReconstruction.set(true);
           if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
         },
         error: (e) => {
@@ -503,7 +541,6 @@ export class FourierIntegralComponent implements OnInit {
 
   onSliderInput(value: number): void {
     this.upperLimit.set(value);
-    this.sliderChange$.next(value);
   }
 
   toggleFullscreen(): void {
@@ -630,13 +667,6 @@ export class FourierIntegralComponent implements OnInit {
     } else {
       this.showFavoriteDialog.set(true);
     }
-  }
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  private triggerReconstruct(): void {
-    this.showReconstruction.set(true);
-    this.sliderChange$.next(this.upperLimit());
   }
 
   display(tex: string): string {
