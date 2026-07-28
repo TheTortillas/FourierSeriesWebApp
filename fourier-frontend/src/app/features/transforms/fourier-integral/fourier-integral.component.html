@@ -221,19 +221,19 @@
 
           <!-- Variant selector -->
           <section class="flex flex-col gap-2">
-            <p class="text-xs text-muted dark:text-dark-muted font-mono">Tipo de integral</p>
-            <div class="flex flex-wrap gap-2">
+            <p class="text-xs text-muted dark:text-dark-muted font-mono">{{ 'fourier-integral.integralType' | transloco }}</p>
+            <div class="grid grid-cols-2 gap-1.5">
               @for (v of variants; track v.id) {
                 <button
                   type="button"
                   (click)="setVariant(castVariant(v.id))"
                   [class]="
                     variant() === v.id
-                      ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
-                      : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'
+                      ? 'px-3 py-1.5 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer text-center'
+                      : 'px-3 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer text-center'
                   "
                 >
-                  {{ v.label }}
+                  {{ v.labelKey | transloco }}
                 </button>
               }
             </div>
@@ -502,6 +502,35 @@
 
             <div class="border-t border-border dark:border-dark-border"></div>
 
+            <!-- Upper integration limit slider (only when reconstruction is available) -->
+            @if (showReconstruction()) {
+              <section class="flex flex-col gap-2">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
+                    {{ 'fourier-integral.upperLimitLabel' | transloco }}
+                  </h4>
+                  <span
+                    class="w-3.5 h-3.5 rounded-full border border-muted dark:border-dark-muted text-muted dark:text-dark-muted flex items-center justify-center text-[9px] cursor-help shrink-0"
+                    [title]="'fourier-integral.upperLimitInfo' | transloco"
+                  >ⓘ</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-mono text-muted dark:text-dark-muted w-4 shrink-0">{{ upperLimitMin }}</span>
+                  <input
+                    type="range"
+                    [min]="upperLimitMin"
+                    [max]="upperLimitMax"
+                    [step]="1"
+                    [value]="upperLimit()"
+                    (input)="onSliderInput(+$any($event.target).value)"
+                    class="flex-1 accent-accent h-1.5"
+                  />
+                  <span class="text-[10px] font-mono text-muted dark:text-dark-muted w-6 shrink-0 text-right">{{ upperLimit() }}</span>
+                </div>
+              </section>
+              <div class="border-t border-border dark:border-dark-border"></div>
+            }
+
             <!-- Axis format -->
             <section class="flex flex-col gap-2">
               <h4 class="text-[10px] uppercase tracking-wider text-muted dark:text-dark-muted">
@@ -715,102 +744,77 @@
             }
 
             <!-- Coefficients card -->
-            <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-4">
+            <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-3">
               <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">
-                Coeficientes
+                {{ 'fourier-integral.coefficients' | transloco }}
               </span>
 
-              @if (res.A) {
-                <div class="flex flex-col gap-1">
-                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                    A({{ transVar() }}) = (1/π) ∫ f({{ intVar() }}) cos({{ transVar() }}{{ intVar() }}) d{{ intVar() }}
-                  </p>
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span #fiAEl [mathjax]="display(res.A.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                    <app-export-button [tex]="res.A.tex" [maxima]="res.A.maxima" [mathEl]="fiAEl" filename="fourier-integral-A" [label]="'A(' + transVar() + ')'" />
+              <div class="flex flex-col gap-4">
+                @if (res.A) {
+                  <div class="flex flex-col gap-1">
+                    <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                      A({{ transVar() }})
+                    </p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span #fiAEl [mathjax]="display(res.A.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                      <app-export-button [tex]="res.A.tex" [maxima]="res.A.maxima" [mathEl]="fiAEl" filename="fourier-integral-A" [label]="'A(' + transVar() + ')'" />
+                    </div>
                   </div>
-                </div>
-              }
+                }
 
-              @if (res.B) {
-                <div class="flex flex-col gap-1">
-                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                    B({{ transVar() }}) = (1/π) ∫ f({{ intVar() }}) sin({{ transVar() }}{{ intVar() }}) d{{ intVar() }}
-                  </p>
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span #fiBEl [mathjax]="display(res.B.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                    <app-export-button [tex]="res.B.tex" [maxima]="res.B.maxima" [mathEl]="fiBEl" filename="fourier-integral-B" [label]="'B(' + transVar() + ')'" />
+                @if (res.B) {
+                  <div class="flex flex-col gap-1">
+                    <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                      B({{ transVar() }})
+                    </p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span #fiBEl [mathjax]="display(res.B.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                      <app-export-button [tex]="res.B.tex" [maxima]="res.B.maxima" [mathEl]="fiBEl" filename="fourier-integral-B" [label]="'B(' + transVar() + ')'" />
+                    </div>
                   </div>
-                </div>
-              }
+                }
 
-              @if (res.C) {
-                <div class="flex flex-col gap-1">
-                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                    C({{ transVar() }}) = (1/2π) ∫ f({{ intVar() }}) e<sup>−i{{ transVar() }}{{ intVar() }}</sup> d{{ intVar() }}
-                  </p>
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span #fiCEl [mathjax]="display(res.C.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                    <app-export-button [tex]="res.C.tex" [maxima]="res.C.maxima" [mathEl]="fiCEl" filename="fourier-integral-C" [label]="'C(' + transVar() + ')'" />
+                @if (res.C) {
+                  <div class="flex flex-col gap-1">
+                    <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                      C({{ transVar() }})
+                    </p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span #fiCEl [mathjax]="display(res.C.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                      <app-export-button [tex]="res.C.tex" [maxima]="res.C.maxima" [mathEl]="fiCEl" filename="fourier-integral-C" [label]="'C(' + transVar() + ')'" />
+                    </div>
                   </div>
-                </div>
-              }
+                }
 
-              @if (res.realPart) {
-                <div class="flex flex-col gap-1">
-                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">Re C({{ transVar() }})</p>
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span #fiRealEl [mathjax]="display(res.realPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                    <app-export-button [tex]="res.realPart.tex" [maxima]="res.realPart.maxima" [mathEl]="fiRealEl" filename="fourier-integral-real" [label]="'Re C(' + transVar() + ')'" />
+                @if (res.realPart || res.imagPart) {
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @if (res.realPart) {
+                      <div class="flex flex-col gap-1">
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                          Re C({{ transVar() }})
+                        </p>
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span #fiRealEl [mathjax]="display(res.realPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                          <app-export-button [tex]="res.realPart.tex" [maxima]="res.realPart.maxima" [mathEl]="fiRealEl" filename="fourier-integral-real" [label]="'Re C(' + transVar() + ')'" />
+                        </div>
+                      </div>
+                    }
+                    @if (res.imagPart) {
+                      <div class="flex flex-col gap-1">
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                          Im C({{ transVar() }})
+                        </p>
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span #fiImagEl [mathjax]="display(res.imagPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                          <app-export-button [tex]="res.imagPart.tex" [maxima]="res.imagPart.maxima" [mathEl]="fiImagEl" filename="fourier-integral-imag" [label]="'Im C(' + transVar() + ')'" />
+                        </div>
+                      </div>
+                    }
                   </div>
-                </div>
-              }
-
-              @if (res.imagPart) {
-                <div class="flex flex-col gap-1">
-                  <p class="text-[10px] font-mono text-muted dark:text-dark-muted">Im C({{ transVar() }})</p>
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span #fiImagEl [mathjax]="display(res.imagPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                    <app-export-button [tex]="res.imagPart.tex" [maxima]="res.imagPart.maxima" [mathEl]="fiImagEl" filename="fourier-integral-imag" [label]="'Im C(' + transVar() + ')'" />
-                  </div>
-                </div>
-              }
+                }
+              </div>
             </div>
 
-            <!-- Reconstruction section -->
-            @if (showReconstruction()) {
-              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-3">
-                <div>
-                  <p class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-                    {{ 'fourier-integral.reconstruction' | transloco }}
-                  </p>
-                  <p class="text-xs text-muted dark:text-dark-muted font-mono mt-0.5">
-                    {{ 'fourier-integral.upperLimit' | transloco: { a: upperLimit() } }}
-                  </p>
-                </div>
-
-                <div [mathjax]="display(reconstructionFormulaTex())"></div>
-
-                <!-- Slider -->
-                <div class="flex items-center gap-3">
-                  <span class="text-xs text-muted font-mono w-6 shrink-0">{{ upperLimitMin }}</span>
-                  <input
-                    type="range"
-                    [min]="upperLimitMin"
-                    [max]="upperLimitMax"
-                    [step]="1"
-                    [value]="upperLimit()"
-                    (input)="onSliderInput(+$any($event.target).value)"
-                    class="flex-1 accent-accent h-1.5"
-                  />
-                  <span class="text-xs text-muted font-mono w-8 shrink-0 text-right">{{ upperLimit() }}</span>
-                </div>
-
-<p class="text-xs text-muted dark:text-dark-muted font-mono">
-                  {{ 'fourier-integral.gibbs' | transloco }}
-                </p>
-              </div>
-            }
 
           }
         }

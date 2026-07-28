@@ -140,8 +140,8 @@
       "halfRangeDesc": "Series de senos o cosenos",
       "complex": "Compleja",
       "complexDesc": "cₙ e^{inω₀x}",
-      "fourierTransform": "Transformada",
-      "inverseFourierTransform": "T. Inversa",
+      "fourierTransform": "T. de Fourier",
+      "inverseFourierTransform": "T. Inversa de Fourier",
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
       "dftEpicycles": "DFT epiciclos"
@@ -506,8 +506,8 @@
       "trigonometric": "Trigonométrica",
       "halfRange": "Medio rango",
       "complex": "Compleja",
-      "fourierTransform": "Transformada",
-      "inverseFourierTransform": "T. Inversa",
+      "fourierTransform": "T. de Fourier",
+      "inverseFourierTransform": "T. Inversa de Fourier",
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
       "dftEpicycles": "DFT epiciclos",
@@ -973,7 +973,11 @@
     "upperLimit": "Límite superior a = {{a}}",
     "gibbs": "Mueve el slider para ver el fenómeno de Gibbs",
     "intVar": "Variable de integración",
-    "transVar": "Variable de transformada"
+    "transVar": "Variable de transformada",
+    "integralType": "Tipo de integral",
+    "coefficients": "Coeficientes",
+    "upperLimitLabel": "Límite superior (a)",
+    "upperLimitInfo": "Reemplaza el límite superior ∞ por un valor finito — mueve el slider para visualizar la convergencia y el fenómeno de Gibbs"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",

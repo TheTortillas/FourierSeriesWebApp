@@ -140,8 +140,8 @@
       "halfRangeDesc": "Sines or cosines series",
       "complex": "Complex",
       "complexDesc": "cₙ e^{inω₀x}",
-      "fourierTransform": "Transform",
-      "inverseFourierTransform": "Inv. Transform",
+      "fourierTransform": "Fourier Transform",
+      "inverseFourierTransform": "Inv. Fourier Transform",
       "dftSignal": "DFT signal",
       "dftFunction": "DFT function",
       "dftEpicycles": "DFT epicycles"
@@ -506,8 +506,8 @@
       "trigonometric": "Trigonometric",
       "halfRange": "Half-range",
       "complex": "Complex",
-      "fourierTransform": "Transform",
-      "inverseFourierTransform": "Inv. Transform",
+      "fourierTransform": "Fourier Transform",
+      "inverseFourierTransform": "Inv. Fourier Transform",
       "dftSignal": "DFT signal",
       "dftFunction": "DFT function",
       "dftEpicycles": "DFT epicycles",
@@ -973,7 +973,11 @@
     "upperLimit": "Upper limit a = {{a}}",
     "gibbs": "Move the slider to see the Gibbs phenomenon",
     "intVar": "Integration variable",
-    "transVar": "Transform variable"
+    "transVar": "Transform variable",
+    "integralType": "Integral type",
+    "coefficients": "Coefficients",
+    "upperLimitLabel": "Upper limit (a)",
+    "upperLimitInfo": "Replaces the ∞ upper bound with a finite value — slide to visualize convergence and the Gibbs phenomenon"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",

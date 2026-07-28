@@ -85,9 +85,9 @@ interface FiVarPair {
 }
 
 const FI_VAR_PAIRS: FiVarPair[] = [
+  { id: 't-w',  intVar: 't', transVar: 'w',   intDisplay: 't', transDisplay: 'ω' },
   { id: 'v-w',  intVar: 'v', transVar: 'w',   intDisplay: 'v', transDisplay: 'ω' },
   { id: 'x-k',  intVar: 'x', transVar: 'k',   intDisplay: 'x', transDisplay: 'k' },
-  { id: 't-w',  intVar: 't', transVar: 'w',   intDisplay: 't', transDisplay: 'ω' },
   { id: 'x-xi', intVar: 'x', transVar: 'xi',  intDisplay: 'x', transDisplay: 'ξ' },
   { id: 'custom', intVar: '', transVar: '',    intDisplay: '', transDisplay: '' },
 ];
@@ -157,11 +157,11 @@ export class FourierIntegralComponent implements OnInit {
   ];
 
   /** Variant options list for the template. */
-  readonly variants: { id: string; label: string }[] = [
-    { id: 'trigonometric', label: 'Trigonométrica' },
-    { id: 'complex', label: 'Compleja' },
-    { id: 'cosine', label: 'Integral Coseno' },
-    { id: 'sine', label: 'Integral Seno' },
+  readonly variants: { id: string; labelKey: string }[] = [
+    { id: 'trigonometric', labelKey: 'fourier-integral.trigonometric' },
+    { id: 'cosine',        labelKey: 'fourier-integral.cosine' },
+    { id: 'sine',          labelKey: 'fourier-integral.sine' },
+    { id: 'complex',       labelKey: 'fourier-integral.complex' },
   ];
 
   /** Exposed var-pair list for template iteration. */
