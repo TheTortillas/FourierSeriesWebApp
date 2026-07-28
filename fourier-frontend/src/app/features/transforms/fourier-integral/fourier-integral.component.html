@@ -716,7 +716,7 @@
           @if (!res.exists) {
             <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
               <p class="text-sm text-amber-800 dark:text-amber-300 font-mono">
-                No se encontró una forma cerrada para esta función.
+                {{ 'fourier-integral.notFound' | transloco }}
               </p>
             </div>
           } @else {
@@ -734,87 +734,158 @@
             @if (res.fourierIntegralTex) {
               <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
                 <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">
-                  Integral de Fourier — {{ variantLabel() }}
+                  {{ 'fourier-integral.title' | transloco }} — {{ variantLabelKey() | transloco }}
                 </span>
                 <div class="flex items-center gap-2 flex-wrap">
                   <span #fiFullEl [mathjax]="display(res.fourierIntegralTex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                  <app-export-button [tex]="res.fourierIntegralTex" [mathEl]="fiFullEl" filename="fourier-integral" label="Integral de Fourier" />
+                  <app-export-button [tex]="res.fourierIntegralTex" [mathEl]="fiFullEl" filename="fourier-integral" [label]="'fourier-integral.title' | transloco" />
                 </div>
               </div>
             }
 
-            <!-- Coefficients card -->
-            <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-3">
-              <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">
-                {{ 'fourier-integral.coefficients' | transloco }}
-              </span>
-
-              <div class="flex flex-col gap-4">
-                @if (res.A) {
-                  <div class="flex flex-col gap-1">
-                    <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-                      A({{ transVar() }})
-                    </p>
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <span #fiAEl [mathjax]="display(res.A.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                      <app-export-button [tex]="res.A.tex" [maxima]="res.A.maxima" [mathEl]="fiAEl" filename="fourier-integral-A" [label]="'A(' + transVar() + ')'" />
-                    </div>
-                  </div>
-                }
-
-                @if (res.B) {
-                  <div class="flex flex-col gap-1">
-                    <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-                      B({{ transVar() }})
-                    </p>
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <span #fiBEl [mathjax]="display(res.B.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                      <app-export-button [tex]="res.B.tex" [maxima]="res.B.maxima" [mathEl]="fiBEl" filename="fourier-integral-B" [label]="'B(' + transVar() + ')'" />
-                    </div>
-                  </div>
-                }
-
-                @if (res.C) {
-                  <div class="flex flex-col gap-1">
-                    <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-                      C({{ transVar() }})
-                    </p>
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <span #fiCEl [mathjax]="display(res.C.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                      <app-export-button [tex]="res.C.tex" [maxima]="res.C.maxima" [mathEl]="fiCEl" filename="fourier-integral-C" [label]="'C(' + transVar() + ')'" />
-                    </div>
-                  </div>
-                }
-
-                @if (res.realPart || res.imagPart) {
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    @if (res.realPart) {
-                      <div class="flex flex-col gap-1">
-                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-                          Re C({{ transVar() }})
-                        </p>
-                        <div class="flex items-center gap-2 flex-wrap">
-                          <span #fiRealEl [mathjax]="display(res.realPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                          <app-export-button [tex]="res.realPart.tex" [maxima]="res.realPart.maxima" [mathEl]="fiRealEl" filename="fourier-integral-real" [label]="'Re C(' + transVar() + ')'" />
-                        </div>
+            <!-- Coefficient A(w) -->
+            @if (res.A) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">
+                  A({{ transVar() }})
+                </span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span #fiAEl [mathjax]="display(res.A.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="res.A.tex" [maxima]="res.A.maxima" [mathEl]="fiAEl" filename="fourier-integral-A" [label]="'A(' + transVar() + ')'" />
+                </div>
+                <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                  <button type="button" (click)="toggleAltForms('A')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenA() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenA()) {
+                    @if (altFormsLoadingA()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altFormsA().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsA(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #fiAAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="fiAAltEl" filename="fourier-integral-A-alt" [label]="'A(' + transVar() + ') — ' + (form.labelKey | transloco)" />
+                            </div>
+                          </div>
+                        }
                       </div>
                     }
-                    @if (res.imagPart) {
-                      <div class="flex flex-col gap-1">
-                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-                          Im C({{ transVar() }})
-                        </p>
-                        <div class="flex items-center gap-2 flex-wrap">
-                          <span #fiImagEl [mathjax]="display(res.imagPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                          <app-export-button [tex]="res.imagPart.tex" [maxima]="res.imagPart.maxima" [mathEl]="fiImagEl" filename="fourier-integral-imag" [label]="'Im C(' + transVar() + ')'" />
-                        </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Coefficient B(w) -->
+            @if (res.B) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">
+                  B({{ transVar() }})
+                </span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span #fiBEl [mathjax]="display(res.B.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="res.B.tex" [maxima]="res.B.maxima" [mathEl]="fiBEl" filename="fourier-integral-B" [label]="'B(' + transVar() + ')'" />
+                </div>
+                <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                  <button type="button" (click)="toggleAltForms('B')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenB() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenB()) {
+                    @if (altFormsLoadingB()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altFormsB().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsB(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #fiBAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="fiBAltEl" filename="fourier-integral-B-alt" [label]="'B(' + transVar() + ') — ' + (form.labelKey | transloco)" />
+                            </div>
+                          </div>
+                        }
                       </div>
                     }
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Coefficient C(w) -->
+            @if (res.C) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">
+                  C({{ transVar() }})
+                </span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span #fiCEl [mathjax]="display(res.C.tex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="res.C.tex" [maxima]="res.C.maxima" [mathEl]="fiCEl" filename="fourier-integral-C" [label]="'C(' + transVar() + ')'" />
+                </div>
+                <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                  <button type="button" (click)="toggleAltForms('C')" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenC() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenC()) {
+                    @if (altFormsLoadingC()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altFormsC().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsC(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #fiCAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="fiCAltEl" filename="fourier-integral-C-alt" [label]="'C(' + transVar() + ') — ' + (form.labelKey | transloco)" />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Re / Im C(w) -->
+            @if (res.realPart || res.imagPart) {
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                @if (res.realPart) {
+                  <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                    <span class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5" [style.color]="originalColor()">
+                      <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="originalColor()"></span>
+                      {{ 'fourier-integral.reCw' | transloco: { v: transVar() } }}
+                    </span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span #fiRealEl [mathjax]="display(res.realPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                      <app-export-button [tex]="res.realPart.tex" [maxima]="res.realPart.maxima" [mathEl]="fiRealEl" filename="fourier-integral-real" [label]="'Re C(' + transVar() + ')'" />
+                    </div>
+                  </div>
+                }
+                @if (res.imagPart) {
+                  <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                    <span class="text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5" [style.color]="reconstructColor()">
+                      <span class="w-2 h-2 rounded-full inline-block shrink-0" [style.backgroundColor]="reconstructColor()"></span>
+                      {{ 'fourier-integral.imCw' | transloco: { v: transVar() } }}
+                    </span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span #fiImagEl [mathjax]="display(res.imagPart.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                      <app-export-button [tex]="res.imagPart.tex" [maxima]="res.imagPart.maxima" [mathEl]="fiImagEl" filename="fourier-integral-imag" [label]="'Im C(' + transVar() + ')'" />
+                    </div>
                   </div>
                 }
               </div>
-            </div>
-
+            }
 
           }
         }

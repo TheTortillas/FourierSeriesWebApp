@@ -43,10 +43,18 @@ import type { ParamValues } from '../../../shared/components/param-sliders/param
 import type {
   FourierIntegralVariant,
   FourierIntegralCoefficientsResponse,
-
   ReconstructPoint,
+  SimplifyRequest,
+  SimplifyResponse,
 } from '../../../domain/types/transform.types';
 import { HistoryEntry } from '../../../domain';
+import { forkJoin } from 'rxjs';
+
+export interface AltForm {
+  labelKey: string;
+  tex: string;
+  maxima: string;
+}
 
 let _nextId = 0;
 const mkId = () => `fi-${++_nextId}`;
@@ -175,6 +183,17 @@ export class FourierIntegralComponent implements OnInit {
   readonly errorMsg = signal<string | null>(null);
   readonly coeffResult = signal<FourierIntegralCoefficientsResponse | null>(null);
 
+  // ── Alt forms ─────────────────────────────────────────────────────────────
+  readonly altFormsA = signal<AltForm[]>([]);
+  readonly altFormsB = signal<AltForm[]>([]);
+  readonly altFormsC = signal<AltForm[]>([]);
+  readonly altFormsLoadingA = signal(false);
+  readonly altFormsLoadingB = signal(false);
+  readonly altFormsLoadingC = signal(false);
+  readonly altFormsOpenA = signal(false);
+  readonly altFormsOpenB = signal(false);
+  readonly altFormsOpenC = signal(false);
+
   // ── Variable selector ─────────────────────────────────────────────────────
   readonly selectedPairId = signal<string>('t-w');
   readonly customIntVar = signal<string>('v');
@@ -271,12 +290,12 @@ export class FourierIntegralComponent implements OnInit {
   readonly hasResult = computed(() => this.coeffResult() !== null);
   readonly inputsLocked = computed(() => this.loading() || this.hasResult());
 
-  readonly variantLabel = computed(() => {
+  readonly variantLabelKey = computed(() => {
     const v = this.variant();
-    if (v === 'trigonometric') return 'Trigonométrica';
-    if (v === 'complex') return 'Compleja';
-    if (v === 'cosine') return 'Integral Coseno';
-    return 'Integral Seno';
+    if (v === 'trigonometric') return 'fourier-integral.variantTrigonometric';
+    if (v === 'complex') return 'fourier-integral.variantComplex';
+    if (v === 'cosine') return 'fourier-integral.variantCosine';
+    return 'fourier-integral.variantSine';
   });
 
   /** Live LaTeX preview of the piecewise input function — always shows f(v), never the integral result. */
@@ -315,7 +334,7 @@ export class FourierIntegralComponent implements OnInit {
     if (v === 'sine') {
       return `f(${iv}) \\approx \\int_{0}^{${a}} B(${tv})\\sin(${tv}${iv})\\, d${tv}`;
     }
-    return `f(${iv}) \\approx \\int_{0}^{${a}} \\left[A(${tv})\\cos(${tv}${iv}) + B(${tv})\\sin(${tv}${iv})\\right] d${tv}`;
+    return `f(${iv}) \\approx \\int_{0}^{${a}} \\left(A(${tv})\\cos(${tv}${iv}) + B(${tv})\\sin(${tv}${iv})\\right) d${tv}`;
   });
 
   // ── Helpers for template type safety ─────────────────────────────────────
@@ -488,12 +507,17 @@ export class FourierIntegralComponent implements OnInit {
             }
           }
 
-          // Determine x range from segment bounds
+          // Fixed wide range so reconstruction is visible at any typical zoom level.
+          // The Fourier integral converges on all of ℝ, not just over the segment.
           const evalB = (v: string) => { const n = this.mathUtils.evaluate(v, 0, '_'); return isFinite(n) ? n : NaN; };
-          const xMins = segs.map(s => { const n = evalB(s.from); return isFinite(n) ? n : -4; });
-          const xMaxs = segs.map(s => { const n = evalB(s.to);   return isFinite(n) ? n :  4; });
-          const xMin  = Math.min(-6, ...xMins) - 2;
-          const xMax  = Math.max( 6, ...xMaxs) + 2;
+          const segMins = segs.map(s => evalB(s.from)).filter(isFinite);
+          const segMaxs = segs.map(s => evalB(s.to)).filter(isFinite);
+          const segSpan = segMins.length && segMaxs.length
+            ? (Math.max(...segMaxs) - Math.min(...segMins)) : 2;
+          const pad  = Math.max(12, segSpan * 5);
+          const mid  = segMins.length ? (Math.min(...segMins) + Math.max(...segMaxs)) / 2 : 0;
+          const xMin = mid - pad;
+          const xMax = mid + pad;
 
           // Sample reconstruction at NX evenly-spaced x points
           const points: ReconstructPoint[] = [];
@@ -659,6 +683,9 @@ export class FourierIntegralComponent implements OnInit {
     this.favoriteName = '';
     this.showFavoriteDialog.set(false);
     this.urlCopied.set(false);
+    this.altFormsA.set([]); this.altFormsOpenA.set(false);
+    this.altFormsB.set([]); this.altFormsOpenB.set(false);
+    this.altFormsC.set([]); this.altFormsOpenC.set(false);
   }
 
   calculate(): void {
@@ -748,6 +775,55 @@ export class FourierIntegralComponent implements OnInit {
     } catch {
       // clipboard not available
     }
+  }
+
+  // ── Alt forms ─────────────────────────────────────────────────────────────
+
+  toggleAltForms(coeff: 'A' | 'B' | 'C'): void {
+    const openSig = coeff === 'A' ? this.altFormsOpenA : coeff === 'B' ? this.altFormsOpenB : this.altFormsOpenC;
+    const formsSig = coeff === 'A' ? this.altFormsA : coeff === 'B' ? this.altFormsB : this.altFormsC;
+    const loadSig  = coeff === 'A' ? this.altFormsLoadingA : coeff === 'B' ? this.altFormsLoadingB : this.altFormsLoadingC;
+    const nowOpen = !openSig();
+    openSig.set(nowOpen);
+    if (!nowOpen || formsSig().length > 0) return;
+    const res = this.coeffResult();
+    if (!res) return;
+    const expr = coeff === 'A' ? res.A : coeff === 'B' ? res.B : res.C;
+    if (!expr?.maxima) return;
+    loadSig.set(true);
+    this.runAltForms(expr, (forms) => { formsSig.set(forms); loadSig.set(false); });
+  }
+
+  private runAltForms(
+    main: { maxima: string; tex: string },
+    done: (forms: AltForm[]) => void,
+  ): void {
+    const mainExpr = main.maxima;
+    const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
+      { labelKey: 'transforms.altFormFactor', req: { expression: mainExpr, profile: 'complete', functions: ['factor'] } },
+      { labelKey: 'transforms.altFormExpand', req: { expression: mainExpr, profile: 'complete', functions: ['expand'] } },
+      { labelKey: 'transforms.altFormTrig',   req: { expression: mainExpr, profile: 'complete', functions: ['trigreduce'], displayFlags: { demoivre: true } } },
+      { labelKey: 'transforms.altFormRect',   req: { expression: mainExpr, profile: 'complete', functions: ['rectform'] } },
+      { labelKey: 'transforms.altFormExp',    req: { expression: mainExpr, profile: 'complete', functions: ['radcan', 'expand', 'combine'], displayFlags: { exponentialize: true } } },
+    ];
+    forkJoin(profiles.map(({ req }) => this.api.simplify(req).pipe(catchError(() => of(null)))))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((results: (SimplifyResponse | null)[]) => {
+        const normalize = (s: string) => s.replace(/\s+/g, '');
+        const seen = new Set<string>();
+        if (main.tex) seen.add(normalize(main.tex));
+        const forms: AltForm[] = [];
+        results.forEach((r, i) => {
+          if (!r) return;
+          const { tex, maxima } = r.simplified;
+          if (!tex || !maxima) return;
+          const norm = normalize(tex);
+          if (seen.has(norm)) return;
+          seen.add(norm);
+          forms.push({ labelKey: profiles[i].labelKey, tex, maxima });
+        });
+        done(forms);
+      });
   }
 
   resetColors(): void {

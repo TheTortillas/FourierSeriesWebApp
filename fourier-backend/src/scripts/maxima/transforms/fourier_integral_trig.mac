@@ -108,13 +108,13 @@ _iv_tex: if INTVAR = "xi" then "\\xi" else INTVAR$
    Omit terms whose coefficient is identically zero. */
 FI_tex: if not exists then ""
   else if VARIANT = "cosine" then
-    sconcat("f(", _iv_tex, ") = \\frac{2}{\\pi}\\int_0^{\\infty}\\left[",
+    sconcat("f(", _iv_tex, ") = \\frac{2}{\\pi}\\int_0^{\\infty}\\left(",
             if not _is_zero(A_raw) then tex1(A_raw) else "0",
-            "\\right]\\cos(", _tv_tex, _iv_tex, ")\\,d", _tv_tex)
+            "\\right)\\cos(", _tv_tex, _iv_tex, ")\\,d", _tv_tex)
   else if VARIANT = "sine" then
-    sconcat("f(", _iv_tex, ") = \\frac{2}{\\pi}\\int_0^{\\infty}\\left[",
+    sconcat("f(", _iv_tex, ") = \\frac{2}{\\pi}\\int_0^{\\infty}\\left(",
             if not _is_zero(B_raw) then tex1(B_raw) else "0",
-            "\\right]\\sin(", _tv_tex, _iv_tex, ")\\,d", _tv_tex)
+            "\\right)\\sin(", _tv_tex, _iv_tex, ")\\,d", _tv_tex)
   else block([_A_str, _B_str, _terms],
     _A_str: if not _is_zero(A_raw) then sconcat(tex1(A_raw), "\\cos(", _tv_tex, _iv_tex, ")") else "",
     _B_str: if not _is_zero(B_raw) then sconcat(tex1(B_raw), "\\sin(", _tv_tex, _iv_tex, ")") else "",
@@ -122,7 +122,7 @@ FI_tex: if not exists then ""
             else if _A_str # "" then _A_str
             else if _B_str # "" then _B_str
             else "0",
-    sconcat("f(", _iv_tex, ") = \\int_0^{\\infty}\\left[", _terms, "\\right]d", _tv_tex)
+    sconcat("f(", _iv_tex, ") = \\int_0^{\\infty}\\left(", _terms, "\\right)d", _tv_tex)
   )$
 
 print("__EXISTS__")$        print(string(exists))$

@@ -61,9 +61,9 @@ _tv_tex: if TRANSVAR = "w"  then "\\omega"
 _iv_tex: if INTVAR = "xi" then "\\xi" else INTVAR$
 
 FI_tex: if not exists then ""
-  else sconcat("f(", _iv_tex, ") = \\int_{-\\infty}^{\\infty}\\left[",
+  else sconcat("f(", _iv_tex, ") = \\int_{-\\infty}^{\\infty}\\left(",
                if C_raw # false then tex1(C_raw) else "0",
-               "\\right]e^{i", _tv_tex, _iv_tex, "}\\,d", _tv_tex)$
+               "\\right)e^{i", _tv_tex, _iv_tex, "}\\,d", _tv_tex)$
 
 print("__EXISTS__")$            print(string(exists))$
 print("__FI_TEX__")$            print(FI_tex)$

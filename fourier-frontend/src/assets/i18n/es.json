@@ -977,7 +977,14 @@
     "integralType": "Tipo de integral",
     "coefficients": "Coeficientes",
     "upperLimitLabel": "Límite superior (a)",
-    "upperLimitInfo": "Reemplaza el límite superior ∞ por un valor finito — mueve el slider para visualizar la convergencia y el fenómeno de Gibbs"
+    "upperLimitInfo": "Reemplaza el límite superior ∞ por un valor finito — mueve el slider para visualizar la convergencia y el fenómeno de Gibbs",
+    "variantTrigonometric": "Trigonométrica",
+    "variantComplex": "Compleja",
+    "variantCosine": "Coseno",
+    "variantSine": "Seno",
+    "reCw": "Re C({{ v }})",
+    "imCw": "Im C({{ v }})",
+    "notFound": "No se encontró una forma cerrada para esta función."
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",

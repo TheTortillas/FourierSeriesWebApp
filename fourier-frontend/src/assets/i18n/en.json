@@ -977,7 +977,14 @@
     "integralType": "Integral type",
     "coefficients": "Coefficients",
     "upperLimitLabel": "Upper limit (a)",
-    "upperLimitInfo": "Replaces the ∞ upper bound with a finite value — slide to visualize convergence and the Gibbs phenomenon"
+    "upperLimitInfo": "Replaces the ∞ upper bound with a finite value — slide to visualize convergence and the Gibbs phenomenon",
+    "variantTrigonometric": "Trigonometric",
+    "variantComplex": "Complex",
+    "variantCosine": "Cosine",
+    "variantSine": "Sine",
+    "reCw": "Re C({{ v }})",
+    "imCw": "Im C({{ v }})",
+    "notFound": "No closed form was found for this function."
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",
