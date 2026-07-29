@@ -1,6 +1,10 @@
 import {
+  AfterViewChecked,
   Component,
+  ElementRef,
+  OnDestroy,
   OnInit,
+  ViewChild,
   computed,
   inject,
   signal,
@@ -19,7 +23,8 @@ import { UserStore } from '../../../core/services/auth/user.store';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { formatApiError } from '../../../shared/utils/api-error.utils';
 import { TransformSegmentComponent, TransformSegmentDraft } from '../continuous/transform-segment.component';
-import type { KeyBtn } from '../../../core/services/math/mathquill.service';
+import { MathquillService, type KeyBtn, type MathField } from '../../../core/services/math/mathquill.service';
+import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 import { MobileMathKeyboardComponent } from '../../../shared/components/math-keyboard/mobile-math-keyboard.component';
 import type {
   LaplaceDirectResponse,
@@ -60,12 +65,19 @@ function defaultSegment(): TransformSegmentDraft {
     FooterComponent,
   ],
 })
-export class LaplaceComponent implements OnInit {
+export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly api        = inject(ApiService);
   readonly userStore  = inject(UserStore);
   private readonly transloco = inject(TranslocoService);
   private readonly seo       = inject(SeoService);
   readonly destroyRef = inject(DestroyRef);
+  private readonly mqs       = inject(MathquillService);
+  private readonly tex2max   = inject(LatexToMaximaService);
+
+  @ViewChild('mqInverseExpr') private mqInverseRef!: ElementRef<HTMLElement>;
+
+  inverseField: MathField | null = null;
+  private _mqInverseInited = false;
 
   showKeyboard = false;
 
@@ -101,7 +113,7 @@ export class LaplaceComponent implements OnInit {
 
   // ── Direct mode ───────────────────────────────────────────────────────────
 
-  readonly segments  = signal<TransformSegmentDraft[]>([defaultSegment()]);
+  readonly segments     = signal<TransformSegmentDraft[]>([defaultSegment()]);
   readonly directResult = signal<LaplaceDirectResponse | null>(null);
 
   addSegment(): void {
@@ -121,8 +133,9 @@ export class LaplaceComponent implements OnInit {
 
   // ── Inverse mode ─────────────────────────────────────────────────────────
 
-  readonly inverseExpr   = signal('');
-  readonly inverseResult = signal<LaplaceInverseResponse | null>(null);
+  readonly inverseExpr    = signal('4/(s-2) - 3/(s+5)');
+  readonly inverseResult  = signal<LaplaceInverseResponse | null>(null);
+  readonly inverseDefault = '\\frac{4}{s-2}-\\frac{3}{s+5}';
 
   // ── ODE mode ─────────────────────────────────────────────────────────────
 
@@ -147,7 +160,7 @@ export class LaplaceComponent implements OnInit {
     this.odeIcs.update(ics => ics.map((ic, i) => i === index ? { ...ic, value } : ic));
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   private readonly submit$ = new Subject<void>();
 
@@ -174,7 +187,10 @@ export class LaplaceComponent implements OnInit {
           }
           return this.api.calculateLaplaceDirect({
             segments: validSegs.map(s => ({ expression: s.expression, from: s.from, to: s.to })),
-          }).pipe(catchError(err => { this.errorMsg.set(formatApiError(err, 'Error al calcular')); return of(null); }));
+          }).pipe(catchError(err => {
+            this.errorMsg.set(formatApiError(err, 'Error al calcular'));
+            return of(null);
+          }));
         }
 
         if (m === 'inverse') {
@@ -213,6 +229,37 @@ export class LaplaceComponent implements OnInit {
       if (m === 'inverse') this.inverseResult.set(result as LaplaceInverseResponse);
       if (m === 'ode')     this.odeResult.set(result as LaplaceOdeResponse);
     });
+  }
+
+  ngAfterViewChecked(): void {
+    if (this._mqInverseInited || !this.mqInverseRef?.nativeElement) return;
+    this._mqInverseInited = true;
+    void this.initInverseField();
+  }
+
+  private async initInverseField(): Promise<void> {
+    const el = this.mqInverseRef.nativeElement;
+    const field = await this.mqs.createField(el, {
+      ...this.mqs.defaultConfig(),
+      handlers: {
+        edit: (mf) => {
+          const latex = mf.latex();
+          if (!latex.trim()) { this.inverseExpr.set(''); return; }
+          this.tex2max.convertWithSpecialFns(latex).subscribe(r => {
+            if (r.ok) this.inverseExpr.set(r.maxima);
+          });
+        },
+        enter: () => this.calculate(),
+      },
+    });
+    this.inverseField = field;
+    if (field) field.latex(this.inverseDefault);
+    el.addEventListener('focusin',  () => { if (this.inverseField) this.mqs.setActiveField(this.inverseField, 'F(s)'); });
+    el.addEventListener('focusout', () => this.mqs.clearActiveField());
+  }
+
+  ngOnDestroy(): void {
+    if (this.mqInverseRef?.nativeElement) this.mqInverseRef.nativeElement.innerHTML = '';
   }
 
   calculate(): void {
