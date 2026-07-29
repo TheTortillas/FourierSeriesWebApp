@@ -11,12 +11,31 @@ display2d: false$
 radexpand: false$
 assume(TRANSVAR > 0)$
 
+/* Declare free parameters so laplace() doesn't hang on sign queries.
+   Variables named n, m, k are declared integer >= 0 (for t^n patterns).
+   All other free params are assumed positive (covers a, b, etc.). */
+block([_allvars, _reserved, _freevars],
+  _allvars: listofvars(FUNC_INPUT),
+  _reserved: [INTVAR, TRANSVAR],
+  _freevars: sublist(_allvars, lambda([_v], not member(_v, _reserved))),
+  for _v in _freevars do (
+    if member(_v, [n, m, k]) then (
+      declare(_v, integer),
+      assume(_v >= 0)
+    ) else
+      assume(_v > 0)
+  )
+)$
+
 F_acc: 0$
 for _i: 1 thru length(FUNC_INPUT) do block(
   [_e, _a, _b, _fi, _shifted],
   _e: FUNC_INPUT[_i][1],
   _a: FUNC_INPUT[_i][2],
   _b: FUNC_INPUT[_i][3],
+
+  /* Laplace integrates from 0 to inf — clamp lower bound */
+  if _a = minf then _a: 0,
 
   if _b # inf then block(
     /* Finite segment [a, b]: direct integration */
