@@ -118,7 +118,12 @@ FI_tex: if not exists then ""
   else block([_A_str, _B_str, _terms],
     _A_str: if not _is_zero(A_raw) then sconcat(tex1(A_raw), "\\cos(", _tv_tex, _iv_tex, ")") else "",
     _B_str: if not _is_zero(B_raw) then sconcat(tex1(B_raw), "\\sin(", _tv_tex, _iv_tex, ")") else "",
-    _terms: if _A_str # "" and _B_str # "" then sconcat(_A_str, "+", _B_str)
+    _terms: if _A_str # "" and _B_str # "" then (
+              /* Omit the '+' when B already carries a leading minus sign */
+              if cequal(substring(_B_str, 1, 2), "-")
+              then sconcat(_A_str, _B_str)
+              else sconcat(_A_str, "+", _B_str)
+            )
             else if _A_str # "" then _A_str
             else if _B_str # "" then _B_str
             else "0",

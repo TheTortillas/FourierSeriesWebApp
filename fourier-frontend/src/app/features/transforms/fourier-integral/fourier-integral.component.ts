@@ -524,20 +524,23 @@ export class FourierIntegralComponent implements OnInit {
           };
           const segMins = segs.map(s => evalB(s.from)).filter(isFinite);
           const segMaxs = segs.map(s => evalB(s.to)).filter(isFinite);
+          const allBounds = [...segMins, ...segMaxs];
           const segSpan = segMins.length && segMaxs.length
             ? (Math.max(...segMaxs) - Math.min(...segMins)) : 2;
           const pad  = Math.max(10, segSpan * 1.5);
-          const mid  = segMins.length ? (Math.min(...segMins) + Math.max(...segMaxs)) / 2 : 0;
+          const mid  = allBounds.length
+            ? (Math.min(...allBounds) + Math.max(...allBounds)) / 2 : 0;
           const xMin = mid - pad;
           const xMax = mid + pad;
 
           // Estimate Y range from original segments to clip Gibbs overshoots.
-          // Sample each segment at 20 points and keep the extremes.
+          // For infinite bounds, clamp to a finite sampling window.
           let yAbsMax = 1;
           for (const seg of segs) {
-            const fFrom = evalB(seg.from);
-            const fTo   = evalB(seg.to);
-            if (!isFinite(fFrom) || !isFinite(fTo)) continue;
+            let fFrom = evalB(seg.from);
+            let fTo   = evalB(seg.to);
+            if (!isFinite(fFrom)) fFrom = xMin;
+            if (!isFinite(fTo))   fTo   = xMax;
             const fn = this.mathUtils.compile(seg.expression, iv, pv);
             if (!fn) continue;
             for (let k = 0; k <= 20; k++) {
