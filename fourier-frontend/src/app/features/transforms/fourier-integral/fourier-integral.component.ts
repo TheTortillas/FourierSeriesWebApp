@@ -368,15 +368,20 @@ export class FourierIntegralComponent implements OnInit {
       curves: recCurves,
       onDraw: (ctx, vp) => {
         if (!showOrig) return;
+        const evalBound = (v: string): number => {
+          const fn = this.mathUtils.compile(v, '_', pv);
+          if (!fn) return NaN;
+          try { const r = fn(0); return isFinite(r) ? r : NaN; } catch { return NaN; }
+        };
         const pieces: { fn: (x: number) => number; from: number; to: number }[] = [];
         for (const seg of segs) {
           if (!seg.expression || !seg.from || !seg.to) continue;
           const from = seg.from === 'minf' || seg.from === '-inf'
             ? -Infinity
-            : this.mathUtils.evaluate(seg.from, 0, '_');
+            : evalBound(seg.from);
           const to = seg.to === 'inf'
             ? Infinity
-            : this.mathUtils.evaluate(seg.to, 0, '_');
+            : evalBound(seg.to);
           const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
           if (!fn) continue;
           if (isFinite(from) && isFinite(to)) {
@@ -509,7 +514,11 @@ export class FourierIntegralComponent implements OnInit {
 
           // Fixed wide range so reconstruction is visible at any typical zoom level.
           // The Fourier integral converges on all of ℝ, not just over the segment.
-          const evalB = (v: string) => { const n = this.mathUtils.evaluate(v, 0, '_'); return isFinite(n) ? n : NaN; };
+          const evalB = (v: string) => {
+            const fn = this.mathUtils.compile(v, '_', pv);
+            if (!fn) return NaN;
+            try { const r = fn(0); return isFinite(r) ? r : NaN; } catch { return NaN; }
+          };
           const segMins = segs.map(s => evalB(s.from)).filter(isFinite);
           const segMaxs = segs.map(s => evalB(s.to)).filter(isFinite);
           const segSpan = segMins.length && segMaxs.length

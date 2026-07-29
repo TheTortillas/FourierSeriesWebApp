@@ -430,6 +430,7 @@ export interface FourierIntegralReconstructInput {
   nPoints?: number;   // default 200
 }
 
+
 export interface FourierIntegralCoefficientsResult {
   input: FourierIntegralInput;
   exists: boolean;

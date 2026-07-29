@@ -138,6 +138,7 @@ export interface FourierIntegralReconstructResponse {
   executionTimeMs: number;
 }
 
+
 // ─── Simplify ─────────────────────────────────────────────────────────────────
 
 export type SimplifyProfile = 'raw' | 'integer' | 'trigonometric' | 'exponential' | 'complete';
