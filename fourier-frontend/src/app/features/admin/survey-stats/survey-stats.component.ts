@@ -47,6 +47,7 @@ const FEATURE_LABEL: Record<string, string> = {
   trigonometric:             'Trigonométrica',
   half_range:                'Medio rango',
   complex:                   'Compleja',
+  fourier_integral:          'Int. Fourier',
   fourier_transform:         'Transformada',
   inverse_fourier_transform: 'T. Inversa',
   dft_signal:                'DFT señal',

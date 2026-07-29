@@ -675,7 +675,7 @@ export class FourierIntegralComponent implements OnInit {
     this.seo.setPage(
       'seo.fourierIntegral.title',
       'seo.fourierIntegral.description',
-      'Fourier integral, integral de Fourier, A(w), B(w), C(w), cosine integral, sine integral',
+      'Fourier integral calculator, integral de Fourier, A(ω) B(ω) coefficients, non-periodic functions, piecewise, cosine integral, sine integral, complex Fourier integral, representación integral de Fourier, funciones no periódicas',
     );
 
     // reconstruction is now a computed signal — no explicit trigger needed
