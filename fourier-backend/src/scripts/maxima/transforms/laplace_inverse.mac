@@ -1,0 +1,41 @@
+/* laplace_inverse.mac
+   Computes f(t) = L⁻¹{F(s)} for a rational expression in s.
+   Injected variables: EXPR_INPUT (F(s) as Maxima expr), TRANSVAR (s), INTVAR (t)
+   Strategy: try ilt() directly; if it fails, try partfrac first; report method used.
+*/
+display2d: false$
+%iargs:    false$
+radexpand: false$
+
+inverse_method: "failed"$
+f_raw: false$
+
+/* Strategy 1: direct ilt */
+block([_r],
+  _r: errcatch(ilt(EXPR_INPUT, TRANSVAR, INTVAR)),
+  if _r # [] then block([_v],
+    _v: first(_r),
+    /* ilt returns unevaluated if it can't solve — check for ilt() in result */
+    if not(freeof('ilt, _v)) then false
+    else block([], f_raw: ratsimp(_v), inverse_method: "ilt")
+  )
+)$
+
+/* Strategy 2: partfrac then ilt */
+if f_raw = false then block([_pf, _r],
+  _pf: errcatch(partfrac(EXPR_INPUT, TRANSVAR)),
+  if _pf # [] then block([],
+    _r: errcatch(ilt(first(_pf), TRANSVAR, INTVAR)),
+    if _r # [] then block([_v],
+      _v: first(_r),
+      if freeof('ilt, _v) then block([], f_raw: ratsimp(_v), inverse_method: "ilt")
+    )
+  )
+)$
+
+exists: is(f_raw # false)$
+
+print("__EXISTS__")$          print(string(exists))$
+print("__F_MAXIMA__")$        print(string(f_raw))$
+print("__F_TEX__")$           if exists then tex(f_raw) else print("")$
+print("__INVERSE_METHOD__")$  print(inverse_method)$

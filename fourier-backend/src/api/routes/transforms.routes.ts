@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import {
   fourierTransformService,
   fourierIntegralService,
+  laplaceService,
   dftService,
   historyRepository,
 } from "../../infrastructure/container";
@@ -12,9 +13,13 @@ import type {
   FourierIntegralReconstructInput,
   DFTInput,
   DFTFunctionInput,
+  LaplaceDirectInput,
+  LaplaceInverseInput,
+  LaplaceOdeInput,
 } from "../../domain/types/fourier.types";
 import {
   sanitizeConvention,
+  sanitizeExpression,
   sanitizeSegments,
   sanitizeVariableName,
 } from "../middlewares/sanitize";
@@ -619,6 +624,158 @@ transformsRouter.post(
           ipAddress: req.ip ?? undefined,
           type: "dft_signal",
           input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Laplace: direct ──────────────────────────────────────────────────────────
+
+transformsRouter.post(
+  "/laplace/direct",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const body = req.body as LaplaceDirectInput;
+
+      if (!Array.isArray(body.segments) || body.segments.length === 0) {
+        res.status(400).json({ error: "segments required" });
+        return;
+      }
+      const sanitized = sanitizeSegments(body.segments);
+      if (!sanitized.valid) { res.status(400).json({ error: sanitized.error ?? "Invalid segments" }); return; }
+
+      const timeVarCheck = body.timeVar ? sanitizeVariableName(body.timeVar, "timeVar") : null;
+      if (timeVarCheck && !timeVarCheck.valid) { res.status(400).json({ error: timeVarCheck.error }); return; }
+      const freqVarCheck = body.freqVar ? sanitizeVariableName(body.freqVar, "freqVar") : null;
+      if (freqVarCheck && !freqVarCheck.valid) { res.status(400).json({ error: freqVarCheck.error }); return; }
+
+      const input: LaplaceDirectInput = {
+        segments: body.segments,
+        timeVar: body.timeVar ?? "t",
+        freqVar: body.freqVar ?? "s",
+      };
+
+      const client = trackClientConnection(req, res);
+      const result = await laplaceService.direct(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects && result.exists) {
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId:      req.user?.id,
+          ipAddress:   req.ip ?? undefined,
+          type:        "laplace_direct",
+          input:       input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Laplace: inverse ─────────────────────────────────────────────────────────
+
+transformsRouter.post(
+  "/laplace/inverse",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const body = req.body as LaplaceInverseInput;
+
+      if (typeof body.expression !== "string" || !body.expression.trim()) {
+        res.status(400).json({ error: "expression required" });
+        return;
+      }
+
+      const freqVarCheckInv = body.freqVar ? sanitizeVariableName(body.freqVar, "freqVar") : null;
+      if (freqVarCheckInv && !freqVarCheckInv.valid) { res.status(400).json({ error: freqVarCheckInv.error }); return; }
+      const timeVarCheckInv = body.timeVar ? sanitizeVariableName(body.timeVar, "timeVar") : null;
+      if (timeVarCheckInv && !timeVarCheckInv.valid) { res.status(400).json({ error: timeVarCheckInv.error }); return; }
+
+      const exprCheck = sanitizeExpression(body.expression.trim());
+      if (!exprCheck.valid) { res.status(400).json({ error: exprCheck.error }); return; }
+
+      const input: LaplaceInverseInput = {
+        expression: body.expression.trim(),
+        freqVar:    body.freqVar ?? "s",
+        timeVar:    body.timeVar ?? "t",
+      };
+
+      const client = trackClientConnection(req, res);
+      const result = await laplaceService.inverse(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects && result.exists) {
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId:      req.user?.id,
+          ipAddress:   req.ip ?? undefined,
+          type:        "laplace_inverse",
+          input:       input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Laplace: ODE ─────────────────────────────────────────────────────────────
+
+transformsRouter.post(
+  "/laplace/ode",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const body = req.body as LaplaceOdeInput;
+
+      if (typeof body.equation !== "string" || !body.equation.trim()) {
+        res.status(400).json({ error: "equation required" });
+        return;
+      }
+      if (typeof body.unknown !== "string" || !body.unknown.trim()) {
+        res.status(400).json({ error: "unknown required" });
+        return;
+      }
+      if (!Array.isArray(body.initialConditions)) {
+        res.status(400).json({ error: "initialConditions required" });
+        return;
+      }
+
+      const eqCheck = sanitizeExpression(body.equation.trim());
+      if (!eqCheck.valid) { res.status(400).json({ error: eqCheck.error }); return; }
+      const timeVarCheckOde = body.timeVar ? sanitizeVariableName(body.timeVar, "timeVar") : null;
+      if (timeVarCheckOde && !timeVarCheckOde.valid) { res.status(400).json({ error: timeVarCheckOde.error }); return; }
+
+      const input: LaplaceOdeInput = {
+        equation:          body.equation.trim(),
+        unknown:           body.unknown.trim(),
+        timeVar:           body.timeVar ?? "t",
+        initialConditions: body.initialConditions.map((ic) => ({
+          order: Number(ic.order),
+          value: String(ic.value).trim(),
+        })),
+      };
+
+      const client = trackClientConnection(req, res);
+      const result = await laplaceService.ode(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects && result.exists) {
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId:      req.user?.id,
+          ipAddress:   req.ip ?? undefined,
+          type:        "laplace_ode",
+          input:       input as unknown as Record<string, unknown>,
           executionMs: result.executionTimeMs,
         });
       }

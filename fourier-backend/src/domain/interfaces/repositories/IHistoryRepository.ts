@@ -6,7 +6,10 @@ export type CalculationType =
   | "inverse_fourier_transform"
   | "dft_signal"
   | "dft_epicycles"
-  | "fourier_integral";
+  | "fourier_integral"
+  | "laplace_direct"
+  | "laplace_inverse"
+  | "laplace_ode";
 
 /**
  * Representa un evento de cálculo tal como lo ve el dominio.

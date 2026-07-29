@@ -1,0 +1,54 @@
+/* laplace_direct.mac
+   Computes F(s) = ∫ f(t) e^{-st} dt for a piecewise function.
+   Strategy per segment:
+     - finite [a,b]: direct integration  ∫_a^b expr·e^{-st} dt
+     - [0,inf):       laplace(expr, t, s)  (no sign queries)
+     - [a,inf) a≠0:   exp(-a·s) · laplace(expr(t+a), t, s)  (time-shift)
+   Injected: FUNC_INPUT (matrix of [expr, a, b] rows), INTVAR (t), TRANSVAR (s)
+*/
+display2d: false$
+%iargs:    false$
+radexpand: false$
+assume(TRANSVAR > 0)$
+
+F_acc: 0$
+for _i: 1 thru length(FUNC_INPUT) do block(
+  [_e, _a, _b, _fi, _shifted],
+  _e: FUNC_INPUT[_i][1],
+  _a: FUNC_INPUT[_i][2],
+  _b: FUNC_INPUT[_i][3],
+
+  if _b # inf then block(
+    /* Finite segment [a, b]: direct integration */
+    _fi: errcatch(integrate(_e * exp(-TRANSVAR * INTVAR), INTVAR, _a, _b)),
+    if _fi # [] then F_acc: F_acc + first(_fi)
+  ) else if _a = 0 or _a = 0.0 then block(
+    /* Semi-infinite [0, inf): use laplace() directly */
+    _fi: errcatch(laplace(_e, INTVAR, TRANSVAR)),
+    if _fi # [] then F_acc: F_acc + first(_fi)
+  ) else block(
+    /* Semi-infinite [a, inf) with a≠0: time-shift theorem */
+    /* L{f(t)·u(t-a)} = e^{-as} · L{f(t+a)} */
+    _shifted: subst(INTVAR = INTVAR + _a, _e),
+    _fi: errcatch(laplace(_shifted, INTVAR, TRANSVAR)),
+    if _fi # [] then F_acc: F_acc + exp(-_a * TRANSVAR) * first(_fi)
+  )
+)$
+
+F_raw: errcatch(ratsimp(F_acc))$
+F_raw: if F_raw = [] then false else first(F_raw)$
+
+exists: is(F_raw # false)$
+
+/* Extract free parameters (symbols other than INTVAR and TRANSVAR) */
+free_params: []$
+if exists then block([_vars, _reserved],
+  _vars: listofvars(F_raw),
+  _reserved: [INTVAR, TRANSVAR],
+  free_params: sublist(_vars, lambda([_v], not member(_v, _reserved)))
+)$
+
+print("__EXISTS__")$   print(string(exists))$
+print("__F_MAXIMA__")$ print(string(F_raw))$
+print("__F_TEX__")$    if exists then tex(F_raw) else print("")$
+print("__PARAMS__")$   print(string(free_params))$
