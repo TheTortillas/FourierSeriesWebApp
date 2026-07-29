@@ -54,6 +54,8 @@ export interface AltForm {
   labelKey: string;
   tex: string;
   maxima: string;
+  kTex?: string;
+  summandTex?: string;
 }
 
 let _nextId = 0;
@@ -187,12 +189,15 @@ export class FourierIntegralComponent implements OnInit {
   readonly altFormsA = signal<AltForm[]>([]);
   readonly altFormsB = signal<AltForm[]>([]);
   readonly altFormsC = signal<AltForm[]>([]);
+  readonly altFormsIntegrand = signal<AltForm[]>([]);
   readonly altFormsLoadingA = signal(false);
   readonly altFormsLoadingB = signal(false);
   readonly altFormsLoadingC = signal(false);
+  readonly altFormsLoadingIntegrand = signal(false);
   readonly altFormsOpenA = signal(false);
   readonly altFormsOpenB = signal(false);
   readonly altFormsOpenC = signal(false);
+  readonly altFormsOpenIntegrand = signal(false);
 
   // ── Variable selector ─────────────────────────────────────────────────────
   readonly selectedPairId = signal<string>('t-w');
@@ -720,6 +725,7 @@ export class FourierIntegralComponent implements OnInit {
     this.altFormsA.set([]); this.altFormsOpenA.set(false);
     this.altFormsB.set([]); this.altFormsOpenB.set(false);
     this.altFormsC.set([]); this.altFormsOpenC.set(false);
+    this.altFormsIntegrand.set([]); this.altFormsOpenIntegrand.set(false);
   }
 
   calculate(): void {
@@ -828,9 +834,40 @@ export class FourierIntegralComponent implements OnInit {
     this.runAltForms(expr, (forms) => { formsSig.set(forms); loadSig.set(false); });
   }
 
+  toggleAltFormsIntegrand(): void {
+    const nowOpen = !this.altFormsOpenIntegrand();
+    this.altFormsOpenIntegrand.set(nowOpen);
+    if (!nowOpen || this.altFormsIntegrand().length > 0) return;
+    const res = this.coeffResult();
+    if (!res?.integrand?.maxima) return;
+    const tv = this.transVar();
+    const tvTex = tv === 'w' ? '\\omega' : tv === 'xi' ? '\\xi' : tv;
+    this.altFormsLoadingIntegrand.set(true);
+    this.runAltForms(res.integrand, (forms) => {
+      // Wrap each form's TeX inside ∫₀^∞ … dw, extracting K when simplifiedK ≠ 1.
+      const wrapped = forms.map(f => ({
+        ...f,
+        tex: this.wrapIntegrand(f.tex, f.kTex, f.summandTex, tvTex),
+      }));
+      this.altFormsIntegrand.set(wrapped);
+      this.altFormsLoadingIntegrand.set(false);
+    }, tvTex);
+  }
+
+  /** Wraps integrand TeX in ∫₀^∞ (…) dω, or K·∫₀^∞ (summand) dω when K≠1. */
+  private wrapIntegrand(innerTex: string, kTex: string | undefined, summandTex: string | undefined, tvTex: string): string {
+    const intOp = `\\int_0^{\\infty}`;
+    const dv    = `\\,d${tvTex}`;
+    if (kTex && summandTex && kTex !== '1' && summandTex !== '1' && summandTex !== innerTex) {
+      return `${kTex}${intOp}\\left(${summandTex}\\right)${dv}`;
+    }
+    return `${intOp}\\left(${innerTex}\\right)${dv}`;
+  }
+
   private runAltForms(
     main: { maxima: string; tex: string },
     done: (forms: AltForm[]) => void,
+    _tvTex?: string,
   ): void {
     const mainExpr = main.maxima;
     const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
@@ -854,7 +891,13 @@ export class FourierIntegralComponent implements OnInit {
           const norm = normalize(tex);
           if (seen.has(norm)) return;
           seen.add(norm);
-          forms.push({ labelKey: profiles[i].labelKey, tex, maxima });
+          forms.push({
+            labelKey: profiles[i].labelKey,
+            tex,
+            maxima,
+            kTex: r.simplifiedK?.tex,
+            summandTex: r.simplifiedSummand?.tex,
+          });
         });
         done(forms);
       });

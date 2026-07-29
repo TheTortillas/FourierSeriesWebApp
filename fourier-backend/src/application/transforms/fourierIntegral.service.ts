@@ -87,7 +87,10 @@ kill(all)$
     const aTex    = this.extractTex(this.extractBetween(raw, "__A_TEX__", "__B_MAXIMA__"));
     const bMaxima = this.extractBetween(raw, "__B_MAXIMA__", "__B_TEX__").replace(/false/g, "").trim();
     const bTex    = this.extractTex(this.extractBetween(raw, "__B_TEX__", "__FI_TEX__"));
-    const fourierIntegralTex = this.extractBetween(raw, "__FI_TEX__", "__INPUT_REAL_MAXIMA__").trim();
+    const fourierIntegralTex = this.extractBetween(raw, "__FI_TEX__", "__INTEGRAND_MAXIMA__").trim();
+
+    const integrandMaxima = this.extractBetween(raw, "__INTEGRAND_MAXIMA__", "__INTEGRAND_TEX__").trim();
+    const integrandTex    = this.extractTex(this.extractBetween(raw, "__INTEGRAND_TEX__", "__INPUT_REAL_MAXIMA__"));
 
     const inputRealMaxima = this.extractBetween(raw, "__INPUT_REAL_MAXIMA__", "__INPUT_REAL_TEX__").replace(/\bfalse\b/g, "").trim();
     const inputRealTex    = this.extractTex(this.extractBetween(raw, "__INPUT_REAL_TEX__", "__INPUT_IMAG_MAXIMA__"));
@@ -104,6 +107,7 @@ kill(all)$
       input,
       exists,
       fourierIntegralTex: exists ? fourierIntegralTex : undefined,
+      integrand: exists ? this.toSymbolic(integrandMaxima, integrandTex) : undefined,
       A: exists && input.variant !== "sine"  ? this.toSymbolic(aMaxima, aTex) : undefined,
       B: exists && input.variant !== "cosine" ? this.toSymbolic(bMaxima, bTex) : undefined,
       inputRealPart: this.toSymbolic(inputRealMaxima, inputRealTex),

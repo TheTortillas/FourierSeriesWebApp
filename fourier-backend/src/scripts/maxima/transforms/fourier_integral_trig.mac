@@ -130,12 +130,23 @@ FI_tex: if not exists then ""
     sconcat("f(", _iv_tex, ") = \\int_0^{\\infty}\\left(", _terms, "\\right)d", _tv_tex)
   )$
 
+/* Build combined integrand: A(w)*cos(w*x) + B(w)*sin(w*x) for alt-forms */
+_iv_sym: INTVAR$   /* integration variable (e.g. t) */
+_tv_sym: TRANSVAR$ /* transform variable (e.g. w)   */
+integrand_raw: block([_Aterm, _Bterm],
+  _Aterm: if not _is_zero(A_raw) then A_raw * cos(_tv_sym * _iv_sym) else 0,
+  _Bterm: if not _is_zero(B_raw) then B_raw * sin(_tv_sym * _iv_sym) else 0,
+  ratsimp(_Aterm + _Bterm)
+)$
+
 print("__EXISTS__")$        print(string(exists))$
 print("__A_MAXIMA__")$      print(string(A_raw))$
 print("__A_TEX__")$         if A_raw # false then tex(A_raw) else print("")$
 print("__B_MAXIMA__")$      print(string(B_raw))$
 print("__B_TEX__")$         if B_raw # false then tex(B_raw) else print("")$
 print("__FI_TEX__")$        print(FI_tex)$
+print("__INTEGRAND_MAXIMA__")$ print(string(integrand_raw))$
+print("__INTEGRAND_TEX__")$    tex(integrand_raw)$
 print("__INPUT_REAL_MAXIMA__")$ print(string(F_in_real))$
 print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else print("")$
 print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$

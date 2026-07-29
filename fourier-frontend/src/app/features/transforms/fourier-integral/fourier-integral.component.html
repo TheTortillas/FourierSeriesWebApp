@@ -740,6 +740,33 @@
                   <span #fiFullEl [mathjax]="display(res.fourierIntegralTex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
                   <app-export-button [tex]="res.fourierIntegralTex" [mathEl]="fiFullEl" filename="fourier-integral" [label]="'fourier-integral.title' | transloco" />
                 </div>
+                @if (res.integrand) {
+                  <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
+                    <button type="button" (click)="toggleAltFormsIntegrand()" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                      <span>{{ 'transforms.altForms' | transloco }}</span>
+                      <span class="text-[9px]">{{ altFormsOpenIntegrand() ? '▲' : '▼' }}</span>
+                    </button>
+                    @if (altFormsOpenIntegrand()) {
+                      @if (altFormsLoadingIntegrand()) {
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                      } @else if (altFormsIntegrand().length === 0) {
+                        <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                      } @else {
+                        <div class="flex flex-col gap-2 mt-2">
+                          @for (form of altFormsIntegrand(); track form.labelKey) {
+                            <div class="flex flex-col gap-0.5">
+                              <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                              <div class="flex items-center gap-2 flex-wrap">
+                                <span #fiIntAltEl [mathjax]="display(form.tex)" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                                <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="fiIntAltEl" filename="fourier-integral-integrand-alt" [label]="'fourier-integral.title' | transloco" />
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
+                }
               </div>
             }
 
