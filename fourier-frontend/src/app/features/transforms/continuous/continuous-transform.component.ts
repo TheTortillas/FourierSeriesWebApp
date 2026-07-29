@@ -13,7 +13,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   catchError,
   debounceTime,
@@ -277,8 +277,10 @@ export class ContinuousTransformComponent implements OnInit {
   readonly continuityValidating = signal(false);
   readonly loading = signal(false);
   readonly errorMsg = signal<string | null>(null);
-  readonly ftResult = signal<FourierTransformResponse | null>(null);
+  readonly ftResult  = signal<FourierTransformResponse | null>(null);
   readonly iftResult = signal<InverseFourierTransformResponse | null>(null);
+  readonly hasResult = computed(() => this.ftResult() !== null || this.iftResult() !== null);
+  readonly lang      = toSignal(this.transloco.langChanges$, { initialValue: this.transloco.getActiveLang() });
 
   // ── Alt forms — main result ────────────────────────────────────────────────
   readonly altFormsFt = signal<AltForm[]>([]);

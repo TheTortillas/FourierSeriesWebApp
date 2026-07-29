@@ -25,7 +25,7 @@
     <span class="hidden lg:flex flex-col items-start leading-none gap-0.5">
       <span class="font-display text-base leading-none">Fourier Web Calculator</span>
       <span class="text-[9px] font-mono text-muted dark:text-dark-muted tracking-wide select-none"
-        >Beta · v11.5</span
+        >Beta · v12.0</span
       >
     </span>
   </a>
@@ -78,6 +78,14 @@
             class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
           >
             {{ 'nav.transforms' | transloco }}
+          </a>
+          <a
+            [routerLink]="'/' + lang() + '/fourier-integral'"
+            routerLinkActive="!text-accent bg-accent/5"
+            (click)="fourierMenuOpen.set(false)"
+            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+          >
+            {{ 'nav.fourierIntegral' | transloco }}
           </a>
         </div>
       }

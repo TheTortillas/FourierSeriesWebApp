@@ -31,6 +31,10 @@ import {
   FourierTransformResponse,
   InverseFourierTransformRequest,
   InverseFourierTransformResponse,
+  FourierIntegralRequest,
+  FourierIntegralReconstructRequest,
+  FourierIntegralCoefficientsResponse,
+  FourierIntegralReconstructResponse,
   // Simplify
   SimplifyRequest,
   SimplifyResponse,
@@ -183,6 +187,24 @@ export class ApiService {
   ): Observable<InverseFourierTransformResponse> {
     return this.http.post<InverseFourierTransformResponse>(
       `${this.base}/transforms/fourier/inverse`,
+      body,
+    );
+  }
+
+  calculateFourierIntegralCoefficients(
+    body: FourierIntegralRequest,
+  ): Observable<FourierIntegralCoefficientsResponse> {
+    return this.http.post<FourierIntegralCoefficientsResponse>(
+      `${this.base}/transforms/fourier-integral/coefficients`,
+      body,
+    );
+  }
+
+  calculateFourierIntegralReconstruct(
+    body: FourierIntegralReconstructRequest,
+  ): Observable<FourierIntegralReconstructResponse> {
+    return this.http.post<FourierIntegralReconstructResponse>(
+      `${this.base}/transforms/fourier-integral/reconstruct`,
       body,
     );
   }

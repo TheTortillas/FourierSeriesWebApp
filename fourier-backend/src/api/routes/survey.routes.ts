@@ -14,6 +14,7 @@ const VALID_HOW_FOUND    = ["search", "recommendation_peer", "recommendation_tea
 const VALID_PURPOSES     = ["problem", "learning", "teaching", "exploration", "other"];
 const VALID_FEATURES     = [
   "trigonometric", "half_range", "complex",
+  "fourier_integral",
   "fourier_transform", "inverse_fourier_transform",
   "dft_signal", "dft_function", "dft_epicycles", "none",
 ];

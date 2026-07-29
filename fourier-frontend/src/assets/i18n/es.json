@@ -28,12 +28,14 @@
     "close": "Cerrar",
     "saving": "Guardando…",
     "downloadCsv": "Descargar CSV",
-    "loginToDownloadCsv": "Inicia sesión para descargar CSV"
+    "loginToDownloadCsv": "Inicia sesión para descargar CSV",
+    "grapherBanner": "¿Quieres graficar esta función? → Abrir Graficador"
   },
   "nav": {
     "fourierAnalysis": "Análisis de Fourier",
     "series": "Series de Fourier",
     "transforms": "Transformadas",
+    "fourierIntegral": "Integral de Fourier",
     "login": "Ingresar",
     "register": "Registrarse",
     "logout": "Salir",
@@ -93,16 +95,28 @@
     }
   },
   "home": {
-    "subtitle": "Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
+    "subtitle": "Calcula, visualiza y analiza el análisis de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
     "learnMore": "Conoce más sobre la herramienta →",
+    "toolsTitle": "Herramientas",
+    "fourierTitle": "Análisis de Fourier",
+    "comingSoonTitle": "Próximamente",
+    "comingSoon": "Próximamente",
     "series": {
       "title": "Series de Fourier",
-      "description": "Descomposición periódica de funciones a trozos en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos exactos."
+      "description": "Descomposición periódica de funciones en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos y Parseval."
+    },
+    "integral": {
+      "title": "Integral de Fourier",
+      "description": "Representación integral de funciones no periódicas en sus formas trigonométrica, coseno, seno y compleja, con reconstrucción gráfica."
     },
     "transforms": {
-      "title": "Transformadas de Fourier",
-      "description": "Análisis espectral de señales no periódicas mediante la transformada continua de Fourier, con acceso preparado para la transformada discreta.",
-      "badge": "Continua activa"
+      "title": "Transformada de Fourier",
+      "description": "Análisis espectral de señales no periódicas con transformada continua directa e inversa, partes real e imaginaria y convenciones de normalización."
+    },
+    "laplace": {
+      "title": "Transformada de Laplace",
+      "description": "Transformada directa e inversa con convergencia, polos y zeros. En desarrollo.",
+      "badge": "Próximamente"
     }
   },
   "calculator": {
@@ -139,8 +153,8 @@
       "halfRangeDesc": "Series de senos o cosenos",
       "complex": "Compleja",
       "complexDesc": "cₙ e^{inω₀x}",
-      "fourierTransform": "Transformada",
-      "inverseFourierTransform": "T. Inversa",
+      "fourierTransform": "T. de Fourier",
+      "inverseFourierTransform": "T. Inversa de Fourier",
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
       "dftEpicycles": "DFT epiciclos"
@@ -226,7 +240,13 @@
     "tabValidation": "Validación",
     "tabValidationDesc": "Convergencia y errores",
     "tabParseval": "Parseval",
-    "tabParsevalDesc": "Identidad de energía"
+    "tabParsevalDesc": "Identidad de energía",
+    "layers": "Capas",
+    "reconstruction": "Reconstrucción",
+    "xAxis": "Eje X",
+    "color": "Color",
+    "width": "Ancho",
+    "dashed": "Discontinua"
   },
   "resultPanel": {
     "sine": "Seno",
@@ -284,6 +304,8 @@
     "subtitle": "Calcula la transformada continua o inversa de una función definida por tramos.",
     "continuous": "Continua",
     "continuousDesc": "f(ω) = ∫f(t)e⁻ⁱωᵗdt",
+    "fourierIntegral": "Integral de Fourier",
+    "fourierIntegralDesc": "f(x) = ∫₀^∞ [A(ω)cos(ωx)+B(ω)sin(ωx)]dω",
     "discrete": "Discreta",
     "discreteDesc": "X[k] = Σx[n]e⁻ⁱ²πkn/N",
     "comingSoon": "Próximamente",
@@ -448,7 +470,8 @@
       "errorCompleteFields": "Completa todos los campos de los tramos.",
       "errorEvalFunction": "Error al evaluar la función.",
       "errorMinPoints": "Se necesitan al menos 3 puntos."
-    }
+    },
+    "hint": "Configura la función y presiona"
   },
   "history": {
     "title": "Mis cálculos",
@@ -497,11 +520,12 @@
       "trigonometric": "Trigonométrica",
       "halfRange": "Medio rango",
       "complex": "Compleja",
-      "fourierTransform": "Transformada",
-      "inverseFourierTransform": "T. Inversa",
+      "fourierTransform": "T. de Fourier",
+      "inverseFourierTransform": "T. Inversa de Fourier",
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
-      "dftEpicycles": "DFT epiciclos"
+      "dftEpicycles": "DFT epiciclos",
+      "fourierIntegral": "Int. Fourier"
     }
   },
   "auth": {
@@ -646,6 +670,10 @@
       "title": "Calculadora de DFT — Transformada Discreta de Fourier con Epiciclos",
       "description": "Calcula la DFT y la FFT con visualización del espectro de amplitud y fase. Reconstruye señales con epiciclos animados. Ideal para procesamiento de señales y análisis de frecuencias."
     },
+    "fourierIntegral": {
+      "title": "Integral de Fourier — Representación continua A(ω) y B(ω)",
+      "description": "Calcula la integral de Fourier trigonométrica, compleja, coseno y seno de funciones definidas por tramos. Visualiza la reconstrucción con el fenómeno de Gibbs mediante un slider interactivo."
+    },
     "about": {
       "title": "Acerca de Fourier Web Calculator",
       "description": "Fourier Web Calculator: herramienta gratuita para calcular transformadas de Fourier continuas, inversas, series de Fourier, DFT y epiciclos. Resultados simbólicos exactos con visualización en tiempo real."
@@ -735,12 +763,14 @@
       },
       "featuresLabel": "¿Qué funcionalidades probaste? (puedes seleccionar varias)",
       "groupSeries": "Series de Fourier",
+      "groupIntegral": "Integral de Fourier",
       "groupContinuous": "Transformada continua",
       "groupDft": "Transformada Discreta (DFT)",
       "features": {
         "trigonometric": "Serie trigonométrica",
         "half_range": "Serie de medio rango",
         "complex": "Serie exponencial compleja",
+        "fourier_integral": "Integral de Fourier",
         "fourier_transform": "Transformada de Fourier continua",
         "inverse_fourier_transform": "Transformada inversa de Fourier",
         "dft_signal": "DFT — señal discreta (puntos manuales)",
@@ -856,6 +886,16 @@
       "f8": "Ver resultados en múltiples formas: expresiones de magnitud, fase, y partes real e imaginaria",
       "f9": "Acepta parámetros libres (p. ej. a·t, sin(ω·t)) — varíalos con sliders interactivos después de calcular"
     },
+    "integral": {
+      "title": "Integral de Fourier",
+      "desc": "Representa funciones no periódicas como integrales continuas de frecuencia y analiza sus distintas formas equivalentes.",
+      "f1": "Formas trigonométrica, coseno, seno y compleja de la integral de Fourier",
+      "f2": "Funciones a trozos con múltiples segmentos en el dominio real o semirreal",
+      "f3": "Coeficientes A(ω) y B(ω) simbólicos exactos calculados con Maxima CAS",
+      "f4": "Reconstrucción gráfica interactiva por suma de Riemann en tiempo real",
+      "f5": "Formas equivalentes con extracción de constante y simplificaciones simbólicas",
+      "f6": "Exportar y compartir resultados"
+    },
     "dft": {
       "title": "Transformada Discreta de Fourier (DFT)",
       "desc": "Analiza señales numéricamente con la DFT, visualiza el espectro y observa la animación de epiciclos.",
@@ -947,6 +987,32 @@
         "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
       }
     }
+  },
+  "fourier-integral": {
+    "title": "Integral de Fourier",
+    "subtitle": "Representación integral de funciones no periódicas",
+    "trigonometric": "Trigonométrica",
+    "complex": "Compleja",
+    "cosine": "Integral Coseno",
+    "sine": "Integral Seno",
+    "reconstruction": "Reconstrucción",
+    "upperLimit": "Límite superior a = {{a}}",
+    "gibbs": "Mueve el slider para ver el fenómeno de Gibbs",
+    "intVar": "Variable de integración",
+    "transVar": "Variable de transformada",
+    "integralType": "Tipo de integral",
+    "coefficients": "Coeficientes",
+    "upperLimitLabel": "Límite superior (a)",
+    "upperLimitInfo": "Reemplaza el límite superior ∞ por un valor finito — mueve el slider para visualizar la convergencia y el fenómeno de Gibbs",
+    "variantTrigonometric": "Trigonométrica",
+    "variantComplex": "Compleja",
+    "variantCosine": "Coseno",
+    "variantSine": "Seno",
+    "reCw": "Re C({{ v }})",
+    "imCw": "Im C({{ v }})",
+    "notFound": "No se encontró una forma cerrada para esta función.",
+    "hint": "Configura la función y presiona",
+    "calculate": "Calcular"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",

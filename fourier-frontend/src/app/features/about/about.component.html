@@ -78,6 +78,37 @@
         </a>
       </div>
 
+      <!-- Integral de Fourier -->
+      <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+            <span class="font-display text-xl text-accent leading-none select-none">∫</span>
+          </div>
+          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+            {{ 'about.integral.title' | transloco }}
+          </h2>
+        </div>
+        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+          {{ 'about.integral.desc' | transloco }}
+        </p>
+        <ul class="flex flex-col gap-1.5">
+          @for (key of integralItems; track key) {
+            <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+              <span class="text-accent mt-px shrink-0">✓</span>
+              {{ key | transloco }}
+            </li>
+          }
+        </ul>
+        <a [routerLink]="'/' + lang() + '/fourier-integral'"
+          class="mt-2 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
+          {{ 'common.explore' | transloco }}
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </a>
+      </div>
+
       <!-- DFT -->
       <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
         <div class="flex items-center gap-3">
@@ -272,6 +303,11 @@
           class="flex items-center gap-2 px-5 py-2.5 rounded bg-accent text-white text-sm font-mono hover:bg-accent/90 transition-colors">
           <span>Σ</span>
           {{ 'about.series.title' | transloco }}
+        </a>
+        <a [routerLink]="'/' + lang() + '/fourier-integral'"
+          class="flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
+          <span class="font-display">∫</span>
+          {{ 'about.integral.title' | transloco }}
         </a>
         <a [routerLink]="'/' + lang() + '/transforms/continuous'"
           class="flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">

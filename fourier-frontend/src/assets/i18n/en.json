@@ -28,12 +28,14 @@
     "close": "Close",
     "saving": "Saving…",
     "downloadCsv": "Download CSV",
-    "loginToDownloadCsv": "Log in to download CSV"
+    "loginToDownloadCsv": "Log in to download CSV",
+    "grapherBanner": "Want to plot this function? → Open Grapher"
   },
   "nav": {
     "fourierAnalysis": "Fourier Analysis",
     "series": "Fourier Series",
     "transforms": "Transforms",
+    "fourierIntegral": "Fourier Integral",
     "login": "Log in",
     "register": "Sign up",
     "logout": "Log out",
@@ -93,16 +95,28 @@
     }
   },
   "home": {
-    "subtitle": "Calculate, visualize and analyze Fourier Series and Transforms with exact symbolic expressions and real-time graphical reconstruction.",
+    "subtitle": "Calculate, visualize and analyze Fourier analysis with exact symbolic expressions and real-time graphical reconstruction.",
     "learnMore": "Learn more about the tool →",
+    "toolsTitle": "Tools",
+    "fourierTitle": "Fourier Analysis",
+    "comingSoonTitle": "Coming soon",
+    "comingSoon": "Coming soon",
     "series": {
       "title": "Fourier Series",
-      "description": "Periodic decomposition of piecewise functions into trigonometric, complex and half-range series, with exact symbolic coefficients."
+      "description": "Periodic decomposition of piecewise functions into trigonometric, complex and half-range series, with symbolic coefficients and Parseval."
+    },
+    "integral": {
+      "title": "Fourier Integral",
+      "description": "Integral representation of non-periodic functions in trigonometric, cosine, sine and complex forms, with graphical reconstruction."
     },
     "transforms": {
-      "title": "Fourier Transforms",
-      "description": "Spectral analysis of non-periodic signals via the continuous Fourier transform, with support prepared for the discrete transform.",
-      "badge": "Continuous active"
+      "title": "Fourier Transform",
+      "description": "Spectral analysis of non-periodic signals with continuous direct and inverse transform, real and imaginary parts and normalization conventions."
+    },
+    "laplace": {
+      "title": "Laplace Transform",
+      "description": "Direct and inverse transform with region of convergence, poles and zeros. Under development.",
+      "badge": "Coming soon"
     }
   },
   "calculator": {
@@ -139,8 +153,8 @@
       "halfRangeDesc": "Sines or cosines series",
       "complex": "Complex",
       "complexDesc": "cₙ e^{inω₀x}",
-      "fourierTransform": "Transform",
-      "inverseFourierTransform": "Inv. Transform",
+      "fourierTransform": "Fourier Transform",
+      "inverseFourierTransform": "Inv. Fourier Transform",
       "dftSignal": "DFT signal",
       "dftFunction": "DFT function",
       "dftEpicycles": "DFT epicycles"
@@ -197,7 +211,13 @@
     "tabValidation": "Validation",
     "tabValidationDesc": "Convergence & errors",
     "tabParseval": "Parseval",
-    "tabParsevalDesc": "Energy identity"
+    "tabParsevalDesc": "Energy identity",
+    "layers": "Layers",
+    "reconstruction": "Reconstruction",
+    "xAxis": "X axis",
+    "color": "Color",
+    "width": "Width",
+    "dashed": "Dashed"
   },
   "resultPanel": {
     "sine": "Sine",
@@ -284,6 +304,8 @@
     "subtitle": "Compute the continuous or inverse transform of a piecewise-defined function.",
     "continuous": "Continuous",
     "continuousDesc": "f(ω) = ∫f(t)e⁻ⁱωᵗdt",
+    "fourierIntegral": "Fourier Integral",
+    "fourierIntegralDesc": "f(x) = ∫₀^∞ [A(ω)cos(ωx)+B(ω)sin(ωx)]dω",
     "discrete": "Discrete",
     "discreteDesc": "X[k] = Σx[n]e⁻ⁱ²πkn/N",
     "comingSoon": "Coming soon",
@@ -448,7 +470,8 @@
       "errorCompleteFields": "Please complete all segment fields.",
       "errorEvalFunction": "Error evaluating the function.",
       "errorMinPoints": "At least 3 points are required."
-    }
+    },
+    "hint": "Configure the function and press"
   },
   "history": {
     "title": "My calculations",
@@ -497,11 +520,12 @@
       "trigonometric": "Trigonometric",
       "halfRange": "Half-range",
       "complex": "Complex",
-      "fourierTransform": "Transform",
-      "inverseFourierTransform": "Inv. Transform",
+      "fourierTransform": "Fourier Transform",
+      "inverseFourierTransform": "Inv. Fourier Transform",
       "dftSignal": "DFT signal",
       "dftFunction": "DFT function",
-      "dftEpicycles": "DFT epicycles"
+      "dftEpicycles": "DFT epicycles",
+      "fourierIntegral": "Fourier Integral"
     }
   },
   "auth": {
@@ -646,6 +670,10 @@
       "title": "DFT Calculator — Discrete Fourier Transform with Epicycles",
       "description": "Calculate the DFT and FFT with amplitude and phase spectrum visualization. Reconstruct signals with animated epicycles. Perfect for signal processing and frequency analysis."
     },
+    "fourierIntegral": {
+      "title": "Fourier Integral Calculator — A(ω) and B(ω) Coefficients",
+      "description": "Calculate the trigonometric, complex, cosine, and sine Fourier integral of piecewise-defined functions. Visualize the reconstruction and Gibbs phenomenon with an interactive slider."
+    },
     "about": {
       "title": "About Fourier Web Calculator",
       "description": "Fourier Web Calculator: free tool for computing continuous Fourier transforms, inverse transforms, Fourier series, DFT and epicycles. Exact symbolic results with real-time visualization."
@@ -735,12 +763,14 @@
       },
       "featuresLabel": "Which features did you try? (select all that apply)",
       "groupSeries": "Fourier Series",
+      "groupIntegral": "Fourier Integral",
       "groupContinuous": "Continuous transform",
       "groupDft": "Discrete Transform (DFT)",
       "features": {
         "trigonometric": "Trigonometric series",
         "half_range": "Half-range series",
         "complex": "Complex exponential series",
+        "fourier_integral": "Fourier Integral",
         "fourier_transform": "Continuous Fourier Transform",
         "inverse_fourier_transform": "Inverse Fourier Transform",
         "dft_signal": "DFT — discrete signal (manual points)",
@@ -856,6 +886,16 @@
       "f8": "View results in multiple forms: magnitude, phase, real/imaginary component expressions",
       "f9": "Supports free parameters (e.g. a·t, sin(ω·t)) — vary them with interactive sliders after computing"
     },
+    "integral": {
+      "title": "Fourier Integral",
+      "desc": "Represent non-periodic functions as continuous frequency integrals and analyze their different equivalent forms.",
+      "f1": "Trigonometric, cosine, sine and complex forms of the Fourier integral",
+      "f2": "Piecewise functions with multiple segments over real or semi-infinite domains",
+      "f3": "Exact symbolic coefficients A(ω) and B(ω) computed with Maxima CAS",
+      "f4": "Interactive graphical reconstruction via real-time Riemann sum",
+      "f5": "Equivalent forms with constant extraction and symbolic simplifications",
+      "f6": "Export and share results"
+    },
     "dft": {
       "title": "Discrete Fourier Transform (DFT)",
       "desc": "Analyze signals numerically with the DFT, visualize the spectrum and watch the epicycles animation.",
@@ -947,6 +987,32 @@
         "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
       }
     }
+  },
+  "fourier-integral": {
+    "title": "Fourier Integral",
+    "subtitle": "Integral representation of non-periodic functions",
+    "trigonometric": "Trigonometric",
+    "complex": "Complex",
+    "cosine": "Cosine Integral",
+    "sine": "Sine Integral",
+    "reconstruction": "Reconstruction",
+    "upperLimit": "Upper limit a = {{a}}",
+    "gibbs": "Move the slider to see the Gibbs phenomenon",
+    "intVar": "Integration variable",
+    "transVar": "Transform variable",
+    "integralType": "Integral type",
+    "coefficients": "Coefficients",
+    "upperLimitLabel": "Upper limit (a)",
+    "upperLimitInfo": "Replaces the ∞ upper bound with a finite value — slide to visualize convergence and the Gibbs phenomenon",
+    "variantTrigonometric": "Trigonometric",
+    "variantComplex": "Complex",
+    "variantCosine": "Cosine",
+    "variantSine": "Sine",
+    "reCw": "Re C({{ v }})",
+    "imCw": "Im C({{ v }})",
+    "notFound": "No closed form was found for this function.",
+    "hint": "Configure the function and press",
+    "calculate": "Calculate"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",

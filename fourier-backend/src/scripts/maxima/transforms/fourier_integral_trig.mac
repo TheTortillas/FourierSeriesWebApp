@@ -1,0 +1,227 @@
+/* ═══════════════════════════════════════════════════════════════
+   Integral de Fourier — Forma Trigonométrica
+   Input:  FUNC_INPUT  → matrix con tramos [expr, a, b]
+           INTVAR      → variable de integración (default v)
+           TRANSVAR    → variable de transformada (default w)
+           VARIANT     → "trigonometric" | "cosine" | "sine"
+
+   Trigonométrica completa:
+     A(w) = (1/π) ∫_{-∞}^{∞} f(v) cos(wv) dv
+     B(w) = (1/π) ∫_{-∞}^{∞} f(v) sin(wv) dv
+     f(x) = ∫₀^∞ [A(w)cos(wx) + B(w)sin(wx)] dw
+
+   Integral coseno (f par):
+     A(w) = (2/π) ∫₀^∞ f(v) cos(wv) dv
+
+   Integral seno (f impar):
+     B(w) = (2/π) ∫₀^∞ f(v) sin(wv) dv
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+%iargs: false$
+radexpand: false$
+
+load("CLEAN_INTEGRAL_PATH")$
+
+/* Scale factors by variant */
+if VARIANT = "cosine" then (
+  A_scale: 2/%pi,
+  B_scale: 2/%pi
+) else if VARIANT = "sine" then (
+  A_scale: 2/%pi,
+  B_scale: 2/%pi
+) else (
+  A_scale: 1/%pi,
+  B_scale: 1/%pi
+)$
+
+/* Integrate each segment separately and accumulate.
+   For cosine/sine variants the user provides f on [0,∞) only,
+   so we integrate exactly over the given [a,b] bounds. */
+
+A_acc: 0$
+B_acc: 0$
+
+block([_i, _e, _a, _b, _Ai, _Bi],
+  for _i: 1 thru length(FUNC_INPUT) do (
+    _e: FUNC_INPUT[_i][1],
+    _a: FUNC_INPUT[_i][2],
+    _b: FUNC_INPUT[_i][3],
+
+    if VARIANT # "sine" then (
+      _Ai: errcatch(integrate(_e * cos(TRANSVAR * INTVAR), INTVAR, _a, _b)),
+      if _Ai # [] then A_acc: A_acc + first(_Ai)
+    ),
+
+    if VARIANT # "cosine" then (
+      _Bi: errcatch(integrate(_e * sin(TRANSVAR * INTVAR), INTVAR, _a, _b)),
+      if _Bi # [] then B_acc: B_acc + first(_Bi)
+    )
+  )
+)$
+
+/* Apply scale and simplify */
+A_raw: if VARIANT = "sine" then false
+  else errcatch(ratsimp(A_scale * A_acc))$
+A_raw: if A_raw = [] then false else first(A_raw)$
+A_raw: if A_raw # false and not freeof(gamma_incomplete, A_raw)
+       then clean_integral(A_raw, TRANSVAR) else A_raw$
+
+B_raw: if VARIANT = "cosine" then false
+  else errcatch(ratsimp(B_scale * B_acc))$
+B_raw: if B_raw = [] then false else first(B_raw)$
+B_raw: if B_raw # false and not freeof(gamma_incomplete, B_raw)
+       then clean_integral(B_raw, TRANSVAR) else B_raw$
+
+/* exists=true only when at least one non-zero symbolic coefficient was found */
+exists: (A_raw # false and A_raw # 0) or (B_raw # false and B_raw # 0)$
+
+/* Build f_in_expr for plotting using unit step gates (same as fourier_transform.mac) */
+block([_i, _e, _a, _b, _gate],
+  f_in_expr: 0,
+  for _i: 1 thru length(FUNC_INPUT) do (
+    _e: FUNC_INPUT[_i][1],
+    _a: FUNC_INPUT[_i][2],
+    _b: FUNC_INPUT[_i][3],
+    _gate: if _a = minf and _b = inf then 1
+           else if _a = minf then u(_b - INTVAR)
+           else if _b = inf  then u(INTVAR - _a)
+           else (u(INTVAR - _a) - u(INTVAR - _b)),
+    f_in_expr: f_in_expr + _e * _gate
+  )
+)$
+
+F_in_real: if freeof(%i, f_in_expr) then f_in_expr else realpart(f_in_expr)$
+F_in_imag: if freeof(%i, f_in_expr) then 0 else imagpart(f_in_expr)$
+
+/* Helpers to detect a truly-zero coefficient */
+_is_zero(expr) := (expr = false or expr = 0 or expr = 0.0)$
+
+/* TeX representations for the integration/transform variables.
+   w and xi get their Unicode symbols; anything else is rendered verbatim. */
+_tv_tex: if TRANSVAR = "w"  then "\\omega"
+         else if TRANSVAR = "xi" then "\\xi"
+         else TRANSVAR$
+_iv_tex: if INTVAR = "xi" then "\\xi" else INTVAR$
+
+/* Build the full Fourier Integral formula as a TeX string.
+   Omit terms whose coefficient is identically zero. */
+FI_tex: if not exists then ""
+  else if VARIANT = "cosine" then
+    sconcat("f(", _iv_tex, ") = \\frac{2}{\\pi}\\int_0^{\\infty}\\left(",
+            if not _is_zero(A_raw) then tex1(A_raw) else "0",
+            "\\right)\\cos(", _tv_tex, _iv_tex, ")\\,d", _tv_tex)
+  else if VARIANT = "sine" then
+    sconcat("f(", _iv_tex, ") = \\frac{2}{\\pi}\\int_0^{\\infty}\\left(",
+            if not _is_zero(B_raw) then tex1(B_raw) else "0",
+            "\\right)\\sin(", _tv_tex, _iv_tex, ")\\,d", _tv_tex)
+  else block([_A_str, _B_str, _terms],
+    _A_str: if not _is_zero(A_raw) then sconcat(tex1(A_raw), "\\cos(", _tv_tex, _iv_tex, ")") else "",
+    _B_str: if not _is_zero(B_raw) then sconcat(tex1(B_raw), "\\sin(", _tv_tex, _iv_tex, ")") else "",
+    _terms: if _A_str # "" and _B_str # "" then (
+              /* Omit the '+' when B already carries a leading minus sign */
+              if cequal(substring(_B_str, 1, 2), "-")
+              then sconcat(_A_str, _B_str)
+              else sconcat(_A_str, "+", _B_str)
+            )
+            else if _A_str # "" then _A_str
+            else if _B_str # "" then _B_str
+            else "0",
+    sconcat("f(", _iv_tex, ") = \\int_0^{\\infty}\\left(", _terms, "\\right)d", _tv_tex)
+  )$
+
+/* Build combined integrand: A(w)*cos(w*x) + B(w)*sin(w*x) for alt-forms */
+_iv_sym: INTVAR$   /* integration variable (e.g. t) */
+_tv_sym: TRANSVAR$ /* transform variable (e.g. w)   */
+integrand_raw: block([_Aterm, _Bterm],
+  _Aterm: if not _is_zero(A_raw) then A_raw * cos(_tv_sym * _iv_sym) else 0,
+  _Bterm: if not _is_zero(B_raw) then B_raw * sin(_tv_sym * _iv_sym) else 0,
+  ratsimp(_Aterm + _Bterm)
+)$
+
+/* Extract constant factor K from integrand.
+   Works for A-only, B-only, and both-A-and-B cases.
+   All work is in local variables — A_raw and B_raw are never modified. */
+integrand_K: false$
+integrand_summand: false$
+block([_A, _B, _cfA, _cfB, _KA, _KB, _SA, _SB, _r],
+  _r: errcatch(factor(fullratsimp(A_raw))),
+  _A: if not _is_zero(A_raw) then (if _r = [] then A_raw else first(_r)) else false,
+  _r: errcatch(factor(fullratsimp(B_raw))),
+  _B: if not _is_zero(B_raw) then (if _r = [] then B_raw else first(_r)) else false,
+  if _A # false and _B # false then
+    block([],
+      _cfA: errcatch(const_factor(_A, _tv_sym)),
+      _cfB: errcatch(const_factor(_B, _tv_sym)),
+      if _cfA # [] and _cfB # [] then
+        block([],
+          _cfA: first(_cfA),  _cfB: first(_cfB),
+          _KA: _cfA[1],  _SA: _cfA[2],
+          _KB: _cfB[1],  _SB: _cfB[2],
+          if ratsimp(_KA - _KB) = 0 and _KA # 1 and _KA # -1 then
+            block([],
+              integrand_K: _KA,
+              integrand_summand: ratsimp(_SA * cos(_tv_sym * _iv_sym) + _SB * sin(_tv_sym * _iv_sym))
+            )
+        )
+    )
+  else if _A # false then
+    block([],
+      _cfA: errcatch(const_factor(_A, _tv_sym)),
+      if _cfA # [] then
+        block([],
+          _cfA: first(_cfA),
+          _KA: _cfA[1],  _SA: _cfA[2],
+          if _KA # 1 and _KA # -1 then
+            block([],
+              integrand_K: _KA,
+              integrand_summand: ratsimp(_SA * cos(_tv_sym * _iv_sym))
+            )
+        )
+    )
+  else if _B # false then
+    block([],
+      _cfB: errcatch(const_factor(_B, _tv_sym)),
+      if _cfB # [] then
+        block([],
+          _cfB: first(_cfB),
+          _KB: _cfB[1],  _SB: _cfB[2],
+          if _KB # 1 and _KB # -1 then
+            block([],
+              integrand_K: _KB,
+              integrand_summand: ratsimp(_SB * sin(_tv_sym * _iv_sym))
+            )
+        )
+    )
+)$
+
+print("__EXISTS__")$        print(string(exists))$
+print("__A_MAXIMA__")$      print(string(A_raw))$
+print("__A_TEX__")$         if A_raw # false then tex(A_raw) else print("")$
+print("__B_MAXIMA__")$      print(string(B_raw))$
+print("__B_TEX__")$         if B_raw # false then tex(B_raw) else print("")$
+print("__FI_TEX__")$        print(FI_tex)$
+print("__INTEGRAND_MAXIMA__")$ print(string(integrand_raw))$
+print("__INTEGRAND_TEX__")$    tex(integrand_raw)$
+print("__INTEGRAND_K_MAXIMA__")$  print(string(integrand_K))$
+print("__INTEGRAND_K_TEX__")$     if integrand_K # false then tex(integrand_K) else print("")$
+print("__INTEGRAND_S_MAXIMA__")$  print(string(integrand_summand))$
+print("__INTEGRAND_S_TEX__")$     if integrand_summand # false then tex(integrand_summand) else print("")$
+print("__INPUT_REAL_MAXIMA__")$ print(string(F_in_real))$
+print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else print("")$
+print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$
+print("__INPUT_IMAG_TEX__")$    if F_in_imag # false then tex(F_in_imag) else print("")$
+block([_all_vars, _reserved, _params, _s],
+  _reserved: [TRANSVAR, INTVAR],
+  _all_vars: append(
+    if A_raw # false then listofvars(A_raw) else [],
+    if B_raw # false then listofvars(B_raw) else []
+  ),
+  _params: [],
+  for _s in _all_vars do (
+    if not member(_s, _reserved) and not member(_s, _params) then
+      _params: append(_params, [_s])
+  ),
+  free_params: _params
+)$
+print("__PARAMS__")$         print(string(free_params))$

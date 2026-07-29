@@ -32,7 +32,8 @@ export class AboutComponent implements OnInit {
   readonly seriesItems = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11'].map(
     (k) => `about.series.${k}`,
   );
-  readonly transformItems = ['f1', 'f3', 'f4', 'f5', 'f7', 'f8', 'f9', 'f6'].map((k) => `about.transforms.${k}`);
+  readonly transformItems  = ['f1', 'f3', 'f4', 'f5', 'f7', 'f8', 'f9', 'f6'].map((k) => `about.transforms.${k}`);
+  readonly integralItems  = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'].map((k) => `about.integral.${k}`);
   readonly dftItems = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9'].map((k) => `about.dft.${k}`);
   readonly inputItems = ['f1', 'f2', 'f3', 'f4'].map((k) => `about.input.${k}`);
   readonly accountItems = ['f1', 'f2', 'f3', 'f4'].map((k) => `about.account.${k}`);

@@ -17,6 +17,7 @@ const TYPE_KEY: Record<string, string> = {
   inverse_fourier_transform: 'history.types.inverseFourierTransform',
   dft_signal: 'history.types.dftSignal',
   dft_epicycles: 'history.types.dftEpicycles',
+  fourier_integral: 'history.types.fourierIntegral',
 };
 
 @Component({
@@ -189,6 +190,10 @@ export class HistoryComponent implements OnInit {
       this.router.navigate(['/' + lang + '/transforms/continuous'], {
         state: { restoreInput: { ...inp, type: entry.type } },
       });
+    } else if (entry.type === 'fourier_integral') {
+      this.router.navigate(['/' + lang + '/fourier-integral'], {
+        state: { restoreInput: inp },
+      });
     } else {
       this.router.navigate(['/' + lang + '/calculator'], { state: { restoreInput: inp } });
     }
@@ -355,6 +360,8 @@ export class HistoryComponent implements OnInit {
         'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
       dft_epicycles:
         'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800',
+      fourier_integral:
+        'bg-lime-50 dark:bg-lime-950/30 text-lime-700 dark:text-lime-400 border-lime-200 dark:border-lime-800',
     };
     return (
       map[type] ??

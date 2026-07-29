@@ -190,7 +190,8 @@ export class SurveyComponent {
 
   // Grouped for clarity in the template
   readonly featuresSeries: SurveyFeature[]    = ['trigonometric', 'half_range', 'complex'];
-  readonly featuresCont: SurveyFeature[]      = ['fourier_transform', 'inverse_fourier_transform'];
+  readonly featuresIntegral: SurveyFeature[]   = ['fourier_integral'];
+  readonly featuresCont: SurveyFeature[]       = ['fourier_transform', 'inverse_fourier_transform'];
   readonly featuresDft: SurveyFeature[]       = ['dft_signal', 'dft_function', 'dft_epicycles'];
   readonly featuresNone: SurveyFeature[]      = ['none'];
 

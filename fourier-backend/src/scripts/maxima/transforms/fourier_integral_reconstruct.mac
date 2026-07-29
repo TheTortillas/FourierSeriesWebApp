@@ -1,0 +1,105 @@
+/* ═══════════════════════════════════════════════════════════════
+   Reconstrucción numérica de la Integral de Fourier
+   Input:  FUNC_INPUT   → matrix con tramos [expr, a, b]
+           INTVAR       → variable de integración de coeficientes (default v)
+           TRANSVAR     → variable de frecuencia (default w)
+           VARIANT      → "trigonometric" | "cosine" | "sine" | "complex"
+           UPPER_LIMIT  → límite superior de integración (el "a" del slider)
+           X_GRID       → lista de valores x donde evaluar la reconstrucción
+
+   Estrategia: calcular A(w) y B(w) simbólicamente primero (integral sobre v),
+   luego evaluar la integral exterior ∫₀^a numéricamente para cada x.
+   Esto evita integración doble y es órdenes de magnitud más rápido.
+   ═══════════════════════════════════════════════════════════════ */
+
+display2d: false$
+%iargs: false$
+radexpand: false$
+
+/* ── 1. Calcular A(w) y B(w) simbólicamente integrando por tramos ── */
+
+if VARIANT = "cosine" then (
+  coef_scale: 2/%pi,
+  v_lower: 0, v_upper: inf
+) else if VARIANT = "sine" then (
+  coef_scale: 2/%pi,
+  v_lower: 0, v_upper: inf
+) else if VARIANT = "complex" then (
+  coef_scale: 1/(2*%pi),
+  v_lower: minf, v_upper: inf
+) else (
+  coef_scale: 1/%pi,
+  v_lower: minf, v_upper: inf
+)$
+
+A_sym: 0$
+B_sym: 0$
+C_real_sym: 0$
+C_imag_sym: 0$
+
+block([_i, _e, _a, _b, _Ai, _Bi],
+  for _i: 1 thru length(FUNC_INPUT) do (
+    _e: FUNC_INPUT[_i][1],
+    _a: FUNC_INPUT[_i][2],
+    _b: FUNC_INPUT[_i][3],
+
+    if VARIANT = "complex" then (
+      /* C(w) = (1/2π) ∫ f(v) e^{-iwv} dv = (1/2π)[∫f cos(wv)dv - i ∫f sin(wv)dv] */
+      _Ai: errcatch(ratsimp(coef_scale * integrate(_e * cos(TRANSVAR * INTVAR), INTVAR, _a, _b))),
+      if _Ai # [] then C_real_sym: C_real_sym + first(_Ai),
+      _Bi: errcatch(ratsimp(coef_scale * integrate(_e * sin(TRANSVAR * INTVAR), INTVAR, _a, _b))),
+      if _Bi # [] then C_imag_sym: C_imag_sym - first(_Bi)
+    ) else if VARIANT = "sine" then (
+      _Bi: errcatch(ratsimp(coef_scale * integrate(_e * sin(TRANSVAR * INTVAR), INTVAR, _a, _b))),
+      if _Bi # [] then B_sym: B_sym + first(_Bi)
+    ) else if VARIANT = "cosine" then (
+      _Ai: errcatch(ratsimp(coef_scale * integrate(_e * cos(TRANSVAR * INTVAR), INTVAR, _a, _b))),
+      if _Ai # [] then A_sym: A_sym + first(_Ai)
+    ) else (
+      /* trigonometric */
+      _Ai: errcatch(ratsimp(coef_scale * integrate(_e * cos(TRANSVAR * INTVAR), INTVAR, _a, _b))),
+      if _Ai # [] then A_sym: A_sym + first(_Ai),
+      _Bi: errcatch(ratsimp(coef_scale * integrate(_e * sin(TRANSVAR * INTVAR), INTVAR, _a, _b))),
+      if _Bi # [] then B_sym: B_sym + first(_Bi)
+    )
+  )
+)$
+
+/* ── 2. Para cada x, evaluar solo la integral exterior sobre w ── */
+y_values: makelist(0.0, _k, 1, length(X_GRID))$
+
+for _idx: 1 thru length(X_GRID) do (
+  block([_x, _qr, _y, _integrand],
+    _x: X_GRID[_idx],
+
+    if VARIANT = "complex" then (
+      /* f(x) ≈ Re[∫_{-a}^{a} C(w) e^{iwx} dw]
+               = ∫_{-a}^{a} [Re(C)*cos(wx) - Im(C)*sin(wx)] dw
+         Since Re(C) is even and Im(C) is odd in w for real f:
+               = 2 ∫₀^a [Re(C)*cos(wx)] dw  */
+      _integrand: subst(TRANSVAR = w,
+                    ratsimp(C_real_sym * cos(w * _x) - C_imag_sym * sin(w * _x))),
+      _qr: errcatch(quad_qags(float(_integrand), w, -UPPER_LIMIT, UPPER_LIMIT)),
+      _y: if _qr = [] then 0.0 else float(_qr[1][1])
+    ) else if VARIANT = "cosine" then (
+      _integrand: subst(TRANSVAR = w, ratsimp(A_sym * cos(w * _x))),
+      _qr: errcatch(quad_qags(float(_integrand), w, 0, UPPER_LIMIT)),
+      _y: if _qr = [] then 0.0 else float(_qr[1][1])
+    ) else if VARIANT = "sine" then (
+      _integrand: subst(TRANSVAR = w, ratsimp(B_sym * sin(w * _x))),
+      _qr: errcatch(quad_qags(float(_integrand), w, 0, UPPER_LIMIT)),
+      _y: if _qr = [] then 0.0 else float(_qr[1][1])
+    ) else (
+      /* trigonometric */
+      _integrand: subst(TRANSVAR = w,
+                    ratsimp(A_sym * cos(w * _x) + B_sym * sin(w * _x))),
+      _qr: errcatch(quad_qags(float(_integrand), w, 0, UPPER_LIMIT)),
+      _y: if _qr = [] then 0.0 else float(_qr[1][1])
+    ),
+    y_values[_idx]: _y
+  )
+)$
+
+print("__Y_VALUES__")$
+print(string(y_values))$
+print("__END__")$
