@@ -458,6 +458,7 @@ export class FourierIntegralComponent implements OnInit {
       const show = this.showReconstruction();
       const pv = this.evaluationParams();
       const tv = this.transVar();
+      const iv = this.intVar();
       const variant = this.variant();
       const segs = this.segments();
 
@@ -479,7 +480,9 @@ export class FourierIntegralComponent implements OnInit {
           const cReFn = res.realPart?.maxima ? this.mathUtils.compile(res.realPart.maxima, tv, pv) : null;
           const cImFn = res.imagPart?.maxima ? this.mathUtils.compile(res.imagPart.maxima, tv, pv) : null;
 
-          const NW  = 600;
+          // Keep dw ≤ 0.05 regardless of limit so the Riemann sum stays accurate
+          // at high A values and doesn't produce spurious Gibbs spikes.
+          const NW  = Math.max(600, Math.ceil(limit / 0.05));
           const NX  = 1500;
 
           // Precompute w-grid values into typed arrays (evaluated once per coefficient change)
@@ -498,17 +501,17 @@ export class FourierIntegralComponent implements OnInit {
               imA[j]  = (cImFn ? cImFn(absW) : 0) * Math.sign(w) * wt;
             }
           } else {
+            // Use midpoint rule: shift grid by dw/2 so w=0 is never evaluated.
+            // This avoids 1/w singularities in A(w) and B(w).
             const dw = limit / NW;
-            wArr = new Float64Array(NW + 1);
-            reA  = new Float64Array(NW + 1);
-            imA  = new Float64Array(NW + 1);
-            for (let j = 0; j <= NW; j++) {
-              const w    = j * dw;
-              const wSafe = w === 0 ? 1e-10 : w;
-              const wt   = (j === 0 || j === NW) ? dw * 0.5 : dw;
+            wArr = new Float64Array(NW);
+            reA  = new Float64Array(NW);
+            imA  = new Float64Array(NW);
+            for (let j = 0; j < NW; j++) {
+              const w = (j + 0.5) * dw;
               wArr[j] = w;
-              reA[j]  = (aFn ? (aFn(wSafe) || 0) : 0) * wt;
-              imA[j]  = (bFn ? (bFn(wSafe) || 0) : 0) * wt;
+              reA[j]  = (aFn ? (aFn(w) || 0) : 0) * dw;
+              imA[j]  = (bFn ? (bFn(w) || 0) : 0) * dw;
             }
           }
 
@@ -523,10 +526,29 @@ export class FourierIntegralComponent implements OnInit {
           const segMaxs = segs.map(s => evalB(s.to)).filter(isFinite);
           const segSpan = segMins.length && segMaxs.length
             ? (Math.max(...segMaxs) - Math.min(...segMins)) : 2;
-          const pad  = Math.max(12, segSpan * 5);
+          const pad  = Math.max(10, segSpan * 1.5);
           const mid  = segMins.length ? (Math.min(...segMins) + Math.max(...segMaxs)) / 2 : 0;
           const xMin = mid - pad;
           const xMax = mid + pad;
+
+          // Estimate Y range from original segments to clip Gibbs overshoots.
+          // Sample each segment at 20 points and keep the extremes.
+          let yAbsMax = 1;
+          for (const seg of segs) {
+            const fFrom = evalB(seg.from);
+            const fTo   = evalB(seg.to);
+            if (!isFinite(fFrom) || !isFinite(fTo)) continue;
+            const fn = this.mathUtils.compile(seg.expression, iv, pv);
+            if (!fn) continue;
+            for (let k = 0; k <= 20; k++) {
+              const xk = fFrom + (k / 20) * (fTo - fFrom);
+              try {
+                const yk = fn(xk);
+                if (isFinite(yk)) yAbsMax = Math.max(yAbsMax, Math.abs(yk));
+              } catch { /* skip */ }
+            }
+          }
+          const yClip = yAbsMax * 4;
 
           // Sample reconstruction at NX evenly-spaced x points
           const points: ReconstructPoint[] = [];
@@ -540,12 +562,12 @@ export class FourierIntegralComponent implements OnInit {
                 if (isFinite(c)) y += c;
               }
             } else {
-              for (let j = 0; j <= NW; j++) {
+              for (let j = 0; j < NW; j++) {
                 const c = reA[j] * Math.cos(wArr[j] * x) + imA[j] * Math.sin(wArr[j] * x);
                 if (isFinite(c)) y += c;
               }
             }
-            if (isFinite(y)) points.push({ x, y });
+            if (isFinite(y) && Math.abs(y) <= yClip) points.push({ x, y });
           }
 
           this.ngZone.run(() => {
