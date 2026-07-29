@@ -143,6 +143,7 @@ radexpand: false$
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 TRANSVAR: ${transVar};
+load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 ${script}
 kill(all)$
 `;
@@ -154,7 +155,13 @@ kill(all)$
     const exists =
       this.extractBetween(raw, "__EXISTS__", "__FI_TEX__").replace(/false/g, "").trim() === "true";
 
-    const fourierIntegralTex = this.extractBetween(raw, "__FI_TEX__", "__C_MAXIMA__").trim();
+    const fourierIntegralTex = this.extractBetween(raw, "__FI_TEX__", "__INTEGRAND_K_MAXIMA__").trim();
+
+    const integrandKMaxima = this.extractBetween(raw, "__INTEGRAND_K_MAXIMA__", "__INTEGRAND_K_TEX__").replace(/\bfalse\b/g, "").trim();
+    const integrandKTex    = this.extractTex(this.extractBetween(raw, "__INTEGRAND_K_TEX__", "__INTEGRAND_S_MAXIMA__"));
+    const integrandSMaxima = this.extractBetween(raw, "__INTEGRAND_S_MAXIMA__", "__INTEGRAND_S_TEX__").replace(/\bfalse\b/g, "").trim();
+    const integrandSTex    = this.extractTex(this.extractBetween(raw, "__INTEGRAND_S_TEX__", "__C_MAXIMA__"));
+
     const cMaxima     = this.extractBetween(raw, "__C_MAXIMA__",      "__C_TEX__").replace(/false/g, "").trim();
     const cTex        = this.extractTex(this.extractBetween(raw, "__C_TEX__",      "__C_REAL_MAXIMA__"));
     const cRealMaxima = this.extractBetween(raw, "__C_REAL_MAXIMA__", "__C_REAL_TEX__").replace(/false/g, "").trim();
@@ -177,6 +184,8 @@ kill(all)$
       input,
       exists,
       fourierIntegralTex: exists ? fourierIntegralTex : undefined,
+      integrandK:       exists ? this.toSymbolic(integrandKMaxima, integrandKTex) : undefined,
+      integrandSummand: exists ? this.toSymbolic(integrandSMaxima, integrandSTex) : undefined,
       C:         exists ? this.toSymbolic(cMaxima,     cTex)     : undefined,
       realPart:  exists ? this.toSymbolic(cRealMaxima, cRealTex) : undefined,
       imagPart:  exists ? this.toSymbolic(cImagMaxima, cImagTex) : undefined,

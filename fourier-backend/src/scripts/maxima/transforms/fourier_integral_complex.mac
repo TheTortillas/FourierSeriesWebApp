@@ -65,16 +65,44 @@ FI_tex: if not exists then ""
                if C_raw # false then tex1(C_raw) else "0",
                "\\right)e^{i", _tv_tex, _iv_tex, "}\\,d", _tv_tex)$
 
-print("__EXISTS__")$            print(string(exists))$
-print("__FI_TEX__")$            print(FI_tex)$
-print("__C_MAXIMA__")$          print(string(C))$
-print("__C_TEX__")$             if C # false then tex(C) else print("")$
-print("__C_REAL_MAXIMA__")$     print(string(C_real))$
-print("__C_REAL_TEX__")$        if C_real # false then tex(C_real) else print("")$
-print("__C_IMAG_MAXIMA__")$     print(string(C_imag))$
-print("__C_IMAG_TEX__")$        if C_imag # false then tex(C_imag) else print("")$
-print("__INPUT_REAL_MAXIMA__")$ print(string(F_in_real))$
-print("__INPUT_REAL_TEX__")$    if F_in_real # false then tex(F_in_real) else print("")$
-print("__INPUT_IMAG_MAXIMA__")$ print(string(F_in_imag))$
-print("__INPUT_IMAG_TEX__")$    if F_in_imag # false then tex(F_in_imag) else print("")$
-print("__PARAMS__")$            print(string(free_params))$
+/* Compute integrand C(w)·e^{iwx} and extract constant factor K free of TRANSVAR.
+   TRANSVAR and INTVAR are already Maxima symbols (injected as "TRANSVAR: w;"). */
+_c_tv: TRANSVAR$
+_c_iv: INTVAR$
+
+integrand_K: false$
+integrand_summand: false$
+if C_raw # false then
+  block([_C, _cf, _K, _S, _r],
+    _r: errcatch(factor(fullratsimp(C_raw))),
+    _C: if _r = [] then C_raw else first(_r),
+    _cf: errcatch(const_factor(_C, _c_tv)),
+    if _cf # [] then
+      block([],
+        _cf: first(_cf),
+        _K: _cf[1],  _S: _cf[2],
+        if _K # 1 and _K # -1 then
+          block([],
+            integrand_K: _K,
+            integrand_summand: ratsimp(_S * exp(%i * _c_tv * _c_iv))
+          )
+      )
+  )$
+
+print("__EXISTS__")$              print(string(exists))$
+print("__FI_TEX__")$              print(FI_tex)$
+print("__INTEGRAND_K_MAXIMA__")$  print(string(integrand_K))$
+print("__INTEGRAND_K_TEX__")$     if integrand_K # false then tex(integrand_K) else print("")$
+print("__INTEGRAND_S_MAXIMA__")$  print(string(integrand_summand))$
+print("__INTEGRAND_S_TEX__")$     if integrand_summand # false then tex(integrand_summand) else print("")$
+print("__C_MAXIMA__")$            print(string(C))$
+print("__C_TEX__")$               if C # false then tex(C) else print("")$
+print("__C_REAL_MAXIMA__")$       print(string(C_real))$
+print("__C_REAL_TEX__")$          if C_real # false then tex(C_real) else print("")$
+print("__C_IMAG_MAXIMA__")$       print(string(C_imag))$
+print("__C_IMAG_TEX__")$          if C_imag # false then tex(C_imag) else print("")$
+print("__INPUT_REAL_MAXIMA__")$   print(string(F_in_real))$
+print("__INPUT_REAL_TEX__")$      if F_in_real # false then tex(F_in_real) else print("")$
+print("__INPUT_IMAG_MAXIMA__")$   print(string(F_in_imag))$
+print("__INPUT_IMAG_TEX__")$      if F_in_imag # false then tex(F_in_imag) else print("")$
+print("__PARAMS__")$              print(string(free_params))$

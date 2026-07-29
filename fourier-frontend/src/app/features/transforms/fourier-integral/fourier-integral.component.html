@@ -740,7 +740,7 @@
                   <span #fiFullEl [mathjax]="display(res.fourierIntegralTex)" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
                   <app-export-button [tex]="res.fourierIntegralTex" [mathEl]="fiFullEl" filename="fourier-integral" [label]="'fourier-integral.title' | transloco" />
                 </div>
-                @if (res.integrand) {
+                @if (res.integrand || res.C) {
                   <div class="border-t border-border dark:border-dark-border mt-2 pt-2">
                     <button type="button" (click)="toggleAltFormsIntegrand()" class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
                       <span>{{ 'transforms.altForms' | transloco }}</span>

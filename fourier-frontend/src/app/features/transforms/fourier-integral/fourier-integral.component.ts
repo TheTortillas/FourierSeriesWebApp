@@ -839,30 +839,34 @@ export class FourierIntegralComponent implements OnInit {
     this.altFormsOpenIntegrand.set(nowOpen);
     if (!nowOpen || this.altFormsIntegrand().length > 0) return;
     const res = this.coeffResult();
-    if (!res?.integrand?.maxima) return;
+    if (!res) return;
+    const isComplex = res.input.variant === 'complex';
+    // For complex: use C as the base expression; for trig: use integrand.
+    const baseExprFull = isComplex ? res.C : res.integrand;
+    if (!baseExprFull?.maxima) return;
     const tv = this.transVar();
     const tvTex = tv === 'w' ? '\\omega' : tv === 'xi' ? '\\xi' : tv;
     this.altFormsLoadingIntegrand.set(true);
-    // If backend extracted K, simplify the summand (K already factored out).
-    // Then wrap each alt form as K·∫(summand_form)dω.
-    const baseKTex = res.integrandK?.tex;
+    const baseKTex    = res.integrandK?.tex;
     const baseKMaxima = res.integrandK?.maxima;
+    // If backend extracted K, simplify the summand (K already factored out).
     const baseExpr = (baseKMaxima && res.integrandSummand?.maxima)
       ? res.integrandSummand
-      : res.integrand;
+      : baseExprFull;
     this.runAltForms(baseExpr, (forms) => {
       const wrapped = forms.map(f => ({
         ...f,
-        tex: this.wrapIntegrand(f.tex, f.kTex ?? baseKTex, f.summandTex ?? f.tex, tvTex),
+        tex: this.wrapIntegrand(f.tex, f.kTex ?? baseKTex, f.summandTex ?? f.tex, tvTex, isComplex),
       }));
       this.altFormsIntegrand.set(wrapped);
       this.altFormsLoadingIntegrand.set(false);
     }, tvTex, tv, baseKMaxima ?? undefined);
   }
 
-  /** Wraps integrand TeX in ∫₀^∞ (…) dω, or K·∫₀^∞ (summand) dω when K is present and ≠1. */
-  private wrapIntegrand(innerTex: string, kTex: string | undefined, summandTex: string | undefined, tvTex: string): string {
-    const intOp = `\\int_0^{\\infty}`;
+  /** Wraps integrand TeX in ∫(…)dω, or K·∫(summand)dω when K≠±1.
+   *  Uses ∫_{-∞}^{∞} for complex variant and ∫_0^{∞} for trig/cosine/sine. */
+  private wrapIntegrand(innerTex: string, kTex: string | undefined, summandTex: string | undefined, tvTex: string, isComplex = false): string {
+    const intOp = isComplex ? `\\int_{-\\infty}^{\\infty}` : `\\int_0^{\\infty}`;
     const dv    = `\\,d${tvTex}`;
     if (kTex && summandTex && kTex !== '1' && kTex !== '-1') {
       return `${kTex}${intOp}\\left(${summandTex}\\right)${dv}`;
