@@ -139,29 +139,61 @@ integrand_raw: block([_Aterm, _Bterm],
   ratsimp(_Aterm + _Bterm)
 )$
 
-/* Extract constant factor K from integrand when both A and B share the same K.
-   All work is done in local variables — A_raw and B_raw are never modified. */
+/* Extract constant factor K from integrand.
+   Works for A-only, B-only, and both-A-and-B cases.
+   All work is in local variables — A_raw and B_raw are never modified. */
 integrand_K: false$
 integrand_summand: false$
-if (not _is_zero(A_raw)) and (not _is_zero(B_raw)) then
-  block([_A, _B, _cfA, _cfB, _KA, _KB, _SA, _SB],
-    _A: errcatch(factor(fullratsimp(A_raw))),
-    _A: if _A = [] then A_raw else first(_A),
-    _B: errcatch(factor(fullratsimp(B_raw))),
-    _B: if _B = [] then B_raw else first(_B),
-    _cfA: errcatch(const_factor(_A, _tv_sym)),
-    _cfB: errcatch(const_factor(_B, _tv_sym)),
-    if _cfA # [] and _cfB # [] then (
-      _cfA: first(_cfA),
-      _cfB: first(_cfB),
-      _KA: _cfA[1],  _SA: _cfA[2],
-      _KB: _cfB[1],  _SB: _cfB[2],
-      if ratsimp(_KA - _KB) = 0 and _KA # 1 and _KA # -1 then (
-        integrand_K: _KA,
-        integrand_summand: ratsimp(_SA * cos(_tv_sym * _iv_sym) + _SB * sin(_tv_sym * _iv_sym))
-      )
+block([_A, _B, _cfA, _cfB, _KA, _KB, _SA, _SB, _r],
+  _r: errcatch(factor(fullratsimp(A_raw))),
+  _A: if not _is_zero(A_raw) then (if _r = [] then A_raw else first(_r)) else false,
+  _r: errcatch(factor(fullratsimp(B_raw))),
+  _B: if not _is_zero(B_raw) then (if _r = [] then B_raw else first(_r)) else false,
+  if _A # false and _B # false then
+    block([],
+      _cfA: errcatch(const_factor(_A, _tv_sym)),
+      _cfB: errcatch(const_factor(_B, _tv_sym)),
+      if _cfA # [] and _cfB # [] then
+        block([],
+          _cfA: first(_cfA),  _cfB: first(_cfB),
+          _KA: _cfA[1],  _SA: _cfA[2],
+          _KB: _cfB[1],  _SB: _cfB[2],
+          if ratsimp(_KA - _KB) = 0 and _KA # 1 and _KA # -1 then
+            block([],
+              integrand_K: _KA,
+              integrand_summand: ratsimp(_SA * cos(_tv_sym * _iv_sym) + _SB * sin(_tv_sym * _iv_sym))
+            )
+        )
     )
-  )$
+  else if _A # false then
+    block([],
+      _cfA: errcatch(const_factor(_A, _tv_sym)),
+      if _cfA # [] then
+        block([],
+          _cfA: first(_cfA),
+          _KA: _cfA[1],  _SA: _cfA[2],
+          if _KA # 1 and _KA # -1 then
+            block([],
+              integrand_K: _KA,
+              integrand_summand: ratsimp(_SA * cos(_tv_sym * _iv_sym))
+            )
+        )
+    )
+  else if _B # false then
+    block([],
+      _cfB: errcatch(const_factor(_B, _tv_sym)),
+      if _cfB # [] then
+        block([],
+          _cfB: first(_cfB),
+          _KB: _cfB[1],  _SB: _cfB[2],
+          if _KB # 1 and _KB # -1 then
+            block([],
+              integrand_K: _KB,
+              integrand_summand: ratsimp(_SB * sin(_tv_sym * _iv_sym))
+            )
+        )
+    )
+)$
 
 print("__EXISTS__")$        print(string(exists))$
 print("__A_MAXIMA__")$      print(string(A_raw))$

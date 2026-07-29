@@ -843,30 +843,28 @@ export class FourierIntegralComponent implements OnInit {
     const tv = this.transVar();
     const tvTex = tv === 'w' ? '\\omega' : tv === 'xi' ? '\\xi' : tv;
     this.altFormsLoadingIntegrand.set(true);
+    // If backend extracted K, simplify the summand (K already factored out).
+    // Then wrap each alt form as K·∫(summand_form)dω.
     const baseKTex = res.integrandK?.tex;
-    const baseSumTex = res.integrandSummand?.tex;
-    this.runAltForms(res.integrand, (forms) => {
-      // Wrap each form's TeX inside ∫₀^∞ … dw, using per-form K when available,
-      // falling back to the K extracted by the backend from the raw integrand.
+    const baseKMaxima = res.integrandK?.maxima;
+    const baseExpr = (baseKMaxima && res.integrandSummand?.maxima)
+      ? res.integrandSummand
+      : res.integrand;
+    this.runAltForms(baseExpr, (forms) => {
       const wrapped = forms.map(f => ({
         ...f,
-        tex: this.wrapIntegrand(
-          f.tex,
-          f.kTex ?? baseKTex,
-          f.summandTex ?? (f.kTex ? undefined : baseSumTex),
-          tvTex,
-        ),
+        tex: this.wrapIntegrand(f.tex, f.kTex ?? baseKTex, f.summandTex ?? f.tex, tvTex),
       }));
       this.altFormsIntegrand.set(wrapped);
       this.altFormsLoadingIntegrand.set(false);
-    }, tvTex);
+    }, tvTex, tv, baseKMaxima ?? undefined);
   }
 
-  /** Wraps integrand TeX in ∫₀^∞ (…) dω, or K·∫₀^∞ (summand) dω when K≠1. */
+  /** Wraps integrand TeX in ∫₀^∞ (…) dω, or K·∫₀^∞ (summand) dω when K is present and ≠1. */
   private wrapIntegrand(innerTex: string, kTex: string | undefined, summandTex: string | undefined, tvTex: string): string {
     const intOp = `\\int_0^{\\infty}`;
     const dv    = `\\,d${tvTex}`;
-    if (kTex && summandTex && kTex !== '1' && summandTex !== '1' && summandTex !== innerTex) {
+    if (kTex && summandTex && kTex !== '1' && kTex !== '-1') {
       return `${kTex}${intOp}\\left(${summandTex}\\right)${dv}`;
     }
     return `${intOp}\\left(${innerTex}\\right)${dv}`;
@@ -876,14 +874,16 @@ export class FourierIntegralComponent implements OnInit {
     main: { maxima: string; tex: string },
     done: (forms: AltForm[]) => void,
     _tvTex?: string,
+    splitVar?: string,
+    baseK?: string,
   ): void {
     const mainExpr = main.maxima;
     const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
-      { labelKey: 'transforms.altFormFactor', req: { expression: mainExpr, profile: 'complete', functions: ['factor'] } },
-      { labelKey: 'transforms.altFormExpand', req: { expression: mainExpr, profile: 'complete', functions: ['expand'] } },
-      { labelKey: 'transforms.altFormTrig',   req: { expression: mainExpr, profile: 'complete', functions: ['trigreduce'], displayFlags: { demoivre: true } } },
-      { labelKey: 'transforms.altFormRect',   req: { expression: mainExpr, profile: 'complete', functions: ['rectform'] } },
-      { labelKey: 'transforms.altFormExp',    req: { expression: mainExpr, profile: 'complete', functions: ['radcan', 'expand', 'combine'], displayFlags: { exponentialize: true } } },
+      { labelKey: 'transforms.altFormFactor', req: { expression: mainExpr, profile: 'complete', functions: ['factor'], splitVar, baseK } },
+      { labelKey: 'transforms.altFormExpand', req: { expression: mainExpr, profile: 'complete', functions: ['expand'], splitVar, baseK } },
+      { labelKey: 'transforms.altFormTrig',   req: { expression: mainExpr, profile: 'complete', functions: ['trigreduce'], displayFlags: { demoivre: true }, splitVar, baseK } },
+      { labelKey: 'transforms.altFormRect',   req: { expression: mainExpr, profile: 'complete', functions: ['rectform'], splitVar, baseK } },
+      { labelKey: 'transforms.altFormExp',    req: { expression: mainExpr, profile: 'complete', functions: ['radcan', 'expand', 'combine'], displayFlags: { exponentialize: true }, splitVar, baseK } },
     ];
     forkJoin(profiles.map(({ req }) => this.api.simplify(req).pipe(catchError(() => of(null)))))
       .pipe(takeUntilDestroyed(this.destroyRef))

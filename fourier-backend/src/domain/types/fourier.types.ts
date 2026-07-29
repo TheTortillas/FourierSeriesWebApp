@@ -228,6 +228,8 @@ export interface SimplifyInput {
     toHyperbolic?: boolean;
   };
   convention?: NormalizationConvention;
+  splitVar?: string;
+  baseK?: string;
 }
 
 export interface SimplifyResult {

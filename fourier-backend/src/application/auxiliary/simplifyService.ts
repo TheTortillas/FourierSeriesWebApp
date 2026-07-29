@@ -41,6 +41,8 @@ export class SimplifyService {
 
     const radexpandLine =
       input.convention === "physics" ? "radexpand: false$\n" : "";
+    const splitVarLine = `SPLIT_VAR: ${input.splitVar ?? "n"}$\n`;
+    const baseKLine    = `BASE_K: ${input.baseK ?? "1"}$\n`;
 
     const fullScript = `
 ${radexpandLine}EXPR_INPUT: "${input.expression.replace(/"/g, '\\"')}"$
@@ -51,7 +53,7 @@ FLAG_EXPONENT:    ${flags.exponentialize ? "true" : "false"}$
 FLAG_DEMOIVRE:    ${flags.demoivre ? "true" : "false"}$
 FLAG_ERF_REPR:    "${erfRepresentation}"$
 FLAG_N_INTEGER:   ${declareNInteger ? "true" : "false"}$
-load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
+${splitVarLine}${baseKLine}load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 load("${process.cwd()}/src/scripts/maxima/lib/hyper.mac")$
 load("${process.cwd()}/src/scripts/maxima/lib/texput_special.mac")$
 ${script}

@@ -173,6 +173,8 @@ export interface SimplifyRequest {
     toHyperbolic?: boolean;
   };
   convention?: NormalizationConvention;
+  splitVar?: string;
+  baseK?: string;
 }
 
 export interface SimplifyResponse {
