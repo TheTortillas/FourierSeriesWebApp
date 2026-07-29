@@ -138,27 +138,27 @@
     </div>
 
     <!-- Laplace -->
-    <div
-      class="flex flex-col sm:flex-row gap-4 sm:items-center p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface select-none cursor-default"
-      aria-disabled="true"
+    <a
+      [routerLink]="'/' + lang() + '/laplace'"
+      class="flex flex-col sm:flex-row gap-4 sm:items-center p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface hover:border-accent/50 dark:hover:border-accent/50 transition-all group"
     >
-      <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0">
-        <span class="font-display text-2xl text-muted dark:text-dark-muted select-none leading-none">ℒ</span>
+      <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent/5 transition-colors">
+        <span class="font-display text-2xl text-ink dark:text-dark-ink select-none leading-none">ℒ</span>
       </div>
       <div class="flex flex-col gap-1 flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-wrap">
-          <h2 class="font-display text-base text-ink/50 dark:text-dark-ink/50 leading-tight">
+          <h2 class="font-display text-base text-ink dark:text-dark-ink leading-tight group-hover:text-accent transition-colors">
             {{ 'home.laplace.title' | transloco }}
           </h2>
-          <span class="text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-accent/10 dark:bg-accent/15 border border-accent/30 dark:border-accent/30 text-accent dark:text-accent">
-            {{ 'home.laplace.badge' | transloco }}
+          <span class="text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-green-500/10 dark:bg-green-500/15 border border-green-500/30 dark:border-green-500/30 text-green-600 dark:text-green-400">
+            {{ 'laplace.modeDirecta' | transloco }}
           </span>
         </div>
         <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
           {{ 'home.laplace.description' | transloco }}
         </p>
       </div>
-    </div>
+    </a>
 
   </section>
 

@@ -15,6 +15,9 @@ const TYPE_COLOR: Record<string, { bg: string; border: string }> = {
   fourier_transform:         { bg: 'rgba(16,185,129,0.75)',  border: 'rgb(16,185,129)' },
   inverse_fourier_transform: { bg: 'rgba(52,211,153,0.75)',  border: 'rgb(52,211,153)' },
   fourier_integral:          { bg: 'rgba(132,204,22,0.75)',  border: 'rgb(132,204,22)' },
+  laplace_direct:            { bg: 'rgba(249,115,22,0.75)',  border: 'rgb(249,115,22)' },
+  laplace_inverse:           { bg: 'rgba(251,146,60,0.75)',  border: 'rgb(251,146,60)' },
+  laplace_ode:               { bg: 'rgba(253,186,116,0.75)', border: 'rgb(253,186,116)' },
   dft_signal:                { bg: 'rgba(168,85,247,0.75)',  border: 'rgb(168,85,247)' },
   dft_function:              { bg: 'rgba(192,132,252,0.75)', border: 'rgb(192,132,252)' },
   dft_epicycles:             { bg: 'rgba(216,180,254,0.75)', border: 'rgb(216,180,254)' },
@@ -24,12 +27,14 @@ const GROUP_COLORS = {
   series:    { bg: 'rgba(59,130,246,0.8)',  border: 'rgb(59,130,246)' },
   integral:  { bg: 'rgba(132,204,22,0.8)',  border: 'rgb(132,204,22)' },
   transform: { bg: 'rgba(16,185,129,0.8)',  border: 'rgb(16,185,129)' },
+  laplace:   { bg: 'rgba(249,115,22,0.8)',  border: 'rgb(249,115,22)' },
   dft:       { bg: 'rgba(168,85,247,0.8)',  border: 'rgb(168,85,247)' },
 };
 
 const SERIES_TYPES    = new Set(['trigonometric', 'half_range', 'complex']);
 const TRANSFORM_TYPES = new Set(['fourier_transform', 'inverse_fourier_transform']);
 const INTEGRAL_TYPES  = new Set(['fourier_integral']);
+const LAPLACE_TYPES   = new Set(['laplace_direct', 'laplace_inverse', 'laplace_ode']);
 const DFT_TYPES       = new Set(['dft_signal', 'dft_function', 'dft_epicycles']);
 const TREND_COLOR     = { bg: 'rgba(46,125,110,0.2)', border: 'rgb(46,125,110)' };
 
@@ -126,6 +131,7 @@ export class CalcStatsComponent implements OnInit, OnDestroy {
     if (SERIES_TYPES.has(type))    return 'Series';
     if (INTEGRAL_TYPES.has(type))  return 'Integral';
     if (TRANSFORM_TYPES.has(type)) return 'Transformadas';
+    if (LAPLACE_TYPES.has(type))   return 'Laplace';
     if (DFT_TYPES.has(type))       return 'DFT';
     return '';
   }
@@ -248,11 +254,11 @@ export class CalcStatsComponent implements OnInit, OnDestroy {
       new Chart(canvas, {
         type: 'doughnut',
         data: {
-          labels: ['Series de Fourier', 'Integral de Fourier', 'Transformadas', 'DFT'],
+          labels: ['Series de Fourier', 'Integral de Fourier', 'Transformadas', 'Laplace', 'DFT'],
           datasets: [{
-            data: [sum(SERIES_TYPES), sum(INTEGRAL_TYPES), sum(TRANSFORM_TYPES), sum(DFT_TYPES)],
-            backgroundColor: [GROUP_COLORS.series.bg, GROUP_COLORS.integral.bg, GROUP_COLORS.transform.bg, GROUP_COLORS.dft.bg],
-            borderColor:     [GROUP_COLORS.series.border, GROUP_COLORS.integral.border, GROUP_COLORS.transform.border, GROUP_COLORS.dft.border],
+            data: [sum(SERIES_TYPES), sum(INTEGRAL_TYPES), sum(TRANSFORM_TYPES), sum(LAPLACE_TYPES), sum(DFT_TYPES)],
+            backgroundColor: [GROUP_COLORS.series.bg, GROUP_COLORS.integral.bg, GROUP_COLORS.transform.bg, GROUP_COLORS.laplace.bg, GROUP_COLORS.dft.bg],
+            borderColor:     [GROUP_COLORS.series.border, GROUP_COLORS.integral.border, GROUP_COLORS.transform.border, GROUP_COLORS.laplace.border, GROUP_COLORS.dft.border],
             borderWidth: 2,
             hoverOffset: 6,
           }],

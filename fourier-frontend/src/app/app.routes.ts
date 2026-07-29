@@ -62,6 +62,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'laplace',
+        loadComponent: () =>
+          import('./features/transforms/laplace/laplace.component').then(
+            (m) => m.LaplaceComponent,
+          ),
+      },
+      {
         path: 'transforms',
         loadChildren: () =>
           import('./features/transforms/transforms.routes').then(

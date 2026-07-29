@@ -677,6 +677,10 @@
     "about": {
       "title": "About Fourier Web Calculator",
       "description": "Fourier Web Calculator: free tool for computing continuous Fourier transforms, inverse transforms, Fourier series, DFT and epicycles. Exact symbolic results with real-time visualization."
+    },
+    "laplace": {
+      "title": "Laplace Transform Calculator — Direct, Inverse and ODEs",
+      "description": "Compute the direct and inverse Laplace transform of piecewise functions. Solve ordinary differential equations (ODE) with initial conditions using the Laplace method. Exact symbolic results."
     }
   },
   "dev": {
@@ -1022,5 +1026,33 @@
     "profileTrigDesc": "Converts to the most compact trigonometric form, combining terms and applying identities.",
     "profileExpDesc": "Rewrites coefficients using complex exponentials. Choose between e^{ix} form or De Moivre.",
     "profileCompleteDesc": "Applies all available simplifications in cascade: integer → trigonometric → power reduction."
+  },
+  "laplace": {
+    "title": "Laplace Transform",
+    "subtitle": "Direct transform, inverse, and ODE solving via the Laplace method",
+    "modeDirecta": "Direct",
+    "modeInversa": "Inverse",
+    "modeOde": "ODE",
+    "exprPlaceholder": "e.g. 1/(s^2+1)",
+    "inverseHint": "Enter F(s) in terms of s. Partial fractions are applied automatically.",
+    "odeEquation": "Differential equation",
+    "odeUnknown": "Unknown function",
+    "odeIcs": "Initial conditions",
+    "addIc": "Add condition",
+    "ic0": "y(0)",
+    "ic1": "y'(0)",
+    "ic2": "y''(0)",
+    "ic3": "y'''(0)",
+    "hint": "Configure the function and press Calculate to get the transform",
+    "calculate": "Calculate",
+    "calculating": "Calculating…",
+    "notFound": "No closed form was found for this expression.",
+    "odeSolution": "Solution y(t)",
+    "params": "Parameters",
+    "execTime": "Computed in {{ms}} ms",
+    "errorNoSegments": "Add at least one segment with an expression.",
+    "errorNoExpr": "Enter an expression F(s) to invert.",
+    "errorNoEq": "Enter the differential equation and the unknown function.",
+    "odeHint": "Use Maxima syntax: diff(y(t),t,2) for y'', diff(y(t),t) for y'"
   }
 }

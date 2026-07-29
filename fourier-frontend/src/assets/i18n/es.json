@@ -677,6 +677,10 @@
     "about": {
       "title": "Acerca de Fourier Web Calculator",
       "description": "Fourier Web Calculator: herramienta gratuita para calcular transformadas de Fourier continuas, inversas, series de Fourier, DFT y epiciclos. Resultados simbólicos exactos con visualización en tiempo real."
+    },
+    "laplace": {
+      "title": "Calculadora de Transformada de Laplace — Directa, Inversa y EDOs",
+      "description": "Calcula la transformada de Laplace directa e inversa de funciones a trozos. Resuelve ecuaciones diferenciales ordinarias (EDO) con condiciones iniciales mediante el método de Laplace. Resultados simbólicos exactos."
     }
   },
   "dev": {
@@ -1022,5 +1026,33 @@
     "profileTrigDesc": "Convierte a la forma trigonométrica más compacta, combinando términos y aplicando identidades.",
     "profileExpDesc": "Reescribe los coeficientes usando exponenciales complejas. Elige entre forma e^{ix} o De Moivre.",
     "profileCompleteDesc": "Aplica todas las simplificaciones disponibles en cascada: entero → trigonométrico → reducción de potencias."
+  },
+  "laplace": {
+    "title": "Transformada de Laplace",
+    "subtitle": "Transformada directa, inversa y resolución de EDOs mediante el método de Laplace",
+    "modeDirecta": "Directa",
+    "modeInversa": "Inversa",
+    "modeOde": "EDO",
+    "exprPlaceholder": "ej. 1/(s^2+1)",
+    "inverseHint": "Ingresa F(s) en términos de s. Se aplican fracciones parciales automáticamente.",
+    "odeEquation": "Ecuación diferencial",
+    "odeUnknown": "Función incógnita",
+    "odeIcs": "Condiciones iniciales",
+    "addIc": "Agregar condición",
+    "ic0": "y(0)",
+    "ic1": "y'(0)",
+    "ic2": "y''(0)",
+    "ic3": "y'''(0)",
+    "hint": "Configura la función y presiona Calcular para obtener la transformada",
+    "calculate": "Calcular",
+    "calculating": "Calculando…",
+    "notFound": "No se encontró una forma cerrada para esta expresión.",
+    "odeSolution": "Solución y(t)",
+    "params": "Parámetros",
+    "execTime": "Calculado en {{ms}} ms",
+    "errorNoSegments": "Agrega al menos un segmento con una expresión.",
+    "errorNoExpr": "Ingresa una expresión F(s) para invertir.",
+    "errorNoEq": "Ingresa la ecuación diferencial y la función incógnita.",
+    "odeHint": "Usa sintaxis de Maxima: diff(y(t),t,2) para y'', diff(y(t),t) para y'"
   }
 }
