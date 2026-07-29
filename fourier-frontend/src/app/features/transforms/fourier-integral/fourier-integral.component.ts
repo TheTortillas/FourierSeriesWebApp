@@ -843,11 +843,19 @@ export class FourierIntegralComponent implements OnInit {
     const tv = this.transVar();
     const tvTex = tv === 'w' ? '\\omega' : tv === 'xi' ? '\\xi' : tv;
     this.altFormsLoadingIntegrand.set(true);
+    const baseKTex = res.integrandK?.tex;
+    const baseSumTex = res.integrandSummand?.tex;
     this.runAltForms(res.integrand, (forms) => {
-      // Wrap each form's TeX inside ∫₀^∞ … dw, extracting K when simplifiedK ≠ 1.
+      // Wrap each form's TeX inside ∫₀^∞ … dw, using per-form K when available,
+      // falling back to the K extracted by the backend from the raw integrand.
       const wrapped = forms.map(f => ({
         ...f,
-        tex: this.wrapIntegrand(f.tex, f.kTex, f.summandTex, tvTex),
+        tex: this.wrapIntegrand(
+          f.tex,
+          f.kTex ?? baseKTex,
+          f.summandTex ?? (f.kTex ? undefined : baseSumTex),
+          tvTex,
+        ),
       }));
       this.altFormsIntegrand.set(wrapped);
       this.altFormsLoadingIntegrand.set(false);

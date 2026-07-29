@@ -117,6 +117,8 @@ export interface FourierIntegralCoefficientsResponse {
   exists: boolean;
   fourierIntegralTex?: string;
   integrand?: SymbolicExpression;
+  integrandK?: SymbolicExpression;
+  integrandSummand?: SymbolicExpression;
   A?: SymbolicExpression;
   B?: SymbolicExpression;
   C?: SymbolicExpression;

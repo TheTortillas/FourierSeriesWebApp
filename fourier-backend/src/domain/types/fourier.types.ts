@@ -435,7 +435,9 @@ export interface FourierIntegralCoefficientsResult {
   input: FourierIntegralInput;
   exists: boolean;
   fourierIntegralTex?: string;  // complete Fourier Integral formula f(x) = ∫...
-  integrand?: SymbolicExpression;  // A(w)cos(wx) + B(w)sin(wx) for alt-forms
+  integrand?: SymbolicExpression;         // A(w)cos(wx) + B(w)sin(wx) for alt-forms
+  integrandK?: SymbolicExpression;        // constant factor K (free of w) extracted from integrand
+  integrandSummand?: SymbolicExpression;  // integrand / K (the part inside the integral after factoring out K)
   // Trigonometric / cosine / sine variants
   A?: SymbolicExpression;  // A(w) cosine coefficient
   B?: SymbolicExpression;  // B(w) sine coefficient

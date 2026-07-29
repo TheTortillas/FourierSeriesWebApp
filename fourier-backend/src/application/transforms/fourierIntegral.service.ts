@@ -68,6 +68,7 @@ export class FourierIntegralService {
 
     const fullScript = `
 radexpand: false$
+load("${process.cwd()}/src/scripts/maxima/lib/const_factor.mac")$
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 TRANSVAR: ${transVar};
@@ -90,7 +91,12 @@ kill(all)$
     const fourierIntegralTex = this.extractBetween(raw, "__FI_TEX__", "__INTEGRAND_MAXIMA__").trim();
 
     const integrandMaxima = this.extractBetween(raw, "__INTEGRAND_MAXIMA__", "__INTEGRAND_TEX__").trim();
-    const integrandTex    = this.extractTex(this.extractBetween(raw, "__INTEGRAND_TEX__", "__INPUT_REAL_MAXIMA__"));
+    const integrandTex    = this.extractTex(this.extractBetween(raw, "__INTEGRAND_TEX__", "__INTEGRAND_K_MAXIMA__"));
+
+    const integrandKMaxima = this.extractBetween(raw, "__INTEGRAND_K_MAXIMA__", "__INTEGRAND_K_TEX__").replace(/\bfalse\b/g, "").trim();
+    const integrandKTex    = this.extractTex(this.extractBetween(raw, "__INTEGRAND_K_TEX__", "__INTEGRAND_S_MAXIMA__"));
+    const integrandSMaxima = this.extractBetween(raw, "__INTEGRAND_S_MAXIMA__", "__INTEGRAND_S_TEX__").replace(/\bfalse\b/g, "").trim();
+    const integrandSTex    = this.extractTex(this.extractBetween(raw, "__INTEGRAND_S_TEX__", "__INPUT_REAL_MAXIMA__"));
 
     const inputRealMaxima = this.extractBetween(raw, "__INPUT_REAL_MAXIMA__", "__INPUT_REAL_TEX__").replace(/\bfalse\b/g, "").trim();
     const inputRealTex    = this.extractTex(this.extractBetween(raw, "__INPUT_REAL_TEX__", "__INPUT_IMAG_MAXIMA__"));
@@ -107,8 +113,10 @@ kill(all)$
       input,
       exists,
       fourierIntegralTex: exists ? fourierIntegralTex : undefined,
-      integrand: exists ? this.toSymbolic(integrandMaxima, integrandTex) : undefined,
-      A: exists && input.variant !== "sine"  ? this.toSymbolic(aMaxima, aTex) : undefined,
+      integrand:         exists ? this.toSymbolic(integrandMaxima, integrandTex) : undefined,
+      integrandK:        exists ? this.toSymbolic(integrandKMaxima, integrandKTex) : undefined,
+      integrandSummand:  exists ? this.toSymbolic(integrandSMaxima, integrandSTex) : undefined,
+      A: exists && input.variant !== "sine"   ? this.toSymbolic(aMaxima, aTex) : undefined,
       B: exists && input.variant !== "cosine" ? this.toSymbolic(bMaxima, bTex) : undefined,
       inputRealPart: this.toSymbolic(inputRealMaxima, inputRealTex),
       inputImagPart: this.toSymbolic(inputImagMaxima, inputImagTex),
