@@ -6,6 +6,7 @@ export type SurveyFeature =
   | 'trigonometric'
   | 'half_range'
   | 'complex'
+  | 'fourier_integral'
   | 'fourier_transform'
   | 'inverse_fourier_transform'
   | 'dft_signal'

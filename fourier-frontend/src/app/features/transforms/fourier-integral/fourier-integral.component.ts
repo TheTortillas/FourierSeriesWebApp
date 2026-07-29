@@ -13,10 +13,10 @@ import {
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, filter, map, of, Subject, switchMap, take, tap, timer } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -116,6 +116,7 @@ const FI_VAR_PAIRS: FiVarPair[] = [
     MobileMathKeyboardComponent,
     ExportButtonComponent,
     ParamSlidersComponent,
+    RouterLink,
   ],
 })
 export class FourierIntegralComponent implements OnInit {
@@ -293,6 +294,7 @@ export class FourierIntegralComponent implements OnInit {
   );
 
   readonly hasResult = computed(() => this.coeffResult() !== null);
+  readonly lang = toSignal(this.transloco.langChanges$, { initialValue: this.transloco.getActiveLang() });
   readonly inputsLocked = computed(() => this.loading() || this.hasResult());
 
   readonly variantLabelKey = computed(() => {

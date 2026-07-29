@@ -28,7 +28,8 @@
     "close": "Cerrar",
     "saving": "Guardando…",
     "downloadCsv": "Descargar CSV",
-    "loginToDownloadCsv": "Inicia sesión para descargar CSV"
+    "loginToDownloadCsv": "Inicia sesión para descargar CSV",
+    "grapherBanner": "¿Quieres graficar esta función? → Abrir Graficador"
   },
   "nav": {
     "fourierAnalysis": "Análisis de Fourier",
@@ -94,16 +95,28 @@
     }
   },
   "home": {
-    "subtitle": "Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
+    "subtitle": "Calcula, visualiza y analiza el análisis de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
     "learnMore": "Conoce más sobre la herramienta →",
+    "toolsTitle": "Herramientas",
+    "fourierTitle": "Análisis de Fourier",
+    "comingSoonTitle": "Próximamente",
+    "comingSoon": "Próximamente",
     "series": {
       "title": "Series de Fourier",
-      "description": "Descomposición periódica de funciones a trozos en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos exactos."
+      "description": "Descomposición periódica de funciones en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos y Parseval."
+    },
+    "integral": {
+      "title": "Integral de Fourier",
+      "description": "Representación integral de funciones no periódicas en sus formas trigonométrica, coseno, seno y compleja, con reconstrucción gráfica."
     },
     "transforms": {
-      "title": "Transformadas de Fourier",
-      "description": "Análisis espectral de señales no periódicas mediante la transformada continua de Fourier, con acceso preparado para la transformada discreta.",
-      "badge": "Continua activa"
+      "title": "Transformada de Fourier",
+      "description": "Análisis espectral de señales no periódicas con transformada continua directa e inversa, partes real e imaginaria y convenciones de normalización."
+    },
+    "laplace": {
+      "title": "Transformada de Laplace",
+      "description": "Transformada directa e inversa con convergencia, polos y zeros. En desarrollo.",
+      "badge": "Próximamente"
     }
   },
   "calculator": {
@@ -457,7 +470,8 @@
       "errorCompleteFields": "Completa todos los campos de los tramos.",
       "errorEvalFunction": "Error al evaluar la función.",
       "errorMinPoints": "Se necesitan al menos 3 puntos."
-    }
+    },
+    "hint": "Configura la función y presiona"
   },
   "history": {
     "title": "Mis cálculos",
@@ -749,12 +763,14 @@
       },
       "featuresLabel": "¿Qué funcionalidades probaste? (puedes seleccionar varias)",
       "groupSeries": "Series de Fourier",
+      "groupIntegral": "Integral de Fourier",
       "groupContinuous": "Transformada continua",
       "groupDft": "Transformada Discreta (DFT)",
       "features": {
         "trigonometric": "Serie trigonométrica",
         "half_range": "Serie de medio rango",
         "complex": "Serie exponencial compleja",
+        "fourier_integral": "Integral de Fourier",
         "fourier_transform": "Transformada de Fourier continua",
         "inverse_fourier_transform": "Transformada inversa de Fourier",
         "dft_signal": "DFT — señal discreta (puntos manuales)",
@@ -870,6 +886,16 @@
       "f8": "Ver resultados en múltiples formas: expresiones de magnitud, fase, y partes real e imaginaria",
       "f9": "Acepta parámetros libres (p. ej. a·t, sin(ω·t)) — varíalos con sliders interactivos después de calcular"
     },
+    "integral": {
+      "title": "Integral de Fourier",
+      "desc": "Representa funciones no periódicas como integrales continuas de frecuencia y analiza sus distintas formas equivalentes.",
+      "f1": "Formas trigonométrica, coseno, seno y compleja de la integral de Fourier",
+      "f2": "Funciones a trozos con múltiples segmentos en el dominio real o semirreal",
+      "f3": "Coeficientes A(ω) y B(ω) simbólicos exactos calculados con Maxima CAS",
+      "f4": "Reconstrucción gráfica interactiva por suma de Riemann en tiempo real",
+      "f5": "Formas equivalentes con extracción de constante y simplificaciones simbólicas",
+      "f6": "Exportar y compartir resultados"
+    },
     "dft": {
       "title": "Transformada Discreta de Fourier (DFT)",
       "desc": "Analiza señales numéricamente con la DFT, visualiza el espectro y observa la animación de epiciclos.",
@@ -984,7 +1010,9 @@
     "variantSine": "Seno",
     "reCw": "Re C({{ v }})",
     "imCw": "Im C({{ v }})",
-    "notFound": "No se encontró una forma cerrada para esta función."
+    "notFound": "No se encontró una forma cerrada para esta función.",
+    "hint": "Configura la función y presiona",
+    "calculate": "Calcular"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",

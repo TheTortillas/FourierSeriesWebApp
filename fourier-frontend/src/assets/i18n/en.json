@@ -28,7 +28,8 @@
     "close": "Close",
     "saving": "Saving…",
     "downloadCsv": "Download CSV",
-    "loginToDownloadCsv": "Log in to download CSV"
+    "loginToDownloadCsv": "Log in to download CSV",
+    "grapherBanner": "Want to plot this function? → Open Grapher"
   },
   "nav": {
     "fourierAnalysis": "Fourier Analysis",
@@ -94,16 +95,28 @@
     }
   },
   "home": {
-    "subtitle": "Calculate, visualize and analyze Fourier Series and Transforms with exact symbolic expressions and real-time graphical reconstruction.",
+    "subtitle": "Calculate, visualize and analyze Fourier analysis with exact symbolic expressions and real-time graphical reconstruction.",
     "learnMore": "Learn more about the tool →",
+    "toolsTitle": "Tools",
+    "fourierTitle": "Fourier Analysis",
+    "comingSoonTitle": "Coming soon",
+    "comingSoon": "Coming soon",
     "series": {
       "title": "Fourier Series",
-      "description": "Periodic decomposition of piecewise functions into trigonometric, complex and half-range series, with exact symbolic coefficients."
+      "description": "Periodic decomposition of piecewise functions into trigonometric, complex and half-range series, with symbolic coefficients and Parseval."
+    },
+    "integral": {
+      "title": "Fourier Integral",
+      "description": "Integral representation of non-periodic functions in trigonometric, cosine, sine and complex forms, with graphical reconstruction."
     },
     "transforms": {
-      "title": "Fourier Transforms",
-      "description": "Spectral analysis of non-periodic signals via the continuous Fourier transform, with support prepared for the discrete transform.",
-      "badge": "Continuous active"
+      "title": "Fourier Transform",
+      "description": "Spectral analysis of non-periodic signals with continuous direct and inverse transform, real and imaginary parts and normalization conventions."
+    },
+    "laplace": {
+      "title": "Laplace Transform",
+      "description": "Direct and inverse transform with region of convergence, poles and zeros. Under development.",
+      "badge": "Coming soon"
     }
   },
   "calculator": {
@@ -457,7 +470,8 @@
       "errorCompleteFields": "Please complete all segment fields.",
       "errorEvalFunction": "Error evaluating the function.",
       "errorMinPoints": "At least 3 points are required."
-    }
+    },
+    "hint": "Configure the function and press"
   },
   "history": {
     "title": "My calculations",
@@ -749,12 +763,14 @@
       },
       "featuresLabel": "Which features did you try? (select all that apply)",
       "groupSeries": "Fourier Series",
+      "groupIntegral": "Fourier Integral",
       "groupContinuous": "Continuous transform",
       "groupDft": "Discrete Transform (DFT)",
       "features": {
         "trigonometric": "Trigonometric series",
         "half_range": "Half-range series",
         "complex": "Complex exponential series",
+        "fourier_integral": "Fourier Integral",
         "fourier_transform": "Continuous Fourier Transform",
         "inverse_fourier_transform": "Inverse Fourier Transform",
         "dft_signal": "DFT — discrete signal (manual points)",
@@ -870,6 +886,16 @@
       "f8": "View results in multiple forms: magnitude, phase, real/imaginary component expressions",
       "f9": "Supports free parameters (e.g. a·t, sin(ω·t)) — vary them with interactive sliders after computing"
     },
+    "integral": {
+      "title": "Fourier Integral",
+      "desc": "Represent non-periodic functions as continuous frequency integrals and analyze their different equivalent forms.",
+      "f1": "Trigonometric, cosine, sine and complex forms of the Fourier integral",
+      "f2": "Piecewise functions with multiple segments over real or semi-infinite domains",
+      "f3": "Exact symbolic coefficients A(ω) and B(ω) computed with Maxima CAS",
+      "f4": "Interactive graphical reconstruction via real-time Riemann sum",
+      "f5": "Equivalent forms with constant extraction and symbolic simplifications",
+      "f6": "Export and share results"
+    },
     "dft": {
       "title": "Discrete Fourier Transform (DFT)",
       "desc": "Analyze signals numerically with the DFT, visualize the spectrum and watch the epicycles animation.",
@@ -984,7 +1010,9 @@
     "variantSine": "Sine",
     "reCw": "Re C({{ v }})",
     "imCw": "Im C({{ v }})",
-    "notFound": "No closed form was found for this function."
+    "notFound": "No closed form was found for this function.",
+    "hint": "Configure the function and press",
+    "calculate": "Calculate"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",
