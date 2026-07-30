@@ -1035,6 +1035,7 @@
     "modeOde": "EDO",
     "exprPlaceholder": "ej. 1/(s^2+1)",
     "inverseHint": "Ingresa F(s) en términos de s. Se aplican fracciones parciales automáticamente.",
+    "variables": "Variables",
     "odeEquation": "Ecuación diferencial",
     "odeUnknown": "Función incógnita",
     "odeIcs": "Condiciones iniciales",
@@ -1053,6 +1054,8 @@
     "errorNoSegments": "Agrega al menos un segmento con una expresión.",
     "errorNoExpr": "Ingresa una expresión F(s) para invertir.",
     "errorNoEq": "Ingresa la ecuación diferencial y la función incógnita.",
-    "odeHint": "Usa sintaxis de Maxima: diff(y(t),t,2) para y'', diff(y(t),t) para y'"
+    "odeHint": "Usa sintaxis de Maxima: diff(y(t),t,2) para y'', diff(y(t),t) para y'",
+    "newCalculation": "Nuevo cálculo",
+    "result": "Resultado"
   }
 }

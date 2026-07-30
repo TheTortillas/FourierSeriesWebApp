@@ -1035,6 +1035,7 @@
     "modeOde": "ODE",
     "exprPlaceholder": "e.g. 1/(s^2+1)",
     "inverseHint": "Enter F(s) in terms of s. Partial fractions are applied automatically.",
+    "variables": "Variables",
     "odeEquation": "Differential equation",
     "odeUnknown": "Unknown function",
     "odeIcs": "Initial conditions",
@@ -1053,6 +1054,8 @@
     "errorNoSegments": "Add at least one segment with an expression.",
     "errorNoExpr": "Enter an expression F(s) to invert.",
     "errorNoEq": "Enter the differential equation and the unknown function.",
-    "odeHint": "Use Maxima syntax: diff(y(t),t,2) for y'', diff(y(t),t) for y'"
+    "odeHint": "Use Maxima syntax: diff(y(t),t,2) for y'', diff(y(t),t) for y'",
+    "newCalculation": "New calculation",
+    "result": "Result"
   }
 }

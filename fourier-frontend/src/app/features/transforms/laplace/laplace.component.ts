@@ -6,15 +6,17 @@ import {
   OnInit,
   ViewChild,
   computed,
+  effect,
   inject,
   signal,
   DestroyRef,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, Subject, switchMap } from 'rxjs';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -26,6 +28,13 @@ import { TransformSegmentComponent, TransformSegmentDraft } from '../continuous/
 import { MathquillService, type KeyBtn, type MathField } from '../../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
 import { MobileMathKeyboardComponent } from '../../../shared/components/math-keyboard/mobile-math-keyboard.component';
+import {
+  FunctionPlotComponent,
+  type PlotLayer,
+} from '../../../shared/components/function-plot/function-plot.component';
+import { ParamSlidersComponent, type ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
+import { PlottingService } from '../../../core/services/canvas/plotting.service';
+import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import type {
   LaplaceDirectResponse,
   LaplaceInverseResponse,
@@ -51,6 +60,21 @@ function defaultSegment(): TransformSegmentDraft {
   };
 }
 
+interface VarPair {
+  id: string;
+  time: string;
+  freq: string;
+  timeDisplay: string;
+  freqDisplay: string;
+}
+
+const VAR_PAIRS: VarPair[] = [
+  { id: 't-s', time: 't', freq: 's', timeDisplay: 't', freqDisplay: 's' },
+  { id: 't-p', time: 't', freq: 'p', timeDisplay: 't', freqDisplay: 'p' },
+  { id: 'x-s', time: 'x', freq: 's', timeDisplay: 'x', freqDisplay: 's' },
+  { id: 'tau-s', time: 'tau', freq: 's', timeDisplay: 'τ', freqDisplay: 's' },
+];
+
 @Component({
   selector: 'app-laplace',
   templateUrl: './laplace.component.html',
@@ -61,23 +85,55 @@ function defaultSegment(): TransformSegmentDraft {
     FormsModule,
     TranslocoPipe,
     MobileMathKeyboardComponent,
-    RouterLink,
+    FunctionPlotComponent,
+    ParamSlidersComponent,
     FooterComponent,
   ],
 })
 export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly api        = inject(ApiService);
   readonly userStore  = inject(UserStore);
-  private readonly transloco = inject(TranslocoService);
-  private readonly seo       = inject(SeoService);
+  private readonly transloco  = inject(TranslocoService);
+  private readonly seo        = inject(SeoService);
+  private readonly route      = inject(ActivatedRoute);
+  private readonly router     = inject(Router);
   readonly destroyRef = inject(DestroyRef);
-  private readonly mqs       = inject(MathquillService);
-  private readonly tex2max   = inject(LatexToMaximaService);
+  private readonly mqs        = inject(MathquillService);
+  private readonly tex2max    = inject(LatexToMaximaService);
+  private readonly plotter    = inject(PlottingService);
+  private readonly mathUtils  = inject(MathUtilsService);
 
   @ViewChild('mqInverseExpr') private mqInverseRef!: ElementRef<HTMLElement>;
+  @ViewChild('canvasWrapperRef') private canvasWrapperRef!: ElementRef<HTMLElement>;
+  readonly plotComponent = viewChild(FunctionPlotComponent);
 
   inverseField: MathField | null = null;
   private _mqInverseInited = false;
+  private _urlPopulated = false;
+
+  constructor() {
+    // Sync result → URL (must be in constructor for valid injection context)
+    effect(() => {
+      const hasDirect  = this.directResult();
+      const hasInverse = this.inverseResult();
+      const hasOde     = this.odeResult();
+
+      if (hasDirect || hasInverse || hasOde) {
+        this._urlPopulated = true;
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { s: this.encodeState() },
+          replaceUrl: true,
+        });
+      } else if (this._urlPopulated) {
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true,
+        });
+      }
+    });
+  }
 
   showKeyboard = false;
 
@@ -90,6 +146,24 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly lang = toSignal(this.transloco.langChanges$, {
     initialValue: this.transloco.getActiveLang(),
   });
+
+  // ── Canvas overlay state ───────────────────────────────────────────────────
+
+  readonly showCanvasSettings = signal(false);
+  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
+  readonly isFullscreen = signal(false);
+
+  // ── Variables ─────────────────────────────────────────────────────────────
+
+  readonly varPairs = VAR_PAIRS;
+  readonly varPairId = signal<string>('t-s');
+
+  readonly activePair = computed<VarPair>(() =>
+    VAR_PAIRS.find(p => p.id === this.varPairId()) ?? VAR_PAIRS[0],
+  );
+
+  readonly timeVar = computed(() => this.activePair().time);
+  readonly freqVar = computed(() => this.activePair().freq);
 
   // ── Mode ──────────────────────────────────────────────────────────────────
 
@@ -110,6 +184,43 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   readonly loading   = signal(false);
   readonly errorMsg  = signal<string | null>(null);
+
+  readonly hasComputedResult = computed(() =>
+    this.directResult() !== null || this.inverseResult() !== null || this.odeResult() !== null,
+  );
+
+  readonly inputsLocked = computed(() => this.loading() || this.hasComputedResult());
+
+  startNewCalculation(): void {
+    this.directResult.set(null);
+    this.inverseResult.set(null);
+    this.odeResult.set(null);
+    this.errorMsg.set(null);
+    this.paramValues.set({});
+    this.showCanvasSettings.set(false);
+  }
+
+  // ── Free parameters ───────────────────────────────────────────────────────
+
+  readonly paramValues = signal<ParamValues>({});
+
+  readonly activeParams = computed<string[]>(() =>
+    this.directResult()?.params ?? [],
+  );
+
+  readonly evaluationParams = computed<ParamValues>(() => {
+    const names = this.activeParams();
+    const pv = this.paramValues();
+    const merged: ParamValues = { ...pv };
+    for (const name of names) {
+      if (!Number.isFinite(merged[name])) merged[name] = 1;
+    }
+    return merged;
+  });
+
+  onParamChange(pv: ParamValues): void {
+    this.paramValues.set(pv);
+  }
 
   // ── Direct mode ───────────────────────────────────────────────────────────
 
@@ -160,6 +271,170 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.odeIcs.update(ics => ics.map((ic, i) => i === index ? { ...ic, value } : ic));
   }
 
+  // ── Canvas layers ─────────────────────────────────────────────────────────
+
+  readonly layers = computed<PlotLayer[]>(() => {
+    const m        = this.mode();
+    const direct   = this.directResult();
+    const inverse  = this.inverseResult();
+    const ode      = this.odeResult();
+    const segs     = this.segments();
+    const tVar     = this.timeVar();
+    const pv       = this.evaluationParams();
+    const plotter  = this.plotter;
+    const math     = this.mathUtils;
+
+    const layer: PlotLayer = {
+      curves: [],
+      onDraw: (ctx, vp) => {
+        // ── Direct: plot f(t) input segments ───────────────────────────────
+        if (m === 'direct') {
+          const compiled = segs
+            .map(seg => ({
+              fn: math.compile(seg.expression, tVar, pv),
+              from: this.parseLimit(seg.from, pv),
+              to:   this.parseLimit(seg.to, pv),
+            }))
+            .filter(s => !!s.fn);
+
+          const finitePieces  = compiled.filter(s => isFinite(s.from) && isFinite(s.to));
+          const infinitePieces = compiled.filter(s => !isFinite(s.from) || !isFinite(s.to));
+
+          if (finitePieces.length > 0) {
+            plotter.plotPiecewise(
+              ctx,
+              finitePieces.map(s => ({ fn: s.fn!, from: s.from, to: s.to })),
+              vp,
+              { color: '#dc2626', lineWidth: 2 },
+            );
+          }
+
+          for (const s of infinitePieces) {
+            const gated = (x: number) => (x >= s.from && x <= s.to ? s.fn!(x) : NaN);
+            plotter.plotFn(ctx, gated, vp, { color: '#dc2626', lineWidth: 2 });
+          }
+
+          // F(s) result — plot vs real axis of s
+          if (direct?.exists && direct.F?.maxima) {
+            const fVar = this.freqVar();
+            const fn = math.compile(direct.F.maxima, fVar, pv);
+            if (fn) plotter.plotFn(ctx, fn, vp, { color: '#2563eb', lineWidth: 2 });
+          }
+        }
+
+        // ── Inverse: plot f(t) result ───────────────────────────────────────
+        if (m === 'inverse' && inverse?.exists && inverse.f?.maxima) {
+          const fn = math.compile(inverse.f.maxima, tVar, pv);
+          if (fn) plotter.plotFn(ctx, fn, vp, { color: '#dc2626', lineWidth: 2 });
+        }
+
+        // ── ODE: plot y(t) solution ─────────────────────────────────────────
+        if (m === 'ode' && ode?.exists && ode.solution?.maxima) {
+          const fn = math.compile(ode.solution.maxima, tVar, pv);
+          if (fn) plotter.plotFn(ctx, fn, vp, { color: '#dc2626', lineWidth: 2 });
+        }
+      },
+    };
+
+    return [layer];
+  });
+
+  private parseLimit(s: string, params?: ParamValues): number {
+    if (!s?.trim()) return NaN;
+    if (s === 'inf' || s === '+inf') return Infinity;
+    if (s === 'minf' || s === '-inf') return -Infinity;
+    if (params && Object.keys(params).length > 0) {
+      const fn = this.mathUtils.compile(s, '_', params);
+      const v = fn?.(0);
+      if (v !== undefined && isFinite(v)) return v;
+    }
+    const result = this.mathUtils.evaluate(s, 0, '_');
+    return isFinite(result) ? result : NaN;
+  }
+
+  // ── Canvas overlay actions ─────────────────────────────────────────────────
+
+  toggleFullscreen(): void {
+    const el = this.canvasWrapperRef?.nativeElement;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void el.requestFullscreen();
+    }
+  }
+
+  downloadCanvas(): void {
+    const canvas = this.canvasWrapperRef?.nativeElement?.querySelector('canvas');
+    if (!canvas) return;
+    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'laplace-transform.png';
+    a.click();
+  }
+
+  // ── URL state ─────────────────────────────────────────────────────────────
+
+  private encodeState(): string {
+    try {
+      const m = this.mode();
+      const state: Record<string, unknown> = {
+        m,
+        vp: this.varPairId(),
+      };
+      if (m === 'direct') {
+        state['seg'] = this.segments().map(s => ({
+          e: s.expression, et: s.expressionTex,
+          f: s.from, ft: s.fromTex,
+          t: s.to, tt: s.toTex,
+        }));
+      } else if (m === 'inverse') {
+        state['expr'] = this.inverseExpr();
+      } else if (m === 'ode') {
+        state['eq'] = this.odeEquation();
+        state['unk'] = this.odeUnknown();
+        state['ics'] = this.odeIcs();
+      }
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    } catch {
+      return '';
+    }
+  }
+
+  private restoreState(encoded: string): void {
+    try {
+      const json = decodeURIComponent(escape(atob(encoded)));
+      const s = JSON.parse(json) as Record<string, unknown>;
+
+      if (s['vp'] && typeof s['vp'] === 'string') this.varPairId.set(s['vp']);
+
+      const m = s['m'];
+      if (m === 'direct' || m === 'inverse' || m === 'ode') this.mode.set(m);
+
+      if (m === 'direct' && Array.isArray(s['seg'])) {
+        const segs = (s['seg'] as Array<Record<string, string>>).map(seg => ({
+          id: mkId(),
+          expression: seg['e'] ?? '',
+          expressionTex: seg['et'] ?? '',
+          from: seg['f'] ?? '',
+          fromTex: seg['ft'] ?? '',
+          to: seg['t'] ?? '',
+          toTex: seg['tt'] ?? '',
+        }));
+        if (segs.length) this.segments.set(segs);
+      } else if (m === 'inverse' && typeof s['expr'] === 'string') {
+        this.inverseExpr.set(s['expr']);
+      } else if (m === 'ode') {
+        if (typeof s['eq'] === 'string') this.odeEquation.set(s['eq']);
+        if (typeof s['unk'] === 'string') this.odeUnknown.set(s['unk']);
+        if (Array.isArray(s['ics'])) this.odeIcs.set(s['ics'] as Array<{ order: number; value: string }>);
+      }
+    } catch {
+      // ignore malformed state
+    }
+  }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   private readonly submit$ = new Subject<void>();
@@ -171,11 +446,23 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       'Laplace transform calculator, transformada de Laplace, inverse Laplace, ODE solver, partial fractions, differential equations, Laplace method, transformada inversa de Laplace',
     );
 
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', () => this.isMobile.set(window.innerWidth < 1024));
+      document.addEventListener('fullscreenchange', () => {
+        this.isFullscreen.set(!!document.fullscreenElement);
+      });
+    }
+
+    // Restore state from URL
+    const encoded = this.route.snapshot.queryParamMap.get('s');
+    if (encoded) this.restoreState(encoded);
+
     this.submit$.pipe(
       debounceTime(50),
       switchMap(() => {
         this.loading.set(true);
         this.errorMsg.set(null);
+        this.paramValues.set({});
 
         const m = this.mode();
         if (m === 'direct') {
@@ -186,7 +473,13 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
             return of(null);
           }
           return this.api.calculateLaplaceDirect({
-            segments: validSegs.map(s => ({ expression: s.expression, from: s.from, to: s.to })),
+            segments: validSegs.map(s => ({
+              expression: s.expression, expressionTex: s.expressionTex,
+              from: s.from, fromTex: s.fromTex,
+              to: s.to,   toTex: s.toTex,
+            })),
+            timeVar: this.timeVar(),
+            freqVar: this.freqVar(),
           }).pipe(catchError(err => {
             this.errorMsg.set(formatApiError(err, 'Error al calcular'));
             return of(null);
@@ -200,7 +493,11 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
             this.errorMsg.set(this.transloco.translate('laplace.errorNoExpr'));
             return of(null);
           }
-          return this.api.calculateLaplaceInverse({ expression: expr }).pipe(
+          return this.api.calculateLaplaceInverse({
+            expression: expr,
+            freqVar: this.freqVar(),
+            timeVar: this.timeVar(),
+          }).pipe(
             catchError(err => { this.errorMsg.set(formatApiError(err, 'Error al calcular')); return of(null); }),
           );
         }
@@ -216,7 +513,12 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
           order: ic.order,
           value: ic.value || '0',
         }));
-        return this.api.calculateLaplaceOde({ equation: eq, unknown: unk, initialConditions: ics }).pipe(
+        return this.api.calculateLaplaceOde({
+          equation: eq,
+          unknown: unk,
+          timeVar: this.timeVar(),
+          initialConditions: ics,
+        }).pipe(
           catchError(err => { this.errorMsg.set(formatApiError(err, 'Error al calcular')); return of(null); }),
         );
       }),
@@ -225,9 +527,9 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.loading.set(false);
       if (result === null) return;
       const m = this.mode();
-      if (m === 'direct')  this.directResult.set(result as LaplaceDirectResponse);
-      if (m === 'inverse') this.inverseResult.set(result as LaplaceInverseResponse);
-      if (m === 'ode')     this.odeResult.set(result as LaplaceOdeResponse);
+      if (m === 'direct')  { this.directResult.set(result as LaplaceDirectResponse); this.plotComponent()?.resetView(); }
+      if (m === 'inverse') { this.inverseResult.set(result as LaplaceInverseResponse); this.plotComponent()?.resetView(); }
+      if (m === 'ode')     { this.odeResult.set(result as LaplaceOdeResponse); this.plotComponent()?.resetView(); }
     });
   }
 
@@ -271,6 +573,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.inverseResult.set(null);
     this.odeResult.set(null);
     this.errorMsg.set(null);
+    this.paramValues.set({});
   }
 
   // ── Computed helpers ──────────────────────────────────────────────────────

@@ -183,6 +183,14 @@ export class HistoryComponent implements OnInit {
       return;
     }
 
+    if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse' || entry.type === 'laplace_ode') {
+      const encoded = this._encodeLaplaceState(entry);
+      if (encoded) {
+        this.router.navigate(['/' + lang + '/laplace'], { queryParams: { s: encoded } });
+      }
+      return;
+    }
+
     if (!inp?.['segments']) return;
 
     const transformTypes = ['fourier_transform', 'inverse_fourier_transform'];
@@ -231,6 +239,44 @@ export class HistoryComponent implements OnInit {
       }
       const json = JSON.stringify(state);
       return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16))));
+    } catch { return ''; }
+  }
+
+  private _encodeLaplaceState(entry: HistoryEntry): string {
+    const inp = entry.input;
+    try {
+      let state: Record<string, unknown>;
+      if (entry.type === 'laplace_direct') {
+        const segs = inp['segments'] as Array<{
+          expression: string; expressionTex?: string;
+          from: string; fromTex?: string;
+          to: string; toTex?: string;
+        }> | undefined;
+        state = {
+          m: 'direct',
+          vp: inp['timeVar'] && inp['freqVar'] ? `${inp['timeVar']}-${inp['freqVar']}` : 't-s',
+          seg: (segs ?? []).map(s => ({
+            e: s.expression, et: s.expressionTex ?? s.expression,
+            f: s.from, ft: s.fromTex ?? s.from,
+            t: s.to,   tt: s.toTex ?? s.to,
+          })),
+        };
+      } else if (entry.type === 'laplace_inverse') {
+        state = {
+          m: 'inverse',
+          vp: inp['timeVar'] && inp['freqVar'] ? `${inp['timeVar']}-${inp['freqVar']}` : 't-s',
+          expr: inp['expression'] as string ?? '',
+        };
+      } else {
+        state = {
+          m: 'ode',
+          vp: inp['timeVar'] ? `${inp['timeVar']}-s` : 't-s',
+          eq: inp['equation'] as string ?? '',
+          unk: inp['unknown'] as string ?? 'y(t)',
+          ics: inp['initialConditions'] ?? [],
+        };
+      }
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
     } catch { return ''; }
   }
 
