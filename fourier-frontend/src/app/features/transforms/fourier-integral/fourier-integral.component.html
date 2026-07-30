@@ -951,9 +951,11 @@
   </div>
 </div>
 
-<!-- Mobile keyboard -->
+<!-- Mobile math keyboard (< lg only) -->
 @if (showKeyboard) {
-  <app-mobile-math-keyboard
-    [extraGroup]="mobileExtraGroup"
-    (close)="showKeyboard = false" />
+  <div class="lg:hidden">
+    <app-mobile-math-keyboard
+      [extraGroup]="mobileExtraGroup"
+      (close)="showKeyboard = false" />
+  </div>
 }

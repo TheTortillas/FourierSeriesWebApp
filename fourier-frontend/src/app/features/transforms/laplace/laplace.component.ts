@@ -102,7 +102,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   private readonly route      = inject(ActivatedRoute);
   private readonly router     = inject(Router);
   readonly destroyRef = inject(DestroyRef);
-  private readonly mqs        = inject(MathquillService);
+  readonly mqs                = inject(MathquillService);
   private readonly tex2max    = inject(LatexToMaximaService);
   private readonly plotter    = inject(PlottingService);
   private readonly mathUtils  = inject(MathUtilsService);
@@ -159,6 +159,38 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     { label: 'δ(□)', typedText: 'delta(' },
     { label: 'u(□)', typedText: 'heaviside(' },
     { label: '∞', write: '\\infty' },
+  ];
+
+  readonly keyGroups: KeyBtn[][] = [
+    // Row 1: Funciones especiales de Laplace
+    [
+      { label: 'u(□)',    writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+      { label: 'δ(□)',    writeWithCursor: '\\operatorname{delta}\\left(\\right)' },
+      { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+      { label: '|□|',    writeWithCursor: '\\left|\\right|' },
+    ],
+    // Row 2: Trig + hiperbólicas
+    [
+      { label: 'sin(□)',  writeWithCursor: '\\sin\\left(\\right)' },
+      { label: 'cos(□)',  writeWithCursor: '\\cos\\left(\\right)' },
+      { label: 'sinh(□)', writeWithCursor: '\\sinh\\left(\\right)' },
+      { label: 'cosh(□)', writeWithCursor: '\\cosh\\left(\\right)' },
+      { label: 'atan(□)', writeWithCursor: '\\operatorname{atan}\\left(\\right)' },
+      { label: 'ln(□)',   writeWithCursor: '\\ln\\left(\\right)' },
+    ],
+    // Row 3: Operadores y constantes
+    [
+      { label: 'e^□' },
+      { label: '□²' },
+      { label: '□^□' },
+      { label: '□/□' },
+      { label: '√□', cmd: '\\sqrt' },
+      { label: '(□)', writeWithCursor: '\\left(\\right)' },
+      { label: 'π', typedText: 'pi' },
+      { label: '∞', write: '\\infty' },
+      { label: '−', write: '-' },
+      { label: '⌫', keystroke: 'Backspace' },
+    ],
   ];
 
   readonly lang = toSignal(this.transloco.langChanges$, {

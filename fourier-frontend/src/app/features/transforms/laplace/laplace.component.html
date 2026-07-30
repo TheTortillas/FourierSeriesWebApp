@@ -105,12 +105,22 @@
                 </div>
               </div>
 
-              <!-- Mobile keyboard -->
+              <!-- Mini-teclado desktop -->
               @if (showKeyboard) {
-                <app-mobile-math-keyboard
-                  [extraGroup]="mobileExtraGroup"
-                  (close)="showKeyboard = false"
-                />
+                <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
+                  @for (row of keyGroups; track $index) {
+                    <div class="flex flex-wrap gap-1">
+                      @for (btn of row; track btn.label) {
+                        <button
+                          type="button"
+                          (mousedown)="$event.preventDefault()"
+                          (click)="mqs.insertKey(btn)"
+                          class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
+                        >{{ btn.label }}</button>
+                      }
+                    </div>
+                  }
+                </div>
               }
             </section>
           }
@@ -163,11 +173,22 @@
                 </div>
               </div>
 
+              <!-- Mini-teclado desktop -->
               @if (showKeyboard) {
-                <app-mobile-math-keyboard
-                  [extraGroup]="mobileExtraGroup"
-                  (close)="showKeyboard = false"
-                />
+                <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
+                  @for (row of keyGroups; track $index) {
+                    <div class="flex flex-wrap gap-1">
+                      @for (btn of row; track btn.label) {
+                        <button
+                          type="button"
+                          (mousedown)="$event.preventDefault()"
+                          (click)="mqs.insertKey(btn)"
+                          class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
+                        >{{ btn.label }}</button>
+                      }
+                    </div>
+                  }
+                </div>
               }
             </section>
           }
@@ -613,6 +634,16 @@
     </main>
 
   </div>
+
+  <!-- Mobile math keyboard (< lg only) -->
+  @if (showKeyboard) {
+    <div class="lg:hidden">
+      <app-mobile-math-keyboard
+        [extraGroup]="mobileExtraGroup"
+        (close)="showKeyboard = false"
+      />
+    </div>
+  }
 
   <app-footer />
 </div>

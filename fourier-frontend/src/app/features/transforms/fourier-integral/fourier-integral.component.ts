@@ -144,22 +144,32 @@ export class FourierIntegralComponent implements OnInit {
   ];
 
   readonly keyGroups: KeyBtn[][] = [
-    // Row 1: Trig functions
+    // Row 1: Funciones especiales de Fourier
     [
-      { label: 'sin(□)', writeWithCursor: '\\sin\\left(\\right)' },
-      { label: 'cos(□)', writeWithCursor: '\\cos\\left(\\right)' },
+      { label: 'δ(□)',    writeWithCursor: '\\delta\\left(\\right)' },
+      { label: 'u(□)',    writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+      { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+      { label: 'abs(□)', writeWithCursor: '\\operatorname{abs}\\left(\\right)' },
+      { label: '|□|',    writeWithCursor: '\\left|\\right|' },
+    ],
+    // Row 2: Trig + hiperbólicas
+    [
+      { label: 'sin(□)',  writeWithCursor: '\\sin\\left(\\right)' },
+      { label: 'cos(□)',  writeWithCursor: '\\cos\\left(\\right)' },
       { label: 'sinh(□)', writeWithCursor: '\\sinh\\left(\\right)' },
       { label: 'cosh(□)', writeWithCursor: '\\cosh\\left(\\right)' },
-      { label: 'e^□' },
+      { label: 'atan(□)', writeWithCursor: '\\operatorname{atan}\\left(\\right)' },
     ],
-    // Row 2: Operators and constants
+    // Row 3: Operadores y constantes
     [
+      { label: 'e^□' },
       { label: '□²' },
       { label: '□^□' },
       { label: '□/□' },
       { label: '√□', cmd: '\\sqrt' },
       { label: '(□)', writeWithCursor: '\\left(\\right)' },
       { label: 'π', typedText: 'pi' },
+      { label: 'i', typedText: 'i' },
       { label: '∞', write: '\\infty' },
       { label: '-∞', write: '-\\infty' },
       { label: '−', write: '-' },
