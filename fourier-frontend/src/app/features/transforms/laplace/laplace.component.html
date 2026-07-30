@@ -145,7 +145,7 @@
                 {{ 'laplace.inverseHint' | transloco }}
               </p>
 
-              <!-- Variable selector -->
+              <!-- Variable selector — inversa: s→t -->
               <div class="border-t border-border dark:border-dark-border pt-3 flex flex-col gap-3">
                 <p class="text-xs text-muted font-mono shrink-0">
                   {{ 'laplace.variables' | transloco }}
@@ -158,7 +158,7 @@
                       [class]="varPairId() === pair.id
                         ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
                         : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'"
-                    >{{ pair.timeDisplay }}→{{ pair.freqDisplay }}</button>
+                    >{{ pair.freqDisplay }}→{{ pair.timeDisplay }}</button>
                   }
                 </div>
               </div>
@@ -385,42 +385,7 @@
           <!-- Settings slide-in panel (desktop) -->
           @if (hasComputedResult() && showCanvasSettings()) {
             <div class="absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-
-              <!-- Panel header -->
-              <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
-                <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
-                  {{ 'transforms.panelSettings' | transloco }}
-                </span>
-                <button
-                  type="button"
-                  (click)="showCanvasSettings.set(false)"
-                  class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light"
-                >×</button>
-              </div>
-
-              <!-- Settings content -->
-              <div class="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-4">
-
-                <!-- Param sliders -->
-                @if (activeParams().length > 0) {
-                  <div class="flex flex-col gap-3">
-                    <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
-                      {{ 'transforms.freeParams' | transloco }}
-                    </p>
-                    <app-param-sliders
-                      [params]="activeParams()"
-                      (valuesChange)="onParamChange($event)"
-                    />
-                  </div>
-                }
-
-                <div class="flex flex-col gap-2">
-                  <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50">
-                    {{ 'transforms.dragToPan' | transloco }}
-                  </p>
-                </div>
-
-              </div>
+              <ng-container *ngTemplateOutlet="settingsPanelContent" />
             </div>
           }
 
@@ -429,31 +394,141 @@
 
         <!-- Mobile settings panel (below canvas, non-fullscreen) -->
         @if (hasComputedResult() && showCanvasSettings()) {
-          <div class="flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface">
-            <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border bg-paper2/60 dark:bg-dark-surface2/60">
-              <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
-                {{ 'transforms.panelSettings' | transloco }}
-              </span>
-              <button type="button" (click)="showCanvasSettings.set(false)" class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer text-lg leading-none">×</button>
-            </div>
+          <div class="flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-72 overflow-hidden">
+            <ng-container *ngTemplateOutlet="settingsPanelContent" />
+          </div>
+        }
+
+        <ng-template #settingsPanelContent>
+          <!-- Panel header -->
+          <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+            <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
+              {{ 'transforms.panelSettings' | transloco }}
+            </span>
+            <button type="button" (click)="showCanvasSettings.set(false)"
+              class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light">×</button>
+          </div>
+
+          <!-- Scrollable content -->
+          <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
+
+            <!-- ── 1. Estilo de líneas ─────────────────────────────────── -->
+            <section class="px-5 py-4 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                  {{ 'transforms.lineStyle' | transloco }}
+                </p>
+                <button type="button" (click)="resetLineStyles()"
+                  class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2">
+                  {{ 'transforms.reset' | transloco }}
+                </button>
+              </div>
+
+              <!-- ── Curva de entrada — directo: f(t), inverso: F(s) ── -->
+              @if (mode() === 'direct' || mode() === 'inverse') {
+                <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50 -mb-1">
+                  {{ 'transforms.ftInputLabel' | transloco }}:
+                  @if (mode() === 'direct') { f({{ activePair().timeDisplay }}) }
+                  @else { F({{ activePair().freqDisplay }}) }
+                </p>
+                <div class="flex flex-col gap-1.5">
+                  <div class="flex items-center gap-2">
+                    <svg width="28" height="12" class="shrink-0">
+                      <line x1="2" y1="6" x2="26" y2="6"
+                        [attr.stroke]="inputColor()"
+                        [attr.stroke-width]="inputLineWidth()"
+                        [attr.stroke-dasharray]="inputDashed() ? '4 3' : 'none'"
+                        stroke-linecap="round"/>
+                    </svg>
+                    <span class="text-xs font-mono text-ink/90 dark:text-dark-ink/90 flex-1">
+                      @if (mode() === 'direct') { f({{ activePair().timeDisplay }}) }
+                      @else { F({{ activePair().freqDisplay }}) }
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+                      <button type="button" (click)="inputDashed.set(false)"
+                        [class]="!inputDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">—</button>
+                      <button type="button" (click)="inputDashed.set(true)"
+                        [class]="inputDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
+                    </div>
+                    <input type="color" [value]="inputColor()" (input)="inputColor.set($any($event.target).value)"
+                      class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
+                    <input type="number" [value]="inputLineWidth()" min="0.5" max="5" step="0.5"
+                      (input)="inputLineWidth.set(+$any($event.target).value)"
+                      class="w-0 flex-1 px-2 py-1 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-xs font-mono text-center focus:outline-none focus:border-accent" />
+                    <span class="text-[10px] text-ink/65 dark:text-dark-ink/65 font-mono shrink-0">px</span>
+                  </div>
+                </div>
+              }
+
+              <!-- ── Curva de resultado ── -->
+              <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50 mt-1 -mb-1">
+                {{ 'transforms.ftResultLabel' | transloco }}:
+                @if (mode() === 'direct') { F({{ activePair().freqDisplay }}) }
+                @else if (mode() === 'ode') { y({{ activePair().timeDisplay }}) }
+                @else { f({{ activePair().timeDisplay }}) }
+              </p>
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center gap-2">
+                  <svg width="28" height="12" class="shrink-0">
+                    <line x1="2" y1="6" x2="26" y2="6"
+                      [attr.stroke]="resultColor()"
+                      [attr.stroke-width]="resultLineWidth()"
+                      [attr.stroke-dasharray]="resultDashed() ? '4 3' : 'none'"
+                      stroke-linecap="round"/>
+                  </svg>
+                  <span class="text-xs font-mono text-ink/90 dark:text-dark-ink/90 flex-1">
+                    @if (mode() === 'direct') { F({{ activePair().freqDisplay }}) }
+                    @else if (mode() === 'ode') { y({{ activePair().timeDisplay }}) }
+                    @else { f({{ activePair().timeDisplay }}) }
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+                    <button type="button" (click)="resultDashed.set(false)"
+                      [class]="!resultDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">—</button>
+                    <button type="button" (click)="resultDashed.set(true)"
+                      [class]="resultDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
+                  </div>
+                  <input type="color" [value]="resultColor()" (input)="resultColor.set($any($event.target).value)"
+                    class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
+                  <input type="number" [value]="resultLineWidth()" min="0.5" max="5" step="0.5"
+                    (input)="resultLineWidth.set(+$any($event.target).value)"
+                    class="w-0 flex-1 px-2 py-1 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-xs font-mono text-center focus:outline-none focus:border-accent" />
+                  <span class="text-[10px] text-ink/65 dark:text-dark-ink/65 font-mono shrink-0">px</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- ── 2. Constantes detectadas ──────────────────────────── -->
             @if (activeParams().length > 0) {
-              <div class="px-4 py-3">
+              <section class="px-4 py-4 flex flex-col gap-3">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                  {{ 'transforms.freeParams' | transloco }}
+                </p>
                 <app-param-sliders
                   [params]="activeParams()"
                   (valuesChange)="onParamChange($event)"
                 />
-              </div>
+              </section>
             }
+
+            <!-- ── 3. Hint ────────────────────────────────────────────── -->
+            <section class="px-4 py-3">
+              <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50">
+                {{ 'transforms.dragToPan' | transloco }}
+              </p>
+            </section>
+
           </div>
-        }
+        </ng-template>
 
         <!-- Result cards -->
         @if (!hasResult() && !loading()) {
-          <div class="flex flex-col items-center justify-center py-16 gap-4 text-center">
-            <span class="font-display text-5xl text-muted/30 dark:text-dark-muted/30 select-none">ℒ</span>
-            <p class="text-sm font-mono text-muted dark:text-dark-muted max-w-xs">
-              {{ 'laplace.hint' | transloco }}
-            </p>
+          <div class="text-center py-6 text-muted dark:text-dark-muted text-sm font-body">
+            {{ 'transforms.hint' | transloco }}
+            <strong class="text-ink dark:text-dark-ink">{{ 'laplace.calculate' | transloco }}</strong>.
           </div>
         }
 
@@ -475,7 +550,8 @@
                 </span>
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">F({{ activePair().freqDisplay }}) =</span>
-                  <span [mathjax]="'\\(' + r.F!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <span #directResultEl [mathjax]="'\\(' + r.F!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="r.F!.tex" [maxima]="r.F!.maxima" [mathEl]="directResultEl" filename="laplace-transform" [label]="'F(' + activePair().freqDisplay + ')'" />
                 </div>
               </div>
             }
@@ -500,7 +576,8 @@
                 </span>
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">f({{ activePair().timeDisplay }}) =</span>
-                  <span [mathjax]="'\\(' + r.f!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <span #inverseResultEl [mathjax]="'\\(' + r.f!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="r.f!.tex" [maxima]="r.f!.maxima" [mathEl]="inverseResultEl" filename="laplace-inverse" [label]="'f(' + activePair().timeDisplay + ')'" />
                 </div>
               </div>
             }
@@ -524,7 +601,8 @@
                   {{ 'laplace.odeSolution' | transloco }}
                 </span>
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span [mathjax]="'\\(' + r.solution!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <span #odeResultEl [mathjax]="'\\(' + r.solution!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="r.solution!.tex" [maxima]="r.solution!.maxima" [mathEl]="odeResultEl" filename="laplace-ode" [label]="'y(' + activePair().timeDisplay + ')'" />
                 </div>
               </div>
             }

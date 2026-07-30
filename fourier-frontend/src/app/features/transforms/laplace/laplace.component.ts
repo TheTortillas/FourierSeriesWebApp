@@ -12,6 +12,7 @@ import {
   DestroyRef,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -42,6 +43,7 @@ import type {
   LaplaceIcCondition,
 } from '../../../domain/types/transform.types';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
+import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 
 export type LaplaceMode = 'direct' | 'inverse' | 'ode';
 
@@ -51,12 +53,12 @@ const mkId = () => `lp-${++_nextId}`;
 function defaultSegment(): TransformSegmentDraft {
   return {
     id: mkId(),
-    expression: '1',
-    expressionTex: '1',
+    expression: 'sin(t)',
+    expressionTex: '\\sin(t)',
     from: '0',
     fromTex: '0',
-    to: '1',
-    toTex: '1',
+    to: 'inf',
+    toTex: '\\infty',
   };
 }
 
@@ -80,6 +82,7 @@ const VAR_PAIRS: VarPair[] = [
   templateUrl: './laplace.component.html',
   imports: [
     NavComponent,
+    NgTemplateOutlet,
     MathjaxDirective,
     TransformSegmentComponent,
     FormsModule,
@@ -88,6 +91,7 @@ const VAR_PAIRS: VarPair[] = [
     FunctionPlotComponent,
     ParamSlidersComponent,
     FooterComponent,
+    ExportButtonComponent,
   ],
 })
 export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
@@ -167,6 +171,24 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
   readonly isFullscreen = signal(false);
 
+  // ── Canvas line style ─────────────────────────────────────────────────────
+
+  readonly inputColor     = signal('#dc2626');
+  readonly inputLineWidth = signal(2);
+  readonly inputDashed    = signal(false);
+  readonly resultColor    = signal('#2563eb');
+  readonly resultLineWidth = signal(2);
+  readonly resultDashed   = signal(false);
+
+  resetLineStyles(): void {
+    this.inputColor.set('#dc2626');
+    this.inputLineWidth.set(2);
+    this.inputDashed.set(false);
+    this.resultColor.set('#2563eb');
+    this.resultLineWidth.set(2);
+    this.resultDashed.set(false);
+  }
+
   // ── Variables ─────────────────────────────────────────────────────────────
 
   readonly varPairs = VAR_PAIRS;
@@ -192,6 +214,16 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   setMode(m: LaplaceMode): void {
     this.mode.set(m);
     this.clearResults();
+    if (m === 'direct') {
+      this.segments.set([defaultSegment()]);
+    } else if (m === 'inverse') {
+      this.inverseExpr.set('1/(s^2+1)');
+      this.inverseExprTex.set('\\frac{1}{s^{2}+1}');
+      this._mqInverseInited = false;
+    } else if (m === 'ode') {
+      this.odeEquation.set('');
+      this.odeIcs.set([{ order: 0, value: '0' }, { order: 1, value: '0' }]);
+    }
   }
 
   // ── Shared state ─────────────────────────────────────────────────────────
@@ -212,6 +244,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.errorMsg.set(null);
     this.paramValues.set({});
     this.showCanvasSettings.set(false);
+    this.resetLineStyles();
   }
 
   // ── Free parameters ───────────────────────────────────────────────────────
@@ -258,10 +291,10 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   // ── Inverse mode ─────────────────────────────────────────────────────────
 
-  readonly inverseExpr    = signal('4/(s-2) - 3/(s+5)');
-  readonly inverseExprTex = signal('\\frac{4}{s-2}-\\frac{3}{s+5}');
+  readonly inverseExpr    = signal('1/(s^2+1)');
+  readonly inverseExprTex = signal('\\frac{1}{s^{2}+1}');
   readonly inverseResult  = signal<LaplaceInverseResponse | null>(null);
-  readonly inverseDefault = '\\frac{4}{s-2}-\\frac{3}{s+5}';
+  readonly inverseDefault = '\\frac{1}{s^{2}+1}';
 
   // ── ODE mode ─────────────────────────────────────────────────────────────
 
@@ -295,9 +328,18 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     const ode      = this.odeResult();
     const segs     = this.segments();
     const tVar     = this.timeVar();
+    const fVar     = this.freqVar();
     const pv       = this.evaluationParams();
     const plotter  = this.plotter;
     const math     = this.mathUtils;
+    const invExpr  = this.inverseExpr();
+
+    const inColor  = this.inputColor();
+    const inLW     = this.inputLineWidth();
+    const inDashed = this.inputDashed();
+    const resColor = this.resultColor();
+    const resLW    = this.resultLineWidth();
+    const resDashed = this.resultDashed();
 
     const layer: PlotLayer = {
       curves: [],
@@ -312,7 +354,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
             }))
             .filter(s => !!s.fn);
 
-          const finitePieces  = compiled.filter(s => isFinite(s.from) && isFinite(s.to));
+          const finitePieces   = compiled.filter(s => isFinite(s.from) && isFinite(s.to));
           const infinitePieces = compiled.filter(s => !isFinite(s.from) || !isFinite(s.to));
 
           if (finitePieces.length > 0) {
@@ -320,33 +362,39 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
               ctx,
               finitePieces.map(s => ({ fn: s.fn!, from: s.from, to: s.to })),
               vp,
-              { color: '#dc2626', lineWidth: 2 },
+              { color: inColor, lineWidth: inLW, dashed: inDashed },
             );
           }
-
           for (const s of infinitePieces) {
             const gated = (x: number) => (x >= s.from && x <= s.to ? s.fn!(x) : NaN);
-            plotter.plotFn(ctx, gated, vp, { color: '#dc2626', lineWidth: 2 });
+            plotter.plotFn(ctx, gated, vp, { color: inColor, lineWidth: inLW, dashed: inDashed });
           }
 
           // F(s) result — plot vs real axis of s
           if (direct?.exists && direct.F?.maxima) {
-            const fVar = this.freqVar();
             const fn = math.compile(direct.F.maxima, fVar, pv);
-            if (fn) plotter.plotFn(ctx, fn, vp, { color: '#2563eb', lineWidth: 2 });
+            if (fn) plotter.plotFn(ctx, fn, vp, { color: resColor, lineWidth: resLW, dashed: resDashed });
           }
         }
 
-        // ── Inverse: plot f(t) result ───────────────────────────────────────
-        if (m === 'inverse' && inverse?.exists && inverse.f?.maxima) {
-          const fn = math.compile(inverse.f.maxima, tVar, pv);
-          if (fn) plotter.plotFn(ctx, fn, vp, { color: '#dc2626', lineWidth: 2 });
+        // ── Inverse: plot F(s) input + f(t) result ─────────────────────────
+        if (m === 'inverse') {
+          // Input F(s) in red — plot over the frequency axis
+          if (invExpr) {
+            const fn = math.compile(invExpr, fVar, pv);
+            if (fn) plotter.plotFn(ctx, fn, vp, { color: inColor, lineWidth: inLW, dashed: inDashed });
+          }
+          // Result f(t) in blue
+          if (inverse?.exists && inverse.f?.maxima) {
+            const fn = math.compile(inverse.f.maxima, tVar, pv);
+            if (fn) plotter.plotFn(ctx, fn, vp, { color: resColor, lineWidth: resLW, dashed: resDashed });
+          }
         }
 
         // ── ODE: plot y(t) solution ─────────────────────────────────────────
         if (m === 'ode' && ode?.exists && ode.solution?.maxima) {
           const fn = math.compile(ode.solution.maxima, tVar, pv);
-          if (fn) plotter.plotFn(ctx, fn, vp, { color: '#dc2626', lineWidth: 2 });
+          if (fn) plotter.plotFn(ctx, fn, vp, { color: resColor, lineWidth: resLW, dashed: resDashed });
         }
       },
     };
