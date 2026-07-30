@@ -68,15 +68,18 @@ kill(all)$
 
     const { raw } = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
 
-    const exists  = this.extractBetween(raw, "__EXISTS__", "__F_MAXIMA__").trim().includes("true");
-    const fMaxima = this.extractBetween(raw, "__F_MAXIMA__", "__F_TEX__").trim();
-    const fTex    = this.extractTex(this.extractBetween(raw, "__F_TEX__", "__INVERSE_METHOD__"));
-    const method  = this.extractBetween(raw, "__INVERSE_METHOD__", null).trim() as "ilt" | "pwilt" | "failed";
+    const exists     = this.extractBetween(raw, "__EXISTS__", "__F_MAXIMA__").trim().includes("true");
+    const fMaxima    = this.extractBetween(raw, "__F_MAXIMA__", "__F_TEX__").trim();
+    const fTex       = this.extractTex(this.extractBetween(raw, "__F_TEX__", "__PARAMS__"));
+    const paramsRaw  = this.extractBetween(raw, "__PARAMS__", "__INVERSE_METHOD__").trim();
+    const params     = this.parseParams(paramsRaw);
+    const method     = this.extractBetween(raw, "__INVERSE_METHOD__", null).trim() as "ilt" | "pwilt" | "failed";
 
     return {
       input,
       exists,
       f: this.toSymbolic(fMaxima, fTex),
+      params: params.length ? params : undefined,
       inverseMethod: method || "failed",
       executionTimeMs: Date.now() - startTime,
     };

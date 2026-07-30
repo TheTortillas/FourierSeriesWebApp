@@ -218,7 +218,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.segments.set([defaultSegment()]);
     } else if (m === 'inverse') {
       this.inverseExpr.set('1/(s^2+1)');
-      this.inverseExprTex.set('\\frac{1}{s^{2}+1}');
+      this.inverseExprTex.set('\\frac{1}{s^2+1}');
       this._mqInverseInited = false;
     } else if (m === 'ode') {
       this.odeEquation.set('');
@@ -252,7 +252,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly paramValues = signal<ParamValues>({});
 
   readonly activeParams = computed<string[]>(() =>
-    this.directResult()?.params ?? [],
+    this.directResult()?.params ?? this.inverseResult()?.params ?? [],
   );
 
   readonly evaluationParams = computed<ParamValues>(() => {
@@ -292,9 +292,9 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   // ── Inverse mode ─────────────────────────────────────────────────────────
 
   readonly inverseExpr    = signal('1/(s^2+1)');
-  readonly inverseExprTex = signal('\\frac{1}{s^{2}+1}');
+  readonly inverseExprTex = signal('\\frac{1}{s^2+1}');
   readonly inverseResult  = signal<LaplaceInverseResponse | null>(null);
-  readonly inverseDefault = '\\frac{1}{s^{2}+1}';
+  readonly inverseDefault = '\\frac{1}{s^2+1}';
 
   // ── ODE mode ─────────────────────────────────────────────────────────────
 
@@ -612,7 +612,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
           const latex = mf.latex();
           if (!latex.trim()) { this.inverseExpr.set(''); this.inverseExprTex.set(''); return; }
           this.inverseExprTex.set(latex);
-          this.tex2max.convertWithSpecialFns(latex).subscribe(r => {
+          this.tex2max.convertClientSide(latex).subscribe(r => {
             if (r.ok) this.inverseExpr.set(r.maxima);
           });
         },

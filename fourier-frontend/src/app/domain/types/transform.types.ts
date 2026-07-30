@@ -225,6 +225,7 @@ export interface LaplaceInverseResponse {
   input: LaplaceInverseRequest;
   exists: boolean;
   f?: SymbolicExpression;
+  params?: string[];
   inverseMethod: 'ilt' | 'pwilt' | 'failed';
   executionTimeMs: number;
 }

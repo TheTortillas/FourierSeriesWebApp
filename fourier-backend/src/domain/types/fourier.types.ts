@@ -494,6 +494,7 @@ export interface LaplaceInverseResult {
   input: LaplaceInverseInput;
   exists: boolean;
   f?: SymbolicExpression;   // f(t) = L⁻¹{F(s)}
+  params?: string[];
   inverseMethod?: "ilt" | "pwilt" | "failed";
   executionTimeMs: number;
 }
