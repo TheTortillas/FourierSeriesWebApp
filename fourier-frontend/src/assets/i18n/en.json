@@ -782,6 +782,8 @@
       "groupIntegral": "Fourier Integral",
       "groupContinuous": "Continuous transform",
       "groupDft": "Discrete Transform (DFT)",
+      "groupLaplace": "Laplace Transform",
+      "groupTools": "Tools",
       "features": {
         "trigonometric": "Trigonometric series",
         "half_range": "Half-range series",
@@ -792,6 +794,10 @@
         "dft_signal": "DFT — discrete signal (manual points)",
         "dft_function": "DFT — sampled continuous function",
         "dft_epicycles": "DFT — animated epicycles",
+        "laplace_direct": "Direct Laplace Transform",
+        "laplace_inverse": "Inverse Laplace Transform",
+        "laplace_ode": "ODE solving with Laplace",
+        "grapher": "Function grapher",
         "none": "None yet"
       },
       "deviceLabel": "Which device did you use?",
