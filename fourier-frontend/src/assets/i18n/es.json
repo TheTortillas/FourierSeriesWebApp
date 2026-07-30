@@ -879,7 +879,42 @@
   "about": {
     "hero": {
       "title": "Acerca de Fourier Web Calculator",
-      "intro": "Una herramienta web gratuita y de acceso abierto para calcular, visualizar y compartir análisis de Fourier — diseñada para estudiantes, ingenieros y científicos."
+      "intro": "Una herramienta web gratuita y de acceso abierto para calcular, visualizar y compartir análisis matemático — desde series y transformadas de Fourier hasta la Transformada de Laplace. Diseñada para estudiantes, ingenieros y científicos."
+    },
+    "sectionFourier": "Análisis de Fourier",
+    "sectionFourierTitle": "Herramientas de Fourier",
+    "sectionFourierDesc": "Cuatro herramientas para descomponer, transformar y analizar señales en el dominio de la frecuencia, todas con cálculo simbólico exacto vía Maxima CAS.",
+    "sectionLaplace": "Transformada de Laplace",
+    "sectionFns": "Referencia",
+    "sectionPlatform": "Plataforma",
+    "sectionPlatformTitle": "Entrada, cuentas y diseño",
+    "laplace": {
+      "title": "Transformada de Laplace",
+      "desc": "Calcula transformadas simbólicas exactas de funciones causales, recupera la función original y resuelve ecuaciones diferenciales ordinarias con condiciones iniciales.",
+      "direct": {
+        "title": "Transformada directa",
+        "desc": "Obtén F(s) = ℒ{f(t)} de forma exacta para funciones a trozos o con parámetros libres.",
+        "f1": "Funciones a trozos con múltiples segmentos en t ≥ 0",
+        "f2": "Soporte completo de u(t), δ(t), e^(at), sin, cos, sinh, cosh y polinomios",
+        "f3": "Parámetros libres con variación interactiva por sliders",
+        "f4": "Gráficas de f(t) y F(s) superpuestas en el canvas"
+      },
+      "inverse": {
+        "title": "Transformada inversa",
+        "desc": "Recupera f(t) = ℒ⁻¹{F(s)} de funciones racionales o con parámetros libres.",
+        "f1": "Fracciones parciales automáticas vía Maxima",
+        "f2": "Soporte de parámetros libres con sliders (p. ej. 1/(s²+a²))",
+        "f3": "Conversión cliente-lado de LaTeX a Maxima para la entrada de F(s)",
+        "f4": "Visualización simultánea de F(s) y f(t) en el canvas"
+      },
+      "ode": {
+        "title": "Resolución de EDOs",
+        "desc": "Resuelve EDOs lineales con coeficientes constantes aplicando la transformada de Laplace con condiciones iniciales.",
+        "f1": "EDOs de hasta orden 2 (configurable)",
+        "f2": "Condiciones iniciales y(0) e y'(0) ajustables",
+        "f3": "Muestra la solución simbólica exacta y su gráfica",
+        "f4": "Historial de resultados con recuperación completa"
+      }
     },
     "series": {
       "title": "Series de Fourier",
@@ -911,7 +946,7 @@
     "integral": {
       "title": "Integral de Fourier",
       "desc": "Representa funciones no periódicas como integrales continuas de frecuencia y analiza sus distintas formas equivalentes.",
-      "f1": "Formas trigonométrica, coseno, seno y compleja de la integral de Fourier",
+      "f1": "Formas trigonométrica, coseno, seno y compleja — la forma compleja entrega el coeficiente C(ω) directamente",
       "f2": "Funciones a trozos con múltiples segmentos en el dominio real o semirreal",
       "f3": "Coeficientes A(ω) y B(ω) simbólicos exactos calculados con Maxima CAS",
       "f4": "Reconstrucción gráfica interactiva por suma de Riemann en tiempo real",
@@ -960,13 +995,15 @@
       "title": "Funciones especiales soportadas",
       "intro": "Además de las funciones trigonométricas e hiperbólicas estándar, la calculadora reconoce estas funciones propias del análisis de señales, tanto en la entrada simbólica como en la evaluación numérica y las transformadas.",
       "ftLabel": "Transformada de Fourier",
+      "ltLabel": "Transformada de Laplace",
       "u": {
         "name": "Escalón unitario",
         "notation": "u(t)",
         "aka": "Función de Heaviside",
         "def": "Vale 1 para t ≥ 0 y 0 para t < 0. Modela el encendido abrupto de una señal: multiplica por u(t) para «activar» una función desde t = 0, o por u(t − a) para retrasarla a t = a.",
         "latex": "u(t) = \\begin{cases} 1 & t \\ge 0 \\\\ 0 & t < 0 \\end{cases}",
-        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}"
+        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}",
+        "lt": "\\mathcal{L}\\{u(t)\\} = \\dfrac{1}{s}, \\quad \\operatorname{Re}(s) > 0"
       },
       "sgn": {
         "name": "Función signo",
@@ -982,7 +1019,8 @@
         "aka": "Impulso unitario",
         "def": "Distribución de área unidad concentrada en t = 0. Propiedad de muestreo: ∫ f(t) δ(t − a) dt = f(a). Es el elemento neutro de la convolución y el fundamento de los sistemas LTI.",
         "latex": "\\int_{-\\infty}^{\\infty} \\delta(t)\\,dt = 1",
-        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1"
+        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1",
+        "lt": "\\mathcal{L}\\{\\delta(t)\\} = 1"
       },
       "rect": {
         "name": "Pulso rectangular",
