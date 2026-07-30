@@ -36,6 +36,7 @@
     "series": "Series de Fourier",
     "transforms": "Transformadas",
     "fourierIntegral": "Integral de Fourier",
+    "laplace": "Transformada de Laplace",
     "login": "Ingresar",
     "register": "Registrarse",
     "logout": "Salir",
@@ -98,6 +99,7 @@
     "subtitle": "Calcula, visualiza y analiza el análisis de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
     "learnMore": "Conoce más sobre la herramienta →",
     "toolsTitle": "Herramientas",
+    "analysisTitle": "Análisis de Fourier",
     "fourierTitle": "Análisis de Fourier",
     "comingSoonTitle": "Próximamente",
     "comingSoon": "Próximamente",
@@ -115,8 +117,11 @@
     },
     "laplace": {
       "title": "Transformada de Laplace",
-      "description": "Transformada directa e inversa con convergencia, polos y zeros. En desarrollo.",
-      "badge": "Próximamente"
+      "description": "Transformada directa e inversa y resolución de EDOs. Con soporte de parámetros libres, fracciones parciales y graficación."
+    },
+    "grapher": {
+      "title": "Graficador",
+      "description": "Grafica funciones matemáticas de forma interactiva. Soporta múltiples expresiones, colores y zoom."
     }
   },
   "calculator": {

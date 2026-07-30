@@ -36,6 +36,7 @@
     "series": "Fourier Series",
     "transforms": "Transforms",
     "fourierIntegral": "Fourier Integral",
+    "laplace": "Laplace Transform",
     "login": "Log in",
     "register": "Sign up",
     "logout": "Log out",
@@ -98,6 +99,7 @@
     "subtitle": "Calculate, visualize and analyze Fourier analysis with exact symbolic expressions and real-time graphical reconstruction.",
     "learnMore": "Learn more about the tool →",
     "toolsTitle": "Tools",
+    "analysisTitle": "Fourier Analysis",
     "fourierTitle": "Fourier Analysis",
     "comingSoonTitle": "Coming soon",
     "comingSoon": "Coming soon",
@@ -115,8 +117,11 @@
     },
     "laplace": {
       "title": "Laplace Transform",
-      "description": "Direct and inverse transform with region of convergence, poles and zeros. Under development.",
-      "badge": "Coming soon"
+      "description": "Direct and inverse transform and ODE solving. Supports free parameters, partial fractions and graphing."
+    },
+    "grapher": {
+      "title": "Grapher",
+      "description": "Plot mathematical functions interactively. Supports multiple expressions, colors and zoom."
     }
   },
   "calculator": {
