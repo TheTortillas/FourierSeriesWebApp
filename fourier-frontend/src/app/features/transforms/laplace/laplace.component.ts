@@ -14,8 +14,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, of, Subject, switchMap } from 'rxjs';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, debounceTime, filter, of, Subject, switchMap, take, timer } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -112,7 +112,21 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   private _urlPopulated = false;
 
   constructor() {
-    // Sync result → URL (must be in constructor for valid injection context)
+    // ── 1. Restore state from URL and auto-calculate ──────────────────────
+    const encoded = this.route.snapshot.queryParamMap.get('s');
+    if (encoded) {
+      this.restoreState(encoded);
+      toObservable(this.userStore.initialized)
+        .pipe(
+          filter(Boolean),
+          take(1),
+          switchMap(() => timer(0)),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe(() => this.calculate());
+    }
+
+    // ── 2. Sync result → URL ──────────────────────────────────────────────
     effect(() => {
       const hasDirect  = this.directResult();
       const hasInverse = this.inverseResult();
@@ -245,6 +259,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   // ── Inverse mode ─────────────────────────────────────────────────────────
 
   readonly inverseExpr    = signal('4/(s-2) - 3/(s+5)');
+  readonly inverseExprTex = signal('\\frac{4}{s-2}-\\frac{3}{s+5}');
   readonly inverseResult  = signal<LaplaceInverseResponse | null>(null);
   readonly inverseDefault = '\\frac{4}{s-2}-\\frac{3}{s+5}';
 
@@ -391,6 +406,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         }));
       } else if (m === 'inverse') {
         state['expr'] = this.inverseExpr();
+        state['exprTex'] = this.inverseExprTex();
       } else if (m === 'ode') {
         state['eq'] = this.odeEquation();
         state['unk'] = this.odeUnknown();
@@ -425,6 +441,9 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         if (segs.length) this.segments.set(segs);
       } else if (m === 'inverse' && typeof s['expr'] === 'string') {
         this.inverseExpr.set(s['expr']);
+        if (typeof s['exprTex'] === 'string' && s['exprTex']) {
+          this.inverseExprTex.set(s['exprTex']);
+        }
       } else if (m === 'ode') {
         if (typeof s['eq'] === 'string') this.odeEquation.set(s['eq']);
         if (typeof s['unk'] === 'string') this.odeUnknown.set(s['unk']);
@@ -452,10 +471,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.isFullscreen.set(!!document.fullscreenElement);
       });
     }
-
-    // Restore state from URL
-    const encoded = this.route.snapshot.queryParamMap.get('s');
-    if (encoded) this.restoreState(encoded);
 
     this.submit$.pipe(
       debounceTime(50),
@@ -495,6 +510,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
           }
           return this.api.calculateLaplaceInverse({
             expression: expr,
+            expressionTex: this.inverseExprTex(),
             freqVar: this.freqVar(),
             timeVar: this.timeVar(),
           }).pipe(
@@ -546,7 +562,8 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       handlers: {
         edit: (mf) => {
           const latex = mf.latex();
-          if (!latex.trim()) { this.inverseExpr.set(''); return; }
+          if (!latex.trim()) { this.inverseExpr.set(''); this.inverseExprTex.set(''); return; }
+          this.inverseExprTex.set(latex);
           this.tex2max.convertWithSpecialFns(latex).subscribe(r => {
             if (r.ok) this.inverseExpr.set(r.maxima);
           });
@@ -555,7 +572,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       },
     });
     this.inverseField = field;
-    if (field) field.latex(this.inverseDefault);
+    if (field) field.latex(this.inverseExprTex());
     el.addEventListener('focusin',  () => { if (this.inverseField) this.mqs.setActiveField(this.inverseField, 'F(s)'); });
     el.addEventListener('focusout', () => this.mqs.clearActiveField());
   }

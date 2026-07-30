@@ -157,7 +157,11 @@
       "inverseFourierTransform": "T. Inversa de Fourier",
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
-      "dftEpicycles": "DFT epiciclos"
+      "dftEpicycles": "DFT epiciclos",
+      "fourierIntegral": "Int. Fourier",
+      "laplaceDirect": "Laplace directa",
+      "laplaceInverse": "Laplace inversa",
+      "laplaceOde": "Laplace EDO"
     },
     "label": "Configura la función y presiona"
   },
@@ -525,7 +529,10 @@
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
       "dftEpicycles": "DFT epiciclos",
-      "fourierIntegral": "Int. Fourier"
+      "fourierIntegral": "Int. Fourier",
+      "laplaceDirect": "Laplace directa",
+      "laplaceInverse": "Laplace inversa",
+      "laplaceOde": "Laplace EDO"
     }
   },
   "auth": {
@@ -1056,6 +1063,8 @@
     "errorNoEq": "Ingresa la ecuación diferencial y la función incógnita.",
     "odeHint": "Usa sintaxis de Maxima: diff(y(t),t,2) para y'', diff(y(t),t) para y'",
     "newCalculation": "Nuevo cálculo",
-    "result": "Resultado"
+    "result": "Resultado",
+    "fullTransform": "Transformada completa",
+    "inverseResult": "Transformada inversa"
   }
 }

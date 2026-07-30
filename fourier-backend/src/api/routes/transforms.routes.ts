@@ -702,11 +702,15 @@ transformsRouter.post(
       const exprCheck = sanitizeExpression(body.expression.trim());
       if (!exprCheck.valid) { res.status(400).json({ error: exprCheck.error }); return; }
 
-      const input: LaplaceInverseInput = {
+      const bodyAny = body as unknown as Record<string, unknown>;
+      const input: LaplaceInverseInput & { expressionTex?: string } = {
         expression: body.expression.trim(),
         freqVar:    body.freqVar ?? "s",
         timeVar:    body.timeVar ?? "t",
       };
+      if (typeof bodyAny['expressionTex'] === 'string') {
+        input.expressionTex = bodyAny['expressionTex'];
+      }
 
       const client = trackClientConnection(req, res);
       const result = await laplaceService.inverse(input);

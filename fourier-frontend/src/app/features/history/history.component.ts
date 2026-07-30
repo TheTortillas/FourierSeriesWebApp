@@ -18,6 +18,9 @@ const TYPE_KEY: Record<string, string> = {
   dft_signal: 'history.types.dftSignal',
   dft_epicycles: 'history.types.dftEpicycles',
   fourier_integral: 'history.types.fourierIntegral',
+  laplace_direct: 'history.types.laplaceDirect',
+  laplace_inverse: 'history.types.laplaceInverse',
+  laplace_ode: 'history.types.laplaceOde',
 };
 
 @Component({
@@ -266,6 +269,7 @@ export class HistoryComponent implements OnInit {
           m: 'inverse',
           vp: inp['timeVar'] && inp['freqVar'] ? `${inp['timeVar']}-${inp['freqVar']}` : 't-s',
           expr: inp['expression'] as string ?? '',
+          exprTex: inp['expressionTex'] as string ?? '',
         };
       } else {
         state = {
@@ -373,11 +377,17 @@ export class HistoryComponent implements OnInit {
     };
   }
 
-  hasSegments(entry: HistoryEntry): boolean {
+  canReopen(entry: HistoryEntry): boolean {
+    if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse' || entry.type === 'laplace_ode') return true;
+    if (entry.type === 'fourier_integral') return true;
     if (entry.type === 'dft_signal' || entry.type === 'dft_epicycles') {
       return Array.isArray(entry.input?.['points']) || Array.isArray(entry.input?.['segments']);
     }
     return Array.isArray(entry.input?.['segments']);
+  }
+
+  hasSegments(entry: HistoryEntry): boolean {
+    return this.canReopen(entry);
   }
 
   formatDate(iso: string): string {
@@ -408,6 +418,12 @@ export class HistoryComponent implements OnInit {
         'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800',
       fourier_integral:
         'bg-lime-50 dark:bg-lime-950/30 text-lime-700 dark:text-lime-400 border-lime-200 dark:border-lime-800',
+      laplace_direct:
+        'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800',
+      laplace_inverse:
+        'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+      laplace_ode:
+        'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
     };
     return (
       map[type] ??

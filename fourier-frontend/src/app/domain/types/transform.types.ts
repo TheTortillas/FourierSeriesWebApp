@@ -196,6 +196,7 @@ export interface LaplaceDirectRequest {
 
 export interface LaplaceInverseRequest {
   expression: string;
+  expressionTex?: string;
   freqVar?: string;
   timeVar?: string;
 }
