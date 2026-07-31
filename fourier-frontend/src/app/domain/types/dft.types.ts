@@ -40,6 +40,9 @@ export interface DftSegment {
   expression: string;
   from: string;
   to: string;
+  expressionTex?: string;
+  fromTex?: string;
+  toTex?: string;
 }
 
 export interface DftFunctionRequest {

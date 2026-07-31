@@ -1,6 +1,6 @@
 <app-nav />
 
-<main class="max-w-4xl mx-auto px-4 py-8 flex flex-col gap-5">
+<main class="max-w-6xl mx-auto px-4 py-8 flex flex-col gap-5">
   <!-- Header -->
   <div class="flex items-center justify-between flex-wrap gap-3">
     <div>
@@ -24,6 +24,23 @@
         'history.favoritesOnly' | transloco
       }}</span>
     </label>
+  </div>
+
+  <!-- Type filter -->
+  <div class="flex flex-wrap gap-2 items-center">
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">{{ 'history.filterType' | transloco }}</label>
+      <select
+        [(ngModel)]="activeTypeFilter"
+        (change)="setTypeFilter(activeTypeFilter)"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      >
+        <option value="">{{ 'history.filterTypeAll' | transloco }}</option>
+        @for (t of CALC_TYPES; track t) {
+          <option [value]="t">{{ typeLabelI18n(t) }}</option>
+        }
+      </select>
+    </div>
   </div>
 
   <!-- Free tier limit banner -->
@@ -102,11 +119,13 @@
           />
         </svg>
         <p class="text-sm font-mono">
-          {{
-            showFavoritesOnly
-              ? ('history.emptyFavorites' | transloco)
-              : ('history.emptyAll' | transloco)
-          }}
+          @if (activeTypeFilter) {
+            {{ 'history.emptyType' | transloco }}
+          } @else if (showFavoritesOnly) {
+            {{ 'history.emptyFavorites' | transloco }}
+          } @else {
+            {{ 'history.emptyAll' | transloco }}
+          }
         </p>
       </div>
     } @else {

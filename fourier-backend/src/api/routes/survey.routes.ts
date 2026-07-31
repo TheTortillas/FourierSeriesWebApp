@@ -16,7 +16,10 @@ const VALID_FEATURES     = [
   "trigonometric", "half_range", "complex",
   "fourier_integral",
   "fourier_transform", "inverse_fourier_transform",
-  "dft_signal", "dft_function", "dft_epicycles", "none",
+  "dft_signal", "dft_function", "dft_epicycles",
+  "laplace_direct", "laplace_inverse", "laplace_ode",
+  "grapher",
+  "none",
 ];
 const VALID_DEVICES      = ["phone", "computer"];
 const VALID_IMPROVEMENTS = ["ui", "features", "speed", "results_clarity", "other"];

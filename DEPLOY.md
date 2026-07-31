@@ -1,4 +1,4 @@
-# Guía de despliegue — Fourier Web Calculator
+# Guía de despliegue — Fourier & Laplace Web Calculator
 
 Servidor limpio (Ubuntu/Debian) → sitio en producción.  
 Ejecuta los pasos en orden. Los pasos del 1 al 16 son de **instalación inicial**; a partir del 17 es el flujo de **deploy continuo**.
@@ -602,12 +602,12 @@ bash deploy.sh
 
 ## 19. Reglas del .env
 
-|                              | Tu máquina          | Servidor                                                                 |
-| ---------------------------- | ------------------- | ------------------------------------------------------------------------ |
-| `.env` (valores reales)      | ✗ nunca             | ✓ solo aquí                                                              |
-| `.env.example` (sin valores) | ✓ en git            | ✗ no necesario                                                           |
-| Actualizar una variable      | Editar `.env` local | `ssh` → `nano /root/fourierWebApp/backend/.env` → `pm2 restart backend` |
-| Añadir nueva variable        | Añadir a `.env.example` en git (sin valor) | SSH al servidor y añadir el valor real al `.env` |
+|                              | Tu máquina                                 | Servidor                                                                |
+| ---------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- |
+| `.env` (valores reales)      | ✗ nunca                                    | ✓ solo aquí                                                             |
+| `.env.example` (sin valores) | ✓ en git                                   | ✗ no necesario                                                          |
+| Actualizar una variable      | Editar `.env` local                        | `ssh` → `nano /root/fourierWebApp/backend/.env` → `pm2 restart backend` |
+| Añadir nueva variable        | Añadir a `.env.example` en git (sin valor) | SSH al servidor y añadir el valor real al `.env`                        |
 
 ---
 
@@ -683,9 +683,9 @@ IP_BLOCKER_LONG_BAN_HOURS=24
 
 Endpoints admin disponibles tras el deploy:
 
-| Método | Ruta | Qué hace |
-|--------|------|---------|
-| `GET` | `/api/admin/ip-blocks` | Lista historial con filtros (`ip`, `blockedBy`, `activeOnly`) |
-| `GET` | `/api/admin/ip-blocks/active` | Solo los bloques activos ahora mismo |
-| `POST` | `/api/admin/ip-blocks` | Bloquear una IP (`ip`, `reason`, `durationHours?`) |
-| `DELETE` | `/api/admin/ip-blocks/:ip` | Desbloquear una IP |
+| Método   | Ruta                          | Qué hace                                                      |
+| -------- | ----------------------------- | ------------------------------------------------------------- |
+| `GET`    | `/api/admin/ip-blocks`        | Lista historial con filtros (`ip`, `blockedBy`, `activeOnly`) |
+| `GET`    | `/api/admin/ip-blocks/active` | Solo los bloques activos ahora mismo                          |
+| `POST`   | `/api/admin/ip-blocks`        | Bloquear una IP (`ip`, `reason`, `durationHours?`)            |
+| `DELETE` | `/api/admin/ip-blocks/:ip`    | Desbloquear una IP                                            |

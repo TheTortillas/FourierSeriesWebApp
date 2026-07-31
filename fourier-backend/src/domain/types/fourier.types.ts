@@ -460,3 +460,48 @@ export interface FourierIntegralReconstructResult {
   points: DFTPoint[];  // reuse existing {x, y} type
   executionTimeMs: number;
 }
+
+// ── Laplace Transform ─────────────────────────────────────────────────────────
+
+export interface LaplaceDirectInput {
+  segments: PiecewiseSegment[];
+  timeVar?: string;   // default "t"
+  freqVar?: string;   // default "s"
+}
+
+export interface LaplaceInverseInput {
+  expression: string; // F(s) in Maxima syntax
+  freqVar?: string;   // default "s"
+  timeVar?: string;   // default "t"
+}
+
+export interface LaplaceOdeInput {
+  equation: string;   // e.g. "diff(y(t),t,2) + y(t) = sin(t)"
+  unknown: string;    // e.g. "y(t)"
+  timeVar?: string;   // default "t"
+  initialConditions: Array<{ order: number; value: string }>;
+}
+
+export interface LaplaceDirectResult {
+  input: LaplaceDirectInput;
+  exists: boolean;
+  F?: SymbolicExpression;   // F(s) = L{f(t)}
+  params?: string[];
+  executionTimeMs: number;
+}
+
+export interface LaplaceInverseResult {
+  input: LaplaceInverseInput;
+  exists: boolean;
+  f?: SymbolicExpression;   // f(t) = L⁻¹{F(s)}
+  params?: string[];
+  inverseMethod?: "ilt" | "pwilt" | "failed";
+  executionTimeMs: number;
+}
+
+export interface LaplaceOdeResult {
+  input: LaplaceOdeInput;
+  exists: boolean;
+  solution?: SymbolicExpression; // y(t)
+  executionTimeMs: number;
+}

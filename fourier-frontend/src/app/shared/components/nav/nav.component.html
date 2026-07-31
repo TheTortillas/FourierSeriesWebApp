@@ -87,6 +87,15 @@
           >
             {{ 'nav.fourierIntegral' | transloco }}
           </a>
+          <div class="my-0.5 mx-3 h-px bg-border dark:bg-dark-border"></div>
+          <a
+            [routerLink]="'/' + lang() + '/laplace'"
+            routerLinkActive="!text-accent bg-accent/5"
+            (click)="fourierMenuOpen.set(false)"
+            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+          >
+            {{ 'nav.laplace' | transloco }}
+          </a>
         </div>
       }
     </div>

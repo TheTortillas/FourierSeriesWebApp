@@ -132,11 +132,19 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         @if (stats.institutions.length) {
           <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-            <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-              <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Instituciones (top 15)</span>
+            <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+              <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">
+                Instituciones (top {{ stats.institutions.length }})
+              </span>
+              @if (stats.institutions.length > 5) {
+                <button type="button" (click)="showAllInstitutions = !showAllInstitutions"
+                  class="text-[11px] font-mono text-accent hover:underline underline-offset-2">
+                  {{ showAllInstitutions ? 'Ver menos' : 'Ver todas (' + stats.institutions.length + ')' }}
+                </button>
+              }
             </div>
             <div class="divide-y divide-border dark:divide-dark-border">
-              @for (row of stats.institutions; track row.value; let i = $index) {
+              @for (row of (showAllInstitutions ? stats.institutions : stats.institutions.slice(0, 5)); track row.value; let i = $index) {
                 <div class="px-4 py-2 flex items-center justify-between gap-2">
                   <span class="text-xs font-mono text-ink dark:text-dark-ink truncate" [title]="row.value">
                     <span class="text-muted dark:text-dark-muted mr-1.5">{{ i + 1 }}.</span>{{ row.value }}
@@ -150,11 +158,19 @@
 
         @if (stats.careers.length) {
           <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-            <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-              <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Carreras (top 15)</span>
+            <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+              <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">
+                Carreras (top {{ stats.careers.length }})
+              </span>
+              @if (stats.careers.length > 5) {
+                <button type="button" (click)="showAllCareers = !showAllCareers"
+                  class="text-[11px] font-mono text-accent hover:underline underline-offset-2">
+                  {{ showAllCareers ? 'Ver menos' : 'Ver todas (' + stats.careers.length + ')' }}
+                </button>
+              }
             </div>
             <div class="divide-y divide-border dark:divide-dark-border">
-              @for (row of stats.careers; track row.value; let i = $index) {
+              @for (row of (showAllCareers ? stats.careers : stats.careers.slice(0, 5)); track row.value; let i = $index) {
                 <div class="px-4 py-2 flex items-center justify-between gap-2">
                   <span class="text-xs font-mono text-ink dark:text-dark-ink truncate" [title]="row.value">
                     <span class="text-muted dark:text-dark-muted mr-1.5">{{ i + 1 }}.</span>{{ row.value }}

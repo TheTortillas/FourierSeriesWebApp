@@ -35,6 +35,13 @@ import {
   FourierIntegralReconstructRequest,
   FourierIntegralCoefficientsResponse,
   FourierIntegralReconstructResponse,
+  // Laplace
+  LaplaceDirectRequest,
+  LaplaceInverseRequest,
+  LaplaceOdeRequest,
+  LaplaceDirectResponse,
+  LaplaceInverseResponse,
+  LaplaceOdeResponse,
   // Simplify
   SimplifyRequest,
   SimplifyResponse,
@@ -209,6 +216,18 @@ export class ApiService {
     );
   }
 
+  calculateLaplaceDirect(body: LaplaceDirectRequest): Observable<LaplaceDirectResponse> {
+    return this.http.post<LaplaceDirectResponse>(`${this.base}/transforms/laplace/direct`, body);
+  }
+
+  calculateLaplaceInverse(body: LaplaceInverseRequest): Observable<LaplaceInverseResponse> {
+    return this.http.post<LaplaceInverseResponse>(`${this.base}/transforms/laplace/inverse`, body);
+  }
+
+  calculateLaplaceOde(body: LaplaceOdeRequest): Observable<LaplaceOdeResponse> {
+    return this.http.post<LaplaceOdeResponse>(`${this.base}/transforms/laplace/ode`, body);
+  }
+
   calculateDFT(body: DftRequest): Observable<DftResponse> {
     return this.http.post<DftResponse>(`${this.base}/transforms/dft`, body);
   }
@@ -259,6 +278,7 @@ export class ApiService {
     if (query?.limit !== undefined) params = params.set('limit', query.limit);
     if (query?.offset !== undefined) params = params.set('offset', query.offset);
     if (query?.favorites !== undefined) params = params.set('favorites', query.favorites);
+    if (query?.type) params = params.set('type', query.type);
     return this.http.get<HistoryListResponse>(`${this.base}/history`, { params });
   }
 

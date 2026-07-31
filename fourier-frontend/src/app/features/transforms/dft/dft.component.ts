@@ -1107,7 +1107,10 @@ export class DftComponent implements OnInit, OnDestroy {
     this.error.set(null);
 
     const body = {
-      segments: segs.map((s): DftSegment => ({ expression: s.expression, from: s.from, to: s.to })),
+      segments: segs.map((s): DftSegment => ({
+        expression: s.expression, from: s.from, to: s.to,
+        expressionTex: s.expressionTex, fromTex: s.fromTex, toTex: s.toTex,
+      })),
       intVar: this.intVar(),
       N: this.effectiveN(),
     };

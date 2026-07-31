@@ -36,6 +36,7 @@
     "series": "Fourier Series",
     "transforms": "Transforms",
     "fourierIntegral": "Fourier Integral",
+    "laplace": "Laplace Transform",
     "login": "Log in",
     "register": "Sign up",
     "logout": "Log out",
@@ -95,9 +96,10 @@
     }
   },
   "home": {
-    "subtitle": "Calculate, visualize and analyze Fourier analysis with exact symbolic expressions and real-time graphical reconstruction.",
+    "subtitle": "Compute Fourier series, Fourier and Laplace transforms, and Fourier integrals. Solve ODEs with Laplace. Exact symbolic results with real-time graphical reconstruction.",
     "learnMore": "Learn more about the tool →",
     "toolsTitle": "Tools",
+    "analysisTitle": "Fourier Analysis",
     "fourierTitle": "Fourier Analysis",
     "comingSoonTitle": "Coming soon",
     "comingSoon": "Coming soon",
@@ -115,8 +117,11 @@
     },
     "laplace": {
       "title": "Laplace Transform",
-      "description": "Direct and inverse transform with region of convergence, poles and zeros. Under development.",
-      "badge": "Coming soon"
+      "description": "Direct and inverse transform and ODE solving. Supports free parameters, partial fractions and graphing."
+    },
+    "grapher": {
+      "title": "Grapher",
+      "description": "Plot mathematical functions interactively. Supports multiple expressions, colors and zoom."
     }
   },
   "calculator": {
@@ -157,7 +162,11 @@
       "inverseFourierTransform": "Inv. Fourier Transform",
       "dftSignal": "DFT signal",
       "dftFunction": "DFT function",
-      "dftEpicycles": "DFT epicycles"
+      "dftEpicycles": "DFT epicycles",
+      "fourierIntegral": "Fourier Integral",
+      "laplaceDirect": "Laplace Direct",
+      "laplaceInverse": "Laplace Inverse",
+      "laplaceOde": "Laplace ODE"
     },
     "label": "Set up the function and press"
   },
@@ -477,6 +486,9 @@
     "title": "My calculations",
     "total": "{{ count }} records total",
     "favoritesOnly": "Favorites only",
+    "filterType": "Calculation type",
+    "filterTypeAll": "All types",
+    "emptyType": "No results for this type",
     "loading": "Loading…",
     "emptyFavorites": "You have no favorite calculations",
     "emptyAll": "You have not made any calculations yet",
@@ -525,7 +537,10 @@
       "dftSignal": "DFT signal",
       "dftFunction": "DFT function",
       "dftEpicycles": "DFT epicycles",
-      "fourierIntegral": "Fourier Integral"
+      "fourierIntegral": "Fourier Integral",
+      "laplaceDirect": "Laplace direct",
+      "laplaceInverse": "Laplace inverse",
+      "laplaceOde": "Laplace ODE"
     }
   },
   "auth": {
@@ -675,8 +690,12 @@
       "description": "Calculate the trigonometric, complex, cosine, and sine Fourier integral of piecewise-defined functions. Visualize the reconstruction and Gibbs phenomenon with an interactive slider."
     },
     "about": {
-      "title": "About Fourier Web Calculator",
-      "description": "Fourier Web Calculator: free tool for computing continuous Fourier transforms, inverse transforms, Fourier series, DFT and epicycles. Exact symbolic results with real-time visualization."
+      "title": "About Fourier & Laplace Web Calculator",
+      "description": "Fourier Web Calculator: free tool for computing Fourier series, Fourier and Laplace transforms, Fourier integrals, and solving ODEs with Laplace. Exact symbolic results with real-time visualization."
+    },
+    "laplace": {
+      "title": "Laplace Transform Calculator — Direct, Inverse and ODEs",
+      "description": "Compute the direct and inverse Laplace transform of piecewise functions. Solve ordinary differential equations (ODE) with initial conditions using the Laplace method. Exact symbolic results."
     }
   },
   "dev": {
@@ -766,6 +785,8 @@
       "groupIntegral": "Fourier Integral",
       "groupContinuous": "Continuous transform",
       "groupDft": "Discrete Transform (DFT)",
+      "groupLaplace": "Laplace Transform",
+      "groupTools": "Tools",
       "features": {
         "trigonometric": "Trigonometric series",
         "half_range": "Half-range series",
@@ -776,6 +797,10 @@
         "dft_signal": "DFT — discrete signal (manual points)",
         "dft_function": "DFT — sampled continuous function",
         "dft_epicycles": "DFT — animated epicycles",
+        "laplace_direct": "Direct Laplace Transform",
+        "laplace_inverse": "Inverse Laplace Transform",
+        "laplace_ode": "ODE solving with Laplace",
+        "grapher": "Function grapher",
         "none": "None yet"
       },
       "deviceLabel": "Which device did you use?",
@@ -786,7 +811,7 @@
     },
     "s4": {
       "heading": "Did you know the previous version?",
-      "imgAlt": "Screenshot of the previous version of Fourier Web Calculator",
+      "imgAlt": "Screenshot of the previous version of Fourier & Laplace Web Calculator",
       "usedPreviousLabel": "Had you used this tool before this version?",
       "usedPreviousYes": "Yes, I used the previous version",
       "usedPreviousNo": "No, this is my first time using it",
@@ -856,8 +881,43 @@
   },
   "about": {
     "hero": {
-      "title": "About Fourier Web Calculator",
-      "intro": "A free, open-access web tool for computing, visualizing and sharing Fourier analysis — designed for students, engineers and scientists."
+      "title": "About Fourier & Laplace Web Calculator",
+      "intro": "A free, open-access web tool for computing, visualizing and sharing mathematical analysis — from Fourier series and transforms to the Laplace Transform. Designed for students, engineers and scientists."
+    },
+    "sectionFourier": "Fourier Analysis",
+    "sectionFourierTitle": "Fourier Tools",
+    "sectionFourierDesc": "Four tools to decompose, transform and analyze signals in the frequency domain, all with exact symbolic computation via Maxima CAS.",
+    "sectionLaplace": "Laplace Transform",
+    "sectionFns": "Reference",
+    "sectionPlatform": "Platform",
+    "sectionPlatformTitle": "Input, accounts and design",
+    "laplace": {
+      "title": "Laplace Transform",
+      "desc": "Compute exact symbolic transforms of causal functions, recover the original function and solve ordinary differential equations with initial conditions.",
+      "direct": {
+        "title": "Direct transform",
+        "desc": "Obtain F(s) = ℒ{f(t)} exactly for piecewise functions or expressions with free parameters.",
+        "f1": "Piecewise functions with multiple segments on t ≥ 0",
+        "f2": "Full support for u(t), δ(t), e^(at), sin, cos, sinh, cosh and polynomials",
+        "f3": "Free parameters with interactive slider variation",
+        "f4": "Overlaid plots of f(t) and F(s) on the canvas"
+      },
+      "inverse": {
+        "title": "Inverse transform",
+        "desc": "Recover f(t) = ℒ⁻¹{F(s)} from rational functions or expressions with free parameters.",
+        "f1": "Automatic partial fractions via Maxima",
+        "f2": "Free parameter support with sliders (e.g. 1/(s²+a²))",
+        "f3": "Client-side LaTeX-to-Maxima conversion for F(s) input",
+        "f4": "Simultaneous visualization of F(s) and f(t) on the canvas"
+      },
+      "ode": {
+        "title": "ODE solving",
+        "desc": "Solve linear constant-coefficient ODEs using the Laplace Transform with initial conditions.",
+        "f1": "ODEs up to order 2 (configurable)",
+        "f2": "Adjustable initial conditions y(0) and y'(0)",
+        "f3": "Shows the exact symbolic solution and its graph",
+        "f4": "Result history with full recovery"
+      }
     },
     "series": {
       "title": "Fourier Series",
@@ -889,7 +949,7 @@
     "integral": {
       "title": "Fourier Integral",
       "desc": "Represent non-periodic functions as continuous frequency integrals and analyze their different equivalent forms.",
-      "f1": "Trigonometric, cosine, sine and complex forms of the Fourier integral",
+      "f1": "Trigonometric, cosine, sine and complex forms — the complex form yields the C(ω) coefficient directly",
       "f2": "Piecewise functions with multiple segments over real or semi-infinite domains",
       "f3": "Exact symbolic coefficients A(ω) and B(ω) computed with Maxima CAS",
       "f4": "Interactive graphical reconstruction via real-time Riemann sum",
@@ -938,13 +998,15 @@
       "title": "Supported special functions",
       "intro": "Beyond standard trigonometric and hyperbolic functions, the calculator recognises these signal-analysis functions in symbolic input, numeric evaluation and Fourier transforms.",
       "ftLabel": "Fourier transform",
+      "ltLabel": "Laplace transform",
       "u": {
         "name": "Unit step",
         "notation": "u(t)",
         "aka": "Heaviside function",
         "def": "Equals 1 for t ≥ 0 and 0 for t < 0. Models the abrupt switch-on of a signal: multiply by u(t) to activate a function from t = 0, or by u(t − a) to delay it to t = a.",
         "latex": "u(t) = \\begin{cases} 1 & t \\ge 0 \\\\ 0 & t < 0 \\end{cases}",
-        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}"
+        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}",
+        "lt": "\\mathcal{L}\\{u(t)\\} = \\dfrac{1}{s}, \\quad \\operatorname{Re}(s) > 0"
       },
       "sgn": {
         "name": "Sign function",
@@ -960,7 +1022,8 @@
         "aka": "Unit impulse",
         "def": "A unit-area distribution concentrated at t = 0. Sifting property: ∫ f(t) δ(t − a) dt = f(a). Identity element of convolution and the cornerstone of LTI system theory.",
         "latex": "\\int_{-\\infty}^{\\infty} \\delta(t)\\,dt = 1",
-        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1"
+        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1",
+        "lt": "\\mathcal{L}\\{\\delta(t)\\} = 1"
       },
       "rect": {
         "name": "Rectangular pulse",
@@ -1022,5 +1085,38 @@
     "profileTrigDesc": "Converts to the most compact trigonometric form, combining terms and applying identities.",
     "profileExpDesc": "Rewrites coefficients using complex exponentials. Choose between e^{ix} form or De Moivre.",
     "profileCompleteDesc": "Applies all available simplifications in cascade: integer → trigonometric → power reduction."
+  },
+  "laplace": {
+    "title": "Laplace Transform",
+    "subtitle": "Direct transform, inverse, and ODE solving via the Laplace method",
+    "modeDirecta": "Direct",
+    "modeInversa": "Inverse",
+    "modeOde": "ODE",
+    "exprPlaceholder": "e.g. 1/(s^2+1)",
+    "inverseHint": "Enter F(s) in terms of s. Partial fractions are applied automatically.",
+    "variables": "Variables",
+    "odeEquation": "Differential equation",
+    "odeUnknown": "Unknown function",
+    "odeIcs": "Initial conditions",
+    "addIc": "Add condition",
+    "ic0": "y(0)",
+    "ic1": "y'(0)",
+    "ic2": "y''(0)",
+    "ic3": "y'''(0)",
+    "hint": "Configure the function and press Calculate to get the transform",
+    "calculate": "Calculate",
+    "calculating": "Calculating…",
+    "notFound": "No closed form was found for this expression.",
+    "odeSolution": "Solution y(t)",
+    "params": "Parameters",
+    "execTime": "Computed in {{ms}} ms",
+    "errorNoSegments": "Add at least one segment with an expression.",
+    "errorNoExpr": "Enter an expression F(s) to invert.",
+    "errorNoEq": "Enter the differential equation and the unknown function.",
+    "odeHint": "Use Maxima syntax: diff(y(t),t,2) for y'', diff(y(t),t) for y'",
+    "newCalculation": "New calculation",
+    "result": "Result",
+    "fullTransform": "Full transform",
+    "inverseResult": "Inverse transform"
   }
 }

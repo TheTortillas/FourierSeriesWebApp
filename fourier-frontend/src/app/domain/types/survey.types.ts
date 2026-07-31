@@ -12,6 +12,10 @@ export type SurveyFeature =
   | 'dft_signal'
   | 'dft_function'
   | 'dft_epicycles'
+  | 'laplace_direct'
+  | 'laplace_inverse'
+  | 'laplace_ode'
+  | 'grapher'
   | 'none';
 export type SurveyDevice = 'phone' | 'computer';
 export type HowFound = 'search' | 'recommendation_peer' | 'recommendation_teacher' | 'social' | 'other';

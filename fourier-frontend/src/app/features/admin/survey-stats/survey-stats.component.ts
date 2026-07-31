@@ -53,6 +53,9 @@ const FEATURE_LABEL: Record<string, string> = {
   dft_signal:                'DFT señal',
   dft_function:              'DFT función',
   dft_epicycles:             'DFT epiciclos',
+  laplace_direct:            'Laplace directa',
+  laplace_inverse:           'Laplace inversa',
+  laplace_ode:               'Laplace EDO',
   none:                      'Ninguna',
 };
 const ACADEMIC_LABEL: Record<string, string> = {
@@ -95,6 +98,9 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
   loading = true;
   error   = false;
   stats: SurveyStats | null = null;
+
+  showAllInstitutions = false;
+  showAllCareers      = false;
 
   loadingComments = false;
   errorComments   = false;

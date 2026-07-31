@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../core/services/api/api.service';
 import { SeoService } from '../../core/services/seo/seo.service';
-import { HistoryEntry } from '../../domain';
+import { HistoryEntry, CALC_TYPE_LABEL } from '../../domain';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 
 const PAGE_SIZE = 15;
@@ -18,6 +18,9 @@ const TYPE_KEY: Record<string, string> = {
   dft_signal: 'history.types.dftSignal',
   dft_epicycles: 'history.types.dftEpicycles',
   fourier_integral: 'history.types.fourierIntegral',
+  laplace_direct: 'history.types.laplaceDirect',
+  laplace_inverse: 'history.types.laplaceInverse',
+  laplace_ode: 'history.types.laplaceOde',
 };
 
 @Component({
@@ -42,6 +45,7 @@ export class HistoryComponent implements OnInit {
 
   // Filters
   showFavoritesOnly = false;
+  activeTypeFilter  = '';
 
   // Rename dialog
   readonly renamingId = signal<string | null>(null);
@@ -54,7 +58,13 @@ export class HistoryComponent implements OnInit {
   readonly totalPages = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
 
+  readonly CALC_TYPES = Object.keys(CALC_TYPE_LABEL);
+  readonly typeLabel  = (t: string) => CALC_TYPE_LABEL[t] ?? t;
   readonly typeKey = (t: string) => TYPE_KEY[t] ?? t;
+  readonly typeLabelI18n = (t: string) => {
+    const key = TYPE_KEY[t];
+    return key ? this.transloco.translate(key) : (CALC_TYPE_LABEL[t] ?? t);
+  };
 
   entryTypeKey(entry: HistoryEntry): string {
     if (entry.type === 'dft_signal' && Array.isArray(entry.input?.['segments'])) {
@@ -79,6 +89,12 @@ export class HistoryComponent implements OnInit {
     this.load();
   }
 
+  setTypeFilter(type: string): void {
+    this.activeTypeFilter = type;
+    this.offset.set(0);
+    this.load();
+  }
+
   load(): void {
     this.loading.set(true);
     this.api
@@ -86,6 +102,7 @@ export class HistoryComponent implements OnInit {
         limit: this.pageSize,
         offset: this.offset(),
         ...(this.showFavoritesOnly ? { favorites: true } : {}),
+        ...(this.activeTypeFilter ? { type: this.activeTypeFilter } : {}),
       })
       .subscribe({
         next: (res) => {
@@ -183,6 +200,14 @@ export class HistoryComponent implements OnInit {
       return;
     }
 
+    if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse' || entry.type === 'laplace_ode') {
+      const encoded = this._encodeLaplaceState(entry);
+      if (encoded) {
+        this.router.navigate(['/' + lang + '/laplace'], { queryParams: { s: encoded } });
+      }
+      return;
+    }
+
     if (!inp?.['segments']) return;
 
     const transformTypes = ['fourier_transform', 'inverse_fourier_transform'];
@@ -217,8 +242,8 @@ export class HistoryComponent implements OnInit {
           alg: 'fft',
           v: (inp['intVar'] as string | undefined) ?? 'x',
           N: (inp['N'] as number | undefined) ?? 128,
-          seg: (inp['segments'] as Array<{ expression: string; from: string; to: string }>)
-            .map((s) => ({ e: s.expression, et: s.expression, f: s.from, ft: s.from, t: s.to, tt: s.to })),
+          seg: (inp['segments'] as Array<{ expression: string; from: string; to: string; expressionTex?: string; fromTex?: string; toTex?: string }>)
+            .map((s) => ({ e: s.expression, et: s.expressionTex ?? s.expression, f: s.from, ft: s.fromTex ?? s.from, t: s.to, tt: s.toTex ?? s.to })),
         };
       } else {
         // dft_signal with points — manual/discrete mode
@@ -231,6 +256,45 @@ export class HistoryComponent implements OnInit {
       }
       const json = JSON.stringify(state);
       return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16))));
+    } catch { return ''; }
+  }
+
+  private _encodeLaplaceState(entry: HistoryEntry): string {
+    const inp = entry.input;
+    try {
+      let state: Record<string, unknown>;
+      if (entry.type === 'laplace_direct') {
+        const segs = inp['segments'] as Array<{
+          expression: string; expressionTex?: string;
+          from: string; fromTex?: string;
+          to: string; toTex?: string;
+        }> | undefined;
+        state = {
+          m: 'direct',
+          vp: inp['timeVar'] && inp['freqVar'] ? `${inp['timeVar']}-${inp['freqVar']}` : 't-s',
+          seg: (segs ?? []).map(s => ({
+            e: s.expression, et: s.expressionTex ?? s.expression,
+            f: s.from, ft: s.fromTex ?? s.from,
+            t: s.to,   tt: s.toTex ?? s.to,
+          })),
+        };
+      } else if (entry.type === 'laplace_inverse') {
+        state = {
+          m: 'inverse',
+          vp: inp['timeVar'] && inp['freqVar'] ? `${inp['timeVar']}-${inp['freqVar']}` : 't-s',
+          expr: inp['expression'] as string ?? '',
+          exprTex: inp['expressionTex'] as string ?? '',
+        };
+      } else {
+        state = {
+          m: 'ode',
+          vp: inp['timeVar'] ? `${inp['timeVar']}-s` : 't-s',
+          eq: inp['equation'] as string ?? '',
+          unk: inp['unknown'] as string ?? 'y(t)',
+          ics: inp['initialConditions'] ?? [],
+        };
+      }
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
     } catch { return ''; }
   }
 
@@ -327,11 +391,17 @@ export class HistoryComponent implements OnInit {
     };
   }
 
-  hasSegments(entry: HistoryEntry): boolean {
+  canReopen(entry: HistoryEntry): boolean {
+    if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse' || entry.type === 'laplace_ode') return true;
+    if (entry.type === 'fourier_integral') return true;
     if (entry.type === 'dft_signal' || entry.type === 'dft_epicycles') {
       return Array.isArray(entry.input?.['points']) || Array.isArray(entry.input?.['segments']);
     }
     return Array.isArray(entry.input?.['segments']);
+  }
+
+  hasSegments(entry: HistoryEntry): boolean {
+    return this.canReopen(entry);
   }
 
   formatDate(iso: string): string {
@@ -362,6 +432,12 @@ export class HistoryComponent implements OnInit {
         'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800',
       fourier_integral:
         'bg-lime-50 dark:bg-lime-950/30 text-lime-700 dark:text-lime-400 border-lime-200 dark:border-lime-800',
+      laplace_direct:
+        'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800',
+      laplace_inverse:
+        'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+      laplace_ode:
+        'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
     };
     return (
       map[type] ??

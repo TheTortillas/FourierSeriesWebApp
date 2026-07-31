@@ -25,9 +25,9 @@ const SITE_NAME = 'Fourier Web Calculator';
 @Injectable({ providedIn: 'root' })
 export class SeoService {
   private readonly titleSvc = inject(Title);
-  private readonly meta     = inject(Meta);
-  private readonly router   = inject(Router);
-  private readonly doc      = inject(DOCUMENT);
+  private readonly meta = inject(Meta);
+  private readonly router = inject(Router);
+  private readonly doc = inject(DOCUMENT);
   private readonly transloco = inject(TranslocoService);
 
   /**
@@ -45,38 +45,41 @@ export class SeoService {
   setPage(titleKey: string, descriptionKey: string, keywords?: string): void {
     const lang = this.transloco.getActiveLang();
 
-    this.transloco.selectTranslation(lang).pipe(take(1)).subscribe(() => {
-      const pageTitle   = this.transloco.translate(titleKey);
-      const description = this.transloco.translate(descriptionKey);
-      const fullTitle   = `${pageTitle} | ${SITE_NAME}`;
-      const canonical   = this.buildCanonical();
-      const ogLocale    = OG_LOCALE[lang] ?? 'es_ES';
+    this.transloco
+      .selectTranslation(lang)
+      .pipe(take(1))
+      .subscribe(() => {
+        const pageTitle = this.transloco.translate(titleKey);
+        const description = this.transloco.translate(descriptionKey);
+        const fullTitle = `${pageTitle} | ${SITE_NAME}`;
+        const canonical = this.buildCanonical();
+        const ogLocale = OG_LOCALE[lang] ?? 'es_ES';
 
-      // ── Basic ────────────────────────────────────────────────────────────
-      this.titleSvc.setTitle(fullTitle);
-      this.meta.updateTag({ name: 'description', content: description });
-      this.meta.updateTag({ name: 'robots',      content: 'index, follow' });
-      
-      if (keywords) {
-        this.meta.updateTag({ name: 'keywords', content: keywords });
-      }
+        // ── Basic ────────────────────────────────────────────────────────────
+        this.titleSvc.setTitle(fullTitle);
+        this.meta.updateTag({ name: 'description', content: description });
+        this.meta.updateTag({ name: 'robots', content: 'index, follow' });
 
-      // ── Open Graph ───────────────────────────────────────────────────────
-      this.meta.updateTag({ property: 'og:type',        content: 'website' });
-      this.meta.updateTag({ property: 'og:site_name',   content: SITE_NAME });
-      this.meta.updateTag({ property: 'og:title',       content: fullTitle });
-      this.meta.updateTag({ property: 'og:description', content: description });
-      this.meta.updateTag({ property: 'og:url',         content: canonical });
-      this.meta.updateTag({ property: 'og:locale',      content: ogLocale });
+        if (keywords) {
+          this.meta.updateTag({ name: 'keywords', content: keywords });
+        }
 
-      // ── Twitter Card ─────────────────────────────────────────────────────
-      this.meta.updateTag({ name: 'twitter:card',        content: 'summary' });
-      this.meta.updateTag({ name: 'twitter:title',       content: fullTitle });
-      this.meta.updateTag({ name: 'twitter:description', content: description });
+        // ── Open Graph ───────────────────────────────────────────────────────
+        this.meta.updateTag({ property: 'og:type', content: 'website' });
+        this.meta.updateTag({ property: 'og:site_name', content: SITE_NAME });
+        this.meta.updateTag({ property: 'og:title', content: fullTitle });
+        this.meta.updateTag({ property: 'og:description', content: description });
+        this.meta.updateTag({ property: 'og:url', content: canonical });
+        this.meta.updateTag({ property: 'og:locale', content: ogLocale });
 
-      // ── Canonical ────────────────────────────────────────────────────────
-      this.setCanonical(canonical);
-    });
+        // ── Twitter Card ─────────────────────────────────────────────────────
+        this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+        this.meta.updateTag({ name: 'twitter:title', content: fullTitle });
+        this.meta.updateTag({ name: 'twitter:description', content: description });
+
+        // ── Canonical ────────────────────────────────────────────────────────
+        this.setCanonical(canonical);
+      });
   }
 
   /** Sets `noindex, nofollow` — use on auth, profile, and history pages. */

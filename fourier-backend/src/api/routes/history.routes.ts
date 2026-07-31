@@ -35,6 +35,7 @@ historyRouter.get(
     try {
       const user = req.user!;
       const favoritesOnly = req.query["favorites"] === "true";
+      const calcType = (req.query["type"] as string) || undefined;
 
       const FREE_CAP = favoritesOnly ? 2 : 5;
       const isLimited = user.tier === "free";
@@ -43,8 +44,8 @@ historyRouter.get(
       const offset = isLimited ? 0 : (parseInt(req.query["offset"] as string) || 0);
 
       const [realTotal, entries] = await Promise.all([
-        historyRepository.countByUser(user.id, favoritesOnly),
-        historyRepository.findByUser(user.id, limit, offset, favoritesOnly),
+        historyRepository.countByUser(user.id, favoritesOnly, calcType),
+        historyRepository.findByUser(user.id, limit, offset, favoritesOnly, calcType),
       ]);
 
       const total = isLimited ? Math.min(realTotal, FREE_CAP) : realTotal;

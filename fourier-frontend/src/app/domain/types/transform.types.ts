@@ -185,3 +185,54 @@ export interface SimplifyResponse {
   profile: SimplifyProfile;
   functionsApplied: SimplifyFunction[];
 }
+
+// ─── Laplace ──────────────────────────────────────────────────────────────────
+
+export interface LaplaceDirectRequest {
+  segments: Segment[];
+  timeVar?: string;
+  freqVar?: string;
+}
+
+export interface LaplaceInverseRequest {
+  expression: string;
+  expressionTex?: string;
+  freqVar?: string;
+  timeVar?: string;
+}
+
+export interface LaplaceIcCondition {
+  order: number;
+  value: string;
+}
+
+export interface LaplaceOdeRequest {
+  equation: string;
+  unknown: string;
+  timeVar?: string;
+  initialConditions: LaplaceIcCondition[];
+}
+
+export interface LaplaceDirectResponse {
+  input: LaplaceDirectRequest;
+  exists: boolean;
+  F?: SymbolicExpression;
+  params?: string[];
+  executionTimeMs: number;
+}
+
+export interface LaplaceInverseResponse {
+  input: LaplaceInverseRequest;
+  exists: boolean;
+  f?: SymbolicExpression;
+  params?: string[];
+  inverseMethod: 'ilt' | 'pwilt' | 'failed';
+  executionTimeMs: number;
+}
+
+export interface LaplaceOdeResponse {
+  input: LaplaceOdeRequest;
+  exists: boolean;
+  solution?: SymbolicExpression;
+  executionTimeMs: number;
+}

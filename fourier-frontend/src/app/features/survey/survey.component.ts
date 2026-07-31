@@ -192,8 +192,10 @@ export class SurveyComponent {
   readonly featuresSeries: SurveyFeature[]    = ['trigonometric', 'half_range', 'complex'];
   readonly featuresIntegral: SurveyFeature[]   = ['fourier_integral'];
   readonly featuresCont: SurveyFeature[]       = ['fourier_transform', 'inverse_fourier_transform'];
-  readonly featuresDft: SurveyFeature[]       = ['dft_signal', 'dft_function', 'dft_epicycles'];
-  readonly featuresNone: SurveyFeature[]      = ['none'];
+  readonly featuresDft: SurveyFeature[]        = ['dft_signal', 'dft_function', 'dft_epicycles'];
+  readonly featuresLaplace: SurveyFeature[]    = ['laplace_direct', 'laplace_inverse', 'laplace_ode'];
+  readonly featuresTools: SurveyFeature[]      = ['grapher'];
+  readonly featuresNone: SurveyFeature[]       = ['none'];
 
   readonly devices: SurveyDevice[] = ['phone', 'computer'];
   readonly stars = [1, 2, 3, 4, 5];

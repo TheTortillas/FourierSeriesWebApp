@@ -306,6 +306,18 @@ export class LatexToMaximaService {
     return this._backend(latex, mode);
   }
 
+  /**
+   * Converts LaTeX entirely client-side using the local parser.
+   * Use for fields where the backend tex2max parser produces wrong output
+   * (e.g. Laplace inverse expressions like \frac{1}{s^2+1}).
+   */
+  convertClientSide(latex: string): Observable<ConversionResult> {
+    if (!latex.trim()) return of({ maxima: '', ok: false, error: 'Expresión vacía' });
+    const maxima = clientTranslate(latex);
+    if (maxima) return of({ ok: true, maxima });
+    return this._backend(latex, 'transform');
+  }
+
   /** Validates segment boundaries via a single backend call. */
   validateBoundaries(body: {
     pairs?: Array<{ a: string; b: string }>;

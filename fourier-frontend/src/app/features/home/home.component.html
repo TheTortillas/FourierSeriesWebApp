@@ -37,129 +37,109 @@
   </section>
 
   <!-- ── Análisis de Fourier ───────────────────────────────────────────────── -->
-  <section class="relative z-10 px-4 sm:px-6 pb-12 w-full max-w-5xl mx-auto">
+  <section class="relative z-10 px-4 sm:px-6 pb-10 w-full max-w-5xl mx-auto">
 
     <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted mb-4 text-center">
-      {{ 'home.fourierTitle' | transloco }}
+      {{ 'home.analysisTitle' | transloco }}
     </p>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
       <!-- Series de Fourier -->
-      <a
-        [routerLink]="'/' + lang() + '/calculator'"
-        class="group flex flex-col gap-4 p-5 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer"
-      >
-        <div class="flex items-start justify-between">
-          <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
-            <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">Σ</span>
-          </div>
+      <a [routerLink]="'/' + lang() + '/calculator'"
+        class="group flex flex-col gap-4 p-5 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
+          <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">Σ</span>
         </div>
         <div class="flex flex-col gap-1.5 flex-1">
-          <h2 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
-            {{ 'home.series.title' | transloco }}
-          </h2>
-          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-            {{ 'home.series.description' | transloco }}
-          </p>
+          <h2 class="font-display text-base text-ink dark:text-dark-ink leading-tight">{{ 'home.series.title' | transloco }}</h2>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">{{ 'home.series.description' | transloco }}</p>
         </div>
         <div class="flex items-center gap-1.5 text-xs font-mono text-accent group-hover:gap-2.5 transition-all">
           <span>{{ 'common.explore' | transloco }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5">
-            <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
-          </svg>
-        </div>
-      </a>
-
-      <!-- Integral de Fourier -->
-      <a
-        [routerLink]="'/' + lang() + '/fourier-integral'"
-        class="group flex flex-col gap-4 p-5 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer"
-      >
-        <div class="flex items-start justify-between">
-          <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
-            <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">∫</span>
-          </div>
-        </div>
-        <div class="flex flex-col gap-1.5 flex-1">
-          <h2 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
-            {{ 'home.integral.title' | transloco }}
-          </h2>
-          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-            {{ 'home.integral.description' | transloco }}
-          </p>
-        </div>
-        <div class="flex items-center gap-1.5 text-xs font-mono text-accent group-hover:gap-2.5 transition-all">
-          <span>{{ 'common.explore' | transloco }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5">
-            <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
         </div>
       </a>
 
       <!-- Transformada de Fourier -->
-      <a
-        [routerLink]="'/' + lang() + '/transforms/continuous'"
-        class="group flex flex-col gap-4 p-5 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer sm:col-span-2 lg:col-span-1"
-      >
-        <div class="flex items-start justify-between">
-          <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
-            <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">ℱ</span>
-          </div>
+      <a [routerLink]="'/' + lang() + '/transforms/continuous'"
+        class="group flex flex-col gap-4 p-5 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
+          <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">ℱ</span>
         </div>
         <div class="flex flex-col gap-1.5 flex-1">
-          <h2 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
-            {{ 'home.transforms.title' | transloco }}
-          </h2>
-          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-            {{ 'home.transforms.description' | transloco }}
-          </p>
+          <h2 class="font-display text-base text-ink dark:text-dark-ink leading-tight">{{ 'home.transforms.title' | transloco }}</h2>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">{{ 'home.transforms.description' | transloco }}</p>
         </div>
         <div class="flex items-center gap-1.5 text-xs font-mono text-accent group-hover:gap-2.5 transition-all">
           <span>{{ 'common.explore' | transloco }}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5">
-            <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
         </div>
       </a>
-    </div>
 
+      <!-- Integral de Fourier -->
+      <a [routerLink]="'/' + lang() + '/fourier-integral'"
+        class="group flex flex-col gap-4 p-5 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
+          <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">∫</span>
+        </div>
+        <div class="flex flex-col gap-1.5 flex-1">
+          <h2 class="font-display text-base text-ink dark:text-dark-ink leading-tight">{{ 'home.integral.title' | transloco }}</h2>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">{{ 'home.integral.description' | transloco }}</p>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs font-mono text-accent group-hover:gap-2.5 transition-all">
+          <span>{{ 'common.explore' | transloco }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+        </div>
+      </a>
+
+    </div>
   </section>
 
-  <!-- ── Próximamente ───────────────────────────────────────────────────────── -->
+  <!-- ── Herramientas ─────────────────────────────────────────────────────── -->
   <section class="relative z-10 px-4 sm:px-6 pb-20 w-full max-w-5xl mx-auto">
 
-    <div class="flex items-center gap-3 mb-4">
-      <div class="flex-1 h-px bg-border dark:bg-dark-border"></div>
-      <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
-        {{ 'home.comingSoonTitle' | transloco }}
-      </p>
-      <div class="flex-1 h-px bg-border dark:bg-dark-border"></div>
-    </div>
+    <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted mb-4 text-center">
+      {{ 'home.toolsTitle' | transloco }}
+    </p>
 
-    <!-- Laplace -->
-    <div
-      class="flex flex-col sm:flex-row gap-4 sm:items-center p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface select-none cursor-default"
-      aria-disabled="true"
-    >
-      <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0">
-        <span class="font-display text-2xl text-muted dark:text-dark-muted select-none leading-none">ℒ</span>
-      </div>
-      <div class="flex flex-col gap-1 flex-1 min-w-0">
-        <div class="flex items-center gap-2 flex-wrap">
-          <h2 class="font-display text-base text-ink/50 dark:text-dark-ink/50 leading-tight">
-            {{ 'home.laplace.title' | transloco }}
-          </h2>
-          <span class="text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-accent/10 dark:bg-accent/15 border border-accent/30 dark:border-accent/30 text-accent dark:text-accent">
-            {{ 'home.laplace.badge' | transloco }}
-          </span>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+      <!-- Transformada de Laplace -->
+      <a [routerLink]="'/' + lang() + '/laplace'"
+        class="group flex flex-col gap-4 p-5 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
+          <span class="font-display text-2xl text-accent group-hover:text-white select-none leading-none transition-colors">ℒ</span>
         </div>
-        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-          {{ 'home.laplace.description' | transloco }}
-        </p>
-      </div>
-    </div>
+        <div class="flex flex-col gap-1.5 flex-1">
+          <h2 class="font-display text-base text-ink dark:text-dark-ink leading-tight">{{ 'home.laplace.title' | transloco }}</h2>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">{{ 'home.laplace.description' | transloco }}</p>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs font-mono text-accent group-hover:gap-2.5 transition-all">
+          <span>{{ 'common.explore' | transloco }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+        </div>
+      </a>
 
+      <!-- Graficador -->
+      <a [routerLink]="'/' + lang() + '/grapher'"
+        class="group flex flex-col gap-4 p-5 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border hover:border-accent dark:hover:border-accent hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <div class="w-11 h-11 rounded-lg bg-paper dark:bg-dark-bg flex items-center justify-center shrink-0 group-hover:bg-accent transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+        </div>
+        <div class="flex flex-col gap-1.5 flex-1">
+          <h2 class="font-display text-base text-ink dark:text-dark-ink leading-tight">{{ 'home.grapher.title' | transloco }}</h2>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">{{ 'home.grapher.description' | transloco }}</p>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs font-mono text-accent group-hover:gap-2.5 transition-all">
+          <span>{{ 'common.explore' | transloco }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+        </div>
+      </a>
+
+    </div>
   </section>
 
   <app-footer />

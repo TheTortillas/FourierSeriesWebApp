@@ -36,6 +36,7 @@
     "series": "Series de Fourier",
     "transforms": "Transformadas",
     "fourierIntegral": "Integral de Fourier",
+    "laplace": "Transformada de Laplace",
     "login": "Ingresar",
     "register": "Registrarse",
     "logout": "Salir",
@@ -95,9 +96,10 @@
     }
   },
   "home": {
-    "subtitle": "Calcula, visualiza y analiza el análisis de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
+    "subtitle": "Calcula series de Fourier, transformadas de Fourier y Laplace, e integrales. Resuelve EDOs con Laplace. Resultados simbólicos exactos y reconstrucción gráfica en tiempo real.",
     "learnMore": "Conoce más sobre la herramienta →",
     "toolsTitle": "Herramientas",
+    "analysisTitle": "Análisis de Fourier",
     "fourierTitle": "Análisis de Fourier",
     "comingSoonTitle": "Próximamente",
     "comingSoon": "Próximamente",
@@ -115,8 +117,11 @@
     },
     "laplace": {
       "title": "Transformada de Laplace",
-      "description": "Transformada directa e inversa con convergencia, polos y zeros. En desarrollo.",
-      "badge": "Próximamente"
+      "description": "Transformada directa e inversa y resolución de EDOs. Con soporte de parámetros libres, fracciones parciales y graficación."
+    },
+    "grapher": {
+      "title": "Graficador",
+      "description": "Grafica funciones matemáticas de forma interactiva. Soporta múltiples expresiones, colores y zoom."
     }
   },
   "calculator": {
@@ -157,7 +162,11 @@
       "inverseFourierTransform": "T. Inversa de Fourier",
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
-      "dftEpicycles": "DFT epiciclos"
+      "dftEpicycles": "DFT epiciclos",
+      "fourierIntegral": "Int. Fourier",
+      "laplaceDirect": "Laplace directa",
+      "laplaceInverse": "Laplace inversa",
+      "laplaceOde": "Laplace EDO"
     },
     "label": "Configura la función y presiona"
   },
@@ -477,6 +486,9 @@
     "title": "Mis cálculos",
     "total": "{{ count }} registros en total",
     "favoritesOnly": "Solo favoritos",
+    "filterType": "Tipo de cálculo",
+    "filterTypeAll": "Todos los tipos",
+    "emptyType": "Sin resultados para este tipo",
     "loading": "Cargando…",
     "emptyFavorites": "No tienes cálculos favoritos",
     "emptyAll": "Aún no has hecho cálculos",
@@ -525,7 +537,10 @@
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
       "dftEpicycles": "DFT epiciclos",
-      "fourierIntegral": "Int. Fourier"
+      "fourierIntegral": "Int. Fourier",
+      "laplaceDirect": "Laplace directa",
+      "laplaceInverse": "Laplace inversa",
+      "laplaceOde": "Laplace EDO"
     }
   },
   "auth": {
@@ -675,8 +690,12 @@
       "description": "Calcula la integral de Fourier trigonométrica, compleja, coseno y seno de funciones definidas por tramos. Visualiza la reconstrucción con el fenómeno de Gibbs mediante un slider interactivo."
     },
     "about": {
-      "title": "Acerca de Fourier Web Calculator",
-      "description": "Fourier Web Calculator: herramienta gratuita para calcular transformadas de Fourier continuas, inversas, series de Fourier, DFT y epiciclos. Resultados simbólicos exactos con visualización en tiempo real."
+      "title": "Acerca de Fourier & Laplace Web Calculator",
+      "description": "Fourier Web Calculator: herramienta gratuita para calcular series de Fourier, transformadas de Fourier y Laplace, integrales de Fourier y resolver EDOs con Laplace. Resultados simbólicos exactos con visualización en tiempo real."
+    },
+    "laplace": {
+      "title": "Calculadora de Transformada de Laplace — Directa, Inversa y EDOs",
+      "description": "Calcula la transformada de Laplace directa e inversa de funciones a trozos. Resuelve ecuaciones diferenciales ordinarias (EDO) con condiciones iniciales mediante el método de Laplace. Resultados simbólicos exactos."
     }
   },
   "dev": {
@@ -766,6 +785,8 @@
       "groupIntegral": "Integral de Fourier",
       "groupContinuous": "Transformada continua",
       "groupDft": "Transformada Discreta (DFT)",
+      "groupLaplace": "Transformada de Laplace",
+      "groupTools": "Herramientas",
       "features": {
         "trigonometric": "Serie trigonométrica",
         "half_range": "Serie de medio rango",
@@ -776,6 +797,10 @@
         "dft_signal": "DFT — señal discreta (puntos manuales)",
         "dft_function": "DFT — función continua muestreada",
         "dft_epicycles": "DFT — epiciclos animados",
+        "laplace_direct": "Laplace directa",
+        "laplace_inverse": "Laplace inversa",
+        "laplace_ode": "Resolución de EDOs con Laplace",
+        "grapher": "Graficador de funciones",
         "none": "Ninguna aún"
       },
       "deviceLabel": "¿En qué dispositivo usaste la aplicación?",
@@ -786,7 +811,7 @@
     },
     "s4": {
       "heading": "¿Conociste la versión anterior?",
-      "imgAlt": "Captura de la versión anterior de Fourier Web Calculator",
+      "imgAlt": "Captura de la versión anterior de Fourier & Laplace Web Calculator",
       "usedPreviousLabel": "¿Habías usado esta herramienta antes de esta versión?",
       "usedPreviousYes": "Sí, usé la versión anterior",
       "usedPreviousNo": "No, es la primera vez que la uso",
@@ -856,8 +881,43 @@
   },
   "about": {
     "hero": {
-      "title": "Acerca de Fourier Web Calculator",
-      "intro": "Una herramienta web gratuita y de acceso abierto para calcular, visualizar y compartir análisis de Fourier — diseñada para estudiantes, ingenieros y científicos."
+      "title": "Acerca de Fourier & Laplace Web Calculator",
+      "intro": "Una herramienta web gratuita y de acceso abierto para calcular, visualizar y compartir análisis matemático — desde series y transformadas de Fourier hasta la Transformada de Laplace. Diseñada para estudiantes, ingenieros y científicos."
+    },
+    "sectionFourier": "Análisis de Fourier",
+    "sectionFourierTitle": "Herramientas de Fourier",
+    "sectionFourierDesc": "Cuatro herramientas para descomponer, transformar y analizar señales en el dominio de la frecuencia, todas con cálculo simbólico exacto vía Maxima CAS.",
+    "sectionLaplace": "Transformada de Laplace",
+    "sectionFns": "Referencia",
+    "sectionPlatform": "Plataforma",
+    "sectionPlatformTitle": "Entrada, cuentas y diseño",
+    "laplace": {
+      "title": "Transformada de Laplace",
+      "desc": "Calcula transformadas simbólicas exactas de funciones causales, recupera la función original y resuelve ecuaciones diferenciales ordinarias con condiciones iniciales.",
+      "direct": {
+        "title": "Transformada directa",
+        "desc": "Obtén F(s) = ℒ{f(t)} de forma exacta para funciones a trozos o con parámetros libres.",
+        "f1": "Funciones a trozos con múltiples segmentos en t ≥ 0",
+        "f2": "Soporte completo de u(t), δ(t), e^(at), sin, cos, sinh, cosh y polinomios",
+        "f3": "Parámetros libres con variación interactiva por sliders",
+        "f4": "Gráficas de f(t) y F(s) superpuestas en el canvas"
+      },
+      "inverse": {
+        "title": "Transformada inversa",
+        "desc": "Recupera f(t) = ℒ⁻¹{F(s)} de funciones racionales o con parámetros libres.",
+        "f1": "Fracciones parciales automáticas vía Maxima",
+        "f2": "Soporte de parámetros libres con sliders (p. ej. 1/(s²+a²))",
+        "f3": "Conversión cliente-lado de LaTeX a Maxima para la entrada de F(s)",
+        "f4": "Visualización simultánea de F(s) y f(t) en el canvas"
+      },
+      "ode": {
+        "title": "Resolución de EDOs",
+        "desc": "Resuelve EDOs lineales con coeficientes constantes aplicando la transformada de Laplace con condiciones iniciales.",
+        "f1": "EDOs de hasta orden 2 (configurable)",
+        "f2": "Condiciones iniciales y(0) e y'(0) ajustables",
+        "f3": "Muestra la solución simbólica exacta y su gráfica",
+        "f4": "Historial de resultados con recuperación completa"
+      }
     },
     "series": {
       "title": "Series de Fourier",
@@ -889,7 +949,7 @@
     "integral": {
       "title": "Integral de Fourier",
       "desc": "Representa funciones no periódicas como integrales continuas de frecuencia y analiza sus distintas formas equivalentes.",
-      "f1": "Formas trigonométrica, coseno, seno y compleja de la integral de Fourier",
+      "f1": "Formas trigonométrica, coseno, seno y compleja — la forma compleja entrega el coeficiente C(ω) directamente",
       "f2": "Funciones a trozos con múltiples segmentos en el dominio real o semirreal",
       "f3": "Coeficientes A(ω) y B(ω) simbólicos exactos calculados con Maxima CAS",
       "f4": "Reconstrucción gráfica interactiva por suma de Riemann en tiempo real",
@@ -938,13 +998,15 @@
       "title": "Funciones especiales soportadas",
       "intro": "Además de las funciones trigonométricas e hiperbólicas estándar, la calculadora reconoce estas funciones propias del análisis de señales, tanto en la entrada simbólica como en la evaluación numérica y las transformadas.",
       "ftLabel": "Transformada de Fourier",
+      "ltLabel": "Transformada de Laplace",
       "u": {
         "name": "Escalón unitario",
         "notation": "u(t)",
         "aka": "Función de Heaviside",
         "def": "Vale 1 para t ≥ 0 y 0 para t < 0. Modela el encendido abrupto de una señal: multiplica por u(t) para «activar» una función desde t = 0, o por u(t − a) para retrasarla a t = a.",
         "latex": "u(t) = \\begin{cases} 1 & t \\ge 0 \\\\ 0 & t < 0 \\end{cases}",
-        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}"
+        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}",
+        "lt": "\\mathcal{L}\\{u(t)\\} = \\dfrac{1}{s}, \\quad \\operatorname{Re}(s) > 0"
       },
       "sgn": {
         "name": "Función signo",
@@ -960,7 +1022,8 @@
         "aka": "Impulso unitario",
         "def": "Distribución de área unidad concentrada en t = 0. Propiedad de muestreo: ∫ f(t) δ(t − a) dt = f(a). Es el elemento neutro de la convolución y el fundamento de los sistemas LTI.",
         "latex": "\\int_{-\\infty}^{\\infty} \\delta(t)\\,dt = 1",
-        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1"
+        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1",
+        "lt": "\\mathcal{L}\\{\\delta(t)\\} = 1"
       },
       "rect": {
         "name": "Pulso rectangular",
@@ -1022,5 +1085,38 @@
     "profileTrigDesc": "Convierte a la forma trigonométrica más compacta, combinando términos y aplicando identidades.",
     "profileExpDesc": "Reescribe los coeficientes usando exponenciales complejas. Elige entre forma e^{ix} o De Moivre.",
     "profileCompleteDesc": "Aplica todas las simplificaciones disponibles en cascada: entero → trigonométrico → reducción de potencias."
+  },
+  "laplace": {
+    "title": "Transformada de Laplace",
+    "subtitle": "Transformada directa, inversa y resolución de EDOs mediante el método de Laplace",
+    "modeDirecta": "Directa",
+    "modeInversa": "Inversa",
+    "modeOde": "EDO",
+    "exprPlaceholder": "ej. 1/(s^2+1)",
+    "inverseHint": "Ingresa F(s) en términos de s. Se aplican fracciones parciales automáticamente.",
+    "variables": "Variables",
+    "odeEquation": "Ecuación diferencial",
+    "odeUnknown": "Función incógnita",
+    "odeIcs": "Condiciones iniciales",
+    "addIc": "Agregar condición",
+    "ic0": "y(0)",
+    "ic1": "y'(0)",
+    "ic2": "y''(0)",
+    "ic3": "y'''(0)",
+    "hint": "Configura la función y presiona Calcular para obtener la transformada",
+    "calculate": "Calcular",
+    "calculating": "Calculando…",
+    "notFound": "No se encontró una forma cerrada para esta expresión.",
+    "odeSolution": "Solución y(t)",
+    "params": "Parámetros",
+    "execTime": "Calculado en {{ms}} ms",
+    "errorNoSegments": "Agrega al menos un segmento con una expresión.",
+    "errorNoExpr": "Ingresa una expresión F(s) para invertir.",
+    "errorNoEq": "Ingresa la ecuación diferencial y la función incógnita.",
+    "odeHint": "Usa sintaxis de Maxima: diff(y(t),t,2) para y'', diff(y(t),t) para y'",
+    "newCalculation": "Nuevo cálculo",
+    "result": "Resultado",
+    "fullTransform": "Transformada completa",
+    "inverseResult": "Transformada inversa"
   }
 }
