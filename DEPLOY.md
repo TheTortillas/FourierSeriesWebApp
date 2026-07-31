@@ -1,4 +1,4 @@
-# Guía de despliegue — Fourier Web Calculator
+# Guía de despliegue — Fourier & Laplace Web Calculator
 
 Servidor limpio (Ubuntu/Debian) → sitio en producción.  
 Ejecuta los pasos en orden. Los pasos del 1 al 16 son de **instalación inicial**; a partir del 17 es el flujo de **deploy continuo**.
@@ -602,12 +602,12 @@ bash deploy.sh
 
 ## 19. Reglas del .env
 
-|                              | Tu máquina          | Servidor                                                                 |
-| ---------------------------- | ------------------- | ------------------------------------------------------------------------ |
-| `.env` (valores reales)      | ✗ nunca             | ✓ solo aquí                                                              |
-| `.env.example` (sin valores) | ✓ en git            | ✗ no necesario                                                           |
-| Actualizar una variable      | Editar `.env` local | `ssh` → `nano /root/fourierWebApp/backend/.env` → `pm2 restart backend` |
-| Añadir nueva variable        | Añadir a `.env.example` en git (sin valor) | SSH al servidor y añadir el valor real al `.env` |
+|                              | Tu máquina                                 | Servidor                                                                |
+| ---------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- |
+| `.env` (valores reales)      | ✗ nunca                                    | ✓ solo aquí                                                             |
+| `.env.example` (sin valores) | ✓ en git                                   | ✗ no necesario                                                          |
+| Actualizar una variable      | Editar `.env` local                        | `ssh` → `nano /root/fourierWebApp/backend/.env` → `pm2 restart backend` |
+| Añadir nueva variable        | Añadir a `.env.example` en git (sin valor) | SSH al servidor y añadir el valor real al `.env`                        |
 
 ---
 
@@ -638,3 +638,54 @@ ssh -i ~/.ssh/fourier_deploy root@209.46.121.183 \
 ```
 
 > Todos los scripts de migración usan `IF NOT EXISTS` — son seguros de re-ejecutar.
+
+### v4 — IP blocklist dinámica
+
+Crea la tabla `ip_blocks`, la vista `ip_blocks_active` y añade los valores
+`ip_blocked` / `ip_unblocked` al enum `audit_action`.
+
+```bash
+rsync -e "ssh -i ~/.ssh/fourier_deploy" \
+  fourier-database/migrate_v4_ip_blocks.sql \
+  root@209.46.121.183:/tmp/
+
+ssh -i ~/.ssh/fourier_deploy root@209.46.121.183 \
+  "psql -U fourier_user -d fourier_db -f /tmp/migrate_v4_ip_blocks.sql"
+```
+
+Otorgar permisos a `fourier_user` sobre la nueva tabla:
+
+```bash
+ssh -i ~/.ssh/fourier_deploy root@209.46.121.183 "sudo -u postgres psql -d fourier_db <<SQL
+GRANT ALL PRIVILEGES ON TABLE ip_blocks TO fourier_user;
+GRANT SELECT ON ip_blocks_active TO fourier_user;
+SQL"
+```
+
+Variables de entorno opcionales (añadir al `.env` del servidor solo si quieres
+cambiar los valores por defecto):
+
+```env
+# IP Blocklist
+IP_BLOCKLIST_CACHE_TTL_MS=60000       # TTL del cache en memoria (ms). Default: 60 s
+IP_BLOCKER_INTERVAL_MS=300000         # Intervalo del worker (ms). Default: 5 min
+
+# Nivel 1 — ráfaga corta: ban de 2 h si ≥200 bloqueos en 15 min
+IP_BLOCKER_SHORT_WINDOW_MIN=15
+IP_BLOCKER_SHORT_THRESHOLD=200
+IP_BLOCKER_SHORT_BAN_HOURS=2
+
+# Nivel 2 — abuso sostenido: ban de 24 h si ≥500 bloqueos en 60 min
+IP_BLOCKER_LONG_WINDOW_MIN=60
+IP_BLOCKER_LONG_THRESHOLD=500
+IP_BLOCKER_LONG_BAN_HOURS=24
+```
+
+Endpoints admin disponibles tras el deploy:
+
+| Método   | Ruta                          | Qué hace                                                      |
+| -------- | ----------------------------- | ------------------------------------------------------------- |
+| `GET`    | `/api/admin/ip-blocks`        | Lista historial con filtros (`ip`, `blockedBy`, `activeOnly`) |
+| `GET`    | `/api/admin/ip-blocks/active` | Solo los bloques activos ahora mismo                          |
+| `POST`   | `/api/admin/ip-blocks`        | Bloquear una IP (`ip`, `reason`, `durationHours?`)            |
+| `DELETE` | `/api/admin/ip-blocks/:ip`    | Desbloquear una IP                                            |

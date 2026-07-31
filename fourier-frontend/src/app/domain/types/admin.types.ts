@@ -80,14 +80,16 @@ export interface SystemStats {
 }
 
 export interface RateLimitMetricsSnapshot {
-  startedAt: string;
-  requestsByBucket: { compute: number; parse: number; auth: number };
+  /** Ventana de tiempo consultada en horas */
+  windowHours: number;
+  /** ISO timestamp — inicio de la ventana */
+  windowStart: string;
+  /** Total de bloqueos en la ventana */
+  totalBlocked: number;
   blockedByBucket:  { compute: number; parse: number; auth: number };
-  requestsByEndpoint: Record<string, number>;
-  blockedByEndpoint:  Record<string, number>;
-  blockedByLimiter:   Record<string, number>;
-  blockedByIp:        Record<string, number>;
-  ratios: { compute: number; parse: number; auth: number };
+  blockedByEndpoint: Record<string, number>;
+  blockedByLimiter:  Record<string, number>;
+  blockedByIp:       Record<string, number>;
 }
 
 export interface RateLimitBlockedEvent {
@@ -108,6 +110,35 @@ export interface RateLimitHistoryResponse {
   entries: RateLimitBlockedEvent[];
 }
 
+// ── IP Blocklist ──────────────────────────────────────────────────────────────
+
+export interface IpBlockEntry {
+  id: string;
+  ip_address: string;
+  reason: string;
+  blocked_by: 'auto' | 'admin';
+  blocked_until: string | null;   // ISO string, null = permanente
+  admin_user_id: string | null;
+  created_at: string;
+  released_at: string | null;
+  released_by: 'expired' | 'admin' | null;
+  is_active: boolean;
+}
+
+export interface IpBlockListResponse {
+  total:   number;
+  limit:   number;
+  offset:  number;
+  entries: IpBlockEntry[];
+}
+
+export interface IpBlockActiveResponse {
+  total:   number;
+  entries: IpBlockEntry[];
+}
+
+// ── CacheStats ────────────────────────────────────────────────────────────────
+
 export interface CacheStats {
   backend: 'redis' | 'lru';
   connected: boolean;
@@ -126,17 +157,22 @@ export interface FeedbackStats {
 }
 
 export interface SurveyStats {
-  total:        number;
-  byRole:       { role: string;        count: number }[];
-  topCountries: { country: string;     count: number }[];
-  byHowFound:   { how_found: string;   count: number }[];
-  byPurpose:    { purpose: string;     count: number }[];
-  byFeature:    { feature: string;     count: number }[];
-  byDevice:     { device: string;      count: number }[];
-  usedPrevious: { used_previous: boolean; count: number }[];
-  improvements: { improvement: string; count: number }[];
-  avgRatings:   { usefulness: number; ease: number; vs_other: number; recommend: number };
-  byDay:        { day: string;         count: number }[];
+  total:           number;
+  byRole:          { role: string;           count: number }[];
+  byAcademicLevel: { academic_level: string; count: number }[];
+  topCountries:    { country: string;        count: number }[];
+  byHowFound:      { how_found: string;      count: number }[];
+  byPurpose:       { purpose: string;        count: number }[];
+  byFeature:       { feature: string;        count: number }[];
+  byDevice:        { device: string;         count: number }[];
+  usedPrevious:    { used_previous: boolean; count: number }[];
+  improvements:    { improvement: string;    count: number }[];
+  avgRatings:      { usefulness: number; ease: number; vs_other: number; recommend: number };
+  ratingDist:      { rating: number; usefulness: number; ease: number; vs_other: number; recommend: number }[];
+  byDay:           { day: string; count: number }[];
+  otherTexts:      { field: string; value: string; count: number }[];
+  institutions:    { type: string; value: string; count: number }[];
+  careers:         { type: string; value: string; count: number }[];
 }
 
 export const CALC_TYPE_LABEL: Record<string, string> = {
@@ -148,6 +184,10 @@ export const CALC_TYPE_LABEL: Record<string, string> = {
   dft_signal:                'DFT señal',
   dft_function:              'DFT función',
   dft_epicycles:             'DFT epiciclos',
+  fourier_integral:          'Int. Fourier',
+  laplace_direct:            'Laplace directa',
+  laplace_inverse:           'Laplace inversa',
+  laplace_ode:               'Laplace EDO',
 };
 
 export interface CalcTypeStat {

@@ -28,4 +28,5 @@ export interface HistoryQuery {
   limit?: number;
   offset?: number;
   favorites?: boolean;
+  type?: string;
 }

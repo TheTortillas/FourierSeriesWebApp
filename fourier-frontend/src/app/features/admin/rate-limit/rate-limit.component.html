@@ -1,20 +1,31 @@
 <div class="p-6 flex flex-col gap-6 max-w-5xl">
 
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
-  <div class="flex items-start justify-between gap-4">
+  <div class="flex items-start justify-between gap-4 flex-wrap">
     <div>
       <h1 class="font-display text-2xl text-ink dark:text-dark-ink">Rate Limit Health</h1>
       <p class="text-xs font-mono text-muted dark:text-dark-muted mt-0.5">
-        Estado de throttling por bucket, endpoint y limiter
+        Bloqueos desde base de datos · sobrevive reinicios del servidor
       </p>
     </div>
-    <button
-      type="button"
-      (click)="refresh(); loadHistory()"
-      class="px-3 py-2 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-ink dark:text-dark-ink hover:border-accent/40 transition-colors"
-    >
-      Actualizar
-    </button>
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Selector de ventana -->
+      @for (opt of WINDOW_OPTIONS; track opt.hours) {
+        <button
+          type="button"
+          (click)="setWindow(opt.hours)"
+          [class]="opt.hours === windowHours
+            ? 'px-3 py-1.5 rounded-lg text-xs font-mono border border-accent bg-accent/10 text-accent'
+            : 'px-3 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted hover:border-accent/40 hover:text-accent transition-colors'"
+        >{{ opt.label }}</button>
+      }
+      <button
+        type="button"
+        (click)="refresh(); loadHistory()"
+        class="px-3 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-ink dark:text-dark-ink hover:border-accent/40 transition-colors"
+        title="Recargar datos"
+      >↺ Actualizar</button>
+    </div>
   </div>
 
   @if (loading()) {
@@ -31,12 +42,18 @@
     </div>
   } @else if (metrics(); as rm) {
 
-    <!-- snapshot timestamp -->
-    <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-4 py-3">
+    <!-- ventana info banner -->
+    <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
       <p class="text-[11px] font-mono text-muted dark:text-dark-muted">
-        Snapshot activo desde: {{ rm.startedAt | adminDate: 'seconds' }}
-        &nbsp;·&nbsp;
-        Los porcentajes muestran <strong>bloqueadas / (bloqueadas + permitidas)</strong>
+        Mostrando bloqueos desde <strong>{{ rm.windowStart | adminDate: 'seconds' }}</strong>
+        &nbsp;·&nbsp; Ventana: {{ rm.windowHours }}h
+      </p>
+      <p class="text-[11px] font-mono">
+        <span class="text-muted dark:text-dark-muted">Total bloqueados: </span>
+        <span
+          class="font-semibold"
+          [ngClass]="rm.totalBlocked > 500 ? 'text-red-500 dark:text-red-400' : rm.totalBlocked > 50 ? 'text-amber-500 dark:text-amber-400' : 'text-ink dark:text-dark-ink'"
+        >{{ rm.totalBlocked }}</span>
       </p>
     </div>
 
@@ -48,10 +65,7 @@
         { key: 'parse',   label: 'Parse',   hint: 'Endpoints de parse/validación.' },
         { key: 'auth',    label: 'Auth + General', hint: 'Auth, login, y tráfico genérico (escaneos de bots, rutas desconocidas).' }
       ]; track bucket.key) {
-        @let blocked = $any(rm.blockedByBucket)[bucket.key];
-        @let allowed = $any(rm.requestsByBucket)[bucket.key];
-        @let total   = blocked + allowed;
-        @let ratio   = $any(rm.ratios)[bucket.key];
+        @let blocked = $any(rm.blockedByBucket)[bucket.key] ?? 0;
         <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface p-4">
           <p class="text-xs font-mono text-muted dark:text-dark-muted flex items-center gap-1">
             {{ bucket.label }}
@@ -62,12 +76,12 @@
           </p>
           <p
             class="font-display text-3xl mt-1"
-            [ngClass]="ratio > 20 ? 'text-red-500 dark:text-red-400' : ratio > 5 ? 'text-amber-500 dark:text-amber-400' : 'text-ink dark:text-dark-ink'"
+            [ngClass]="blocked > 200 ? 'text-red-500 dark:text-red-400' : blocked > 20 ? 'text-amber-500 dark:text-amber-400' : 'text-ink dark:text-dark-ink'"
           >
-            {{ ratio.toFixed(2) }}%
+            {{ blocked }}
           </p>
           <p class="text-[11px] font-mono text-muted dark:text-dark-muted mt-2">
-            {{ blocked }} bloqueadas de {{ total }} totales
+            bloqueos en las últimas {{ rm.windowHours }}h
           </p>
         </div>
       }
@@ -91,7 +105,7 @@
               <span class="text-[11px] font-mono px-2 py-0.5 rounded border border-border dark:border-dark-border">{{ item.value }}</span>
             </div>
           } @empty {
-            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">Sin bloqueos registrados.</p>
+            <p class="px-4 py-3 text-xs font-mono text-muted dark:text-dark-muted">Sin bloqueos en esta ventana.</p>
           }
         </div>
       </div>
@@ -118,7 +132,7 @@
       <!-- Top IPs bloqueadas -->
       <div class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <h2 class="text-sm font-mono text-ink dark:text-dark-ink" title="IPs con más solicitudes bloqueadas en el snapshot actual.">
+          <h2 class="text-sm font-mono text-ink dark:text-dark-ink" title="IPs con más solicitudes bloqueadas.">
             IPs bloqueadas
           </h2>
         </div>

@@ -7,6 +7,8 @@ import { HalfRangeService } from "../application/fourier/halfRange.service";
 import { ComplexService } from "../application/fourier/complex.service";
 import { ParsevalService } from "../application/fourier/parseval.service";
 import { FourierTransformService } from "../application/transforms/fourierTransform.service";
+import { FourierIntegralService } from "../application/transforms/fourierIntegral.service";
+import { LaplaceService } from "../application/transforms/laplace.service";
 import { DFTService } from "../application/transforms/dft.service";
 
 import { UserRepository } from "./persistence/UserRepository";
@@ -38,6 +40,8 @@ const complexService = new ComplexService(
 );
 const parsevalService = new ParsevalService(runner);
 const fourierTransformService = new FourierTransformService(runner);
+const fourierIntegralService = new FourierIntegralService(runner);
+const laplaceService         = new LaplaceService(runner);
 const dftService = new DFTService(runner);
 
 const userRepository = new UserRepository();
@@ -63,6 +67,8 @@ export {
   complexService,
   parsevalService,
   fourierTransformService,
+  fourierIntegralService,
+  laplaceService,
   dftService,
   userRepository,
   tokenRepository,

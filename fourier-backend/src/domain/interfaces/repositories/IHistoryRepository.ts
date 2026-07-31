@@ -5,7 +5,11 @@ export type CalculationType =
   | "fourier_transform"
   | "inverse_fourier_transform"
   | "dft_signal"
-  | "dft_epicycles";
+  | "dft_epicycles"
+  | "fourier_integral"
+  | "laplace_direct"
+  | "laplace_inverse"
+  | "laplace_ode";
 
 /**
  * Representa un evento de cálculo tal como lo ve el dominio.
@@ -48,6 +52,7 @@ export interface IHistoryRepository {
     limit: number,
     offset: number,
     favoritesOnly?: boolean,
+    calcType?: string,
   ): Promise<HistoryRecord[]>;
 
   findById(id: string): Promise<HistoryRecord | null>;
@@ -66,7 +71,7 @@ export interface IHistoryRepository {
 
   delete(id: string, userId: string): Promise<void>;
 
-  countByUser(userId: string, favoritesOnly?: boolean): Promise<number>;
+  countByUser(userId: string, favoritesOnly?: boolean, calcType?: string): Promise<number>;
 
   findAll(
     limit: number,

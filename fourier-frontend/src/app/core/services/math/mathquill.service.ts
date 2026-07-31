@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { PlatformService } from '../platform/platform.service';
+import { AUTO_OPERATOR_NAMES } from './function-registry';
 
 export interface KeyBtn {
   label: string;
@@ -124,12 +125,7 @@ export class MathquillService {
   defaultConfig(): MathQuillConfig {
     const config: MathQuillConfig = {
       autoCommands: 'pi theta sqrt sum int',
-      autoOperatorNames:
-        'sin cos tan cot sec csc asin acos atan acot asec acsc ' +
-        'sinh cosh tanh asinh acosh atanh log ln exp abs ' +
-        'sen tg senh ctg arcsin arccos arctan ' +
-        'gamma factorial ' +
-        'delta sgn rect',
+      autoOperatorNames: AUTO_OPERATOR_NAMES,
     };
     // On mobile viewports, replace MathQuill's hidden textarea with a non-editable
     // span so the native OS keyboard never appears. Input is handled exclusively

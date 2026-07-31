@@ -81,6 +81,8 @@ declare(sgn,       real)$
 declare(delta,     real)$
 declare(unit_step, real)$
 declare(rect,      real)$
+declare(tri,       real)$
+declare(sinc,      real)$
 
 /* Parsear expresión */
 _input_expr: parse_string(EXPR_INPUT)$
@@ -125,6 +127,7 @@ for fn in SIMP_FUNCTIONS do (
         [_prev: _result_expr, _r: errcatch(radcan(_result_expr))],
         if _r # [] then _result_expr: _safe_apply(_prev, first(_r))
     )
+    else if fn = "combine"    then _result_expr: _safe_apply(_result_expr, combine(_result_expr))
     else if fn = "rectform"   then _result_expr: _safe_apply(_result_expr, rectform(_result_expr))
     else if fn = "polarform"  then _result_expr: _safe_apply(_result_expr, polarform(_result_expr))
     else if fn = "to_hyper"   then block(
@@ -136,11 +139,13 @@ for fn in SIMP_FUNCTIONS do (
 print("__SIMPLIFIED_MAXIMA__")$ print(string(_result_expr))$
 print("__SIMPLIFIED_TEX__")$    tex(_result_expr)$
 
-/* Factored form: K · summand where K is free of n.
-   factor() ensures the denominator is in product form before splitting. */
+/* Factored form: K · summand where K is free of the split variable.
+   SPLIT_VAR and BASE_K are always injected by the TypeScript caller (with
+   defaults n and 1 when the caller does not supply them).
+   BASE_K folds an outer constant in: K_final = ratsimp(BASE_K * localK). */
 block(
-    [_cf: const_factor(factor(_result_expr), n)],
-    _K_simp: _cf[1],
+    [_cf: const_factor(factor(_result_expr), SPLIT_VAR)],
+    _K_simp: ratsimp(BASE_K * _cf[1]),
     _S_simp: _cf[2]
 )$
 print("__SIMPLIFIED_K_MAXIMA__")$       print(string(_K_simp))$

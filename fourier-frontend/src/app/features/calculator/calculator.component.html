@@ -26,6 +26,25 @@
     <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
       <div class="p-5 flex flex-col gap-5 flex-1 min-h-0">
         <app-results-summary class="flex-1 min-h-0" />
+
+        @if (hasResult()) {
+          <a [routerLink]="'/' + lang() + '/grapher'"
+            class="flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface hover:border-accent dark:hover:border-accent transition-colors group">
+            <div class="flex items-center gap-2.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent shrink-0" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted group-hover:text-ink dark:group-hover:text-dark-ink transition-colors">
+                {{ 'common.grapherBanner' | transloco }}
+              </span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-accent shrink-0" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        }
       </div>
     </main>
   </div>

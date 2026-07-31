@@ -31,6 +31,17 @@ import {
   FourierTransformResponse,
   InverseFourierTransformRequest,
   InverseFourierTransformResponse,
+  FourierIntegralRequest,
+  FourierIntegralReconstructRequest,
+  FourierIntegralCoefficientsResponse,
+  FourierIntegralReconstructResponse,
+  // Laplace
+  LaplaceDirectRequest,
+  LaplaceInverseRequest,
+  LaplaceOdeRequest,
+  LaplaceDirectResponse,
+  LaplaceInverseResponse,
+  LaplaceOdeResponse,
   // Simplify
   SimplifyRequest,
   SimplifyResponse,
@@ -187,6 +198,36 @@ export class ApiService {
     );
   }
 
+  calculateFourierIntegralCoefficients(
+    body: FourierIntegralRequest,
+  ): Observable<FourierIntegralCoefficientsResponse> {
+    return this.http.post<FourierIntegralCoefficientsResponse>(
+      `${this.base}/transforms/fourier-integral/coefficients`,
+      body,
+    );
+  }
+
+  calculateFourierIntegralReconstruct(
+    body: FourierIntegralReconstructRequest,
+  ): Observable<FourierIntegralReconstructResponse> {
+    return this.http.post<FourierIntegralReconstructResponse>(
+      `${this.base}/transforms/fourier-integral/reconstruct`,
+      body,
+    );
+  }
+
+  calculateLaplaceDirect(body: LaplaceDirectRequest): Observable<LaplaceDirectResponse> {
+    return this.http.post<LaplaceDirectResponse>(`${this.base}/transforms/laplace/direct`, body);
+  }
+
+  calculateLaplaceInverse(body: LaplaceInverseRequest): Observable<LaplaceInverseResponse> {
+    return this.http.post<LaplaceInverseResponse>(`${this.base}/transforms/laplace/inverse`, body);
+  }
+
+  calculateLaplaceOde(body: LaplaceOdeRequest): Observable<LaplaceOdeResponse> {
+    return this.http.post<LaplaceOdeResponse>(`${this.base}/transforms/laplace/ode`, body);
+  }
+
   calculateDFT(body: DftRequest): Observable<DftResponse> {
     return this.http.post<DftResponse>(`${this.base}/transforms/dft`, body);
   }
@@ -237,6 +278,7 @@ export class ApiService {
     if (query?.limit !== undefined) params = params.set('limit', query.limit);
     if (query?.offset !== undefined) params = params.set('offset', query.offset);
     if (query?.favorites !== undefined) params = params.set('favorites', query.favorites);
+    if (query?.type) params = params.set('type', query.type);
     return this.http.get<HistoryListResponse>(`${this.base}/history`, { params });
   }
 
@@ -329,8 +371,10 @@ export class ApiService {
     return this.http.get<SystemStats>(`${this.base}/admin/system/stats`);
   }
 
-  getRateLimitMetrics(): Observable<RateLimitMetricsSnapshot> {
-    return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`);
+  getRateLimitMetrics(windowHours?: number): Observable<RateLimitMetricsSnapshot> {
+    let params = new HttpParams();
+    if (windowHours !== undefined) params = params.set('windowHours', windowHours);
+    return this.http.get<RateLimitMetricsSnapshot>(`${this.base}/admin/rate-limit/metrics`, { params });
   }
 
   getRateLimitHistory(params: { limit?: number; offset?: number; ip?: string; limiter?: string } = {}):
@@ -345,10 +389,48 @@ export class ApiService {
     );
   }
 
-  getFeedbackStats(): Observable<import('../../../domain').FeedbackStats> {
-    return this.http.get<import('../../../domain').FeedbackStats>(
-      `${this.base}/admin/feedback/stats`,
+  // ── IP Blocklist ────────────────────────────────────────────────────────────
+
+  getIpBlocks(params: {
+    limit?: number; offset?: number;
+    ip?: string; blockedBy?: string; activeOnly?: boolean;
+  } = {}): Observable<import('../../../domain').IpBlockListResponse> {
+    let p = new HttpParams();
+    if (params.limit    != null) p = p.set('limit',      params.limit);
+    if (params.offset   != null) p = p.set('offset',     params.offset);
+    if (params.ip)               p = p.set('ip',         params.ip);
+    if (params.blockedBy)        p = p.set('blockedBy',  params.blockedBy);
+    if (params.activeOnly)       p = p.set('activeOnly', 'true');
+    return this.http.get<import('../../../domain').IpBlockListResponse>(
+      `${this.base}/admin/ip-blocks`, { params: p },
     );
+  }
+
+  getIpBlocksActive(): Observable<import('../../../domain').IpBlockActiveResponse> {
+    return this.http.get<import('../../../domain').IpBlockActiveResponse>(
+      `${this.base}/admin/ip-blocks/active`,
+    );
+  }
+
+  blockIp(ip: string, reason: string, durationHours?: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${this.base}/admin/ip-blocks`,
+      { ip, reason, ...(durationHours != null && { durationHours }) },
+    );
+  }
+
+  unblockIp(ip: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.base}/admin/ip-blocks/${encodeURIComponent(ip)}`,
+    );
+  }
+
+  getFeedbackStats(query?: { dateFrom?: string; dateTo?: string; tz?: string }): Observable<import('../../../domain').FeedbackStats> {
+    let params = new HttpParams();
+    if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
+    if (query?.dateTo)   params = params.set('dateTo',   query.dateTo);
+    if (query?.tz)       params = params.set('tz',       query.tz);
+    return this.http.get<import('../../../domain').FeedbackStats>(`${this.base}/admin/feedback/stats`, { params });
   }
 
   getFeedbackList(
@@ -364,21 +446,29 @@ export class ApiService {
   getAllComments(
     limit: number = 50,
     offset: number = 0,
+    source?: 'feedback' | 'survey',
   ): Observable<import('../../../domain').UnifiedCommentsResponse> {
+    let params = new HttpParams().set('limit', limit).set('offset', offset);
+    if (source) params = params.set('source', source);
     return this.http.get<import('../../../domain').UnifiedCommentsResponse>(
-      `${this.base}/admin/comments/all?limit=${limit}&offset=${offset}`,
+      `${this.base}/admin/comments/all`, { params },
     );
   }
 
-  getSurveyStats(): Observable<import('../../../domain').SurveyStats> {
-    return this.http.get<import('../../../domain').SurveyStats>(`${this.base}/admin/survey/stats`);
+  getSurveyStats(query?: { dateFrom?: string; dateTo?: string; tz?: string }): Observable<import('../../../domain').SurveyStats> {
+    let params = new HttpParams();
+    if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
+    if (query?.dateTo)   params = params.set('dateTo',   query.dateTo);
+    if (query?.tz)       params = params.set('tz',       query.tz);
+    return this.http.get<import('../../../domain').SurveyStats>(`${this.base}/admin/survey/stats`, { params });
   }
 
-  getCalcStats(query?: { dateFrom?: string; dateTo?: string; topN?: number }): Observable<import('../../../domain').CalcStats> {
+  getCalcStats(query?: { dateFrom?: string; dateTo?: string; topN?: number; tz?: string }): Observable<import('../../../domain').CalcStats> {
     let params = new HttpParams();
     if (query?.dateFrom) params = params.set('dateFrom', query.dateFrom);
     if (query?.dateTo)   params = params.set('dateTo',   query.dateTo);
     if (query?.topN)     params = params.set('topN',     query.topN);
+    if (query?.tz)       params = params.set('tz',       query.tz);
     return this.http.get<import('../../../domain').CalcStats>(`${this.base}/admin/calculations/stats`, { params });
   }
 

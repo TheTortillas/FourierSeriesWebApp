@@ -160,3 +160,16 @@ mjx-container[display="true"] {
 .dark mjx-container svg {
   fill: currentColor;
 }
+
+/* ─── Canvas side panel animations ──────────────────────────────────────────
+   Used by results-summary and continuous-transform canvas panels.            */
+@keyframes panel-slide-in-left {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes panel-slide-out-left {
+  from { transform: translateX(0);     opacity: 1; }
+  to   { transform: translateX(-100%); opacity: 0; }
+}
+.panel-slide-in  { animation: panel-slide-in-left  200ms ease-out both; }
+.panel-slide-out { animation: panel-slide-out-left 150ms ease-in  both; }

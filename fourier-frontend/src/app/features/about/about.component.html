@@ -1,7 +1,7 @@
 <div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
   <app-nav />
 
-  <main class="flex-1 w-full max-w-5xl mx-auto px-5 py-12 flex flex-col gap-14">
+  <main class="flex-1 w-full max-w-5xl mx-auto px-5 py-12 flex flex-col gap-16">
 
     <!-- ── Hero ──────────────────────────────────────────────────────────────── -->
     <section class="flex flex-col gap-3 max-w-2xl">
@@ -13,193 +13,437 @@
       </p>
     </section>
 
-    <!-- ── Feature grid ───────────────────────────────────────────────────────── -->
-    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <!-- ── Análisis de Fourier ───────────────────────────────────────────────── -->
+    <section class="flex flex-col gap-6">
 
-      <!-- Series de Fourier -->
-      <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
-            <span class="font-display text-xl text-accent leading-none select-none">Σ</span>
-          </div>
-          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
-            {{ 'about.series.title' | transloco }}
-          </h2>
-        </div>
-        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-          {{ 'about.series.desc' | transloco }}
+      <div class="flex flex-col gap-1">
+        <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+          {{ 'about.sectionFourier' | transloco }}
         </p>
-        <ul class="flex flex-col gap-1.5">
-          @for (key of seriesItems; track key) {
-            <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
-              <span class="text-accent mt-px shrink-0">✓</span>
-              {{ key | transloco }}
-            </li>
-          }
-        </ul>
-        <a [routerLink]="'/' + lang() + '/calculator'"
-          class="mt-2 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
-          {{ 'common.explore' | transloco }}
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          {{ 'about.sectionFourierTitle' | transloco }}
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted max-w-2xl leading-relaxed">
+          {{ 'about.sectionFourierDesc' | transloco }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <!-- Series de Fourier -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <span class="font-display text-xl text-accent leading-none select-none">Σ</span>
+            </div>
+            <h3 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.series.title' | transloco }}
+            </h3>
+          </div>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.series.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of seriesItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+          <a [routerLink]="'/' + lang() + '/calculator'"
+            class="mt-2 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
+            {{ 'common.explore' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Transformadas Continuas -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <span class="font-display text-xl text-accent leading-none select-none">ℱ</span>
+            </div>
+            <h3 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.transforms.title' | transloco }}
+            </h3>
+          </div>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.transforms.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of transformItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+          <a [routerLink]="'/' + lang() + '/transforms/continuous'"
+            class="mt-2 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
+            {{ 'common.explore' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Integral de Fourier -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <span class="font-display text-xl text-accent leading-none select-none">∫</span>
+            </div>
+            <h3 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.integral.title' | transloco }}
+            </h3>
+          </div>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.integral.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of integralItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+          <a [routerLink]="'/' + lang() + '/fourier-integral'"
+            class="mt-2 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
+            {{ 'common.explore' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- DFT -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="20" x2="21" y2="20"/>
+                <line x1="5"  y1="20" x2="5"  y2="16"/>
+                <line x1="8"  y1="20" x2="8"  y2="11"/>
+                <line x1="11" y1="20" x2="11" y2="6"/>
+                <line x1="14" y1="20" x2="14" y2="10"/>
+                <line x1="17" y1="20" x2="17" y2="14"/>
+                <line x1="20" y1="20" x2="20" y2="18"/>
+              </svg>
+            </div>
+            <h3 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.dft.title' | transloco }}
+            </h3>
+          </div>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.dft.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of dftItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+          <a [routerLink]="'/' + lang() + '/transforms/dft'"
+            class="mt-2 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
+            {{ 'common.explore' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── Transformada de Laplace ───────────────────────────────────────────── -->
+    <section class="flex flex-col gap-6">
+
+      <div class="flex flex-col gap-1">
+        <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+          {{ 'about.sectionLaplace' | transloco }}
+        </p>
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          {{ 'about.laplace.title' | transloco }}
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted max-w-2xl leading-relaxed">
+          {{ 'about.laplace.desc' | transloco }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+        <!-- Directa -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <span class="font-display text-xl text-accent leading-none select-none">ℒ</span>
+            </div>
+            <h3 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.laplace.direct.title' | transloco }}
+            </h3>
+          </div>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.laplace.direct.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of laplaceDirectItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+        </div>
+
+        <!-- Inversa -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <span class="font-display text-xl text-accent leading-none select-none">ℒ⁻¹</span>
+            </div>
+            <h3 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.laplace.inverse.title' | transloco }}
+            </h3>
+          </div>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.laplace.inverse.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of laplaceInverseItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+        </div>
+
+        <!-- EDOs -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19c2-4 4-8 8-8s6 4 8 8"/>
+                <line x1="4" y1="5" x2="20" y2="5"/>
+                <line x1="12" y1="3" x2="12" y2="7"/>
+              </svg>
+            </div>
+            <h3 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.laplace.ode.title' | transloco }}
+            </h3>
+          </div>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.laplace.ode.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of laplaceOdeItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="flex">
+        <a [routerLink]="'/' + lang() + '/laplace'"
+          class="inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
+          {{ 'common.explore' | transloco }} {{ 'about.laplace.title' | transloco }}
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
         </a>
       </div>
+    </section>
 
-      <!-- Transformadas Continuas -->
-      <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
-            <span class="font-display text-xl text-accent leading-none select-none">ℱ</span>
-          </div>
-          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
-            {{ 'about.transforms.title' | transloco }}
-          </h2>
-        </div>
-        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-          {{ 'about.transforms.desc' | transloco }}
+    <!-- ── Funciones especiales ──────────────────────────────────────────────── -->
+    <section class="flex flex-col gap-6">
+
+      <div class="flex flex-col gap-1">
+        <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+          {{ 'about.sectionFns' | transloco }}
         </p>
-        <ul class="flex flex-col gap-1.5">
-          @for (key of transformItems; track key) {
-            <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
-              <span class="text-accent mt-px shrink-0">✓</span>
-              {{ key | transloco }}
-            </li>
-          }
-        </ul>
-        <a [routerLink]="'/' + lang() + '/transforms/continuous'"
-          class="mt-2 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
-          {{ 'common.explore' | transloco }}
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-          </svg>
-        </a>
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          {{ 'about.fns.title' | transloco }}
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted max-w-2xl leading-relaxed">
+          {{ 'about.fns.intro' | transloco }}
+        </p>
       </div>
 
-      <!-- DFT -->
-      <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="3" y1="20" x2="21" y2="20"/>
-              <line x1="5"  y1="20" x2="5"  y2="16"/>
-              <line x1="8"  y1="20" x2="8"  y2="11"/>
-              <line x1="11" y1="20" x2="11" y2="6"/>
-              <line x1="14" y1="20" x2="14" y2="10"/>
-              <line x1="17" y1="20" x2="17" y2="14"/>
-              <line x1="20" y1="20" x2="20" y2="18"/>
-            </svg>
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+
+        @for (fn of specialFns; track fn.key) {
+          <div class="flex flex-col gap-3 p-4 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+
+            <!-- Notación + alias -->
+            <div class="flex items-start justify-between gap-3">
+              <span class="font-mono text-lg text-accent leading-none select-all">
+                {{ ('about.fns.' + fn.key + '.notation') | transloco }}
+              </span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border border-border dark:border-dark-border text-muted dark:text-dark-muted shrink-0 self-center">
+                {{ ('about.fns.' + fn.key + '.aka') | transloco }}
+              </span>
+            </div>
+
+            <!-- Nombre formal -->
+            <p class="font-display text-sm text-ink dark:text-dark-ink leading-snug -mt-1">
+              {{ ('about.fns.' + fn.key + '.name') | transloco }}
+            </p>
+
+            <!-- Definición LaTeX -->
+            <div class="overflow-x-auto py-1">
+              <span [mathjax]="'\\[' + (('about.fns.' + fn.key + '.latex') | transloco) + '\\]'"
+                    class="text-ink dark:text-dark-ink text-sm"></span>
+            </div>
+
+            <!-- Descripción en texto -->
+            <p class="font-body text-xs text-muted dark:text-dark-muted leading-relaxed">
+              {{ ('about.fns.' + fn.key + '.def') | transloco }}
+            </p>
+
+            <!-- Transformada de Fourier -->
+            <div class="pt-2 border-t border-border dark:border-dark-border flex flex-col gap-1">
+              <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide opacity-60">
+                {{ 'about.fns.ftLabel' | transloco }}
+              </p>
+              <div class="overflow-x-auto">
+                <span [mathjax]="'\\(' + (('about.fns.' + fn.key + '.ft') | transloco) + '\\)'"
+                      class="text-ink dark:text-dark-ink text-sm"></span>
+              </div>
+            </div>
+
+            <!-- Transformada de Laplace (solo donde aplica) -->
+            @if (fn.lt) {
+              <div class="pt-2 border-t border-border dark:border-dark-border flex flex-col gap-1">
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide opacity-60">
+                  {{ 'about.fns.ltLabel' | transloco }}
+                </p>
+                <div class="overflow-x-auto">
+                  <span [mathjax]="'\\(' + (('about.fns.' + fn.key + '.lt') | transloco) + '\\)'"
+                        class="text-ink dark:text-dark-ink text-sm"></span>
+                </div>
+              </div>
+            }
+
           </div>
-          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
-            {{ 'about.dft.title' | transloco }}
-          </h2>
-        </div>
-        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-          {{ 'about.dft.desc' | transloco }}
+        }
+
+      </div>
+    </section>
+
+    <!-- ── Plataforma ────────────────────────────────────────────────────────── -->
+    <section class="flex flex-col gap-6">
+
+      <div class="flex flex-col gap-1">
+        <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+          {{ 'about.sectionPlatform' | transloco }}
         </p>
-        <ul class="flex flex-col gap-1.5">
-          @for (key of dftItems; track key) {
-            <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
-              <span class="text-accent mt-px shrink-0">✓</span>
-              {{ key | transloco }}
-            </li>
-          }
-        </ul>
-        <a [routerLink]="'/' + lang() + '/transforms/dft'"
-          class="mt-2 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
-          {{ 'common.explore' | transloco }}
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-          </svg>
-        </a>
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          {{ 'about.sectionPlatformTitle' | transloco }}
+        </h2>
       </div>
 
-      <!-- Entrada matemática -->
-      <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="5" width="20" height="14" rx="2"/>
-              <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M10 13h4M18 13h.01M6 17h12"/>
-            </svg>
-          </div>
-          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
-            {{ 'about.input.title' | transloco }}
-          </h2>
-        </div>
-        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-          {{ 'about.input.desc' | transloco }}
-        </p>
-        <ul class="flex flex-col gap-1.5">
-          @for (key of inputItems; track key) {
-            <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
-              <span class="text-accent mt-px shrink-0">✓</span>
-              {{ key | transloco }}
-            </li>
-          }
-        </ul>
-      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-      <!-- Cuentas e historial -->
-      <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-            </svg>
+        <!-- Entrada matemática -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M10 13h4M18 13h.01M6 17h12"/>
+              </svg>
+            </div>
+            <h3 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.input.title' | transloco }}
+            </h3>
           </div>
-          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
-            {{ 'about.account.title' | transloco }}
-          </h2>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.input.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of inputItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
         </div>
-        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-          {{ 'about.account.desc' | transloco }}
-        </p>
-        <ul class="flex flex-col gap-1.5">
-          @for (key of accountItems; track key) {
-            <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
-              <span class="text-accent mt-px shrink-0">✓</span>
-              {{ key | transloco }}
-            </li>
-          }
-        </ul>
-      </div>
 
-      <!-- Diseño y usabilidad -->
-      <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9"/>
-              <path d="M12 3a4.5 4.5 0 0 1 0 9 4.5 4.5 0 0 1 0 9"/>
-              <line x1="3" y1="12" x2="21" y2="12"/>
-            </svg>
+        <!-- Cuentas e historial -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
+            </div>
+            <h3 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.account.title' | transloco }}
+            </h3>
           </div>
-          <h2 class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
-            {{ 'about.ux.title' | transloco }}
-          </h2>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.account.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of accountItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
         </div>
-        <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
-          {{ 'about.ux.desc' | transloco }}
-        </p>
-        <ul class="flex flex-col gap-1.5">
-          @for (key of uxItems; track key) {
-            <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
-              <span class="text-accent mt-px shrink-0">✓</span>
-              {{ key | transloco }}
-            </li>
-          }
-        </ul>
-      </div>
 
+        <!-- Diseño y usabilidad -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 3a4.5 4.5 0 0 1 0 9 4.5 4.5 0 0 1 0 9"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+              </svg>
+            </div>
+            <h3 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.ux.title' | transloco }}
+            </h3>
+          </div>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.ux.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of uxItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+        </div>
+
+      </div>
     </section>
 
     <!-- ── CTA ────────────────────────────────────────────────────────────────── -->
@@ -210,17 +454,23 @@
       <div class="flex flex-wrap items-center justify-center gap-3">
         <a [routerLink]="'/' + lang() + '/calculator'"
           class="flex items-center gap-2 px-5 py-2.5 rounded bg-accent text-white text-sm font-mono hover:bg-accent/90 transition-colors">
-          <span>Σ</span>
-          {{ 'about.series.title' | transloco }}
+          <span>Σ</span>{{ 'about.series.title' | transloco }}
         </a>
         <a [routerLink]="'/' + lang() + '/transforms/continuous'"
           class="flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
-          <span class="font-display">ℱ</span>
-          {{ 'about.transforms.title' | transloco }}
+          <span class="font-display">ℱ</span>{{ 'about.transforms.title' | transloco }}
+        </a>
+        <a [routerLink]="'/' + lang() + '/fourier-integral'"
+          class="flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
+          <span class="font-display">∫</span>{{ 'about.integral.title' | transloco }}
         </a>
         <a [routerLink]="'/' + lang() + '/transforms/dft'"
           class="flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
           DFT
+        </a>
+        <a [routerLink]="'/' + lang() + '/laplace'"
+          class="flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
+          <span class="font-display">ℒ</span>{{ 'about.laplace.title' | transloco }}
         </a>
       </div>
     </section>

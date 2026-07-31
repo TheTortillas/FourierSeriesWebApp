@@ -16,6 +16,7 @@ import {
   getFromCache,
   setInCache,
 } from "../../infrastructure/cache/fourierCache";
+import { expandAbsSegments } from "./absExpander";
 
 const TRIG_PARSEVAL_MARKERS = [
   "__PARSEVAL_LHS_MAXIMA__",
@@ -104,7 +105,8 @@ export class ParsevalService {
 
     const startTime = Date.now();
     const intVar = input.intVar ?? "x";
-    const funcInput = this.buildFuncInput(input.segments);
+    const segments = expandAbsSegments(input.segments, intVar);
+    const funcInput = this.buildFuncInput(segments);
 
     let parseval: ParsevalTrig | ParsevalHalfRange | ParsevalComplex | undefined;
 

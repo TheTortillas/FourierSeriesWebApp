@@ -101,29 +101,31 @@ export class DftComputeService {
   // ── Public API ──────────────────────────────────────────────────────────────
 
   /** Compute DFT (O(N²)) on the given samples. Returns coefficients + elapsed ms. */
-  computeDft(samples: number[]): { coefficients: DftCoefficient[]; timeMs: number } {
+  computeDft(samples: number[], normalize = true): { coefficients: DftCoefficient[]; timeMs: number } {
     const t0 = performance.now();
     const raw = this.dftRaw(samples);
-    const coefficients = this.buildCoefficients(raw, samples.length);
+    const coefficients = this.buildCoefficients(raw, samples.length, normalize);
     return { coefficients, timeMs: Math.round(performance.now() - t0) };
   }
 
   /** Compute FFT (O(N log N)) on the given samples. N must be a power of 2. */
-  computeFft(samples: number[]): { coefficients: DftCoefficient[]; timeMs: number } {
+  computeFft(samples: number[], normalize = true): { coefficients: DftCoefficient[]; timeMs: number } {
     const t0 = performance.now();
     const raw = this.fftRaw(samples);
-    const coefficients = this.buildCoefficients(raw, samples.length);
+    const coefficients = this.buildCoefficients(raw, samples.length, normalize);
     return { coefficients, timeMs: Math.round(performance.now() - t0) };
   }
 
-  /** IDFT: reconstruct discrete signal from normalized coefficients. */
-  reconstruct(coefficients: DftCoefficient[], N: number, xs?: number[]): DftPoint[] {
+  /** IDFT: reconstruct signal from coefficients.
+   *  When normalize=false the coefficients are raw X[k], so we must divide by N here. */
+  reconstruct(coefficients: DftCoefficient[], N: number, xs?: number[], normalize = true): DftPoint[] {
     const points: DftPoint[] = new Array(N);
+    const scale = normalize ? 1 : 1 / N;
     for (let n = 0; n < N; n++) {
       let y = 0;
       for (const c of coefficients) {
         const angle = (TAU * c.k * n) / N;
-        y += c.re * Math.cos(angle) - c.im * Math.sin(angle);
+        y += (c.re * Math.cos(angle) - c.im * Math.sin(angle)) * scale;
       }
       points[n] = { x: xs ? (xs[n] ?? n) : n, y: cleanFloat(y, 1e-9) };
     }
@@ -151,11 +153,12 @@ export class DftComputeService {
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
-  private buildCoefficients(raw: Complex[], N: number): DftCoefficient[] {
-    const totalAmp = raw.reduce((s, c) => s + Math.hypot(c.re, c.im) / N, 0);
+  private buildCoefficients(raw: Complex[], N: number, normalize: boolean): DftCoefficient[] {
+    const divisor = normalize ? N : 1;
+    const totalAmp = raw.reduce((s, c) => s + Math.hypot(c.re, c.im) / divisor, 0);
     return raw.map((c, k) => {
-      const re = cleanFloat(c.re / N);
-      const im = cleanFloat(c.im / N);
+      const re = cleanFloat(c.re / divisor);
+      const im = cleanFloat(c.im / divisor);
       const amplitude = cleanFloat(Math.hypot(re, im));
       const phase = amplitude < 1e-12 ? 0 : cleanFloat(Math.atan2(im, re), 1e-12);
       return {

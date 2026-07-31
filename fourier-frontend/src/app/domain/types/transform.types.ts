@@ -90,6 +90,58 @@ export interface InverseFourierTransformResponse {
   executionTimeMs: number;
 }
 
+// ─── Fourier Integral ─────────────────────────────────────────────────────────
+
+export type FourierIntegralVariant = 'trigonometric' | 'complex' | 'cosine' | 'sine';
+
+export interface FourierIntegralRequest {
+  segments: Segment[];
+  intVar?: string;
+  transVar?: string;
+  variant: FourierIntegralVariant;
+}
+
+export interface FourierIntegralReconstructRequest {
+  segments: Segment[];
+  intVar?: string;
+  transVar?: string;
+  variant: FourierIntegralVariant;
+  upperLimit: number;
+  xMin: number;
+  xMax: number;
+  nPoints?: number;
+}
+
+export interface FourierIntegralCoefficientsResponse {
+  input: FourierIntegralRequest;
+  exists: boolean;
+  fourierIntegralTex?: string;
+  integrand?: SymbolicExpression;
+  integrandK?: SymbolicExpression;
+  integrandSummand?: SymbolicExpression;
+  A?: SymbolicExpression;
+  B?: SymbolicExpression;
+  C?: SymbolicExpression;
+  realPart?: SymbolicExpression;
+  imagPart?: SymbolicExpression;
+  inputRealPart?: SymbolicExpression;
+  inputImagPart?: SymbolicExpression;
+  params?: string[];
+  executionTimeMs: number;
+}
+
+export interface ReconstructPoint {
+  x: number;
+  y: number;
+}
+
+export interface FourierIntegralReconstructResponse {
+  input: FourierIntegralReconstructRequest;
+  points: ReconstructPoint[];
+  executionTimeMs: number;
+}
+
+
 // ─── Simplify ─────────────────────────────────────────────────────────────────
 
 export type SimplifyProfile = 'raw' | 'integer' | 'trigonometric' | 'exponential' | 'complete';
@@ -105,6 +157,7 @@ export type SimplifyFunction =
   | 'radcan'
   | 'rectform'
   | 'polarform'
+  | 'combine'
   | 'to_hyper';
 
 export interface SimplifyRequest {
@@ -120,6 +173,8 @@ export interface SimplifyRequest {
     toHyperbolic?: boolean;
   };
   convention?: NormalizationConvention;
+  splitVar?: string;
+  baseK?: string;
 }
 
 export interface SimplifyResponse {
@@ -129,4 +184,58 @@ export interface SimplifyResponse {
   simplifiedSummand?: SymbolicExpression;
   profile: SimplifyProfile;
   functionsApplied: SimplifyFunction[];
+}
+
+// ─── Laplace ──────────────────────────────────────────────────────────────────
+
+export interface LaplaceDirectRequest {
+  segments: Segment[];
+  timeVar?: string;
+  freqVar?: string;
+}
+
+export interface LaplaceInverseRequest {
+  expression: string;
+  expressionTex?: string;
+  freqVar?: string;
+  timeVar?: string;
+}
+
+export interface LaplaceIcCondition {
+  order: number;
+  value: string;
+  valueTex?: string;
+}
+
+export interface LaplaceOdeRequest {
+  equation: string;
+  equationTex?: string;
+  unknown: string;
+  timeVar?: string;
+  initialConditions: LaplaceIcCondition[];
+}
+
+export interface LaplaceDirectResponse {
+  input: LaplaceDirectRequest;
+  exists: boolean;
+  F?: SymbolicExpression;
+  params?: string[];
+  executionTimeMs: number;
+}
+
+export interface LaplaceInverseResponse {
+  input: LaplaceInverseRequest;
+  exists: boolean;
+  f?: SymbolicExpression;
+  params?: string[];
+  inverseMethod: 'ilt' | 'pwilt' | 'failed';
+  executionTimeMs: number;
+}
+
+export interface LaplaceOdeResponse {
+  input: LaplaceOdeRequest;
+  exists: boolean;
+  solution?: SymbolicExpression;
+  params?: string[];
+  executionTimeMs: number;
 }

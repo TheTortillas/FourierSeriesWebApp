@@ -180,13 +180,10 @@
         <div>
           <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Tendencia de ejecuciones</span>
           <p class="text-xs text-muted dark:text-dark-muted mt-0.5">
-            @if (dateFrom || dateTo) {
-              @if (dateFrom && dateTo) { De {{ dateFrom }} a {{ dateTo }} }
-              @else if (dateFrom)     { Desde {{ dateFrom }} }
-              @else                   { Hasta {{ dateTo }} }
-            } @else {
-              Últimos 30 días
-            }
+            @if (dateFrom && dateTo) { De {{ dateFrom }} a {{ dateTo }} }
+            @else if (dateFrom)      { Desde {{ dateFrom }} }
+            @else if (dateTo)        { Hasta {{ dateTo }} }
+            @else                    { Todo el historial }
           </p>
         </div>
         <span class="text-xs font-mono text-muted dark:text-dark-muted">
@@ -249,10 +246,18 @@
                     [class.dark\:bg-blue-900\/30]="groupLabel(entry.type) === 'Series'"
                     [class.text-blue-700]="groupLabel(entry.type) === 'Series'"
                     [class.dark\:text-blue-300]="groupLabel(entry.type) === 'Series'"
+                    [class.bg-lime-100]="groupLabel(entry.type) === 'Integral'"
+                    [class.dark\:bg-lime-900\/30]="groupLabel(entry.type) === 'Integral'"
+                    [class.text-lime-700]="groupLabel(entry.type) === 'Integral'"
+                    [class.dark\:text-lime-400]="groupLabel(entry.type) === 'Integral'"
                     [class.bg-emerald-100]="groupLabel(entry.type) === 'Transformadas'"
                     [class.dark\:bg-emerald-900\/30]="groupLabel(entry.type) === 'Transformadas'"
                     [class.text-emerald-700]="groupLabel(entry.type) === 'Transformadas'"
                     [class.dark\:text-emerald-300]="groupLabel(entry.type) === 'Transformadas'"
+                    [class.bg-orange-100]="groupLabel(entry.type) === 'Laplace'"
+                    [class.dark\:bg-orange-900\/30]="groupLabel(entry.type) === 'Laplace'"
+                    [class.text-orange-700]="groupLabel(entry.type) === 'Laplace'"
+                    [class.dark\:text-orange-300]="groupLabel(entry.type) === 'Laplace'"
                     [class.bg-purple-100]="groupLabel(entry.type) === 'DFT'"
                     [class.dark\:bg-purple-900\/30]="groupLabel(entry.type) === 'DFT'"
                     [class.text-purple-700]="groupLabel(entry.type) === 'DFT'"

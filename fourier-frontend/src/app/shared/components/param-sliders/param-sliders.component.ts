@@ -34,23 +34,18 @@ interface ParamRange {
 
         @for (name of params(); track name) {
           <div
-            class="rounded-lg border border-gray-200 dark:border-gray-600
-                      bg-white dark:bg-gray-800 px-3 py-2 space-y-1.5"
+            class="rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 px-3 py-2 space-y-1.5"
           >
             <!-- Row 1: param name + current value -->
             <div class="flex items-center justify-between gap-2">
               <span
-                class="text-sm font-mono font-semibold text-gray-700 dark:text-gray-200 shrink-0"
+                class="text-xs font-mono font-semibold text-ink dark:text-dark-ink shrink-0"
               >
                 {{ name }} =
               </span>
               <input
                 type="number"
-                class="w-24 px-2 py-0.5 text-sm text-right font-mono rounded border
-                       border-blue-300 dark:border-blue-700
-                       bg-blue-50 dark:bg-blue-900/30
-                       text-gray-800 dark:text-gray-100
-                       focus:outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-20 px-2 py-0.5 text-xs text-right font-mono rounded border border-accent/40 bg-accent/5 dark:bg-accent/10 text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
                 [step]="step()"
                 [ngModel]="getValue(name)"
                 (ngModelChange)="setValue(name, +$event)"
@@ -62,17 +57,13 @@ interface ParamRange {
               <input
                 type="number"
                 title="Mínimo"
-                class="w-14 px-1.5 py-0.5 text-xs text-center font-mono rounded border
-                       border-gray-300 dark:border-gray-600
-                       bg-gray-50 dark:bg-gray-700
-                       text-gray-500 dark:text-gray-400
-                       focus:outline-none focus:ring-1 focus:ring-gray-400"
+                class="w-12 px-1.5 py-0.5 text-[10px] text-center font-mono rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted focus:outline-none focus:border-accent"
                 [ngModel]="getMin(name)"
                 (ngModelChange)="setMin(name, +$event)"
               />
               <input
                 type="range"
-                class="flex-1 accent-blue-600 cursor-pointer"
+                class="flex-1 accent-accent cursor-pointer"
                 [min]="getMin(name)"
                 [max]="getMax(name)"
                 [step]="step()"
@@ -82,11 +73,7 @@ interface ParamRange {
               <input
                 type="number"
                 title="Máximo"
-                class="w-14 px-1.5 py-0.5 text-xs text-center font-mono rounded border
-                       border-gray-300 dark:border-gray-600
-                       bg-gray-50 dark:bg-gray-700
-                       text-gray-500 dark:text-gray-400
-                       focus:outline-none focus:ring-1 focus:ring-gray-400"
+                class="w-12 px-1.5 py-0.5 text-[10px] text-center font-mono rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted focus:outline-none focus:border-accent"
                 [ngModel]="getMax(name)"
                 (ngModelChange)="setMax(name, +$event)"
               />

@@ -1,9 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { CanvasViewport, CanvasTheme } from './canvas.types';
+import { CanvasViewport, CanvasTheme, CanvasRenderConfig, DEFAULT_RENDER_CONFIG } from './canvas.types';
 import { CoordinateTransformService } from './coordinate-transform.service';
-
-const TARGET_GRID_PX = 80; // target CSS pixels between major grid lines
-const MIN_LABEL_GAP = 44; // minimum CSS pixels between axis labels
 
 const CONST_STEP_MULTIPLIERS: ReadonlyArray<{ num: number; den: number }> = [
   { num: 1, den: 4 },
@@ -32,8 +29,16 @@ export class CanvasRendererService {
   /**
    * Full redraw of background + grid + axes + labels.
    * Call this once per frame before plotting any curves.
+   *
+   * @param config  Rendering tunables. Defaults to DEFAULT_RENDER_CONFIG so
+   *                existing callers that omit this parameter are unaffected.
    */
-  drawBackground(ctx: CanvasRenderingContext2D, vp: CanvasViewport, theme: CanvasTheme): void {
+  drawBackground(
+    ctx: CanvasRenderingContext2D,
+    vp: CanvasViewport,
+    theme: CanvasTheme,
+    config: CanvasRenderConfig = DEFAULT_RENDER_CONFIG,
+  ): void {
     ctx.save();
 
     // 1. Background
@@ -41,22 +46,27 @@ export class CanvasRendererService {
     ctx.fillRect(0, 0, vp.cssWidth, vp.cssHeight);
 
     // 2. Grid
-    this.drawGrid(ctx, vp, theme);
+    this.drawGrid(ctx, vp, theme, config);
 
     // 3. Axes
-    this.drawAxes(ctx, vp, theme);
+    this.drawAxes(ctx, vp, theme, config);
 
     // 4. Labels
-    this.drawLabels(ctx, vp, theme);
+    this.drawLabels(ctx, vp, theme, config);
 
     ctx.restore();
   }
 
   // ── Grid ──────────────────────────────────────────────────────────────────
 
-  private drawGrid(ctx: CanvasRenderingContext2D, vp: CanvasViewport, theme: CanvasTheme): void {
+  private drawGrid(
+    ctx: CanvasRenderingContext2D,
+    vp: CanvasViewport,
+    theme: CanvasTheme,
+    config: CanvasRenderConfig,
+  ): void {
     // X step must match the label step so grid lines align with labels
-    const step = this.xStep(vp);
+    const step = this.xStep(vp, config);
     const range = this.t.visibleRange(vp);
 
     const xStart = Math.floor(range.xMin / step) * step;
@@ -75,7 +85,7 @@ export class CanvasRendererService {
     }
 
     // Horizontal lines (use same step — symmetric grid)
-    const stepY = this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleY);
+    const stepY = this.t.niceStep(config.targetGridPx, vp.unit * vp.scaleY);
     const yStartH = Math.floor(range.yMin / stepY) * stepY;
 
     for (let y = yStartH; y <= range.yMax + stepY; y += stepY) {
@@ -96,12 +106,17 @@ export class CanvasRendererService {
 
   // ── Axes ──────────────────────────────────────────────────────────────────
 
-  private drawAxes(ctx: CanvasRenderingContext2D, vp: CanvasViewport, theme: CanvasTheme): void {
+  private drawAxes(
+    ctx: CanvasRenderingContext2D,
+    vp: CanvasViewport,
+    theme: CanvasTheme,
+    config: CanvasRenderConfig,
+  ): void {
     const ox = this.t.mathToScreenX(0, vp) / vp.dpr;
     const oy = this.t.mathToScreenY(0, vp) / vp.dpr;
 
     ctx.strokeStyle = theme.axis;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = config.axisLineWidth;
     ctx.lineCap = 'square';
 
     ctx.beginPath();
@@ -116,16 +131,24 @@ export class CanvasRendererService {
 
   // ── Labels ────────────────────────────────────────────────────────────────
 
-  private drawLabels(ctx: CanvasRenderingContext2D, vp: CanvasViewport, theme: CanvasTheme): void {
-    const step = this.xStep(vp);
-    const stepY = this.t.niceStep(TARGET_GRID_PX, vp.unit * vp.scaleY);
+  private drawLabels(
+    ctx: CanvasRenderingContext2D,
+    vp: CanvasViewport,
+    theme: CanvasTheme,
+    config: CanvasRenderConfig,
+  ): void {
+    const step = this.xStep(vp, config);
+    const stepY = this.t.niceStep(config.targetGridPx, vp.unit * vp.scaleY);
     const range = this.t.visibleRange(vp);
 
     const ox = this.t.mathToScreenX(0, vp) / vp.dpr;
     const oy = this.t.mathToScreenY(0, vp) / vp.dpr;
 
     ctx.fillStyle = theme.label;
-    ctx.font = `${(11 * vp.dpr) / vp.dpr}px JetBrains Mono, monospace`;
+    // Bug fix: was `${11 * vp.dpr / vp.dpr}px` which always evaluates to 11px.
+    // Now uses config.labelFontSize directly (CSS pixels, already correct since
+    // ctx has ctx.setTransform(dpr, 0, 0, dpr, 0, 0) applied by the component).
+    ctx.font = `${config.labelFontSize}px ${config.labelFont}`;
     ctx.textBaseline = 'top';
 
     // ── X axis labels ──────────────────────────────────────────────────────
@@ -135,7 +158,7 @@ export class CanvasRendererService {
     for (let x = xStart; x <= range.xMax + step * 0.5; x += step) {
       if (Math.abs(x) < step * 0.01) continue; // skip origin
       const sx = this.t.mathToScreenX(x, vp) / vp.dpr;
-      if (sx - lastLabelX < MIN_LABEL_GAP) continue;
+      if (sx - lastLabelX < config.minLabelGap) continue;
 
       const label = this.formatX(x, step, vp);
       ctx.textAlign = 'center';
@@ -154,7 +177,7 @@ export class CanvasRendererService {
     for (let y = yStart; y <= range.yMax + stepY * 0.5; y += stepY) {
       if (Math.abs(y) < stepY * 0.01) continue;
       const sy = this.t.mathToScreenY(y, vp) / vp.dpr;
-      if (lastLabelY - sy < MIN_LABEL_GAP) continue;
+      if (lastLabelY - sy < config.minLabelGap) continue;
 
       const label = this.formatY(y, stepY);
       const labelX = Math.min(Math.max(ox - 6, 6), vp.cssWidth - 6);
@@ -251,12 +274,12 @@ export class CanvasRendererService {
   // ── Shared X step (grid + labels must always agree) ──────────────────────
 
   /** Returns the X grid/label step for the current viewport format. */
-  private xStep(vp: CanvasViewport): number {
+  private xStep(vp: CanvasViewport, config: CanvasRenderConfig): number {
     const unitPx = vp.unit * vp.scaleX;
-    if (vp.xAxisFormat === 'pi') return this.niceStepConst(unitPx, Math.PI);
-    if (vp.xAxisFormat === 'e') return this.niceStepConst(unitPx, Math.E);
-    if (vp.xAxisFormat === 'custom') return this.niceStepConst(unitPx, vp.customConst.value);
-    return this.t.niceStep(TARGET_GRID_PX, unitPx);
+    if (vp.xAxisFormat === 'pi') return this.niceStepConst(unitPx, Math.PI, config);
+    if (vp.xAxisFormat === 'e') return this.niceStepConst(unitPx, Math.E, config);
+    if (vp.xAxisFormat === 'custom') return this.niceStepConst(unitPx, vp.customConst.value, config);
+    return this.t.niceStep(config.targetGridPx, unitPx);
   }
 
   // ── Constant-aligned nice steps ──────────────────────────────────────────
@@ -265,8 +288,8 @@ export class CanvasRendererService {
    * Returns a "nice" step that is a fraction/multiple of `constVal`.
    * Works for any constant: π, e, T, L, etc.
    */
-  private niceStepConst(unitPx: number, constVal: number): number {
-    const rawStep = TARGET_GRID_PX / unitPx;
+  private niceStepConst(unitPx: number, constVal: number, config: CanvasRenderConfig): number {
+    const rawStep = config.targetGridPx / unitPx;
     const candidates = CONST_STEP_MULTIPLIERS.map((m) => (m.num / m.den) * constVal).filter(
       (c) => c > 0,
     );

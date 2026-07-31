@@ -9,10 +9,11 @@ import {
   viewChild,
   ElementRef,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   catchError,
   debounceTime,
@@ -35,13 +36,14 @@ import {
 } from '../../../shared/components/function-plot/function-plot.component';
 import { ApiService } from '../../../core/services/api/api.service';
 import { UserStore } from '../../../core/services/auth/user.store';
+import { FeedbackService } from '../../../core/services/feedback/feedback.service';
+import { SurveyService } from '../../../core/services/survey/survey.service';
 import { formatApiError } from '../../../shared/utils/api-error.utils';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
-import { ParamSlidersComponent } from '../../../shared/components/param-sliders/param-sliders.component';
 import type { ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
 import { TransformSegmentComponent, TransformSegmentDraft } from './transform-segment.component';
 import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxima.service';
@@ -182,19 +184,21 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     MathjaxDirective,
     FunctionPlotComponent,
     TransformSegmentComponent,
-    ParamSlidersComponent,
     FormsModule,
     RouterLink,
     RouterLinkActive,
     TranslocoPipe,
     MobileMathKeyboardComponent,
     ExportButtonComponent,
+    NgTemplateOutlet,
   ],
 })
 export class ContinuousTransformComponent implements OnInit {
   readonly api = inject(ApiService);
   readonly mqs = inject(MathquillService);
   readonly userStore = inject(UserStore);
+  private readonly feedbackSvc = inject(FeedbackService);
+  private readonly surveySvc = inject(SurveyService);
   private readonly transloco = inject(TranslocoService);
 
   showKeyboard = false;
@@ -248,7 +252,11 @@ export class ContinuousTransformComponent implements OnInit {
   private readonly intervalValidator = inject(LatexToMaximaService);
 
   ngOnInit(): void {
-    this.seo.setPage('seo.transforms.title', 'seo.transforms.description');
+    this.seo.setPage(
+      'seo.transforms.title',
+      'seo.transforms.description',
+      'Fourier transform calculator, inverse Fourier transform, calculadora transformada de Fourier, transformada inversa de Fourier, IFT, FT, piecewise, symbolic',
+    );
   }
   readonly plotter = inject(PlottingService);
   private readonly drawingUtils = inject(DrawingUtilsService);
@@ -269,8 +277,10 @@ export class ContinuousTransformComponent implements OnInit {
   readonly continuityValidating = signal(false);
   readonly loading = signal(false);
   readonly errorMsg = signal<string | null>(null);
-  readonly ftResult = signal<FourierTransformResponse | null>(null);
+  readonly ftResult  = signal<FourierTransformResponse | null>(null);
   readonly iftResult = signal<InverseFourierTransformResponse | null>(null);
+  readonly hasResult = computed(() => this.ftResult() !== null || this.iftResult() !== null);
+  readonly lang      = toSignal(this.transloco.langChanges$, { initialValue: this.transloco.getActiveLang() });
 
   // ── Alt forms — main result ────────────────────────────────────────────────
   readonly altFormsFt = signal<AltForm[]>([]);
@@ -329,7 +339,12 @@ export class ContinuousTransformComponent implements OnInit {
   readonly customMagColor = signal(false);
   readonly originalLineWidth = signal(2);
   readonly resultLineWidth = signal(2);
+  readonly originalDashed = signal(false);
+  readonly resultDashed = signal(false);
   readonly showCanvasSettings = signal(false);
+  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
+
+  readonly Math = Math;
 
   // ── Favorites ─────────────────────────────────────────────────────────────
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
@@ -339,6 +354,8 @@ export class ContinuousTransformComponent implements OnInit {
 
   // ── Free parameter sliders ────────────────────────────────────────────────
   readonly paramValues = signal<ParamValues>({});
+  private readonly paramSliderMins = signal<Record<string, number>>({});
+  private readonly paramSliderMaxs = signal<Record<string, number>>({});
 
   readonly activeParams = computed<string[]>(() => {
     const ft = this.ftResult();
@@ -346,18 +363,32 @@ export class ContinuousTransformComponent implements OnInit {
     return (ft ?? ift)?.params ?? [];
   });
 
-  /** TeX for the piecewise Re f(t) primary display — used in results section. */
-  readonly inputRealPiecewiseTex = computed<string>(() => {
-    const segs = this.segments();
-    const v = this.intVar();
-    if (segs.length === 0) return '';
-    if (segs.length === 1) return segs[0].expressionTex;
-    return (
-      '\\begin{cases}' +
-      segs.map((s) => s.expressionTex + ',&' + s.fromTex + '<' + v + '<' + s.toTex).join('\\\\') +
-      '\\end{cases}'
-    );
+  /** Params used on canvas — defaults to 1 for any param not yet moved by the user. */
+  readonly evaluationParams = computed<ParamValues>(() => {
+    const names = this.activeParams();
+    const pv = this.paramValues();
+    const merged: ParamValues = { ...pv };
+    for (const name of names) {
+      if (!Number.isFinite(merged[name])) merged[name] = 1;
+    }
+    return merged;
   });
+
+  paramSliderMin(p: string): number { return this.paramSliderMins()[p] ?? -5; }
+  paramSliderMax(p: string): number { return this.paramSliderMaxs()[p] ?? 5; }
+
+  setParamMin(p: string, v: number): void {
+    if (!isFinite(v)) return;
+    this.paramSliderMins.update(m => ({ ...m, [p]: v }));
+  }
+  setParamMax(p: string, v: number): void {
+    if (!isFinite(v)) return;
+    this.paramSliderMaxs.update(m => ({ ...m, [p]: v }));
+  }
+  onParamSliderInput(p: string, v: number): void {
+    if (!isFinite(v)) return;
+    this.paramValues.update(pv => ({ ...pv, [p]: v }));
+  }
 
   /** LaTeX preview of the piecewise input function, mirroring calculator's previewLatex. */
   readonly previewLatex = computed<string | null>(() => {
@@ -398,13 +429,18 @@ export class ContinuousTransformComponent implements OnInit {
 
   readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
   readonly plotComponent = viewChild(FunctionPlotComponent);
-  readonly paramSliders = viewChild(ParamSlidersComponent);
 
   readonly varPairs = VAR_PAIRS;
 
   private urlPopulated = false;
 
   constructor() {
+    if (typeof window !== 'undefined') {
+      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
+      window.addEventListener('resize', onResize);
+      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
+    }
+
     effect(() => {
       void this.theme.theme();
       void this.theme.palette();
@@ -546,7 +582,7 @@ export class ContinuousTransformComponent implements OnInit {
       this.customConstName.set(null);
     });
 
-    // ── 4. Sync result → URL ──────────────────────────────────────────────
+    // ── 4. Sync result → URL + feedback/survey prompt trigger ────────────
     effect(() => {
       const ft = this.ftResult();
       const ift = this.iftResult();
@@ -557,6 +593,17 @@ export class ContinuousTransformComponent implements OnInit {
           queryParams: { s: this.encodeState() },
           replaceUrl: true,
         });
+        const tryPrompts = () => {
+          setTimeout(() => this.feedbackSvc.tryOpenModal(), 4000);
+          setTimeout(() => this.surveySvc.tryPrompt(), 8000);
+        };
+        if (this.userStore.initialized()) {
+          tryPrompts();
+        } else {
+          toObservable(this.userStore.initialized)
+            .pipe(filter(Boolean), take(1))
+            .subscribe(tryPrompts);
+        }
       } else if (this.urlPopulated) {
         void this.router.navigate([], {
           relativeTo: this.route,
@@ -658,9 +705,14 @@ export class ContinuousTransformComponent implements OnInit {
     const mgColor = this.magColor();
     const origLW = this.originalLineWidth();
     const resLW = this.resultLineWidth();
+    const origDashed = this.originalDashed();
+    const resDashed = this.resultDashed();
 
     const plotter = this.plotter;
-    const pv = this.paramValues();
+    const pv = this.evaluationParams();
+
+    const inputJumpStyle = 'solid' as const; // f(t) piecewise boundaries (explicit, zero perf cost)
+    const resultJumpStyle = 'solid' as const; // F(w) result curves — heuristic tracking too costly
 
     const layer: PlotLayer = {
       curves: [],
@@ -682,45 +734,74 @@ export class ContinuousTransformComponent implements OnInit {
           (this.mode() === 'ft' && !hasFtComputedInput) ||
           (this.mode() === 'ift' && !ift?.exists && !iftInputIsComplex);
         if ((showOrigRe || showOrigM) && shouldDrawInputPreview) {
-          for (const seg of segs) {
-            const fn = this.mathUtils.compile(seg.expression, intVariable, pv);
-            const from = this.parseLimit(seg.from, pv);
-            const to = this.parseLimit(seg.to, pv);
-            if (!fn) continue;
+          // Compile all segments up-front and partition by bound type.
+          // Finite-bound pieces go through plotPiecewise (single canvas path,
+          // NaN-sentinel between pieces → no spurious vertical lines at boundaries).
+          // Infinite-bound pieces use a gated plotFn as before.
+          const compiled = segs
+            .map((seg) => ({
+              fn: this.mathUtils.compile(seg.expression, intVariable, pv),
+              from: this.parseLimit(seg.from, pv),
+              to: this.parseLimit(seg.to, pv),
+              expression: seg.expression,
+            }))
+            .filter((s) => !!s.fn);
+
+          const finitePieces = compiled.filter((s) => isFinite(s.from) && isFinite(s.to));
+          const infinitePieces = compiled.filter((s) => !isFinite(s.from) || !isFinite(s.to));
+
+          // ── Finite pieces: draw together via plotPiecewise ──────────────
+          if (finitePieces.length > 0) {
             if (showOrigRe) {
-              if (isFinite(from) && isFinite(to)) {
-                plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
-                  color: origReColor,
-                  lineWidth: origLW,
-                });
-              } else {
-                const gated = (x: number) => (x >= from && x <= to ? fn(x) : NaN);
-                plotter.plotFn(ctx, gated, vp, { color: origReColor, lineWidth: origLW });
-              }
+              plotter.plotPiecewise(
+                ctx,
+                finitePieces.map((s) => ({ fn: s.fn!, from: s.from, to: s.to })),
+                vp,
+                { color: origReColor, lineWidth: origLW, jumpStyle: inputJumpStyle, dashed: origDashed },
+              );
             }
             if (showOrigM) {
-              const absFn = (x: number) => {
-                const y = fn(x);
+              plotter.plotPiecewise(
+                ctx,
+                finitePieces.map((s) => ({
+                  fn: (x: number) => {
+                    const y = s.fn!(x);
+                    return isFinite(y) ? Math.abs(y) : NaN;
+                  },
+                  from: s.from,
+                  to: s.to,
+                })),
+                vp,
+                { color: origMgColor, lineWidth: origLW, jumpStyle: inputJumpStyle, dashed: origDashed },
+              );
+            }
+          }
+
+          // ── Infinite pieces: gated plotFn (existing behaviour) ──────────
+          for (const s of infinitePieces) {
+            if (showOrigRe) {
+              const gated = (x: number) => (x >= s.from && x <= s.to ? s.fn!(x) : NaN);
+              plotter.plotFn(ctx, gated, vp, { color: origReColor, lineWidth: origLW, dashed: origDashed });
+            }
+            if (showOrigM) {
+              const gatedAbs = (x: number) => {
+                if (x < s.from || x > s.to) return NaN;
+                const y = s.fn!(x);
                 return isFinite(y) ? Math.abs(y) : NaN;
               };
-              if (isFinite(from) && isFinite(to)) {
-                plotter.plotFnRange(ctx, absFn, from, to, 400, vp, {
-                  color: origMgColor,
-                  lineWidth: origLW,
-                });
-              } else {
-                const gatedAbs = (x: number) => (x >= from && x <= to ? absFn(x) : NaN);
-                plotter.plotFn(ctx, gatedAbs, vp, { color: origMgColor, lineWidth: origLW });
-              }
+              plotter.plotFn(ctx, gatedAbs, vp, { color: origMgColor, lineWidth: origLW, dashed: origDashed });
             }
-            // Draw Dirac delta terms (FT mode only — IFT inputs are rarely delta)
-            if (this.mode() === 'ft' && showOrigRe) {
+          }
+
+          // ── Dirac delta terms (FT mode only, per segment) ───────────────
+          if (this.mode() === 'ft' && showOrigRe) {
+            for (const s of compiled) {
               for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
-                seg.expression,
+                s.expression,
                 intVariable,
                 pv,
               )) {
-                if (pos >= from && pos <= to) {
+                if (pos >= s.from && pos <= s.to) {
                   this.drawingUtils.drawImpulse(ctx, vp, pos, weight, origReColor, origLW);
                 }
               }
@@ -738,7 +819,7 @@ export class ContinuousTransformComponent implements OnInit {
               ? this.mathUtils.compile(inputRealExpr, intVariable, pv)
               : null;
           if (inputReFn) {
-            plotter.plotFn(ctx, inputReFn, vp, { color: origReColor, lineWidth: origLW });
+            plotter.plotFn(ctx, inputReFn, vp, { color: origReColor, lineWidth: origLW, dashed: origDashed });
           }
 
           const hasInputImag = !!inputImagExpr && !this.isZeroExpression(inputImagExpr);
@@ -750,6 +831,7 @@ export class ContinuousTransformComponent implements OnInit {
             plotter.plotFn(ctx, inputImFn, vp, {
               color: origImColor,
               lineWidth: Math.max(1, origLW - 0.25),
+              dashed: origDashed,
             });
           }
 
@@ -763,7 +845,7 @@ export class ContinuousTransformComponent implements OnInit {
                 )
               : null;
           if (inputMagFn) {
-            plotter.plotFn(ctx, inputMagFn, vp, { color: origMgColor, lineWidth: origLW });
+            plotter.plotFn(ctx, inputMagFn, vp, { color: origMgColor, lineWidth: origLW, dashed: origDashed });
           }
 
           if (showOrigRe && inputRealExpr) {
@@ -801,9 +883,27 @@ export class ContinuousTransformComponent implements OnInit {
               ? this.buildMagFn(ft.realPart.maxima, ft.imagPart.maxima, transVariable, pv)
               : null;
 
-          if (reFn) plotter.plotFn(ctx, reFn, vp, { color: reColor, lineWidth: resLW });
-          if (imFn) plotter.plotFn(ctx, imFn, vp, { color: imColor, lineWidth: resLW });
-          if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW });
+          if (reFn)
+            plotter.plotFn(ctx, reFn, vp, {
+              color: reColor,
+              lineWidth: resLW,
+              jumpStyle: resultJumpStyle,
+              dashed: resDashed,
+            });
+          if (imFn)
+            plotter.plotFn(ctx, imFn, vp, {
+              color: imColor,
+              lineWidth: resLW,
+              jumpStyle: resultJumpStyle,
+              dashed: resDashed,
+            });
+          if (magFn)
+            plotter.plotFn(ctx, magFn, vp, {
+              color: mgColor,
+              lineWidth: resLW,
+              jumpStyle: resultJumpStyle,
+              dashed: resDashed,
+            });
 
           // ── Dirac delta impulses ───────────────────────────────────────
           // compile() already replaces delta(…) with 0, so plotFn produces
@@ -857,16 +957,28 @@ export class ContinuousTransformComponent implements OnInit {
 
             if (outputReFn || outputImFn || outputMagFn) {
               if (outputReFn) {
-                plotter.plotFn(ctx, outputReFn, vp, { color: origReColor, lineWidth: origLW });
+                plotter.plotFn(ctx, outputReFn, vp, {
+                  color: origReColor,
+                  lineWidth: origLW,
+                  jumpStyle: resultJumpStyle,
+                  dashed: origDashed,
+                });
               }
               if (outputImFn) {
                 plotter.plotFn(ctx, outputImFn, vp, {
                   color: origImColor,
                   lineWidth: Math.max(1, origLW - 0.25),
+                  jumpStyle: resultJumpStyle,
+                  dashed: origDashed,
                 });
               }
               if (outputMagFn) {
-                plotter.plotFn(ctx, outputMagFn, vp, { color: origMgColor, lineWidth: origLW });
+                plotter.plotFn(ctx, outputMagFn, vp, {
+                  color: origMgColor,
+                  lineWidth: origLW,
+                  jumpStyle: resultJumpStyle,
+                  dashed: origDashed,
+                });
               }
               if (showOrigRe && outputRealExpr) {
                 for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
@@ -890,32 +1002,26 @@ export class ContinuousTransformComponent implements OnInit {
               if (showOrigRe && ift.fPositive?.maxima) {
                 const raw = this.mathUtils.compile(ift.fPositive.maxima, transVariable, pv);
                 const fn = raw ? (x: number) => (x >= 0 ? raw(x) : NaN) : null;
-                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW });
+                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW, dashed: origDashed });
                 if (showOrigM && fn) {
                   plotter.plotFn(
                     ctx,
-                    (x) => {
-                      const y = fn(x);
-                      return isFinite(y) ? Math.abs(y) : NaN;
-                    },
+                    (x) => { const y = fn(x); return isFinite(y) ? Math.abs(y) : NaN; },
                     vp,
-                    { color: origMgColor, lineWidth: origLW },
+                    { color: origMgColor, lineWidth: origLW, dashed: origDashed },
                   );
                 }
               }
               if (showOrigRe && ift.fNegative?.maxima) {
                 const raw = this.mathUtils.compile(ift.fNegative.maxima, transVariable, pv);
                 const fn = raw ? (x: number) => (x <= 0 ? raw(x) : NaN) : null;
-                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW });
+                if (fn) plotter.plotFn(ctx, fn, vp, { color: origReColor, lineWidth: origLW, dashed: origDashed });
                 if (showOrigM && fn) {
                   plotter.plotFn(
                     ctx,
-                    (x) => {
-                      const y = fn(x);
-                      return isFinite(y) ? Math.abs(y) : NaN;
-                    },
+                    (x) => { const y = fn(x); return isFinite(y) ? Math.abs(y) : NaN; },
                     vp,
-                    { color: origMgColor, lineWidth: origLW },
+                    { color: origMgColor, lineWidth: origLW, dashed: origDashed },
                   );
                 }
               }
@@ -925,7 +1031,13 @@ export class ContinuousTransformComponent implements OnInit {
           // Input F(ω) split into Re/Im/|F| for inverse mode controls.
           if (showRe && ift.inputRealPart?.maxima) {
             const fn = this.mathUtils.compile(ift.inputRealPart.maxima, intVariable, pv);
-            if (fn) plotter.plotFn(ctx, fn, vp, { color: reColor, lineWidth: resLW });
+            if (fn)
+              plotter.plotFn(ctx, fn, vp, {
+                color: reColor,
+                lineWidth: resLW,
+                jumpStyle: resultJumpStyle,
+                dashed: resDashed,
+              });
             for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
               ift.inputRealPart.maxima,
               intVariable,
@@ -936,7 +1048,13 @@ export class ContinuousTransformComponent implements OnInit {
           }
           if (showIm && ift.inputImagPart?.maxima) {
             const fn = this.mathUtils.compile(ift.inputImagPart.maxima, intVariable, pv);
-            if (fn) plotter.plotFn(ctx, fn, vp, { color: imColor, lineWidth: resLW });
+            if (fn)
+              plotter.plotFn(ctx, fn, vp, {
+                color: imColor,
+                lineWidth: resLW,
+                jumpStyle: resultJumpStyle,
+                dashed: resDashed,
+              });
             for (const { pos, weight } of this.mathUtils.parseDeltaTerms(
               ift.inputImagPart.maxima,
               intVariable,
@@ -950,7 +1068,13 @@ export class ContinuousTransformComponent implements OnInit {
             const realExpr = ift.inputRealPart?.maxima ?? '0';
             const imagExpr = ift.inputImagPart?.maxima ?? '0';
             const magFn = this.buildMagFn(realExpr, imagExpr, intVariable, pv);
-            if (magFn) plotter.plotFn(ctx, magFn, vp, { color: mgColor, lineWidth: resLW });
+            if (magFn)
+              plotter.plotFn(ctx, magFn, vp, {
+                color: mgColor,
+                lineWidth: resLW,
+                jumpStyle: resultJumpStyle,
+                dashed: resDashed,
+              });
           }
         }
       },
@@ -1017,7 +1141,8 @@ export class ContinuousTransformComponent implements OnInit {
     this.showShareDialog.set(false);
     this.urlCopied.set(false);
     this.paramValues.set({});
-    this.paramSliders()?.reset();
+    this.paramSliderMins.set({});
+    this.paramSliderMaxs.set({});
     this.latestHistoryEntry.set(null);
     this.favoriteName = '';
     this.showFavoriteDialog.set(false);
@@ -1139,6 +1264,38 @@ export class ContinuousTransformComponent implements OnInit {
     return !!seg && !!main && seg.replace(/\s+/g, '') === main;
   });
 
+  /** True when outputRealPartPositive is identical to outputRealPart (no new info). */
+  readonly iftRealPosEqMain = computed(() => {
+    const ift = this.iftResult();
+    const pos  = ift?.outputRealPartPositive?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputRealPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!pos && !!main && pos === main;
+  });
+
+  /** True when outputRealPartNegative is identical to outputRealPart. */
+  readonly iftRealNegEqMain = computed(() => {
+    const ift = this.iftResult();
+    const neg  = ift?.outputRealPartNegative?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputRealPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!neg && !!main && neg === main;
+  });
+
+  /** True when outputImagPartPositive is identical to outputImagPart. */
+  readonly iftImagPosEqMain = computed(() => {
+    const ift = this.iftResult();
+    const pos  = ift?.outputImagPartPositive?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputImagPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!pos && !!main && pos === main;
+  });
+
+  /** True when outputImagPartNegative is identical to outputImagPart. */
+  readonly iftImagNegEqMain = computed(() => {
+    const ift = this.iftResult();
+    const neg  = ift?.outputImagPartNegative?.tex?.replace(/\s+/g, '') ?? '';
+    const main = ift?.outputImagPart?.tex?.replace(/\s+/g, '') ?? '';
+    return !!neg && !!main && neg === main;
+  });
+
   toggleAltForms(mode: 'ft' | 'ift'): void {
     if (mode === 'ft') {
       const nowOpen = !this.altFormsOpenFt();
@@ -1246,8 +1403,7 @@ export class ContinuousTransformComponent implements OnInit {
     // For FT: prepend the backend-provided alternate form (sech / sinh/(cosh+1))
     // if it exists and differs from the principal. This is the canonical "Otras formas"
     // entry derived directly from the Maxima computation, not from simplification.
-    const ftAlt =
-      mode === 'ft' ? (res as FourierTransformResponse).FAlt : undefined;
+    const ftAlt = mode === 'ft' ? (res as FourierTransformResponse).FAlt : undefined;
     const altSeed: AltForm | undefined =
       ftAlt?.tex && ftAlt.tex !== mainSymbolic.tex
         ? { labelKey: 'transforms.altFormAlt', tex: ftAlt.tex, maxima: ftAlt.maxima }
@@ -1327,7 +1483,7 @@ export class ContinuousTransformComponent implements OnInit {
         req: {
           expression: mainExpr,
           profile: 'complete',
-          functions: ['radcan'],
+          functions: ['radcan', 'expand', 'combine'],
           displayFlags: { exponentialize: true },
           convention,
         },
@@ -1407,7 +1563,7 @@ export class ContinuousTransformComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.ftResult.set(res);
-            this.showCanvasSettings.set(true);
+            this.showCanvasSettings.set(!this.isMobile());
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
@@ -1432,7 +1588,7 @@ export class ContinuousTransformComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.iftResult.set(res);
-            this.showCanvasSettings.set(true);
+            this.showCanvasSettings.set(!this.isMobile());
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
@@ -1530,6 +1686,83 @@ export class ContinuousTransformComponent implements OnInit {
     }
   }
 
+  // ── Test-case export ────────────────────────────────────────────────────────
+  readonly exportCopied = signal(false);
+
+  exportTestCase(): void {
+    const mode = this.mode();
+    const ft = this.ftResult();
+    const ift = this.iftResult();
+    const segs = this.segments();
+    const intV = this.intVar();
+    const trV = this.transVar();
+    const conv = this.convention();
+
+    if (!ft && !ift) return;
+
+    // Build segment list in fixture format
+    const segments = segs.map((s) => ({
+      expression: s.expression,
+      from: s.from,
+      to: s.to,
+    }));
+
+    let testCase: Record<string, unknown>;
+
+    if (mode === 'ft' && ft) {
+      testCase = {
+        id: 'XX00',
+        type: 'FT',
+        convention: conv,
+        intVar: intV,
+        transVar: trV,
+        segments,
+        expected: {
+          exists: ft.exists,
+          ...(ft.F?.maxima ? { F: ft.F.maxima } : {}),
+          ...(ft.realPart?.maxima ? { realPart: ft.realPart.maxima } : {}),
+          ...(ft.imagPart?.maxima ? { imagPart: ft.imagPart.maxima } : {}),
+        },
+      };
+    } else if (mode === 'ift' && ift) {
+      testCase = {
+        id: 'XX00',
+        type: 'IFT',
+        convention: conv,
+        intVar: intV,
+        transVar: trV,
+        segments,
+        expected: {
+          exists: ift.exists,
+          ...(ift.fCombined?.maxima ? { fCombined: ift.fCombined.maxima } : {}),
+          ...(ift.fPositive?.maxima ? { fPositive: ift.fPositive.maxima } : {}),
+          ...(ift.fNegative?.maxima ? { fNegative: ift.fNegative.maxima } : {}),
+          ...(ift.fOutUForm?.maxima ? { fOutUForm: ift.fOutUForm.maxima } : {}),
+        },
+      };
+    } else {
+      return;
+    }
+
+    const json = JSON.stringify(testCase, null, 2);
+
+    // Print to browser console for easy copy
+    console.group('📋 Test case export');
+    console.log(json);
+    console.groupEnd();
+
+    // Also copy to clipboard
+    navigator.clipboard
+      .writeText(json)
+      .then(() => {
+        this.exportCopied.set(true);
+        setTimeout(() => this.exportCopied.set(false), 2500);
+      })
+      .catch(() => {
+        // clipboard unavailable — user can copy from console
+      });
+  }
+
   toggleFullscreen(): void {
     const el = this.canvasWrapper()?.nativeElement;
     if (!el) return;
@@ -1600,6 +1833,8 @@ export class ContinuousTransformComponent implements OnInit {
     this.resultColor.set(preset.result);
     this.imagColor.set(preset.imag);
     this.magColor.set(preset.mag);
+    this.originalDashed.set(false);
+    this.resultDashed.set(false);
   }
 
   private isZeroExpression(expr: string): boolean {

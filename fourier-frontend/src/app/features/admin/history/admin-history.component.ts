@@ -1,6 +1,8 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslocoService } from '@jsverse/transloco';
 
 import { ApiService } from '../../../core/services/api/api.service';
 import { HistoryEntry, CALC_TYPE_LABEL, AdminHistoryQuery } from '../../../domain';
@@ -22,7 +24,9 @@ const CALC_TYPES = Object.keys(CALC_TYPE_LABEL);
   imports: [NgClass, FormsModule, AdminDatePipe],
 })
 export class AdminHistoryComponent implements OnInit {
-  private readonly api = inject(ApiService);
+  private readonly api      = inject(ApiService);
+  private readonly router   = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   readonly loading  = signal(false);
   readonly entries  = signal<HistoryEntry[]>([]);
@@ -181,6 +185,9 @@ export class AdminHistoryComponent implements OnInit {
     const expr = inp['expression'] as string | undefined;
     if (expr) return expr;
 
+    const equation = inp['equation'] as string | undefined;
+    if (equation) return equation;
+
     const points = inp['points'] as unknown[] | undefined;
     if (points) return `${points.length} puntos`;
 
@@ -189,6 +196,110 @@ export class AdminHistoryComponent implements OnInit {
 
   inputJson(entry: HistoryEntry): string {
     return JSON.stringify(entry.input, null, 2);
+  }
+
+  // ── Abrir cálculo en la calculadora ──────────────────────────────────────
+  // Reutiliza exactamente la misma lógica que el historial de usuario.
+
+  openInCalculator(entry: HistoryEntry, event: Event): void {
+    event.stopPropagation();
+    const inp  = entry.input;
+    const lang = this.transloco.getActiveLang();
+
+    if (entry.type === 'dft_signal' || entry.type === 'dft_epicycles') {
+      const encoded = this._encodeDftState(entry);
+      if (encoded) {
+        this.router.navigate(['/' + lang + '/transforms/dft'], { queryParams: { s: encoded } });
+      }
+      return;
+    }
+
+    if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse' || entry.type === 'laplace_ode') {
+      const encoded = this._encodeLaplaceState(entry);
+      if (encoded) {
+        this.router.navigate(['/' + lang + '/laplace'], { queryParams: { s: encoded } });
+      }
+      return;
+    }
+
+    const transformTypes = ['fourier_transform', 'inverse_fourier_transform'];
+    if (transformTypes.includes(entry.type)) {
+      this.router.navigate(['/' + lang + '/transforms/continuous'], {
+        state: { restoreInput: { ...inp, type: entry.type } },
+      });
+    } else if (entry.type === 'fourier_integral') {
+      this.router.navigate(['/' + lang + '/fourier-integral'], {
+        state: { restoreInput: inp },
+      });
+    } else {
+      this.router.navigate(['/' + lang + '/calculator'], { state: { restoreInput: inp } });
+    }
+  }
+
+  private _encodeDftState(entry: HistoryEntry): string {
+    const inp = entry.input;
+    try {
+      let state: Record<string, unknown>;
+      if (entry.type === 'dft_epicycles') {
+        const pts = inp['points'] as Array<{ x: number; y: number }> | undefined;
+        state = { mode: 'epicycles', pts: pts?.map((p) => `${p.x}, ${p.y}`).join('\n') ?? '' };
+      } else if (Array.isArray(inp['segments'])) {
+        state = {
+          mode: 'function', alg: 'fft',
+          v: (inp['intVar'] as string | undefined) ?? 'x',
+          N: (inp['N'] as number | undefined) ?? 128,
+          seg: (inp['segments'] as Array<{ expression: string; from: string; to: string; expressionTex?: string; fromTex?: string; toTex?: string }>)
+            .map((s) => ({ e: s.expression, et: s.expressionTex ?? s.expression, f: s.from, ft: s.fromTex ?? s.from, t: s.to, tt: s.toTex ?? s.to })),
+        };
+      } else {
+        const pts = inp['points'] as Array<{ x: number; y: number }> | undefined;
+        state = { mode: 'manual', mr: pts?.map((p) => p.y.toFixed(4)).join(', ') ?? '', mN: pts?.length ?? 8 };
+      }
+      const json = JSON.stringify(state);
+      return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16))));
+    } catch { return ''; }
+  }
+
+  private _encodeLaplaceState(entry: HistoryEntry): string {
+    const inp = entry.input;
+    try {
+      let state: Record<string, unknown>;
+      if (entry.type === 'laplace_direct') {
+        const segs = inp['segments'] as Array<{
+          expression: string; expressionTex?: string;
+          from: string; fromTex?: string;
+          to: string; toTex?: string;
+        }> | undefined;
+        state = {
+          m: 'direct',
+          vp: inp['timeVar'] && inp['freqVar'] ? `${inp['timeVar']}-${inp['freqVar']}` : 't-s',
+          seg: (segs ?? []).map(s => ({
+            e: s.expression, et: s.expressionTex ?? s.expression,
+            f: s.from, ft: s.fromTex ?? s.from,
+            t: s.to,   tt: s.toTex ?? s.to,
+          })),
+        };
+      } else if (entry.type === 'laplace_inverse') {
+        state = {
+          m: 'inverse',
+          vp: inp['timeVar'] && inp['freqVar'] ? `${inp['timeVar']}-${inp['freqVar']}` : 't-s',
+          expr: inp['expression'] as string ?? '',
+          exprTex: inp['expressionTex'] as string ?? '',
+        };
+      } else {
+        const unk = inp['unknown'] as string ?? 'y(t)';
+        const fnName = unk.replace(/\(.*\)$/, '') || 'y';
+        state = {
+          m: 'ode',
+          vp: inp['timeVar'] ? `${inp['timeVar']}-s` : 't-s',
+          eq:     inp['equation'] as string ?? '',
+          eqTex:  inp['equationTex'] as string ?? '',
+          fnName,
+          ics: inp['initialConditions'] ?? [],
+        };
+      }
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    } catch { return ''; }
   }
 
   typeBadgeClass(type: string): string {
@@ -200,6 +311,10 @@ export class AdminHistoryComponent implements OnInit {
       inverse_fourier_transform: 'bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800',
       dft_signal:                'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
       dft_epicycles:             'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800',
+      fourier_integral:          'bg-lime-50 dark:bg-lime-950/30 text-lime-700 dark:text-lime-400 border-lime-200 dark:border-lime-800',
+      laplace_direct:            'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800',
+      laplace_inverse:           'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+      laplace_ode:               'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
     };
     return map[type] ?? 'bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border';
   }

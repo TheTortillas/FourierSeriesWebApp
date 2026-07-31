@@ -28,15 +28,25 @@
     "close": "Cerrar",
     "saving": "Guardando…",
     "downloadCsv": "Descargar CSV",
-    "loginToDownloadCsv": "Inicia sesión para descargar CSV"
+    "loginToDownloadCsv": "Inicia sesión para descargar CSV",
+    "grapherBanner": "¿Quieres graficar esta función? → Abrir Graficador"
   },
   "nav": {
     "fourierAnalysis": "Análisis de Fourier",
     "series": "Series de Fourier",
     "transforms": "Transformadas",
+    "fourierIntegral": "Integral de Fourier",
+    "laplace": "Transformada de Laplace",
     "login": "Ingresar",
     "register": "Registrarse",
     "logout": "Salir",
+    "profile": "Mi perfil",
+    "settings": "Apariencia",
+    "settingsLang": "Idioma",
+    "settingsPalette": "Paleta",
+    "settingsTheme": "Tema",
+    "themeDark": "Oscuro",
+    "themeLight": "Claro",
     "quotaTitle": "Cálculos restantes esta semana",
     "changeToCoffee": "Cambiar a paleta coffee",
     "changeToNeutral": "Cambiar a paleta neutral",
@@ -52,19 +62,66 @@
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
+    },
+    "grapher": "Graficador"
+  },
+  "grapher": {
+    "addExpression": "+ Agregar expresión",
+    "changeColor": "Cambiar color",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "remove": "Eliminar",
+    "emptyHint": "Escribe una expresión para empezar",
+    "xLabel": "x",
+    "yLabel": "y",
+    "settings": {
+      "markers": "Marcadores",
+      "showRoots": "Raíces (función-eje)",
+      "showIntersections": "Intersecciones (función-función)",
+      "xAxis": "Formato eje X",
+      "zoom": "Zoom inicial"
+    },
+    "style": {
+      "lineStyle": "Estilo de línea",
+      "color": "Color",
+      "width": "Grosor",
+      "dash": "Estilo",
+      "customColor": "Color personalizado",
+      "solid": "Sólida",
+      "dashed": "Discontinua",
+      "dotted": "Punteada",
+      "show": "Mostrar",
+      "hide": "Ocultar",
+      "remove": "Eliminar"
     }
   },
   "home": {
-    "subtitle": "Calcula, visualiza y analiza Series y Transformadas de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
+    "subtitle": "Calcula y grafica series de Fourier, transformadas de Fourier y Laplace, e integrales. Resuelve EDOs con Laplace. Resultados simbólicos exactos y reconstrucción gráfica en tiempo real.",
     "learnMore": "Conoce más sobre la herramienta →",
+    "toolsTitle": "Herramientas",
+    "analysisTitle": "Análisis de Fourier",
+    "fourierTitle": "Análisis de Fourier",
+    "comingSoonTitle": "Próximamente",
+    "comingSoon": "Próximamente",
     "series": {
       "title": "Series de Fourier",
-      "description": "Descomposición periódica de funciones a trozos en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos exactos."
+      "description": "Descomposición periódica de funciones en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos y Parseval."
+    },
+    "integral": {
+      "title": "Integral de Fourier",
+      "description": "Representación integral de funciones no periódicas en sus formas trigonométrica, coseno, seno y compleja, con reconstrucción gráfica."
     },
     "transforms": {
-      "title": "Transformadas de Fourier",
-      "description": "Análisis espectral de señales no periódicas mediante la transformada continua de Fourier, con acceso preparado para la transformada discreta.",
-      "badge": "Continua activa"
+      "title": "Transformada de Fourier",
+      "description": "Análisis espectral de señales no periódicas con transformada continua directa e inversa, partes real e imaginaria y convenciones de normalización."
+    },
+    "laplace": {
+      "title": "Transformada de Laplace",
+      "description": "Transformada directa e inversa y resolución de EDOs. Con soporte de parámetros libres, fracciones parciales y graficación."
+    },
+    "grapher": {
+      "title": "Graficador",
+      "description": "Grafica funciones matemáticas de forma interactiva. Soporta múltiples expresiones, colores y zoom."
     }
   },
   "calculator": {
@@ -101,11 +158,15 @@
       "halfRangeDesc": "Series de senos o cosenos",
       "complex": "Compleja",
       "complexDesc": "cₙ e^{inω₀x}",
-      "fourierTransform": "Transformada",
-      "inverseFourierTransform": "T. Inversa",
+      "fourierTransform": "T. de Fourier",
+      "inverseFourierTransform": "T. Inversa de Fourier",
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
-      "dftEpicycles": "DFT epiciclos"
+      "dftEpicycles": "DFT epiciclos",
+      "fourierIntegral": "Int. Fourier",
+      "laplaceDirect": "Laplace directa",
+      "laplaceInverse": "Laplace inversa",
+      "laplaceOde": "Laplace EDO"
     },
     "label": "Configura la función y presiona"
   },
@@ -149,7 +210,24 @@
     "axisX": "Eje X",
     "lineStyle": "Estilo de líneas",
     "reset": "Restablecer",
-    "freeParams": "Parámetros libres",
+    "freeParams": "Constantes detectadas",
+    "paramCurrent": "Valor",
+    "paramMin": "Mín",
+    "paramMax": "Máx",
+    "harmonicsSection": "Armónicos",
+    "nTermsSection": "Número de términos",
+    "solidLine": "Sólida",
+    "dashedLine": "Discontinua",
+    "spectrumSettings": "Ajustes del espectro",
+    "spectrumView": "Vista",
+    "spectrumResetColors": "Restablecer colores",
+    "spectrumMarkerShape": "Forma del marcador",
+    "spectrumMarkerFilled": "Rellena",
+    "spectrumMarkerOpen": "Vacía",
+    "spectrumMarkerSquare": "Cuadrado",
+    "spectrumMarkerDiamond": "Diamante",
+    "spectrumLineWidth": "Grosor",
+    "spectrumCustomizeStems": "Personalizar stems",
     "original": "Original",
     "aprox": "Aprox",
     "linesLabel": "Leyenda de líneas",
@@ -163,10 +241,21 @@
     "profileExp": "Exp.",
     "profileComplete": "Completo",
     "tabCoefficients": "Coeficientes",
+    "tabCoefficientsDesc": "aₙ, bₙ, cₙ",
     "tabTerms": "Términos",
+    "tabTermsDesc": "Serie suma a suma",
     "tabSpectrum": "Espectro",
+    "tabSpectrumDesc": "Amplitud por frecuencia",
     "tabValidation": "Validación",
-    "tabParseval": "Parseval"
+    "tabValidationDesc": "Convergencia y errores",
+    "tabParseval": "Parseval",
+    "tabParsevalDesc": "Identidad de energía",
+    "layers": "Capas",
+    "reconstruction": "Reconstrucción",
+    "xAxis": "Eje X",
+    "color": "Color",
+    "width": "Ancho",
+    "dashed": "Discontinua"
   },
   "resultPanel": {
     "sine": "Seno",
@@ -223,7 +312,11 @@
     "title": "Transformada de Fourier",
     "subtitle": "Calcula la transformada continua o inversa de una función definida por tramos.",
     "continuous": "Continua",
+    "continuousDesc": "f(ω) = ∫f(t)e⁻ⁱωᵗdt",
+    "fourierIntegral": "Integral de Fourier",
+    "fourierIntegralDesc": "f(x) = ∫₀^∞ [A(ω)cos(ωx)+B(ω)sin(ωx)]dω",
     "discrete": "Discreta",
+    "discreteDesc": "X[k] = Σx[n]e⁻ⁱ²πkn/N",
     "comingSoon": "Próximamente",
     "direct": "Directa",
     "inverse": "Inversa",
@@ -249,9 +342,13 @@
     "lineStyle": "Estilo de líneas",
     "reset": "Restablecer",
     "original": "Original",
-    "freeParams": "Parámetros libres",
+    "freeParams": "Constantes detectadas",
     "lineLegend": "Leyenda de líneas",
     "dragToPan": "Arrastra para hacer pan · Scroll para zoom",
+    "ftInputLabel": "Entrada",
+    "ftResultLabel": "Resultado",
+    "panelSettings": "Configuración del canvas",
+    "closePanel": "Cerrar",
     "xAxisRepresents": " · El eje X representa {{ var }}",
     "result": "Resultado",
     "ftNotExists": "La transformada no existe para esta función (integral divergente).",
@@ -286,7 +383,9 @@
       "title": "Transformada Discreta de Fourier",
       "subtitle": "Analiza el espectro de frecuencias de una función muestreada o una señal discreta.",
       "modeFn": "Función continua",
+      "modeFnDesc": "f(x) por tramos",
       "modeManual": "Señal discreta",
+      "modeManualDesc": "x[0], x[1], …, x[N-1]",
       "algorithm": "Algoritmo de cómputo",
       "algorithmNote": "FFT y DFT producen el mismo resultado — la FFT es O(N log N), la DFT naïve es O(N²)",
       "variable": "Variable de integración",
@@ -309,10 +408,16 @@
       "samplesLabel": "x[n] original",
       "reconstructionLabel": "Reconstrucción IDFT",
       "spectrumTitle": "Espectro",
+      "normalizeToggle": "Normalizar amplitudes",
+      "spectrumNoteNorm": "Eje X: índice k · Eje Y: amplitud normalizada |X[k]|/N · Hover para detalles",
+      "spectrumNoteRaw": "Eje X: índice k · Eje Y: amplitud sin normalizar |X[k]| · Hover para detalles",
       "spectrumNote": "Eje X: índice k · Eje Y: amplitud normalizada |X[k]|/N · Hover para detalles",
       "fftShift": "Centrar espectro (fftshift)",
       "negFreq": "frec. negativas",
       "stemWidth": "Grosor stems",
+      "specMode": "Vista del espectro",
+      "specModeAmplitude": "espectro de amplitud",
+      "specModePhase": "espectro de fase",
       "layersShow": "Capas a mostrar",
       "showSamples": "x[n] original",
       "showReconstruction": "IDFT",
@@ -329,11 +434,15 @@
       "goToContinuous": "Ir a transformada continua",
       "freeSymbolsWarning": "La DFT requiere expresiones numéricas. Elimina los símbolos libres: {{ symbols }}",
       "modeEpicycles": "Epiciclos",
+      "modeEpicyclesDesc": "figura 2D → DFT",
       "epicycles": {
         "presetsLabel": "Figuras predefinidas",
         "presetCircle": "Círculo",
         "presetStar": "Estrella",
         "presetLissajous": "Lissajous 3:2",
+        "presetCat": "Gato",
+        "presetTrex": "T-Rex",
+        "presetHomer": "Homero",
         "inputLabel": "Puntos de entrada (x, y)",
         "drawBtn": "Dibujar en el canvas",
         "drawActive": "Dibujando…",
@@ -364,13 +473,22 @@
         "coeffsHint": "Filas resaltadas = top-K activos. Clic para aislar.",
         "phaseToggleHint": "Clic para alternar entre radianes/π y grados",
         "drawModeActive": "Modo dibujo activo"
-      }
-    }
+      },
+      "errorNValues": "Se necesitan exactamente {{ n }} valores separados por coma.",
+      "errorWeeklyLimit": "Límite semanal de cálculos alcanzado.",
+      "errorCompleteFields": "Completa todos los campos de los tramos.",
+      "errorEvalFunction": "Error al evaluar la función.",
+      "errorMinPoints": "Se necesitan al menos 3 puntos."
+    },
+    "hint": "Configura la función y presiona"
   },
   "history": {
     "title": "Mis cálculos",
     "total": "{{ count }} registros en total",
     "favoritesOnly": "Solo favoritos",
+    "filterType": "Tipo de cálculo",
+    "filterTypeAll": "Todos los tipos",
+    "emptyType": "Sin resultados para este tipo",
     "loading": "Cargando…",
     "emptyFavorites": "No tienes cálculos favoritos",
     "emptyAll": "Aún no has hecho cálculos",
@@ -414,11 +532,15 @@
       "trigonometric": "Trigonométrica",
       "halfRange": "Medio rango",
       "complex": "Compleja",
-      "fourierTransform": "Transformada",
-      "inverseFourierTransform": "T. Inversa",
+      "fourierTransform": "T. de Fourier",
+      "inverseFourierTransform": "T. Inversa de Fourier",
       "dftSignal": "DFT señal",
       "dftFunction": "DFT función",
-      "dftEpicycles": "DFT epiciclos"
+      "dftEpicycles": "DFT epiciclos",
+      "fourierIntegral": "Int. Fourier",
+      "laplaceDirect": "Laplace directa",
+      "laplaceInverse": "Laplace inversa",
+      "laplaceOde": "Laplace EDO"
     }
   },
   "auth": {
@@ -548,24 +670,32 @@
   },
   "seo": {
     "home": {
-      "title": "Calculadora de Series y Transformadas de Fourier",
-      "description": "Calculadora simbólica de series y transformadas de Fourier. Coeficientes exactos, gráficas en tiempo real y soporte para funciones a trozos."
+      "title": "Calculadora de Transformada de Fourier y Series de Fourier",
+      "description": "Calculadora simbólica de transformada de Fourier, transformada inversa y series de Fourier. Coeficientes exactos, gráficas interactivas en tiempo real y soporte para funciones definidas por tramos. Gratuita y en línea."
     },
     "calculator": {
-      "title": "Calculadora de Series de Fourier",
-      "description": "Calcula series de Fourier trigonométricas, complejas y de medio rango con coeficientes simbólicos exactos y reconstrucción gráfica interactiva."
+      "title": "Calculadora de Series de Fourier con Gráfica Interactiva",
+      "description": "Calcula series de Fourier trigonométricas, complejas y de medio rango con coeficientes simbólicos exactos. Reconstrucción gráfica animada, identidad de Parseval y soporte para funciones discontinuas."
     },
     "transforms": {
-      "title": "Calculadora de Transformada de Fourier Continua",
-      "description": "Calcula la transformada de Fourier continua y su inversa de forma simbólica. Visualiza el espectro de amplitud y fase en tiempo real."
+      "title": "Calculadora de Transformada de Fourier — Directa e Inversa",
+      "description": "Calcula la transformada de Fourier y la transformada inversa de Fourier de forma simbólica. Visualiza el espectro de amplitud y fase. Compatible con funciones a trozos, convolución, series de Taylor y más."
     },
     "dft": {
-      "title": "Calculadora de DFT — Transformada Discreta de Fourier",
-      "description": "Calcula la DFT con visualización de espectro de amplitud, fase y reconstrucción de señales mediante epiciclos."
+      "title": "Calculadora de DFT — Transformada Discreta de Fourier con Epiciclos",
+      "description": "Calcula la DFT y la FFT con visualización del espectro de amplitud y fase. Reconstruye señales con epiciclos animados. Ideal para procesamiento de señales y análisis de frecuencias."
+    },
+    "fourierIntegral": {
+      "title": "Integral de Fourier — Representación continua A(ω) y B(ω)",
+      "description": "Calcula la integral de Fourier trigonométrica, compleja, coseno y seno de funciones definidas por tramos. Visualiza la reconstrucción con el fenómeno de Gibbs mediante un slider interactivo."
     },
     "about": {
-      "title": "Acerca de",
-      "description": "Descubre todo lo que puedes hacer con Fourier Web Calculator: series de Fourier con identidad de Parseval, transformadas continuas y discretas, epicíclos, teclado matemático y más."
+      "title": "Acerca de Fourier & Laplace Web Calculator",
+      "description": "Fourier Web Calculator: herramienta gratuita para calcular series de Fourier, transformadas de Fourier y Laplace, integrales de Fourier y resolver EDOs con Laplace. Resultados simbólicos exactos con visualización en tiempo real."
+    },
+    "laplace": {
+      "title": "Transformada de Laplace — Directa, Inversa y EDOs con Gráfica",
+      "description": "Calcula la transformada de Laplace directa e inversa de funciones a trozos. Resuelve EDOs con condiciones iniciales por el método de Laplace. Gráfica interactiva y resultados simbólicos exactos."
     }
   },
   "dev": {
@@ -652,17 +782,25 @@
       },
       "featuresLabel": "¿Qué funcionalidades probaste? (puedes seleccionar varias)",
       "groupSeries": "Series de Fourier",
+      "groupIntegral": "Integral de Fourier",
       "groupContinuous": "Transformada continua",
       "groupDft": "Transformada Discreta (DFT)",
+      "groupLaplace": "Transformada de Laplace",
+      "groupTools": "Herramientas",
       "features": {
         "trigonometric": "Serie trigonométrica",
         "half_range": "Serie de medio rango",
         "complex": "Serie exponencial compleja",
+        "fourier_integral": "Integral de Fourier",
         "fourier_transform": "Transformada de Fourier continua",
         "inverse_fourier_transform": "Transformada inversa de Fourier",
         "dft_signal": "DFT — señal discreta (puntos manuales)",
         "dft_function": "DFT — función continua muestreada",
         "dft_epicycles": "DFT — epiciclos animados",
+        "laplace_direct": "Laplace directa",
+        "laplace_inverse": "Laplace inversa",
+        "laplace_ode": "Resolución de EDOs con Laplace",
+        "grapher": "Graficador de funciones",
         "none": "Ninguna aún"
       },
       "deviceLabel": "¿En qué dispositivo usaste la aplicación?",
@@ -673,7 +811,7 @@
     },
     "s4": {
       "heading": "¿Conociste la versión anterior?",
-      "imgAlt": "Captura de la versión anterior de Fourier Web Calculator",
+      "imgAlt": "Captura de la versión anterior de Fourier & Laplace Web Calculator",
       "usedPreviousLabel": "¿Habías usado esta herramienta antes de esta versión?",
       "usedPreviousYes": "Sí, usé la versión anterior",
       "usedPreviousNo": "No, es la primera vez que la uso",
@@ -743,8 +881,43 @@
   },
   "about": {
     "hero": {
-      "title": "Acerca de Fourier Web Calculator",
-      "intro": "Una herramienta web gratuita y de acceso abierto para calcular, visualizar y compartir análisis de Fourier — diseñada para estudiantes, ingenieros y científicos."
+      "title": "Acerca de Fourier & Laplace Web Calculator",
+      "intro": "Una herramienta web gratuita y de acceso abierto para calcular, visualizar y compartir análisis matemático — desde series y transformadas de Fourier hasta la Transformada de Laplace. Diseñada para estudiantes, ingenieros y científicos."
+    },
+    "sectionFourier": "Análisis de Fourier",
+    "sectionFourierTitle": "Herramientas de Fourier",
+    "sectionFourierDesc": "Cuatro herramientas para descomponer, transformar y analizar señales en el dominio de la frecuencia, todas con cálculo simbólico exacto vía Maxima CAS.",
+    "sectionLaplace": "Transformada de Laplace",
+    "sectionFns": "Referencia",
+    "sectionPlatform": "Plataforma",
+    "sectionPlatformTitle": "Entrada, cuentas y diseño",
+    "laplace": {
+      "title": "Transformada de Laplace",
+      "desc": "Calcula transformadas simbólicas exactas de funciones causales, recupera la función original y resuelve ecuaciones diferenciales ordinarias con condiciones iniciales.",
+      "direct": {
+        "title": "Transformada directa",
+        "desc": "Obtén F(s) = ℒ{f(t)} de forma exacta para funciones a trozos o con parámetros libres.",
+        "f1": "Funciones a trozos con múltiples segmentos en t ≥ 0",
+        "f2": "Soporte completo de u(t), δ(t), e^(at), sin, cos, sinh, cosh y polinomios",
+        "f3": "Parámetros libres con variación interactiva por sliders",
+        "f4": "Gráficas de f(t) y F(s) superpuestas en el canvas"
+      },
+      "inverse": {
+        "title": "Transformada inversa",
+        "desc": "Recupera f(t) = ℒ⁻¹{F(s)} de funciones racionales o con parámetros libres.",
+        "f1": "Fracciones parciales automáticas vía Maxima",
+        "f2": "Soporte de parámetros libres con sliders (p. ej. 1/(s²+a²))",
+        "f3": "Conversión cliente-lado de LaTeX a Maxima para la entrada de F(s)",
+        "f4": "Visualización simultánea de F(s) y f(t) en el canvas"
+      },
+      "ode": {
+        "title": "Resolución de EDOs",
+        "desc": "Resuelve EDOs lineales con coeficientes constantes aplicando la transformada de Laplace con condiciones iniciales.",
+        "f1": "EDOs de hasta orden 2 (configurable)",
+        "f2": "Condiciones iniciales y(0) e y'(0) ajustables",
+        "f3": "Muestra la solución simbólica exacta y su gráfica",
+        "f4": "Historial de resultados con recuperación completa"
+      }
     },
     "series": {
       "title": "Series de Fourier",
@@ -765,7 +938,7 @@
       "title": "Transformadas Continuas",
       "desc": "Calcula transformadas simbólicas exactas de señales a trozos, incluyendo funciones especiales.",
       "f1": "Transformada de Fourier continua bilateral (ℱ) y su inversa (ℱ⁻¹)",
-      "f3": "Entrada a trozos con soporte para u(·), sgn(·), rect(·), δ(·)",
+      "f3": "Entrada a trozos con soporte para u(·), sgn(·), rect(·), tri(·), δ(·)",
       "f4": "Resultados simbólicos exactos mediante Maxima CAS",
       "f5": "Gráficas interactivas de la función original y su transformada",
       "f6": "Exportar y compartir resultados",
@@ -773,11 +946,21 @@
       "f8": "Ver resultados en múltiples formas: expresiones de magnitud, fase, y partes real e imaginaria",
       "f9": "Acepta parámetros libres (p. ej. a·t, sin(ω·t)) — varíalos con sliders interactivos después de calcular"
     },
+    "integral": {
+      "title": "Integral de Fourier",
+      "desc": "Representa funciones no periódicas como integrales continuas de frecuencia y analiza sus distintas formas equivalentes.",
+      "f1": "Formas trigonométrica, coseno, seno y compleja — la forma compleja entrega el coeficiente C(ω) directamente",
+      "f2": "Funciones a trozos con múltiples segmentos en el dominio real o semirreal",
+      "f3": "Coeficientes A(ω) y B(ω) simbólicos exactos calculados con Maxima CAS",
+      "f4": "Reconstrucción gráfica interactiva por suma de Riemann en tiempo real",
+      "f5": "Formas equivalentes con extracción de constante y simplificaciones simbólicas",
+      "f6": "Exportar y compartir resultados"
+    },
     "dft": {
       "title": "Transformada Discreta de Fourier (DFT)",
       "desc": "Analiza señales numéricamente con la DFT, visualiza el espectro y observa la animación de epiciclos.",
       "f1": "Tres modos de entrada: muestreo de función, datos manuales y epiciclos",
-      "f2": "Modo función: muestreo numérico de funciones a trozos (soporta u, sgn, rect)",
+      "f2": "Modo función: muestreo numérico de funciones a trozos (soporta u, sgn, rect, tri)",
       "f3": "Modo manual: introduce cualquier cantidad de muestras a mano",
       "f4": "Modo epiciclos: la DFT cobra vida como vectores complejos giratorios que trazan cualquier figura cerrada",
       "f5": "Espectro: gráficas de amplitud |X[k]| y fase ∠X[k]",
@@ -792,7 +975,7 @@
       "f1": "Editor LaTeX interactivo con MathQuill",
       "f2": "Barra de escritorio con operadores, funciones, letras griegas y constantes",
       "f3": "Teclado táctil para móvil: numérico, trig, f(x), QWERTY completo + mayúsculas, letras griegas",
-      "f4": "Funciones disponibles: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), n!, Γ(·)"
+      "f4": "Funciones disponibles: sin, cos, tan, sinh, cosh, asin, acos, atan, exp, log, ln, √, u(·), sgn(·), rect(·), tri(·), n!, Γ(·)"
     },
     "account": {
       "title": "Cuentas e Historial",
@@ -810,10 +993,144 @@
       "f3": "Completamente bilingüe: español e inglés",
       "f4": "Diseño responsive — funciona en escritorio y móvil"
     },
-    "cta": "Empezar a explorar"
+    "cta": "Empezar a explorar",
+    "fns": {
+      "title": "Funciones especiales soportadas",
+      "intro": "Además de las funciones trigonométricas e hiperbólicas estándar, la calculadora reconoce estas funciones propias del análisis de señales, tanto en la entrada simbólica como en la evaluación numérica y las transformadas.",
+      "ftLabel": "Transformada de Fourier",
+      "ltLabel": "Transformada de Laplace",
+      "u": {
+        "name": "Escalón unitario",
+        "notation": "u(t)",
+        "aka": "Función de Heaviside",
+        "def": "Vale 1 para t ≥ 0 y 0 para t < 0. Modela el encendido abrupto de una señal: multiplica por u(t) para «activar» una función desde t = 0, o por u(t − a) para retrasarla a t = a.",
+        "latex": "u(t) = \\begin{cases} 1 & t \\ge 0 \\\\ 0 & t < 0 \\end{cases}",
+        "ft": "\\mathcal{F}\\{u(t)\\} = \\pi\\,\\delta(\\omega) + \\dfrac{1}{i\\omega}",
+        "lt": "\\mathcal{L}\\{u(t)\\} = \\dfrac{1}{s}, \\quad \\operatorname{Re}(s) > 0"
+      },
+      "sgn": {
+        "name": "Función signo",
+        "notation": "sgn(t)",
+        "aka": "Función signum",
+        "def": "Devuelve +1 si t > 0, −1 si t < 0 y 0 en el origen. Se relaciona con el escalón por sgn(t) = 2u(t) − 1. Aparece en la transformada de Hilbert y en el análisis de señales causales.",
+        "latex": "\\operatorname{sgn}(t) = \\begin{cases} 1 & t > 0 \\\\ 0 & t = 0 \\\\ -1 & t < 0 \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{sgn}(t)\\} = \\dfrac{2}{i\\omega}"
+      },
+      "delta": {
+        "name": "Delta de Dirac",
+        "notation": "δ(t)",
+        "aka": "Impulso unitario",
+        "def": "Distribución de área unidad concentrada en t = 0. Propiedad de muestreo: ∫ f(t) δ(t − a) dt = f(a). Es el elemento neutro de la convolución y el fundamento de los sistemas LTI.",
+        "latex": "\\int_{-\\infty}^{\\infty} \\delta(t)\\,dt = 1",
+        "ft": "\\mathcal{F}\\{\\delta(t)\\} = 1",
+        "lt": "\\mathcal{L}\\{\\delta(t)\\} = 1"
+      },
+      "rect": {
+        "name": "Pulso rectangular",
+        "notation": "rect(t)",
+        "aka": "Pulso rectangular",
+        "def": "Vale 1 cuando |t| < ½, ½ en los bordes y 0 fuera. Usa rect(t/T) para un pulso de ancho T, o rect((t − t₀)/T) para desplazarlo en el tiempo.",
+        "latex": "\\operatorname{rect}(t) = \\begin{cases} 1 & |t| < \\tfrac{1}{2} \\\\ \\tfrac{1}{2} & |t| = \\tfrac{1}{2} \\\\ 0 & |t| > \\tfrac{1}{2} \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{rect}(t/T)\\} = T\\,\\operatorname{sinc}\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
+      },
+      "tri": {
+        "name": "Pulso triangular",
+        "notation": "tri(t)",
+        "aka": "Pulso triangular",
+        "def": "Una pirámide de base 2 y altura 1 — la autoconvolución normalizada de rect. Usa tri(t/T) para escalar la base a 2T. Su transformada es sinc², lo que lo hace útil en diseño de ventanas espectrales.",
+        "latex": "\\operatorname{tri}(t) = \\begin{cases} 1 - |t| & |t| < 1 \\\\ 0 & |t| \\ge 1 \\end{cases}",
+        "ft": "\\mathcal{F}\\{\\operatorname{tri}(t/T)\\} = T\\,\\operatorname{sinc}^2\\!\\left(\\frac{\\omega T}{2\\pi}\\right)"
+      },
+      "sinc": {
+        "name": "Función sinc",
+        "notation": "sinc(t)",
+        "aka": "Cardinal del seno",
+        "def": "Definida como sin(t)/t (sinc no normalizada). Surge naturalmente como la transformada de rect y como la respuesta en frecuencia del filtro paso bajo ideal. Por continuidad, sinc(0) = 1.",
+        "latex": "\\operatorname{sinc}(t) = \\frac{\\sin t}{t}",
+        "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
+      }
+    }
+  },
+  "fourier-integral": {
+    "title": "Integral de Fourier",
+    "subtitle": "Representación integral de funciones no periódicas",
+    "trigonometric": "Trigonométrica",
+    "complex": "Compleja",
+    "cosine": "Integral Coseno",
+    "sine": "Integral Seno",
+    "reconstruction": "Reconstrucción",
+    "upperLimit": "Límite superior a = {{a}}",
+    "gibbs": "Mueve el slider para ver el fenómeno de Gibbs",
+    "intVar": "Variable de integración",
+    "transVar": "Variable de transformada",
+    "integralType": "Tipo de integral",
+    "coefficients": "Coeficientes",
+    "upperLimitLabel": "Límite superior (a)",
+    "upperLimitInfo": "Reemplaza el límite superior ∞ por un valor finito — mueve el slider para visualizar la convergencia y el fenómeno de Gibbs",
+    "variantTrigonometric": "Trigonométrica",
+    "variantComplex": "Compleja",
+    "variantCosine": "Coseno",
+    "variantSine": "Seno",
+    "reCw": "Re C({{ v }})",
+    "imCw": "Im C({{ v }})",
+    "notFound": "No se encontró una forma cerrada para esta función.",
+    "hint": "Configura la función y presiona",
+    "calculate": "Calcular"
   },
   "simplify": {
     "nInteger": "n ∈ ℤ",
-    "toHyperbolic": "→ Hiperbólicas"
+    "toHyperbolic": "→ Hiperbólicas",
+    "profileRawDesc": "Muestra los coeficientes tal como los devuelve el motor, sin ninguna transformación.",
+    "profileIntegerDesc": "Simplificación algebraica básica: aplica declare(n, integer), elimina sin(nπ)=0, cos(nπ)=(-1)ⁿ, etc.",
+    "profileTrigDesc": "Convierte a la forma trigonométrica más compacta, combinando términos y aplicando identidades.",
+    "profileExpDesc": "Reescribe los coeficientes usando exponenciales complejas. Elige entre forma e^{ix} o De Moivre.",
+    "profileCompleteDesc": "Aplica todas las simplificaciones disponibles en cascada: entero → trigonométrico → reducción de potencias."
+  },
+  "laplace": {
+    "title": "Transformada de Laplace",
+    "subtitle": "Transformada directa, inversa y resolución de EDOs mediante el método de Laplace",
+    "modeDirecta": "Directa",
+    "modeInversa": "Inversa",
+    "modeOde": "EDO",
+    "exprPlaceholder": "ej. 1/(s^2+1)",
+    "inverseHint": "Ingresa F(s) en términos de s. Se aplican fracciones parciales automáticamente.",
+    "variables": "Variables",
+    "odeEquation": "Ecuación diferencial",
+    "odeUnknown": "Función incógnita",
+    "odeIcs": "Condiciones iniciales",
+    "addIc": "Agregar condición",
+    "ic0": "y(0)",
+    "ic1": "y'(0)",
+    "ic2": "y''(0)",
+    "ic3": "y'''(0)",
+    "hint": "Configura la función y presiona Calcular para obtener la transformada",
+    "calculate": "Calcular",
+    "calculating": "Calculando…",
+    "notFound": "No se encontró una forma cerrada para esta expresión.",
+    "odeSolution": "Solución y(t)",
+    "params": "Parámetros",
+    "execTime": "Calculado en {{ms}} ms",
+    "errorNoSegments": "Agrega al menos un segmento con una expresión.",
+    "errorNoExpr": "Ingresa una expresión F(s) para invertir.",
+    "errorNoEq": "Ingresa la ecuación diferencial y la función incógnita.",
+    "odeHint": "Usa sintaxis de Maxima: diff(y(t),t,2) para y'', diff(y(t),t) para y'",
+    "odeHintPrefix": "Escribe la ecuación usando notación prima:",
+    "odeVariable": "Variable",
+    "odeExamplePlaceholder": "Cargar ejemplo…",
+    "odeEx1stOrderHom": "1er orden homogéneo",
+    "odeEx1stOrderNonHom": "1er orden no homogéneo",
+    "odeEx2ndRealRoots": "2do orden — raíces reales",
+    "odeEx2ndComplex": "2do orden — raíces complejas",
+    "odeEx2ndRepeated": "2do orden — raíz repetida",
+    "odeEx2ndExpForcing": "2do orden — forzamiento exponencial",
+    "odeEx2ndSinForcing": "2do orden — forzamiento sinusoidal",
+    "odeEx2ndPolyForcing": "2do orden — forzamiento polinomial",
+    "odeEx2ndCompoundForcing": "2do orden — forzamiento compuesto",
+    "odeEx2ndDirac": "2do orden — delta de Dirac",
+    "odeEx3rdOrder": "3er orden",
+    "newCalculation": "Nuevo cálculo",
+    "result": "Resultado",
+    "fullTransform": "Transformada completa",
+    "inverseResult": "Transformada inversa"
   }
 }

@@ -55,10 +55,31 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'fourier-integral',
+        loadComponent: () =>
+          import('./features/transforms/fourier-integral/fourier-integral.component').then(
+            (m) => m.FourierIntegralComponent,
+          ),
+      },
+      {
+        path: 'laplace',
+        loadComponent: () =>
+          import('./features/transforms/laplace/laplace.component').then(
+            (m) => m.LaplaceComponent,
+          ),
+      },
+      {
         path: 'transforms',
         loadChildren: () =>
           import('./features/transforms/transforms.routes').then(
             (m) => m.transformRoutes,
+          ),
+      },
+      {
+        path: 'grapher',
+        loadComponent: () =>
+          import('./features/grapher/grapher.component').then(
+            (m) => m.GrapherComponent,
           ),
       },
       {

@@ -19,6 +19,7 @@ import {
   buildQuadWithSingularities,
   getRemovableSingularities,
 } from "./quadHelper";
+import { expandAbsSegments } from "./absExpander";
 
 const TRIG_MARKERS = [
   "__A0RAW_MAXIMA__",
@@ -76,10 +77,11 @@ export class TrigonometricService {
     }
 
     const script = await loadScript("trigonometric", "trigonometric.mac");
-    const funcInput = this.buildFuncInput(input.segments);
+    const segments = expandAbsSegments(input.segments, intVar);
+    const funcInput = this.buildFuncInput(segments);
 
     const quadIntegralA0 = buildQuadWithSingularities(
-      input.segments,
+      segments,
       intVar,
       removableSingularities,
       "(2/T)",
@@ -193,10 +195,11 @@ kill(all)$
       "trigonometric",
       "trigonometric_coeffs.mac",
     );
-    const funcInput = this.buildFuncInput(input.segments);
+    const segments = expandAbsSegments(input.segments, intVar);
+    const funcInput = this.buildFuncInput(segments);
 
     const quadIntegralAn = buildQuadWithSingularities(
-      input.segments,
+      segments,
       intVar,
       removableSingularities,
       "(2/T)",
@@ -204,7 +207,7 @@ kill(all)$
     );
 
     const quadIntegralBn = buildQuadWithSingularities(
-      input.segments,
+      segments,
       intVar,
       removableSingularities,
       "(2/T)",

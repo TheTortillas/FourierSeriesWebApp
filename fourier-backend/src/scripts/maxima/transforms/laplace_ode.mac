@@ -1,0 +1,47 @@
+/* laplace_ode.mac
+   Solves an ODE using Laplace transforms via desolve + atvalue.
+   Injected variables:
+     ODE_INPUT    — the ODE as a Maxima equation string, e.g. diff(y(t),t,2)+y(t)=sin(t)
+     UNKNOWN_FN   — the unknown function, e.g. y(t)
+     INTVAR       — time variable (t)
+     IC_INPUT     — list of [order, value] pairs for initial conditions
+*/
+display2d: false$
+%iargs:    false$
+radexpand: false$
+
+/* Declare initial conditions via atvalue */
+for _ic in IC_INPUT do block([_ord, _val, _deriv],
+  _ord: _ic[1],
+  _val: _ic[2],
+  _deriv: if _ord = 0 then UNKNOWN_FN
+          else apply('diff, [UNKNOWN_FN, INTVAR, _ord]),
+  errcatch(atvalue(_deriv, INTVAR = 0, _val))
+)$
+
+sol_raw: false$
+block([_r],
+  _r: errcatch(desolve(ODE_INPUT, UNKNOWN_FN)),
+  if _r # [] then block([_v],
+    _v: first(_r),
+    /* desolve returns an equation like y(t) = ..., extract rhs */
+    if listp(_v) then _v: first(_v),
+    if not atom(_v) and op(_v) = "=" then _v: rhs(_v),
+    sol_raw: ratsimp(_v)
+  )
+)$
+
+exists: is(sol_raw # false)$
+
+/* Extract free parameters (symbols other than INTVAR and UNKNOWN_FN's variable) */
+free_params: []$
+if exists then block([_vars, _reserved],
+  _vars: listofvars(sol_raw),
+  _reserved: [INTVAR],
+  free_params: sublist(_vars, lambda([_v], not member(_v, _reserved)))
+)$
+
+print("__EXISTS__")$     print(string(exists))$
+print("__SOL_MAXIMA__")$ print(string(sol_raw))$
+print("__SOL_TEX__")$    if exists then tex(sol_raw) else print("")$
+print("__PARAMS__")$     print(string(free_params))$

@@ -14,7 +14,7 @@ type RequestLike = {
   user?: { id?: string };
 };
 
-type RateLimitBucket = "compute" | "parse" | "auth";
+type RateLimitBucket = "compute" | "parse" | "auth" | "general";
 
 type RateLimitMetricsSnapshot = {
   startedAt: string;
@@ -29,8 +29,8 @@ type RateLimitMetricsSnapshot = {
 
 const metrics: Omit<RateLimitMetricsSnapshot, "ratios"> = {
   startedAt: new Date().toISOString(),
-  requestsByBucket: { compute: 0, parse: 0, auth: 0 },
-  blockedByBucket:  { compute: 0, parse: 0, auth: 0 },
+  requestsByBucket: { compute: 0, parse: 0, auth: 0, general: 0 },
+  blockedByBucket:  { compute: 0, parse: 0, auth: 0, general: 0 },
   requestsByEndpoint: {},
   blockedByEndpoint:  {},
   blockedByLimiter:   {},
@@ -166,6 +166,7 @@ export function getRateLimitMetricsSnapshot(): RateLimitMetricsSnapshot {
       compute: ratio(blockedByBucket.compute, requestsByBucket.compute),
       parse:   ratio(blockedByBucket.parse,   requestsByBucket.parse),
       auth:    ratio(blockedByBucket.auth,     requestsByBucket.auth),
+      general: ratio(blockedByBucket.general,  requestsByBucket.general),
     },
   };
 }
@@ -201,7 +202,7 @@ export const generalLimiter = rateLimit({
   legacyHeaders: false,
   skip: (req) => hasDedicatedLimiter(req.path),
   handler: rateLimitHandler(
-    "auth",
+    "general",
     "general",
     "Too many requests, please try again later.",
   ),

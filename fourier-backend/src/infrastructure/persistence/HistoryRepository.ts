@@ -137,6 +137,12 @@ export class HistoryRepository implements IHistoryRepository {
       eventRow = r.rows[0]!;
     }
 
+    // ── Paso 3: Registrar la ejecución en el log append-only ───────────────────
+    // execution_log es la fuente de verdad para métricas temporales. No lanzamos
+    // error si falla — es telemetría, no datos de negocio críticos.
+    const eventId = (eventRow as { id: string }).id;
+    db.query(`INSERT INTO execution_log (event_id) VALUES ($1)`, [eventId]).catch(() => {});
+
     // Completamos con type e input que ya tenemos del paso 1.
     return { ...eventRow, type: input.type, input: input.input } as HistoryRecord;
   }
@@ -146,15 +152,19 @@ export class HistoryRepository implements IHistoryRepository {
     limit: number,
     offset: number,
     favoritesOnly = false,
+    calcType?: string,
   ): Promise<HistoryRecord[]> {
+    const params: unknown[] = [userId, limit, offset];
+    const conditions: string[] = [`ce.user_id = $1`];
+    if (favoritesOnly) conditions.push(`ce.is_favorite = TRUE`);
+    if (calcType) { params.push(calcType); conditions.push(`c.type = $${params.length}`); }
     const result = await db.query(
       `SELECT ${EVENT_COLS}
        ${EVENT_JOIN}
-       WHERE ce.user_id = $1
-         ${favoritesOnly ? "AND ce.is_favorite = TRUE" : ""}
+       WHERE ${conditions.join(" AND ")}
        ORDER BY ce.last_calculated_at DESC
        LIMIT $2 OFFSET $3`,
-      [userId, limit, offset],
+      params,
     );
     return result.rows;
   }
@@ -230,13 +240,17 @@ export class HistoryRepository implements IHistoryRepository {
     // es un registro canónico compartido que puede tener otros eventos.
   }
 
-  async countByUser(userId: string, favoritesOnly = false): Promise<number> {
+  async countByUser(userId: string, favoritesOnly = false, calcType?: string): Promise<number> {
+    const params: unknown[] = [userId];
+    const conditions: string[] = [`ce.user_id = $1`];
+    if (favoritesOnly) conditions.push(`ce.is_favorite = TRUE`);
+    if (calcType) { params.push(calcType); conditions.push(`c.type = $${params.length}`); }
     const result = await db.query(
       `SELECT COUNT(*) AS count
-       FROM calculation_events
-       WHERE user_id = $1
-         ${favoritesOnly ? "AND is_favorite = TRUE" : ""}`,
-      [userId],
+       FROM calculation_events ce
+       JOIN calculations c ON c.id = ce.calculation_id
+       WHERE ${conditions.join(" AND ")}`,
+      params,
     );
     return parseInt(result.rows[0]?.count ?? "0");
   }

@@ -1,11 +1,11 @@
 import { Component, OnInit, effect, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { filter, take } from 'rxjs';
 import { CalculatorStore } from './store/calculator.store';
 import { CalculatorFormComponent } from './components/calculator-form/calculator-form.component';
 import { ResultsSummaryComponent } from './components/results-summary/results-summary.component';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { UserStore } from '../../core/services/auth/user.store';
 import { SeoService } from '../../core/services/seo/seo.service';
@@ -14,7 +14,7 @@ import { SurveyService } from '../../core/services/survey/survey.service';
 
 @Component({
   selector: 'app-calculator',
-  imports: [NavComponent, CalculatorFormComponent, ResultsSummaryComponent, TranslocoPipe],
+  imports: [NavComponent, CalculatorFormComponent, ResultsSummaryComponent, TranslocoPipe, RouterLink],
   templateUrl: './calculator.component.html',
 })
 export class CalculatorComponent implements OnInit {
@@ -25,9 +25,13 @@ export class CalculatorComponent implements OnInit {
   private readonly seo        = inject(SeoService);
   private readonly feedbackSvc  = inject(FeedbackService);
   private readonly surveySvc    = inject(SurveyService);
+  private readonly transloco    = inject(TranslocoService);
+
+  readonly lang    = toSignal(this.transloco.langChanges$, { initialValue: this.transloco.getActiveLang() });
+  readonly hasResult = this.store.hasResult;
 
   ngOnInit(): void {
-    this.seo.setPage('seo.calculator.title', 'seo.calculator.description');
+    this.seo.setPage('seo.calculator.title', 'seo.calculator.description', 'Fourier series calculator, calculadora series de Fourier, coeficientes de Fourier, Parseval identity, trigonometric series, complex Fourier series');
   }
 
   /** Set to true when URL state was restored and needs a first calculation */
@@ -79,8 +83,19 @@ export class CalculatorComponent implements OnInit {
           queryParams: { s: this.store.encodeState() },
           replaceUrl: true,
         });
-        setTimeout(() => this.feedbackSvc.tryOpenModal(), 4000);
-        setTimeout(() => this.surveySvc.tryPrompt(), 8000);
+        // Wait for auth to initialize before checking flags so that
+        // authenticated users are never shown prompts they already completed.
+        const tryPrompts = () => {
+          setTimeout(() => this.feedbackSvc.tryOpenModal(), 4000);
+          setTimeout(() => this.surveySvc.tryPrompt(), 8000);
+        };
+        if (this.userStore.initialized()) {
+          tryPrompts();
+        } else {
+          toObservable(this.userStore.initialized)
+            .pipe(filter(Boolean), take(1))
+            .subscribe(tryPrompts);
+        }
       } else if (this.urlPopulated) {
         // Form was reset — clear the URL param
         void this.router.navigate([], {

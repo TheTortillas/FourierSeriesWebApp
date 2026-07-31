@@ -251,6 +251,26 @@
               <p
                 class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-3 mb-1"
               >
+                {{ 'survey.s3.groupIntegral' | transloco }}
+              </p>
+              @for (f of featuresIntegral; track f) {
+                <label class="flex items-center gap-3 cursor-pointer group pl-1">
+                  <input
+                    type="checkbox"
+                    [checked]="hasFeature(f)"
+                    (change)="toggleFeature(f)"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
+                    {{ 'survey.s3.features.' + f | transloco }}
+                  </span>
+                </label>
+              }
+              <p
+                class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-3 mb-1"
+              >
                 {{ 'survey.s3.groupContinuous' | transloco }}
               </p>
               @for (f of featuresCont; track f) {
@@ -274,6 +294,46 @@
                 {{ 'survey.s3.groupDft' | transloco }}
               </p>
               @for (f of featuresDft; track f) {
+                <label class="flex items-center gap-3 cursor-pointer group pl-1">
+                  <input
+                    type="checkbox"
+                    [checked]="hasFeature(f)"
+                    (change)="toggleFeature(f)"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
+                    {{ 'survey.s3.features.' + f | transloco }}
+                  </span>
+                </label>
+              }
+              <p
+                class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-3 mb-1"
+              >
+                {{ 'survey.s3.groupLaplace' | transloco }}
+              </p>
+              @for (f of featuresLaplace; track f) {
+                <label class="flex items-center gap-3 cursor-pointer group pl-1">
+                  <input
+                    type="checkbox"
+                    [checked]="hasFeature(f)"
+                    (change)="toggleFeature(f)"
+                    class="accent-accent w-4 h-4 shrink-0"
+                  />
+                  <span
+                    class="text-sm font-mono text-ink dark:text-dark-ink group-hover:text-accent transition-colors"
+                  >
+                    {{ 'survey.s3.features.' + f | transloco }}
+                  </span>
+                </label>
+              }
+              <p
+                class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider mt-3 mb-1"
+              >
+                {{ 'survey.s3.groupTools' | transloco }}
+              </p>
+              @for (f of featuresTools; track f) {
                 <label class="flex items-center gap-3 cursor-pointer group pl-1">
                   <input
                     type="checkbox"

@@ -1,27 +1,41 @@
 <div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
   <app-nav />
 
-  <main class="flex-1 max-w-2xl mx-auto w-full px-4 py-10 flex flex-col gap-6">
+  <main class="flex-1 max-w-3xl mx-auto w-full px-4 py-10 flex flex-col gap-6">
 
     <h1 class="font-display text-2xl text-ink dark:text-dark-ink">{{ 'profile.title' | transloco }}</h1>
 
     @if (store.user(); as user) {
 
       <!-- ── Identity card ──────────────────────────────────────────────── -->
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5 flex flex-col gap-5">
+      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden flex flex-col">
 
-        <!-- Avatar + name + email -->
-        <div class="flex items-start gap-4">
-          <div class="w-14 h-14 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
-            <span class="font-display text-xl text-accent select-none">
-              {{ user.firstName[0] }}{{ user.lastName[0] }}
-            </span>
-          </div>
+        <!-- Hero: avatar + info principal -->
+        <div class="flex items-center gap-5 px-6 py-6 bg-accent/5 dark:bg-accent/5 border-b border-border dark:border-dark-border">
 
-          <div class="flex-1 min-w-0">
+          <!-- Avatar 80px -->
+          @if (user.avatarUrl) {
+            <img
+              [src]="user.avatarUrl"
+              [alt]="user.firstName + ' ' + user.lastName"
+              class="w-20 h-20 rounded-full object-cover shrink-0 border border-accent/20"
+              referrerpolicy="no-referrer"
+            />
+          } @else {
+            <div class="w-20 h-20 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+              <span class="font-display text-2xl text-accent select-none">
+                {{ user.firstName[0] }}{{ user.lastName[0] }}
+              </span>
+            </div>
+          }
+
+          <!-- Nombre + email + badges -->
+          <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+
+            <!-- Nombre + editar -->
             @if (!editingName()) {
               <div class="flex items-center gap-2 flex-wrap">
-                <p class="font-display text-lg text-ink dark:text-dark-ink leading-tight">
+                <p class="font-display text-2xl text-ink dark:text-dark-ink leading-tight">
                   {{ user.firstName }} {{ user.lastName }}
                 </p>
                 <button type="button" (click)="startEditName()"
@@ -59,56 +73,54 @@
                 </div>
               </form>
             }
-            <p class="font-mono text-xs text-muted dark:text-dark-muted truncate mt-0.5">{{ user.email }}</p>
-          </div>
 
-          <!-- Tier badge -->
-          <span [class]="user.tier === 'premium'
-            ? 'shrink-0 px-2 py-0.5 rounded-full text-xs font-mono border bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
-            : 'shrink-0 px-2 py-0.5 rounded-full text-xs font-mono border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'">
-            {{ user.tier }}
-          </span>
+            <!-- Email -->
+            <p class="font-mono text-xs text-muted dark:text-dark-muted truncate">{{ user.email }}</p>
+
+            <!-- Badges: tier + verificado -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <span [class]="user.tier === 'premium'
+                ? 'px-2 py-0.5 rounded-full text-xs font-mono border bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
+                : 'px-2 py-0.5 rounded-full text-xs font-mono border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'">
+                {{ user.tier }}
+              </span>
+              @if (user.emailVerified) {
+                <span class="text-xs font-mono text-green-600 dark:text-green-400">
+                  {{ 'profile.emailVerified' | transloco }}
+                </span>
+              } @else {
+                <span class="flex items-center gap-1.5 flex-wrap text-xs font-mono text-amber-600 dark:text-amber-400">
+                  {{ 'profile.emailNotVerified' | transloco }}
+                  @if (!resendSent()) {
+                    <button type="button" (click)="onResendVerification()" [disabled]="resendLoading()"
+                      class="text-accent hover:underline cursor-pointer disabled:opacity-50">
+                      {{ resendLoading() ? ('profile.resendSending' | transloco) : ('profile.resendVerification' | transloco) }}
+                    </button>
+                  } @else {
+                    <span class="text-green-600 dark:text-green-400">{{ 'profile.resendSent' | transloco }}</span>
+                  }
+                </span>
+              }
+            </div>
+          </div>
         </div>
 
-        <!-- Info grid -->
-        <div class="grid grid-cols-2 gap-x-6 gap-y-4 text-xs font-mono border-t border-border dark:border-dark-border pt-4">
+        <!-- Metadata grid: 3 cols -->
+        <div class="grid grid-cols-3 gap-4 text-xs font-mono px-6 py-5">
 
-          <!-- Email verification -->
+          <!-- Miembro desde -->
           <div class="flex flex-col gap-1">
-            <span class="text-muted dark:text-dark-muted">{{ 'profile.email' | transloco }}</span>
-            @if (user.emailVerified) {
-              <span class="text-green-600 dark:text-green-400">{{ 'profile.emailVerified' | transloco }}</span>
-            } @else {
-              <div class="flex flex-col gap-1">
-                <span class="text-amber-600 dark:text-amber-400">{{ 'profile.emailNotVerified' | transloco }}</span>
-                @if (!resendSent()) {
-                  <button type="button" (click)="onResendVerification()" [disabled]="resendLoading()"
-                    class="text-accent hover:underline cursor-pointer disabled:opacity-50 text-left">
-                    {{ resendLoading() ? ('profile.resendSending' | transloco) : ('profile.resendVerification' | transloco) }}
-                  </button>
-                } @else {
-                  <span class="text-green-600 dark:text-green-400">{{ 'profile.resendSent' | transloco }}</span>
-                }
-              </div>
-            }
+            <span class="text-muted dark:text-dark-muted">{{ 'profile.memberSince' | transloco }}</span>
+            <span class="text-ink dark:text-dark-ink">{{ formatDate(user.createdAt) }}</span>
           </div>
 
-          <!-- Auth method -->
+          <!-- Último login -->
           <div class="flex flex-col gap-1">
-            <span class="text-muted dark:text-dark-muted">{{ 'profile.authMethod' | transloco }}</span>
-            @if (user.passwordHash === null) {
-              <span class="flex items-center gap-1 text-ink dark:text-dark-ink">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14l-4-4 1.41-1.41L11 13.17l6.59-6.59L19 8l-8 8z"/>
-                </svg>
-                Google
-              </span>
-            } @else {
-              <span class="text-ink dark:text-dark-ink">{{ 'profile.authEmail' | transloco }}</span>
-            }
+            <span class="text-muted dark:text-dark-muted">{{ 'profile.lastLogin' | transloco }}</span>
+            <span class="text-ink dark:text-dark-ink">{{ formatDate(user.lastLoginAt) }}</span>
           </div>
 
-          <!-- Role -->
+          <!-- Rol -->
           <div class="flex flex-col gap-1">
             <span class="text-muted dark:text-dark-muted">{{ 'profile.role' | transloco }}</span>
             <span [class]="user.role === 'admin' ? 'text-accent font-medium' : 'text-ink dark:text-dark-ink'">
@@ -116,77 +128,95 @@
             </span>
           </div>
 
-          <!-- Member since -->
-          <div class="flex flex-col gap-1">
-            <span class="text-muted dark:text-dark-muted">{{ 'profile.memberSince' | transloco }}</span>
-            <span class="text-ink dark:text-dark-ink">{{ formatDate(user.createdAt) }}</span>
-          </div>
-
-          <!-- Last login -->
-          <div class="flex flex-col gap-1 col-span-2">
-            <span class="text-muted dark:text-dark-muted">{{ 'profile.lastLogin' | transloco }}</span>
-            <span class="text-ink dark:text-dark-ink">{{ formatDate(user.lastLoginAt) }}</span>
+          <!-- Métodos de acceso — ocupa las 3 cols -->
+          <div class="flex flex-col gap-2 col-span-3">
+            <span class="text-muted dark:text-dark-muted">{{ 'profile.authMethod' | transloco }}</span>
+            <div class="flex items-center gap-3 flex-wrap">
+              @if (user.providers.includes('email')) {
+                <span class="flex items-center gap-1.5 text-ink dark:text-dark-ink">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                  {{ 'profile.authEmail' | transloco }}
+                </span>
+              }
+              @if (user.providers.includes('google')) {
+                <span class="flex items-center gap-1.5 text-ink dark:text-dark-ink">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14l-4-4 1.41-1.41L11 13.17l6.59-6.59L19 8l-8 8z"/>
+                  </svg>
+                  Google
+                </span>
+              }
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- ── Quota card ─────────────────────────────────────────────────── -->
-      @if (store.quota(); as quota) {
-        <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5 flex flex-col gap-3">
-          <div class="flex items-center justify-between">
-            <h2 class="font-mono text-sm text-ink dark:text-dark-ink">{{ 'profile.calculationsThisWeek' | transloco }}</h2>
-            <span class="font-mono text-xs text-muted dark:text-dark-muted">
-              @if (quota.remaining === null) {
-                {{ 'profile.quotaUnlimited' | transloco: { used: quota.used } }}
-              } @else {
-                {{ quota.used }} / {{ quota.limit }}
-              }
-            </span>
-          </div>
+      <!-- ── Cuota + accesos rápidos (grid 2 cols) ───────────────────────── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-          @if (quotaPct() !== null) {
-            <div class="w-full h-1.5 rounded-full bg-border dark:bg-dark-border overflow-hidden">
-              <div
-                class="h-full rounded-full transition-all"
-                [class]="quotaPct()! >= 90 ? 'bg-red-500' : quotaPct()! >= 70 ? 'bg-amber-500' : 'bg-accent'"
-                [style.width.%]="quotaPct()">
-              </div>
+        <!-- Cuota -->
+        @if (store.quota(); as quota) {
+          <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <h2 class="font-mono text-sm text-ink dark:text-dark-ink">{{ 'profile.calculationsThisWeek' | transloco }}</h2>
+              <span class="font-mono text-xs text-muted dark:text-dark-muted">
+                @if (quota.remaining === null) {
+                  {{ 'profile.quotaUnlimited' | transloco: { used: quota.used } }}
+                } @else {
+                  {{ quota.used }} / {{ quota.limit }}
+                }
+              </span>
             </div>
-            <p class="text-xs font-mono text-muted dark:text-dark-muted">
-              {{ 'profile.quotaLimited' | transloco: { used: quota.used, limit: quota.limit, remaining: quota.remaining } }}
-            </p>
-          } @else {
-            <p class="text-xs font-mono text-muted dark:text-dark-muted">
-              {{ 'profile.quotaUnlimitedDesc' | transloco }}
-            </p>
-          }
-        </section>
-      }
+            @if (quotaPct() !== null) {
+              <div class="w-full h-1.5 rounded-full bg-border dark:bg-dark-border overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all"
+                  [class]="quotaPct()! >= 90 ? 'bg-red-500' : quotaPct()! >= 70 ? 'bg-amber-500' : 'bg-accent'"
+                  [style.width.%]="quotaPct()">
+                </div>
+              </div>
+              <p class="text-xs font-mono text-muted dark:text-dark-muted">
+                {{ 'profile.quotaLimited' | transloco: { used: quota.used, limit: quota.limit, remaining: quota.remaining } }}
+              </p>
+            } @else {
+              <p class="text-xs font-mono text-muted dark:text-dark-muted">
+                {{ 'profile.quotaUnlimitedDesc' | transloco }}
+              </p>
+            }
+          </section>
+        }
 
-      <!-- ── Quick links ────────────────────────────────────────────────── -->
-      <div class="flex gap-2 flex-wrap">
-        <a [routerLink]="'/' + lang() + '/history'"
-          class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
-            class="w-4 h-4 shrink-0">
-            <path d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/>
-          </svg>
-          {{ 'profile.myCalculations' | transloco }}
-        </a>
-        <a [routerLink]="'/' + lang() + '/history'" [queryParams]="{ favorites: true }"
-          class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
-            class="w-4 h-4 shrink-0">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-          </svg>
-          {{ 'profile.myFavorites' | transloco }}
-        </a>
+        <!-- Accesos rápidos -->
+        <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5 flex flex-col gap-3">
+          <h2 class="font-mono text-sm text-ink dark:text-dark-ink">{{ 'profile.myCalculations' | transloco }}</h2>
+          <div class="flex flex-col gap-2">
+            <a [routerLink]="'/' + lang() + '/history'"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+                class="w-4 h-4 shrink-0">
+                <path d="M12 6v6l4 2m6-2a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/>
+              </svg>
+              {{ 'profile.myCalculations' | transloco }}
+            </a>
+            <a [routerLink]="'/' + lang() + '/history'" [queryParams]="{ favorites: true }"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-sm font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+                class="w-4 h-4 shrink-0">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              {{ 'profile.myFavorites' | transloco }}
+            </a>
+          </div>
+        </section>
       </div>
 
       <!-- ── Change password ────────────────────────────────────────────── -->
-      @if (user.passwordHash !== null) {
+      @if (user.providers.includes('email')) {
         <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5 flex flex-col gap-4">
           <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'profile.changePassword' | transloco }}</h2>
 
@@ -228,14 +258,10 @@
             </form>
           }
         </section>
-      } @else {
-        <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-5">
-          <p class="text-sm font-mono text-muted dark:text-dark-muted">{{ 'profile.googleNoPassword' | transloco }}</p>
-        </section>
       }
 
     <!-- ── Danger zone ──────────────────────────────────────────────────── -->
-    <section class="border border-red-200 dark:border-red-900/40 rounded-xl overflow-hidden">
+    <section class="border border-red-200 dark:border-red-900/40 rounded-xl overflow-hidden bg-paper dark:bg-dark-bg">
       <div class="px-5 py-3 bg-red-50 dark:bg-red-950/20 border-b border-red-200 dark:border-red-900/40">
         <h2 class="font-mono text-xs text-red-600 dark:text-red-400 uppercase tracking-widest">
           {{ 'profile.dangerZone' | transloco }}

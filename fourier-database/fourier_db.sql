@@ -45,7 +45,11 @@ CREATE TYPE calculation_type AS ENUM (
     'inverse_fourier_transform',
     'dft_signal',
     'dft_function',
-    'dft_epicycles'
+    'dft_epicycles',
+    'fourier_integral',
+    'laplace_direct',
+    'laplace_inverse',
+    'laplace_ode'
 );
 
 CREATE TYPE feedback_category AS ENUM ('bug', 'suggestion', 'question', 'other', 'rating');
@@ -91,19 +95,21 @@ CREATE TABLE persons (
 -- USERS
 -- -------------------------------------------------------
 CREATE TABLE users (
-    id              TEXT PRIMARY KEY DEFAULT gen_ulid(),
-    person_id       TEXT NOT NULL REFERENCES persons(id),
-    email           VARCHAR(320) NOT NULL,
-    email_verified  BOOLEAN NOT NULL DEFAULT FALSE,
-    password_hash   TEXT,
-    role            user_role NOT NULL DEFAULT 'user',
-    tier            user_tier NOT NULL DEFAULT 'free',
-    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_login_at   TIMESTAMPTZ,
+    id                  TEXT PRIMARY KEY DEFAULT gen_ulid(),
+    person_id           TEXT NOT NULL REFERENCES persons(id),
+    email               VARCHAR(320) NOT NULL,
+    email_verified      BOOLEAN NOT NULL DEFAULT FALSE,
+    password_hash       TEXT,
+    role                user_role NOT NULL DEFAULT 'user',
+    tier                user_tier NOT NULL DEFAULT 'free',
+    is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_login_at       TIMESTAMPTZ,
     deleted_at          TIMESTAMPTZ,
     deleted_email_hash  TEXT,
+    has_done_survey     BOOLEAN NOT NULL DEFAULT FALSE,
+    has_done_feedback   BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT users_email_unique  UNIQUE (email),
     CONSTRAINT users_person_unique UNIQUE (person_id)
 );
@@ -259,6 +265,23 @@ CREATE INDEX idx_event_fav       ON calculation_events (user_id)
 CREATE INDEX idx_event_calc      ON calculation_events (calculation_id);
 CREATE INDEX idx_event_ip        ON calculation_events (ip_address)
     WHERE ip_address IS NOT NULL;
+
+-- -------------------------------------------------------
+-- EXECUTION LOG
+-- Registro append-only de cada ejecución real.
+-- Fuente de verdad para métricas temporales (tendencias por
+-- día, semana, tipo, actor). A diferencia del contador
+-- acumulado en calculation_events.count, esta tabla conserva
+-- el timestamp exacto de cada llamada.
+-- -------------------------------------------------------
+CREATE TABLE execution_log (
+    id          BIGSERIAL    PRIMARY KEY,
+    event_id    TEXT         NOT NULL REFERENCES calculation_events(id) ON DELETE CASCADE,
+    executed_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_execution_log_executed_at ON execution_log (executed_at);
+CREATE INDEX idx_execution_log_event_id    ON execution_log (event_id);
 
 -- -------------------------------------------------------
 -- USER CALCULATION COUNTERS

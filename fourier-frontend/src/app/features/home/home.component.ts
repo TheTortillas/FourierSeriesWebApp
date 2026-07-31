@@ -32,7 +32,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly seo = inject(SeoService);
 
   ngOnInit(): void {
-    this.seo.setPage('seo.home.title', 'seo.home.description');
+    this.seo.setPage('seo.home.title', 'seo.home.description', 'Fourier transform calculator, calculadora transformada de Fourier, series de Fourier, inverse Fourier transform, DFT, FFT, Parseval');
   }
 
   private readonly transloco = inject(TranslocoService);

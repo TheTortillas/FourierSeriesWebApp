@@ -6,11 +6,16 @@ export type SurveyFeature =
   | 'trigonometric'
   | 'half_range'
   | 'complex'
+  | 'fourier_integral'
   | 'fourier_transform'
   | 'inverse_fourier_transform'
   | 'dft_signal'
   | 'dft_function'
   | 'dft_epicycles'
+  | 'laplace_direct'
+  | 'laplace_inverse'
+  | 'laplace_ode'
+  | 'grapher'
   | 'none';
 export type SurveyDevice = 'phone' | 'computer';
 export type HowFound = 'search' | 'recommendation_peer' | 'recommendation_teacher' | 'social' | 'other';

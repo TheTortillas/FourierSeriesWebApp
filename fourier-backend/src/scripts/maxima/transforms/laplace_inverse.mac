@@ -1,0 +1,66 @@
+/* laplace_inverse.mac
+   Computes f(t) = L⁻¹{F(s)} for a rational expression in s.
+   Injected variables: EXPR_INPUT (F(s) as Maxima expr), TRANSVAR (s), INTVAR (t)
+   Strategy: try ilt() directly; if it fails, try partfrac first; report method used.
+*/
+display2d: false$
+%iargs:    false$
+radexpand: false$
+
+/* Declare free parameters so ilt() doesn't hang on sign queries.
+   Variables named n, m, k are declared integer >= 0 (for t^n patterns).
+   All other free params are assumed positive (covers a, b, omega, etc.). */
+block([_allvars, _reserved, _freevars],
+  _allvars: listofvars(EXPR_INPUT),
+  _reserved: [TRANSVAR, INTVAR],
+  _freevars: sublist(_allvars, lambda([_v], not member(_v, _reserved))),
+  for _v in _freevars do (
+    if member(_v, [n, m, k]) then (
+      declare(_v, integer),
+      assume(_v >= 0)
+    ) else
+      assume(_v > 0)
+  )
+)$
+
+inverse_method: "failed"$
+f_raw: false$
+
+/* Strategy 1: direct ilt */
+block([_r],
+  _r: errcatch(ilt(EXPR_INPUT, TRANSVAR, INTVAR)),
+  if _r # [] then block([_v],
+    _v: first(_r),
+    /* ilt returns unevaluated if it can't solve — check for ilt() in result */
+    if not(freeof('ilt, _v)) then false
+    else block([], f_raw: ratsimp(_v), inverse_method: "ilt")
+  )
+)$
+
+/* Strategy 2: partfrac then ilt */
+if f_raw = false then block([_pf, _r],
+  _pf: errcatch(partfrac(EXPR_INPUT, TRANSVAR)),
+  if _pf # [] then block([],
+    _r: errcatch(ilt(first(_pf), TRANSVAR, INTVAR)),
+    if _r # [] then block([_v],
+      _v: first(_r),
+      if freeof('ilt, _v) then block([], f_raw: ratsimp(_v), inverse_method: "ilt")
+    )
+  )
+)$
+
+exists: is(f_raw # false)$
+
+/* Extract free parameters from the result */
+free_params: []$
+if exists then block([_vars, _reserved],
+  _vars: listofvars(f_raw),
+  _reserved: [TRANSVAR, INTVAR],
+  free_params: sublist(_vars, lambda([_v], not member(_v, _reserved)))
+)$
+
+print("__EXISTS__")$          print(string(exists))$
+print("__F_MAXIMA__")$        print(string(f_raw))$
+print("__F_TEX__")$           if exists then tex(f_raw) else print("")$
+print("__PARAMS__")$          print(string(free_params))$
+print("__INVERSE_METHOD__")$  print(inverse_method)$

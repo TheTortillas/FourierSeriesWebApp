@@ -1,22 +1,30 @@
 import { Router, Request, Response, NextFunction } from "express";
 import {
   fourierTransformService,
+  fourierIntegralService,
+  laplaceService,
   dftService,
   historyRepository,
 } from "../../infrastructure/container";
 import type {
   FourierTransformInput,
   InverseFourierTransformInput,
+  FourierIntegralInput,
+  FourierIntegralReconstructInput,
   DFTInput,
   DFTFunctionInput,
+  LaplaceDirectInput,
+  LaplaceInverseInput,
+  LaplaceOdeInput,
 } from "../../domain/types/fourier.types";
 import {
   sanitizeConvention,
+  sanitizeExpression,
   sanitizeSegments,
   sanitizeVariableName,
 } from "../middlewares/sanitize";
 import { AuthenticatedRequest } from "../middlewares/authenticate";
-import { incrementCalculationCount } from "../middlewares/requireTierLimit";
+import { tryConsumeQuota, type QuotaRequest } from "../middlewares/requireTierLimit";
 import { trackClientConnection } from "../middlewares/requestLifecycle";
 
 export const transformsRouter = Router();
@@ -105,28 +113,14 @@ transformsRouter.post(
       const shouldPersistSideEffects = !client.isDisconnected();
 
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          if (shouldConsume) {
-            await incrementCalculationCount(req.user.id);
-          }
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: "fourier_transform",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        } else {
-          if (shouldConsume) {
-            await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          }
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: "fourier_transform",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        }
+        if (shouldConsume) await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "fourier_transform",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {
@@ -211,28 +205,14 @@ transformsRouter.post(
       const shouldPersistSideEffects = !client.isDisconnected();
 
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          if (shouldConsume) {
-            await incrementCalculationCount(req.user.id);
-          }
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: "inverse_fourier_transform",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        } else {
-          if (shouldConsume) {
-            await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          }
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: "inverse_fourier_transform",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        }
+        if (shouldConsume) await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "inverse_fourier_transform",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {
@@ -295,6 +275,120 @@ transformsRouter.post(
  *       500:
  *         description: Error de cálculo
  */
+/**
+ * @openapi
+ * /api/transforms/fourier-integral/coefficients:
+ *   post:
+ *     summary: Calcula los coeficientes de la Integral de Fourier (A(w), B(w) o C(w))
+ *     tags: [Transforms]
+ */
+transformsRouter.post(
+  "/fourier-integral/coefficients",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const client = trackClientConnection(req, res);
+      const input = req.body as FourierIntegralInput;
+
+      if (!input.segments || input.segments.length === 0) {
+        res.status(400).json({ error: "segments is required" });
+        return;
+      }
+
+      const validVariants = ["trigonometric", "complex", "cosine", "sine"];
+      if (!input.variant || !validVariants.includes(input.variant)) {
+        res.status(400).json({ error: `variant must be one of: ${validVariants.join(", ")}` });
+        return;
+      }
+
+      if (input.intVar) {
+        const check = sanitizeVariableName(input.intVar, "intVar");
+        if (!check.valid) { res.status(400).json({ error: check.error }); return; }
+      }
+      if (input.transVar) {
+        const check = sanitizeVariableName(input.transVar, "transVar");
+        if (!check.valid) { res.status(400).json({ error: check.error }); return; }
+      }
+
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
+
+      const result = await fourierIntegralService.coefficients(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects) {
+        if (result.exists) await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "fourier_integral",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/transforms/fourier-integral/reconstruct:
+ *   post:
+ *     summary: Reconstruye f(x) numéricamente con límite superior `a` (para el slider)
+ *     tags: [Transforms]
+ */
+transformsRouter.post(
+  "/fourier-integral/reconstruct",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const input = req.body as FourierIntegralReconstructInput;
+
+      if (!input.segments || input.segments.length === 0) {
+        res.status(400).json({ error: "segments is required" });
+        return;
+      }
+
+      const validVariants = ["trigonometric", "complex", "cosine", "sine"];
+      if (!input.variant || !validVariants.includes(input.variant)) {
+        res.status(400).json({ error: `variant must be one of: ${validVariants.join(", ")}` });
+        return;
+      }
+
+      if (typeof input.upperLimit !== "number" || input.upperLimit <= 0) {
+        res.status(400).json({ error: "upperLimit must be a positive number" });
+        return;
+      }
+
+      if (typeof input.xMin !== "number" || typeof input.xMax !== "number" || input.xMin >= input.xMax) {
+        res.status(400).json({ error: "xMin must be less than xMax" });
+        return;
+      }
+
+      if (input.nPoints !== undefined && (input.nPoints < 10 || input.nPoints > 500)) {
+        res.status(400).json({ error: "nPoints must be between 10 and 500" });
+        return;
+      }
+
+      const sanitizeCheck = sanitizeSegments(input.segments);
+      if (!sanitizeCheck.valid) {
+        res.status(400).json({ error: sanitizeCheck.error });
+        return;
+      }
+
+      const result = await fourierIntegralService.reconstruct(input);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+
 transformsRouter.post(
   "/dft",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -339,24 +433,14 @@ transformsRouter.post(
 
       const historyType = input.mode === "epicycles" ? "dft_epicycles" : "dft_signal";
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          await incrementCalculationCount(req.user.id);
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: historyType,
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        } else {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: historyType,
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        }
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: historyType,
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {
@@ -441,24 +525,14 @@ transformsRouter.post(
       const shouldPersistSideEffects = !client.isDisconnected();
 
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          await incrementCalculationCount(req.user.id);
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: "dft_signal",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.samplingTimeMs,
-          });
-        } else {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: "dft_signal",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.samplingTimeMs,
-          });
-        }
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "dft_signal",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.samplingTimeMs,
+        });
       }
 
       res.json(result);
@@ -544,24 +618,178 @@ transformsRouter.post(
       const shouldPersistSideEffects = !client.isDisconnected();
 
       if (shouldPersistSideEffects) {
-        if (req.user) {
-          await incrementCalculationCount(req.user.id);
-          await historyRepository.create({
-            userId: req.user.id,
-            ipAddress: req.ip ?? undefined,
-            type: "dft_signal",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        } else {
-          await incrementCalculationCount(req.ip ?? "0.0.0.0", true);
-          await historyRepository.create({
-            ipAddress: req.ip ?? undefined,
-            type: "dft_signal",
-            input: input as unknown as Record<string, unknown>,
-            executionMs: result.executionTimeMs,
-          });
-        }
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId: req.user?.id,
+          ipAddress: req.ip ?? undefined,
+          type: "dft_signal",
+          input: input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Laplace: direct ──────────────────────────────────────────────────────────
+
+transformsRouter.post(
+  "/laplace/direct",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const body = req.body as LaplaceDirectInput;
+
+      if (!Array.isArray(body.segments) || body.segments.length === 0) {
+        res.status(400).json({ error: "segments required" });
+        return;
+      }
+      const sanitized = sanitizeSegments(body.segments);
+      if (!sanitized.valid) { res.status(400).json({ error: sanitized.error ?? "Invalid segments" }); return; }
+
+      const timeVarCheck = body.timeVar ? sanitizeVariableName(body.timeVar, "timeVar") : null;
+      if (timeVarCheck && !timeVarCheck.valid) { res.status(400).json({ error: timeVarCheck.error }); return; }
+      const freqVarCheck = body.freqVar ? sanitizeVariableName(body.freqVar, "freqVar") : null;
+      if (freqVarCheck && !freqVarCheck.valid) { res.status(400).json({ error: freqVarCheck.error }); return; }
+
+      const input: LaplaceDirectInput = {
+        segments: body.segments,
+        timeVar: body.timeVar ?? "t",
+        freqVar: body.freqVar ?? "s",
+      };
+
+      const client = trackClientConnection(req, res);
+      const result = await laplaceService.direct(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects && result.exists) {
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId:      req.user?.id,
+          ipAddress:   req.ip ?? undefined,
+          type:        "laplace_direct",
+          input:       input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Laplace: inverse ─────────────────────────────────────────────────────────
+
+transformsRouter.post(
+  "/laplace/inverse",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const body = req.body as LaplaceInverseInput;
+
+      if (typeof body.expression !== "string" || !body.expression.trim()) {
+        res.status(400).json({ error: "expression required" });
+        return;
+      }
+
+      const freqVarCheckInv = body.freqVar ? sanitizeVariableName(body.freqVar, "freqVar") : null;
+      if (freqVarCheckInv && !freqVarCheckInv.valid) { res.status(400).json({ error: freqVarCheckInv.error }); return; }
+      const timeVarCheckInv = body.timeVar ? sanitizeVariableName(body.timeVar, "timeVar") : null;
+      if (timeVarCheckInv && !timeVarCheckInv.valid) { res.status(400).json({ error: timeVarCheckInv.error }); return; }
+
+      const exprCheck = sanitizeExpression(body.expression.trim());
+      if (!exprCheck.valid) { res.status(400).json({ error: exprCheck.error }); return; }
+
+      const bodyAny = body as unknown as Record<string, unknown>;
+      const input: LaplaceInverseInput & { expressionTex?: string } = {
+        expression: body.expression.trim(),
+        freqVar:    body.freqVar ?? "s",
+        timeVar:    body.timeVar ?? "t",
+      };
+      if (typeof bodyAny['expressionTex'] === 'string') {
+        input.expressionTex = bodyAny['expressionTex'];
+      }
+
+      const client = trackClientConnection(req, res);
+      const result = await laplaceService.inverse(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects && result.exists) {
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId:      req.user?.id,
+          ipAddress:   req.ip ?? undefined,
+          type:        "laplace_inverse",
+          input:       input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Laplace: ODE ─────────────────────────────────────────────────────────────
+
+transformsRouter.post(
+  "/laplace/ode",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const body = req.body as LaplaceOdeInput;
+
+      if (typeof body.equation !== "string" || !body.equation.trim()) {
+        res.status(400).json({ error: "equation required" });
+        return;
+      }
+      if (typeof body.unknown !== "string" || !body.unknown.trim()) {
+        res.status(400).json({ error: "unknown required" });
+        return;
+      }
+      if (!Array.isArray(body.initialConditions)) {
+        res.status(400).json({ error: "initialConditions required" });
+        return;
+      }
+
+      const eqCheck = sanitizeExpression(body.equation.trim());
+      if (!eqCheck.valid) { res.status(400).json({ error: eqCheck.error }); return; }
+      const timeVarCheckOde = body.timeVar ? sanitizeVariableName(body.timeVar, "timeVar") : null;
+      if (timeVarCheckOde && !timeVarCheckOde.valid) { res.status(400).json({ error: timeVarCheckOde.error }); return; }
+
+      const bodyAny = body as unknown as Record<string, unknown>;
+      const input: LaplaceOdeInput & { equationTex?: string } = {
+        equation:          body.equation.trim(),
+        unknown:           body.unknown.trim(),
+        timeVar:           body.timeVar ?? "t",
+        initialConditions: body.initialConditions.map((ic) => {
+          const icAny = ic as unknown as Record<string, unknown>;
+          return {
+            order:    Number(ic.order),
+            value:    String(ic.value).trim(),
+            ...(typeof icAny['valueTex'] === 'string' ? { valueTex: icAny['valueTex'] } : {}),
+          };
+        }),
+      };
+      if (typeof bodyAny['equationTex'] === 'string') {
+        input.equationTex = bodyAny['equationTex'];
+      }
+
+      const client = trackClientConnection(req, res);
+      const result = await laplaceService.ode(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects && result.exists) {
+        await tryConsumeQuota(req as QuotaRequest);
+        await historyRepository.create({
+          userId:      req.user?.id,
+          ipAddress:   req.ip ?? undefined,
+          type:        "laplace_ode",
+          input:       input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
       }
       res.json(result);
     } catch (err) {

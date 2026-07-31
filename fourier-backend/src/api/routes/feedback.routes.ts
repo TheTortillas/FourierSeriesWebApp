@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { optionalAuth, type AuthenticatedRequest } from "../middlewares/authenticate";
 import { FeedbackRepository } from "../../infrastructure/persistence/FeedbackRepository";
+import { UserRepository } from "../../infrastructure/persistence/UserRepository";
 
 export const feedbackRouter = Router();
 
-const repo = new FeedbackRepository();
+const repo     = new FeedbackRepository();
+const userRepo = new UserRepository();
 
 const VALID_CATEGORIES = ["bug", "suggestion", "question", "other", "rating"];
 
@@ -29,6 +31,10 @@ feedbackRouter.post("/", optionalAuth, async (req: AuthenticatedRequest, res): P
   }
 
   try {
+    if (req.user?.id) {
+      await userRepo.markFeedbackDone(req.user.id);
+    }
+
     await repo.create({
       userId:    req.user?.id,
       ipAddress: req.ip ?? undefined,

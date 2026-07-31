@@ -22,6 +22,9 @@ export interface UserRecord {
   deletedAt: Date | null;
   firstName: string;
   lastName: string;
+  hasDoneSurvey: boolean;
+  hasDoneFeedback: boolean;
+  avatarUrl: string | null;
 }
 
 export interface IUserRepository {
@@ -38,6 +41,8 @@ export interface IUserRepository {
   hardDeleteUnverified(id: string): Promise<void>;
   getWeeklyCount(userId: string): Promise<number>;
   incrementWeeklyCount(userId: string): Promise<void>;
+  tryIncrementWeeklyCount(userId: string, limit: number): Promise<{ allowed: boolean }>;
+  tryIncrementAnonymousCount(ip: string, limit: number): Promise<{ allowed: boolean }>;
   findAll(
     limit: number,
     offset: number,
@@ -53,5 +58,12 @@ export interface IUserRepository {
     isActive?: boolean;
   }): Promise<number>;
   activate(id: string): Promise<void>;
+  deactivate(id: string): Promise<void>;
   getAdminStats(): Promise<{ total: number; premium: number; free: number; inactive: number }>;
+  markEmailVerified(userId: string): Promise<void>;
+  updatePassword(userId: string, passwordHash: string): Promise<void>;
+  markSurveyDone(userId: string): Promise<void>;
+  markFeedbackDone(userId: string): Promise<void>;
+  updateAvatarUrl(userId: string, avatarUrl: string | null): Promise<void>;
+  getProviders(userId: string): Promise<("email" | "google")[]>;
 }

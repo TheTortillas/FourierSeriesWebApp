@@ -1,0 +1,773 @@
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
+  <app-nav />
+
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
+  <header class="shrink-0 border-b border-border dark:border-dark-border px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">
+        {{ 'laplace.title' | transloco }}
+      </h1>
+      <p class="text-sm font-mono text-muted dark:text-dark-muted mt-0.5">
+        {{ 'laplace.subtitle' | transloco }}
+      </p>
+    </div>
+  </header>
+
+  <!-- ── Two-panel layout ─────────────────────────────────────────────────── -->
+  <div class="flex flex-col lg:flex-row flex-1 min-h-0">
+
+    <!-- ── Left panel: controls ────────────────────────────────────────────── -->
+    <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto">
+      <div class="p-5 flex flex-col gap-5">
+
+        <!-- Mode tabs -->
+        <div class="flex items-center gap-1 bg-paper2 dark:bg-dark-surface rounded-lg p-1 border border-border dark:border-dark-border">
+          @for (m of modes; track m.id) {
+            <button
+              type="button"
+              (click)="setMode(m.id)"
+              class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all cursor-pointer"
+              [class]="mode() === m.id
+                ? 'bg-accent text-white dark:text-white shadow-sm'
+                : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+            >
+              {{ m.labelKey | transloco }}
+            </button>
+          }
+        </div>
+
+        <!-- ── Inputs (locked when result exists) ───────────────────────── -->
+        <div
+          class="flex flex-col gap-5"
+          [class.pointer-events-none]="inputsLocked()"
+          [class.opacity-70]="inputsLocked()"
+        >
+
+          <!-- ── DIRECT MODE ──────────────────────────────────────────────── -->
+          @if (mode() === 'direct') {
+            <section class="flex flex-col gap-3">
+              <!-- Header: title + keyboard btn -->
+              <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                  {{ 'calculator.piecewiseFunction' | transloco }}
+                  <span class="font-normal text-muted dark:text-dark-muted font-mono text-xs ml-1">f({{ activePair().timeDisplay }})</span>
+                </h2>
+                <button
+                  type="button"
+                  (click)="showKeyboard = !showKeyboard"
+                  class="hidden lg:flex items-center gap-1 px-2 h-6 rounded text-[10px] font-mono border transition-colors cursor-pointer"
+                  [class]="showKeyboard
+                    ? 'bg-accent/10 border-accent/40 text-accent'
+                    : 'border-border dark:border-dark-border text-muted hover:border-accent hover:text-accent'"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="6" width="20" height="12" rx="2" />
+                    <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" />
+                  </svg>
+                  {{ 'calculator.segment.keyboardTitle' | transloco }}
+                </button>
+              </div>
+
+              @for (seg of segments(); track seg.id; let i = $index) {
+                <app-transform-segment
+                  [segment]="seg"
+                  [index]="i"
+                  [isOnly]="segments().length === 1"
+                  (updated)="updateSegment($event.id, $event.changes)"
+                  (removed)="removeSegment($event)"
+                />
+              }
+
+              <!-- Add segment -->
+              <button
+                type="button"
+                (click)="addSegment()"
+                class="flex items-center gap-1.5 text-xs text-accent dark:text-accent hover:underline cursor-pointer font-mono transition-opacity"
+              >
+                {{ 'transforms.addSegment' | transloco }}
+              </button>
+
+              <!-- Variable selector -->
+              <div class="border-t border-border dark:border-dark-border pt-3 flex flex-col gap-3">
+                <p class="text-xs text-muted font-mono shrink-0">
+                  {{ 'laplace.variables' | transloco }}
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  @for (pair of varPairs; track pair.id) {
+                    <button
+                      type="button"
+                      (click)="varPairId.set(pair.id)"
+                      [class]="varPairId() === pair.id
+                        ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                        : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'"
+                    >{{ pair.timeDisplay }}→{{ pair.freqDisplay }}</button>
+                  }
+                </div>
+              </div>
+
+              <!-- Mini-teclado desktop -->
+              @if (showKeyboard) {
+                <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
+                  @for (row of keyGroups; track $index) {
+                    <div class="flex flex-wrap gap-1">
+                      @for (btn of row; track btn.label) {
+                        <button
+                          type="button"
+                          (mousedown)="$event.preventDefault()"
+                          (click)="mqs.insertKey(btn)"
+                          class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
+                        >{{ btn.label }}</button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </section>
+          }
+
+          <!-- ── INVERSE MODE ─────────────────────────────────────────────── -->
+          @if (mode() === 'inverse') {
+            <section class="flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                  F({{ activePair().freqDisplay }})
+                </h2>
+                <button
+                  type="button"
+                  (click)="showKeyboard = !showKeyboard"
+                  class="hidden lg:flex items-center gap-1 px-2 h-6 rounded text-[10px] font-mono border transition-colors cursor-pointer"
+                  [class]="showKeyboard
+                    ? 'bg-accent/10 border-accent/40 text-accent'
+                    : 'border-border dark:border-dark-border text-muted hover:border-accent hover:text-accent'"
+                >
+                  {{ 'calculator.segment.keyboardTitle' | transloco }}
+                </button>
+              </div>
+
+              <div
+                class="w-full px-3 py-2 min-h-10 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                (click)="inverseField?.focus()"
+              >
+                <div #mqInverseExpr class="w-full"></div>
+              </div>
+
+              <p class="text-xs text-muted dark:text-dark-muted font-mono">
+                {{ 'laplace.inverseHint' | transloco }}
+              </p>
+
+              <!-- Variable selector — inversa: s→t -->
+              <div class="border-t border-border dark:border-dark-border pt-3 flex flex-col gap-3">
+                <p class="text-xs text-muted font-mono shrink-0">
+                  {{ 'laplace.variables' | transloco }}
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  @for (pair of varPairs; track pair.id) {
+                    <button
+                      type="button"
+                      (click)="varPairId.set(pair.id)"
+                      [class]="varPairId() === pair.id
+                        ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
+                        : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'"
+                    >{{ pair.freqDisplay }}→{{ pair.timeDisplay }}</button>
+                  }
+                </div>
+              </div>
+
+              <!-- Mini-teclado desktop -->
+              @if (showKeyboard) {
+                <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
+                  @for (row of keyGroups; track $index) {
+                    <div class="flex flex-wrap gap-1">
+                      @for (btn of row; track btn.label) {
+                        <button
+                          type="button"
+                          (mousedown)="$event.preventDefault()"
+                          (click)="mqs.insertKey(btn)"
+                          class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
+                        >{{ btn.label }}</button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </section>
+          }
+
+          <!-- ── ODE MODE ─────────────────────────────────────────────────── -->
+          @if (mode() === 'ode') {
+            <section class="flex flex-col gap-4">
+
+              <!-- Selector de ejemplos -->
+              <select
+                (change)="loadOdeExample($any($event.target).value); $any($event.target).value = ''"
+                class="w-full px-3 py-2 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-sm font-mono text-muted dark:text-dark-muted focus:outline-none focus:border-accent cursor-pointer"
+              >
+                <option value="" disabled selected>{{ 'laplace.odeExamplePlaceholder' | transloco }}</option>
+                @for (ex of odeExamples; track ex.labelKey) {
+                  <option [value]="ex.labelKey">{{ ex.labelKey | transloco }}</option>
+                }
+              </select>
+
+              <!-- Ecuación diferencial -->
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                    {{ 'laplace.odeEquation' | transloco }}
+                  </label>
+                  <button
+                    type="button"
+                    (click)="showKeyboard = !showKeyboard"
+                    class="hidden lg:flex items-center gap-1 px-2 h-6 rounded text-[10px] font-mono border transition-colors cursor-pointer"
+                    [class]="showKeyboard
+                      ? 'bg-accent/10 border-accent/40 text-accent'
+                      : 'border-border dark:border-dark-border text-muted hover:border-accent hover:text-accent'"
+                  >
+                    {{ 'calculator.segment.keyboardTitle' | transloco }}
+                  </button>
+                </div>
+                <div
+                  class="w-full px-3 py-2 min-h-10 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                  (click)="odeEqField?.focus()"
+                >
+                  <div #mqOdeEquation class="w-full"></div>
+                </div>
+                <p class="text-xs text-muted dark:text-dark-muted font-mono">
+                  {{ 'laplace.odeHintPrefix' | transloco }}
+                  {{ odeFnName() }}'',&nbsp;{{ odeFnName() }}',&nbsp;{{ odeFnName() }}
+                </p>
+              </div>
+
+              <!-- Función incógnita + variable independiente -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                  {{ 'laplace.odeUnknown' | transloco }}
+                </label>
+                <div class="flex items-center gap-3 flex-wrap">
+                  <input
+                    type="text"
+                    [value]="odeFnName()"
+                    (input)="onOdeFnNameChange($any($event.target).value)"
+                    maxlength="2"
+                    class="w-16 px-3 py-2 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent text-center"
+                    placeholder="y"
+                  />
+                  <span
+                    class="text-sm text-muted dark:text-dark-muted"
+                    [mathjax]="'\\(' + odeFnName() + '(' + activePair().timeDisplay + ')\\)'"
+                  ></span>
+                  <div class="ml-auto flex items-center gap-1.5">
+                    <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'laplace.odeVariable' | transloco }}</span>
+                    <select
+                      [value]="varPairId()"
+                      (change)="varPairId.set($any($event.target).value)"
+                      class="px-2 py-1.5 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-xs font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent cursor-pointer"
+                    >
+                      @for (pair of odeVarOptions; track pair.id) {
+                        <option [value]="pair.id">{{ pair.timeDisplay }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Condiciones iniciales -->
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                    {{ 'laplace.odeIcs' | transloco }}
+                  </label>
+                  <button
+                    type="button"
+                    (click)="addIc()"
+                    class="text-xs font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+                  >
+                    + {{ 'laplace.addIc' | transloco }}
+                  </button>
+                </div>
+                @for (ic of odeIcs(); track ic.order; let i = $index) {
+                  <div class="flex items-center gap-2">
+                    <!-- Label rendered with MathJax -->
+                    <span
+                      class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
+                      [mathjax]="'\\(' + odeIcLabel(ic.order) + ' = \\)'"
+                    ></span>
+                    <!-- MathQuill value field -->
+                    <div
+                      class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                      (click)="odeIcFields[i]?.focus()"
+                    >
+                      <div [attr.data-mq-ic]="i" class="w-full"></div>
+                    </div>
+                    @if (odeIcs().length > 1) {
+                      <button
+                        type="button"
+                        (click)="removeIc(i)"
+                        class="text-muted dark:text-dark-muted hover:text-red-500 transition-colors cursor-pointer text-sm leading-none shrink-0"
+                      >×</button>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Mini-teclado desktop -->
+              @if (showKeyboard) {
+                <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
+                  @for (row of keyGroups; track $index) {
+                    <div class="flex flex-wrap gap-1">
+                      @for (btn of row; track btn.label) {
+                        <button
+                          type="button"
+                          (mousedown)="$event.preventDefault()"
+                          (click)="mqs.insertKey(btn)"
+                          class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
+                        >{{ btn.label }}</button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+            </section>
+          }
+
+        </div>
+        <!-- /inputs locked wrapper -->
+
+        <!-- ── Calculate button ─────────────────────────────────────────── -->
+        <button
+          type="button"
+          (click)="calculate()"
+          [disabled]="loading() || hasComputedResult()"
+          class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          @if (loading()) {
+            <span class="flex items-center justify-center gap-2">
+              <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              {{ 'laplace.calculating' | transloco }}
+            </span>
+          } @else {
+            {{ 'laplace.calculate' | transloco }}
+          }
+        </button>
+
+        @if (errorMsg()) {
+          <div class="rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2">
+            <p class="text-xs font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
+          </div>
+        }
+
+        @if (hasComputedResult()) {
+          <button
+            type="button"
+            (click)="startNewCalculation()"
+            class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold"
+          >
+            {{ 'laplace.newCalculation' | transloco }}
+          </button>
+        }
+
+      </div>
+    </aside>
+
+    <!-- ── Right panel: canvas + results ──────────────────────────────────── -->
+    <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
+      <div class="p-5 flex flex-col gap-5">
+
+        <!-- Canvas wrapper with overlay buttons -->
+        <div
+          #canvasWrapperRef
+          class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
+          style="height: 420px"
+        >
+          <app-function-plot
+            [layers]="layers()"
+            [xAxisFormat]="'integer'"
+            class="w-full h-full block"
+          />
+
+          <!-- Overlay buttons (top-left) -->
+          <div class="absolute top-2 left-2 flex gap-1">
+
+            <!-- Fullscreen -->
+            <button
+              type="button"
+              (click)="toggleFullscreen()"
+              [title]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
+              class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center"
+            >
+              @if (isFullscreen()) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" />
+                  <line x1="10" y1="14" x2="3" y2="21" /><line x1="21" y1="3" x2="14" y2="10" />
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" />
+                  <line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+              }
+            </button>
+
+            <!-- Settings (only when result exists) -->
+            @if (hasComputedResult()) {
+              <button
+                type="button"
+                (click)="showCanvasSettings.set(!showCanvasSettings())"
+                [title]="'results.canvasSettings' | transloco"
+                [class]="showCanvasSettings()
+                  ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent transition-colors flex items-center justify-center'
+                  : 'w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+              </button>
+            }
+
+            <!-- Download -->
+            <button
+              type="button"
+              (click)="downloadCanvas()"
+              [title]="'results.downloadImage' | transloco"
+              class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+
+          </div>
+
+          <!-- Settings slide-in panel (desktop) -->
+          @if (hasComputedResult() && showCanvasSettings()) {
+            <div class="absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+              <ng-container *ngTemplateOutlet="settingsPanelContent" />
+            </div>
+          }
+
+          <!-- Settings panel mobile: below canvas -->
+        </div>
+
+        <!-- Mobile settings panel (below canvas, non-fullscreen) -->
+        @if (hasComputedResult() && showCanvasSettings()) {
+          <div class="flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-72 overflow-hidden">
+            <ng-container *ngTemplateOutlet="settingsPanelContent" />
+          </div>
+        }
+
+        <ng-template #settingsPanelContent>
+          <!-- Panel header -->
+          <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+            <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
+              {{ 'transforms.panelSettings' | transloco }}
+            </span>
+            <button type="button" (click)="showCanvasSettings.set(false)"
+              class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light">×</button>
+          </div>
+
+          <!-- Scrollable content -->
+          <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
+
+            <!-- ── 1. Estilo de líneas ─────────────────────────────────── -->
+            <section class="px-5 py-4 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                  {{ 'transforms.lineStyle' | transloco }}
+                </p>
+                <button type="button" (click)="resetLineStyles()"
+                  class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2">
+                  {{ 'transforms.reset' | transloco }}
+                </button>
+              </div>
+
+              <!-- ── Curva de entrada — directo: f(t), inverso: F(s) ── -->
+              @if (mode() === 'direct' || mode() === 'inverse') {
+                <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50 -mb-1">
+                  {{ 'transforms.ftInputLabel' | transloco }}:
+                  @if (mode() === 'direct') { f({{ activePair().timeDisplay }}) }
+                  @else { F({{ activePair().freqDisplay }}) }
+                </p>
+                <div class="flex flex-col gap-1.5">
+                  <div class="flex items-center gap-2">
+                    <svg width="28" height="12" class="shrink-0">
+                      <line x1="2" y1="6" x2="26" y2="6"
+                        [attr.stroke]="inputColor()"
+                        [attr.stroke-width]="inputLineWidth()"
+                        [attr.stroke-dasharray]="inputDashed() ? '4 3' : 'none'"
+                        stroke-linecap="round"/>
+                    </svg>
+                    <span class="text-xs font-mono text-ink/90 dark:text-dark-ink/90 flex-1">
+                      @if (mode() === 'direct') { f({{ activePair().timeDisplay }}) }
+                      @else { F({{ activePair().freqDisplay }}) }
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+                      <button type="button" (click)="inputDashed.set(false)"
+                        [class]="!inputDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">—</button>
+                      <button type="button" (click)="inputDashed.set(true)"
+                        [class]="inputDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
+                    </div>
+                    <input type="color" [value]="inputColor()" (input)="inputColor.set($any($event.target).value)"
+                      class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
+                    <input type="number" [value]="inputLineWidth()" min="0.5" max="5" step="0.5"
+                      (input)="inputLineWidth.set(+$any($event.target).value)"
+                      class="w-0 flex-1 px-2 py-1 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-xs font-mono text-center focus:outline-none focus:border-accent" />
+                    <span class="text-[10px] text-ink/65 dark:text-dark-ink/65 font-mono shrink-0">px</span>
+                  </div>
+                </div>
+              }
+
+              <!-- ── Curva de resultado ── -->
+              <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50 mt-1 -mb-1">
+                {{ 'transforms.ftResultLabel' | transloco }}:
+                @if (mode() === 'direct') { F({{ activePair().freqDisplay }}) }
+                @else if (mode() === 'ode') { y({{ activePair().timeDisplay }}) }
+                @else { f({{ activePair().timeDisplay }}) }
+              </p>
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center gap-2">
+                  <svg width="28" height="12" class="shrink-0">
+                    <line x1="2" y1="6" x2="26" y2="6"
+                      [attr.stroke]="resultColor()"
+                      [attr.stroke-width]="resultLineWidth()"
+                      [attr.stroke-dasharray]="resultDashed() ? '4 3' : 'none'"
+                      stroke-linecap="round"/>
+                  </svg>
+                  <span class="text-xs font-mono text-ink/90 dark:text-dark-ink/90 flex-1">
+                    @if (mode() === 'direct') { F({{ activePair().freqDisplay }}) }
+                    @else if (mode() === 'ode') { y({{ activePair().timeDisplay }}) }
+                    @else { f({{ activePair().timeDisplay }}) }
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+                    <button type="button" (click)="resultDashed.set(false)"
+                      [class]="!resultDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">—</button>
+                    <button type="button" (click)="resultDashed.set(true)"
+                      [class]="resultDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
+                  </div>
+                  <input type="color" [value]="resultColor()" (input)="resultColor.set($any($event.target).value)"
+                    class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
+                  <input type="number" [value]="resultLineWidth()" min="0.5" max="5" step="0.5"
+                    (input)="resultLineWidth.set(+$any($event.target).value)"
+                    class="w-0 flex-1 px-2 py-1 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-xs font-mono text-center focus:outline-none focus:border-accent" />
+                  <span class="text-[10px] text-ink/65 dark:text-dark-ink/65 font-mono shrink-0">px</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- ── 2. Constantes detectadas ──────────────────────────── -->
+            @if (activeParams().length > 0) {
+              <section class="px-4 py-4 flex flex-col gap-3">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                  {{ 'transforms.freeParams' | transloco }}
+                </p>
+                <app-param-sliders
+                  [params]="activeParams()"
+                  (valuesChange)="onParamChange($event)"
+                />
+              </section>
+            }
+
+            <!-- ── 3. Hint ────────────────────────────────────────────── -->
+            <section class="px-4 py-3">
+              <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50">
+                {{ 'transforms.dragToPan' | transloco }}
+              </p>
+            </section>
+
+          </div>
+        </ng-template>
+
+        <!-- Result cards -->
+        @if (!hasResult() && !loading()) {
+          <div class="text-center py-6 text-muted dark:text-dark-muted text-sm font-body">
+            {{ 'transforms.hint' | transloco }}
+            <strong class="text-ink dark:text-dark-ink">{{ 'laplace.calculate' | transloco }}</strong>.
+          </div>
+        }
+
+        <!-- ── DIRECT RESULT ─────────────────────────────────────────── -->
+        @if (directResult(); as r) {
+          <div class="flex flex-col gap-3 pt-1">
+            <div class="flex items-center gap-2">
+              <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'laplace.result' | transloco }}</h2>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ r.executionTimeMs }} ms</span>
+            </div>
+            @if (!r.exists) {
+              <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
+                <p class="text-sm font-mono text-amber-700 dark:text-amber-400">{{ 'laplace.notFound' | transloco }}</p>
+              </div>
+            } @else if (r.F?.tex) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                  {{ 'laplace.fullTransform' | transloco }}
+                </span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">F({{ activePair().freqDisplay }}) =</span>
+                  <span #directResultEl [mathjax]="'\\(' + r.F!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="r.F!.tex" [maxima]="r.F!.maxima" [mathEl]="directResultEl" filename="laplace-transform" [label]="'F(' + activePair().freqDisplay + ')'" />
+                </div>
+                <div class="mt-2 pt-2 border-t border-border dark:border-dark-border">
+                  <button type="button" (click)="altFormsOpenDirect.set(!altFormsOpenDirect())"
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenDirect() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenDirect()) {
+                    @if (altFormsLoadingDirect()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altFormsDirect().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsDirect(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #directAltEl [mathjax]="'\\(' + form.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="directAltEl" filename="laplace-direct-alt" [label]="'F(' + activePair().freqDisplay + ') — ' + (form.labelKey | transloco)" />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ── INVERSE RESULT ────────────────────────────────────────── -->
+        @if (inverseResult(); as r) {
+          <div class="flex flex-col gap-3 pt-1">
+            <div class="flex items-center gap-2">
+              <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'laplace.result' | transloco }}</h2>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ r.executionTimeMs }} ms</span>
+            </div>
+            @if (!r.exists) {
+              <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
+                <p class="text-sm font-mono text-amber-700 dark:text-amber-400">{{ 'laplace.notFound' | transloco }}</p>
+              </div>
+            } @else if (r.f?.tex) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                  {{ 'laplace.inverseResult' | transloco }}
+                </span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">f({{ activePair().timeDisplay }}) =</span>
+                  <span #inverseResultEl [mathjax]="'\\(' + r.f!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="r.f!.tex" [maxima]="r.f!.maxima" [mathEl]="inverseResultEl" filename="laplace-inverse" [label]="'f(' + activePair().timeDisplay + ')'" />
+                </div>
+                <div class="mt-2 pt-2 border-t border-border dark:border-dark-border">
+                  <button type="button" (click)="altFormsOpenInverse.set(!altFormsOpenInverse())"
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenInverse() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenInverse()) {
+                    @if (altFormsLoadingInverse()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altFormsInverse().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsInverse(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #inverseAltEl [mathjax]="'\\(' + form.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="inverseAltEl" filename="laplace-inverse-alt" [label]="'f(' + activePair().timeDisplay + ') — ' + (form.labelKey | transloco)" />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ── ODE RESULT ──────────────────────────────────────────────── -->
+        @if (odeResult(); as r) {
+          <div class="flex flex-col gap-3 pt-1">
+            <div class="flex items-center gap-2">
+              <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'laplace.result' | transloco }}</h2>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ r.executionTimeMs }} ms</span>
+            </div>
+            @if (!r.exists) {
+              <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
+                <p class="text-sm font-mono text-amber-700 dark:text-amber-400">{{ 'laplace.notFound' | transloco }}</p>
+              </div>
+            } @else if (r.solution?.tex) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                  {{ 'laplace.odeSolution' | transloco }} {{ odeFnName() }}({{ activePair().timeDisplay }})
+                </span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{ odeFnName() }}({{ activePair().timeDisplay }}) =</span>
+                  <span #odeResultEl [mathjax]="'\\(' + r.solution!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button [tex]="r.solution!.tex" [maxima]="r.solution!.maxima" [mathEl]="odeResultEl" filename="laplace-ode" [label]="odeFnName() + '(' + activePair().timeDisplay + ')'" />
+                </div>
+                <!-- Formas alternativas -->
+                <div class="mt-2 pt-2 border-t border-border dark:border-dark-border">
+                  <button
+                    type="button"
+                    (click)="altFormsOpenOde.set(!altFormsOpenOde())"
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1"
+                  >
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenOde() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenOde()) {
+                    @if (altFormsLoadingOde()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altFormsOde().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsOde(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #odeAltEl [mathjax]="'\\(' + form.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="odeAltEl" filename="laplace-ode-alt" [label]="odeFnName() + '(' + activePair().timeDisplay + ') — ' + (form.labelKey | transloco)" />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Mobile math keyboard (< lg only) -->
+  @if (showKeyboard) {
+    <div class="lg:hidden">
+      <app-mobile-math-keyboard
+        [extraGroup]="mobileExtraGroup"
+        (close)="showKeyboard = false"
+      />
+    </div>
+  }
+
+  <app-footer />
+</div>

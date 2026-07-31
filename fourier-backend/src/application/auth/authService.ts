@@ -8,16 +8,14 @@ import type { IAuditRepository } from "../../domain/interfaces/repositories/IAud
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
-  sendRecoveryEmail,
 } from "../../infrastructure/email/emailService";
-import { db } from "../../infrastructure/database/db";
 
 const googleClient = new OAuth2Client(config.google.clientId);
 const BCRYPT_ROUNDS = 12;
 
+/** Shape sent to the client in the JSON response body. No tokens beyond the access token. */
 export interface AuthResult {
   accessToken: string;
-  refreshToken: string;
   user: {
     id: string;
     email: string;
@@ -26,7 +24,17 @@ export interface AuthResult {
     role: "user" | "admin";
     tier: "free" | "premium";
     emailVerified: boolean;
+    hasDoneSurvey: boolean;
+    hasDoneFeedback: boolean;
+    avatarUrl: string | null;
+    providers: ("email" | "google")[];
   };
+}
+
+/** Internal shape returned by auth methods — includes the refresh token so the router
+ *  can set it as an httpOnly cookie without ever putting it in the JSON body. */
+export interface AuthServiceResult extends AuthResult {
+  refreshToken: string;
 }
 
 export class AuthService {
@@ -44,7 +52,7 @@ export class AuthService {
     password: string;
     ipAddress?: string;
     lang?: string;
-  }): Promise<AuthResult> {
+  }): Promise<AuthServiceResult> {
     const existing = await this.userRepo.findByEmail(input.email);
 
     if (existing) {
@@ -109,7 +117,8 @@ export class AuthService {
       metadata: { provider: "email" },
     });
 
-    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken, providers);
   }
 
   async login(input: {
@@ -117,7 +126,7 @@ export class AuthService {
     password: string;
     ipAddress?: string;
     userAgent?: string;
-  }): Promise<AuthResult> {
+  }): Promise<AuthServiceResult> {
     const user = await this.userRepo.findByEmail(input.email);
     if (!user || !user.passwordHash) {
       throw new Error("Invalid credentials");
@@ -152,14 +161,15 @@ export class AuthService {
       metadata: { provider: "email" },
     });
 
-    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken, providers);
   }
 
   async loginWithGoogle(input: {
     idToken: string;
     ipAddress?: string;
     userAgent?: string;
-  }): Promise<AuthResult> {
+  }): Promise<AuthServiceResult> {
     const ticket = await googleClient.verifyIdToken({
       idToken: input.idToken,
       audience: config.google.clientId,
@@ -169,6 +179,11 @@ export class AuthService {
     if (!payload?.email || !payload.sub) {
       throw new Error("Invalid Google token");
     }
+
+    // Upgrade Google picture to 200px and strip trailing size param variations.
+    const avatarUrl = payload.picture
+      ? payload.picture.replace(/=s\d+-c$/, "=s200-c")
+      : null;
 
     let user = await this.userRepo.findByGoogleId(payload.sub);
 
@@ -211,6 +226,10 @@ export class AuthService {
       throw new Error("Account is deactivated");
     }
 
+    // Sync avatar on every Google login so photo changes are picked up automatically.
+    await this.userRepo.updateAvatarUrl(user.id, avatarUrl);
+    user = { ...user, avatarUrl };
+
     const tokens = this.tokenService.generateTokenPair(user);
 
     await this.tokenRepo.createRefreshToken({
@@ -231,14 +250,15 @@ export class AuthService {
       metadata: { provider: "google" },
     });
 
-    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken);
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, tokens.accessToken, tokens.refreshToken, providers);
   }
 
   async refresh(input: {
     refreshToken: string;
     ipAddress?: string;
     userAgent?: string;
-  }): Promise<AuthResult> {
+  }): Promise<AuthServiceResult> {
     const tokenHash = this.tokenService.hashToken(input.refreshToken);
     const stored = await this.tokenRepo.findRefreshToken(tokenHash);
 
@@ -271,16 +291,12 @@ export class AuthService {
       newTokens.expiresAt,
     );
 
-    return this.buildAuthResult(
-      user,
-      newTokens.accessToken,
-      newTokens.refreshToken,
-    );
+    const providers = await this.userRepo.getProviders(user.id);
+    return this.buildAuthResult(user, newTokens.accessToken, newTokens.refreshToken, providers);
   }
 
   async logout(input: {
     refreshToken: string;
-    userId: string;
     ipAddress?: string;
   }): Promise<void> {
     const tokenHash = this.tokenService.hashToken(input.refreshToken);
@@ -288,20 +304,20 @@ export class AuthService {
 
     if (stored) {
       await this.tokenRepo.revokeFamily(stored.familyId);
+      await this.auditRepo.log({
+        userId: stored.userId,
+        action: "logout",
+        ipAddress: input.ipAddress,
+      });
     }
-
-    await this.auditRepo.log({
-      userId: input.userId,
-      action: "logout",
-      ipAddress: input.ipAddress,
-    });
   }
 
   private buildAuthResult(
     user: ReturnType<typeof Object.assign>,
     accessToken: string,
     refreshToken: string,
-  ): AuthResult {
+    providers: ("email" | "google")[],
+  ): AuthServiceResult {
     return {
       accessToken,
       refreshToken,
@@ -313,6 +329,10 @@ export class AuthService {
         role: user.role,
         tier: user.tier,
         emailVerified: user.emailVerified,
+        hasDoneSurvey: user.hasDoneSurvey ?? false,
+        hasDoneFeedback: user.hasDoneFeedback ?? false,
+        avatarUrl: user.avatarUrl ?? null,
+        providers,
       },
     };
   }
@@ -336,10 +356,7 @@ export class AuthService {
     }
 
     await this.tokenRepo.markEmailTokenUsed(record.id);
-
-    await db.query(`UPDATE users SET email_verified = TRUE WHERE id = $1`, [
-      record.userId,
-    ]);
+    await this.userRepo.markEmailVerified(record.userId);
   }
 
   async forgotPassword(email: string, ipAddress?: string, lang?: string): Promise<void> {
@@ -375,11 +392,7 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
-
-    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [
-      passwordHash,
-      record.userId,
-    ]);
+    await this.userRepo.updatePassword(record.userId, passwordHash);
 
     await this.tokenRepo.markPasswordResetUsed(record.id);
     await this.tokenRepo.revokeAllUserTokens(record.userId);
@@ -408,7 +421,11 @@ export class AuthService {
     if (!valid) throw new Error("Current password is incorrect");
 
     const newHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
-    await db.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, input.userId]);
+    await this.userRepo.updatePassword(input.userId, newHash);
+
+    // Revoke all refresh tokens so any other active session is invalidated immediately.
+    // The caller's current access token (15 min TTL) will expire on its own.
+    await this.tokenRepo.revokeAllUserTokens(input.userId);
 
     await this.auditRepo.log({
       userId: input.userId,
@@ -417,9 +434,15 @@ export class AuthService {
     });
   }
 
-  async resendVerification(email: string, ipAddress?: string, lang?: string): Promise<void> {
+  async resendVerification(email: string, _ipAddress?: string, lang?: string): Promise<void> {
     const user = await this.userRepo.findByEmail(email);
     if (!user || user.emailVerified) return;
+
+    // Cooldown: silently skip if a token was sent within the last 5 minutes.
+    // Prevents cross-IP email spam against known unverified addresses.
+    const COOLDOWN_MS = 5 * 60 * 1000;
+    const recent = await this.tokenRepo.findPendingVerificationToken(user.id);
+    if (recent && Date.now() - recent.createdAt.getTime() < COOLDOWN_MS) return;
 
     const emailToken = this.tokenService.generateEmailToken();
     await this.tokenRepo.createEmailToken({
