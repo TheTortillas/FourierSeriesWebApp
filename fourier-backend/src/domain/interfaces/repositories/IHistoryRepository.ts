@@ -52,6 +52,7 @@ export interface IHistoryRepository {
     limit: number,
     offset: number,
     favoritesOnly?: boolean,
+    calcType?: string,
   ): Promise<HistoryRecord[]>;
 
   findById(id: string): Promise<HistoryRecord | null>;
@@ -70,7 +71,7 @@ export interface IHistoryRepository {
 
   delete(id: string, userId: string): Promise<void>;
 
-  countByUser(userId: string, favoritesOnly?: boolean): Promise<number>;
+  countByUser(userId: string, favoritesOnly?: boolean, calcType?: string): Promise<number>;
 
   findAll(
     limit: number,

@@ -278,6 +278,7 @@ export class ApiService {
     if (query?.limit !== undefined) params = params.set('limit', query.limit);
     if (query?.offset !== undefined) params = params.set('offset', query.offset);
     if (query?.favorites !== undefined) params = params.set('favorites', query.favorites);
+    if (query?.type) params = params.set('type', query.type);
     return this.http.get<HistoryListResponse>(`${this.base}/history`, { params });
   }
 

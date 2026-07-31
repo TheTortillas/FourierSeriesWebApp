@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../core/services/api/api.service';
 import { SeoService } from '../../core/services/seo/seo.service';
-import { HistoryEntry } from '../../domain';
+import { HistoryEntry, CALC_TYPE_LABEL } from '../../domain';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 
 const PAGE_SIZE = 15;
@@ -45,6 +45,7 @@ export class HistoryComponent implements OnInit {
 
   // Filters
   showFavoritesOnly = false;
+  activeTypeFilter  = '';
 
   // Rename dialog
   readonly renamingId = signal<string | null>(null);
@@ -57,7 +58,13 @@ export class HistoryComponent implements OnInit {
   readonly totalPages = computed(() => Math.ceil(this.total() / this.pageSize));
   readonly currentPage = computed(() => Math.floor(this.offset() / this.pageSize) + 1);
 
+  readonly CALC_TYPES = Object.keys(CALC_TYPE_LABEL);
+  readonly typeLabel  = (t: string) => CALC_TYPE_LABEL[t] ?? t;
   readonly typeKey = (t: string) => TYPE_KEY[t] ?? t;
+  readonly typeLabelI18n = (t: string) => {
+    const key = TYPE_KEY[t];
+    return key ? this.transloco.translate(key) : (CALC_TYPE_LABEL[t] ?? t);
+  };
 
   entryTypeKey(entry: HistoryEntry): string {
     if (entry.type === 'dft_signal' && Array.isArray(entry.input?.['segments'])) {
@@ -82,6 +89,12 @@ export class HistoryComponent implements OnInit {
     this.load();
   }
 
+  setTypeFilter(type: string): void {
+    this.activeTypeFilter = type;
+    this.offset.set(0);
+    this.load();
+  }
+
   load(): void {
     this.loading.set(true);
     this.api
@@ -89,6 +102,7 @@ export class HistoryComponent implements OnInit {
         limit: this.pageSize,
         offset: this.offset(),
         ...(this.showFavoritesOnly ? { favorites: true } : {}),
+        ...(this.activeTypeFilter ? { type: this.activeTypeFilter } : {}),
       })
       .subscribe({
         next: (res) => {
