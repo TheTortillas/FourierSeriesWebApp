@@ -361,6 +361,8 @@ export class HistoryComponent implements OnInit {
     }
     const expr = inp['expression'] as string | undefined;
     if (expr) return expr;
+    const equation = inp['equation'] as string | undefined;
+    if (equation) return equation;
     const points = inp['points'] as unknown[] | undefined;
     if (points) return `${points.length} ${this.transloco.translate('history.points')}`;
     return JSON.stringify(inp).slice(0, 80);

@@ -1114,6 +1114,7 @@
     "errorNoExpr": "Ingresa una expresión F(s) para invertir.",
     "errorNoEq": "Ingresa la ecuación diferencial y la función incógnita.",
     "odeHint": "Usa sintaxis de Maxima: diff(y(t),t,2) para y'', diff(y(t),t) para y'",
+    "odeHintPrefix": "Escribe la ecuación usando notación prima:",
     "newCalculation": "Nuevo cálculo",
     "result": "Resultado",
     "fullTransform": "Transformada completa",

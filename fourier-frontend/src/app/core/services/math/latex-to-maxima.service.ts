@@ -34,6 +34,7 @@ type Token =
   | { t: 'cmd';    v: string }
   | { t: 'lbrace' }
   | { t: 'rbrace' }
+  | { t: 'prime' }
   | { t: 'end' };
 
 function tokenise(src: string): Token[] {
@@ -53,6 +54,7 @@ function tokenise(src: string): Token[] {
     if (ch === '}') { out.push({ t: 'rbrace' }); i++; continue; }
     if (ch === '(') { out.push({ t: 'lp'     }); i++; continue; }
     if (ch === ')') { out.push({ t: 'rp'     }); i++; continue; }
+    if (ch === "'") { out.push({ t: 'prime'  }); i++; continue; }
     if (/[0-9]/.test(ch) || (ch === '.' && /[0-9]/.test(src[i + 1] ?? ''))) {
       let n = '';
       while (i < src.length && /[0-9.]/.test(src[i])) n += src[i++];
@@ -65,7 +67,7 @@ function tokenise(src: string): Token[] {
       out.push({ t: 'ident', v: name });
       continue;
     }
-    if (/[+\-*/^_|]/.test(ch)) { out.push({ t: 'op', v: ch }); i++; continue; }
+    if (/[+\-*/^_|=]/.test(ch)) { out.push({ t: 'op', v: ch }); i++; continue; }
     if (ch === ',') { out.push({ t: 'op', v: ',' }); i++; continue; }
     i++;
   }
@@ -75,9 +77,14 @@ function tokenise(src: string): Token[] {
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 
+interface OdeContext { fn: string; tvar: string; }
+
 class Parser {
   private pos = 0;
-  constructor(private readonly toks: Token[]) {}
+  constructor(
+    private readonly toks: Token[],
+    private readonly ode?: OdeContext,
+  ) {}
 
   private peek(): Token { return this.toks[this.pos]; }
   private eat(): Token  { return this.toks[this.pos++]; }
@@ -87,7 +94,17 @@ class Parser {
     return tok.t === t && (v === undefined || ('v' in tok && (tok as { v: string }).v === v));
   }
 
-  parse(): string { return this.addSub(); }
+  parse(): string { return this.equation(); }
+
+  // Top-level: handle optional = for ODE equations like y'' + y = sin(t)
+  private equation(): string {
+    const lhs = this.addSub();
+    if (this.is('op', '=')) {
+      this.eat();
+      return `${lhs}=${this.addSub()}`;
+    }
+    return lhs;
+  }
 
   private addSub(): string {
     let s = this.mulDiv();
@@ -144,6 +161,20 @@ class Parser {
     if (tok.t === 'ident') {
       this.eat();
       const name = tok.v;
+
+      // ODE prime notation: if this ident is the unknown function, count trailing primes
+      if (this.ode && name === this.ode.fn) {
+        let order = 0;
+        while (this.is('prime')) { this.eat(); order++; }
+        const { fn, tvar } = this.ode;
+        if (order > 0) return `diff(${fn}(${tvar}),${tvar},${order})`;
+        // bare fn name → fn(tvar) unless immediately followed by ( (already a call)
+        if (!this.is('lp')) return `${fn}(${tvar})`;
+      }
+
+      // In ODE context, bare 'e' (not the unknown fn) is Euler's number %e
+      if (this.ode && name === 'e' && name !== this.ode.fn) return '%e';
+
       // Look up in registry (covers both clientSideOnly and standard functions)
       const mx = LATEX_TO_MAXIMA.get(name);
       if (mx) return `${mx}(${this.funcArg()})`;
@@ -254,9 +285,9 @@ class Parser {
   }
 }
 
-function clientTranslate(latex: string): string | null {
+function clientTranslate(latex: string, ode?: OdeContext): string | null {
   try {
-    const result = new Parser(tokenise(latex)).parse();
+    const result = new Parser(tokenise(latex), ode).parse();
     return result || null;
   } catch {
     return null;
@@ -316,6 +347,23 @@ export class LatexToMaximaService {
     const maxima = clientTranslate(latex);
     if (maxima) return of({ ok: true, maxima });
     return this._backend(latex, 'transform');
+  }
+
+  /**
+   * Converts an ODE equation written with prime notation (y', y'', y''') to Maxima.
+   * Prime derivatives and bare function references are expanded to diff(...) form.
+   * Everything else (e^{4t}, \sin, \frac, implicit multiplication, …) is handled
+   * by the same client-side parser used for all other expressions.
+   *
+   * @param latex   Raw MathQuill LaTeX string, e.g. "y''+2y'+y=25e^{4t}"
+   * @param odeFn   Unknown function letter, e.g. "y"
+   * @param odeTvar Independent variable, e.g. "t"
+   */
+  convertOde(latex: string, odeFn: string, odeTvar: string): ConversionResult {
+    if (!latex.trim()) return { maxima: '', ok: false, error: 'Expresión vacía' };
+    const maxima = clientTranslate(latex, { fn: odeFn, tvar: odeTvar });
+    if (maxima) return { ok: true, maxima };
+    return { maxima: '', ok: false, error: 'No se pudo parsear la ecuación' };
   }
 
   /** Validates segment boundaries via a single backend call. */

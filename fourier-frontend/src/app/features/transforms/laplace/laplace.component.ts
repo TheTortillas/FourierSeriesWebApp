@@ -371,54 +371,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     ));
   }
 
-  // ── ODE LaTeX → Maxima converter ─────────────────────────────────────────
-  // Operates directly on raw MathQuill LaTeX. tex2max doesn't support ' or
-  // \prime, so we parse the full expression here without backend round-trips.
-  parseOdeLatex(latex: string, fn: string, tvar: string): string {
-    let s = latex.trim();
-
-    // 1. Prime derivatives (longest first): y''' y'' y' → diff(y(t),t,n)
-    //    Lookbehind excludes letters/_ but allows digits (e.g. 2y'') and operators
-    for (let n = 6; n >= 1; n--) {
-      const primes = "'".repeat(n);
-      const re = new RegExp(`(?<![a-zA-Z_])${fn}${primes}(?![a-zA-Z0-9_'(])`, 'g');
-      s = s.replace(re, `diff(${fn}(${tvar}),${tvar},${n})`);
-    }
-
-    // 2. Bare function name → fn(tvar)  (after all derivatives are substituted)
-    const reBare = new RegExp(`(?<![a-zA-Z_(])${fn}(?![a-zA-Z0-9_'(])`, 'g');
-    s = s.replace(reBare, `${fn}(${tvar})`);
-
-    // 3. LaTeX structural tokens → Maxima equivalents
-    s = s
-      .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)')
-      .replace(/\^\{([^{}]+)\}/g, '^($1)')
-      .replace(/\\left\(/g, '(').replace(/\\right\)/g, ')')
-      .replace(/\\left\[/g, '[').replace(/\\right\]/g, ']')
-      .replace(/\\left\|/g, 'abs(').replace(/\\right\|/g, ')')
-      .replace(/\\sin/g, 'sin').replace(/\\cos/g, 'cos').replace(/\\tan/g, 'tan')
-      .replace(/\\sinh/g, 'sinh').replace(/\\cosh/g, 'cosh').replace(/\\tanh/g, 'tanh')
-      .replace(/\\arcsin/g, 'asin').replace(/\\arccos/g, 'acos').replace(/\\arctan/g, 'atan')
-      .replace(/\\ln/g, 'log').replace(/\\log/g, 'log').replace(/\\exp/g, 'exp')
-      .replace(/e\^\{([^{}]+)\}/g, 'exp($1)')
-      .replace(/(?<![a-zA-Z])e\^([a-zA-Z0-9])/g, 'exp($1)')
-      .replace(/\\sqrt\{([^{}]+)\}/g, 'sqrt($1)')
-      .replace(/\\cdot/g, '*')
-      .replace(/\\delta/g, 'delta')
-      .replace(/\\pi/g, '%pi').replace(/\\infty/g, 'inf')
-      .replace(/u\(([^)]+)\)/g, 'unit_step($1)')
-      // Implied multiplication: digit before ( or function name
-      .replace(/(\d)diff\(/g, '$1*diff(')
-      .replace(/(\d)\(/g, '$1*(')
-      .replace(/(\d)(sin|cos|tan|sinh|cosh|log|exp|sqrt|abs)\(/g, '$1*$2(')
-      // Remove remaining LaTeX braces
-      .replace(/\{/g, '(').replace(/\}/g, ')')
-      .replace(/\\ /g, ' ')
-      .replace(/  +/g, ' ').trim();
-
-    return s;
-  }
-
   // ── Canvas layers ─────────────────────────────────────────────────────────
 
   readonly layers = computed<PlotLayer[]>(() => {
@@ -680,9 +632,11 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         const ics: LaplaceIcCondition[] = this.odeIcs().map(ic => ({
           order: ic.order,
           value: ic.value || '0',
+          valueTex: ic.valueTex,
         }));
         return this.api.calculateLaplaceOde({
           equation: eq,
+          equationTex: this.odeEquationTex(),
           unknown: unk,
           timeVar: this.timeVar(),
           initialConditions: ics,
@@ -746,8 +700,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   private async initOdeEqField(): Promise<void> {
     const el = this.mqOdeEqRef.nativeElement;
-    const tvar = this.timeVar();
-    const fn   = this.odeFnName();
     const field = await this.mqs.createField(el, {
       ...this.mqs.defaultConfig(),
       handlers: {
@@ -755,16 +707,18 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
           const latex = mf.latex();
           this.odeEquationTex.set(latex);
           if (!latex.trim()) { this.odeEquation.set(''); return; }
-          // Parse directly from LaTeX — tex2max doesn't support prime notation
-          this.odeEquation.set(this.parseOdeLatex(latex, fn, tvar));
+          // Read signals at event time so fn/tvar changes are always reflected
+          const r = this.tex2max.convertOde(latex, this.odeFnName(), this.timeVar());
+          this.odeEquation.set(r.ok ? r.maxima : '');
         },
         enter: () => this.calculate(),
       },
     });
     this.odeEqField = field;
     if (field) field.latex(this.odeEquationTex());
-    const label = `${fn}'' + ${fn} = f(${tvar})`;
-    el.addEventListener('focusin',  () => { if (this.odeEqField) this.mqs.setActiveField(this.odeEqField, label); });
+    el.addEventListener('focusin',  () => {
+      if (this.odeEqField) this.mqs.setActiveField(this.odeEqField, `${this.odeFnName()}'' + ${this.odeFnName()} = f(${this.timeVar()})`);
+    });
     el.addEventListener('focusout', () => this.mqs.clearActiveField());
   }
 
@@ -802,7 +756,8 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     // Re-parse the current equation with the new function name
     const latex = this.odeEquationTex();
     if (latex.trim()) {
-      this.odeEquation.set(this.parseOdeLatex(latex, clean, this.timeVar()));
+      const r = this.tex2max.convertOde(latex, clean, this.timeVar());
+      this.odeEquation.set(r.ok ? r.maxima : '');
     }
   }
 

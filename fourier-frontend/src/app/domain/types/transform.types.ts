@@ -204,10 +204,12 @@ export interface LaplaceInverseRequest {
 export interface LaplaceIcCondition {
   order: number;
   value: string;
+  valueTex?: string;
 }
 
 export interface LaplaceOdeRequest {
   equation: string;
+  equationTex?: string;
   unknown: string;
   timeVar?: string;
   initialConditions: LaplaceIcCondition[];

@@ -1114,6 +1114,7 @@
     "errorNoExpr": "Enter an expression F(s) to invert.",
     "errorNoEq": "Enter the differential equation and the unknown function.",
     "odeHint": "Use Maxima syntax: diff(y(t),t,2) for y'', diff(y(t),t) for y'",
+    "odeHintPrefix": "Write the equation using prime notation:",
     "newCalculation": "New calculation",
     "result": "Result",
     "fullTransform": "Full transform",
