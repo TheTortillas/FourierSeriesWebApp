@@ -503,5 +503,6 @@ export interface LaplaceOdeResult {
   input: LaplaceOdeInput;
   exists: boolean;
   solution?: SymbolicExpression; // y(t)
+  params?: string[];
   executionTimeMs: number;
 }

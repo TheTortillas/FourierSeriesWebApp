@@ -759,15 +759,23 @@ transformsRouter.post(
       const timeVarCheckOde = body.timeVar ? sanitizeVariableName(body.timeVar, "timeVar") : null;
       if (timeVarCheckOde && !timeVarCheckOde.valid) { res.status(400).json({ error: timeVarCheckOde.error }); return; }
 
-      const input: LaplaceOdeInput = {
+      const bodyAny = body as unknown as Record<string, unknown>;
+      const input: LaplaceOdeInput & { equationTex?: string } = {
         equation:          body.equation.trim(),
         unknown:           body.unknown.trim(),
         timeVar:           body.timeVar ?? "t",
-        initialConditions: body.initialConditions.map((ic) => ({
-          order: Number(ic.order),
-          value: String(ic.value).trim(),
-        })),
+        initialConditions: body.initialConditions.map((ic) => {
+          const icAny = ic as unknown as Record<string, unknown>;
+          return {
+            order:    Number(ic.order),
+            value:    String(ic.value).trim(),
+            ...(typeof icAny['valueTex'] === 'string' ? { valueTex: icAny['valueTex'] } : {}),
+          };
+        }),
       };
+      if (typeof bodyAny['equationTex'] === 'string') {
+        input.equationTex = bodyAny['equationTex'];
+      }
 
       const client = trackClientConnection(req, res);
       const result = await laplaceService.ode(input);

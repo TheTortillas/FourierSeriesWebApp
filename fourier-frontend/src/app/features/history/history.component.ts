@@ -286,11 +286,15 @@ export class HistoryComponent implements OnInit {
           exprTex: inp['expressionTex'] as string ?? '',
         };
       } else {
+        // Derive fnName from unknown field "y(t)" → "y"
+        const unk = inp['unknown'] as string ?? 'y(t)';
+        const fnName = unk.replace(/\(.*\)$/, '') || 'y';
         state = {
           m: 'ode',
           vp: inp['timeVar'] ? `${inp['timeVar']}-s` : 't-s',
-          eq: inp['equation'] as string ?? '',
-          unk: inp['unknown'] as string ?? 'y(t)',
+          eq:     inp['equation'] as string ?? '',
+          eqTex:  inp['equationTex'] as string ?? '',
+          fnName,
           ics: inp['initialConditions'] ?? [],
         };
       }
@@ -361,6 +365,8 @@ export class HistoryComponent implements OnInit {
     }
     const expr = inp['expression'] as string | undefined;
     if (expr) return expr;
+    const equation = inp['equation'] as string | undefined;
+    if (equation) return equation;
     const points = inp['points'] as unknown[] | undefined;
     if (points) return `${points.length} ${this.transloco.translate('history.points')}`;
     return JSON.stringify(inp).slice(0, 80);
