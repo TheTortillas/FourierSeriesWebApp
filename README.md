@@ -7,7 +7,7 @@ A full-stack web application for symbolic computation, visualization, and intera
 ---
 
 <p>
-  <img src="https://img.shields.io/badge/version-v0.9.1-brightgreen" alt="Version">
+  <img src="https://img.shields.io/badge/version-v14.0-brightgreen" alt="Version">
   <img src="https://img.shields.io/badge/license-Non--Commercial-orange" alt="License">
   <img src="https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa&logoColor=white" alt="PWA">
   <a href="https://deepwiki.com/TheTortillas/FourierSeriesWebApp"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
@@ -183,7 +183,8 @@ Fourier-Web-Calculator/
 │   ├── migrate_v2_feedback_survey.sql  # Incremental migration (dev only)
 │   └── reset_db.sql                # Drop & recreate for dev
 │
-├── Makefile
+├── setup.sh                # First-time setup (dependencies + .env scaffold)
+├── dev.sh                  # Start backend + frontend in dev mode
 ├── FOURIER_TABLES.md       # Database schema documentation
 └── LICENSE
 ```
@@ -239,8 +240,8 @@ Verify: `maxima --version`
 git clone https://github.com/TheTortillas/FourierSeriesWebApp.git
 cd FourierSeriesWebApp
 
-# Install all dependencies
-make install
+# First-time setup: installs dependencies and scaffolds .env
+./setup.sh
 ```
 
 ---
@@ -349,13 +350,11 @@ psql -d fourier_db -f fourier-database/fourier_db.sql
 ## Running in Development
 
 ```bash
-# Both services at once
-make dev
-
-# Or separately (recommended — separate terminals)
-make dev-backend    # http://localhost:3000  (tsx watch, auto-reload)
-make dev-frontend   # http://localhost:4200  (ng serve)
+# Single command — colored logs, pre-flight checks, clean Ctrl+C shutdown
+./dev.sh
 ```
+
+`dev.sh` verifies `.env`, `node_modules`, Maxima and PostgreSQL before starting. Run `./setup.sh` first if you haven't.
 
 Swagger API docs: `http://localhost:3000/api-docs`
 
@@ -403,12 +402,11 @@ Full interactive documentation: `http://localhost:3000/api-docs`
 
 ## Branch Strategy
 
-| Branch                | Purpose                                                                  |
-| --------------------- | ------------------------------------------------------------------------ |
-| `main`                | Production-ready code. Tagged releases (`v0.9`, `v0.9.1`, …)             |
-| `develop`             | Integration branch — all feature branches merge here first               |
-| `feat/laplace`        | Laplace Transform feature (direct, inverse, ODE solver, UI, canvas)      |
-| `feat/theory-section` | Long-running branch for theory content and documentation pages           |
+| Branch                | Purpose                                                                   |
+| --------------------- | ------------------------------------------------------------------------- |
+| `main`                | Production-ready code. Tagged releases (`v13.0`, `v14.0`, …)             |
+| `develop`             | Integration branch — all feature branches merge here first                |
+| `feat/theory-section` | Long-running branch for theory content and documentation pages            |
 | `archive/v0-legacy`   | Snapshot of the original v0 app (Angular 18 + plain JS backend, no auth) |
 
 Feature branches: `feat/<name>`. Bug fixes: `fix/<name>`. Always branch from `develop`, merge back with `--no-ff`.
