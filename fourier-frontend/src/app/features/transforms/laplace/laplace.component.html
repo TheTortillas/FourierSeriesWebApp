@@ -610,6 +610,32 @@
                   <span #directResultEl [mathjax]="'\\(' + r.F!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
                   <app-export-button [tex]="r.F!.tex" [maxima]="r.F!.maxima" [mathEl]="directResultEl" filename="laplace-transform" [label]="'F(' + activePair().freqDisplay + ')'" />
                 </div>
+                <div class="mt-2 pt-2 border-t border-border dark:border-dark-border">
+                  <button type="button" (click)="altFormsOpenDirect.set(!altFormsOpenDirect())"
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenDirect() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenDirect()) {
+                    @if (altFormsLoadingDirect()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altFormsDirect().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsDirect(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #directAltEl [mathjax]="'\\(' + form.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="directAltEl" filename="laplace-direct-alt" [label]="'F(' + activePair().freqDisplay + ') — ' + (form.labelKey | transloco)" />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
               </div>
             }
           </div>
@@ -635,6 +661,32 @@
                   <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">f({{ activePair().timeDisplay }}) =</span>
                   <span #inverseResultEl [mathjax]="'\\(' + r.f!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
                   <app-export-button [tex]="r.f!.tex" [maxima]="r.f!.maxima" [mathEl]="inverseResultEl" filename="laplace-inverse" [label]="'f(' + activePair().timeDisplay + ')'" />
+                </div>
+                <div class="mt-2 pt-2 border-t border-border dark:border-dark-border">
+                  <button type="button" (click)="altFormsOpenInverse.set(!altFormsOpenInverse())"
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1">
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenInverse() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenInverse()) {
+                    @if (altFormsLoadingInverse()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altFormsInverse().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsInverse(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #inverseAltEl [mathjax]="'\\(' + form.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="inverseAltEl" filename="laplace-inverse-alt" [label]="'f(' + activePair().timeDisplay + ') — ' + (form.labelKey | transloco)" />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
                 </div>
               </div>
             }

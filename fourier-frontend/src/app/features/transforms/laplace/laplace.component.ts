@@ -317,7 +317,10 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   // ── Direct mode ───────────────────────────────────────────────────────────
 
   readonly segments     = signal<TransformSegmentDraft[]>([defaultSegment()]);
-  readonly directResult = signal<LaplaceDirectResponse | null>(null);
+  readonly directResult          = signal<LaplaceDirectResponse | null>(null);
+  readonly altFormsDirect        = signal<AltForm[]>([]);
+  readonly altFormsLoadingDirect = signal(false);
+  readonly altFormsOpenDirect    = signal(false);
 
   addSegment(): void {
     this.segments.update(segs => [
@@ -335,6 +338,10 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   // ── Inverse mode ─────────────────────────────────────────────────────────
+
+  readonly altFormsInverse        = signal<AltForm[]>([]);
+  readonly altFormsLoadingInverse = signal(false);
+  readonly altFormsOpenInverse    = signal(false);
 
   readonly inverseExpr    = signal('1/(s^2+1)');
   readonly inverseExprTex = signal('\\frac{1}{s^2+1}');
@@ -656,14 +663,25 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.loading.set(false);
       if (result === null) return;
       const m = this.mode();
-      if (m === 'direct')  { this.directResult.set(result as LaplaceDirectResponse); this.plotComponent()?.resetView(); }
-      if (m === 'inverse') { this.inverseResult.set(result as LaplaceInverseResponse); this.plotComponent()?.resetView(); }
+      if (m === 'direct') {
+        const r = result as LaplaceDirectResponse;
+        this.directResult.set(r);
+        this.altFormsDirect.set([]); this.altFormsOpenDirect.set(false);
+        if (r.exists && r.F) this._runAltForms(r.F, this.altFormsDirect, this.altFormsLoadingDirect);
+        this.plotComponent()?.resetView();
+      }
+      if (m === 'inverse') {
+        const r = result as LaplaceInverseResponse;
+        this.inverseResult.set(r);
+        this.altFormsInverse.set([]); this.altFormsOpenInverse.set(false);
+        if (r.exists && r.f) this._runAltForms(r.f, this.altFormsInverse, this.altFormsLoadingInverse);
+        this.plotComponent()?.resetView();
+      }
       if (m === 'ode') {
-        const odeRes = result as LaplaceOdeResponse;
-        this.odeResult.set(odeRes);
-        this.altFormsOde.set([]);
-        this.altFormsOpenOde.set(false);
-        if (odeRes.exists && odeRes.solution) this.loadAltFormsOde(odeRes.solution);
+        const r = result as LaplaceOdeResponse;
+        this.odeResult.set(r);
+        this.altFormsOde.set([]); this.altFormsOpenOde.set(false);
+        if (r.exists && r.solution) this._runAltForms(r.solution, this.altFormsOde, this.altFormsLoadingOde);
         this.plotComponent()?.resetView();
       }
     });
@@ -800,23 +818,26 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.paramValues.set({});
   }
 
-  // ── Alt forms (ODE) ──────────────────────────────────────────────────────
+  // ── Alt forms ─────────────────────────────────────────────────────────────
 
-  loadAltFormsOde(main: { maxima: string; tex: string }): void {
-    this.altFormsOde.set([]);
-    this.altFormsLoadingOde.set(true);
+  private _runAltForms(
+    main: { maxima: string; tex: string },
+    formsSig: ReturnType<typeof signal<AltForm[]>>,
+    loadingSig: ReturnType<typeof signal<boolean>>,
+  ): void {
+    formsSig.set([]);
+    loadingSig.set(true);
     const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
-      { labelKey: 'transforms.altFormFactor',  req: { expression: main.maxima, profile: 'complete', functions: ['factor'] } },
-      { labelKey: 'transforms.altFormExpand',  req: { expression: main.maxima, profile: 'complete', functions: ['expand'] } },
-      { labelKey: 'transforms.altFormTrig',    req: { expression: main.maxima, profile: 'complete', functions: ['trigreduce'], displayFlags: { demoivre: true } } },
-      { labelKey: 'transforms.altFormExp',     req: { expression: main.maxima, profile: 'complete', functions: ['radcan', 'expand', 'combine'], displayFlags: { exponentialize: true } } },
+      { labelKey: 'transforms.altFormFactor', req: { expression: main.maxima, profile: 'complete', functions: ['factor'] } },
+      { labelKey: 'transforms.altFormExpand', req: { expression: main.maxima, profile: 'complete', functions: ['expand'] } },
+      { labelKey: 'transforms.altFormTrig',   req: { expression: main.maxima, profile: 'complete', functions: ['trigreduce'], displayFlags: { demoivre: true } } },
+      { labelKey: 'transforms.altFormExp',    req: { expression: main.maxima, profile: 'complete', functions: ['radcan', 'expand', 'combine'], displayFlags: { exponentialize: true } } },
     ];
     forkJoin(profiles.map(({ req }) => this.api.simplify(req).pipe(catchError(() => of(null)))))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((results) => {
         const normalize = (s: string) => s.replace(/\s+/g, '');
-        const seenTex = new Set<string>();
-        if (main.tex) seenTex.add(normalize(main.tex));
+        const seenTex = new Set<string>([main.tex ? normalize(main.tex) : '']);
         const forms: AltForm[] = [];
         results.forEach((r: SimplifyResponse | null, i) => {
           if (!r) return;
@@ -827,8 +848,8 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
           seenTex.add(key);
           forms.push({ labelKey: profiles[i].labelKey, tex, maxima });
         });
-        this.altFormsOde.set(forms);
-        this.altFormsLoadingOde.set(false);
+        formsSig.set(forms);
+        loadingSig.set(false);
       });
   }
 

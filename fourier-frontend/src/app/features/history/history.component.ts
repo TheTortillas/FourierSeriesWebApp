@@ -286,11 +286,15 @@ export class HistoryComponent implements OnInit {
           exprTex: inp['expressionTex'] as string ?? '',
         };
       } else {
+        // Derive fnName from unknown field "y(t)" → "y"
+        const unk = inp['unknown'] as string ?? 'y(t)';
+        const fnName = unk.replace(/\(.*\)$/, '') || 'y';
         state = {
           m: 'ode',
           vp: inp['timeVar'] ? `${inp['timeVar']}-s` : 't-s',
-          eq: inp['equation'] as string ?? '',
-          unk: inp['unknown'] as string ?? 'y(t)',
+          eq:     inp['equation'] as string ?? '',
+          eqTex:  inp['equationTex'] as string ?? '',
+          fnName,
           ics: inp['initialConditions'] ?? [],
         };
       }
