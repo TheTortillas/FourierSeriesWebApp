@@ -59,6 +59,11 @@ PARSEVAL_PLAN.md
 **/*_CLEANUP.md
 .claude/
 REVIEW.md
+ABS_EXPANDER_CASES.md
+BUGS_TRANSFORMS.md
+tests_exitosos.txt
+UX_IMPROVEMENTS.md
+Makefile
 
 #
 generar_pdf_codigo.py
