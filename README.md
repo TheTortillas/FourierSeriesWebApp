@@ -1,4 +1,4 @@
-# Fourier Web Calculator
+# Fourier & Laplace Web Calculator
 
 A full-stack web application for symbolic computation, visualization, and interactive exploration of Fourier Series and Fourier Transforms. Combines a Maxima-powered mathematical engine with a modern Angular frontend featuring user authentication, calculation history, and a quota system.
 

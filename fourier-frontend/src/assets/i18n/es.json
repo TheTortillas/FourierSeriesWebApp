@@ -96,7 +96,7 @@
     }
   },
   "home": {
-    "subtitle": "Calcula, visualiza y analiza el análisis de Fourier con expresiones simbólicas exactas y reconstrucción gráfica en tiempo real.",
+    "subtitle": "Calcula series de Fourier, transformadas de Fourier y Laplace, e integrales. Resuelve EDOs con Laplace. Resultados simbólicos exactos y reconstrucción gráfica en tiempo real.",
     "learnMore": "Conoce más sobre la herramienta →",
     "toolsTitle": "Herramientas",
     "analysisTitle": "Análisis de Fourier",
@@ -687,8 +687,8 @@
       "description": "Calcula la integral de Fourier trigonométrica, compleja, coseno y seno de funciones definidas por tramos. Visualiza la reconstrucción con el fenómeno de Gibbs mediante un slider interactivo."
     },
     "about": {
-      "title": "Acerca de Fourier Web Calculator",
-      "description": "Fourier Web Calculator: herramienta gratuita para calcular transformadas de Fourier continuas, inversas, series de Fourier, DFT y epiciclos. Resultados simbólicos exactos con visualización en tiempo real."
+      "title": "Acerca de Fourier & Laplace Web Calculator",
+      "description": "Fourier Web Calculator: herramienta gratuita para calcular series de Fourier, transformadas de Fourier y Laplace, integrales de Fourier y resolver EDOs con Laplace. Resultados simbólicos exactos con visualización en tiempo real."
     },
     "laplace": {
       "title": "Calculadora de Transformada de Laplace — Directa, Inversa y EDOs",
@@ -808,7 +808,7 @@
     },
     "s4": {
       "heading": "¿Conociste la versión anterior?",
-      "imgAlt": "Captura de la versión anterior de Fourier Web Calculator",
+      "imgAlt": "Captura de la versión anterior de Fourier & Laplace Web Calculator",
       "usedPreviousLabel": "¿Habías usado esta herramienta antes de esta versión?",
       "usedPreviousYes": "Sí, usé la versión anterior",
       "usedPreviousNo": "No, es la primera vez que la uso",
@@ -878,7 +878,7 @@
   },
   "about": {
     "hero": {
-      "title": "Acerca de Fourier Web Calculator",
+      "title": "Acerca de Fourier & Laplace Web Calculator",
       "intro": "Una herramienta web gratuita y de acceso abierto para calcular, visualizar y compartir análisis matemático — desde series y transformadas de Fourier hasta la Transformada de Laplace. Diseñada para estudiantes, ingenieros y científicos."
     },
     "sectionFourier": "Análisis de Fourier",

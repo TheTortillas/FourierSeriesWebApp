@@ -1,4 +1,4 @@
-# Fourier Web Calculator - Makefile
+# Fourier & Laplace Web Calculator - Makefile
 
 .PHONY: install install-backend install-frontend clean clean-backend clean-frontend \
         dev dev-backend dev-frontend start stop help all
