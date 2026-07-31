@@ -242,8 +242,8 @@ export class HistoryComponent implements OnInit {
           alg: 'fft',
           v: (inp['intVar'] as string | undefined) ?? 'x',
           N: (inp['N'] as number | undefined) ?? 128,
-          seg: (inp['segments'] as Array<{ expression: string; from: string; to: string }>)
-            .map((s) => ({ e: s.expression, et: s.expression, f: s.from, ft: s.from, t: s.to, tt: s.to })),
+          seg: (inp['segments'] as Array<{ expression: string; from: string; to: string; expressionTex?: string; fromTex?: string; toTex?: string }>)
+            .map((s) => ({ e: s.expression, et: s.expressionTex ?? s.expression, f: s.from, ft: s.fromTex ?? s.from, t: s.to, tt: s.toTex ?? s.to })),
         };
       } else {
         // dft_signal with points — manual/discrete mode
