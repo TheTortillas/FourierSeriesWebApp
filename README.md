@@ -49,10 +49,15 @@ A full-stack web application for symbolic computation, visualization, and intera
 
 **Mathematical computation**
 
-- Trigonometric Fourier series (symbolic coefficients, exact closed form)
+- Trigonometric Fourier series (symbolic coefficients, exact closed form, Parseval identity)
 - Complex exponential Fourier series
 - Half-range series (sine and cosine expansions)
-- Continuous Fourier Transform and its inverse
+- Continuous Fourier Transform and its inverse (multiple normalization conventions)
+- Fourier Integral (trigonometric, cosine, sine and complex forms)
+- Laplace Transform — direct, inverse and ODE solver with initial conditions
+  - Free parameters (assumes positivity for symbolic `ilt()`)
+  - Partial fraction decomposition
+  - Client-side LaTeX → Maxima conversion for inverse mode
 - Discrete Fourier Transform (DFT/FFT) — from points, from function samples, or from function definition
 - Expression parsing (LaTeX → Maxima), simplification, and integrability checks
 
@@ -60,7 +65,10 @@ A full-stack web application for symbolic computation, visualization, and intera
 
 - Real-time series reconstruction with adjustable harmonic count
 - Amplitude and phase spectrum
+- Fourier Integral graphical reconstruction (A(ω), B(ω) and f(t))
+- Laplace Transform canvas: F(s) input curve + f(t) result with parameter sliders
 - DFT epicycle animation
+- Interactive function grapher (multiple expressions, colors, zoom)
 - Coefficient tables with CSV export
 
 **User system**
@@ -70,7 +78,7 @@ A full-stack web application for symbolic computation, visualization, and intera
 - Password reset via email
 - JWT authentication with rotating refresh tokens
 - Weekly calculation quota (anonymous: 10 / free: 50 / premium: unlimited)
-- Calculation history with favorites and rename
+- Calculation history with favorites, rename and filter by calculation type
 - User profile with name editing
 
 **Feedback & community**
@@ -133,7 +141,7 @@ Fourier-Web-Calculator/
 │   │   ├── application/
 │   │   │   ├── auth/           # authService, tokenService
 │   │   │   ├── fourier/        # trigonometric, complex, halfRange services
-│   │   │   ├── transforms/     # fourierTransform, dft services
+│   │   │   ├── transforms/     # fourierTransform, fourierIntegral, dft, laplace services
 │   │   │   └── auxiliary/      # simplify, parse
 │   │   ├── domain/
 │   │   │   ├── interfaces/     # Repository contracts
@@ -156,9 +164,10 @@ Fourier-Web-Calculator/
 │   │   │   │   └── services/       # api, auth, analytics, seo, theme, feedback, survey…
 │   │   │   ├── features/
 │   │   │   │   ├── home/
-│   │   │   │   ├── calculator/     # Main Fourier series calculator
-│   │   │   │   ├── transforms/     # Continuous + DFT transforms
-│   │   │   │   ├── history/        # Calculation history & favorites
+│   │   │   │   ├── calculator/     # Fourier series (trigonometric, complex, half-range, Parseval)
+│   │   │   │   ├── transforms/     # Continuous FT, Fourier Integral, DFT, Laplace
+│   │   │   │   ├── grapher/        # Interactive function grapher
+│   │   │   │   ├── history/        # Calculation history, favorites, type filter
 │   │   │   │   ├── profile/        # User profile
 │   │   │   │   ├── auth/           # Login, register, forgot/reset password
 │   │   │   │   ├── feedback/       # Feedback page
@@ -359,11 +368,11 @@ All routes are prefixed with `/api`.
 | Group          | Prefix            | Description                                                                                      |
 | -------------- | ----------------- | ------------------------------------------------------------------------------------------------ |
 | Auth           | `/api/auth`       | Register, login, Google OAuth, token refresh, email verification, password reset, profile, quota |
-| Fourier series | `/api/fourier`    | Trigonometric, complex, half-range — coefficients and first-N terms                              |
-| Transforms     | `/api/transforms` | Continuous Fourier Transform, Inverse FT, DFT (points / samples / function)                      |
+| Fourier series | `/api/fourier`    | Trigonometric, complex, half-range — coefficients, first-N terms, Parseval                       |
+| Transforms     | `/api/transforms` | Continuous Fourier Transform, Inverse FT, Fourier Integral, DFT (points / samples / function), Laplace (direct, inverse, ODE) |
 | Parse          | `/api/parse`      | LaTeX → Maxima expression parsing                                                                |
 | Simplify       | `/api/simplify`   | Symbolic simplification                                                                          |
-| History        | `/api/history`    | CRUD for calculation history and favorites (auth required)                                       |
+| History        | `/api/history`    | CRUD for calculation history, favorites and type filter (auth required)                          |
 | Feedback       | `/api/feedback`   | Submit user feedback (optional auth)                                                             |
 | Survey         | `/api/survey`     | Submit demographic survey response (optional auth, one-time)                                     |
 | Admin          | `/api/admin`      | User management, audit log, system stats, feedback/survey analytics (admin role required)        |
@@ -398,6 +407,7 @@ Full interactive documentation: `http://localhost:3000/api-docs`
 | --------------------- | ------------------------------------------------------------------------ |
 | `main`                | Production-ready code. Tagged releases (`v0.9`, `v0.9.1`, …)             |
 | `develop`             | Integration branch — all feature branches merge here first               |
+| `feat/laplace`        | Laplace Transform feature (direct, inverse, ODE solver, UI, canvas)      |
 | `feat/theory-section` | Long-running branch for theory content and documentation pages           |
 | `archive/v0-legacy`   | Snapshot of the original v0 app (Angular 18 + plain JS backend, no auth) |
 
