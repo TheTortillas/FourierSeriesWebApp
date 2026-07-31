@@ -172,8 +172,11 @@ class Parser {
         if (!this.is('lp')) return `${fn}(${tvar})`;
       }
 
-      // In ODE context, bare 'e' (not the unknown fn) is Euler's number %e
-      if (this.ode && name === 'e' && name !== this.ode.fn) return '%e';
+      // In ODE context, bare 'e' → %e (Euler), bare 'i' → %i (imaginary unit)
+      if (this.ode && name !== this.ode.fn) {
+        if (name === 'e') return '%e';
+        if (name === 'i') return '%i';
+      }
 
       // Look up in registry (covers both clientSideOnly and standard functions)
       const mx = LATEX_TO_MAXIMA.get(name);

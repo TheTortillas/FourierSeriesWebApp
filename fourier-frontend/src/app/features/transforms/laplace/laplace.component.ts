@@ -761,10 +761,9 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       handlers: {
         edit: (mf) => {
           const latex = mf.latex();
-          this.tex2max.convertClientSide(latex).subscribe(r => {
-            if (r.ok) this.updateIcValue(index, r.maxima, latex);
-            else this.updateIcValue(index, latex, latex);
-          });
+          // Use ODE context so i→%i, e→%e are handled correctly
+          const r = this.tex2max.convertOde(latex, this.odeFnName(), this.timeVar());
+          this.updateIcValue(index, r.ok ? r.maxima : latex, latex);
         },
         enter: () => this.calculate(),
       },
