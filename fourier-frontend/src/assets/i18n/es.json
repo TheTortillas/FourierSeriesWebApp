@@ -96,7 +96,7 @@
     }
   },
   "home": {
-    "subtitle": "Calcula series de Fourier, transformadas de Fourier y Laplace, e integrales. Resuelve EDOs con Laplace. Resultados simbólicos exactos y reconstrucción gráfica en tiempo real.",
+    "subtitle": "Calcula y grafica series de Fourier, transformadas de Fourier y Laplace, e integrales. Resuelve EDOs con Laplace. Resultados simbólicos exactos y reconstrucción gráfica en tiempo real.",
     "learnMore": "Conoce más sobre la herramienta →",
     "toolsTitle": "Herramientas",
     "analysisTitle": "Análisis de Fourier",
@@ -694,8 +694,8 @@
       "description": "Fourier Web Calculator: herramienta gratuita para calcular series de Fourier, transformadas de Fourier y Laplace, integrales de Fourier y resolver EDOs con Laplace. Resultados simbólicos exactos con visualización en tiempo real."
     },
     "laplace": {
-      "title": "Calculadora de Transformada de Laplace — Directa, Inversa y EDOs",
-      "description": "Calcula la transformada de Laplace directa e inversa de funciones a trozos. Resuelve ecuaciones diferenciales ordinarias (EDO) con condiciones iniciales mediante el método de Laplace. Resultados simbólicos exactos."
+      "title": "Transformada de Laplace — Directa, Inversa y EDOs con Gráfica",
+      "description": "Calcula la transformada de Laplace directa e inversa de funciones a trozos. Resuelve EDOs con condiciones iniciales por el método de Laplace. Gráfica interactiva y resultados simbólicos exactos."
     }
   },
   "dev": {
@@ -1115,6 +1115,19 @@
     "errorNoEq": "Ingresa la ecuación diferencial y la función incógnita.",
     "odeHint": "Usa sintaxis de Maxima: diff(y(t),t,2) para y'', diff(y(t),t) para y'",
     "odeHintPrefix": "Escribe la ecuación usando notación prima:",
+    "odeVariable": "Variable",
+    "odeExamplePlaceholder": "Cargar ejemplo…",
+    "odeEx1stOrderHom": "1er orden homogéneo",
+    "odeEx1stOrderNonHom": "1er orden no homogéneo",
+    "odeEx2ndRealRoots": "2do orden — raíces reales",
+    "odeEx2ndComplex": "2do orden — raíces complejas",
+    "odeEx2ndRepeated": "2do orden — raíz repetida",
+    "odeEx2ndExpForcing": "2do orden — forzamiento exponencial",
+    "odeEx2ndSinForcing": "2do orden — forzamiento sinusoidal",
+    "odeEx2ndPolyForcing": "2do orden — forzamiento polinomial",
+    "odeEx2ndCompoundForcing": "2do orden — forzamiento compuesto",
+    "odeEx2ndDirac": "2do orden — delta de Dirac",
+    "odeEx3rdOrder": "3er orden",
     "newCalculation": "Nuevo cálculo",
     "result": "Resultado",
     "fullTransform": "Transformada completa",

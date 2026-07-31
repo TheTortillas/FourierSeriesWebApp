@@ -234,6 +234,85 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   // ── Variables ─────────────────────────────────────────────────────────────
 
   readonly varPairs = VAR_PAIRS;
+  // ODE only needs the independent variable (t, x, τ); frequency is irrelevant
+  readonly odeVarOptions = VAR_PAIRS.filter(p => p.freq === 's');
+
+  // ── ODE examples ─────────────────────────────────────────────────────────
+
+  readonly odeExamples: Array<{
+    labelKey: string;
+    eqTex: string;
+    fn: string;
+    varId: string;
+    ics: Array<{ order: number; value: string; valueTex: string }>;
+  }> = [
+    {
+      labelKey: 'laplace.odeEx1stOrderHom',
+      eqTex: "y'+3y=0",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '1', valueTex: '1' }],
+    },
+    {
+      labelKey: 'laplace.odeEx1stOrderNonHom',
+      eqTex: "y'-2y=4",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '0', valueTex: '0' }],
+    },
+    {
+      labelKey: 'laplace.odeEx2ndRealRoots',
+      eqTex: "y''-5y'+6y=0",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }],
+    },
+    {
+      labelKey: 'laplace.odeEx2ndComplex',
+      eqTex: "y''+2y'+5y=0",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }],
+    },
+    {
+      labelKey: 'laplace.odeEx2ndRepeated',
+      eqTex: "y''-2y'+y=0",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }],
+    },
+    {
+      labelKey: 'laplace.odeEx2ndExpForcing',
+      eqTex: "y''-3y'+2y=e^{t}",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+    },
+    {
+      labelKey: 'laplace.odeEx2ndSinForcing',
+      eqTex: "y''+y=\\sin\\left(t\\right)",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+    },
+    {
+      labelKey: 'laplace.odeEx2ndPolyForcing',
+      eqTex: "y''+4y=t^{2}",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+    },
+    {
+      labelKey: 'laplace.odeEx2ndCompoundForcing',
+      eqTex: "y''+3y'+2y=te^{-t}",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+    },
+    {
+      labelKey: 'laplace.odeEx2ndDirac',
+      eqTex: "y''+2y'+y=\\operatorname{delta}\\left(t\\right)",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+    },
+    {
+      labelKey: 'laplace.odeEx3rdOrder',
+      eqTex: "y'''-6y''+11y'-6y=0",
+      fn: 'y', varId: 't-s',
+      ics: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }, { order: 2, value: '0', valueTex: '0' }],
+    },
+  ];
   readonly varPairId = signal<string>('t-s');
 
   readonly activePair = computed<VarPair>(() =>
@@ -565,6 +644,11 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         if (typeof s['fnName'] === 'string') this.odeFnName.set(s['fnName']);
         if (Array.isArray(s['ics']))
           this.odeIcs.set(s['ics'] as Array<{ order: number; value: string; valueTex?: string }>);
+        // Normalize to an ODE-valid var pair (frequency is irrelevant in ODE)
+        if (!this.odeVarOptions.find(p => p.id === this.varPairId())) {
+          const fallback = this.odeVarOptions.find(p => p.time === this.activePair().time);
+          if (fallback) this.varPairId.set(fallback.id);
+        }
         this._resetOdeMqFlags();
       }
     } catch {
@@ -580,7 +664,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.seo.setPage(
       'seo.laplace.title',
       'seo.laplace.description',
-      'Laplace transform calculator, transformada de Laplace, inverse Laplace, ODE solver, partial fractions, differential equations, Laplace method, transformada inversa de Laplace',
+      'Laplace transform calculator, transformada de Laplace, inverse Laplace transform, transformada inversa de Laplace, ODE solver, resolución de EDOs, differential equations, ecuaciones diferenciales ordinarias, Laplace method, método de Laplace, partial fractions, fracciones parciales, piecewise functions, funciones a trozos, initial conditions, condiciones iniciales, step function, Heaviside, Dirac delta, impulse response, graph Laplace transform, graficar transformada de Laplace, symbolic math, cálculo simbólico',
     );
 
     if (typeof window !== 'undefined') {
@@ -790,6 +874,18 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       const r = this.tex2max.convertOde(latex, clean, this.timeVar());
       this.odeEquation.set(r.ok ? r.maxima : '');
     }
+  }
+
+  loadOdeExample(labelKey: string): void {
+    const ex = this.odeExamples.find(e => e.labelKey === labelKey);
+    if (!ex) return;
+    this.varPairId.set(ex.varId);
+    this.odeFnName.set(ex.fn);
+    this.odeEquationTex.set(ex.eqTex);
+    const r = this.tex2max.convertOde(ex.eqTex, ex.fn, this.timeVar());
+    this.odeEquation.set(r.ok ? r.maxima : '');
+    this.odeIcs.set(ex.ics);
+    this._resetOdeMqFlags();
   }
 
   // Called when mode switches back to ODE — reset MathQuill init flags

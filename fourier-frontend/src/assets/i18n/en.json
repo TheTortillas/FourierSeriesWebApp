@@ -96,7 +96,7 @@
     }
   },
   "home": {
-    "subtitle": "Compute Fourier series, Fourier and Laplace transforms, and Fourier integrals. Solve ODEs with Laplace. Exact symbolic results with real-time graphical reconstruction.",
+    "subtitle": "Compute and plot Fourier series, Fourier and Laplace transforms, and Fourier integrals. Solve ODEs with Laplace. Exact symbolic results with real-time graphical reconstruction.",
     "learnMore": "Learn more about the tool →",
     "toolsTitle": "Tools",
     "analysisTitle": "Fourier Analysis",
@@ -694,8 +694,8 @@
       "description": "Fourier Web Calculator: free tool for computing Fourier series, Fourier and Laplace transforms, Fourier integrals, and solving ODEs with Laplace. Exact symbolic results with real-time visualization."
     },
     "laplace": {
-      "title": "Laplace Transform Calculator — Direct, Inverse and ODEs",
-      "description": "Compute the direct and inverse Laplace transform of piecewise functions. Solve ordinary differential equations (ODE) with initial conditions using the Laplace method. Exact symbolic results."
+      "title": "Laplace Transform Calculator — Direct, Inverse & ODE Solver",
+      "description": "Compute direct and inverse Laplace transforms of piecewise functions. Solve ODEs with initial conditions via the Laplace method. Interactive graph and exact symbolic results."
     }
   },
   "dev": {
@@ -1115,6 +1115,19 @@
     "errorNoEq": "Enter the differential equation and the unknown function.",
     "odeHint": "Use Maxima syntax: diff(y(t),t,2) for y'', diff(y(t),t) for y'",
     "odeHintPrefix": "Write the equation using prime notation:",
+    "odeVariable": "Variable",
+    "odeExamplePlaceholder": "Load example…",
+    "odeEx1stOrderHom": "1st order homogeneous",
+    "odeEx1stOrderNonHom": "1st order non-homogeneous",
+    "odeEx2ndRealRoots": "2nd order — real roots",
+    "odeEx2ndComplex": "2nd order — complex roots",
+    "odeEx2ndRepeated": "2nd order — repeated root",
+    "odeEx2ndExpForcing": "2nd order — exponential forcing",
+    "odeEx2ndSinForcing": "2nd order — sinusoidal forcing",
+    "odeEx2ndPolyForcing": "2nd order — polynomial forcing",
+    "odeEx2ndCompoundForcing": "2nd order — compound forcing",
+    "odeEx2ndDirac": "2nd order — Dirac delta",
+    "odeEx3rdOrder": "3rd order",
     "newCalculation": "New calculation",
     "result": "Result",
     "fullTransform": "Full transform",

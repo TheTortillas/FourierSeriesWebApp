@@ -197,6 +197,17 @@
           @if (mode() === 'ode') {
             <section class="flex flex-col gap-4">
 
+              <!-- Selector de ejemplos -->
+              <select
+                (change)="loadOdeExample($any($event.target).value); $any($event.target).value = ''"
+                class="w-full px-3 py-2 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-sm font-mono text-muted dark:text-dark-muted focus:outline-none focus:border-accent cursor-pointer"
+              >
+                <option value="" disabled selected>{{ 'laplace.odeExamplePlaceholder' | transloco }}</option>
+                @for (ex of odeExamples; track ex.labelKey) {
+                  <option [value]="ex.labelKey">{{ ex.labelKey | transloco }}</option>
+                }
+              </select>
+
               <!-- Ecuación diferencial -->
               <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
@@ -226,12 +237,12 @@
                 </p>
               </div>
 
-              <!-- Función incógnita -->
+              <!-- Función incógnita + variable independiente -->
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
                   {{ 'laplace.odeUnknown' | transloco }}
                 </label>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-wrap">
                   <input
                     type="text"
                     [value]="odeFnName()"
@@ -244,6 +255,18 @@
                     class="text-sm text-muted dark:text-dark-muted"
                     [mathjax]="'\\(' + odeFnName() + '(' + activePair().timeDisplay + ')\\)'"
                   ></span>
+                  <div class="ml-auto flex items-center gap-1.5">
+                    <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'laplace.odeVariable' | transloco }}</span>
+                    <select
+                      [value]="varPairId()"
+                      (change)="varPairId.set($any($event.target).value)"
+                      class="px-2 py-1.5 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-xs font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent cursor-pointer"
+                    >
+                      @for (pair of odeVarOptions; track pair.id) {
+                        <option [value]="pair.id">{{ pair.timeDisplay }}</option>
+                      }
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -284,24 +307,6 @@
                     }
                   </div>
                 }
-              </div>
-
-              <!-- Variable selector -->
-              <div class="border-t border-border dark:border-dark-border pt-3 flex flex-col gap-3">
-                <p class="text-xs text-muted font-mono shrink-0">
-                  {{ 'laplace.variables' | transloco }}
-                </p>
-                <div class="flex flex-wrap gap-2">
-                  @for (pair of varPairs; track pair.id) {
-                    <button
-                      type="button"
-                      (click)="varPairId.set(pair.id)"
-                      [class]="varPairId() === pair.id
-                        ? 'px-3 py-1 rounded-lg text-xs font-mono border bg-accent/10 dark:bg-accent/15 border-accent text-accent cursor-pointer'
-                        : 'px-3 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer'"
-                    >{{ pair.timeDisplay }}→{{ pair.freqDisplay }}</button>
-                  }
-                </div>
               </div>
 
               <!-- Mini-teclado desktop -->
