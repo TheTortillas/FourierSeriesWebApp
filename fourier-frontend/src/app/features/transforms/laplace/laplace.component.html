@@ -23,16 +23,26 @@
         <!-- Mode tabs -->
         <div class="flex items-center gap-1 bg-paper2 dark:bg-dark-surface rounded-lg p-1 border border-border dark:border-dark-border">
           @for (m of modes; track m.id) {
-            <button
-              type="button"
-              (click)="setMode(m.id)"
-              class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all cursor-pointer"
-              [class]="mode() === m.id
-                ? 'bg-accent text-white dark:text-white shadow-sm'
-                : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
-            >
-              {{ m.labelKey | transloco }}
-            </button>
+            @if (m.id === 'ode') {
+              <div
+                class="flex-1 relative flex flex-col items-center py-1.5 rounded-md opacity-50 cursor-not-allowed"
+                title="Próximamente / Coming soon"
+              >
+                <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ m.labelKey | transloco }}</span>
+                <span class="text-[9px] font-mono text-muted dark:text-dark-muted leading-none mt-0.5">Coming soon</span>
+              </div>
+            } @else {
+              <button
+                type="button"
+                (click)="setMode(m.id)"
+                class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all cursor-pointer"
+                [class]="mode() === m.id
+                  ? 'bg-accent text-white dark:text-white shadow-sm'
+                  : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+              >
+                {{ m.labelKey | transloco }}
+              </button>
+            }
           }
         </div>
 
