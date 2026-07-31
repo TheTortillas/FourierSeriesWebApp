@@ -506,7 +506,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       if (s['vp'] && typeof s['vp'] === 'string') this.varPairId.set(s['vp']);
 
       const m = s['m'];
-      if (m === 'direct' || m === 'inverse') this.mode.set(m);
+      if (m === 'direct' || m === 'inverse' || m === 'ode') this.mode.set(m);
 
       if (m === 'direct' && Array.isArray(s['seg'])) {
         const segs = (s['seg'] as Array<Record<string, string>>).map(seg => ({
