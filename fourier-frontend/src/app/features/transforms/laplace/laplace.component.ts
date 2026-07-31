@@ -16,7 +16,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, filter, of, Subject, switchMap, take, timer } from 'rxjs';
+import { catchError, debounceTime, filter, forkJoin, of, Subject, switchMap, take, timer } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -41,7 +41,11 @@ import type {
   LaplaceInverseResponse,
   LaplaceOdeResponse,
   LaplaceIcCondition,
+  SimplifyRequest,
+  SimplifyResponse,
 } from '../../../domain/types/transform.types';
+
+export interface AltForm { labelKey: string; tex: string; maxima: string; }
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 
@@ -293,7 +297,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly paramValues = signal<ParamValues>({});
 
   readonly activeParams = computed<string[]>(() =>
-    this.directResult()?.params ?? this.inverseResult()?.params ?? [],
+    this.directResult()?.params ?? this.inverseResult()?.params ?? this.odeResult()?.params ?? [],
   );
 
   readonly evaluationParams = computed<ParamValues>(() => {
@@ -347,7 +351,10 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     { order: 0, value: '0', valueTex: '0' },
     { order: 1, value: '0', valueTex: '0' },
   ]);
-  readonly odeResult   = signal<LaplaceOdeResponse | null>(null);
+  readonly odeResult          = signal<LaplaceOdeResponse | null>(null);
+  readonly altFormsOde        = signal<AltForm[]>([]);
+  readonly altFormsLoadingOde = signal(false);
+  readonly altFormsOpenOde    = signal(false);
 
   // LaTeX representation for the equation MathQuill field
   readonly odeEquationTex = signal("y'' + y = \\sin\\left(t\\right)");
@@ -651,7 +658,14 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       const m = this.mode();
       if (m === 'direct')  { this.directResult.set(result as LaplaceDirectResponse); this.plotComponent()?.resetView(); }
       if (m === 'inverse') { this.inverseResult.set(result as LaplaceInverseResponse); this.plotComponent()?.resetView(); }
-      if (m === 'ode')     { this.odeResult.set(result as LaplaceOdeResponse); this.plotComponent()?.resetView(); }
+      if (m === 'ode') {
+        const odeRes = result as LaplaceOdeResponse;
+        this.odeResult.set(odeRes);
+        this.altFormsOde.set([]);
+        this.altFormsOpenOde.set(false);
+        if (odeRes.exists && odeRes.solution) this.loadAltFormsOde(odeRes.solution);
+        this.plotComponent()?.resetView();
+      }
     });
   }
 
@@ -784,6 +798,38 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.odeResult.set(null);
     this.errorMsg.set(null);
     this.paramValues.set({});
+  }
+
+  // ── Alt forms (ODE) ──────────────────────────────────────────────────────
+
+  loadAltFormsOde(main: { maxima: string; tex: string }): void {
+    this.altFormsOde.set([]);
+    this.altFormsLoadingOde.set(true);
+    const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
+      { labelKey: 'transforms.altFormFactor',  req: { expression: main.maxima, profile: 'complete', functions: ['factor'] } },
+      { labelKey: 'transforms.altFormExpand',  req: { expression: main.maxima, profile: 'complete', functions: ['expand'] } },
+      { labelKey: 'transforms.altFormTrig',    req: { expression: main.maxima, profile: 'complete', functions: ['trigreduce'], displayFlags: { demoivre: true } } },
+      { labelKey: 'transforms.altFormExp',     req: { expression: main.maxima, profile: 'complete', functions: ['radcan', 'expand', 'combine'], displayFlags: { exponentialize: true } } },
+    ];
+    forkJoin(profiles.map(({ req }) => this.api.simplify(req).pipe(catchError(() => of(null)))))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((results) => {
+        const normalize = (s: string) => s.replace(/\s+/g, '');
+        const seenTex = new Set<string>();
+        if (main.tex) seenTex.add(normalize(main.tex));
+        const forms: AltForm[] = [];
+        results.forEach((r: SimplifyResponse | null, i) => {
+          if (!r) return;
+          const { tex, maxima } = r.simplified;
+          if (!tex || !maxima) return;
+          const key = normalize(tex);
+          if (seenTex.has(key)) return;
+          seenTex.add(key);
+          forms.push({ labelKey: profiles[i].labelKey, tex, maxima });
+        });
+        this.altFormsOde.set(forms);
+        this.altFormsLoadingOde.set(false);
+      });
   }
 
   // ── Computed helpers ──────────────────────────────────────────────────────

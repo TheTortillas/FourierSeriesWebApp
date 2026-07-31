@@ -236,5 +236,6 @@ export interface LaplaceOdeResponse {
   input: LaplaceOdeRequest;
   exists: boolean;
   solution?: SymbolicExpression;
+  params?: string[];
   executionTimeMs: number;
 }

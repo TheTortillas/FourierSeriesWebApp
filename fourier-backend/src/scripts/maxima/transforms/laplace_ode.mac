@@ -33,6 +33,15 @@ block([_r],
 
 exists: is(sol_raw # false)$
 
+/* Extract free parameters (symbols other than INTVAR and UNKNOWN_FN's variable) */
+free_params: []$
+if exists then block([_vars, _reserved],
+  _vars: listofvars(sol_raw),
+  _reserved: [INTVAR],
+  free_params: sublist(_vars, lambda([_v], not member(_v, _reserved)))
+)$
+
 print("__EXISTS__")$     print(string(exists))$
 print("__SOL_MAXIMA__")$ print(string(sol_raw))$
 print("__SOL_TEX__")$    if exists then tex(sol_raw) else print("")$
+print("__PARAMS__")$     print(string(free_params))$

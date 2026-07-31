@@ -655,11 +655,42 @@
             } @else if (r.solution?.tex) {
               <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
                 <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-                  {{ 'laplace.odeSolution' | transloco }}
+                  {{ 'laplace.odeSolution' | transloco }} {{ odeFnName() }}({{ activePair().timeDisplay }})
                 </span>
                 <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{ odeFnName() }}({{ activePair().timeDisplay }}) =</span>
                   <span #odeResultEl [mathjax]="'\\(' + r.solution!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
-                  <app-export-button [tex]="r.solution!.tex" [maxima]="r.solution!.maxima" [mathEl]="odeResultEl" filename="laplace-ode" [label]="'y(' + activePair().timeDisplay + ')'" />
+                  <app-export-button [tex]="r.solution!.tex" [maxima]="r.solution!.maxima" [mathEl]="odeResultEl" filename="laplace-ode" [label]="odeFnName() + '(' + activePair().timeDisplay + ')'" />
+                </div>
+                <!-- Formas alternativas -->
+                <div class="mt-2 pt-2 border-t border-border dark:border-dark-border">
+                  <button
+                    type="button"
+                    (click)="altFormsOpenOde.set(!altFormsOpenOde())"
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent dark:hover:text-dark-accent transition-colors flex items-center gap-1"
+                  >
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpenOde() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpenOde()) {
+                    @if (altFormsLoadingOde()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altFormsOde().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altFormsOde(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #odeAltEl [mathjax]="'\\(' + form.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button [tex]="form.tex" [maxima]="form.maxima" [mathEl]="odeAltEl" filename="laplace-ode-alt" [label]="odeFnName() + '(' + activePair().timeDisplay + ') — ' + (form.labelKey | transloco)" />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
                 </div>
               </div>
             }

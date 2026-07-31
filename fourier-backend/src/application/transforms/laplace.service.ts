@@ -108,14 +108,17 @@ kill(all)$
 
     const { raw } = await this.runner.run({ script: fullScript, timeoutMs: 90000 });
 
-    const exists    = this.extractBetween(raw, "__EXISTS__", "__SOL_MAXIMA__").trim().includes("true");
-    const solMaxima = this.extractBetween(raw, "__SOL_MAXIMA__", "__SOL_TEX__").trim();
-    const solTex    = this.extractTex(this.extractBetween(raw, "__SOL_TEX__", null));
+    const exists     = this.extractBetween(raw, "__EXISTS__", "__SOL_MAXIMA__").trim().includes("true");
+    const solMaxima  = this.extractBetween(raw, "__SOL_MAXIMA__", "__SOL_TEX__").trim();
+    const solTex     = this.extractTex(this.extractBetween(raw, "__SOL_TEX__", "__PARAMS__"));
+    const paramsRaw  = this.extractBetween(raw, "__PARAMS__", null).trim();
+    const params     = this.parseParams(paramsRaw);
 
     return {
       input,
       exists,
       solution: this.toSymbolic(solMaxima, solTex),
+      params: params.length ? params : undefined,
       executionTimeMs: Date.now() - startTime,
     };
   }
