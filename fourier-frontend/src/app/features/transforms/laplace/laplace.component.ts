@@ -107,12 +107,18 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   private readonly plotter    = inject(PlottingService);
   private readonly mathUtils  = inject(MathUtilsService);
 
-  @ViewChild('mqInverseExpr') private mqInverseRef!: ElementRef<HTMLElement>;
+  @ViewChild('mqInverseExpr')   private mqInverseRef!:   ElementRef<HTMLElement>;
+  @ViewChild('mqOdeEquation')   private mqOdeEqRef!:     ElementRef<HTMLElement>;
   @ViewChild('canvasWrapperRef') private canvasWrapperRef!: ElementRef<HTMLElement>;
   readonly plotComponent = viewChild(FunctionPlotComponent);
 
-  inverseField: MathField | null = null;
+  inverseField:  MathField | null = null;
+  odeEqField:    MathField | null = null;
+  odeIcFields:   (MathField | null)[] = [];
+
   private _mqInverseInited = false;
+  private _mqOdeEqInited   = false;
+  private _mqOdeIcInited: boolean[] = [];
   private _urlPopulated = false;
 
   constructor() {
@@ -254,7 +260,10 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       this._mqInverseInited = false;
     } else if (m === 'ode') {
       this.odeEquation.set('');
-      this.odeIcs.set([{ order: 0, value: '0' }, { order: 1, value: '0' }]);
+      this.odeEquationTex.set("y'' + y = \\sin\\left(t\\right)");
+      this.odeFnName.set('y');
+      this.odeIcs.set([{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }]);
+      this._resetOdeMqFlags();
     }
   }
 
@@ -330,25 +339,84 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   // ── ODE mode ─────────────────────────────────────────────────────────────
 
+  // Maxima expressions sent to backend
   readonly odeEquation = signal('');
-  readonly odeUnknown  = signal('y(t)');
-  readonly odeIcs      = signal<Array<{ order: number; value: string }>>([
-    { order: 0, value: '0' },
-    { order: 1, value: '0' },
+  readonly odeFnName   = signal('y');  // just the letter, e.g. "y", "g", "x"
+  readonly odeUnknown  = computed(() => `${this.odeFnName()}(${this.timeVar()})`);
+  readonly odeIcs      = signal<Array<{ order: number; value: string; valueTex?: string }>>([
+    { order: 0, value: '0', valueTex: '0' },
+    { order: 1, value: '0', valueTex: '0' },
   ]);
   readonly odeResult   = signal<LaplaceOdeResponse | null>(null);
 
+  // LaTeX representation for the equation MathQuill field
+  readonly odeEquationTex = signal("y'' + y = \\sin\\left(t\\right)");
+
   addIc(): void {
     const nextOrder = this.odeIcs().length;
-    this.odeIcs.update(ics => [...ics, { order: nextOrder, value: '0' }]);
+    this.odeIcs.update(ics => [...ics, { order: nextOrder, value: '0', valueTex: '0' }]);
+    this._mqOdeIcInited.push(false);
+    this.odeIcFields.push(null);
   }
 
   removeIc(index: number): void {
     this.odeIcs.update(ics => ics.filter((_, i) => i !== index));
+    this._mqOdeIcInited.splice(index, 1);
+    this.odeIcFields.splice(index, 1);
   }
 
-  updateIcValue(index: number, value: string): void {
-    this.odeIcs.update(ics => ics.map((ic, i) => i === index ? { ...ic, value } : ic));
+  updateIcValue(index: number, value: string, valueTex?: string): void {
+    this.odeIcs.update(ics => ics.map((ic, i) =>
+      i === index ? { ...ic, value, valueTex: valueTex ?? value } : ic
+    ));
+  }
+
+  // ── ODE LaTeX → Maxima converter ─────────────────────────────────────────
+  // Operates directly on raw MathQuill LaTeX. tex2max doesn't support ' or
+  // \prime, so we parse the full expression here without backend round-trips.
+  parseOdeLatex(latex: string, fn: string, tvar: string): string {
+    let s = latex.trim();
+
+    // 1. Prime derivatives (longest first): y''' y'' y' → diff(y(t),t,n)
+    //    Lookbehind excludes letters/_ but allows digits (e.g. 2y'') and operators
+    for (let n = 6; n >= 1; n--) {
+      const primes = "'".repeat(n);
+      const re = new RegExp(`(?<![a-zA-Z_])${fn}${primes}(?![a-zA-Z0-9_'(])`, 'g');
+      s = s.replace(re, `diff(${fn}(${tvar}),${tvar},${n})`);
+    }
+
+    // 2. Bare function name → fn(tvar)  (after all derivatives are substituted)
+    const reBare = new RegExp(`(?<![a-zA-Z_(])${fn}(?![a-zA-Z0-9_'(])`, 'g');
+    s = s.replace(reBare, `${fn}(${tvar})`);
+
+    // 3. LaTeX structural tokens → Maxima equivalents
+    s = s
+      .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)')
+      .replace(/\^\{([^{}]+)\}/g, '^($1)')
+      .replace(/\\left\(/g, '(').replace(/\\right\)/g, ')')
+      .replace(/\\left\[/g, '[').replace(/\\right\]/g, ']')
+      .replace(/\\left\|/g, 'abs(').replace(/\\right\|/g, ')')
+      .replace(/\\sin/g, 'sin').replace(/\\cos/g, 'cos').replace(/\\tan/g, 'tan')
+      .replace(/\\sinh/g, 'sinh').replace(/\\cosh/g, 'cosh').replace(/\\tanh/g, 'tanh')
+      .replace(/\\arcsin/g, 'asin').replace(/\\arccos/g, 'acos').replace(/\\arctan/g, 'atan')
+      .replace(/\\ln/g, 'log').replace(/\\log/g, 'log').replace(/\\exp/g, 'exp')
+      .replace(/e\^\{([^{}]+)\}/g, 'exp($1)')
+      .replace(/(?<![a-zA-Z])e\^([a-zA-Z0-9])/g, 'exp($1)')
+      .replace(/\\sqrt\{([^{}]+)\}/g, 'sqrt($1)')
+      .replace(/\\cdot/g, '*')
+      .replace(/\\delta/g, 'delta')
+      .replace(/\\pi/g, '%pi').replace(/\\infty/g, 'inf')
+      .replace(/u\(([^)]+)\)/g, 'unit_step($1)')
+      // Implied multiplication: digit before ( or function name
+      .replace(/(\d)diff\(/g, '$1*diff(')
+      .replace(/(\d)\(/g, '$1*(')
+      .replace(/(\d)(sin|cos|tan|sinh|cosh|log|exp|sqrt|abs)\(/g, '$1*$2(')
+      // Remove remaining LaTeX braces
+      .replace(/\{/g, '(').replace(/\}/g, ')')
+      .replace(/\\ /g, ' ')
+      .replace(/  +/g, ' ').trim();
+
+    return s;
   }
 
   // ── Canvas layers ─────────────────────────────────────────────────────────
@@ -488,9 +556,10 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         state['expr'] = this.inverseExpr();
         state['exprTex'] = this.inverseExprTex();
       } else if (m === 'ode') {
-        state['eq'] = this.odeEquation();
-        state['unk'] = this.odeUnknown();
-        state['ics'] = this.odeIcs();
+        state['eq']    = this.odeEquation();
+        state['eqTex'] = this.odeEquationTex();
+        state['fnName'] = this.odeFnName();
+        state['ics']   = this.odeIcs();
       }
       return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
     } catch {
@@ -525,9 +594,12 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
           this.inverseExprTex.set(s['exprTex']);
         }
       } else if (m === 'ode') {
-        if (typeof s['eq'] === 'string') this.odeEquation.set(s['eq']);
-        if (typeof s['unk'] === 'string') this.odeUnknown.set(s['unk']);
-        if (Array.isArray(s['ics'])) this.odeIcs.set(s['ics'] as Array<{ order: number; value: string }>);
+        if (typeof s['eq'] === 'string')     this.odeEquation.set(s['eq']);
+        if (typeof s['eqTex'] === 'string')  this.odeEquationTex.set(s['eqTex']);
+        if (typeof s['fnName'] === 'string') this.odeFnName.set(s['fnName']);
+        if (Array.isArray(s['ics']))
+          this.odeIcs.set(s['ics'] as Array<{ order: number; value: string; valueTex?: string }>);
+        this._resetOdeMqFlags();
       }
     } catch {
       // ignore malformed state
@@ -630,9 +702,24 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   ngAfterViewChecked(): void {
-    if (this._mqInverseInited || !this.mqInverseRef?.nativeElement) return;
-    this._mqInverseInited = true;
-    void this.initInverseField();
+    if (!this._mqInverseInited && this.mqInverseRef?.nativeElement) {
+      this._mqInverseInited = true;
+      void this.initInverseField();
+    }
+    if (!this._mqOdeEqInited && this.mqOdeEqRef?.nativeElement) {
+      this._mqOdeEqInited = true;
+      void this.initOdeEqField();
+    }
+    // IC fields — one per condition
+    for (let i = 0; i < this.odeIcs().length; i++) {
+      if (!this._mqOdeIcInited[i]) {
+        const el = document.querySelector(`[data-mq-ic="${i}"]`) as HTMLElement | null;
+        if (el) {
+          this._mqOdeIcInited[i] = true;
+          void this.initOdeIcField(el, i);
+        }
+      }
+    }
   }
 
   private async initInverseField(): Promise<void> {
@@ -657,8 +744,79 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     el.addEventListener('focusout', () => this.mqs.clearActiveField());
   }
 
+  private async initOdeEqField(): Promise<void> {
+    const el = this.mqOdeEqRef.nativeElement;
+    const tvar = this.timeVar();
+    const fn   = this.odeFnName();
+    const field = await this.mqs.createField(el, {
+      ...this.mqs.defaultConfig(),
+      handlers: {
+        edit: (mf) => {
+          const latex = mf.latex();
+          this.odeEquationTex.set(latex);
+          if (!latex.trim()) { this.odeEquation.set(''); return; }
+          // Parse directly from LaTeX — tex2max doesn't support prime notation
+          this.odeEquation.set(this.parseOdeLatex(latex, fn, tvar));
+        },
+        enter: () => this.calculate(),
+      },
+    });
+    this.odeEqField = field;
+    if (field) field.latex(this.odeEquationTex());
+    const label = `${fn}'' + ${fn} = f(${tvar})`;
+    el.addEventListener('focusin',  () => { if (this.odeEqField) this.mqs.setActiveField(this.odeEqField, label); });
+    el.addEventListener('focusout', () => this.mqs.clearActiveField());
+  }
+
+  private async initOdeIcField(el: HTMLElement, index: number): Promise<void> {
+    const ic = this.odeIcs()[index];
+    const field = await this.mqs.createField(el, {
+      ...this.mqs.defaultConfig(),
+      handlers: {
+        edit: (mf) => {
+          const latex = mf.latex();
+          this.tex2max.convertClientSide(latex).subscribe(r => {
+            if (r.ok) this.updateIcValue(index, r.maxima, latex);
+            else this.updateIcValue(index, latex, latex);
+          });
+        },
+        enter: () => this.calculate(),
+      },
+    });
+    this.odeIcFields[index] = field;
+    if (field) field.latex(ic.valueTex ?? ic.value);
+    el.addEventListener('focusin',  () => { if (this.odeIcFields[index]) this.mqs.setActiveField(this.odeIcFields[index]!, 'valor'); });
+    el.addEventListener('focusout', () => this.mqs.clearActiveField());
+  }
+
+  // Label for IC row: y(0)=, y'(0)=, y''(0)=, ...
+  odeIcLabel(order: number): string {
+    const fn = this.odeFnName();
+    if (order === 0) return `${fn}(0)`;
+    return `${fn}${"'".repeat(order)}(0)`;
+  }
+
+  onOdeFnNameChange(value: string): void {
+    const clean = value.replace(/[^a-zA-Z]/g, '').slice(0, 2) || 'y';
+    this.odeFnName.set(clean);
+    // Re-parse the current equation with the new function name
+    const latex = this.odeEquationTex();
+    if (latex.trim()) {
+      this.odeEquation.set(this.parseOdeLatex(latex, clean, this.timeVar()));
+    }
+  }
+
+  // Called when mode switches back to ODE — reset MathQuill init flags
+  private _resetOdeMqFlags(): void {
+    this._mqOdeEqInited = false;
+    this._mqOdeIcInited = this.odeIcs().map(() => false);
+    this.odeEqField  = null;
+    this.odeIcFields = this.odeIcs().map(() => null);
+  }
+
   ngOnDestroy(): void {
     if (this.mqInverseRef?.nativeElement) this.mqInverseRef.nativeElement.innerHTML = '';
+    if (this.mqOdeEqRef?.nativeElement)   this.mqOdeEqRef.nativeElement.innerHTML = '';
   }
 
   calculate(): void {
