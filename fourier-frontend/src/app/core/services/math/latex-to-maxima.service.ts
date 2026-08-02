@@ -77,7 +77,7 @@ function tokenise(src: string): Token[] {
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 
-interface OdeContext { fn: string; tvar: string; }
+interface OdeContext { fn: string; tvar: string; bareVar?: boolean; }
 
 class Parser {
   private pos = 0;
@@ -167,9 +167,11 @@ class Parser {
         let order = 0;
         while (this.is('prime')) { this.eat(); order++; }
         const { fn, tvar } = this.ode;
-        if (order > 0) return `diff(${fn}(${tvar}),${tvar},${order})`;
+        if (order > 0) return this.ode!.bareVar
+          ? `diff(${fn},${tvar},${order})`
+          : `diff(${fn}(${tvar}),${tvar},${order})`;
         // bare fn name → fn(tvar) unless immediately followed by ( (already a call)
-        if (!this.is('lp')) return `${fn}(${tvar})`;
+        if (!this.is('lp')) return this.ode!.bareVar ? fn : `${fn}(${tvar})`;
       }
 
       // In ODE context, bare 'e' → %e (Euler), bare 'i' → %i (imaginary unit)
@@ -365,6 +367,14 @@ export class LatexToMaximaService {
   convertOde(latex: string, odeFn: string, odeTvar: string): ConversionResult {
     if (!latex.trim()) return { maxima: '', ok: false, error: 'Expresión vacía' };
     const maxima = clientTranslate(latex, { fn: odeFn, tvar: odeTvar });
+    if (maxima) return { ok: true, maxima };
+    return { maxima: '', ok: false, error: 'No se pudo parsear la ecuación' };
+  }
+
+  /** Like convertOde but produces diff(y,x,2) bare-variable form for ode2/ic1/ic2/bc2. */
+  convertOdeForOde2(latex: string, odeFn: string, odeTvar: string): ConversionResult {
+    if (!latex.trim()) return { maxima: '', ok: false, error: 'Expresión vacía' };
+    const maxima = clientTranslate(latex, { fn: odeFn, tvar: odeTvar, bareVar: true });
     if (maxima) return { ok: true, maxima };
     return { maxima: '', ok: false, error: 'No se pudo parsear la ecuación' };
   }

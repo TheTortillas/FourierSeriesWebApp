@@ -1,0 +1,288 @@
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
+  <app-nav />
+
+  <!-- Page header -->
+  <header class="shrink-0 border-b border-border dark:border-dark-border px-6 py-4">
+    <h1 class="font-display text-2xl text-ink dark:text-dark-ink">
+      {{ 'ode.title' | transloco }}
+    </h1>
+    <p class="text-sm font-mono text-muted dark:text-dark-muted mt-0.5">
+      {{ 'ode.subtitle' | transloco }}
+    </p>
+  </header>
+
+  <!-- Two-panel layout -->
+  <div class="flex flex-col lg:flex-row flex-1 min-h-0">
+
+    <!-- Left panel: controls -->
+    <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto">
+      <div class="p-5 flex flex-col gap-5">
+
+        <!-- Mode tabs -->
+        <div class="flex items-center gap-1 bg-paper2 dark:bg-dark-surface rounded-lg p-1 border border-border dark:border-dark-border">
+          @for (m of modes; track m.id) {
+            <button
+              type="button"
+              (click)="mode.set(m.id); result.set(null); layers.set([])"
+              class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all cursor-pointer"
+              [class]="mode() === m.id
+                ? 'bg-accent text-white dark:text-white shadow-sm'
+                : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+            >
+              {{ m.labelKey | transloco }}
+            </button>
+          }
+        </div>
+
+        <!-- Examples combobox -->
+        <select
+          (change)="loadExample($any($event.target).value); $any($event.target).value = ''"
+          class="w-full px-3 py-2 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono text-muted dark:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+        >
+          <option value="" disabled selected>{{ 'ode.examplePlaceholder' | transloco }}</option>
+          @for (ex of examples; track ex.labelKey) {
+            <option [value]="ex.labelKey">{{ ex.labelKey | transloco }}</option>
+          }
+        </select>
+
+        <!-- Equation field -->
+        <section #mqEqRef class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider">
+              {{ 'ode.equation' | transloco }}
+            </label>
+            <button
+              type="button"
+              (click)="showKeyboard = !showKeyboard"
+              class="hidden lg:flex items-center gap-1 px-2 py-1 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors"
+            >
+              ⌨
+            </button>
+          </div>
+
+          <div
+            [attr.data-mq-eq]="''"
+            class="min-h-11 px-3 py-2 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg focus-within:ring-1 focus-within:ring-accent cursor-text"
+          ></div>
+
+          <p class="text-[11px] font-mono text-muted dark:text-dark-muted">
+            {{ 'ode.hint' | transloco }}&nbsp;{{ fnName() }}',&nbsp;{{ fnName() }}''
+          </p>
+        </section>
+
+        <!-- Function name + variable -->
+        <div class="flex items-center gap-3">
+          <!-- Function name -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">
+              {{ 'ode.fnName' | transloco }}
+            </span>
+            <input
+              type="text"
+              [value]="fnName()"
+              (input)="fnName.set($any($event.target).value.trim() || 'y')"
+              maxlength="2"
+              class="w-10 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono text-center focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+          </div>
+          <!-- Variable -->
+          <div class="ml-auto flex items-center gap-1.5">
+            <span class="text-xs font-mono text-muted dark:text-dark-muted">
+              {{ 'ode.ivar' | transloco }}
+            </span>
+            <select
+              [value]="ivarId()"
+              (change)="ivarId.set($any($event.target).value)"
+              class="px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono text-muted dark:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+            >
+              @for (opt of ivarOptions; track opt.id) {
+                <option [value]="opt.id">{{ opt.display }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- IVP conditions -->
+        @if (mode() === 'ivp') {
+          <section class="flex flex-col gap-3">
+            <span class="text-xs font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider">
+              {{ 'ode.ivpConditions' | transloco }}
+            </span>
+
+            <!-- x0 row -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono text-muted dark:text-dark-muted w-14 shrink-0"
+                [mathjax]="'\\(' + ivar() + '_0 =\\)'"></span>
+              <input type="text" [value]="x0()" (input)="x0.set($any($event.target).value)"
+                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
+
+              <span class="text-xs font-mono text-muted dark:text-dark-muted w-20 shrink-0"
+                [mathjax]="'\\(' + fnName() + '(' + ivar() + '_0) =\\)'"></span>
+              <input type="text" [value]="y0()" (input)="y0.set($any($event.target).value)"
+                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
+            </div>
+
+            <!-- dy0 row (2nd order) -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono text-muted dark:text-dark-muted w-14 shrink-0"
+                [mathjax]="dy0Label()"></span>
+              <input type="text" [value]="dy0()" (input)="dy0.set($any($event.target).value)"
+                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+                [placeholder]="'ode.ivpDy0Hint' | transloco" />
+            </div>
+          </section>
+        }
+
+        <!-- BVP conditions -->
+        @if (mode() === 'bvp') {
+          <section class="flex flex-col gap-3">
+            <span class="text-xs font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider">
+              {{ 'ode.bvpConditions' | transloco }}
+            </span>
+
+            <!-- Point 1 -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono text-muted dark:text-dark-muted w-14 shrink-0"
+                [mathjax]="'\\(' + ivar() + '_1 =\\)'"></span>
+              <input type="text" [value]="x1()" (input)="x1.set($any($event.target).value)"
+                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
+
+              <span class="text-xs font-mono text-muted dark:text-dark-muted w-20 shrink-0"
+                [mathjax]="'\\(' + fnName() + '(' + ivar() + '_1) =\\)'"></span>
+              <input type="text" [value]="y1()" (input)="y1.set($any($event.target).value)"
+                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
+            </div>
+
+            <!-- Point 2 -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono text-muted dark:text-dark-muted w-14 shrink-0"
+                [mathjax]="'\\(' + ivar() + '_2 =\\)'"></span>
+              <input type="text" [value]="x2()" (input)="x2.set($any($event.target).value)"
+                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
+
+              <span class="text-xs font-mono text-muted dark:text-dark-muted w-20 shrink-0"
+                [mathjax]="'\\(' + fnName() + '(' + ivar() + '_2) =\\)'"></span>
+              <input type="text" [value]="y2()" (input)="y2.set($any($event.target).value)"
+                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
+            </div>
+          </section>
+        }
+
+        <!-- Calculate button -->
+        <button
+          type="button"
+          (click)="calculate()"
+          [disabled]="loading()"
+          class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          @if (loading()) {
+            <span class="flex items-center justify-center gap-2">
+              <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              {{ 'ode.calculating' | transloco }}
+            </span>
+          } @else {
+            {{ 'ode.calculate' | transloco }}
+          }
+        </button>
+
+        @if (errorMsg()) {
+          <div class="rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2">
+            <p class="text-xs font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
+          </div>
+        }
+
+        @if (result()) {
+          <button
+            type="button"
+            (click)="result.set(null); layers.set([])"
+            class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold"
+          >
+            {{ 'ode.newCalculation' | transloco }}
+          </button>
+        }
+
+      </div>
+    </aside>
+
+    <!-- Right panel: canvas + result -->
+    <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
+      <div class="p-5 flex flex-col gap-5">
+
+        <!-- Canvas -->
+        <div class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg" style="height: 380px">
+          @if (canvasMounted() && layers().length) {
+            <app-function-plot
+              [layers]="layers()"
+              class="w-full h-full block"
+            />
+          } @else {
+            <div class="w-full h-full flex flex-col items-center justify-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-border dark:text-dark-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+              </svg>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'ode.graphPlaceholder' | transloco }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Result -->
+        @if (result()) {
+          @if (result()!.exists && result()!.solution) {
+            <div class="rounded-xl border border-border dark:border-dark-border p-5 flex flex-col gap-3 bg-paper dark:bg-dark-bg">
+              <p class="text-xs font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider">
+                {{ 'ode.solution' | transloco }}
+              </p>
+
+              <!-- Solution formula -->
+              <div
+                class="text-center py-3 text-lg"
+                [mathjax]="'\\[' + result()!.solution!.tex + '\\]'"
+              ></div>
+
+              <!-- Method + order badges -->
+              <div class="flex flex-wrap gap-2">
+                @if (result()!.order) {
+                  <span class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted">
+                    {{ 'ode.order' | transloco }} {{ result()!.order }}
+                  </span>
+                }
+                @if (result()!.method && result()!.method !== 'failed') {
+                  <span class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted">
+                    {{ result()!.method }}
+                  </span>
+                }
+                @if (result()!.params?.length) {
+                  <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-[10px] font-mono text-amber-700 dark:text-amber-400">
+                    {{ 'ode.generalSolution' | transloco }}: {{ result()!.params!.join(', ') }}
+                  </span>
+                }
+              </div>
+            </div>
+
+          } @else {
+            <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-4">
+              <p class="text-xs font-mono text-amber-700 dark:text-amber-400">
+                {{ 'ode.noSolution' | transloco }}
+              </p>
+            </div>
+          }
+        }
+
+      </div>
+    </main>
+
+  </div>
+
+  <app-footer />
+</div>
+
+<!-- Mobile math keyboard (< lg only) -->
+<div class="lg:hidden">
+  <app-mobile-math-keyboard
+    [extraGroup]="mobileExtraGroup"
+    (close)="showKeyboard = false"
+  />
+</div>

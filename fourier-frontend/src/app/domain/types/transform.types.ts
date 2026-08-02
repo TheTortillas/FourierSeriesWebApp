@@ -239,3 +239,28 @@ export interface LaplaceOdeResponse {
   params?: string[];
   executionTimeMs: number;
 }
+
+// ─── Standalone ODE solver ────────────────────────────────────────────────────
+
+export type OdeMode = 'general' | 'ivp' | 'bvp';
+
+export interface OdeRequest {
+  equation: string;
+  equationTex?: string;
+  unknown: string;
+  ivar: string;
+  mode: OdeMode;
+  x0?: string; y0?: string; dy0?: string;
+  x1?: string; y1?: string;
+  x2?: string; y2?: string;
+}
+
+export interface OdeResponse {
+  input: OdeRequest;
+  exists: boolean;
+  solution?: SymbolicExpression;
+  params?: string[];
+  order?: number;
+  method?: string;
+  executionTimeMs: number;
+}

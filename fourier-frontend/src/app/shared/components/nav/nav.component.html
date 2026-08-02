@@ -96,6 +96,14 @@
           >
             {{ 'nav.laplace' | transloco }}
           </a>
+          <a
+            [routerLink]="'/' + lang() + '/ode'"
+            routerLinkActive="!text-accent bg-accent/5"
+            (click)="fourierMenuOpen.set(false)"
+            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+          >
+            {{ 'nav.ode' | transloco }}
+          </a>
         </div>
       }
     </div>

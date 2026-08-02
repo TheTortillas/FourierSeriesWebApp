@@ -83,7 +83,7 @@ export class NavComponent {
   readonly isAnalysisActive = computed(() => {
     const url = this.currentUrl();
     return url.includes('/calculator') || url.includes('/transforms') ||
-           url.includes('/fourier-integral') || url.includes('/laplace');
+           url.includes('/fourier-integral') || url.includes('/laplace') || url.includes('/ode');
   });
 
   readonly isGrapherActive = computed(() => this.currentUrl().includes('/grapher'));
