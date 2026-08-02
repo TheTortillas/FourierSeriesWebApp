@@ -1,0 +1,88 @@
+/* ode_solve.mac
+   Solves a 1st or 2nd order ODE using ode2 + ic1/ic2/bc2.
+   Injected BEFORE this script runs (in this order):
+     ODE_Y    — dependent variable symbol, e.g. y
+     ODE_X    — independent variable symbol, e.g. x
+     depends(ODE_Y, ODE_X)   — declared before ODE_EQ so diff() keeps noun form
+     ODE_EQ   — ODE in Maxima notation, e.g. diff(y,x,2)+y=sin(x)
+     ODE_MODE — "general" | "ivp" | "bvp"
+     ODE_X0, ODE_Y0, ODE_DY0  — IVP: x=x0, y(x0)=y0, y'(x0)=dy0
+     ODE_X1, ODE_Y1, ODE_X2, ODE_Y2  — BVP: two boundary points
+*/
+display2d: false$
+%iargs:    false$
+radexpand: false$
+
+/* ── Solve general ODE ───────────────────────────────────────────────────── */
+_gen: false$
+block([_r],
+  _r: errcatch(ode2(ODE_EQ, ODE_Y, ODE_X)),
+  if _r # [] then block([_v],
+    _v: first(_r),
+    if listp(_v) then _v: first(_v),
+    if _v # false then _gen: _v
+  )
+)$
+
+/* ── Apply conditions ────────────────────────────────────────────────────── */
+_is_first_order: not freeof('%c, _gen)$
+sol_raw: false$
+
+if _gen # false then block(
+  if ODE_MODE = "general" then (
+    sol_raw: _gen
+
+  ) elseif ODE_MODE = "ivp" then block([_r],
+    if _is_first_order then (
+      _r: errcatch(ic1(_gen, ODE_X = ODE_X0, ODE_Y = ODE_Y0))
+    ) else (
+      _r: errcatch(ic2(_gen,
+            ODE_X = ODE_X0,
+            ODE_Y = ODE_Y0,
+            'diff(ODE_Y, ODE_X) = ODE_DY0))
+    ),
+    if _r # [] then block([_v],
+      _v: first(_r),
+      if listp(_v) then _v: first(_v),
+      if _v # false then sol_raw: _v
+    )
+
+  ) elseif ODE_MODE = "bvp" then block([_r],
+    _r: errcatch(bc2(_gen,
+          ODE_X = ODE_X1, ODE_Y = ODE_Y1,
+          ODE_X = ODE_X2, ODE_Y = ODE_Y2)),
+    if _r # [] then block([_v],
+      _v: first(_r),
+      if listp(_v) then _v: first(_v),
+      if _v # false then sol_raw: _v
+    )
+  )
+)$
+
+/* ── Simplify ────────────────────────────────────────────────────────────── */
+if sol_raw # false then
+  sol_raw: ratsimp(sol_raw)$
+
+/* ── Metadata ────────────────────────────────────────────────────────────── */
+exists: is(sol_raw # false)$
+
+ode_order: if _is_first_order then 1 else 2$
+
+ode_method: if _gen = false then "failed" else string(method)$
+
+/* Free params: constants remaining in the solution (%c, %k1, %k2) */
+free_params: []$
+if exists and ODE_MODE = "general" then block([_vars],
+  _vars: listofvars(sol_raw),
+  free_params: sublist(_vars, lambda([_v],
+    string(_v) = "%c" or string(_v) = "%k1" or string(_v) = "%k2"
+  ))
+)$
+
+/* ── Output ──────────────────────────────────────────────────────────────── */
+print("__EXISTS__")$     print(string(exists))$
+print("__SOL_MAXIMA__")$ print(string(sol_raw))$
+print("__SOL_TEX__")$    if exists then tex(sol_raw) else print("")$
+print("__PARAMS__")$     print(string(free_params))$
+print("__ORDER__")$      print(string(ode_order))$
+print("__METHOD__")$     print(ode_method)$
