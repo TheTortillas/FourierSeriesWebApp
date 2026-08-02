@@ -760,14 +760,12 @@
   </div>
 
   <!-- Mobile math keyboard (< lg only) -->
-  @if (showKeyboard) {
-    <div class="lg:hidden">
-      <app-mobile-math-keyboard
-        [extraGroup]="mobileExtraGroup"
-        (close)="showKeyboard = false"
-      />
-    </div>
-  }
+  <div class="lg:hidden">
+    <app-mobile-math-keyboard
+      [extraGroup]="mobileExtraGroup"
+      (close)="showKeyboard = false"
+    />
+  </div>
 
   <app-footer />
 </div>

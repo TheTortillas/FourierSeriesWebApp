@@ -16,6 +16,7 @@ import { PlottingService } from '../../core/services/canvas/plotting.service';
 import { DrawingUtilsService } from '../../core/services/canvas/drawing-utils.service';
 import { MathUtilsService } from '../../core/services/math/math-utils.service';
 import { MathquillService, KeyBtn } from '../../core/services/math/mathquill.service';
+import { MobileMathKeyboardComponent } from '../../shared/components/math-keyboard/mobile-math-keyboard.component';
 import { CoordinateTransformService } from '../../core/services/canvas/coordinate-transform.service';
 import { CanvasViewport, MathPoint } from '../../core/services/canvas/canvas.types';
 import { FUNCTION_REGISTRY } from '../../core/services/math/function-registry';
@@ -209,7 +210,7 @@ function drawFilledCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number,
 @Component({
   selector: 'app-grapher',
   templateUrl: './grapher.component.html',
-  imports: [NavComponent, GrapherExpressionComponent, FunctionPlotComponent, ParamSlidersComponent, DecimalPipe, TranslocoPipe],
+  imports: [NavComponent, GrapherExpressionComponent, FunctionPlotComponent, ParamSlidersComponent, DecimalPipe, TranslocoPipe, MobileMathKeyboardComponent],
 })
 export class GrapherComponent {
   private readonly plotter      = inject(PlottingService);
