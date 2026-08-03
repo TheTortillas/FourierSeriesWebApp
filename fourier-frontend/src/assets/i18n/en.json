@@ -167,7 +167,10 @@
       "fourierIntegral": "Fourier Integral",
       "laplaceDirect": "Laplace Direct",
       "laplaceInverse": "Laplace Inverse",
-      "laplaceOde": "Laplace ODE"
+      "laplaceOde": "Laplace ODE",
+      "odeGeneral": "ODE General",
+      "odeIvp": "ODE IVP",
+      "odeBvp": "ODE BVP"
     },
     "label": "Set up the function and press"
   },
@@ -541,7 +544,10 @@
       "fourierIntegral": "Fourier Integral",
       "laplaceDirect": "Laplace direct",
       "laplaceInverse": "Laplace inverse",
-      "laplaceOde": "Laplace ODE"
+      "laplaceOde": "Laplace ODE",
+      "odeGeneral": "ODE General",
+      "odeIvp": "ODE IVP",
+      "odeBvp": "ODE BVP"
     }
   },
   "auth": {

@@ -18,9 +18,12 @@ const TYPE_KEY: Record<string, string> = {
   dft_signal: 'history.types.dftSignal',
   dft_epicycles: 'history.types.dftEpicycles',
   fourier_integral: 'history.types.fourierIntegral',
-  laplace_direct: 'history.types.laplaceDirect',
+  laplace_direct:  'history.types.laplaceDirect',
   laplace_inverse: 'history.types.laplaceInverse',
-  laplace_ode: 'history.types.laplaceOde',
+  laplace_ode:     'history.types.laplaceOde',
+  ode_general:     'history.types.odeGeneral',
+  ode_ivp:         'history.types.odeIvp',
+  ode_bvp:         'history.types.odeBvp',
 };
 
 @Component({
@@ -204,6 +207,14 @@ export class HistoryComponent implements OnInit {
       const encoded = this._encodeLaplaceState(entry);
       if (encoded) {
         this.router.navigate(['/' + lang + '/laplace'], { queryParams: { s: encoded } });
+      }
+      return;
+    }
+
+    if (entry.type === 'ode_general' || entry.type === 'ode_ivp' || entry.type === 'ode_bvp') {
+      const encoded = this._encodeOdeState(entry);
+      if (encoded) {
+        this.router.navigate(['/' + lang + '/ode'], { queryParams: { s: encoded } });
       }
       return;
     }
@@ -399,6 +410,7 @@ export class HistoryComponent implements OnInit {
 
   canReopen(entry: HistoryEntry): boolean {
     if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse' || entry.type === 'laplace_ode') return true;
+    if (entry.type === 'ode_general' || entry.type === 'ode_ivp' || entry.type === 'ode_bvp') return true;
     if (entry.type === 'fourier_integral') return true;
     if (entry.type === 'dft_signal' || entry.type === 'dft_epicycles') {
       return Array.isArray(entry.input?.['points']) || Array.isArray(entry.input?.['segments']);
@@ -444,10 +456,40 @@ export class HistoryComponent implements OnInit {
         'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
       laplace_ode:
         'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
+      ode_general:
+        'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+      ode_ivp:
+        'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800',
+      ode_bvp:
+        'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800',
     };
     return (
       map[type] ??
       'bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'
     );
+  }
+
+  private _encodeOdeState(entry: HistoryEntry): string {
+    const inp = entry.input;
+    try {
+      const mode = entry.type === 'ode_ivp' ? 'ivp' : entry.type === 'ode_bvp' ? 'bvp' : 'general';
+      const state: Record<string, unknown> = {
+        mode,
+        ivar:  (inp['ivar']  as string) ?? 'x',
+        fn:    (inp['unknown'] as string) ?? 'y',
+        eq:    (inp['equation'] as string) ?? '',
+        eqTex: (inp['equationTex'] as string) ?? '',
+        x0:    (inp['x0'] as string) ?? '0',
+        ics: mode === 'ivp' ? [
+          { value: (inp['y0']  as string) ?? '0', valueTex: (inp['y0']  as string) ?? '0' },
+          { value: (inp['dy0'] as string) ?? '0', valueTex: (inp['dy0'] as string) ?? '0' },
+        ] : [],
+        bvp: mode === 'bvp' ? [
+          { x: (inp['x1'] as string) ?? '0', value: (inp['y1'] as string) ?? '0', valueTex: (inp['y1'] as string) ?? '0' },
+          { x: (inp['x2'] as string) ?? '1', value: (inp['y2'] as string) ?? '0', valueTex: (inp['y2'] as string) ?? '0' },
+        ] : [],
+      };
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    } catch { return ''; }
   }
 }

@@ -167,7 +167,10 @@
       "fourierIntegral": "Int. Fourier",
       "laplaceDirect": "Laplace directa",
       "laplaceInverse": "Laplace inversa",
-      "laplaceOde": "Laplace EDO"
+      "laplaceOde": "EDO Laplace",
+      "odeGeneral": "EDO general",
+      "odeIvp": "EDO PVI",
+      "odeBvp": "EDO Frontera"
     },
     "label": "Configura la función y presiona"
   },
@@ -541,7 +544,10 @@
       "fourierIntegral": "Int. Fourier",
       "laplaceDirect": "Laplace directa",
       "laplaceInverse": "Laplace inversa",
-      "laplaceOde": "Laplace EDO"
+      "laplaceOde": "EDO Laplace",
+      "odeGeneral": "EDO general",
+      "odeIvp": "EDO PVI",
+      "odeBvp": "EDO Frontera"
     }
   },
   "auth": {

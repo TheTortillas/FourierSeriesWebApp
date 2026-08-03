@@ -15,6 +15,9 @@ export type SurveyFeature =
   | 'laplace_direct'
   | 'laplace_inverse'
   | 'laplace_ode'
+  | 'ode_general'
+  | 'ode_ivp'
+  | 'ode_bvp'
   | 'grapher'
   | 'none';
 export type SurveyDevice = 'phone' | 'computer';
