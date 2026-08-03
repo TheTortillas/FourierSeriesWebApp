@@ -78,9 +78,11 @@
             </div>
 
             <div
-              [attr.data-mq-eq]="''"
               class="w-full px-3 py-2 min-h-10 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
-            ></div>
+              (click)="eqField?.focus()"
+            >
+              <div [attr.data-mq-eq]="''" class="w-full"></div>
+            </div>
 
             <p class="text-xs font-mono text-muted dark:text-dark-muted">
               {{ 'ode.hint' | transloco }}&nbsp;{{ fnName() }}'',&nbsp;{{ fnName() }}',&nbsp;{{ fnName() }}
@@ -177,28 +179,34 @@
 
           <!-- ── Laplace conditions ────────────────────────────────────────────── -->
           @if (mode() === 'laplace') {
-            <!-- Info panel: when to use each engine -->
-            <div class="rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface divide-y divide-border dark:divide-dark-border text-xs font-mono">
-              <div class="px-3 py-2.5 flex flex-col gap-1.5">
-                <p class="font-semibold text-ink dark:text-dark-ink">{{ 'ode.laplaceWhenTitle' | transloco }}</p>
-                <ul class="flex flex-col gap-1 text-muted dark:text-dark-muted pl-2">
-                  <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.laplaceWhen1' | transloco }}</li>
-                  <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.laplaceWhen2' | transloco }}</li>
-                  <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.laplaceWhen3' | transloco }}</li>
-                  <li class="flex gap-1.5"><span class="text-muted/50 dark:text-dark-muted/50 shrink-0">✗</span>{{ 'ode.laplaceWhenNot1' | transloco }}</li>
-                  <li class="flex gap-1.5"><span class="text-muted/50 dark:text-dark-muted/50 shrink-0">✗</span>{{ 'ode.laplaceWhenNot2' | transloco }}</li>
-                </ul>
+            <!-- Info panel: when to use each engine (collapsible) -->
+            <details class="group rounded-lg border border-border dark:border-dark-border text-xs font-mono overflow-hidden">
+              <summary class="flex items-center justify-between px-3 py-2 cursor-pointer select-none text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors bg-paper2 dark:bg-dark-surface list-none">
+                <span class="font-semibold">{{ 'ode.laplaceWhenTitle' | transloco }}</span>
+                <span class="text-[10px] group-open:rotate-180 transition-transform duration-150">▾</span>
+              </summary>
+              <div class="bg-paper2 dark:bg-dark-surface divide-y divide-border dark:divide-dark-border">
+                <div class="px-3 py-2.5 flex flex-col gap-1.5">
+                  <p class="font-semibold text-accent">{{ 'ode.modeLaplace' | transloco }}</p>
+                  <ul class="flex flex-col gap-1 text-muted dark:text-dark-muted pl-2">
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.laplaceWhen1' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.laplaceWhen2' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.laplaceWhen3' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-muted/50 dark:text-dark-muted/50 shrink-0">✗</span>{{ 'ode.laplaceWhenNot1' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-muted/50 dark:text-dark-muted/50 shrink-0">✗</span>{{ 'ode.laplaceWhenNot2' | transloco }}</li>
+                  </ul>
+                </div>
+                <div class="px-3 py-2.5 flex flex-col gap-1.5">
+                  <p class="font-semibold text-accent">{{ 'ode.ode2WhenTitle' | transloco }}</p>
+                  <ul class="flex flex-col gap-1 text-muted dark:text-dark-muted pl-2">
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.ode2When1' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.ode2When2' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.ode2When3' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-muted/50 dark:text-dark-muted/50 shrink-0">✗</span>{{ 'ode.ode2WhenNot1' | transloco }}</li>
+                  </ul>
+                </div>
               </div>
-              <div class="px-3 py-2.5 flex flex-col gap-1.5">
-                <p class="font-semibold text-ink dark:text-dark-ink">{{ 'ode.ode2WhenTitle' | transloco }}</p>
-                <ul class="flex flex-col gap-1 text-muted dark:text-dark-muted pl-2">
-                  <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.ode2When1' | transloco }}</li>
-                  <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.ode2When2' | transloco }}</li>
-                  <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.ode2When3' | transloco }}</li>
-                  <li class="flex gap-1.5"><span class="text-muted/50 dark:text-dark-muted/50 shrink-0">✗</span>{{ 'ode.ode2WhenNot1' | transloco }}</li>
-                </ul>
-              </div>
-            </div>
+            </details>
 
             <!-- IC conditions (always at t=0) -->
             <div class="flex flex-col gap-2">

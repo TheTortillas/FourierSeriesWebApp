@@ -258,7 +258,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
 
   // ── MathQuill refs ───────────────────────────────────────────────────────────
   @ViewChild('mqEqRef') private mqEqRef!: ElementRef<HTMLElement>;
-  private eqField: MathField | null = null;
+  eqField: MathField | null = null;
   private _eqMounted = false;
 
   ivpFields:    (MathField | null)[] = [];
@@ -449,7 +449,8 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   );
 
   private readonly submit$ = new Subject<void>();
-  private _urlPopulated = false;
+  private _urlPopulated  = false;
+  private _restoredFromUrl = false;
 
   constructor() {
     // Re-parse equation whenever ivar changes
@@ -480,12 +481,20 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       }
     });
 
+    // Load first example when mode changes (unless coming from URL or result is active)
+    effect(() => {
+      const m = this.mode();
+      if (this._restoredFromUrl || this.hasComputedResult()) return;
+      const first = ODE_EXAMPLES.find((e) => e.mode === m);
+      if (first) this.loadExample(first.labelKey);
+    });
+
     // Restore from URL
     const encoded = this.route.snapshot.queryParamMap.get('s');
-    if (encoded) this._restoreState(encoded);
+    if (encoded) { this._restoreState(encoded); this._restoredFromUrl = true; }
 
     const tabParam = this.route.snapshot.queryParamMap.get('tab');
-    if (tabParam === 'laplace') this.mode.set('laplace');
+    if (tabParam === 'laplace') { this.mode.set('laplace'); this._restoredFromUrl = true; }
 
     if (typeof window !== 'undefined') {
       document.addEventListener('fullscreenchange', () => {
