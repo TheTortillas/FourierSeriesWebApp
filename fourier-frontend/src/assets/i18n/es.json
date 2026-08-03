@@ -1154,7 +1154,9 @@
     "ivpOrder1Hint": "EDO de 1er orden: el campo y'(x₀) no se usa.",
     "freeConstants": "Constantes libres",
     "canvasSettings": "Ajustes del gráfico",
+    "lineStyle": "Estilo de línea",
     "reset": "Restablecer",
+    "adjustInPanel": "ajusta en el panel ⚙",
     "bvpConditions": "Condiciones de frontera",
     "examplePlaceholder": "Cargar ejemplo…",
     "calculate": "Calcular",
@@ -1182,8 +1184,11 @@
     "exIvp2Complex": "2do orden — raíces complejas",
     "exIvp2Repeat":  "2do orden — raíz repetida",
     "exIvp2Sin":     "2do orden — forzamiento sinusoidal",
-    "exIvp2ExpForce":"2do orden — forzamiento exponencial",
-    "exBvp1":        "y'' + y = 0",
-    "exBvp2":        "Viga: y'' = x(1-x)"
+    "exIvp2ExpForce":      "2do orden — forzamiento exponencial",
+    "exBvp1":              "y'' + y = 0",
+    "exBvp2":              "Viga: y'' = x(1-x)",
+    "exIvp2PolyForce":     "2do orden — forzamiento polinomial",
+    "exIvp2CompoundForce": "2do orden — forzamiento compuesto",
+    "exIvp3rdOrder":       "3er orden — coeficientes constantes (IVP)"
   }
 }

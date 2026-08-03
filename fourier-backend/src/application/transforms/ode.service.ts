@@ -54,7 +54,10 @@ kill(all)$
   private parseParams(raw: string): string[] {
     const match = raw.match(/\[([^\]]*)\]/);
     if (!match) return [];
-    return match[1].split(",").map((s) => s.trim()).filter(Boolean);
+    return match[1]
+      .split(",")
+      .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+      .filter(Boolean);
   }
 
   private toSymbolic(maxima: string, tex: string): SymbolicExpression | undefined {

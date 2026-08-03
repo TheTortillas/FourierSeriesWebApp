@@ -1154,7 +1154,9 @@
     "ivpOrder1Hint": "1st-order ODE: y'(x₀) is not used.",
     "freeConstants": "Free constants",
     "canvasSettings": "Graph settings",
+    "lineStyle": "Line style",
     "reset": "Reset",
+    "adjustInPanel": "adjust in ⚙ panel",
     "bvpConditions": "Boundary conditions",
     "examplePlaceholder": "Load example…",
     "calculate": "Solve",
@@ -1182,8 +1184,11 @@
     "exIvp2Complex": "2nd order — complex roots",
     "exIvp2Repeat":  "2nd order — repeated root",
     "exIvp2Sin":     "2nd order — sinusoidal forcing",
-    "exIvp2ExpForce":"2nd order — exponential forcing",
-    "exBvp1":        "y'' + y = 0",
-    "exBvp2":        "Beam: y'' = x(1-x)"
+    "exIvp2ExpForce":      "2nd order — exponential forcing",
+    "exBvp1":              "y'' + y = 0",
+    "exBvp2":              "Beam: y'' = x(1-x)",
+    "exIvp2PolyForce":     "2nd order — polynomial forcing",
+    "exIvp2CompoundForce": "2nd order — compound forcing",
+    "exIvp3rdOrder":       "3rd order — constant coefficients (IVP)"
   }
 }

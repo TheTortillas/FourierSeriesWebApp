@@ -65,7 +65,8 @@ interface IvpCondition {
 }
 
 interface BvpCondition {
-  x: string;       // point (editable, plain text)
+  x: string;       // Maxima expression for boundary point
+  xTex: string;    // LaTeX for display
   value: string;   // Maxima
   valueTex: string;
 }
@@ -164,8 +165,8 @@ const ODE_EXAMPLES: OdeExample[] = [
     eqTex: "y''+y=0",
     fn: 'y', ivar: 'x', mode: 'bvp',
     bvpConds: [
-      { x: '0',      value: '0', valueTex: '0' },
-      { x: '%pi/2',  value: '1', valueTex: '1' },
+      { x: '0',      xTex: '0',          value: '0', valueTex: '0' },
+      { x: '%pi/2',  xTex: '\\frac{\\pi}{2}', value: '1', valueTex: '1' },
     ],
   },
   {
@@ -173,8 +174,40 @@ const ODE_EXAMPLES: OdeExample[] = [
     eqTex: "y''=x\\left(1-x\\right)",
     fn: 'y', ivar: 'x', mode: 'bvp',
     bvpConds: [
-      { x: '0', value: '0', valueTex: '0' },
-      { x: '1', value: '0', valueTex: '0' },
+      { x: '0', xTex: '0', value: '0', valueTex: '0' },
+      { x: '1', xTex: '1', value: '0', valueTex: '0' },
+    ],
+  },
+  // ── IVP (from Laplace — solved by ode2) ──
+  {
+    labelKey: 'ode.exIvp2PolyForce',
+    eqTex: "y''+4y=t^{2}",
+    fn: 'y', ivar: 't', mode: 'ivp',
+    x0: '0',
+    ivpIcs: [
+      { order: 0, value: '0', valueTex: '0' },
+      { order: 1, value: '0', valueTex: '0' },
+    ],
+  },
+  {
+    labelKey: 'ode.exIvp2CompoundForce',
+    eqTex: "y''+3y'+2y=t\\cdot e^{-t}",
+    fn: 'y', ivar: 't', mode: 'ivp',
+    x0: '0',
+    ivpIcs: [
+      { order: 0, value: '0', valueTex: '0' },
+      { order: 1, value: '0', valueTex: '0' },
+    ],
+  },
+  {
+    labelKey: 'ode.exIvp3rdOrder',
+    eqTex: "y'''-6y''+11y'-6y=0",
+    fn: 'y', ivar: 't', mode: 'ivp',
+    x0: '0',
+    ivpIcs: [
+      { order: 0, value: '0', valueTex: '0' },
+      { order: 1, value: '1', valueTex: '1' },
+      { order: 2, value: '0', valueTex: '0' },
     ],
   },
 ];
@@ -214,9 +247,11 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   ivpFields:       (MathField | null)[] = [];
   private _ivpInited: boolean[] = [];
 
-  // BVP condition MathQuill fields (fixed 2)
-  bvpFields:       (MathField | null)[] = [null, null];
-  private _bvpInited = [false, false];
+  // BVP condition MathQuill fields (fixed 2): value fields + x-point fields
+  bvpFields:    (MathField | null)[] = [null, null];
+  bvpXFields:   (MathField | null)[] = [null, null];
+  private _bvpInited  = [false, false];
+  private _bvpXInited = [false, false];
 
   readonly plotComponent = viewChild(FunctionPlotComponent);
 
@@ -253,8 +288,8 @@ export class OdeComponent implements OnInit, AfterViewChecked {
 
   // BVP: two fixed boundary conditions with independent x
   readonly bvpConds = signal<BvpCondition[]>([
-    { x: '0', value: '0', valueTex: '0' },
-    { x: '1', value: '0', valueTex: '0' },
+    { x: '0', xTex: '0', value: '0', valueTex: '0' },
+    { x: '1', xTex: '1', value: '0', valueTex: '0' },
   ]);
 
   // Result & UI state
@@ -295,6 +330,16 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       void [color, lw, dash]; // track style signals
       if (res?.exists && res.solution) {
         this._buildPlot(res, pv);
+      }
+    });
+
+    // Re-parse equation whenever the independent variable changes
+    effect(() => {
+      const ivar = this.ivar(); // tracked
+      const tex  = this.eqTex();
+      if (tex.trim()) {
+        const r = this.tex2max.convertOdeForOde2(tex, this.fnName(), ivar);
+        this.equation.set(r.ok ? r.maxima : '');
       }
     });
   }
@@ -381,8 +426,15 @@ export class OdeComponent implements OnInit, AfterViewChecked {
         }
       }
     }
-    // BVP value fields
+    // BVP x-point fields and value fields
     for (let i = 0; i < 2; i++) {
+      if (!this._bvpXInited[i]) {
+        const el = document.querySelector(`[data-mq-bvp-x="${i}"]`) as HTMLElement | null;
+        if (el) {
+          this._bvpXInited[i] = true;
+          void this._mountBvpXField(el, i);
+        }
+      }
       if (!this._bvpInited[i]) {
         const el = document.querySelector(`[data-mq-bvp="${i}"]`) as HTMLElement | null;
         if (el) {
@@ -431,9 +483,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   }
 
   // ── BVP condition management ──────────────────────────────────────────────────
-  updateBvpX(index: number, x: string): void {
+  updateBvpX(index: number, x: string, xTex: string): void {
     this.bvpConds.update((cs) =>
-      cs.map((c, i) => (i === index ? { ...c, x } : c)),
+      cs.map((c, i) => (i === index ? { ...c, x, xTex } : c)),
     );
   }
 
@@ -471,8 +523,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     }
     if (ex.mode === 'bvp' && ex.bvpConds) {
       this.bvpConds.set(ex.bvpConds.map((c) => ({ ...c })));
-      this._bvpInited = [false, false];
-      this.bvpFields  = [null, null];
+      this._bvpInited  = [false, false];
+      this._bvpXInited = [false, false];
+      this.bvpFields   = [null, null];
+      this.bvpXFields  = [null, null];
     }
 
     this._eqMounted = false; // force MathQuill remount for equation field
@@ -519,6 +573,27 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     if (field) field.latex(ic.valueTex ?? ic.value);
     el.addEventListener('focusin', () => {
       if (this.ivpFields[index]) this.mqs.setActiveField(this.ivpFields[index]!, 'valor');
+    });
+    el.addEventListener('focusout', () => this.mqs.clearActiveField());
+  }
+
+  private async _mountBvpXField(el: HTMLElement, index: number): Promise<void> {
+    const cond = this.bvpConds()[index];
+    const field = await this.mqs.createField(el, {
+      ...this.mqs.defaultConfig(),
+      handlers: {
+        edit: (mf) => {
+          const latex = mf.latex();
+          const r = this.tex2max.convertOdeForOde2(latex, this.fnName(), this.ivar());
+          this.updateBvpX(index, r.ok ? r.maxima : latex, latex);
+        },
+        enter: () => this.calculate(),
+      },
+    });
+    this.bvpXFields[index] = field;
+    if (field) field.latex(cond.xTex ?? cond.x);
+    el.addEventListener('focusin', () => {
+      if (this.bvpXFields[index]) this.mqs.setActiveField(this.bvpXFields[index]!, 'punto');
     });
     el.addEventListener('focusout', () => this.mqs.clearActiveField());
   }

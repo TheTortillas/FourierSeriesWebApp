@@ -91,10 +91,17 @@ if exists and length(free_params) > 0 then block([_subs],
   sol_display: subst(_subs, sol_raw)
 )$
 
+/* Clean param names for display (%c→C, %k1→k_1, %k2→k_2) */
+free_params_clean: map(lambda([_v],
+  if string(_v) = "%c"  then "C"   else
+  if string(_v) = "%k1" then "k_1" else
+  if string(_v) = "%k2" then "k_2" else string(_v)
+), free_params)$
+
 /* ── Output ──────────────────────────────────────────────────────────────── */
 print("__EXISTS__")$     print(string(exists))$
-print("__SOL_MAXIMA__")$ print(string(sol_raw))$
+print("__SOL_MAXIMA__")$ print(string(sol_display))$
 print("__SOL_TEX__")$    if exists then tex(sol_display) else print("")$
-print("__PARAMS__")$     print(string(free_params))$
+print("__PARAMS__")$     print(string(free_params_clean))$
 print("__ORDER__")$      print(string(ode_order))$
 print("__METHOD__")$     print(ode_method)$

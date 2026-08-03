@@ -23,7 +23,7 @@
           @for (m of modes; track m.id) {
             <button
               type="button"
-              (click)="mode.set(m.id); result.set(null); layers.set([]); freeParams.set([])"
+              (click)="mode.set(m.id); result.set(null); layers.set([]); freeParams.set([]); showCanvasSettings.set(false)"
               class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all cursor-pointer"
               [class]="mode() === m.id
                 ? 'bg-accent text-white dark:text-white shadow-sm'
@@ -103,7 +103,7 @@
           </div>
         </div>
 
-        <!-- ── IVP conditions (Laplace style) ────────────────────────────────── -->
+        <!-- ── IVP conditions ─────────────────────────────────────────────────── -->
         @if (mode() === 'ivp') {
           <div class="flex flex-col gap-2">
             <div class="flex items-center justify-between">
@@ -119,7 +119,7 @@
               </button>
             </div>
 
-            <!-- x₀ row -->
+            <!-- x₀ (plain text — it's a numeric point, not an expression) -->
             <div class="flex items-center gap-2">
               <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
                 [mathjax]="'\\(' + ivar() + '_0 =\\)'"></span>
@@ -131,7 +131,7 @@
               />
             </div>
 
-            <!-- Condition rows -->
+            <!-- Condition rows (MathQuill values) -->
             @for (ic of ivpIcs(); track ic.order; let i = $index) {
               <div class="flex items-center gap-2">
                 <span
@@ -156,7 +156,7 @@
           </div>
         }
 
-        <!-- ── BVP conditions (Laplace style) ────────────────────────────────── -->
+        <!-- ── BVP conditions ─────────────────────────────────────────────────── -->
         @if (mode() === 'bvp') {
           <div class="flex flex-col gap-2">
             <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
@@ -164,20 +164,20 @@
             </label>
 
             @for (cond of bvpConds(); track $index; let i = $index) {
-              <!-- x point -->
+              <!-- Point x_i — MathQuill -->
               <div class="flex items-center gap-2">
                 <span
                   class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
                   [mathjax]="'\\(' + ivar() + '_' + (i+1) + ' =\\)'"
                 ></span>
-                <input
-                  type="text"
-                  [value]="cond.x"
-                  (input)="updateBvpX(i, $any($event.target).value)"
-                  class="flex-1 px-3 py-1.5 text-sm rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 font-mono focus:outline-none focus:ring-1 focus:ring-accent"
-                />
+                <div
+                  class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                  (click)="bvpXFields[i]?.focus()"
+                >
+                  <div [attr.data-mq-bvp-x]="i" class="w-full"></div>
+                </div>
               </div>
-              <!-- y value -->
+              <!-- Value y(x_i) — MathQuill -->
               <div class="flex items-center gap-2">
                 <span
                   class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
@@ -223,7 +223,7 @@
         @if (result()) {
           <button
             type="button"
-            (click)="result.set(null); layers.set([]); freeParams.set([])"
+            (click)="result.set(null); layers.set([]); freeParams.set([]); showCanvasSettings.set(false)"
             class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold"
           >
             {{ 'ode.newCalculation' | transloco }}
@@ -237,31 +237,35 @@
     <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
       <div class="p-5 flex flex-col gap-5">
 
-        <!-- Canvas -->
+        <!-- Canvas wrapper -->
         <div
           class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
           style="height: 380px"
         >
           @if (canvasMounted() && layers().length) {
+
             <app-function-plot [layers]="layers()" class="w-full h-full block" />
 
             <!-- Settings slide-in panel (desktop) -->
             @if (showCanvasSettings()) {
-              <div class="absolute top-0 left-0 bottom-0 w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+              <div class="absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
                 <ng-container *ngTemplateOutlet="settingsPanelTpl" />
               </div>
             }
 
-            <!-- Overlay buttons -->
-            <div class="absolute top-2 right-2 flex gap-1">
+            <!-- Overlay buttons (top-left, same position as Laplace) -->
+            <div class="absolute top-2 left-2 flex gap-1">
               <button
                 type="button"
                 (click)="showCanvasSettings.set(!showCanvasSettings())"
                 [title]="'ode.canvasSettings' | transloco"
-                class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center"
+                [class]="showCanvasSettings()
+                  ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent transition-colors flex items-center justify-center cursor-pointer'
+                  : 'w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
                 </svg>
               </button>
             </div>
@@ -276,9 +280,9 @@
           }
         </div>
 
-        <!-- Settings panel mobile: below canvas -->
+        <!-- Settings panel mobile (below canvas) -->
         @if (canvasMounted() && layers().length && showCanvasSettings()) {
-          <div class="flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
+          <div class="flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-72 overflow-hidden">
             <ng-container *ngTemplateOutlet="settingsPanelTpl" />
           </div>
         }
@@ -293,36 +297,70 @@
               class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light">×</button>
           </div>
 
-          <div class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
-            <!-- Curve label -->
-            <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50 -mb-2">
-              {{ fnName() }}({{ ivar() }})
-            </p>
+          <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
 
-            <!-- Solid / dashed toggle -->
-            <div class="flex items-center gap-2">
-              <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
-                <button type="button" (click)="curveDashed.set(false)"
-                  [class]="!curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">—</button>
-                <button type="button" (click)="curveDashed.set(true)"
-                  [class]="curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
+            <!-- ── Curve style ─────────────────────────────────────────────── -->
+            <section class="px-5 py-4 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                  {{ 'ode.lineStyle' | transloco }}
+                </p>
+                <button type="button"
+                  (click)="curveColor.set('#3b82f6'); curveLineWidth.set(2); curveDashed.set(false)"
+                  class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2">
+                  {{ 'ode.reset' | transloco }}
+                </button>
               </div>
-              <!-- Color picker -->
-              <input type="color" [value]="curveColor()" (input)="curveColor.set($any($event.target).value)"
-                class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
-              <!-- Line width -->
-              <input type="number" [value]="curveLineWidth()" min="0.5" max="5" step="0.5"
-                (input)="curveLineWidth.set(+$any($event.target).value)"
-                class="w-0 flex-1 px-2 py-1 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-xs font-mono text-center focus:outline-none focus:border-accent" />
-              <span class="text-[10px] text-ink/65 dark:text-dark-ink/65 font-mono shrink-0">px</span>
-            </div>
 
-            <!-- Reset -->
-            <button type="button"
-              (click)="curveColor.set('#3b82f6'); curveLineWidth.set(2); curveDashed.set(false)"
-              class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2 text-left">
-              {{ 'ode.reset' | transloco }}
-            </button>
+              <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50 -mb-1">
+                {{ fnName() }}({{ ivar() }})
+              </p>
+
+              <div class="flex flex-col gap-1.5">
+                <!-- Preview line -->
+                <div class="flex items-center gap-2">
+                  <svg width="28" height="12" class="shrink-0">
+                    <line x1="2" y1="6" x2="26" y2="6"
+                      [attr.stroke]="curveColor()"
+                      [attr.stroke-width]="curveLineWidth()"
+                      [attr.stroke-dasharray]="curveDashed() ? '4 3' : 'none'"
+                      stroke-linecap="round"/>
+                  </svg>
+                  <span class="text-xs font-mono text-ink/90 dark:text-dark-ink/90 flex-1">
+                    {{ fnName() }}({{ ivar() }})
+                  </span>
+                </div>
+                <!-- Controls: dash | color | width -->
+                <div class="flex items-center gap-2">
+                  <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+                    <button type="button" (click)="curveDashed.set(false)"
+                      [class]="!curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">—</button>
+                    <button type="button" (click)="curveDashed.set(true)"
+                      [class]="curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
+                  </div>
+                  <input type="color" [value]="curveColor()" (input)="curveColor.set($any($event.target).value)"
+                    class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
+                  <input type="number" [value]="curveLineWidth()" min="0.5" max="5" step="0.5"
+                    (input)="curveLineWidth.set(+$any($event.target).value)"
+                    class="w-0 flex-1 px-2 py-1 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-xs font-mono text-center focus:outline-none focus:border-accent" />
+                  <span class="text-[10px] text-ink/65 dark:text-dark-ink/65 font-mono shrink-0">px</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- ── Free constants sliders ─────────────────────────────────── -->
+            @if (freeParams().length) {
+              <section class="px-5 py-4 flex flex-col gap-2">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                  {{ 'ode.freeConstants' | transloco }}
+                </p>
+                <app-param-sliders
+                  [params]="freeParams()"
+                  (valuesChange)="onParamValuesChange($event)"
+                />
+              </section>
+            }
+
           </div>
         </ng-template>
 
@@ -353,21 +391,10 @@
                 @if (result()!.params?.length) {
                   <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-[10px] font-mono text-amber-700 dark:text-amber-400">
                     {{ 'ode.generalSolution' | transloco }}: {{ result()!.params!.join(', ') }}
+                    — {{ 'ode.adjustInPanel' | transloco }}
                   </span>
                 }
               </div>
-
-              @if (freeParams().length) {
-                <div class="border-t border-border dark:border-dark-border pt-3">
-                  <p class="text-[10px] font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider mb-1">
-                    {{ 'ode.freeConstants' | transloco }}
-                  </p>
-                  <app-param-sliders
-                    [params]="freeParams()"
-                    (valuesChange)="onParamValuesChange($event)"
-                  />
-                </div>
-              }
             </div>
 
           } @else {

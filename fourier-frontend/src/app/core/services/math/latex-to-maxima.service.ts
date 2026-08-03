@@ -62,9 +62,8 @@ function tokenise(src: string): Token[] {
       continue;
     }
     if (/[a-zA-Z]/.test(ch)) {
-      let name = '';
-      while (i < src.length && /[a-zA-Z0-9]/.test(src[i])) name += src[i++];
-      out.push({ t: 'ident', v: name });
+      out.push({ t: 'ident', v: ch });
+      i++;
       continue;
     }
     if (/[+\-*/^_|=]/.test(ch)) { out.push({ t: 'op', v: ch }); i++; continue; }
