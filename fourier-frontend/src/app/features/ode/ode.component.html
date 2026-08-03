@@ -142,12 +142,12 @@
                   class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
                   [mathjax]="'\\(' + ivar() + '_0 =\\)'"
                 ></span>
-                <input
-                  type="text"
-                  [value]="ivpX0()"
-                  (input)="ivpX0.set($any($event.target).value)"
-                  class="flex-1 px-3 py-1.5 text-sm rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 font-mono focus:outline-none focus:ring-1 focus:ring-accent"
-                />
+                <div
+                  class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                  (click)="x0Field?.focus()"
+                >
+                  <div data-mq-x0 class="w-full"></div>
+                </div>
               </div>
 
               <!-- Condition rows -->

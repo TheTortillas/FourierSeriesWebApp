@@ -479,14 +479,15 @@ export class HistoryComponent implements OnInit {
         fn:    (inp['unknown'] as string) ?? 'y',
         eq:    (inp['equation'] as string) ?? '',
         eqTex: (inp['equationTex'] as string) ?? '',
-        x0:    (inp['x0'] as string) ?? '0',
+        x0:    (inp['x0']    as string) ?? '0',
+        x0Tex: (inp['x0Tex'] as string) ?? (inp['x0'] as string) ?? '0',
         ics: mode === 'ivp' ? [
-          { value: (inp['y0']  as string) ?? '0', valueTex: (inp['y0']  as string) ?? '0' },
-          { value: (inp['dy0'] as string) ?? '0', valueTex: (inp['dy0'] as string) ?? '0' },
+          { value: (inp['y0']   as string) ?? '0', valueTex: (inp['y0Tex']  as string) ?? (inp['y0']  as string) ?? '0' },
+          { value: (inp['dy0']  as string) ?? '0', valueTex: (inp['dy0Tex'] as string) ?? (inp['dy0'] as string) ?? '0' },
         ] : [],
         bvp: mode === 'bvp' ? [
-          { x: (inp['x1'] as string) ?? '0', value: (inp['y1'] as string) ?? '0', valueTex: (inp['y1'] as string) ?? '0' },
-          { x: (inp['x2'] as string) ?? '1', value: (inp['y2'] as string) ?? '0', valueTex: (inp['y2'] as string) ?? '0' },
+          { x: (inp['x1'] as string) ?? '0', xTex: (inp['x1Tex'] as string) ?? (inp['x1'] as string) ?? '0', value: (inp['y1'] as string) ?? '0', valueTex: (inp['y1Tex'] as string) ?? (inp['y1'] as string) ?? '0' },
+          { x: (inp['x2'] as string) ?? '1', xTex: (inp['x2Tex'] as string) ?? (inp['x2'] as string) ?? '1', value: (inp['y2'] as string) ?? '0', valueTex: (inp['y2Tex'] as string) ?? (inp['y2'] as string) ?? '0' },
         ] : [],
       };
       return btoa(unescape(encodeURIComponent(JSON.stringify(state))));

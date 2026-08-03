@@ -38,8 +38,8 @@ const GROUP_COLORS = {
 const SERIES_TYPES    = new Set(['trigonometric', 'half_range', 'complex']);
 const TRANSFORM_TYPES = new Set(['fourier_transform', 'inverse_fourier_transform']);
 const INTEGRAL_TYPES  = new Set(['fourier_integral']);
-const LAPLACE_TYPES   = new Set(['laplace_direct', 'laplace_inverse', 'laplace_ode']);
-const ODE_TYPES       = new Set(['ode_general', 'ode_ivp', 'ode_bvp']);
+const LAPLACE_TYPES   = new Set(['laplace_direct', 'laplace_inverse']);
+const ODE_TYPES       = new Set(['ode_general', 'ode_ivp', 'ode_bvp', 'laplace_ode']);
 const DFT_TYPES       = new Set(['dft_signal', 'dft_function', 'dft_epicycles']);
 const TREND_COLOR     = { bg: 'rgba(46,125,110,0.2)', border: 'rgb(46,125,110)' };
 

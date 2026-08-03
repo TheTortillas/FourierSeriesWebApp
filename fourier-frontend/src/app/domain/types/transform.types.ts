@@ -250,9 +250,11 @@ export interface OdeRequest {
   unknown: string;
   ivar: string;
   mode: OdeMode;
-  x0?: string; y0?: string; dy0?: string;
-  x1?: string; y1?: string;
-  x2?: string; y2?: string;
+  x0?: string;  x0Tex?: string;
+  y0?: string;  y0Tex?: string;
+  dy0?: string; dy0Tex?: string;
+  x1?: string;  x1Tex?: string; y1?: string; y1Tex?: string;
+  x2?: string;  x2Tex?: string; y2?: string; y2Tex?: string;
 }
 
 export interface OdeResponse {

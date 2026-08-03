@@ -263,6 +263,8 @@ export class OdeComponent implements OnInit, AfterViewChecked {
 
   ivpFields:    (MathField | null)[] = [];
   private _ivpInited: boolean[] = [];
+  x0Field:            MathField | null = null;
+  private _x0Mounted = false;
 
   bvpFields:    (MathField | null)[] = [null, null];
   bvpXFields:   (MathField | null)[] = [null, null];
@@ -300,7 +302,8 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly eqTex   = signal("y''+y=0");
   readonly equation = signal('');
 
-  readonly ivpX0  = signal('0');
+  readonly ivpX0    = signal('0');
+  readonly ivpX0Tex = signal('0');
   readonly ivpIcs = signal<IvpCondition[]>([
     { order: 0, value: '0', valueTex: '0' },
     { order: 1, value: '0', valueTex: '0' },
@@ -512,13 +515,20 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             unknown:     this.fnName(),
             ivar:        this.ivar(),
             mode:        m as OdeMode,
-            x0:  this.ivpX0(),
-            y0:  ics[0]?.value ?? '0',
-            dy0: ics[1]?.value ?? '0',
-            x1:  bvp[0]?.x ?? '0',
-            y1:  bvp[0]?.value ?? '0',
-            x2:  bvp[1]?.x ?? '1',
-            y2:  bvp[1]?.value ?? '0',
+            x0:    this.ivpX0(),
+            x0Tex: this.ivpX0Tex(),
+            y0:    ics[0]?.value    ?? '0',
+            y0Tex: ics[0]?.valueTex ?? '0',
+            dy0:    ics[1]?.value    ?? '0',
+            dy0Tex: ics[1]?.valueTex ?? '0',
+            x1:    bvp[0]?.x        ?? '0',
+            x1Tex: bvp[0]?.xTex     ?? '0',
+            y1:    bvp[0]?.value     ?? '0',
+            y1Tex: bvp[0]?.valueTex  ?? '0',
+            x2:    bvp[1]?.x         ?? '1',
+            x2Tex: bvp[1]?.xTex      ?? '1',
+            y2:    bvp[1]?.value      ?? '0',
+            y2Tex: bvp[1]?.valueTex   ?? '0',
           };
 
           return this.api.calculateOde(body).pipe(
@@ -564,6 +574,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     if (this.mqEqRef && !this._eqMounted) {
       this._eqMounted = true;
       void this._mountEqField();
+    }
+    if (!this._x0Mounted) {
+      const el = document.querySelector('[data-mq-x0]') as HTMLElement | null;
+      if (el) { this._x0Mounted = true; void this._mountX0Field(el); }
     }
     for (let i = 0; i < this.ivpIcs().length; i++) {
       if (!this._ivpInited[i]) {
@@ -708,7 +722,11 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     this.errorMsg.set(null);
 
     if (ex.mode === 'ivp' && ex.ivpIcs) {
-      this.ivpX0.set(ex.x0 ?? '0');
+      const x0 = ex.x0 ?? '0';
+      this.ivpX0.set(x0);
+      this.ivpX0Tex.set(x0);
+      this.x0Field?.latex(x0);
+      this._x0Mounted = false;
       this.ivpIcs.set(ex.ivpIcs.map((ic) => ({ ...ic })));
       this._ivpInited = ex.ivpIcs.map(() => false);
       this.ivpFields  = ex.ivpIcs.map(() => null);
@@ -781,6 +799,27 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     });
     wrapperDiv.addEventListener('focusout', () => this.mqs.clearActiveField());
     if (this.eqTex()) this.eqField?.latex(this.eqTex());
+  }
+
+  private async _mountX0Field(el: HTMLElement): Promise<void> {
+    const field = await this.mqs.createField(el, {
+      ...this.mqs.defaultConfig(),
+      handlers: {
+        edit: (mf) => {
+          const latex = mf.latex();
+          const r = this.tex2max.convertOdeForOde2(latex, this.fnName(), this.ivar());
+          this.ivpX0.set(r.ok ? r.maxima : latex);
+          this.ivpX0Tex.set(latex);
+        },
+        enter: () => this.calculate(),
+      },
+    });
+    this.x0Field = field;
+    if (field) field.latex(this.ivpX0Tex());
+    el.addEventListener('focusin', () => {
+      if (this.x0Field) this.mqs.setActiveField(this.x0Field, 'punto');
+    });
+    el.addEventListener('focusout', () => this.mqs.clearActiveField());
   }
 
   private async _mountIvpField(el: HTMLElement, index: number): Promise<void> {
@@ -883,6 +922,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
         eq:    this.equation(),
         eqTex: this.eqTex(),
         x0:    this.ivpX0(),
+        x0Tex: this.ivpX0Tex(),
         ics:   this.ivpIcs(),
         bvp:   this.bvpConds(),
       };
@@ -898,7 +938,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       if (typeof s['fn']    === 'string') this.fnName.set(s['fn']);
       if (typeof s['eqTex'] === 'string') this.eqTex.set(s['eqTex']);
       if (typeof s['eq']    === 'string') this.equation.set(s['eq']);
-      if (typeof s['x0']    === 'string') this.ivpX0.set(s['x0']);
+      if (typeof s['x0']    === 'string') { this.ivpX0.set(s['x0']); this.ivpX0Tex.set(typeof s['x0Tex'] === 'string' ? s['x0Tex'] : s['x0']); }
       if (Array.isArray(s['ics'])) this.ivpIcs.set(s['ics'] as IvpCondition[]);
       if (Array.isArray(s['bvp'])) this.bvpConds.set(s['bvp'] as BvpCondition[]);
     } catch { /* ignore */ }

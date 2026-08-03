@@ -37,7 +37,7 @@
     "transforms": "Transformadas",
     "fourierIntegral": "Integral de Fourier",
     "laplace": "Transformada de Laplace",
-    "ode": "Resolvedor de EDOs",
+    "ode": "Calculadora de EDOs",
     "login": "Ingresar",
     "register": "Registrarse",
     "logout": "Salir",
