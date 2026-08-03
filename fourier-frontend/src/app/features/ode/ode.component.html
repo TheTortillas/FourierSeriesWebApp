@@ -244,6 +244,28 @@
         >
           @if (canvasMounted() && layers().length) {
             <app-function-plot [layers]="layers()" class="w-full h-full block" />
+
+            <!-- Settings slide-in panel (desktop) -->
+            @if (showCanvasSettings()) {
+              <div class="absolute top-0 left-0 bottom-0 w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+                <ng-container *ngTemplateOutlet="settingsPanelTpl" />
+              </div>
+            }
+
+            <!-- Overlay buttons -->
+            <div class="absolute top-2 right-2 flex gap-1">
+              <button
+                type="button"
+                (click)="showCanvasSettings.set(!showCanvasSettings())"
+                [title]="'ode.canvasSettings' | transloco"
+                class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </button>
+            </div>
+
           } @else {
             <div class="w-full h-full flex flex-col items-center justify-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-border dark:text-dark-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
@@ -253,6 +275,56 @@
             </div>
           }
         </div>
+
+        <!-- Settings panel mobile: below canvas -->
+        @if (canvasMounted() && layers().length && showCanvasSettings()) {
+          <div class="flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
+            <ng-container *ngTemplateOutlet="settingsPanelTpl" />
+          </div>
+        }
+
+        <!-- Settings panel template -->
+        <ng-template #settingsPanelTpl>
+          <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+            <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
+              {{ 'ode.canvasSettings' | transloco }}
+            </span>
+            <button type="button" (click)="showCanvasSettings.set(false)"
+              class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light">×</button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+            <!-- Curve label -->
+            <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50 -mb-2">
+              {{ fnName() }}({{ ivar() }})
+            </p>
+
+            <!-- Solid / dashed toggle -->
+            <div class="flex items-center gap-2">
+              <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+                <button type="button" (click)="curveDashed.set(false)"
+                  [class]="!curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">—</button>
+                <button type="button" (click)="curveDashed.set(true)"
+                  [class]="curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
+              </div>
+              <!-- Color picker -->
+              <input type="color" [value]="curveColor()" (input)="curveColor.set($any($event.target).value)"
+                class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
+              <!-- Line width -->
+              <input type="number" [value]="curveLineWidth()" min="0.5" max="5" step="0.5"
+                (input)="curveLineWidth.set(+$any($event.target).value)"
+                class="w-0 flex-1 px-2 py-1 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-xs font-mono text-center focus:outline-none focus:border-accent" />
+              <span class="text-[10px] text-ink/65 dark:text-dark-ink/65 font-mono shrink-0">px</span>
+            </div>
+
+            <!-- Reset -->
+            <button type="button"
+              (click)="curveColor.set('#3b82f6'); curveLineWidth.set(2); curveDashed.set(false)"
+              class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2 text-left">
+              {{ 'ode.reset' | transloco }}
+            </button>
+          </div>
+        </ng-template>
 
         <!-- Result -->
         @if (result()) {

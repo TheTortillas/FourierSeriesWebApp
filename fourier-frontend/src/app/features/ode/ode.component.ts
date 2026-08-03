@@ -12,6 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, Subject, switchMap } from 'rxjs';
@@ -82,36 +83,16 @@ interface OdeExample {
 
 const ODE_EXAMPLES: OdeExample[] = [
   // ── General ──
-  {
-    labelKey: 'ode.exSeparable',
-    eqTex: "y'=xy",
-    fn: 'y', ivar: 'x', mode: 'general',
-  },
-  {
-    labelKey: 'ode.exBernoulli',
-    eqTex: "y'+y=y^{2}",
-    fn: 'y', ivar: 'x', mode: 'general',
-  },
-  {
-    labelKey: 'ode.exHomogeneous',
-    eqTex: "y'=\\frac{y}{x}+1",
-    fn: 'y', ivar: 'x', mode: 'general',
-  },
-  {
-    labelKey: 'ode.exEuler',
-    eqTex: "x^{2}y''+xy'-y=0",
-    fn: 'y', ivar: 'x', mode: 'general',
-  },
-  {
-    labelKey: 'ode.exConstCoeff',
-    eqTex: "y''-5y'+6y=0",
-    fn: 'y', ivar: 'x', mode: 'general',
-  },
-  {
-    labelKey: 'ode.exThirdOrder',
-    eqTex: "y'''+y'=0",
-    fn: 'y', ivar: 'x', mode: 'general',
-  },
+  { labelKey: 'ode.exSeparable',   eqTex: "y'=xy",                   fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exBernoulli',   eqTex: "y'+y=y^{2}",              fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exHomogeneous', eqTex: "y'=\\frac{y}{x}+1",       fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exExact',       eqTex: "2xy+y^{2}+(x^{2}+2xy)y'=0", fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exLinear1',     eqTex: "y'+\\frac{2}{x}y=x^{2}",  fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exEuler',       eqTex: "x^{2}y''+xy'-y=0",        fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exConstCoeff',  eqTex: "y''-5y'+6y=0",            fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exUnderdamped', eqTex: "y''+2y'+5y=0",            fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exThirdOrder',  eqTex: "y'''+y'=0",               fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exThirdOrder2', eqTex: "y'''-3y''+3y'-y=0",       fn:'y', ivar:'x', mode:'general' },
   // ── IVP ──
   {
     labelKey: 'ode.exIvp1Hom',
@@ -206,6 +187,7 @@ const ODE_EXAMPLES: OdeExample[] = [
     FooterComponent,
     MathjaxDirective,
     FormsModule,
+    NgTemplateOutlet,
     TranslocoPipe,
     MobileMathKeyboardComponent,
     FunctionPlotComponent,
@@ -280,6 +262,12 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly loading   = signal(false);
   readonly errorMsg  = signal('');
   showKeyboard = false;
+  readonly showCanvasSettings = signal(false);
+
+  // Curve style (for settings panel)
+  readonly curveColor     = signal('#3b82f6');
+  readonly curveLineWidth = signal(2);
+  readonly curveDashed    = signal(false);
 
   // Free-constant sliders
   readonly freeParams  = signal<string[]>([]);
@@ -297,11 +285,15 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   private readonly submit$ = new Subject<void>();
 
   constructor() {
-    // Rebuild plot when slider values change
+    // Rebuild plot when slider values or curve style changes
     effect(() => {
-      const pv  = this.paramValues();
-      const res = this.result();
-      if (res?.exists && res.solution && Object.keys(pv).length > 0) {
+      const pv    = this.paramValues();
+      const res   = this.result();
+      const color = this.curveColor();
+      const lw    = this.curveLineWidth();
+      const dash  = this.curveDashed();
+      void [color, lw, dash]; // track style signals
+      if (res?.exists && res.solution) {
         this._buildPlot(res, pv);
       }
     });
@@ -365,9 +357,8 @@ export class OdeComponent implements OnInit, AfterViewChecked {
         this.result.set(res);
         this.userStore.refreshQuota();
         if (res.exists && res.solution) {
-          const params = res.params ?? [];
-          this.freeParams.set(params);
-          if (params.length === 0) this._buildPlot(res, {});
+          this.freeParams.set(res.params ?? []);
+          // Effect handles plot rebuild (also triggered when params=[])
         }
       });
 
@@ -574,15 +565,19 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       expr = expr.split(name).join(`(${value})`);
     }
 
-    const ivar = this.ivar();
-    const fn = this.mathUtils.compile(expr, ivar);
+    const ivar   = this.ivar();
+    const fn     = this.mathUtils.compile(expr, ivar);
     if (!fn) return;
 
-    const plotter = this.plotter;
+    const plotter   = this.plotter;
+    const color     = this.curveColor();
+    const lineWidth = this.curveLineWidth();
+    const dashed    = this.curveDashed();
+
     const layer: PlotLayer = {
       curves: [],
       onDraw: (ctx, vp) => {
-        plotter.plotFn(ctx, fn, vp, { color: '#3b82f6', lineWidth: 2 });
+        plotter.plotFn(ctx, fn, vp, { color, lineWidth, dashed });
       },
     };
     this.layers.set([layer]);

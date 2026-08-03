@@ -79,10 +79,22 @@ if exists and ODE_MODE = "general" then block([_vars],
   ))
 )$
 
+/* Rename %c/%k1/%k2 → C/k_1/k_2 for clean TeX output (no \% prefix) */
+sol_display: sol_raw$
+if exists and length(free_params) > 0 then block([_subs],
+  _subs: [],
+  for _v in free_params do (
+    if string(_v) = "%c"  then _subs: cons(%c  = C,   _subs),
+    if string(_v) = "%k1" then _subs: cons(%k1 = k_1, _subs),
+    if string(_v) = "%k2" then _subs: cons(%k2 = k_2, _subs)
+  ),
+  sol_display: subst(_subs, sol_raw)
+)$
+
 /* ── Output ──────────────────────────────────────────────────────────────── */
 print("__EXISTS__")$     print(string(exists))$
 print("__SOL_MAXIMA__")$ print(string(sol_raw))$
-print("__SOL_TEX__")$    if exists then tex(sol_raw) else print("")$
+print("__SOL_TEX__")$    if exists then tex(sol_display) else print("")$
 print("__PARAMS__")$     print(string(free_params))$
 print("__ORDER__")$      print(string(ode_order))$
 print("__METHOD__")$     print(ode_method)$
