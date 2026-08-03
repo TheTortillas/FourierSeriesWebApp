@@ -167,9 +167,14 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   showKeyboard = false;
 
   readonly mobileExtraGroup: KeyBtn[] = [
-    { label: 'δ(□)', typedText: 'delta(' },
-    { label: 'u(□)', typedText: 'heaviside(' },
+    { label: 'δ(□)', writeWithCursor: '\\operatorname{delta}\\left(\\right)' },
+    { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+    { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+    { label: 'abs(□)', writeWithCursor: '\\operatorname{abs}\\left(\\right)' },
+    { label: '|□|', writeWithCursor: '\\left|\\right|' },
+    { label: 'i', typedText: 'i' },
     { label: '∞', write: '\\infty' },
+    { label: '-∞', write: '-\\infty' },
   ];
 
   readonly keyGroups: KeyBtn[][] = [
@@ -178,6 +183,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       { label: 'u(□)',    writeWithCursor: '\\operatorname{u}\\left(\\right)' },
       { label: 'δ(□)',    writeWithCursor: '\\operatorname{delta}\\left(\\right)' },
       { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+      { label: 'abs(□)', writeWithCursor: '\\operatorname{abs}\\left(\\right)' },
       { label: '|□|',    writeWithCursor: '\\left|\\right|' },
     ],
     // Row 2: Trig + hiperbólicas
@@ -198,7 +204,9 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       { label: '√□', cmd: '\\sqrt' },
       { label: '(□)', writeWithCursor: '\\left(\\right)' },
       { label: 'π', typedText: 'pi' },
+      { label: 'i', typedText: 'i' },
       { label: '∞', write: '\\infty' },
+      { label: '-∞', write: '-\\infty' },
       { label: '−', write: '-' },
       { label: '⌫', keystroke: 'Backspace' },
     ],

@@ -279,16 +279,18 @@
           <!-- Desktop math keyboard -->
           @if (showKeyboard) {
             <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
-              <div class="flex flex-wrap gap-1">
-                @for (btn of mobileExtraGroup; track btn.label) {
-                  <button
-                    type="button"
-                    (mousedown)="$event.preventDefault()"
-                    (click)="mqs.insertKey(btn)"
-                    class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
-                  >{{ btn.label }}</button>
-                }
-              </div>
+              @for (row of keyGroups; track $index) {
+                <div class="flex flex-wrap gap-1">
+                  @for (btn of row; track btn.label) {
+                    <button
+                      type="button"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="mqs.insertKey(btn)"
+                      class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
+                    >{{ btn.label }}</button>
+                  }
+                </div>
+              }
             </div>
           }
 

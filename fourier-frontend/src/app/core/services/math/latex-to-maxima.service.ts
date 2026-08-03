@@ -173,11 +173,10 @@ class Parser {
         if (!this.is('lp')) return this.ode!.bareVar ? fn : `${fn}(${tvar})`;
       }
 
-      // In ODE context, bare 'e' → %e (Euler), bare 'i' → %i (imaginary unit)
-      if (this.ode && name !== this.ode.fn) {
-        if (name === 'e') return '%e';
-        if (name === 'i') return '%i';
-      }
+      // Bare 'e' → %e (Euler), bare 'i' → %i (imaginary unit) — always, not just in ODE context
+      // Only when NOT immediately followed by ( (which would make them user-defined function calls)
+      if (name === 'e' && !this.is('lp')) return '%e';
+      if (name === 'i' && !this.is('lp')) return '%i';
 
       // Look up in registry (covers both clientSideOnly and standard functions)
       const mx = LATEX_TO_MAXIMA.get(name);

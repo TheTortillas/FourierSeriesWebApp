@@ -287,8 +287,45 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     { label: "y'",   write: "y'" },
     { label: "y''",  write: "y''" },
     { label: '=',    cmd: '=' },
-    { label: 'δ(□)', writeWithCursor: '\\delta\\left(\\right)' },
+    { label: 'δ(□)', writeWithCursor: '\\operatorname{delta}\\left(\\right)' },
     { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+    { label: '∞',    write: '\\infty' },
+    { label: '-∞',   write: '-\\infty' },
+  ];
+
+  readonly keyGroups: KeyBtn[][] = [
+    // Row 1: Notación ODE + funciones especiales
+    [
+      { label: "y'",   write: "y'" },
+      { label: "y''",  write: "y''" },
+      { label: "y'''", write: "y'''" },
+      { label: '=',    cmd: '=' },
+      { label: 'δ(□)', writeWithCursor: '\\operatorname{delta}\\left(\\right)' },
+      { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+    ],
+    // Row 2: Trig + hiperbólicas
+    [
+      { label: 'sin(□)',  writeWithCursor: '\\sin\\left(\\right)' },
+      { label: 'cos(□)',  writeWithCursor: '\\cos\\left(\\right)' },
+      { label: 'sinh(□)', writeWithCursor: '\\sinh\\left(\\right)' },
+      { label: 'cosh(□)', writeWithCursor: '\\cosh\\left(\\right)' },
+      { label: 'atan(□)', writeWithCursor: '\\operatorname{atan}\\left(\\right)' },
+      { label: 'ln(□)',   writeWithCursor: '\\ln\\left(\\right)' },
+    ],
+    // Row 3: Operadores y constantes
+    [
+      { label: 'e^□' },
+      { label: '□²' },
+      { label: '□^□' },
+      { label: '□/□' },
+      { label: '√□', cmd: '\\sqrt' },
+      { label: '(□)', writeWithCursor: '\\left(\\right)' },
+      { label: 'π', typedText: 'pi' },
+      { label: '∞', write: '\\infty' },
+      { label: '-∞', write: '-\\infty' },
+      { label: '−', write: '-' },
+      { label: '⌫', keystroke: 'Backspace' },
+    ],
   ];
 
   showKeyboard = false;
