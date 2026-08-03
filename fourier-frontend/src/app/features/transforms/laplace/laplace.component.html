@@ -193,142 +193,20 @@
             </section>
           }
 
-          <!-- ── ODE MODE ─────────────────────────────────────────────────── -->
-          @if (mode() === 'ode') {
-            <section class="flex flex-col gap-4">
-
-              <!-- Selector de ejemplos -->
-              <select
-                (change)="loadOdeExample($any($event.target).value); $any($event.target).value = ''"
-                class="w-full px-3 py-2 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-sm font-mono text-muted dark:text-dark-muted focus:outline-none focus:border-accent cursor-pointer"
-              >
-                <option value="" disabled selected>{{ 'laplace.odeExamplePlaceholder' | transloco }}</option>
-                @for (ex of odeExamples; track ex.labelKey) {
-                  <option [value]="ex.labelKey">{{ ex.labelKey | transloco }}</option>
-                }
-              </select>
-
-              <!-- Ecuación diferencial -->
-              <div class="flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                  <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-                    {{ 'laplace.odeEquation' | transloco }}
-                  </label>
-                  <button
-                    type="button"
-                    (click)="showKeyboard = !showKeyboard"
-                    class="hidden lg:flex items-center gap-1 px-2 h-6 rounded text-[10px] font-mono border transition-colors cursor-pointer"
-                    [class]="showKeyboard
-                      ? 'bg-accent/10 border-accent/40 text-accent'
-                      : 'border-border dark:border-dark-border text-muted hover:border-accent hover:text-accent'"
-                  >
-                    {{ 'calculator.segment.keyboardTitle' | transloco }}
-                  </button>
-                </div>
-                <div
-                  class="w-full px-3 py-2 min-h-10 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
-                  (click)="odeEqField?.focus()"
-                >
-                  <div #mqOdeEquation class="w-full"></div>
-                </div>
-                <p class="text-xs text-muted dark:text-dark-muted font-mono">
-                  {{ 'laplace.odeHintPrefix' | transloco }}
-                  {{ odeFnName() }}'',&nbsp;{{ odeFnName() }}',&nbsp;{{ odeFnName() }}
-                </p>
-              </div>
-
-              <!-- Función incógnita + variable independiente -->
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-                  {{ 'laplace.odeUnknown' | transloco }}
-                </label>
-                <div class="flex items-center gap-3 flex-wrap">
-                  <input
-                    type="text"
-                    [value]="odeFnName()"
-                    (input)="onOdeFnNameChange($any($event.target).value)"
-                    maxlength="2"
-                    class="w-16 px-3 py-2 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-sm font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent text-center"
-                    placeholder="y"
-                  />
-                  <span
-                    class="text-sm text-muted dark:text-dark-muted"
-                    [mathjax]="'\\(' + odeFnName() + '(' + activePair().timeDisplay + ')\\)'"
-                  ></span>
-                  <div class="ml-auto flex items-center gap-1.5">
-                    <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'laplace.odeVariable' | transloco }}</span>
-                    <select
-                      [value]="varPairId()"
-                      (change)="varPairId.set($any($event.target).value)"
-                      class="px-2 py-1.5 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-xs font-mono text-ink dark:text-dark-ink focus:outline-none focus:border-accent cursor-pointer"
-                    >
-                      @for (pair of odeVarOptions; track pair.id) {
-                        <option [value]="pair.id">{{ pair.timeDisplay }}</option>
-                      }
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Condiciones iniciales -->
-              <div class="flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                  <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
-                    {{ 'laplace.odeIcs' | transloco }}
-                  </label>
-                  <button
-                    type="button"
-                    (click)="addIc()"
-                    class="text-xs font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
-                  >
-                    + {{ 'laplace.addIc' | transloco }}
-                  </button>
-                </div>
-                @for (ic of odeIcs(); track ic.order; let i = $index) {
-                  <div class="flex items-center gap-2">
-                    <!-- Label rendered with MathJax -->
-                    <span
-                      class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
-                      [mathjax]="'\\(' + odeIcLabel(ic.order) + ' = \\)'"
-                    ></span>
-                    <!-- MathQuill value field -->
-                    <div
-                      class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
-                      (click)="odeIcFields[i]?.focus()"
-                    >
-                      <div [attr.data-mq-ic]="i" class="w-full"></div>
-                    </div>
-                    @if (odeIcs().length > 1) {
-                      <button
-                        type="button"
-                        (click)="removeIc(i)"
-                        class="text-muted dark:text-dark-muted hover:text-red-500 transition-colors cursor-pointer text-sm leading-none shrink-0"
-                      >×</button>
-                    }
-                  </div>
-                }
-              </div>
-
-              <!-- Mini-teclado desktop -->
-              @if (showKeyboard) {
-                <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
-                  @for (row of keyGroups; track $index) {
-                    <div class="flex flex-wrap gap-1">
-                      @for (btn of row; track btn.label) {
-                        <button
-                          type="button"
-                          (mousedown)="$event.preventDefault()"
-                          (click)="mqs.insertKey(btn)"
-                          class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent dark:hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
-                        >{{ btn.label }}</button>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-
-            </section>
-          }
+          <!-- ── ODE redirect banner ──────────────────────────────────────── -->
+          <a
+            [routerLink]="['/', lang(), 'ode']"
+            [queryParams]="{ tab: 'laplace' }"
+            class="flex items-start gap-3 rounded-lg border border-accent/30 bg-accent/5 dark:bg-accent/10 px-4 py-3 hover:border-accent/60 hover:bg-accent/10 dark:hover:bg-accent/15 transition-colors group"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mt-0.5 text-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-sm font-semibold text-accent font-body">{{ 'laplace.odeRedirectTitle' | transloco }}</span>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'laplace.odeRedirectDesc' | transloco }}</span>
+            </div>
+          </a>
 
         </div>
         <!-- /inputs locked wrapper -->

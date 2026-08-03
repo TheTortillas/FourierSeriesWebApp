@@ -1189,6 +1189,30 @@
     "exBvp2":              "Beam: y'' = x(1-x)",
     "exIvp2PolyForce":     "2nd order — polynomial forcing",
     "exIvp2CompoundForce": "2nd order — compound forcing",
-    "exIvp3rdOrder":       "3rd order — constant coefficients (IVP)"
+    "exIvp3rdOrder":       "3rd order — constant coefficients (IVP)",
+    "modeLaplace": "Laplace",
+    "laplaceWhenTitle":  "When to use Laplace?",
+    "laplaceWhen1":      "Forcing with δ(t) (unit impulse)",
+    "laplaceWhen2":      "Forcing with u(t) (Heaviside step)",
+    "laplaceWhen3":      "Initial conditions at t = 0",
+    "laplaceWhenNot1":   "Cannot give general solution (no free constants)",
+    "laplaceWhenNot2":   "Cannot solve boundary value problems (BVP)",
+    "ode2WhenTitle":     "When to use the ODE Solver?",
+    "ode2When1":         "General solution (with free constants)",
+    "ode2When2":         "IVP at any point x₀",
+    "ode2When3":         "BVP with conditions at two points",
+    "ode2WhenNot1":      "Cannot handle δ(t) or u(t) as forcing",
+    "noSolutionLaplace": "Maxima could not solve this equation with desolve. Make sure the equation has initial conditions at t = 0.",
+    "engineLaplace":     "Engine: Laplace (desolve)",
+    "exLapDirac1":  "Unit impulse: y'' + 2y' + y = δ(t)",
+    "exLapDirac2":  "Shifted impulse: y'' + 4y = δ(t − π)",
+    "exLapStep1":   "Shifted step: y'' + y = u(t − π)",
+    "exLapStep2":   "Rectangular pulse: y' + y = u(t) − u(t − 2)",
+    "exLapConv":    "Impulse response (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
+    "exLapClassic": "Classic via Laplace: y'' + y = sin(t)"
+  },
+  "laplace": {
+    "odeRedirectTitle": "Solving ODEs without δ(t) or u(t)?",
+    "odeRedirectDesc":  "For general solutions, IVP at any x₀, or boundary conditions, use the ODE Solver →"
   }
 }

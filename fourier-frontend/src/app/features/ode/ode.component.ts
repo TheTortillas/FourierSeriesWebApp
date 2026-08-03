@@ -43,10 +43,14 @@ import { PlottingService } from '../../core/services/canvas/plotting.service';
 import { formatApiError } from '../../shared/utils/api-error.utils';
 
 import type { OdeMode, OdeRequest, OdeResponse } from '../../domain';
+import type {
+  LaplaceIcCondition,
+  LaplaceOdeResponse,
+  SimplifyRequest,
+} from '../../domain/types/transform.types';
 import type { PlotLayer } from '../../shared/components/function-plot/function-plot.component';
-import type { SimplifyRequest } from '../../domain/types/transform.types';
 
-export type OdeModeTab = OdeMode;
+export type OdeModeTab = OdeMode | 'laplace';
 
 export interface AltForm { labelKey: string; tex: string; maxima: string; }
 
@@ -85,6 +89,7 @@ interface OdeExample {
   x0?: string;
   ivpIcs?: IvpCondition[];
   bvpConds?: BvpCondition[];
+  // ivpIcs also used for Laplace ICs (same structure, always at t=0)
 }
 
 const ODE_EXAMPLES: OdeExample[] = [
@@ -139,6 +144,31 @@ const ODE_EXAMPLES: OdeExample[] = [
   {
     labelKey: 'ode.exIvp3rdOrder', eqTex: "y'''-6y''+11y'-6y=0", fn: 'y', ivar: 't', mode: 'ivp', x0: '0',
     ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }, { order: 2, value: '0', valueTex: '0' }],
+  },
+  // ── Laplace (desolve) ──
+  {
+    labelKey: 'ode.exLapDirac1', eqTex: "y''+2y'+y=\\delta\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLapDirac2', eqTex: "y''+4y=\\delta\\left(t-\\pi\\right)", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLapStep1', eqTex: "y''+y=u\\left(t-\\pi\\right)", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLapStep2', eqTex: "y'+y=u\\left(t\\right)-u\\left(t-2\\right)", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLapConv', eqTex: "y''+2y'+5y=\\delta\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLapClassic', eqTex: "y''+y=\\sin\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
   },
   // ── BVP ──
   {
@@ -209,14 +239,17 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     { id: 'general', labelKey: 'ode.modeGeneral' },
     { id: 'ivp',     labelKey: 'ode.modeIvp' },
     { id: 'bvp',     labelKey: 'ode.modeBvp' },
+    { id: 'laplace', labelKey: 'ode.modeLaplace' },
   ];
 
   readonly ivarOptions = IVAR_OPTIONS;
 
   readonly mobileExtraGroup: KeyBtn[] = [
-    { label: "y'",  write: "y'" },
-    { label: "y''", write: "y''" },
-    { label: '=',   cmd: '=' },
+    { label: "y'",   write: "y'" },
+    { label: "y''",  write: "y''" },
+    { label: '=',    cmd: '=' },
+    { label: 'δ(□)', writeWithCursor: '\\delta\\left(\\right)' },
+    { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
   ];
 
   showKeyboard = false;
@@ -241,13 +274,24 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     { x: '1', xTex: '1', value: '0', valueTex: '0' },
   ]);
 
+  // ── Laplace-mode signals ─────────────────────────────────────────────────────
+  readonly laplaceIcs = signal<IvpCondition[]>([
+    { order: 0, value: '0', valueTex: '0' },
+    { order: 1, value: '0', valueTex: '0' },
+  ]);
+  readonly laplaceResult = signal<LaplaceOdeResponse | null>(null);
+  laplaceIcFields: (MathField | null)[] = [];
+  private _laplaceIcInited: boolean[] = [];
+
   // ── Result & UI state ────────────────────────────────────────────────────────
   readonly result   = signal<OdeResponse | null>(null);
   readonly loading  = signal(false);
   readonly errorMsg = signal<string | null>(null);
 
-  readonly hasComputedResult = computed(() => this.result() !== null);
-  readonly inputsLocked      = computed(() => this.loading() || this.hasComputedResult());
+  readonly hasComputedResult = computed(
+    () => this.result() !== null || this.laplaceResult() !== null,
+  );
+  readonly inputsLocked = computed(() => this.loading() || this.hasComputedResult());
 
   readonly showCanvasSettings = signal(false);
   readonly isFullscreen       = signal(false);
@@ -274,30 +318,39 @@ export class OdeComponent implements OnInit, AfterViewChecked {
 
   // ── Plot layers ──────────────────────────────────────────────────────────────
   readonly layers = computed<PlotLayer[]>(() => {
-    const res   = this.result();
-    const pv    = this.evaluationParams();
-    const color = this.curveColor();
-    const lw    = this.curveLineWidth();
-    const dash  = this.curveDashed();
-    const ivar  = this.ivar();
-    const plotter = this.plotter;
-    const math    = this.mathUtils;
+    const res        = this.result();
+    const laplaceRes = this.laplaceResult();
+    const pv         = this.evaluationParams();
+    const color      = this.curveColor();
+    const lw         = this.curveLineWidth();
+    const dash       = this.curveDashed();
+    const ivar       = this.ivar();
+    const plotter    = this.plotter;
+    const math       = this.mathUtils;
+    const fnName     = this.fnName();
 
     const layer: PlotLayer = {
       curves: [],
       onDraw: (ctx, vp) => {
-        if (!res?.exists || !res.solution?.maxima) return;
-        const sol = res.solution.maxima;
-        const rhs = sol.includes('=') ? sol.split('=').slice(1).join('=').trim() : sol;
-        if (rhs.includes(this.fnName())) return;
-
-        let expr = rhs;
-        const params = pv;
-        for (const [name, value] of Object.entries(params).sort((a, b) => b[0].length - a[0].length)) {
-          expr = expr.split(name).join(`(${value})`);
+        // ode2 result
+        if (res?.exists && res.solution?.maxima) {
+          const sol = res.solution.maxima;
+          const rhs = sol.includes('=') ? sol.split('=').slice(1).join('=').trim() : sol;
+          if (!rhs.includes(fnName)) {
+            let expr = rhs;
+            for (const [name, value] of Object.entries(pv).sort((a, b) => b[0].length - a[0].length)) {
+              expr = expr.split(name).join(`(${value})`);
+            }
+            const fn = math.compile(expr, ivar);
+            if (fn) plotter.plotFn(ctx, fn, vp, { color, lineWidth: lw, dashed: dash });
+          }
         }
-        const fn = math.compile(expr, ivar);
-        if (fn) plotter.plotFn(ctx, fn, vp, { color, lineWidth: lw, dashed: dash });
+        // desolve result
+        if (laplaceRes?.exists && laplaceRes.solution?.maxima) {
+          const sol = laplaceRes.solution.maxima;
+          const fn  = math.compile(sol, ivar);
+          if (fn) plotter.plotFn(ctx, fn, vp, { color, lineWidth: lw, dashed: dash });
+        }
       },
     };
     return [layer];
@@ -334,7 +387,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
 
     // Sync result → URL
     effect(() => {
-      if (this.result()) {
+      if (this.result() || this.laplaceResult()) {
         this._urlPopulated = true;
         void this.router.navigate([], {
           relativeTo: this.route,
@@ -353,6 +406,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     // Restore from URL
     const encoded = this.route.snapshot.queryParamMap.get('s');
     if (encoded) this._restoreState(encoded);
+
+    const tabParam = this.route.snapshot.queryParamMap.get('tab');
+    if (tabParam === 'laplace') this.mode.set('laplace');
 
     if (typeof window !== 'undefined') {
       document.addEventListener('fullscreenchange', () => {
@@ -377,6 +433,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
           this.freeParams.set([]);
           this.paramValues.set({});
 
+          const m  = this.mode();
           const eq = this.equation().trim();
           if (!eq) {
             this.loading.set(false);
@@ -384,6 +441,32 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             return of(null);
           }
 
+          // ── Laplace (desolve) ──────────────────────────────────────────────
+          if (m === 'laplace') {
+            const unknown  = `${this.fnName()}(${this.ivar()})`;
+            const laplaceEq = this.tex2max.convertOde(this.eqTex(), this.fnName(), this.ivar());
+            if (!laplaceEq.ok) {
+              this.loading.set(false);
+              this.errorMsg.set(this.transloco.translate('ode.errorNoEq'));
+              return of(null);
+            }
+            const lIcs: LaplaceIcCondition[] = this.laplaceIcs().map(ic => ({
+              order:    ic.order,
+              value:    ic.value || '0',
+              valueTex: ic.valueTex,
+            }));
+            return this.api.calculateLaplaceOde({
+              equation:          laplaceEq.maxima,
+              equationTex:       this.eqTex(),
+              unknown,
+              timeVar:           this.ivar(),
+              initialConditions: lIcs,
+            }).pipe(
+              catchError(err => { this.errorMsg.set(formatApiError(err, 'Error al calcular')); return of(null); }),
+            );
+          }
+
+          // ── ode2 (general / ivp / bvp) ────────────────────────────────────
           const ics = this.ivpIcs();
           const bvp = this.bvpConds();
           const body: OdeRequest = {
@@ -391,7 +474,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             equationTex: this.eqTex(),
             unknown:     this.fnName(),
             ivar:        this.ivar(),
-            mode:        this.mode(),
+            mode:        m as OdeMode,
             x0:  this.ivpX0(),
             y0:  ics[0]?.value ?? '0',
             dy0: ics[1]?.value ?? '0',
@@ -413,14 +496,27 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       .subscribe((res) => {
         this.loading.set(false);
         if (!res) return;
-        this.result.set(res);
         this.userStore.refreshQuota();
-        if (res.exists && res.solution) {
-          this.freeParams.set(res.params ?? []);
+
+        if (this.mode() === 'laplace') {
+          const r = res as LaplaceOdeResponse;
+          this.laplaceResult.set(r);
           this.altForms.set([]);
           this.altFormsOpen.set(false);
-          this._runAltForms(res.solution);
-          this.plotComponent()?.resetView();
+          if (r.exists && r.solution) {
+            this._runAltForms(r.solution);
+            this.plotComponent()?.resetView();
+          }
+        } else {
+          const r = res as OdeResponse;
+          this.result.set(r);
+          if (r.exists && r.solution) {
+            this.freeParams.set(r.params ?? []);
+            this.altForms.set([]);
+            this.altFormsOpen.set(false);
+            this._runAltForms(r.solution);
+            this.plotComponent()?.resetView();
+          }
         }
       });
 
@@ -436,6 +532,12 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       if (!this._ivpInited[i]) {
         const el = document.querySelector(`[data-mq-ivp="${i}"]`) as HTMLElement | null;
         if (el) { this._ivpInited[i] = true; void this._mountIvpField(el, i); }
+      }
+    }
+    for (let i = 0; i < this.laplaceIcs().length; i++) {
+      if (!this._laplaceIcInited[i]) {
+        const el = document.querySelector(`[data-mq-laplace-ic="${i}"]`) as HTMLElement | null;
+        if (el) { this._laplaceIcInited[i] = true; void this._mountLaplaceIcField(el, i); }
       }
     }
     for (let i = 0; i < 2; i++) {
@@ -455,6 +557,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
 
   startNewCalculation(): void {
     this.result.set(null);
+    this.laplaceResult.set(null);
     this.errorMsg.set(null);
     this.freeParams.set([]);
     this.paramValues.set({});
@@ -525,6 +628,32 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     return `${this.fnName()}(${this.ivar()}_${index + 1})`;
   }
 
+  // ── Laplace-mode IC management ───────────────────────────────────────────────
+  addLaplaceIc(): void {
+    const nextOrder = this.laplaceIcs().length;
+    this.laplaceIcs.update(ics => [...ics, { order: nextOrder, value: '0', valueTex: '0' }]);
+    this._laplaceIcInited.push(false);
+    this.laplaceIcFields.push(null);
+  }
+
+  removeLaplaceIc(index: number): void {
+    this.laplaceIcs.update(ics => ics.filter((_, i) => i !== index));
+    this._laplaceIcInited.splice(index, 1);
+    this.laplaceIcFields.splice(index, 1);
+  }
+
+  updateLaplaceIcValue(index: number, value: string, valueTex: string): void {
+    this.laplaceIcs.update(ics =>
+      ics.map((ic, i) => (i === index ? { ...ic, value, valueTex } : ic)),
+    );
+  }
+
+  laplaceIcLabel(order: number): string {
+    const fn = this.fnName();
+    const x  = this.ivar();
+    return `${fn}${"'".repeat(order)}(${x}_0)`;
+  }
+
   // ── Examples ─────────────────────────────────────────────────────────────────
   loadExample(labelKey: string): void {
     const ex = ODE_EXAMPLES.find((e) => e.labelKey === labelKey);
@@ -536,6 +665,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     this.eqTex.set(ex.eqTex);
     this._parseEquation(ex.eqTex);
     this.result.set(null);
+    this.laplaceResult.set(null);
     this.freeParams.set([]);
     this.altForms.set([]);
     this.errorMsg.set(null);
@@ -552,6 +682,11 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       this._bvpXInited = [false, false];
       this.bvpFields   = [null, null];
       this.bvpXFields  = [null, null];
+    }
+    if (ex.mode === 'laplace' && ex.ivpIcs) {
+      this.laplaceIcs.set(ex.ivpIcs.map(ic => ({ ...ic })));
+      this._laplaceIcInited = ex.ivpIcs.map(() => false);
+      this.laplaceIcFields  = ex.ivpIcs.map(() => null);
     }
     this._eqMounted = false;
   }
@@ -670,6 +805,27 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     if (field) field.latex(cond.valueTex ?? cond.value);
     el.addEventListener('focusin', () => {
       if (this.bvpFields[index]) this.mqs.setActiveField(this.bvpFields[index]!, 'valor');
+    });
+    el.addEventListener('focusout', () => this.mqs.clearActiveField());
+  }
+
+  private async _mountLaplaceIcField(el: HTMLElement, index: number): Promise<void> {
+    const ic = this.laplaceIcs()[index];
+    const field = await this.mqs.createField(el, {
+      ...this.mqs.defaultConfig(),
+      handlers: {
+        edit: (mf) => {
+          const latex = mf.latex();
+          const r = this.tex2max.convertOdeForOde2(latex, this.fnName(), this.ivar());
+          this.updateLaplaceIcValue(index, r.ok ? r.maxima : latex, latex);
+        },
+        enter: () => this.calculate(),
+      },
+    });
+    this.laplaceIcFields[index] = field;
+    if (field) field.latex(ic.valueTex ?? ic.value);
+    el.addEventListener('focusin', () => {
+      if (this.laplaceIcFields[index]) this.mqs.setActiveField(this.laplaceIcFields[index]!, 'valor');
     });
     el.addEventListener('focusout', () => this.mqs.clearActiveField());
   }

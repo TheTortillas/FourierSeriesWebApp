@@ -17,7 +17,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, filter, forkJoin, of, Subject, switchMap, take, timer } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -96,6 +96,7 @@ const VAR_PAIRS: VarPair[] = [
     ParamSlidersComponent,
     FooterComponent,
     ExportButtonComponent,
+    RouterLink,
   ],
 })
 export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
@@ -329,7 +330,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly modes: { id: LaplaceMode; labelKey: string }[] = [
     { id: 'direct',  labelKey: 'laplace.modeDirecta' },
     { id: 'inverse', labelKey: 'laplace.modeInversa' },
-    { id: 'ode',     labelKey: 'laplace.modeOde' },
   ];
 
   setMode(m: LaplaceMode): void {
