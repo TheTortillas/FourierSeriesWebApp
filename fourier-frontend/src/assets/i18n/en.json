@@ -1132,7 +1132,9 @@
     "newCalculation": "New calculation",
     "result": "Result",
     "fullTransform": "Full transform",
-    "inverseResult": "Inverse transform"
+    "inverseResult": "Inverse transform",
+    "odeRedirectTitle": "Solving ODEs without δ(t) or u(t)?",
+    "odeRedirectDesc":  "For general solutions, IVP at any x₀, or boundary conditions, use the ODE Solver →"
   },
   "ode": {
     "seoTitle": "ODE Solver — General Solution, IVP and Boundary Value Problems",
@@ -1210,9 +1212,5 @@
     "exLapStep2":   "Rectangular pulse: y' + y = u(t) − u(t − 2)",
     "exLapConv":    "Impulse response (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
     "exLapClassic": "Classic via Laplace: y'' + y = sin(t)"
-  },
-  "laplace": {
-    "odeRedirectTitle": "Solving ODEs without δ(t) or u(t)?",
-    "odeRedirectDesc":  "For general solutions, IVP at any x₀, or boundary conditions, use the ODE Solver →"
   }
 }
