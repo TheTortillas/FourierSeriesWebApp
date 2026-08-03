@@ -5,6 +5,7 @@ import {
   ElementRef,
   OnInit,
   ViewChild,
+  effect,
   inject,
   signal,
   computed,
@@ -20,6 +21,10 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 import { MathjaxDirective } from '../../shared/directives/mathjax.directive';
 import { MobileMathKeyboardComponent } from '../../shared/components/math-keyboard/mobile-math-keyboard.component';
 import { FunctionPlotComponent } from '../../shared/components/function-plot/function-plot.component';
+import {
+  ParamSlidersComponent,
+  type ParamValues,
+} from '../../shared/components/param-sliders/param-sliders.component';
 
 import { ApiService } from '../../core/services/api/api.service';
 import { SeoService } from '../../core/services/seo/seo.service';
@@ -31,11 +36,11 @@ import {
 } from '../../core/services/math/mathquill.service';
 import { LatexToMaximaService } from '../../core/services/math/latex-to-maxima.service';
 import { MathUtilsService } from '../../core/services/math/math-utils.service';
+import { PlottingService } from '../../core/services/canvas/plotting.service';
 import { formatApiError } from '../../shared/utils/api-error.utils';
 
 import type { OdeMode, OdeRequest, OdeResponse } from '../../domain';
 import type { PlotLayer } from '../../shared/components/function-plot/function-plot.component';
-import { PlottingService } from '../../core/services/canvas/plotting.service';
 
 export type OdeModeTab = OdeMode;
 
@@ -52,6 +57,18 @@ const IVAR_OPTIONS: IVarOption[] = [
   { id: 'r', display: 'r', maxima: 'r' },
 ];
 
+interface IvpCondition {
+  order: number;   // 0 = y(x₀), 1 = y'(x₀), 2 = y''(x₀)
+  value: string;   // Maxima
+  valueTex: string;
+}
+
+interface BvpCondition {
+  x: string;       // point (editable, plain text)
+  value: string;   // Maxima
+  valueTex: string;
+}
+
 interface OdeExample {
   labelKey: string;
   eqTex: string;
@@ -59,101 +76,125 @@ interface OdeExample {
   ivar: string;
   mode: OdeModeTab;
   x0?: string;
-  y0?: string;
-  dy0?: string;
-  x1?: string;
-  y1?: string;
-  x2?: string;
-  y2?: string;
+  ivpIcs?: IvpCondition[];
+  bvpConds?: BvpCondition[];
 }
 
 const ODE_EXAMPLES: OdeExample[] = [
   // ── General ──
-  { labelKey: 'ode.exSeparable', eqTex: "y'=xy", fn: 'y', ivar: 'x', mode: 'general' },
-  { labelKey: 'ode.exBernoulli', eqTex: "y'+y=y^{2}", fn: 'y', ivar: 'x', mode: 'general' },
-  { labelKey: 'ode.exEuler', eqTex: "x^{2}y''+xy'-y=0", fn: 'y', ivar: 'x', mode: 'general' },
-  // ── PVI 1er orden ──
+  {
+    labelKey: 'ode.exSeparable',
+    eqTex: "y'=xy",
+    fn: 'y', ivar: 'x', mode: 'general',
+  },
+  {
+    labelKey: 'ode.exBernoulli',
+    eqTex: "y'+y=y^{2}",
+    fn: 'y', ivar: 'x', mode: 'general',
+  },
+  {
+    labelKey: 'ode.exHomogeneous',
+    eqTex: "y'=\\frac{y}{x}+1",
+    fn: 'y', ivar: 'x', mode: 'general',
+  },
+  {
+    labelKey: 'ode.exEuler',
+    eqTex: "x^{2}y''+xy'-y=0",
+    fn: 'y', ivar: 'x', mode: 'general',
+  },
+  {
+    labelKey: 'ode.exConstCoeff',
+    eqTex: "y''-5y'+6y=0",
+    fn: 'y', ivar: 'x', mode: 'general',
+  },
+  {
+    labelKey: 'ode.exThirdOrder',
+    eqTex: "y'''+y'=0",
+    fn: 'y', ivar: 'x', mode: 'general',
+  },
+  // ── IVP ──
   {
     labelKey: 'ode.exIvp1Hom',
     eqTex: "y'+3y=0",
-    fn: 'y',
-    ivar: 'x',
-    mode: 'ivp',
+    fn: 'y', ivar: 'x', mode: 'ivp',
     x0: '0',
-    y0: '1',
+    ivpIcs: [{ order: 0, value: '1', valueTex: '1' }],
   },
   {
     labelKey: 'ode.exIvp1NonHom',
     eqTex: "y'-2y=4",
-    fn: 'y',
-    ivar: 'x',
-    mode: 'ivp',
+    fn: 'y', ivar: 'x', mode: 'ivp',
     x0: '0',
-    y0: '0',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }],
   },
-  // ── PVI 2do orden ──
   {
     labelKey: 'ode.exIvp2Real',
     eqTex: "y''-5y'+6y=0",
-    fn: 'y',
-    ivar: 'x',
-    mode: 'ivp',
+    fn: 'y', ivar: 'x', mode: 'ivp',
     x0: '0',
-    y0: '0',
-    dy0: '1',
+    ivpIcs: [
+      { order: 0, value: '0', valueTex: '0' },
+      { order: 1, value: '1', valueTex: '1' },
+    ],
   },
   {
     labelKey: 'ode.exIvp2Complex',
     eqTex: "y''+2y'+5y=0",
-    fn: 'y',
-    ivar: 'x',
-    mode: 'ivp',
+    fn: 'y', ivar: 'x', mode: 'ivp',
     x0: '0',
-    y0: '1',
-    dy0: '0',
+    ivpIcs: [
+      { order: 0, value: '1', valueTex: '1' },
+      { order: 1, value: '0', valueTex: '0' },
+    ],
   },
   {
     labelKey: 'ode.exIvp2Repeat',
     eqTex: "y''-2y'+y=0",
-    fn: 'y',
-    ivar: 'x',
-    mode: 'ivp',
+    fn: 'y', ivar: 'x', mode: 'ivp',
     x0: '0',
-    y0: '1',
-    dy0: '0',
+    ivpIcs: [
+      { order: 0, value: '1', valueTex: '1' },
+      { order: 1, value: '0', valueTex: '0' },
+    ],
   },
   {
     labelKey: 'ode.exIvp2Sin',
     eqTex: "y''+y=\\sin(x)",
-    fn: 'y',
-    ivar: 'x',
-    mode: 'ivp',
+    fn: 'y', ivar: 'x', mode: 'ivp',
     x0: '0',
-    y0: '0',
-    dy0: '0',
+    ivpIcs: [
+      { order: 0, value: '0', valueTex: '0' },
+      { order: 1, value: '0', valueTex: '0' },
+    ],
   },
-  // ── Frontera ──
+  {
+    labelKey: 'ode.exIvp2ExpForce',
+    eqTex: "y''-3y'+2y=e^{x}",
+    fn: 'y', ivar: 'x', mode: 'ivp',
+    x0: '0',
+    ivpIcs: [
+      { order: 0, value: '0', valueTex: '0' },
+      { order: 1, value: '0', valueTex: '0' },
+    ],
+  },
+  // ── BVP ──
   {
     labelKey: 'ode.exBvp1',
     eqTex: "y''+y=0",
-    fn: 'y',
-    ivar: 'x',
-    mode: 'bvp',
-    x1: '0',
-    y1: '0',
-    x2: '%pi/2',
-    y2: '1',
+    fn: 'y', ivar: 'x', mode: 'bvp',
+    bvpConds: [
+      { x: '0',      value: '0', valueTex: '0' },
+      { x: '%pi/2',  value: '1', valueTex: '1' },
+    ],
   },
   {
     labelKey: 'ode.exBvp2',
     eqTex: "y''=x\\left(1-x\\right)",
-    fn: 'y',
-    ivar: 'x',
-    mode: 'bvp',
-    x1: '0',
-    y1: '0',
-    x2: '1',
-    y2: '0',
+    fn: 'y', ivar: 'x', mode: 'bvp',
+    bvpConds: [
+      { x: '0', value: '0', valueTex: '0' },
+      { x: '1', value: '0', valueTex: '0' },
+    ],
   },
 ];
 
@@ -168,73 +209,103 @@ const ODE_EXAMPLES: OdeExample[] = [
     TranslocoPipe,
     MobileMathKeyboardComponent,
     FunctionPlotComponent,
+    ParamSlidersComponent,
   ],
 })
 export class OdeComponent implements OnInit, AfterViewChecked {
-  private readonly api = inject(ApiService);
-  private readonly seo = inject(SeoService);
-  private readonly userStore = inject(UserStore);
-  private readonly transloco = inject(TranslocoService);
+  private readonly api        = inject(ApiService);
+  private readonly seo        = inject(SeoService);
+  private readonly userStore  = inject(UserStore);
+  private readonly transloco  = inject(TranslocoService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly mqs = inject(MathquillService);
-  private readonly tex2max = inject(LatexToMaximaService);
-  private readonly mathUtils = inject(MathUtilsService);
-  private readonly plotter = inject(PlottingService);
-  // ── MathQuill refs ──────────────────────────────────────────────────────────
+  readonly mqs                = inject(MathquillService);
+  private readonly tex2max    = inject(LatexToMaximaService);
+  private readonly mathUtils  = inject(MathUtilsService);
+  private readonly plotter    = inject(PlottingService);
+
+  // ── MathQuill refs ───────────────────────────────────────────────────────────
   @ViewChild('mqEqRef') private mqEqRef!: ElementRef<HTMLElement>;
   private eqField: MathField | null = null;
   private _eqMounted = false;
+
+  // IVP condition MathQuill fields (one per condition row)
+  ivpFields:       (MathField | null)[] = [];
+  private _ivpInited: boolean[] = [];
+
+  // BVP condition MathQuill fields (fixed 2)
+  bvpFields:       (MathField | null)[] = [null, null];
+  private _bvpInited = [false, false];
 
   readonly plotComponent = viewChild(FunctionPlotComponent);
 
   // ── Modes & options ──────────────────────────────────────────────────────────
   readonly modes: { id: OdeModeTab; labelKey: string }[] = [
     { id: 'general', labelKey: 'ode.modeGeneral' },
-    { id: 'ivp', labelKey: 'ode.modeIvp' },
-    { id: 'bvp', labelKey: 'ode.modeBvp' },
+    { id: 'ivp',     labelKey: 'ode.modeIvp' },
+    { id: 'bvp',     labelKey: 'ode.modeBvp' },
   ];
 
   readonly ivarOptions = IVAR_OPTIONS;
-  readonly examples = ODE_EXAMPLES;
 
   readonly mobileExtraGroup: KeyBtn[] = [
-    { label: "y'", write: "y'" },
+    { label: "y'",  write: "y'" },
     { label: "y''", write: "y''" },
-    { label: '=', cmd: '=' },
+    { label: '=',   cmd: '=' },
   ];
 
   // ── State signals ────────────────────────────────────────────────────────────
-  readonly mode = signal<OdeModeTab>('general');
-  readonly fnName = signal('y');
-  readonly ivarId = signal('x');
-  readonly ivar = computed(() => IVAR_OPTIONS.find((o) => o.id === this.ivarId())?.maxima ?? 'x');
-  readonly dy0Label = computed(() => `\\(${this.fnName()}'(${this.ivar()}_0) =\\)`);
+  readonly mode    = signal<OdeModeTab>('general');
+  readonly fnName  = signal('y');
+  readonly ivarId  = signal('x');
+  readonly ivar    = computed(() => IVAR_OPTIONS.find((o) => o.id === this.ivarId())?.maxima ?? 'x');
 
-  readonly eqTex = signal("y''+y=0");
-  readonly equation = signal(''); // Maxima form
+  readonly eqTex   = signal("y''+y=0");
+  readonly equation = signal('');
 
-  // IVP fields
-  readonly x0 = signal('0');
-  readonly y0 = signal('0');
-  readonly dy0 = signal('0');
+  // IVP: shared x₀ + dynamic condition list
+  readonly ivpX0   = signal('0');
+  readonly ivpIcs  = signal<IvpCondition[]>([
+    { order: 0, value: '0', valueTex: '0' },
+    { order: 1, value: '0', valueTex: '0' },
+  ]);
 
-  // BVP fields
-  readonly x1 = signal('0');
-  readonly y1 = signal('0');
-  readonly x2 = signal('1');
-  readonly y2 = signal('0');
+  // BVP: two fixed boundary conditions with independent x
+  readonly bvpConds = signal<BvpCondition[]>([
+    { x: '0', value: '0', valueTex: '0' },
+    { x: '1', value: '0', valueTex: '0' },
+  ]);
 
   // Result & UI state
-  readonly result = signal<OdeResponse | null>(null);
-  readonly loading = signal(false);
-  readonly errorMsg = signal('');
+  readonly result    = signal<OdeResponse | null>(null);
+  readonly loading   = signal(false);
+  readonly errorMsg  = signal('');
   showKeyboard = false;
+
+  // Free-constant sliders
+  readonly freeParams  = signal<string[]>([]);
+  readonly paramValues = signal<ParamValues>({});
 
   // Plot
   readonly layers        = signal<PlotLayer[]>([]);
   readonly canvasMounted = signal(false);
 
+  // Examples filtered by current mode
+  readonly filteredExamples = computed(() =>
+    ODE_EXAMPLES.filter((e) => e.mode === this.mode()),
+  );
+
   private readonly submit$ = new Subject<void>();
+
+  constructor() {
+    // Rebuild plot when slider values change
+    effect(() => {
+      const pv  = this.paramValues();
+      const res = this.result();
+      if (res?.exists && res.solution && Object.keys(pv).length > 0) {
+        this._buildPlot(res, pv);
+      }
+    });
+  }
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -251,6 +322,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
           this.errorMsg.set('');
           this.result.set(null);
           this.layers.set([]);
+          this.freeParams.set([]);
 
           const eq = this.equation().trim();
           if (!eq) {
@@ -259,19 +331,23 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             return of(null);
           }
 
+          const ics = this.ivpIcs();
+          const bvp = this.bvpConds();
           const body: OdeRequest = {
-            equation: eq,
+            equation:    eq,
             equationTex: this.eqTex(),
-            unknown: this.fnName(),
-            ivar: this.ivar(),
-            mode: this.mode(),
-            x0: this.x0(),
-            y0: this.y0(),
-            dy0: this.dy0(),
-            x1: this.x1(),
-            y1: this.y1(),
-            x2: this.x2(),
-            y2: this.y2(),
+            unknown:     this.fnName(),
+            ivar:        this.ivar(),
+            mode:        this.mode(),
+            // IVP
+            x0:  this.ivpX0(),
+            y0:  ics[0]?.value ?? '0',
+            dy0: ics[1]?.value ?? '0',
+            // BVP
+            x1:  bvp[0]?.x ?? '0',
+            y1:  bvp[0]?.value ?? '0',
+            x2:  bvp[1]?.x ?? '1',
+            y2:  bvp[1]?.value ?? '0',
           };
 
           return this.api.calculateOde(body).pipe(
@@ -288,19 +364,41 @@ export class OdeComponent implements OnInit, AfterViewChecked {
         if (!res) return;
         this.result.set(res);
         this.userStore.refreshQuota();
-        if (res.exists && res.solution) this._buildPlot(res);
+        if (res.exists && res.solution) {
+          const params = res.params ?? [];
+          this.freeParams.set(params);
+          if (params.length === 0) this._buildPlot(res, {});
+        }
       });
 
-    // Trigger initial equation parse after MathQuill mounts
-    setTimeout(() => {
-      this._parseEquation(this.eqTex());
-    }, 300);
+    setTimeout(() => this._parseEquation(this.eqTex()), 300);
   }
 
   ngAfterViewChecked(): void {
+    // Equation field
     if (this.mqEqRef && !this._eqMounted) {
       this._eqMounted = true;
-      this._mountEqField();
+      void this._mountEqField();
+    }
+    // IVP condition fields
+    for (let i = 0; i < this.ivpIcs().length; i++) {
+      if (!this._ivpInited[i]) {
+        const el = document.querySelector(`[data-mq-ivp="${i}"]`) as HTMLElement | null;
+        if (el) {
+          this._ivpInited[i] = true;
+          void this._mountIvpField(el, i);
+        }
+      }
+    }
+    // BVP value fields
+    for (let i = 0; i < 2; i++) {
+      if (!this._bvpInited[i]) {
+        const el = document.querySelector(`[data-mq-bvp="${i}"]`) as HTMLElement | null;
+        if (el) {
+          this._bvpInited[i] = true;
+          void this._mountBvpField(el, i);
+        }
+      }
     }
   }
 
@@ -309,34 +407,90 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     this.submit$.next();
   }
 
+  onParamValuesChange(pv: ParamValues): void {
+    this.paramValues.set(pv);
+  }
+
+  // ── IVP condition management ──────────────────────────────────────────────────
+  addIvpIc(): void {
+    const nextOrder = this.ivpIcs().length;
+    this.ivpIcs.update((ics) => [...ics, { order: nextOrder, value: '0', valueTex: '0' }]);
+    this._ivpInited.push(false);
+    this.ivpFields.push(null);
+  }
+
+  removeIvpIc(index: number): void {
+    this.ivpIcs.update((ics) => ics.filter((_, i) => i !== index));
+    this._ivpInited.splice(index, 1);
+    this.ivpFields.splice(index, 1);
+  }
+
+  updateIvpIcValue(index: number, value: string, valueTex: string): void {
+    this.ivpIcs.update((ics) =>
+      ics.map((ic, i) => (i === index ? { ...ic, value, valueTex } : ic)),
+    );
+  }
+
+  // Label: y(x₀)=, y'(x₀)=, y''(x₀)=
+  ivpIcLabel(order: number): string {
+    const fn = this.fnName();
+    const x  = this.ivar();
+    const primes = "'".repeat(order);
+    return `${fn}${primes}(${x}_0)`;
+  }
+
+  // ── BVP condition management ──────────────────────────────────────────────────
+  updateBvpX(index: number, x: string): void {
+    this.bvpConds.update((cs) =>
+      cs.map((c, i) => (i === index ? { ...c, x } : c)),
+    );
+  }
+
+  updateBvpValue(index: number, value: string, valueTex: string): void {
+    this.bvpConds.update((cs) =>
+      cs.map((c, i) => (i === index ? { ...c, value, valueTex } : c)),
+    );
+  }
+
+  bvpLabel(index: number): string {
+    const fn = this.fnName();
+    const x  = this.ivar();
+    return `${fn}(${x}_${index + 1})`;
+  }
+
   // ── Examples ─────────────────────────────────────────────────────────────────
   loadExample(labelKey: string): void {
     const ex = ODE_EXAMPLES.find((e) => e.labelKey === labelKey);
     if (!ex) return;
+
     this.mode.set(ex.mode);
     this.fnName.set(ex.fn);
     this.ivarId.set(ex.ivar);
     this.eqTex.set(ex.eqTex);
     this._parseEquation(ex.eqTex);
-    if (ex.mode === 'ivp') {
-      this.x0.set(ex.x0 ?? '0');
-      this.y0.set(ex.y0 ?? '0');
-      this.dy0.set(ex.dy0 ?? '0');
+    this.result.set(null);
+    this.layers.set([]);
+    this.freeParams.set([]);
+
+    if (ex.mode === 'ivp' && ex.ivpIcs) {
+      this.ivpX0.set(ex.x0 ?? '0');
+      this.ivpIcs.set(ex.ivpIcs.map((ic) => ({ ...ic })));
+      this._ivpInited = ex.ivpIcs.map(() => false);
+      this.ivpFields  = ex.ivpIcs.map(() => null);
     }
-    if (ex.mode === 'bvp') {
-      this.x1.set(ex.x1 ?? '0');
-      this.y1.set(ex.y1 ?? '0');
-      this.x2.set(ex.x2 ?? '1');
-      this.y2.set(ex.y2 ?? '0');
+    if (ex.mode === 'bvp' && ex.bvpConds) {
+      this.bvpConds.set(ex.bvpConds.map((c) => ({ ...c })));
+      this._bvpInited = [false, false];
+      this.bvpFields  = [null, null];
     }
-    this._eqMounted = false; // force remount to update MathQuill display
+
+    this._eqMounted = false; // force MathQuill remount for equation field
   }
 
   // ── MathQuill ────────────────────────────────────────────────────────────────
   private async _mountEqField(): Promise<void> {
     const el = this.mqEqRef?.nativeElement;
     if (!el) return;
-
     const wrapperDiv = el.querySelector<HTMLElement>('[data-mq-eq]');
     if (!wrapperDiv) return;
 
@@ -350,36 +504,78 @@ export class OdeComponent implements OnInit, AfterViewChecked {
         },
       },
     });
-
     wrapperDiv.addEventListener('focusin', () => {
       if (this.eqField) this.mqs.setActiveField(this.eqField, `${this.fnName()}(${this.ivar()})`);
     });
     wrapperDiv.addEventListener('focusout', () => this.mqs.clearActiveField());
-
     if (this.eqTex()) this.eqField?.latex(this.eqTex());
   }
 
+  private async _mountIvpField(el: HTMLElement, index: number): Promise<void> {
+    const ic = this.ivpIcs()[index];
+    const field = await this.mqs.createField(el, {
+      ...this.mqs.defaultConfig(),
+      handlers: {
+        edit: (mf) => {
+          const latex = mf.latex();
+          const r = this.tex2max.convertOdeForOde2(latex, this.fnName(), this.ivar());
+          this.updateIvpIcValue(index, r.ok ? r.maxima : latex, latex);
+        },
+        enter: () => this.calculate(),
+      },
+    });
+    this.ivpFields[index] = field;
+    if (field) field.latex(ic.valueTex ?? ic.value);
+    el.addEventListener('focusin', () => {
+      if (this.ivpFields[index]) this.mqs.setActiveField(this.ivpFields[index]!, 'valor');
+    });
+    el.addEventListener('focusout', () => this.mqs.clearActiveField());
+  }
+
+  private async _mountBvpField(el: HTMLElement, index: number): Promise<void> {
+    const cond = this.bvpConds()[index];
+    const field = await this.mqs.createField(el, {
+      ...this.mqs.defaultConfig(),
+      handlers: {
+        edit: (mf) => {
+          const latex = mf.latex();
+          const r = this.tex2max.convertOdeForOde2(latex, this.fnName(), this.ivar());
+          this.updateBvpValue(index, r.ok ? r.maxima : latex, latex);
+        },
+        enter: () => this.calculate(),
+      },
+    });
+    this.bvpFields[index] = field;
+    if (field) field.latex(cond.valueTex ?? cond.value);
+    el.addEventListener('focusin', () => {
+      if (this.bvpFields[index]) this.mqs.setActiveField(this.bvpFields[index]!, 'valor');
+    });
+    el.addEventListener('focusout', () => this.mqs.clearActiveField());
+  }
+
   private _parseEquation(latex: string): void {
-    if (!latex.trim()) {
-      this.equation.set('');
-      return;
-    }
+    if (!latex.trim()) { this.equation.set(''); return; }
     const r = this.tex2max.convertOdeForOde2(latex, this.fnName(), this.ivar());
     this.equation.set(r.ok ? r.maxima : '');
   }
 
   // ── Plot ──────────────────────────────────────────────────────────────────────
-  private _buildPlot(res: OdeResponse): void {
+  private _buildPlot(res: OdeResponse, pv: ParamValues): void {
     const sol = res.solution!;
     const rhs = sol.maxima.includes('=')
       ? sol.maxima.split('=').slice(1).join('=').trim()
       : sol.maxima;
 
-    // Only plot if solution is explicit (no remaining fn name on RHS)
     if (rhs.includes(this.fnName())) return;
 
+    // Substitute free constants (%c, %k1, %k2) — longest first to avoid partial matches
+    let expr = rhs;
+    for (const [name, value] of Object.entries(pv).sort((a, b) => b[0].length - a[0].length)) {
+      expr = expr.split(name).join(`(${value})`);
+    }
+
     const ivar = this.ivar();
-    const fn = this.mathUtils.compile(rhs, ivar);
+    const fn = this.mathUtils.compile(expr, ivar);
     if (!fn) return;
 
     const plotter = this.plotter;
@@ -395,6 +591,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   }
 
   private _updateSeo(): void {
-    this.seo.setPage('ode.seoTitle', 'ode.seoDescription', this.transloco.translate('ode.seoKeywords'));
+    this.seo.setPage(
+      'ode.seoTitle',
+      'ode.seoDescription',
+      this.transloco.translate('ode.seoKeywords'),
+    );
   }
 }

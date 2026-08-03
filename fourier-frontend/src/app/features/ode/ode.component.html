@@ -14,7 +14,7 @@
   <!-- Two-panel layout -->
   <div class="flex flex-col lg:flex-row flex-1 min-h-0">
 
-    <!-- Left panel: controls -->
+    <!-- ── Left panel ─────────────────────────────────────────────────────────── -->
     <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto">
       <div class="p-5 flex flex-col gap-5">
 
@@ -23,7 +23,7 @@
           @for (m of modes; track m.id) {
             <button
               type="button"
-              (click)="mode.set(m.id); result.set(null); layers.set([])"
+              (click)="mode.set(m.id); result.set(null); layers.set([]); freeParams.set([])"
               class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all cursor-pointer"
               [class]="mode() === m.id
                 ? 'bg-accent text-white dark:text-white shadow-sm'
@@ -34,13 +34,13 @@
           }
         </div>
 
-        <!-- Examples combobox -->
+        <!-- Examples combobox (filtered by mode) -->
         <select
           (change)="loadExample($any($event.target).value); $any($event.target).value = ''"
           class="w-full px-3 py-2 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono text-muted dark:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
         >
           <option value="" disabled selected>{{ 'ode.examplePlaceholder' | transloco }}</option>
-          @for (ex of examples; track ex.labelKey) {
+          @for (ex of filteredExamples(); track ex.labelKey) {
             <option [value]="ex.labelKey">{{ ex.labelKey | transloco }}</option>
           }
         </select>
@@ -48,33 +48,32 @@
         <!-- Equation field -->
         <section #mqEqRef class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider">
+            <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
               {{ 'ode.equation' | transloco }}
             </label>
             <button
               type="button"
               (click)="showKeyboard = !showKeyboard"
-              class="hidden lg:flex items-center gap-1 px-2 py-1 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors"
+              class="text-xs font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
             >
-              ⌨
+              {{ 'ode.mathKeyboard' | transloco }}
             </button>
           </div>
 
           <div
             [attr.data-mq-eq]="''"
-            class="min-h-11 px-3 py-2 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg focus-within:ring-1 focus-within:ring-accent cursor-text"
+            class="min-h-11 px-3 py-2 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg focus-within:ring-1 focus-within:ring-accent cursor-text flex items-center justify-center"
           ></div>
 
           <p class="text-[11px] font-mono text-muted dark:text-dark-muted">
-            {{ 'ode.hint' | transloco }}&nbsp;{{ fnName() }}',&nbsp;{{ fnName() }}''
+            {{ 'ode.hint' | transloco }}&nbsp;{{ fnName() }}'',&nbsp;{{ fnName() }}',&nbsp;{{ fnName() }}
           </p>
         </section>
 
         <!-- Function name + variable -->
         <div class="flex items-center gap-3">
-          <!-- Function name -->
           <div class="flex items-center gap-1.5">
-            <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">
+            <span class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
               {{ 'ode.fnName' | transloco }}
             </span>
             <input
@@ -82,10 +81,12 @@
               [value]="fnName()"
               (input)="fnName.set($any($event.target).value.trim() || 'y')"
               maxlength="2"
-              class="w-10 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono text-center focus:outline-none focus:ring-1 focus:ring-accent"
+              class="w-12 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-accent"
             />
+            <span class="text-sm font-mono text-muted dark:text-dark-muted">
+              ({{ ivar() }})
+            </span>
           </div>
-          <!-- Variable -->
           <div class="ml-auto flex items-center gap-1.5">
             <span class="text-xs font-mono text-muted dark:text-dark-muted">
               {{ 'ode.ivar' | transloco }}
@@ -102,70 +103,95 @@
           </div>
         </div>
 
-        <!-- IVP conditions -->
+        <!-- ── IVP conditions (Laplace style) ────────────────────────────────── -->
         @if (mode() === 'ivp') {
-          <section class="flex flex-col gap-3">
-            <span class="text-xs font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider">
-              {{ 'ode.ivpConditions' | transloco }}
-            </span>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                {{ 'ode.ivpConditions' | transloco }}
+              </label>
+              <button
+                type="button"
+                (click)="addIvpIc()"
+                class="text-xs font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+              >
+                + {{ 'ode.addCondition' | transloco }}
+              </button>
+            </div>
 
-            <!-- x0 row -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-mono text-muted dark:text-dark-muted w-14 shrink-0"
+            <!-- x₀ row -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
                 [mathjax]="'\\(' + ivar() + '_0 =\\)'"></span>
-              <input type="text" [value]="x0()" (input)="x0.set($any($event.target).value)"
-                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
-
-              <span class="text-xs font-mono text-muted dark:text-dark-muted w-20 shrink-0"
-                [mathjax]="'\\(' + fnName() + '(' + ivar() + '_0) =\\)'"></span>
-              <input type="text" [value]="y0()" (input)="y0.set($any($event.target).value)"
-                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input
+                type="text"
+                [value]="ivpX0()"
+                (input)="ivpX0.set($any($event.target).value)"
+                class="flex-1 px-3 py-1.5 text-sm rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+              />
             </div>
 
-            <!-- dy0 row (2nd order) -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-mono text-muted dark:text-dark-muted w-14 shrink-0"
-                [mathjax]="dy0Label()"></span>
-              <input type="text" [value]="dy0()" (input)="dy0.set($any($event.target).value)"
-                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent"
-                [placeholder]="'ode.ivpDy0Hint' | transloco" />
-            </div>
-          </section>
+            <!-- Condition rows -->
+            @for (ic of ivpIcs(); track ic.order; let i = $index) {
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
+                  [mathjax]="'\\(' + ivpIcLabel(ic.order) + ' =\\)'"
+                ></span>
+                <div
+                  class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                  (click)="ivpFields[i]?.focus()"
+                >
+                  <div [attr.data-mq-ivp]="i" class="w-full"></div>
+                </div>
+                @if (ivpIcs().length > 1) {
+                  <button
+                    type="button"
+                    (click)="removeIvpIc(i)"
+                    class="text-muted dark:text-dark-muted hover:text-red-500 transition-colors cursor-pointer text-sm leading-none shrink-0"
+                  >×</button>
+                }
+              </div>
+            }
+          </div>
         }
 
-        <!-- BVP conditions -->
+        <!-- ── BVP conditions (Laplace style) ────────────────────────────────── -->
         @if (mode() === 'bvp') {
-          <section class="flex flex-col gap-3">
-            <span class="text-xs font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider">
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
               {{ 'ode.bvpConditions' | transloco }}
-            </span>
+            </label>
 
-            <!-- Point 1 -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-mono text-muted dark:text-dark-muted w-14 shrink-0"
-                [mathjax]="'\\(' + ivar() + '_1 =\\)'"></span>
-              <input type="text" [value]="x1()" (input)="x1.set($any($event.target).value)"
-                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
-
-              <span class="text-xs font-mono text-muted dark:text-dark-muted w-20 shrink-0"
-                [mathjax]="'\\(' + fnName() + '(' + ivar() + '_1) =\\)'"></span>
-              <input type="text" [value]="y1()" (input)="y1.set($any($event.target).value)"
-                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
-            </div>
-
-            <!-- Point 2 -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-mono text-muted dark:text-dark-muted w-14 shrink-0"
-                [mathjax]="'\\(' + ivar() + '_2 =\\)'"></span>
-              <input type="text" [value]="x2()" (input)="x2.set($any($event.target).value)"
-                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
-
-              <span class="text-xs font-mono text-muted dark:text-dark-muted w-20 shrink-0"
-                [mathjax]="'\\(' + fnName() + '(' + ivar() + '_2) =\\)'"></span>
-              <input type="text" [value]="y2()" (input)="y2.set($any($event.target).value)"
-                class="w-20 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent" />
-            </div>
-          </section>
+            @for (cond of bvpConds(); track $index; let i = $index) {
+              <!-- x point -->
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
+                  [mathjax]="'\\(' + ivar() + '_' + (i+1) + ' =\\)'"
+                ></span>
+                <input
+                  type="text"
+                  [value]="cond.x"
+                  (input)="updateBvpX(i, $any($event.target).value)"
+                  class="flex-1 px-3 py-1.5 text-sm rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+              </div>
+              <!-- y value -->
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
+                  [mathjax]="'\\(' + bvpLabel(i) + ' =\\)'"
+                ></span>
+                <div
+                  class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                  (click)="bvpFields[i]?.focus()"
+                >
+                  <div [attr.data-mq-bvp]="i" class="w-full"></div>
+                </div>
+              </div>
+            }
+          </div>
         }
 
         <!-- Calculate button -->
@@ -197,7 +223,7 @@
         @if (result()) {
           <button
             type="button"
-            (click)="result.set(null); layers.set([])"
+            (click)="result.set(null); layers.set([]); freeParams.set([])"
             class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold"
           >
             {{ 'ode.newCalculation' | transloco }}
@@ -207,17 +233,17 @@
       </div>
     </aside>
 
-    <!-- Right panel: canvas + result -->
+    <!-- ── Right panel ─────────────────────────────────────────────────────────── -->
     <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
       <div class="p-5 flex flex-col gap-5">
 
         <!-- Canvas -->
-        <div class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg" style="height: 380px">
+        <div
+          class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
+          style="height: 380px"
+        >
           @if (canvasMounted() && layers().length) {
-            <app-function-plot
-              [layers]="layers()"
-              class="w-full h-full block"
-            />
+            <app-function-plot [layers]="layers()" class="w-full h-full block" />
           } @else {
             <div class="w-full h-full flex flex-col items-center justify-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-border dark:text-dark-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
@@ -236,13 +262,11 @@
                 {{ 'ode.solution' | transloco }}
               </p>
 
-              <!-- Solution formula -->
               <div
                 class="text-center py-3 text-lg"
                 [mathjax]="'\\[' + result()!.solution!.tex + '\\]'"
               ></div>
 
-              <!-- Method + order badges -->
               <div class="flex flex-wrap gap-2">
                 @if (result()!.order) {
                   <span class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted">
@@ -260,6 +284,18 @@
                   </span>
                 }
               </div>
+
+              @if (freeParams().length) {
+                <div class="border-t border-border dark:border-dark-border pt-3">
+                  <p class="text-[10px] font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider mb-1">
+                    {{ 'ode.freeConstants' | transloco }}
+                  </p>
+                  <app-param-sliders
+                    [params]="freeParams()"
+                    (valuesChange)="onParamValuesChange($event)"
+                  />
+                </div>
+              }
             </div>
 
           } @else {
@@ -276,13 +312,12 @@
 
   </div>
 
-  <app-footer />
-</div>
+  <div class="lg:hidden">
+    <app-mobile-math-keyboard
+      [extraGroup]="mobileExtraGroup"
+      (close)="showKeyboard = false"
+    />
+  </div>
 
-<!-- Mobile math keyboard (< lg only) -->
-<div class="lg:hidden">
-  <app-mobile-math-keyboard
-    [extraGroup]="mobileExtraGroup"
-    (close)="showKeyboard = false"
-  />
+  <app-footer />
 </div>
