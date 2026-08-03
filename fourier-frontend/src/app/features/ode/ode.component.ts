@@ -15,7 +15,8 @@ import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, of, Subject, switchMap } from 'rxjs';
+import { catchError, debounceTime, forkJoin, of, Subject, switchMap } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
@@ -26,6 +27,7 @@ import {
   ParamSlidersComponent,
   type ParamValues,
 } from '../../shared/components/param-sliders/param-sliders.component';
+import { ExportButtonComponent } from '../../shared/components/export-button/export-button.component';
 
 import { ApiService } from '../../core/services/api/api.service';
 import { SeoService } from '../../core/services/seo/seo.service';
@@ -42,8 +44,11 @@ import { formatApiError } from '../../shared/utils/api-error.utils';
 
 import type { OdeMode, OdeRequest, OdeResponse } from '../../domain';
 import type { PlotLayer } from '../../shared/components/function-plot/function-plot.component';
+import type { SimplifyRequest } from '../../domain/types/transform.types';
 
 export type OdeModeTab = OdeMode;
+
+export interface AltForm { labelKey: string; tex: string; maxima: string; }
 
 interface IVarOption {
   id: string;
@@ -52,22 +57,22 @@ interface IVarOption {
 }
 
 const IVAR_OPTIONS: IVarOption[] = [
-  { id: 'x', display: 'x', maxima: 'x' },
-  { id: 't', display: 't', maxima: 't' },
-  { id: 'tau', display: 'τ', maxima: 'tau' },
-  { id: 'r', display: 'r', maxima: 'r' },
+  { id: 'x',   display: 'x',   maxima: 'x' },
+  { id: 't',   display: 't',   maxima: 't' },
+  { id: 'tau', display: 'τ',   maxima: 'tau' },
+  { id: 'r',   display: 'r',   maxima: 'r' },
 ];
 
 interface IvpCondition {
-  order: number;   // 0 = y(x₀), 1 = y'(x₀), 2 = y''(x₀)
-  value: string;   // Maxima
+  order: number;
+  value: string;
   valueTex: string;
 }
 
 interface BvpCondition {
-  x: string;       // Maxima expression for boundary point
-  xTex: string;    // LaTeX for display
-  value: string;   // Maxima
+  x: string;
+  xTex: string;
+  value: string;
   valueTex: string;
 }
 
@@ -84,130 +89,70 @@ interface OdeExample {
 
 const ODE_EXAMPLES: OdeExample[] = [
   // ── General ──
-  { labelKey: 'ode.exSeparable',   eqTex: "y'=xy",                   fn:'y', ivar:'x', mode:'general' },
-  { labelKey: 'ode.exBernoulli',   eqTex: "y'+y=y^{2}",              fn:'y', ivar:'x', mode:'general' },
-  { labelKey: 'ode.exHomogeneous', eqTex: "y'=\\frac{y}{x}+1",       fn:'y', ivar:'x', mode:'general' },
-  { labelKey: 'ode.exExact',       eqTex: "2xy+y^{2}+(x^{2}+2xy)y'=0", fn:'y', ivar:'x', mode:'general' },
-  { labelKey: 'ode.exLinear1',     eqTex: "y'+\\frac{2}{x}y=x^{2}",  fn:'y', ivar:'x', mode:'general' },
-  { labelKey: 'ode.exEuler',       eqTex: "x^{2}y''+xy'-y=0",        fn:'y', ivar:'x', mode:'general' },
-  { labelKey: 'ode.exConstCoeff',  eqTex: "y''-5y'+6y=0",            fn:'y', ivar:'x', mode:'general' },
-  { labelKey: 'ode.exUnderdamped', eqTex: "y''+2y'+5y=0",            fn:'y', ivar:'x', mode:'general' },
-  { labelKey: 'ode.exThirdOrder',  eqTex: "y'''+y'=0",               fn:'y', ivar:'x', mode:'general' },
-  { labelKey: 'ode.exThirdOrder2', eqTex: "y'''-3y''+3y'-y=0",       fn:'y', ivar:'x', mode:'general' },
+  { labelKey: 'ode.exSeparable',   eqTex: "y'=xy",                      fn: 'y', ivar: 'x', mode: 'general' },
+  { labelKey: 'ode.exBernoulli',   eqTex: "y'+y=y^{2}",                 fn: 'y', ivar: 'x', mode: 'general' },
+  { labelKey: 'ode.exHomogeneous', eqTex: "y'=\\frac{y}{x}+1",          fn: 'y', ivar: 'x', mode: 'general' },
+  { labelKey: 'ode.exExact',       eqTex: "2xy+y^{2}+(x^{2}+2xy)y'=0", fn: 'y', ivar: 'x', mode: 'general' },
+  { labelKey: 'ode.exLinear1',     eqTex: "y'+\\frac{2}{x}y=x^{2}",     fn: 'y', ivar: 'x', mode: 'general' },
+  { labelKey: 'ode.exEuler',       eqTex: "x^{2}y''+xy'-y=0",           fn: 'y', ivar: 'x', mode: 'general' },
+  { labelKey: 'ode.exConstCoeff',  eqTex: "y''-5y'+6y=0",               fn: 'y', ivar: 'x', mode: 'general' },
+  { labelKey: 'ode.exUnderdamped', eqTex: "y''+2y'+5y=0",               fn: 'y', ivar: 'x', mode: 'general' },
+  { labelKey: 'ode.exThirdOrder',  eqTex: "y'''+y'=0",                  fn: 'y', ivar: 'x', mode: 'general' },
+  { labelKey: 'ode.exThirdOrder2', eqTex: "y'''-3y''+3y'-y=0",          fn: 'y', ivar: 'x', mode: 'general' },
   // ── IVP ──
   {
-    labelKey: 'ode.exIvp1Hom',
-    eqTex: "y'+3y=0",
-    fn: 'y', ivar: 'x', mode: 'ivp',
-    x0: '0',
+    labelKey: 'ode.exIvp1Hom', eqTex: "y'+3y=0", fn: 'y', ivar: 'x', mode: 'ivp', x0: '0',
     ivpIcs: [{ order: 0, value: '1', valueTex: '1' }],
   },
   {
-    labelKey: 'ode.exIvp1NonHom',
-    eqTex: "y'-2y=4",
-    fn: 'y', ivar: 'x', mode: 'ivp',
-    x0: '0',
+    labelKey: 'ode.exIvp1NonHom', eqTex: "y'-2y=4", fn: 'y', ivar: 'x', mode: 'ivp', x0: '0',
     ivpIcs: [{ order: 0, value: '0', valueTex: '0' }],
   },
   {
-    labelKey: 'ode.exIvp2Real',
-    eqTex: "y''-5y'+6y=0",
-    fn: 'y', ivar: 'x', mode: 'ivp',
-    x0: '0',
-    ivpIcs: [
-      { order: 0, value: '0', valueTex: '0' },
-      { order: 1, value: '1', valueTex: '1' },
-    ],
+    labelKey: 'ode.exIvp2Real', eqTex: "y''-5y'+6y=0", fn: 'y', ivar: 'x', mode: 'ivp', x0: '0',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }],
   },
   {
-    labelKey: 'ode.exIvp2Complex',
-    eqTex: "y''+2y'+5y=0",
-    fn: 'y', ivar: 'x', mode: 'ivp',
-    x0: '0',
-    ivpIcs: [
-      { order: 0, value: '1', valueTex: '1' },
-      { order: 1, value: '0', valueTex: '0' },
-    ],
+    labelKey: 'ode.exIvp2Complex', eqTex: "y''+2y'+5y=0", fn: 'y', ivar: 'x', mode: 'ivp', x0: '0',
+    ivpIcs: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }],
   },
   {
-    labelKey: 'ode.exIvp2Repeat',
-    eqTex: "y''-2y'+y=0",
-    fn: 'y', ivar: 'x', mode: 'ivp',
-    x0: '0',
-    ivpIcs: [
-      { order: 0, value: '1', valueTex: '1' },
-      { order: 1, value: '0', valueTex: '0' },
-    ],
+    labelKey: 'ode.exIvp2Repeat', eqTex: "y''-2y'+y=0", fn: 'y', ivar: 'x', mode: 'ivp', x0: '0',
+    ivpIcs: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }],
   },
   {
-    labelKey: 'ode.exIvp2Sin',
-    eqTex: "y''+y=\\sin(x)",
-    fn: 'y', ivar: 'x', mode: 'ivp',
-    x0: '0',
-    ivpIcs: [
-      { order: 0, value: '0', valueTex: '0' },
-      { order: 1, value: '0', valueTex: '0' },
-    ],
+    labelKey: 'ode.exIvp2Sin', eqTex: "y''+y=\\sin\\left(x\\right)", fn: 'y', ivar: 'x', mode: 'ivp', x0: '0',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
   },
   {
-    labelKey: 'ode.exIvp2ExpForce',
-    eqTex: "y''-3y'+2y=e^{x}",
-    fn: 'y', ivar: 'x', mode: 'ivp',
-    x0: '0',
-    ivpIcs: [
-      { order: 0, value: '0', valueTex: '0' },
-      { order: 1, value: '0', valueTex: '0' },
-    ],
+    labelKey: 'ode.exIvp2ExpForce', eqTex: "y''-3y'+2y=e^{x}", fn: 'y', ivar: 'x', mode: 'ivp', x0: '0',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exIvp2PolyForce', eqTex: "y''+4y=t^{2}", fn: 'y', ivar: 't', mode: 'ivp', x0: '0',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exIvp2CompoundForce', eqTex: "y''+3y'+2y=t\\cdot e^{-t}", fn: 'y', ivar: 't', mode: 'ivp', x0: '0',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exIvp3rdOrder', eqTex: "y'''-6y''+11y'-6y=0", fn: 'y', ivar: 't', mode: 'ivp', x0: '0',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }, { order: 2, value: '0', valueTex: '0' }],
   },
   // ── BVP ──
   {
-    labelKey: 'ode.exBvp1',
-    eqTex: "y''+y=0",
-    fn: 'y', ivar: 'x', mode: 'bvp',
+    labelKey: 'ode.exBvp1', eqTex: "y''+y=0", fn: 'y', ivar: 'x', mode: 'bvp',
     bvpConds: [
-      { x: '0',      xTex: '0',          value: '0', valueTex: '0' },
-      { x: '%pi/2',  xTex: '\\frac{\\pi}{2}', value: '1', valueTex: '1' },
+      { x: '0', xTex: '0', value: '0', valueTex: '0' },
+      { x: '%pi/2', xTex: '\\frac{\\pi}{2}', value: '1', valueTex: '1' },
     ],
   },
   {
-    labelKey: 'ode.exBvp2',
-    eqTex: "y''=x\\left(1-x\\right)",
-    fn: 'y', ivar: 'x', mode: 'bvp',
+    labelKey: 'ode.exBvp2', eqTex: "y''=x\\left(1-x\\right)", fn: 'y', ivar: 'x', mode: 'bvp',
     bvpConds: [
       { x: '0', xTex: '0', value: '0', valueTex: '0' },
       { x: '1', xTex: '1', value: '0', valueTex: '0' },
-    ],
-  },
-  // ── IVP (from Laplace — solved by ode2) ──
-  {
-    labelKey: 'ode.exIvp2PolyForce',
-    eqTex: "y''+4y=t^{2}",
-    fn: 'y', ivar: 't', mode: 'ivp',
-    x0: '0',
-    ivpIcs: [
-      { order: 0, value: '0', valueTex: '0' },
-      { order: 1, value: '0', valueTex: '0' },
-    ],
-  },
-  {
-    labelKey: 'ode.exIvp2CompoundForce',
-    eqTex: "y''+3y'+2y=t\\cdot e^{-t}",
-    fn: 'y', ivar: 't', mode: 'ivp',
-    x0: '0',
-    ivpIcs: [
-      { order: 0, value: '0', valueTex: '0' },
-      { order: 1, value: '0', valueTex: '0' },
-    ],
-  },
-  {
-    labelKey: 'ode.exIvp3rdOrder',
-    eqTex: "y'''-6y''+11y'-6y=0",
-    fn: 'y', ivar: 't', mode: 'ivp',
-    x0: '0',
-    ivpIcs: [
-      { order: 0, value: '0', valueTex: '0' },
-      { order: 1, value: '1', valueTex: '1' },
-      { order: 2, value: '0', valueTex: '0' },
     ],
   },
 ];
@@ -225,6 +170,7 @@ const ODE_EXAMPLES: OdeExample[] = [
     MobileMathKeyboardComponent,
     FunctionPlotComponent,
     ParamSlidersComponent,
+    ExportButtonComponent,
   ],
 })
 export class OdeComponent implements OnInit, AfterViewChecked {
@@ -233,21 +179,24 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   private readonly userStore  = inject(UserStore);
   private readonly transloco  = inject(TranslocoService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route      = inject(ActivatedRoute);
+  private readonly router     = inject(Router);
   readonly mqs                = inject(MathquillService);
   private readonly tex2max    = inject(LatexToMaximaService);
   private readonly mathUtils  = inject(MathUtilsService);
   private readonly plotter    = inject(PlottingService);
+
+  // ── Canvas ref for fullscreen/download ───────────────────────────────────────
+  @ViewChild('canvasWrapperRef') private canvasWrapperRef!: ElementRef<HTMLElement>;
 
   // ── MathQuill refs ───────────────────────────────────────────────────────────
   @ViewChild('mqEqRef') private mqEqRef!: ElementRef<HTMLElement>;
   private eqField: MathField | null = null;
   private _eqMounted = false;
 
-  // IVP condition MathQuill fields (one per condition row)
-  ivpFields:       (MathField | null)[] = [];
+  ivpFields:    (MathField | null)[] = [];
   private _ivpInited: boolean[] = [];
 
-  // BVP condition MathQuill fields (fixed 2): value fields + x-point fields
   bvpFields:    (MathField | null)[] = [null, null];
   bvpXFields:   (MathField | null)[] = [null, null];
   private _bvpInited  = [false, false];
@@ -270,6 +219,8 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     { label: '=',   cmd: '=' },
   ];
 
+  showKeyboard = false;
+
   // ── State signals ────────────────────────────────────────────────────────────
   readonly mode    = signal<OdeModeTab>('general');
   readonly fnName  = signal('y');
@@ -279,69 +230,135 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly eqTex   = signal("y''+y=0");
   readonly equation = signal('');
 
-  // IVP: shared x₀ + dynamic condition list
-  readonly ivpX0   = signal('0');
-  readonly ivpIcs  = signal<IvpCondition[]>([
+  readonly ivpX0  = signal('0');
+  readonly ivpIcs = signal<IvpCondition[]>([
     { order: 0, value: '0', valueTex: '0' },
     { order: 1, value: '0', valueTex: '0' },
   ]);
 
-  // BVP: two fixed boundary conditions with independent x
   readonly bvpConds = signal<BvpCondition[]>([
     { x: '0', xTex: '0', value: '0', valueTex: '0' },
     { x: '1', xTex: '1', value: '0', valueTex: '0' },
   ]);
 
-  // Result & UI state
-  readonly result    = signal<OdeResponse | null>(null);
-  readonly loading   = signal(false);
-  readonly errorMsg  = signal('');
-  showKeyboard = false;
-  readonly showCanvasSettings = signal(false);
+  // ── Result & UI state ────────────────────────────────────────────────────────
+  readonly result   = signal<OdeResponse | null>(null);
+  readonly loading  = signal(false);
+  readonly errorMsg = signal<string | null>(null);
 
-  // Curve style (for settings panel)
+  readonly hasComputedResult = computed(() => this.result() !== null);
+  readonly inputsLocked      = computed(() => this.loading() || this.hasComputedResult());
+
+  readonly showCanvasSettings = signal(false);
+  readonly isFullscreen       = signal(false);
+
+  // ── Curve style ──────────────────────────────────────────────────────────────
   readonly curveColor     = signal('#3b82f6');
   readonly curveLineWidth = signal(2);
   readonly curveDashed    = signal(false);
 
-  // Free-constant sliders
+  resetLineStyles(): void {
+    this.curveColor.set('#3b82f6');
+    this.curveLineWidth.set(2);
+    this.curveDashed.set(false);
+  }
+
+  // ── Free-constant sliders ────────────────────────────────────────────────────
   readonly freeParams  = signal<string[]>([]);
   readonly paramValues = signal<ParamValues>({});
 
-  // Plot
-  readonly layers        = signal<PlotLayer[]>([]);
-  readonly canvasMounted = signal(false);
+  // ── Alt forms ────────────────────────────────────────────────────────────────
+  readonly altForms        = signal<AltForm[]>([]);
+  readonly altFormsLoading = signal(false);
+  readonly altFormsOpen    = signal(false);
 
-  // Examples filtered by current mode
+  // ── Plot layers ──────────────────────────────────────────────────────────────
+  readonly layers = computed<PlotLayer[]>(() => {
+    const res   = this.result();
+    const pv    = this.evaluationParams();
+    const color = this.curveColor();
+    const lw    = this.curveLineWidth();
+    const dash  = this.curveDashed();
+    const ivar  = this.ivar();
+    const plotter = this.plotter;
+    const math    = this.mathUtils;
+
+    const layer: PlotLayer = {
+      curves: [],
+      onDraw: (ctx, vp) => {
+        if (!res?.exists || !res.solution?.maxima) return;
+        const sol = res.solution.maxima;
+        const rhs = sol.includes('=') ? sol.split('=').slice(1).join('=').trim() : sol;
+        if (rhs.includes(this.fnName())) return;
+
+        let expr = rhs;
+        const params = pv;
+        for (const [name, value] of Object.entries(params).sort((a, b) => b[0].length - a[0].length)) {
+          expr = expr.split(name).join(`(${value})`);
+        }
+        const fn = math.compile(expr, ivar);
+        if (fn) plotter.plotFn(ctx, fn, vp, { color, lineWidth: lw, dashed: dash });
+      },
+    };
+    return [layer];
+  });
+
+  readonly evaluationParams = computed<ParamValues>(() => {
+    const names = this.freeParams();
+    const pv = this.paramValues();
+    const merged: ParamValues = { ...pv };
+    for (const name of names) {
+      if (!Number.isFinite(merged[name])) merged[name] = 1;
+    }
+    return merged;
+  });
+
+  // ── Examples ─────────────────────────────────────────────────────────────────
   readonly filteredExamples = computed(() =>
     ODE_EXAMPLES.filter((e) => e.mode === this.mode()),
   );
 
   private readonly submit$ = new Subject<void>();
+  private _urlPopulated = false;
 
   constructor() {
-    // Rebuild plot when slider values or curve style changes
+    // Re-parse equation whenever ivar changes
     effect(() => {
-      const pv    = this.paramValues();
-      const res   = this.result();
-      const color = this.curveColor();
-      const lw    = this.curveLineWidth();
-      const dash  = this.curveDashed();
-      void [color, lw, dash]; // track style signals
-      if (res?.exists && res.solution) {
-        this._buildPlot(res, pv);
-      }
-    });
-
-    // Re-parse equation whenever the independent variable changes
-    effect(() => {
-      const ivar = this.ivar(); // tracked
+      const ivar = this.ivar();
       const tex  = this.eqTex();
       if (tex.trim()) {
         const r = this.tex2max.convertOdeForOde2(tex, this.fnName(), ivar);
         this.equation.set(r.ok ? r.maxima : '');
       }
     });
+
+    // Sync result → URL
+    effect(() => {
+      if (this.result()) {
+        this._urlPopulated = true;
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { s: this._encodeState() },
+          replaceUrl: true,
+        });
+      } else if (this._urlPopulated) {
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true,
+        });
+      }
+    });
+
+    // Restore from URL
+    const encoded = this.route.snapshot.queryParamMap.get('s');
+    if (encoded) this._restoreState(encoded);
+
+    if (typeof window !== 'undefined') {
+      document.addEventListener('fullscreenchange', () => {
+        this.isFullscreen.set(!!document.fullscreenElement);
+      });
+    }
   }
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
@@ -356,10 +373,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
         debounceTime(50),
         switchMap(() => {
           this.loading.set(true);
-          this.errorMsg.set('');
-          this.result.set(null);
-          this.layers.set([]);
+          this.errorMsg.set(null);
           this.freeParams.set([]);
+          this.paramValues.set({});
 
           const eq = this.equation().trim();
           if (!eq) {
@@ -376,11 +392,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             unknown:     this.fnName(),
             ivar:        this.ivar(),
             mode:        this.mode(),
-            // IVP
             x0:  this.ivpX0(),
             y0:  ics[0]?.value ?? '0',
             dy0: ics[1]?.value ?? '0',
-            // BVP
             x1:  bvp[0]?.x ?? '0',
             y1:  bvp[0]?.value ?? '0',
             x2:  bvp[1]?.x ?? '1',
@@ -403,7 +417,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
         this.userStore.refreshQuota();
         if (res.exists && res.solution) {
           this.freeParams.set(res.params ?? []);
-          // Effect handles plot rebuild (also triggered when params=[])
+          this.altForms.set([]);
+          this.altFormsOpen.set(false);
+          this._runAltForms(res.solution);
+          this.plotComponent()?.resetView();
         }
       });
 
@@ -411,50 +428,61 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   }
 
   ngAfterViewChecked(): void {
-    // Equation field
     if (this.mqEqRef && !this._eqMounted) {
       this._eqMounted = true;
       void this._mountEqField();
     }
-    // IVP condition fields
     for (let i = 0; i < this.ivpIcs().length; i++) {
       if (!this._ivpInited[i]) {
         const el = document.querySelector(`[data-mq-ivp="${i}"]`) as HTMLElement | null;
-        if (el) {
-          this._ivpInited[i] = true;
-          void this._mountIvpField(el, i);
-        }
+        if (el) { this._ivpInited[i] = true; void this._mountIvpField(el, i); }
       }
     }
-    // BVP x-point fields and value fields
     for (let i = 0; i < 2; i++) {
       if (!this._bvpXInited[i]) {
         const el = document.querySelector(`[data-mq-bvp-x="${i}"]`) as HTMLElement | null;
-        if (el) {
-          this._bvpXInited[i] = true;
-          void this._mountBvpXField(el, i);
-        }
+        if (el) { this._bvpXInited[i] = true; void this._mountBvpXField(el, i); }
       }
       if (!this._bvpInited[i]) {
         const el = document.querySelector(`[data-mq-bvp="${i}"]`) as HTMLElement | null;
-        if (el) {
-          this._bvpInited[i] = true;
-          void this._mountBvpField(el, i);
-        }
+        if (el) { this._bvpInited[i] = true; void this._mountBvpField(el, i); }
       }
     }
   }
 
-  // ── Calculation ──────────────────────────────────────────────────────────────
-  calculate(): void {
-    this.submit$.next();
+  // ── Actions ──────────────────────────────────────────────────────────────────
+  calculate(): void { this.submit$.next(); }
+
+  startNewCalculation(): void {
+    this.result.set(null);
+    this.errorMsg.set(null);
+    this.freeParams.set([]);
+    this.paramValues.set({});
+    this.altForms.set([]);
+    this.showCanvasSettings.set(false);
+    this.resetLineStyles();
   }
 
-  onParamValuesChange(pv: ParamValues): void {
-    this.paramValues.set(pv);
+  onParamValuesChange(pv: ParamValues): void { this.paramValues.set(pv); }
+
+  toggleFullscreen(): void {
+    const el = this.canvasWrapperRef?.nativeElement;
+    if (!el) return;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void el.requestFullscreen();
   }
 
-  // ── IVP condition management ──────────────────────────────────────────────────
+  downloadCanvas(): void {
+    const canvas = this.canvasWrapperRef?.nativeElement?.querySelector('canvas');
+    if (!canvas) return;
+    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ode-solution.png';
+    a.click();
+  }
+
+  // ── IVP management ───────────────────────────────────────────────────────────
   addIvpIc(): void {
     const nextOrder = this.ivpIcs().length;
     this.ivpIcs.update((ics) => [...ics, { order: nextOrder, value: '0', valueTex: '0' }]);
@@ -474,15 +502,13 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     );
   }
 
-  // Label: y(x₀)=, y'(x₀)=, y''(x₀)=
   ivpIcLabel(order: number): string {
     const fn = this.fnName();
     const x  = this.ivar();
-    const primes = "'".repeat(order);
-    return `${fn}${primes}(${x}_0)`;
+    return `${fn}${"'".repeat(order)}(${x}_0)`;
   }
 
-  // ── BVP condition management ──────────────────────────────────────────────────
+  // ── BVP management ───────────────────────────────────────────────────────────
   updateBvpX(index: number, x: string, xTex: string): void {
     this.bvpConds.update((cs) =>
       cs.map((c, i) => (i === index ? { ...c, x, xTex } : c)),
@@ -496,9 +522,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   }
 
   bvpLabel(index: number): string {
-    const fn = this.fnName();
-    const x  = this.ivar();
-    return `${fn}(${x}_${index + 1})`;
+    return `${this.fnName()}(${this.ivar()}_${index + 1})`;
   }
 
   // ── Examples ─────────────────────────────────────────────────────────────────
@@ -512,8 +536,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     this.eqTex.set(ex.eqTex);
     this._parseEquation(ex.eqTex);
     this.result.set(null);
-    this.layers.set([]);
     this.freeParams.set([]);
+    this.altForms.set([]);
+    this.errorMsg.set(null);
 
     if (ex.mode === 'ivp' && ex.ivpIcs) {
       this.ivpX0.set(ex.x0 ?? '0');
@@ -528,8 +553,37 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       this.bvpFields   = [null, null];
       this.bvpXFields  = [null, null];
     }
+    this._eqMounted = false;
+  }
 
-    this._eqMounted = false; // force MathQuill remount for equation field
+  // ── Alt forms ────────────────────────────────────────────────────────────────
+  private _runAltForms(main: { maxima: string; tex: string }): void {
+    this.altForms.set([]);
+    this.altFormsLoading.set(true);
+    const profiles: Array<{ labelKey: string; req: SimplifyRequest }> = [
+      { labelKey: 'transforms.altFormFactor', req: { expression: main.maxima, profile: 'complete', functions: ['factor'] } },
+      { labelKey: 'transforms.altFormExpand', req: { expression: main.maxima, profile: 'complete', functions: ['expand'] } },
+      { labelKey: 'transforms.altFormTrig',   req: { expression: main.maxima, profile: 'complete', functions: ['trigreduce'], displayFlags: { demoivre: true } } },
+      { labelKey: 'transforms.altFormExp',    req: { expression: main.maxima, profile: 'complete', functions: ['radcan', 'expand', 'combine'], displayFlags: { exponentialize: true } } },
+    ];
+    forkJoin(profiles.map(({ req }) => this.api.simplify(req).pipe(catchError(() => of(null)))))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((results) => {
+        const normalize = (s: string) => s.replace(/\s+/g, '');
+        const seenTex = new Set<string>([main.tex ? normalize(main.tex) : '']);
+        const forms: AltForm[] = [];
+        results.forEach((r, i) => {
+          if (!r) return;
+          const { tex, maxima } = (r as { simplified: { tex: string; maxima: string } }).simplified;
+          if (!tex || !maxima) return;
+          const key = normalize(tex);
+          if (seenTex.has(key)) return;
+          seenTex.add(key);
+          forms.push({ labelKey: profiles[i].labelKey, tex, maxima });
+        });
+        this.altForms.set(forms);
+        this.altFormsLoading.set(false);
+      });
   }
 
   // ── MathQuill ────────────────────────────────────────────────────────────────
@@ -547,6 +601,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
           this.eqTex.set(latex);
           this._parseEquation(latex);
         },
+        enter: () => this.calculate(),
       },
     });
     wrapperDiv.addEventListener('focusin', () => {
@@ -625,39 +680,35 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     this.equation.set(r.ok ? r.maxima : '');
   }
 
-  // ── Plot ──────────────────────────────────────────────────────────────────────
-  private _buildPlot(res: OdeResponse, pv: ParamValues): void {
-    const sol = res.solution!;
-    const rhs = sol.maxima.includes('=')
-      ? sol.maxima.split('=').slice(1).join('=').trim()
-      : sol.maxima;
+  // ── URL state ────────────────────────────────────────────────────────────────
+  private _encodeState(): string {
+    try {
+      const state: Record<string, unknown> = {
+        mode:  this.mode(),
+        ivar:  this.ivarId(),
+        fn:    this.fnName(),
+        eq:    this.equation(),
+        eqTex: this.eqTex(),
+        x0:    this.ivpX0(),
+        ics:   this.ivpIcs(),
+        bvp:   this.bvpConds(),
+      };
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    } catch { return ''; }
+  }
 
-    if (rhs.includes(this.fnName())) return;
-
-    // Substitute free constants (%c, %k1, %k2) — longest first to avoid partial matches
-    let expr = rhs;
-    for (const [name, value] of Object.entries(pv).sort((a, b) => b[0].length - a[0].length)) {
-      expr = expr.split(name).join(`(${value})`);
-    }
-
-    const ivar   = this.ivar();
-    const fn     = this.mathUtils.compile(expr, ivar);
-    if (!fn) return;
-
-    const plotter   = this.plotter;
-    const color     = this.curveColor();
-    const lineWidth = this.curveLineWidth();
-    const dashed    = this.curveDashed();
-
-    const layer: PlotLayer = {
-      curves: [],
-      onDraw: (ctx, vp) => {
-        plotter.plotFn(ctx, fn, vp, { color, lineWidth, dashed });
-      },
-    };
-    this.layers.set([layer]);
-    this.canvasMounted.set(true);
-    setTimeout(() => this.plotComponent()?.resetView(), 50);
+  private _restoreState(encoded: string): void {
+    try {
+      const s = JSON.parse(decodeURIComponent(escape(atob(encoded)))) as Record<string, unknown>;
+      if (typeof s['mode']  === 'string') this.mode.set(s['mode'] as OdeModeTab);
+      if (typeof s['ivar']  === 'string') this.ivarId.set(s['ivar']);
+      if (typeof s['fn']    === 'string') this.fnName.set(s['fn']);
+      if (typeof s['eqTex'] === 'string') this.eqTex.set(s['eqTex']);
+      if (typeof s['eq']    === 'string') this.equation.set(s['eq']);
+      if (typeof s['x0']    === 'string') this.ivpX0.set(s['x0']);
+      if (Array.isArray(s['ics'])) this.ivpIcs.set(s['ics'] as IvpCondition[]);
+      if (Array.isArray(s['bvp'])) this.bvpConds.set(s['bvp'] as BvpCondition[]);
+    } catch { /* ignore */ }
   }
 
   private _updateSeo(): void {
