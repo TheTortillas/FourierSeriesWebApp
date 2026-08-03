@@ -1133,14 +1133,14 @@
     "result": "Resultado",
     "fullTransform": "Transformada completa",
     "inverseResult": "Transformada inversa",
-    "odeRedirectTitle": "Resolver EDOs sin δ(t) ni u(t)",
-    "odeRedirectDesc":  "Para solución general, PVI en cualquier x₀ o condiciones de frontera, usa el Resolvedor de EDOs →"
+    "odeRedirectTitle": "¿Necesitas resolver una EDO usando Laplace u otro método?",
+    "odeRedirectDesc":  "Para solución general, PVI en cualquier x₀ o condiciones de frontera, usa la Calculadora de EDOs →"
   },
   "ode": {
-    "seoTitle": "Resolvedor de EDOs — Solución General, PVI y Valor en la Frontera",
+    "seoTitle": "Calculadora de EDOs — Solución General, PVI y Valor en la Frontera",
     "seoDescription": "Resuelve ecuaciones diferenciales ordinarias de 1er y 2do orden: solución general, problema de valor inicial (PVI) y problema de frontera (BVP). Motor CAS simbólico con gráfica interactiva.",
     "seoKeywords": "ecuaciones diferenciales, EDO, ODE, solución general, PVI, BVP, condiciones iniciales, valor en la frontera, Bernoulli, ecuación de Euler, ode2, Maxima, calculadora EDO",
-    "title": "Resolvedor de EDOs",
+    "title": "Calculadora de EDOs",
     "subtitle": "Solución general, problema de valor inicial (PVI) y valor en la frontera (BVP)",
     "modeGeneral": "General",
     "modeIvp": "PVI",
@@ -1206,11 +1206,21 @@
     "ode2WhenNot1":      "No maneja δ(t) ni u(t) como forzamiento",
     "noSolutionLaplace": "Maxima no pudo resolver esta ecuación con desolve. Verifica que la ecuación tenga condiciones iniciales en t = 0.",
     "engineLaplace":     "Motor: Laplace (desolve)",
-    "exLapDirac1":  "Impulso unitario: y'' + 2y' + y = δ(t)",
-    "exLapDirac2":  "Impulso desplazado: y'' + 4y = δ(t − π)",
-    "exLapStep1":   "Escalón desplazado: y'' + y = u(t − π)",
-    "exLapStep2":   "Pulso rectangular: y' + y = u(t) − u(t − 2)",
-    "exLapConv":    "Respuesta al impulso (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
-    "exLapClassic": "Clásico con Laplace: y'' + y = sin(t)"
+    "exampleLabel":      "Cargar ejemplo",
+    "exLap1Hom":         "1er orden homogéneo: y' + 3y = 0",
+    "exLap1NonHom":      "1er orden no homogéneo: y' − 2y = 4",
+    "exLap2Real":        "2do orden — raíces reales",
+    "exLap2Complex":     "2do orden — raíces complejas",
+    "exLap2Repeat":      "2do orden — raíz repetida",
+    "exLap2Sin":         "Forzamiento sinusoidal: y'' + y = sin(t)",
+    "exLap2Exp":         "Forzamiento exponencial: y'' − 3y' + 2y = eᵗ",
+    "exLap2Poly":        "Forzamiento polinomial: y'' + 4y = t²",
+    "exLap2Compound":    "Forzamiento compuesto: y'' + 3y' + 2y = t·e⁻ᵗ",
+    "exLap3rd":          "3er orden — coef. constantes",
+    "exLapDirac1":       "Impulso unitario: y'' + 2y' + y = δ(t)",
+    "exLapDirac2":       "Impulso desplazado: y'' + 4y = δ(t − π)",
+    "exLapStep1":        "Escalón desplazado: y'' + y = u(t − π)",
+    "exLapStep2":        "Pulso rectangular: y' + y = u(t) − u(t − 2)",
+    "exLapImpulse":      "Respuesta al impulso (ICs ≠ 0): y'' + 2y' + 5y = δ(t)"
   }
 }

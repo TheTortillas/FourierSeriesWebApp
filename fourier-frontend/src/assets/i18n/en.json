@@ -1133,7 +1133,7 @@
     "result": "Result",
     "fullTransform": "Full transform",
     "inverseResult": "Inverse transform",
-    "odeRedirectTitle": "Solving ODEs without δ(t) or u(t)?",
+    "odeRedirectTitle": "Solving ODEs with the Laplace or other method?",
     "odeRedirectDesc":  "For general solutions, IVP at any x₀, or boundary conditions, use the ODE Solver →"
   },
   "ode": {
@@ -1206,11 +1206,21 @@
     "ode2WhenNot1":      "Cannot handle δ(t) or u(t) as forcing",
     "noSolutionLaplace": "Maxima could not solve this equation with desolve. Make sure the equation has initial conditions at t = 0.",
     "engineLaplace":     "Engine: Laplace (desolve)",
-    "exLapDirac1":  "Unit impulse: y'' + 2y' + y = δ(t)",
-    "exLapDirac2":  "Shifted impulse: y'' + 4y = δ(t − π)",
-    "exLapStep1":   "Shifted step: y'' + y = u(t − π)",
-    "exLapStep2":   "Rectangular pulse: y' + y = u(t) − u(t − 2)",
-    "exLapConv":    "Impulse response (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
-    "exLapClassic": "Classic via Laplace: y'' + y = sin(t)"
+    "exampleLabel":      "Load example",
+    "exLap1Hom":         "1st-order homogeneous: y' + 3y = 0",
+    "exLap1NonHom":      "1st-order non-homogeneous: y' − 2y = 4",
+    "exLap2Real":        "2nd order — real roots",
+    "exLap2Complex":     "2nd order — complex roots",
+    "exLap2Repeat":      "2nd order — repeated root",
+    "exLap2Sin":         "Sinusoidal forcing: y'' + y = sin(t)",
+    "exLap2Exp":         "Exponential forcing: y'' − 3y' + 2y = eᵗ",
+    "exLap2Poly":        "Polynomial forcing: y'' + 4y = t²",
+    "exLap2Compound":    "Compound forcing: y'' + 3y' + 2y = t·e⁻ᵗ",
+    "exLap3rd":          "3rd order — constant coefficients",
+    "exLapDirac1":       "Unit impulse: y'' + 2y' + y = δ(t)",
+    "exLapDirac2":       "Shifted impulse: y'' + 4y = δ(t − π)",
+    "exLapStep1":        "Shifted step: y'' + y = u(t − π)",
+    "exLapStep2":        "Rectangular pulse: y' + y = u(t) − u(t − 2)",
+    "exLapImpulse":      "Impulse response (ICs ≠ 0): y'' + 2y' + 5y = δ(t)"
   }
 }

@@ -145,7 +145,48 @@ const ODE_EXAMPLES: OdeExample[] = [
     labelKey: 'ode.exIvp3rdOrder', eqTex: "y'''-6y''+11y'-6y=0", fn: 'y', ivar: 't', mode: 'ivp', x0: '0',
     ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }, { order: 2, value: '0', valueTex: '0' }],
   },
-  // ── Laplace (desolve) ──
+  // ── Laplace (desolve) — clásicos ──
+  {
+    labelKey: 'ode.exLap1Hom', eqTex: "y'+3y=0", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '1', valueTex: '1' }],
+  },
+  {
+    labelKey: 'ode.exLap1NonHom', eqTex: "y'-2y=4", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLap2Real', eqTex: "y''-5y'+6y=0", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }],
+  },
+  {
+    labelKey: 'ode.exLap2Complex', eqTex: "y''+2y'+5y=0", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLap2Repeat', eqTex: "y''-2y'+y=0", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLap2Sin', eqTex: "y''+y=\\sin\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLap2Exp', eqTex: "y''-3y'+2y=e^{t}", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLap2Poly', eqTex: "y''+4y=t^{2}", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLap2Compound', eqTex: "y''+3y'+2y=t\\cdot e^{-t}", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLap3rd', eqTex: "y'''-6y''+11y'-6y=0", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }, { order: 2, value: '0', valueTex: '0' }],
+  },
+  // ── Laplace (desolve) — δ y u ──
   {
     labelKey: 'ode.exLapDirac1', eqTex: "y''+2y'+y=\\delta\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
     ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
@@ -163,12 +204,8 @@ const ODE_EXAMPLES: OdeExample[] = [
     ivpIcs: [{ order: 0, value: '0', valueTex: '0' }],
   },
   {
-    labelKey: 'ode.exLapConv', eqTex: "y''+2y'+5y=\\delta\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
+    labelKey: 'ode.exLapImpulse', eqTex: "y''+2y'+5y=\\delta\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
     ivpIcs: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }],
-  },
-  {
-    labelKey: 'ode.exLapClassic', eqTex: "y''+y=\\sin\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
-    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }],
   },
   // ── BVP ──
   {
