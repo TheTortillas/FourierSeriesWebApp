@@ -17,6 +17,7 @@ const BETA_BANNER_KEY = 'fwc_beta_banner_dismissed';
   selector: 'app-nav',
   imports: [RouterLink, RouterLinkActive, TranslocoPipe],
   templateUrl: './nav.component.html',
+  styleUrl: './nav.component.css',
 })
 export class NavComponent {
   readonly theme     = inject(ThemeService);
@@ -64,6 +65,9 @@ export class NavComponent {
 
   /** Controls the appearance settings dropdown (lang, palette, theme). */
   readonly settingsMenuOpen = signal(false);
+
+  /** Controls the mobile hamburger menu. */
+  readonly mobileMenuOpen = signal(false);
 
   /** Regex to match the leading /:lang segment in the current URL. */
   private readonly langSegmentRe = new RegExp(
@@ -128,6 +132,13 @@ export class NavComponent {
     const wrapper = e.currentTarget as HTMLElement;
     if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
       this.settingsMenuOpen.set(false);
+    }
+  }
+
+  onMobileMenuFocusOut(e: FocusEvent): void {
+    const wrapper = e.currentTarget as HTMLElement;
+    if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
+      this.mobileMenuOpen.set(false);
     }
   }
 }

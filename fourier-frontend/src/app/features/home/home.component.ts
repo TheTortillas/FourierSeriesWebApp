@@ -7,6 +7,8 @@ import {
   OnInit,
   viewChild,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
@@ -30,6 +32,7 @@ interface Waveform {
 export class HomeComponent implements OnInit, OnDestroy {
   readonly theme = inject(ThemeService);
   private readonly seo = inject(SeoService);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   ngOnInit(): void {
     this.seo.setPage('seo.home.title', 'seo.home.description', 'Fourier transform calculator, calculadora transformada de Fourier, series de Fourier, inverse Fourier transform, DFT, FFT, Parseval');
@@ -118,7 +121,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    cancelAnimationFrame(this.animId);
+    if (this.isBrowser) cancelAnimationFrame(this.animId);
   }
 
   private startAnimation(): void {
