@@ -998,7 +998,16 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       if (typeof s['eqTex'] === 'string') this.eqTex.set(s['eqTex']);
       if (typeof s['eq']    === 'string') this.equation.set(s['eq']);
       if (typeof s['x0']    === 'string') { this.ivpX0.set(s['x0']); this.ivpX0Tex.set(typeof s['x0Tex'] === 'string' ? s['x0Tex'] : s['x0']); }
-      if (Array.isArray(s['ics'])) this.ivpIcs.set(s['ics'] as IvpCondition[]);
+      if (Array.isArray(s['ics'])) {
+        const ics = s['ics'] as IvpCondition[];
+        if (s['mode'] === 'laplace') {
+          this.laplaceIcs.set(ics);
+          this._laplaceIcInited = ics.map(() => false);
+          this.laplaceIcFields  = ics.map(() => null);
+        } else {
+          this.ivpIcs.set(ics);
+        }
+      }
       if (Array.isArray(s['bvp'])) this.bvpConds.set(s['bvp'] as BvpCondition[]);
     } catch { /* ignore */ }
   }

@@ -203,10 +203,18 @@ export class HistoryComponent implements OnInit {
       return;
     }
 
-    if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse' || entry.type === 'laplace_ode') {
+    if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse') {
       const encoded = this._encodeLaplaceState(entry);
       if (encoded) {
         this.router.navigate(['/' + lang + '/laplace'], { queryParams: { s: encoded } });
+      }
+      return;
+    }
+
+    if (entry.type === 'laplace_ode') {
+      const encoded = this._encodeLaplaceOdeForOdeComponent(entry);
+      if (encoded) {
+        this.router.navigate(['/' + lang + '/ode'], { queryParams: { s: encoded } });
       }
       return;
     }
@@ -467,6 +475,30 @@ export class HistoryComponent implements OnInit {
       map[type] ??
       'bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted border-border dark:border-dark-border'
     );
+  }
+
+  private _encodeLaplaceOdeForOdeComponent(entry: HistoryEntry): string {
+    const inp = entry.input;
+    try {
+      const unk = (inp['unknown'] as string) ?? 'y(t)';
+      const fnName = unk.replace(/\(.*\)$/, '') || 'y';
+      const timeVar = (inp['timeVar'] as string) ?? 't';
+      const rawIcs = inp['initialConditions'] as Array<{ order: number; value: string | number }> ?? [];
+      const ics = rawIcs.map((ic) => ({
+        order:    ic.order,
+        value:    String(ic.value),
+        valueTex: String(ic.value),
+      }));
+      const state: Record<string, unknown> = {
+        mode:  'laplace',
+        ivar:  timeVar,
+        fn:    fnName,
+        eq:    (inp['equation']    as string) ?? '',
+        eqTex: (inp['equationTex'] as string) ?? '',
+        ics,
+      };
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    } catch { return ''; }
   }
 
   private _encodeOdeState(entry: HistoryEntry): string {
