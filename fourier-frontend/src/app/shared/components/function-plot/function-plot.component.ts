@@ -232,6 +232,7 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    if (!this.isBrowser) return;
     const canvas = this.canvasRef()?.nativeElement;
     const wrapper = this.wrapperRef()?.nativeElement;
     if (!canvas || !wrapper) return;
@@ -460,7 +461,7 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   // ── Resize ────────────────────────────────────────────────────────────────
 
   private resizeCanvas(canvas: HTMLCanvasElement, wrapper: HTMLDivElement): void {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = (this.isBrowser ? window.devicePixelRatio : 1) || 1;
     const w = wrapper.clientWidth;
     const h = wrapper.clientHeight;
     canvas.width  = Math.round(w * dpr);
