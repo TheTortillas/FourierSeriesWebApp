@@ -18,6 +18,7 @@ const VALID_FEATURES     = [
   "fourier_transform", "inverse_fourier_transform",
   "dft_signal", "dft_function", "dft_epicycles",
   "laplace_direct", "laplace_inverse", "laplace_ode",
+  "ode_general", "ode_ivp", "ode_bvp",
   "grapher",
   "none",
 ];

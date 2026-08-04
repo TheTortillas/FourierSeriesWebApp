@@ -194,6 +194,7 @@ export class SurveyComponent {
   readonly featuresCont: SurveyFeature[]       = ['fourier_transform', 'inverse_fourier_transform'];
   readonly featuresDft: SurveyFeature[]        = ['dft_signal', 'dft_function', 'dft_epicycles'];
   readonly featuresLaplace: SurveyFeature[]    = ['laplace_direct', 'laplace_inverse', 'laplace_ode'];
+  readonly featuresOde: SurveyFeature[]        = ['ode_general', 'ode_ivp', 'ode_bvp'];
   readonly featuresTools: SurveyFeature[]      = ['grapher'];
   readonly featuresNone: SurveyFeature[]       = ['none'];
 

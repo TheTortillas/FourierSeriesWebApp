@@ -837,6 +837,7 @@
       "groupContinuous": "Continuous transform",
       "groupDft": "Discrete Transform (DFT)",
       "groupLaplace": "Laplace Transform",
+      "groupOde": "Differential Equations (ODE)",
       "groupTools": "Tools",
       "features": {
         "trigonometric": "Trigonometric series",
@@ -851,6 +852,9 @@
         "laplace_direct": "Direct Laplace Transform",
         "laplace_inverse": "Inverse Laplace Transform",
         "laplace_ode": "ODE solving with Laplace",
+        "ode_general": "ODE — general solution",
+        "ode_ivp": "ODE — initial value problem (IVP)",
+        "ode_bvp": "ODE — boundary value problem (BVP)",
         "grapher": "Function grapher",
         "none": "None yet"
       },

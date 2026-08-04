@@ -837,6 +837,7 @@
       "groupContinuous": "Transformada continua",
       "groupDft": "Transformada Discreta (DFT)",
       "groupLaplace": "Transformada de Laplace",
+      "groupOde": "Ecuaciones Diferenciales (EDO)",
       "groupTools": "Herramientas",
       "features": {
         "trigonometric": "Serie trigonométrica",
@@ -851,6 +852,9 @@
         "laplace_direct": "Laplace directa",
         "laplace_inverse": "Laplace inversa",
         "laplace_ode": "Resolución de EDOs con Laplace",
+        "ode_general": "EDO — solución general",
+        "ode_ivp": "EDO — problema de valor inicial (PVI)",
+        "ode_bvp": "EDO — problema de valor en la frontera (PVF)",
         "grapher": "Graficador de funciones",
         "none": "Ninguna aún"
       },
