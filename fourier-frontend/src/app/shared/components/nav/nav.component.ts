@@ -17,6 +17,7 @@ const BETA_BANNER_KEY = 'fwc_beta_banner_dismissed';
   selector: 'app-nav',
   imports: [RouterLink, RouterLinkActive, TranslocoPipe],
   templateUrl: './nav.component.html',
+  styleUrl: './nav.component.css',
 })
 export class NavComponent {
   readonly theme     = inject(ThemeService);
@@ -53,8 +54,8 @@ export class NavComponent {
   /** Controls the language dropdown visibility. */
   readonly langMenuOpen = signal(false);
 
-  /** Controls the Fourier analysis dropdown visibility. */
-  readonly fourierMenuOpen = signal(false);
+  /** Controls the tools dropdown visibility. */
+  readonly toolsMenuOpen = signal(false);
 
   /** Controls the community/meta dropdown (feedback + survey). */
   readonly moreMenuOpen = signal(false);
@@ -64,6 +65,9 @@ export class NavComponent {
 
   /** Controls the appearance settings dropdown (lang, palette, theme). */
   readonly settingsMenuOpen = signal(false);
+
+  /** Controls the mobile hamburger menu. */
+  readonly mobileMenuOpen = signal(false);
 
   /** Regex to match the leading /:lang segment in the current URL. */
   private readonly langSegmentRe = new RegExp(
@@ -79,14 +83,13 @@ export class NavComponent {
     { requireSync: true },
   );
 
-  /** True when the active route belongs to the Fourier analysis section. */
-  readonly isAnalysisActive = computed(() => {
+  /** True when the active route belongs to any tool. */
+  readonly isToolActive = computed(() => {
     const url = this.currentUrl();
     return url.includes('/calculator') || url.includes('/transforms') ||
-           url.includes('/fourier-integral') || url.includes('/laplace');
+           url.includes('/fourier-integral') || url.includes('/laplace') ||
+           url.includes('/ode') || url.includes('/grapher');
   });
-
-  readonly isGrapherActive = computed(() => this.currentUrl().includes('/grapher'));
 
   switchToLang(code: string): void {
     this.langMenuOpen.set(false);
@@ -104,10 +107,10 @@ export class NavComponent {
     }
   }
 
-  onFourierMenuFocusOut(e: FocusEvent): void {
+  onToolsMenuFocusOut(e: FocusEvent): void {
     const wrapper = e.currentTarget as HTMLElement;
     if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
-      this.fourierMenuOpen.set(false);
+      this.toolsMenuOpen.set(false);
     }
   }
 
@@ -129,6 +132,13 @@ export class NavComponent {
     const wrapper = e.currentTarget as HTMLElement;
     if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
       this.settingsMenuOpen.set(false);
+    }
+  }
+
+  onMobileMenuFocusOut(e: FocusEvent): void {
+    const wrapper = e.currentTarget as HTMLElement;
+    if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
+      this.mobileMenuOpen.set(false);
     }
   }
 }

@@ -3,6 +3,7 @@ import {
   fourierTransformService,
   fourierIntegralService,
   laplaceService,
+  odeService,
   dftService,
   historyRepository,
 } from "../../infrastructure/container";
@@ -16,6 +17,8 @@ import type {
   LaplaceDirectInput,
   LaplaceInverseInput,
   LaplaceOdeInput,
+  OdeInput,
+  OdeMode,
 } from "../../domain/types/fourier.types";
 import {
   sanitizeConvention,
@@ -787,6 +790,68 @@ transformsRouter.post(
           userId:      req.user?.id,
           ipAddress:   req.ip ?? undefined,
           type:        "laplace_ode",
+          input:       input as unknown as Record<string, unknown>,
+          executionMs: result.executionTimeMs,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Standalone ODE solver (ode2 + ic1/ic2/bc2) ───────────────────────────────
+
+transformsRouter.post(
+  "/ode/solve",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const body = req.body as OdeInput;
+
+      if (typeof body.equation !== "string" || !body.equation.trim()) {
+        res.status(400).json({ error: "equation required" }); return;
+      }
+      if (typeof body.unknown !== "string" || !body.unknown.trim()) {
+        res.status(400).json({ error: "unknown required" }); return;
+      }
+      if (typeof body.ivar !== "string" || !body.ivar.trim()) {
+        res.status(400).json({ error: "ivar required" }); return;
+      }
+      const validModes: OdeMode[] = ["general", "ivp", "bvp"];
+      if (!validModes.includes(body.mode)) {
+        res.status(400).json({ error: "mode must be general | ivp | bvp" }); return;
+      }
+
+      const eqCheck = sanitizeExpression(body.equation.trim());
+      if (!eqCheck.valid) { res.status(400).json({ error: eqCheck.error }); return; }
+      const ivarCheck = sanitizeVariableName(body.ivar.trim(), "ivar");
+      if (!ivarCheck.valid) { res.status(400).json({ error: ivarCheck.error }); return; }
+
+      const input: OdeInput = {
+        equation:    body.equation.trim(),
+        equationTex: typeof body.equationTex === "string" ? body.equationTex : undefined,
+        unknown:     body.unknown.trim(),
+        ivar:        body.ivar.trim(),
+        mode:        body.mode,
+        x0: body.x0, y0: body.y0, dy0: body.dy0,
+        x1: body.x1, y1: body.y1,
+        x2: body.x2, y2: body.y2,
+      };
+
+      const client = trackClientConnection(req, res);
+      const result = await odeService.solve(input);
+      const shouldPersistSideEffects = !client.isDisconnected();
+
+      if (shouldPersistSideEffects && result.exists) {
+        await tryConsumeQuota(req as QuotaRequest);
+        const historyType =
+          input.mode === "ivp" ? "ode_ivp" :
+          input.mode === "bvp" ? "ode_bvp" : "ode_general";
+        await historyRepository.create({
+          userId:      req.user?.id,
+          ipAddress:   req.ip ?? undefined,
+          type:        historyType,
           input:       input as unknown as Record<string, unknown>,
           executionMs: result.executionTimeMs,
         });

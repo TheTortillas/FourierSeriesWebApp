@@ -9,6 +9,7 @@ import { ParsevalService } from "../application/fourier/parseval.service";
 import { FourierTransformService } from "../application/transforms/fourierTransform.service";
 import { FourierIntegralService } from "../application/transforms/fourierIntegral.service";
 import { LaplaceService } from "../application/transforms/laplace.service";
+import { OdeService } from "../application/transforms/ode.service";
 import { DFTService } from "../application/transforms/dft.service";
 
 import { UserRepository } from "./persistence/UserRepository";
@@ -42,6 +43,7 @@ const parsevalService = new ParsevalService(runner);
 const fourierTransformService = new FourierTransformService(runner);
 const fourierIntegralService = new FourierIntegralService(runner);
 const laplaceService         = new LaplaceService(runner);
+const odeService             = new OdeService(runner);
 const dftService = new DFTService(runner);
 
 const userRepository = new UserRepository();
@@ -69,6 +71,7 @@ export {
   fourierTransformService,
   fourierIntegralService,
   laplaceService,
+  odeService,
   dftService,
   userRepository,
   tokenRepository,

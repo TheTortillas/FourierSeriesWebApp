@@ -187,7 +187,10 @@ export const CALC_TYPE_LABEL: Record<string, string> = {
   fourier_integral:          'Int. Fourier',
   laplace_direct:            'Laplace directa',
   laplace_inverse:           'Laplace inversa',
-  laplace_ode:               'Laplace EDO',
+  laplace_ode:               'EDO Laplace',
+  ode_general:               'EDO general',
+  ode_ivp:                   'EDO PVI',
+  ode_bvp:                   'EDO Frontera',
 };
 
 export interface CalcTypeStat {

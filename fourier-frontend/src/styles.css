@@ -106,6 +106,14 @@
   }
 }
 
+/* Dropdown menus — fondo sólido garantizado, sin oklch ni opacidad */
+.nav-dropdown {
+  background-color: var(--color-paper);
+}
+html.dark .nav-dropdown {
+  background-color: var(--color-dark-bg);
+}
+
 /* ─── MathQuill integration ─────────────────────────────────────────────────
    Strip MathQuill's own border/background so our wrapper div controls those.
    Text color inherits from the parent (our ink / dark-ink tokens).

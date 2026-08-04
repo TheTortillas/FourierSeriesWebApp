@@ -1,5 +1,5 @@
 <nav
-  class="shrink-0 border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg px-6 h-12 flex items-center justify-between"
+  class="shrink-0 border-b border-border dark:border-dark-border bg-paper/95 dark:bg-dark-bg/95 backdrop-blur-sm px-6 h-12 flex items-center justify-between relative z-9999"
 >
   <!-- Logo -->
   <a
@@ -32,105 +32,170 @@
 
   <!-- Actions -->
   <div class="flex items-center gap-0.5">
-    <!-- Grupo 1: Navegación -->
-    <div class="relative hidden sm:block" (focusout)="onFourierMenuFocusOut($event)">
+
+    <!-- Herramientas — desktop -->
+    <div class="relative hidden sm:block" (focusout)="onToolsMenuFocusOut($event)">
       <button
         type="button"
-        (click)="fourierMenuOpen.set(!fourierMenuOpen())"
-        [class]="
-          isAnalysisActive()
-            ? 'flex items-center gap-0.5 px-2 py-1.5 rounded text-xs font-mono text-accent hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
-            : 'flex items-center gap-0.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
-        "
+        (click)="toolsMenuOpen.set(!toolsMenuOpen())"
+        [class]="isToolActive()
+          ? 'flex items-center gap-0.5 px-2 py-1.5 rounded text-xs font-mono text-accent hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
+          : 'flex items-center gap-0.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'"
       >
-        {{ 'nav.fourierAnalysis' | transloco }}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-2.5 h-2.5 transition-transform"
-          [class.rotate-180]="fourierMenuOpen()"
-        >
+        {{ 'nav.tools' | transloco }}
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+          class="w-2.5 h-2.5 transition-transform" [class.rotate-180]="toolsMenuOpen()">
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
 
-      @if (fourierMenuOpen()) {
-        <div
-          class="absolute left-0 top-full mt-1 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-40"
-        >
-          <a
-            [routerLink]="'/' + lang() + '/calculator'"
-            routerLinkActive="!text-accent bg-accent/5"
-            (click)="fourierMenuOpen.set(false)"
-            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
-          >
+      @if (toolsMenuOpen()) {
+        <div class="absolute left-0 top-full mt-1 z-50 min-w-48 py-1 rounded border border-border dark:border-dark-border shadow-xl"
+             [style.background-color]="theme.isDark ? 'var(--color-dark-surface)' : 'var(--color-paper)'">
+          <p class="px-3 pt-0.5 pb-0.5 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'home.fourierSectionTitle' | transloco }}</p>
+          <a [routerLink]="'/' + lang() + '/calculator'" routerLinkActive="!text-accent bg-accent/5"
+            (click)="toolsMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display leading-none">Σ</span>
             {{ 'nav.series' | transloco }}
           </a>
-          <a
-            [routerLink]="'/' + lang() + '/transforms'"
-            routerLinkActive="!text-accent bg-accent/5"
-            (click)="fourierMenuOpen.set(false)"
-            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
-          >
-            {{ 'nav.transforms' | transloco }}
-          </a>
-          <a
-            [routerLink]="'/' + lang() + '/fourier-integral'"
-            routerLinkActive="!text-accent bg-accent/5"
-            (click)="fourierMenuOpen.set(false)"
-            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
-          >
+          <a [routerLink]="'/' + lang() + '/fourier-integral'" routerLinkActive="!text-accent bg-accent/5"
+            (click)="toolsMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display leading-none">∫</span>
             {{ 'nav.fourierIntegral' | transloco }}
           </a>
-          <div class="my-0.5 mx-3 h-px bg-border dark:bg-dark-border"></div>
-          <a
-            [routerLink]="'/' + lang() + '/laplace'"
-            routerLinkActive="!text-accent bg-accent/5"
-            (click)="fourierMenuOpen.set(false)"
-            class="flex items-center w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
-          >
+          <a [routerLink]="'/' + lang() + '/transforms/continuous'" routerLinkActive="!text-accent bg-accent/5"
+            (click)="toolsMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display leading-none">ℱ</span>
+            {{ 'nav.transforms' | transloco }}
+          </a>
+          <a [routerLink]="'/' + lang() + '/transforms/dft'" routerLinkActive="!text-accent bg-accent/5"
+            (click)="toolsMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-mono text-[9px] font-bold leading-none">FFT</span>
+            {{ 'nav.dft' | transloco }}
+          </a>
+
+          <div class="mx-3 my-1 border-t border-border dark:border-dark-border"></div>
+
+          <p class="px-3 pb-0.5 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'home.laplaceSectionTitle' | transloco }}</p>
+          <a [routerLink]="'/' + lang() + '/laplace'" routerLinkActive="!text-accent bg-accent/5"
+            (click)="toolsMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display leading-none">ℒ</span>
             {{ 'nav.laplace' | transloco }}
+          </a>
+
+          <div class="mx-3 my-1 border-t border-border dark:border-dark-border"></div>
+
+          <p class="px-3 pb-0.5 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'home.odeSectionTitle' | transloco }}</p>
+          <a [routerLink]="'/' + lang() + '/ode'" routerLinkActive="!text-accent bg-accent/5"
+            (click)="toolsMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display text-sm leading-none">y′</span>
+            {{ 'nav.ode' | transloco }}
+          </a>
+
+          <div class="mx-3 my-1 border-t border-border dark:border-dark-border"></div>
+
+          <a [routerLink]="'/' + lang() + '/grapher'" routerLinkActive="!text-accent bg-accent/5"
+            (click)="toolsMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent opacity-70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+            {{ 'nav.grapher' | transloco }}
           </a>
         </div>
       }
     </div>
 
-    <!-- Grapher — top-level link -->
-    <a
-      [routerLink]="'/' + lang() + '/grapher'"
-      [class]="
-        isGrapherActive()
-          ? 'hidden sm:flex items-center px-2 py-1.5 rounded text-xs font-mono text-accent hover:bg-paper2 dark:hover:bg-dark-surface transition-colors'
-          : 'hidden sm:flex items-center px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors'
-      "
-    >
-      {{ 'nav.grapher' | transloco }}
-    </a>
+    <!-- Hamburguesa mobile -->
+    <div class="relative sm:hidden" (focusout)="onMobileMenuFocusOut($event)">
+      <button
+        type="button"
+        (click)="mobileMenuOpen.set(!mobileMenuOpen())"
+        class="flex items-center p-2 rounded text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
+      >
+        @if (mobileMenuOpen()) {
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        }
+      </button>
 
-    <!-- Acerca de — link directo -->
-    <a
-      [routerLink]="'/' + lang() + '/about'"
-      routerLinkActive="!text-accent"
-      class="hidden sm:flex items-center px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
-    >
-      {{ 'nav.about' | transloco }}
-    </a>
+      @if (mobileMenuOpen()) {
+        <div class="absolute right-0 top-full mt-1 z-50 w-56 py-2 rounded border border-border dark:border-dark-border shadow-xl"
+             [style.background-color]="theme.isDark ? 'var(--color-dark-surface)' : 'var(--color-paper)'">
+          <p class="px-3 pt-0.5 pb-1 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'home.fourierSectionTitle' | transloco }}</p>
+          <a [routerLink]="'/' + lang() + '/calculator'" (click)="mobileMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-2 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display leading-none">Σ</span>{{ 'nav.series' | transloco }}
+          </a>
+          <a [routerLink]="'/' + lang() + '/fourier-integral'" (click)="mobileMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-2 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display leading-none">∫</span>{{ 'nav.fourierIntegral' | transloco }}
+          </a>
+          <a [routerLink]="'/' + lang() + '/transforms/continuous'" (click)="mobileMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-2 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display leading-none">ℱ</span>{{ 'nav.transforms' | transloco }}
+          </a>
+          <a [routerLink]="'/' + lang() + '/transforms/dft'" (click)="mobileMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-2 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-mono text-[9px] font-bold leading-none">FFT</span>{{ 'nav.dft' | transloco }}
+          </a>
+
+          <div class="mx-3 my-1.5 border-t border-border dark:border-dark-border"></div>
+
+          <p class="px-3 pb-1 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'home.laplaceSectionTitle' | transloco }}</p>
+          <a [routerLink]="'/' + lang() + '/laplace'" (click)="mobileMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-2 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display leading-none">ℒ</span>{{ 'nav.laplace' | transloco }}
+          </a>
+
+          <div class="mx-3 my-1.5 border-t border-border dark:border-dark-border"></div>
+
+          <p class="px-3 pb-1 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'home.odeSectionTitle' | transloco }}</p>
+          <a [routerLink]="'/' + lang() + '/ode'" (click)="mobileMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-2 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <span class="w-4 text-center text-accent opacity-70 font-display text-sm leading-none">y′</span>{{ 'nav.ode' | transloco }}
+          </a>
+
+          <div class="mx-3 my-1.5 border-t border-border dark:border-dark-border"></div>
+
+          <a [routerLink]="'/' + lang() + '/grapher'" (click)="mobileMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-2 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent opacity-70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+            {{ 'nav.grapher' | transloco }}
+          </a>
+
+          <div class="mx-3 my-1.5 border-t border-border dark:border-dark-border"></div>
+
+          <a [routerLink]="'/' + lang() + '/about'" (click)="mobileMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-2 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            {{ 'nav.about' | transloco }}
+          </a>
+        </div>
+      }
+    </div>
 
     <!-- Engagement: Feedback + Encuesta -->
     <div class="relative hidden sm:block" (focusout)="onMoreMenuFocusOut($event)">
       <button
         type="button"
         (click)="moreMenuOpen.set(!moreMenuOpen())"
-        [class]="
-          moreMenuOpen()
-            ? 'relative flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-accent bg-paper2 dark:bg-dark-surface transition-colors cursor-pointer'
-            : 'relative flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
-        "
+        [class]="moreMenuOpen()
+          ? 'relative flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-accent bg-paper2 dark:bg-dark-surface transition-colors cursor-pointer'
+          : 'relative flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'"
         [title]="'nav.more' | transloco"
       >
         ···
@@ -140,7 +205,8 @@
       </button>
 
       @if (moreMenuOpen()) {
-        <div class="absolute left-0 top-full mt-1 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-36">
+        <div class="absolute left-0 top-full mt-1 z-50 min-w-36 py-0.5 rounded border border-border dark:border-dark-border shadow-xl"
+             [style.background-color]="theme.isDark ? 'var(--color-dark-surface)' : 'var(--color-paper)'">
           <a
             [routerLink]="'/' + lang() + '/feedback'"
             routerLinkActive="!text-accent bg-accent/5"
@@ -172,15 +238,12 @@
     <!-- Grupo 2: Cuota + cuenta -->
     @if (userStore.isAuthenticated()) {
 
-      <!-- Badge de cuota -->
       @if (userStore.quota()?.remaining !== null && userStore.quota()?.remaining !== undefined) {
         <span
           [title]="'nav.quotaTitle' | transloco"
-          [class]="
-            userStore.quota()!.remaining! <= 0
-              ? 'flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono bg-red-50 dark:bg-red-950/30 text-red-500 border border-red-200 dark:border-red-800 select-none'
-              : 'flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted border border-border dark:border-dark-border select-none'
-          "
+          [class]="userStore.quota()!.remaining! <= 0
+            ? 'flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono bg-red-50 dark:bg-red-950/30 text-red-500 border border-red-200 dark:border-red-800 select-none'
+            : 'flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted border border-border dark:border-dark-border select-none'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
@@ -200,12 +263,8 @@
           class="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
         >
           @if (userStore.avatarUrl()) {
-            <img
-              [src]="userStore.avatarUrl()!"
-              [alt]="userStore.displayName() ?? ''"
-              class="w-5 h-5 rounded-full object-cover shrink-0"
-              referrerpolicy="no-referrer"
-            />
+            <img [src]="userStore.avatarUrl()!" [alt]="userStore.displayName() ?? ''"
+              class="w-5 h-5 rounded-full object-cover shrink-0" referrerpolicy="no-referrer" />
           } @else {
             <span class="w-5 h-5 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0 text-[9px] font-mono text-accent select-none leading-none">
               {{ userStore.user()?.firstName?.[0] }}{{ userStore.user()?.lastName?.[0] }}
@@ -214,15 +273,14 @@
           <span class="hidden sm:inline">{{ userStore.displayName() }}</span>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-            class="w-2.5 h-2.5 transition-transform hidden sm:block"
-            [class.rotate-180]="userMenuOpen()">
+            class="w-2.5 h-2.5 transition-transform hidden sm:block" [class.rotate-180]="userMenuOpen()">
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
 
         @if (userMenuOpen()) {
-          <div class="absolute right-0 top-full mt-1 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-40">
-            <!-- Cabecera con nombre completo -->
+          <div class="absolute right-0 top-full mt-1 z-50 min-w-40 py-0.5 rounded border border-border dark:border-dark-border shadow-xl"
+               [style.background-color]="theme.isDark ? 'var(--color-dark-surface)' : 'var(--color-paper)'">
             <div class="px-3 py-2 border-b border-border dark:border-dark-border">
               <p class="text-[11px] font-mono text-ink dark:text-dark-ink truncate">{{ userStore.displayName() }}</p>
               <p class="text-[10px] font-mono text-muted dark:text-dark-muted truncate">{{ userStore.user()?.email }}</p>
@@ -260,15 +318,12 @@
       </div>
 
     } @else {
-      <!-- Cuota anónima -->
       @if (userStore.quota()?.remaining !== null && userStore.quota()?.remaining !== undefined) {
         <span
           [title]="'nav.quotaTitle' | transloco"
-          [class]="
-            userStore.quota()!.remaining! <= 0
-              ? 'flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono bg-red-50 dark:bg-red-950/30 text-red-500 border border-red-200 dark:border-red-800 select-none'
-              : 'flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted border border-border dark:border-dark-border select-none'
-          "
+          [class]="userStore.quota()!.remaining! <= 0
+            ? 'flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono bg-red-50 dark:bg-red-950/30 text-red-500 border border-red-200 dark:border-red-800 select-none'
+            : 'flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono bg-paper2 dark:bg-dark-surface text-muted dark:text-dark-muted border border-border dark:border-dark-border select-none'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
@@ -303,7 +358,6 @@
         [title]="'nav.settings' | transloco"
         class="flex items-center gap-1 p-2 rounded text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer"
       >
-        <!-- Sliders icon -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
           class="w-4 h-4">
@@ -316,26 +370,22 @@
         </svg>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-          class="w-2.5 h-2.5 transition-transform"
-          [class.rotate-180]="settingsMenuOpen()">
+          class="w-2.5 h-2.5 transition-transform" [class.rotate-180]="settingsMenuOpen()">
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
 
       @if (settingsMenuOpen()) {
-        <div class="absolute right-0 top-full mt-1 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg shadow-md z-50 min-w-44">
-
-          <!-- Idioma -->
+        <div class="absolute right-0 top-full mt-1 z-50 min-w-44 py-1 rounded border border-border dark:border-dark-border shadow-xl"
+             [style.background-color]="theme.isDark ? 'var(--color-dark-surface)' : 'var(--color-paper)'">
           <p class="px-3 pt-1 pb-0.5 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'nav.settingsLang' | transloco }}</p>
           @for (l of languages; track l.code) {
             <button
               type="button"
               (click)="switchToLang(l.code)"
-              [class]="
-                l.code === lang()
-                  ? 'flex items-center gap-2.5 w-full px-3 py-1.5 text-[11px] font-mono text-accent bg-accent/5 cursor-pointer'
-                  : 'flex items-center gap-2.5 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'
-              "
+              [class]="l.code === lang()
+                ? 'flex items-center gap-2.5 w-full px-3 py-1.5 text-[11px] font-mono text-accent bg-accent/5 cursor-pointer'
+                : 'flex items-center gap-2.5 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors cursor-pointer'"
             >
               <span class="w-6 uppercase tracking-wider shrink-0">{{ l.code }}</span>
               <span class="normal-case">{{ l.label }}</span>
@@ -350,7 +400,6 @@
 
           <div class="mx-3 my-1 border-t border-border dark:border-dark-border"></div>
 
-          <!-- Paleta -->
           <p class="px-3 pb-0.5 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'nav.settingsPalette' | transloco }}</p>
           <button
             type="button"
@@ -367,7 +416,6 @@
 
           <div class="mx-3 my-1 border-t border-border dark:border-dark-border"></div>
 
-          <!-- Tema claro/oscuro -->
           <p class="px-3 pb-0.5 text-[9px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">{{ 'nav.settingsTheme' | transloco }}</p>
           <button
             type="button"
@@ -397,9 +445,7 @@
 </nav>
 
 @if (betaBannerVisible()) {
-  <div
-    class="w-full bg-accent/8 border-b border-accent/25 px-4 py-2 flex items-center justify-center gap-3"
-  >
+  <div class="w-full bg-accent/8 border-b border-accent/25 px-4 py-2 flex items-center justify-center gap-3">
     <span class="text-xs font-body text-accent">
       {{ 'nav.betaBanner.message' | transloco }}
     </span>
@@ -409,16 +455,8 @@
       [attr.aria-label]="'nav.betaBanner.dismiss' | transloco"
       class="ml-auto shrink-0 p-1 rounded text-accent/60 hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="w-3.5 h-3.5"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18" />
         <line x1="6" y1="6" x2="18" y2="18" />
       </svg>

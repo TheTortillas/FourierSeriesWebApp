@@ -9,7 +9,10 @@ export type CalculationType =
   | "fourier_integral"
   | "laplace_direct"
   | "laplace_inverse"
-  | "laplace_ode";
+  | "laplace_ode"
+  | "ode_general"
+  | "ode_ivp"
+  | "ode_bvp";
 
 /**
  * Representa un evento de cálculo tal como lo ve el dominio.

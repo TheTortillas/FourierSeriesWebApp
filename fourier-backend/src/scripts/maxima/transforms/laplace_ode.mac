@@ -1,47 +1,118 @@
 /* laplace_ode.mac
-   Solves an ODE using Laplace transforms via desolve + atvalue.
+   Solves an ODE using the Laplace transform method.
+   Strategy:
+     1. Substitute u() → hside() so Maxima knows it's the Heaviside step.
+     2. Take the Laplace transform of both sides (including IC contributions).
+     3. Solve for Y(s) algebraically.
+     4. Invert with pwilt() which handles hside/delta shifts correctly.
+   Falls back to desolve+atvalue for equations where the manual pipeline fails.
+
    Injected variables:
-     ODE_INPUT    — the ODE as a Maxima equation string, e.g. diff(y(t),t,2)+y(t)=sin(t)
-     UNKNOWN_FN   — the unknown function, e.g. y(t)
-     INTVAR       — time variable (t)
-     IC_INPUT     — list of [order, value] pairs for initial conditions
+     ODE_INPUT  — ODE as Maxima equation, e.g. diff(y(t),t,2)+y(t)=delta(t)
+     UNKNOWN_FN — unknown function, e.g. y(t)
+     INTVAR     — time variable (t)
+     IC_INPUT   — list of [order, value] pairs for initial conditions
 */
 display2d: false$
 %iargs:    false$
 radexpand: false$
 
-/* Declare initial conditions via atvalue */
-for _ic in IC_INPUT do block([_ord, _val, _deriv],
-  _ord: _ic[1],
-  _val: _ic[2],
-  _deriv: if _ord = 0 then UNKNOWN_FN
-          else apply('diff, [UNKNOWN_FN, INTVAR, _ord]),
-  errcatch(atvalue(_deriv, INTVAR = 0, _val))
+/* ── 1. Normalise u() → unit_step() (known to laplace()), delta stays ──── */
+ODE_INPUT: subst('u = 'unit_step, ODE_INPUT)$
+
+/* ── 2. Extract function name and order ─────────────────────────────────── */
+_fn:    UNKNOWN_FN$              /* e.g. y(t)          */
+_tvar:  INTVAR$                  /* e.g. t             */
+_s:     gensym("s")$             /* fresh Laplace variable */
+
+/* Determine ODE order from IC_INPUT (highest order given) */
+_order: 0$
+for _ic in IC_INPUT do
+  if _ic[1] > _order then _order: _ic[1]$
+/* Also scan the ODE itself for the highest diff order */
+block([_lhs],
+  _lhs: lhs(ODE_INPUT),
+  for _k: 1 thru 5 do
+    if not freeof(apply('diff,[_fn,_tvar,_k]), _lhs) then _order: max(_order, _k)
 )$
 
+/* Build IC lookup: order → value (default 0) */
+_ic_val: makelist(0, _k, 0, _order)$
+for _ic in IC_INPUT do
+  _ic_val[_ic[1]+1]: _ic[2]$
+
+/* ── 3. Take Laplace transform of both sides ────────────────────────────── */
+_lhs_expr: lhs(ODE_INPUT)$
+_rhs_expr: rhs(ODE_INPUT)$
+
+/* Replace diff(y(t),t,k) → s^k*Y - Σ s^(k-1-j)*y^(j)(0) */
+_Y: gensym("Y")$
+_lhs_s: _lhs_expr$
+
+/* Substitute each derivative from highest to lowest to avoid partial matches */
+for _k: _order step -1 thru 1 do block([_diff_k, _ic_terms, _j],
+  _diff_k: apply('diff, [_fn, _tvar, _k]),
+  _ic_terms: sum(_s^(_k-1-_j) * _ic_val[_j+1], _j, 0, _k-1),
+  _lhs_s: subst(_diff_k = _s^_k * _Y - _ic_terms, _lhs_s)
+)$
+_lhs_s: subst(_fn = _Y, _lhs_s)$
+
+/* Laplace of RHS: use laplace() for smooth terms, known rule for delta/hside */
+_rhs_s: errcatch(laplace(_rhs_expr, _tvar, _s))$
+_rhs_s: if _rhs_s = [] then false else first(_rhs_s)$
+
+/* ── 4. Solve Y(s) and invert ───────────────────────────────────────────── */
 sol_raw: false$
-block([_r],
-  _r: errcatch(desolve(ODE_INPUT, UNKNOWN_FN)),
+
+if _rhs_s # false and not member('laplace, listofops(_rhs_s)) then block(
+  [_Ysol, _sol],
+  _Ysol: errcatch(solve(_lhs_s = _rhs_s, _Y)),
+  if _Ysol # [] and _Ysol # [[]] then block(
+    [_Yexpr],
+    _Yexpr: rhs(first(first(_Ysol))),
+    /* Invert using pwilt (handles hside shifts, delta shifts) */
+    _sol: errcatch(pwilt(_Yexpr, _s, _tvar)),
+    if _sol # [] and first(_sol) # false then block(
+      [_v],
+      _v: first(_sol),
+      sol_raw: ratsimp(_v)
+    )
+  )
+)$
+
+/* ── 5. Fallback: desolve + atvalue ─────────────────────────────────────── */
+if sol_raw = false then block(
+  [_ode2, _r],
+  /* Re-apply atvalue for desolve */
+  for _ic in IC_INPUT do block([_ord, _val, _deriv],
+    _ord: _ic[1],
+    _val: _ic[2],
+    _deriv: if _ord = 0 then _fn
+            else apply('diff, [_fn, _tvar, _ord]),
+    errcatch(atvalue(_deriv, _tvar = 0, _val))
+  ),
+  _r: errcatch(desolve(ODE_INPUT, _fn)),
   if _r # [] then block([_v],
     _v: first(_r),
-    /* desolve returns an equation like y(t) = ..., extract rhs */
     if listp(_v) then _v: first(_v),
     if not atom(_v) and op(_v) = "=" then _v: rhs(_v),
-    sol_raw: ratsimp(_v)
+    /* Only accept if desolve produced a closed form (no leftover ilt/laplace) */
+    if freeof('ilt, 'laplace, _v) then
+      sol_raw: ratsimp(_v)
   )
 )$
 
 exists: is(sol_raw # false)$
 
-/* Extract free parameters (symbols other than INTVAR and UNKNOWN_FN's variable) */
-free_params: []$
-if exists then block([_vars, _reserved],
-  _vars: listofvars(sol_raw),
-  _reserved: [INTVAR],
-  free_params: sublist(_vars, lambda([_v], not member(_v, _reserved)))
+/* ── 6. Normalise step function names → u (for display) ────────────────── */
+if exists then block(
+  sol_raw: subst('hstep     = 'u, sol_raw),
+  sol_raw: subst('unit_step = 'u, sol_raw),
+  sol_raw: subst('hside     = 'u, sol_raw)
 )$
 
+/* ── 7. Output ──────────────────────────────────────────────────────────── */
 print("__EXISTS__")$     print(string(exists))$
 print("__SOL_MAXIMA__")$ print(string(sol_raw))$
 print("__SOL_TEX__")$    if exists then tex(sol_raw) else print("")$
-print("__PARAMS__")$     print(string(free_params))$
+print("__PARAMS__")$     print("[]")$

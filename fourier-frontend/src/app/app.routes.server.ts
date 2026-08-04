@@ -30,6 +30,31 @@ export const serverRoutes: ServerRoute[] = [
     getPrerenderParams: langParams,
   },
   {
+    path: ':lang/fourier-integral',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: langParams,
+  },
+  {
+    path: ':lang/laplace',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: langParams,
+  },
+  {
+    path: ':lang/ode',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: langParams,
+  },
+  {
+    path: ':lang/grapher',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: langParams,
+  },
+  {
+    path: ':lang/about',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: langParams,
+  },
+  {
     path: ':lang',
     renderMode: RenderMode.Prerender,
     getPrerenderParams: langParams,
