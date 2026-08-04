@@ -529,6 +529,21 @@ export interface OdeInput {
   y2?: string;           // y(x2)
 }
 
+/** Canonical shape stored in history for ode_general / ode_ivp / ode_bvp. */
+export interface OdeHistoryInput {
+  equation: string;
+  equationTex: string;
+  unknown: string;        // e.g. "y"
+  ivar: string;           // e.g. "x" | "t"
+  mode: OdeMode;
+  // IVP
+  x0?: string;
+  x0Tex?: string;
+  initialConditions?: Array<{ order: number; value: string; valueTex: string }>;
+  // BVP
+  boundaryConditions?: Array<{ x: string; xTex: string; value: string; valueTex: string }>;
+}
+
 export interface OdeResult {
   input: OdeInput;
   exists: boolean;

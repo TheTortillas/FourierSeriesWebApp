@@ -19,6 +19,7 @@ import type {
   LaplaceOdeInput,
   OdeInput,
   OdeMode,
+  OdeHistoryInput,
 } from "../../domain/types/fourier.types";
 import {
   sanitizeConvention,
@@ -807,7 +808,7 @@ transformsRouter.post(
   "/ode/solve",
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const body = req.body as OdeInput;
+      const body = req.body as OdeInput & Record<string, string | undefined>;
 
       if (typeof body.equation !== "string" || !body.equation.trim()) {
         res.status(400).json({ error: "equation required" }); return;
@@ -848,11 +849,43 @@ transformsRouter.post(
         const historyType =
           input.mode === "ivp" ? "ode_ivp" :
           input.mode === "bvp" ? "ode_bvp" : "ode_general";
+
+        const str  = (v: unknown) => (typeof v === "string" ? v : "");
+        const tex  = (v: unknown, fallback: string) => str(v) || fallback;
+
+        const historyInput: OdeHistoryInput = {
+          equation:    input.equation,
+          equationTex: tex(body.equationTex, input.equation),
+          unknown:     input.unknown,
+          ivar:        input.ivar,
+          mode:        input.mode,
+        };
+
+        if (input.mode === "ivp") {
+          historyInput.x0    = str(body.x0);
+          historyInput.x0Tex = tex(body.x0Tex, str(body.x0));
+          const ics: OdeHistoryInput["initialConditions"] = [
+            { order: 0, value: str(body.y0),   valueTex: tex(body.y0Tex,   str(body.y0))   },
+            { order: 1, value: str(body.dy0),  valueTex: tex(body.dy0Tex,  str(body.dy0))  },
+          ];
+          if (body.ddy0 !== undefined && body.ddy0 !== "0") {
+            ics.push({ order: 2, value: str(body.ddy0), valueTex: tex(body.ddy0Tex, str(body.ddy0)) });
+          }
+          historyInput.initialConditions = ics;
+        }
+
+        if (input.mode === "bvp") {
+          historyInput.boundaryConditions = [
+            { x: str(body.x1), xTex: tex(body.x1Tex, str(body.x1)), value: str(body.y1), valueTex: tex(body.y1Tex, str(body.y1)) },
+            { x: str(body.x2), xTex: tex(body.x2Tex, str(body.x2)), value: str(body.y2), valueTex: tex(body.y2Tex, str(body.y2)) },
+          ];
+        }
+
         await historyRepository.create({
           userId:      req.user?.id,
           ipAddress:   req.ip ?? undefined,
           type:        historyType,
-          input:       input as unknown as Record<string, unknown>,
+          input:       historyInput as unknown as Record<string, unknown>,
           executionMs: result.executionTimeMs,
         });
       }
