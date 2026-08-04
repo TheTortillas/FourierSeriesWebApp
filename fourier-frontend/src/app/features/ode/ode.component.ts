@@ -4,6 +4,7 @@ import {
   DestroyRef,
   ElementRef,
   OnInit,
+  PLATFORM_ID,
   ViewChild,
   effect,
   inject,
@@ -17,6 +18,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, forkJoin, of, Subject, switchMap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
 
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
@@ -186,6 +188,14 @@ const ODE_EXAMPLES: OdeExample[] = [
     labelKey: 'ode.exLap3rd', eqTex: "y'''-6y''+11y'-6y=0", fn: 'y', ivar: 't', mode: 'laplace',
     ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }, { order: 2, value: '0', valueTex: '0' }],
   },
+  {
+    labelKey: 'ode.exLap3rdForce', eqTex: "y'''+y''=e^{t}", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }, { order: 2, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLap3rdRepeat', eqTex: "y'''-3y''+3y'-y=0", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }, { order: 2, value: '0', valueTex: '0' }],
+  },
   // ── Laplace (desolve) — δ y u ──
   {
     labelKey: 'ode.exLapDirac1', eqTex: "y''+2y'+y=\\delta\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
@@ -241,6 +251,7 @@ const ODE_EXAMPLES: OdeExample[] = [
   ],
 })
 export class OdeComponent implements OnInit, AfterViewChecked {
+  private readonly isBrowser  = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly api        = inject(ApiService);
   private readonly seo        = inject(SeoService);
   private readonly userStore  = inject(UserStore);
@@ -449,8 +460,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   );
 
   private readonly submit$ = new Subject<void>();
-  private _urlPopulated  = false;
+  private _urlPopulated    = false;
   private _restoredFromUrl = false;
+  private _loadingExample  = false;
 
   constructor() {
     // Re-parse equation whenever ivar changes
@@ -481,10 +493,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       }
     });
 
-    // Load first example when mode changes (unless coming from URL or result is active)
+    // Load first example when mode changes (unless coming from URL, result active, or triggered by loadExample itself)
     effect(() => {
       const m = this.mode();
-      if (this._restoredFromUrl || this.hasComputedResult()) return;
+      if (this._restoredFromUrl || this.hasComputedResult() || this._loadingExample) return;
       const first = ODE_EXAMPLES.find((e) => e.mode === m);
       if (first) this.loadExample(first.labelKey);
     });
@@ -563,10 +575,12 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             mode:        m as OdeMode,
             x0:    this.ivpX0(),
             x0Tex: this.ivpX0Tex(),
-            y0:    ics[0]?.value    ?? '0',
-            y0Tex: ics[0]?.valueTex ?? '0',
+            y0:     ics[0]?.value    ?? '0',
+            y0Tex:  ics[0]?.valueTex ?? '0',
             dy0:    ics[1]?.value    ?? '0',
             dy0Tex: ics[1]?.valueTex ?? '0',
+            ddy0:    ics[2]?.value    ?? '0',
+            ddy0Tex: ics[2]?.valueTex ?? '0',
             x1:    bvp[0]?.x        ?? '0',
             x1Tex: bvp[0]?.xTex     ?? '0',
             y1:    bvp[0]?.value     ?? '0',
@@ -617,6 +631,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   }
 
   ngAfterViewChecked(): void {
+    if (!this.isBrowser) return;
     if (this.mqEqRef && !this._eqMounted) {
       this._eqMounted = true;
       void this._mountEqField();
@@ -756,7 +771,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     const ex = ODE_EXAMPLES.find((e) => e.labelKey === labelKey);
     if (!ex) return;
 
+    this._loadingExample = true;
     this.mode.set(ex.mode);
+    this._loadingExample = false;
     this.fnName.set(ex.fn);
     this.ivarId.set(ex.ivar);
     this.eqTex.set(ex.eqTex);
@@ -985,7 +1002,16 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       if (typeof s['eqTex'] === 'string') this.eqTex.set(s['eqTex']);
       if (typeof s['eq']    === 'string') this.equation.set(s['eq']);
       if (typeof s['x0']    === 'string') { this.ivpX0.set(s['x0']); this.ivpX0Tex.set(typeof s['x0Tex'] === 'string' ? s['x0Tex'] : s['x0']); }
-      if (Array.isArray(s['ics'])) this.ivpIcs.set(s['ics'] as IvpCondition[]);
+      if (Array.isArray(s['ics'])) {
+        const ics = s['ics'] as IvpCondition[];
+        if (s['mode'] === 'laplace') {
+          this.laplaceIcs.set(ics);
+          this._laplaceIcInited = ics.map(() => false);
+          this.laplaceIcFields  = ics.map(() => null);
+        } else {
+          this.ivpIcs.set(ics);
+        }
+      }
       if (Array.isArray(s['bvp'])) this.bvpConds.set(s['bvp'] as BvpCondition[]);
     } catch { /* ignore */ }
   }

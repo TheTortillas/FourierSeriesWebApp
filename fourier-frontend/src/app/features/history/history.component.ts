@@ -203,10 +203,18 @@ export class HistoryComponent implements OnInit {
       return;
     }
 
-    if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse' || entry.type === 'laplace_ode') {
+    if (entry.type === 'laplace_direct' || entry.type === 'laplace_inverse') {
       const encoded = this._encodeLaplaceState(entry);
       if (encoded) {
         this.router.navigate(['/' + lang + '/laplace'], { queryParams: { s: encoded } });
+      }
+      return;
+    }
+
+    if (entry.type === 'laplace_ode') {
+      const encoded = this._encodeLaplaceOdeForOdeComponent(entry);
+      if (encoded) {
+        this.router.navigate(['/' + lang + '/ode'], { queryParams: { s: encoded } });
       }
       return;
     }
@@ -469,26 +477,71 @@ export class HistoryComponent implements OnInit {
     );
   }
 
+  private _encodeLaplaceOdeForOdeComponent(entry: HistoryEntry): string {
+    const inp = entry.input;
+    try {
+      const unk = (inp['unknown'] as string) ?? 'y(t)';
+      const fnName = unk.replace(/\(.*\)$/, '') || 'y';
+      const timeVar = (inp['timeVar'] as string) ?? 't';
+      const rawIcs = inp['initialConditions'] as Array<{ order: number; value: string | number; valueTex?: string }> ?? [];
+      const ics = rawIcs.map((ic) => ({
+        order:    ic.order,
+        value:    String(ic.value),
+        valueTex: ic.valueTex ? String(ic.valueTex) : String(ic.value),
+      }));
+      const state: Record<string, unknown> = {
+        mode:  'laplace',
+        ivar:  timeVar,
+        fn:    fnName,
+        eq:    (inp['equation']    as string) ?? '',
+        eqTex: (inp['equationTex'] as string) ?? '',
+        ics,
+      };
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    } catch { return ''; }
+  }
+
   private _encodeOdeState(entry: HistoryEntry): string {
     const inp = entry.input;
     try {
       const mode = entry.type === 'ode_ivp' ? 'ivp' : entry.type === 'ode_bvp' ? 'bvp' : 'general';
+      const s = (v: unknown, fb = '') => (typeof v === 'string' && v ? v : fb);
+
+      // New format: initialConditions / boundaryConditions arrays
+      // Fallback to old flat fields for legacy history entries
+      const newIcs = Array.isArray(inp['initialConditions'])
+        ? (inp['initialConditions'] as Array<{ order: number; value: string; valueTex: string }>)
+        : null;
+      const newBvp = Array.isArray(inp['boundaryConditions'])
+        ? (inp['boundaryConditions'] as Array<{ x: string; xTex: string; value: string; valueTex: string }>)
+        : null;
+
+      const ics = mode === 'ivp' ? (newIcs
+        ? newIcs.map(ic => ({ order: ic.order, value: s(ic.value, '0'), valueTex: s(ic.valueTex, s(ic.value, '0')) }))
+        : [
+            { order: 0, value: s(inp['y0'],  '0'), valueTex: s(inp['y0Tex'],  s(inp['y0'],  '0')) },
+            { order: 1, value: s(inp['dy0'], '0'), valueTex: s(inp['dy0Tex'], s(inp['dy0'], '0')) },
+          ]
+      ) : [];
+
+      const bvp = mode === 'bvp' ? (newBvp
+        ? newBvp.map(bc => ({ x: s(bc.x, '0'), xTex: s(bc.xTex, s(bc.x, '0')), value: s(bc.value, '0'), valueTex: s(bc.valueTex, s(bc.value, '0')) }))
+        : [
+            { x: s(inp['x1'], '0'), xTex: s(inp['x1Tex'], s(inp['x1'], '0')), value: s(inp['y1'], '0'), valueTex: s(inp['y1Tex'], s(inp['y1'], '0')) },
+            { x: s(inp['x2'], '1'), xTex: s(inp['x2Tex'], s(inp['x2'], '1')), value: s(inp['y2'], '0'), valueTex: s(inp['y2Tex'], s(inp['y2'], '0')) },
+          ]
+      ) : [];
+
       const state: Record<string, unknown> = {
         mode,
-        ivar:  (inp['ivar']  as string) ?? 'x',
-        fn:    (inp['unknown'] as string) ?? 'y',
-        eq:    (inp['equation'] as string) ?? '',
-        eqTex: (inp['equationTex'] as string) ?? '',
-        x0:    (inp['x0']    as string) ?? '0',
-        x0Tex: (inp['x0Tex'] as string) ?? (inp['x0'] as string) ?? '0',
-        ics: mode === 'ivp' ? [
-          { value: (inp['y0']   as string) ?? '0', valueTex: (inp['y0Tex']  as string) ?? (inp['y0']  as string) ?? '0' },
-          { value: (inp['dy0']  as string) ?? '0', valueTex: (inp['dy0Tex'] as string) ?? (inp['dy0'] as string) ?? '0' },
-        ] : [],
-        bvp: mode === 'bvp' ? [
-          { x: (inp['x1'] as string) ?? '0', xTex: (inp['x1Tex'] as string) ?? (inp['x1'] as string) ?? '0', value: (inp['y1'] as string) ?? '0', valueTex: (inp['y1Tex'] as string) ?? (inp['y1'] as string) ?? '0' },
-          { x: (inp['x2'] as string) ?? '1', xTex: (inp['x2Tex'] as string) ?? (inp['x2'] as string) ?? '1', value: (inp['y2'] as string) ?? '0', valueTex: (inp['y2Tex'] as string) ?? (inp['y2'] as string) ?? '0' },
-        ] : [],
+        ivar:  s(inp['ivar'],  'x'),
+        fn:    s(inp['unknown'], 'y'),
+        eq:    s(inp['equation']),
+        eqTex: s(inp['equationTex']),
+        x0:    s(inp['x0'],    '0'),
+        x0Tex: s(inp['x0Tex'], s(inp['x0'], '0')),
+        ics,
+        bvp,
       };
       return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
     } catch { return ''; }

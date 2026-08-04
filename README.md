@@ -7,7 +7,7 @@ A full-stack web application for symbolic computation, visualization, and intera
 ---
 
 <p>
-  <img src="https://img.shields.io/badge/version-v14.0-brightgreen" alt="Version">
+  <img src="https://img.shields.io/badge/version-v15.0-brightgreen" alt="Version">
   <img src="https://img.shields.io/badge/license-Non--Commercial-orange" alt="License">
   <img src="https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa&logoColor=white" alt="PWA">
   <a href="https://deepwiki.com/TheTortillas/FourierSeriesWebApp"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
@@ -58,6 +58,11 @@ A full-stack web application for symbolic computation, visualization, and intera
   - Free parameters (assumes positivity for symbolic `ilt()`)
   - Partial fraction decomposition
   - Client-side LaTeX → Maxima conversion for inverse mode
+- ODE Solver (independent module) — solves 1st, 2nd and 3rd order ODEs via `ode2()` and characteristic polynomial method
+  - General solution, IVP (initial value problem) and BVP (boundary value problem) sub-modes
+  - Laplace sub-tab: wraps the Laplace ODE solver with the same UI
+  - 3rd order constant-coefficient ODEs via characteristic polynomial + `multiplicities` for repeated roots
+  - Free parameter sliders (`%k1`, `%k2`, `%k3`) and result canvas
 - Discrete Fourier Transform (DFT/FFT) — from points, from function samples, or from function definition
 - Expression parsing (LaTeX → Maxima), simplification, and integrability checks
 
@@ -166,6 +171,7 @@ Fourier-Web-Calculator/
 │   │   │   │   ├── home/
 │   │   │   │   ├── calculator/     # Fourier series (trigonometric, complex, half-range, Parseval)
 │   │   │   │   ├── transforms/     # Continuous FT, Fourier Integral, DFT, Laplace
+│   │   │   │   ├── ode/            # ODE solver (general / IVP / BVP / Laplace tab)
 │   │   │   │   ├── grapher/        # Interactive function grapher
 │   │   │   │   ├── history/        # Calculation history, favorites, type filter
 │   │   │   │   ├── profile/        # User profile
@@ -368,7 +374,7 @@ All routes are prefixed with `/api`.
 | -------------- | ----------------- | ------------------------------------------------------------------------------------------------ |
 | Auth           | `/api/auth`       | Register, login, Google OAuth, token refresh, email verification, password reset, profile, quota |
 | Fourier series | `/api/fourier`    | Trigonometric, complex, half-range — coefficients, first-N terms, Parseval                       |
-| Transforms     | `/api/transforms` | Continuous Fourier Transform, Inverse FT, Fourier Integral, DFT (points / samples / function), Laplace (direct, inverse, ODE) |
+| Transforms     | `/api/transforms` | Continuous Fourier Transform, Inverse FT, Fourier Integral, DFT (points / samples / function), Laplace (direct, inverse, ODE), ODE solver (general / IVP / BVP) |
 | Parse          | `/api/parse`      | LaTeX → Maxima expression parsing                                                                |
 | Simplify       | `/api/simplify`   | Symbolic simplification                                                                          |
 | History        | `/api/history`    | CRUD for calculation history, favorites and type filter (auth required)                          |
@@ -404,7 +410,7 @@ Full interactive documentation: `http://localhost:3000/api-docs`
 
 | Branch                | Purpose                                                                   |
 | --------------------- | ------------------------------------------------------------------------- |
-| `main`                | Production-ready code. Tagged releases (`v13.0`, `v14.0`, …)             |
+| `main`                | Production-ready code. Tagged releases (`v13.0`, `v14.0`, `v15.0`, …)   |
 | `develop`             | Integration branch — all feature branches merge here first                |
 | `feat/theory-section` | Long-running branch for theory content and documentation pages            |
 | `archive/v0-legacy`   | Snapshot of the original v0 app (Angular 18 + plain JS backend, no auth) |

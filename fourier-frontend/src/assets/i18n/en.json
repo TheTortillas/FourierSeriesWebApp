@@ -837,6 +837,7 @@
       "groupContinuous": "Continuous transform",
       "groupDft": "Discrete Transform (DFT)",
       "groupLaplace": "Laplace Transform",
+      "groupOde": "Differential Equations (ODE)",
       "groupTools": "Tools",
       "features": {
         "trigonometric": "Trigonometric series",
@@ -851,6 +852,9 @@
         "laplace_direct": "Direct Laplace Transform",
         "laplace_inverse": "Inverse Laplace Transform",
         "laplace_ode": "ODE solving with Laplace",
+        "ode_general": "ODE — general solution",
+        "ode_ivp": "ODE — initial value problem (IVP)",
+        "ode_bvp": "ODE — boundary value problem (BVP)",
         "grapher": "Function grapher",
         "none": "None yet"
       },
@@ -1338,6 +1342,8 @@
     "exLapDirac2": "Shifted impulse: y'' + 4y = δ(t − π)",
     "exLapStep1": "Shifted step: y'' + y = u(t − π)",
     "exLapStep2": "Rectangular pulse: y' + y = u(t) − u(t − 2)",
-    "exLapImpulse": "Impulse response (ICs ≠ 0): y'' + 2y' + 5y = δ(t)"
+    "exLapImpulse": "Impulse response (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
+    "exLap3rdForce": "3rd order — exponential forcing: y'''+ y'' = eᵗ",
+    "exLap3rdRepeat": "3rd order — triple root: y'''- 3y'' + 3y' - y = 0"
   }
 }
