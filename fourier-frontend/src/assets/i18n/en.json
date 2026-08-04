@@ -32,9 +32,11 @@
     "grapherBanner": "Want to plot this function? → Open Grapher"
   },
   "nav": {
+    "tools": "Tools",
     "fourierAnalysis": "Fourier Analysis",
     "series": "Fourier Series",
-    "transforms": "Transforms",
+    "transforms": "Continuous Transform",
+    "dft": "DFT / FFT",
     "fourierIntegral": "Fourier Integral",
     "laplace": "Laplace Transform",
     "ode": "ODE Solver",
@@ -97,32 +99,59 @@
     }
   },
   "home": {
-    "subtitle": "Compute and plot Fourier series, Fourier and Laplace transforms, and Fourier integrals. Solve ODEs with Laplace. Exact symbolic results with real-time graphical reconstruction.",
+    "subtitle": "Engineering mathematics suite: Fourier analysis, Laplace transform, differential equations and graphing. Exact symbolic results with interactive visualization.",
     "learnMore": "Learn more about the tool →",
     "toolsTitle": "Tools",
     "analysisTitle": "Fourier Analysis",
     "fourierTitle": "Fourier Analysis",
     "comingSoonTitle": "Coming soon",
     "comingSoon": "Coming soon",
+    "scrollHint": "Explore",
+    "fourierSectionTitle": "Fourier Analysis",
+    "fourierSectionDesc": "Decompose signals into their constituent frequencies. Series, continuous transforms, integrals and DFT/FFT with real-time visualization.",
+    "laplaceSectionTitle": "Laplace Transform",
+    "laplaceSectionDesc": "Essential tool for circuit analysis, control systems and signals. Direct and inverse transform, plus ODE solving with initial conditions.",
+    "odeSectionTitle": "Differential Equations",
+    "odeSectionDesc": "Symbolically solve ordinary differential equations: general solution with free constants, initial value problems (IVP) and boundary value problems (BVP).",
+    "grapherSectionTitle": "Grapher",
+    "grapherSectionDesc": "Visualize mathematical functions interactively with support for multiple simultaneous expressions.",
     "series": {
       "title": "Fourier Series",
+      "shortDesc": "Trigonometric, complex and half-range. Symbolic coefficients, Parseval and animated graph.",
       "description": "Periodic decomposition of piecewise functions into trigonometric, complex and half-range series, with symbolic coefficients and Parseval."
     },
     "integral": {
       "title": "Fourier Integral",
+      "shortDesc": "Representation of non-periodic functions. Trigonometric, cosine, sine and complex forms with graphical reconstruction.",
       "description": "Integral representation of non-periodic functions in trigonometric, cosine, sine and complex forms, with graphical reconstruction."
     },
     "transforms": {
-      "title": "Fourier Transform",
-      "description": "Spectral analysis of non-periodic signals with continuous direct and inverse transform, real and imaginary parts and normalization conventions."
+      "title": "Continuous Transform",
+      "shortDesc": "Direct and inverse. Three normalization conventions and configurable variable pairs.",
+      "description": "Direct and inverse transform with multiple normalization conventions (engineering, physics, ordinary) and configurable variable pairs."
+    },
+    "dft": {
+      "title": "DFT / FFT",
+      "shortDesc": "Discrete transform on sequences or sampled functions. Amplitude and phase spectrum, epicycle visualization.",
+      "description": "Discrete Fourier transform on numerical sequences or sampled functions. Amplitude and phase spectrum, and epicycle visualization."
     },
     "laplace": {
       "title": "Laplace Transform",
-      "description": "Direct and inverse transform and ODE solving. Supports free parameters, partial fractions and graphing."
+      "shortDesc": "Direct and inverse transform with automatic partial fractions. Supports δ(t) and u(t).",
+      "description": "Direct and inverse transform with automatic partial fractions. Supports δ(t) and u(t).",
+      "features": ["Direct & inverse symbolic", "Automatic partial fractions", "Supports δ(t) and u(t)", "LaTeX output"]
+    },
+    "ode": {
+      "title": "ODE Calculator",
+      "shortDesc": "General solution, IVP and BVP up to 3rd order. Includes Laplace mode for δ(t) and u(t) forcing. Symbolic CAS engine with graph.",
+      "description": "General solution (C₁, C₂), IVP and BVP up to 3rd order. Includes Laplace mode for δ(t) and u(t) forcing. Symbolic CAS engine with interactive graph.",
+      "features": ["General · IVP · BVP", "Up to 3rd order", "Laplace mode for δ(t) and u(t)", "Interactive solution graph"]
     },
     "grapher": {
       "title": "Grapher",
-      "description": "Plot mathematical functions interactively. Supports multiple expressions, colors and zoom."
+      "shortDesc": "Multiple simultaneous functions with special functions (erf, Γ, Si, Ci…), zoom and per-expression colors.",
+      "description": "Plot multiple functions simultaneously with support for special functions (erf, Γ, Si, Ci…), zoom and per-expression colors.",
+      "features": ["Multiple simultaneous expressions", "Special functions (erf, Γ, Si…)", "Roots and intersections", "Zoom and per-curve colors"]
     }
   },
   "calculator": {

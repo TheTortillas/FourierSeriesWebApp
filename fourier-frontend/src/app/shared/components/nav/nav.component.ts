@@ -53,8 +53,8 @@ export class NavComponent {
   /** Controls the language dropdown visibility. */
   readonly langMenuOpen = signal(false);
 
-  /** Controls the Fourier analysis dropdown visibility. */
-  readonly fourierMenuOpen = signal(false);
+  /** Controls the tools dropdown visibility. */
+  readonly toolsMenuOpen = signal(false);
 
   /** Controls the community/meta dropdown (feedback + survey). */
   readonly moreMenuOpen = signal(false);
@@ -79,14 +79,13 @@ export class NavComponent {
     { requireSync: true },
   );
 
-  /** True when the active route belongs to the Fourier analysis section. */
-  readonly isAnalysisActive = computed(() => {
+  /** True when the active route belongs to any tool. */
+  readonly isToolActive = computed(() => {
     const url = this.currentUrl();
     return url.includes('/calculator') || url.includes('/transforms') ||
-           url.includes('/fourier-integral') || url.includes('/laplace') || url.includes('/ode');
+           url.includes('/fourier-integral') || url.includes('/laplace') ||
+           url.includes('/ode') || url.includes('/grapher');
   });
-
-  readonly isGrapherActive = computed(() => this.currentUrl().includes('/grapher'));
 
   switchToLang(code: string): void {
     this.langMenuOpen.set(false);
@@ -104,10 +103,10 @@ export class NavComponent {
     }
   }
 
-  onFourierMenuFocusOut(e: FocusEvent): void {
+  onToolsMenuFocusOut(e: FocusEvent): void {
     const wrapper = e.currentTarget as HTMLElement;
     if (!e.relatedTarget || !wrapper.contains(e.relatedTarget as Node)) {
-      this.fourierMenuOpen.set(false);
+      this.toolsMenuOpen.set(false);
     }
   }
 

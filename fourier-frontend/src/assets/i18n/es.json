@@ -32,12 +32,15 @@
     "grapherBanner": "¿Quieres graficar esta función? → Abrir Graficador"
   },
   "nav": {
+    "tools": "Herramientas",
     "fourierAnalysis": "Análisis de Fourier",
     "series": "Series de Fourier",
-    "transforms": "Transformadas",
+    "transforms": "Transformada continua",
+    "dft": "DFT / FFT",
     "fourierIntegral": "Integral de Fourier",
     "laplace": "Transformada de Laplace",
     "ode": "Calculadora de EDOs",
+    "grapher": "Graficador",
     "login": "Ingresar",
     "register": "Registrarse",
     "logout": "Salir",
@@ -63,8 +66,7 @@
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
-    },
-    "grapher": "Graficador"
+    }
   },
   "grapher": {
     "addExpression": "+ Agregar expresión",
@@ -97,32 +99,59 @@
     }
   },
   "home": {
-    "subtitle": "Calcula y grafica series de Fourier, transformadas de Fourier y Laplace, e integrales. Resuelve EDOs con Laplace. Resultados simbólicos exactos y reconstrucción gráfica en tiempo real.",
+    "subtitle": "Suite de matemáticas para ingeniería: análisis de Fourier, transformada de Laplace, ecuaciones diferenciales y graficación. Resultados simbólicos exactos con visualización interactiva.",
     "learnMore": "Conoce más sobre la herramienta →",
     "toolsTitle": "Herramientas",
     "analysisTitle": "Análisis de Fourier",
     "fourierTitle": "Análisis de Fourier",
     "comingSoonTitle": "Próximamente",
     "comingSoon": "Próximamente",
+    "scrollHint": "Explorar",
+    "fourierSectionTitle": "Análisis de Fourier",
+    "fourierSectionDesc": "Descompón señales en sus frecuencias constituyentes. Series, transformadas continuas, integrales y DFT/FFT con visualización en tiempo real.",
+    "laplaceSectionTitle": "Transformada de Laplace",
+    "laplaceSectionDesc": "Herramienta fundamental para análisis de circuitos, sistemas de control y señales. Transformada directa, inversa y resolución de EDOs con condiciones iniciales.",
+    "odeSectionTitle": "Ecuaciones Diferenciales",
+    "odeSectionDesc": "Resuelve EDOs ordinarias simbólicamente: solución general con constantes libres, problemas de valor inicial (PVI) y de frontera (BVP).",
+    "grapherSectionTitle": "Graficador",
+    "grapherSectionDesc": "Visualiza funciones matemáticas de forma interactiva con soporte de múltiples expresiones simultáneas.",
     "series": {
       "title": "Series de Fourier",
+      "shortDesc": "Trigonométrica, compleja y semirango. Coeficientes simbólicos, Parseval y gráfica animada.",
       "description": "Descomposición periódica de funciones en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos y Parseval."
     },
     "integral": {
       "title": "Integral de Fourier",
+      "shortDesc": "Representación de funciones no periódicas. Formas trigonométrica, coseno, seno y compleja con reconstrucción gráfica.",
       "description": "Representación integral de funciones no periódicas en sus formas trigonométrica, coseno, seno y compleja, con reconstrucción gráfica."
     },
     "transforms": {
-      "title": "Transformada de Fourier",
-      "description": "Análisis espectral de señales no periódicas con transformada continua directa e inversa, partes real e imaginaria y convenciones de normalización."
+      "title": "Transformada continua",
+      "shortDesc": "Directa e inversa. Tres convenciones de normalización y pares de variables configurables.",
+      "description": "Transformada directa e inversa con múltiples convenciones de normalización (ingeniería, física, ordinaria) y pares de variables configurables."
+    },
+    "dft": {
+      "title": "DFT / FFT",
+      "shortDesc": "Transformada discreta sobre secuencias o funciones muestreadas. Espectro de amplitudes, fases y epiciclos.",
+      "description": "Transformada discreta de Fourier sobre secuencias numéricas o funciones muestreadas. Espectro de amplitudes, fases y visualización por epiciclos."
     },
     "laplace": {
       "title": "Transformada de Laplace",
-      "description": "Transformada directa e inversa y resolución de EDOs. Con soporte de parámetros libres, fracciones parciales y graficación."
+      "shortDesc": "Transformada directa e inversa con fracciones parciales automáticas. Soporte de δ(t) y u(t).",
+      "description": "Transformada directa e inversa con fracciones parciales automáticas. Soporte de δ(t) y u(t).",
+      "features": ["Directa e inversa simbólica", "Fracciones parciales automáticas", "Soporte δ(t) y u(t)", "Resultados en LaTeX"]
+    },
+    "ode": {
+      "title": "Calculadora de EDOs",
+      "shortDesc": "Solución general, PVI y BVP hasta 3er orden. Incluye modo Laplace para forzamientos con δ(t) y u(t). Motor CAS simbólico con gráfica.",
+      "description": "Solución general (C₁, C₂), PVI y BVP hasta 3er orden. Incluye modo Laplace para forzamientos con δ(t) y u(t). Motor CAS simbólico con gráfica interactiva.",
+      "features": ["General · PVI · BVP", "Hasta 3er orden", "Modo Laplace para δ(t) y u(t)", "Gráfica interactiva de la solución"]
     },
     "grapher": {
       "title": "Graficador",
-      "description": "Grafica funciones matemáticas de forma interactiva. Soporta múltiples expresiones, colores y zoom."
+      "shortDesc": "Múltiples funciones simultáneas con funciones especiales (erf, Γ, Si, Ci…), zoom y colores por expresión.",
+      "description": "Grafica múltiples funciones simultáneamente con soporte de funciones especiales (erf, Γ, Si, Ci…), zoom y colores por expresión.",
+      "features": ["Múltiples expresiones simultáneas", "Funciones especiales (erf, Γ, Si…)", "Raíces e intersecciones", "Zoom y colores por curva"]
     }
   },
   "calculator": {
