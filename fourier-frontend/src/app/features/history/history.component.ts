@@ -483,11 +483,11 @@ export class HistoryComponent implements OnInit {
       const unk = (inp['unknown'] as string) ?? 'y(t)';
       const fnName = unk.replace(/\(.*\)$/, '') || 'y';
       const timeVar = (inp['timeVar'] as string) ?? 't';
-      const rawIcs = inp['initialConditions'] as Array<{ order: number; value: string | number }> ?? [];
+      const rawIcs = inp['initialConditions'] as Array<{ order: number; value: string | number; valueTex?: string }> ?? [];
       const ics = rawIcs.map((ic) => ({
         order:    ic.order,
         value:    String(ic.value),
-        valueTex: String(ic.value),
+        valueTex: ic.valueTex ? String(ic.valueTex) : String(ic.value),
       }));
       const state: Record<string, unknown> = {
         mode:  'laplace',

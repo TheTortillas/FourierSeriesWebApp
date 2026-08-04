@@ -4,6 +4,7 @@ import {
   DestroyRef,
   ElementRef,
   OnInit,
+  PLATFORM_ID,
   ViewChild,
   effect,
   inject,
@@ -17,6 +18,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, forkJoin, of, Subject, switchMap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
 
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
@@ -249,6 +251,7 @@ const ODE_EXAMPLES: OdeExample[] = [
   ],
 })
 export class OdeComponent implements OnInit, AfterViewChecked {
+  private readonly isBrowser  = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly api        = inject(ApiService);
   private readonly seo        = inject(SeoService);
   private readonly userStore  = inject(UserStore);
@@ -628,6 +631,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   }
 
   ngAfterViewChecked(): void {
+    if (!this.isBrowser) return;
     if (this.mqEqRef && !this._eqMounted) {
       this._eqMounted = true;
       void this._mountEqField();
