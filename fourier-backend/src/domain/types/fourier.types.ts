@@ -506,3 +506,50 @@ export interface LaplaceOdeResult {
   params?: string[];
   executionTimeMs: number;
 }
+
+// ── Standalone ODE solver (ode2 + ic1/ic2/bc2) ───────────────────────────────
+
+export type OdeMode = "general" | "ivp" | "bvp";
+
+export interface OdeInput {
+  equation: string;      // Maxima syntax, e.g. "'diff(y,x,2) + y = sin(x)"
+  equationTex?: string;
+  unknown: string;       // dependent variable letter, e.g. "y"
+  ivar: string;          // independent variable letter, e.g. "x" | "t"
+  mode: OdeMode;
+  // IVP fields (mode = "ivp")
+  x0?: string;           // initial point
+  y0?: string;           // y(x0)
+  dy0?: string;          // y'(x0) — required for 2nd+ order
+  ddy0?: string;         // y''(x0) — required for 3rd order
+  // BVP fields (mode = "bvp")
+  x1?: string;           // first boundary point
+  y1?: string;           // y(x1)
+  x2?: string;           // second boundary point
+  y2?: string;           // y(x2)
+}
+
+/** Canonical shape stored in history for ode_general / ode_ivp / ode_bvp. */
+export interface OdeHistoryInput {
+  equation: string;
+  equationTex: string;
+  unknown: string;        // e.g. "y"
+  ivar: string;           // e.g. "x" | "t"
+  mode: OdeMode;
+  // IVP
+  x0?: string;
+  x0Tex?: string;
+  initialConditions?: Array<{ order: number; value: string; valueTex: string }>;
+  // BVP
+  boundaryConditions?: Array<{ x: string; xTex: string; value: string; valueTex: string }>;
+}
+
+export interface OdeResult {
+  input: OdeInput;
+  exists: boolean;
+  solution?: SymbolicExpression; // y = f(x), may be implicit
+  params?: string[];             // free constants: %c, %k1, %k2
+  order?: number;                // 1, 2 or 3
+  method?: string;               // linear, separable, constcoeff, exact, …
+  executionTimeMs: number;
+}

@@ -32,11 +32,15 @@
     "grapherBanner": "¿Quieres graficar esta función? → Abrir Graficador"
   },
   "nav": {
+    "tools": "Herramientas",
     "fourierAnalysis": "Análisis de Fourier",
     "series": "Series de Fourier",
-    "transforms": "Transformadas",
+    "transforms": "Transformada continua",
+    "dft": "DFT / FFT",
     "fourierIntegral": "Integral de Fourier",
     "laplace": "Transformada de Laplace",
+    "ode": "Calculadora de EDOs",
+    "grapher": "Graficador",
     "login": "Ingresar",
     "register": "Registrarse",
     "logout": "Salir",
@@ -62,8 +66,7 @@
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
-    },
-    "grapher": "Graficador"
+    }
   },
   "grapher": {
     "addExpression": "+ Agregar expresión",
@@ -96,32 +99,74 @@
     }
   },
   "home": {
-    "subtitle": "Calcula y grafica series de Fourier, transformadas de Fourier y Laplace, e integrales. Resuelve EDOs con Laplace. Resultados simbólicos exactos y reconstrucción gráfica en tiempo real.",
-    "learnMore": "Conoce más sobre la herramienta →",
+    "subtitle": "Calcula y grafica series de Fourier, integrales, transformadas continuas y DFT/FFT. Resuelve transformadas de Laplace e integrales inversas. Resuelve ecuaciones diferenciales ordinarias, problemas de valor inicial (PVI) y problemas de frontera (BVP). Resultados simbólicos exactos con exportación a LaTeX.",
+    "learnMore": "Conoce más sobre la herramienta",
     "toolsTitle": "Herramientas",
     "analysisTitle": "Análisis de Fourier",
     "fourierTitle": "Análisis de Fourier",
     "comingSoonTitle": "Próximamente",
     "comingSoon": "Próximamente",
+    "scrollHint": "Explorar",
+    "fourierSectionTitle": "Análisis de Fourier",
+    "fourierSectionDesc": "Descompón señales en sus frecuencias constituyentes. Series, transformadas continuas, integrales y DFT/FFT con visualización en tiempo real.",
+    "laplaceSectionTitle": "Transformada de Laplace",
+    "laplaceSectionDesc": "Herramienta fundamental para análisis de circuitos, sistemas de control y señales. Transformada directa, inversa y resolución de EDOs con condiciones iniciales.",
+    "odeSectionTitle": "Ecuaciones Diferenciales",
+    "odeSectionDesc": "Resuelve EDOs ordinarias simbólicamente: solución general con constantes libres, problemas de valor inicial (PVI) y de frontera (BVP).",
+    "grapherSectionTitle": "Graficador",
+    "grapherSectionDesc": "Visualiza funciones matemáticas de forma interactiva con soporte de múltiples expresiones simultáneas.",
     "series": {
       "title": "Series de Fourier",
+      "shortDesc": "Trigonométrica, compleja y semirango. Coeficientes simbólicos, Parseval y gráfica animada.",
       "description": "Descomposición periódica de funciones en series trigonométricas, complejas y de medio rango, con coeficientes simbólicos y Parseval."
     },
     "integral": {
       "title": "Integral de Fourier",
+      "shortDesc": "Representación de funciones no periódicas. Formas trigonométrica, coseno, seno y compleja con reconstrucción gráfica.",
       "description": "Representación integral de funciones no periódicas en sus formas trigonométrica, coseno, seno y compleja, con reconstrucción gráfica."
     },
     "transforms": {
-      "title": "Transformada de Fourier",
-      "description": "Análisis espectral de señales no periódicas con transformada continua directa e inversa, partes real e imaginaria y convenciones de normalización."
+      "title": "Transformada continua",
+      "shortDesc": "Directa e inversa. Tres convenciones de normalización y pares de variables configurables.",
+      "description": "Transformada directa e inversa con múltiples convenciones de normalización (ingeniería, física, ordinaria) y pares de variables configurables."
+    },
+    "dft": {
+      "title": "DFT / FFT",
+      "shortDesc": "Transformada discreta sobre secuencias o funciones muestreadas. Espectro de amplitudes, fases y epiciclos.",
+      "description": "Transformada discreta de Fourier sobre secuencias numéricas o funciones muestreadas. Espectro de amplitudes, fases y visualización por epiciclos."
     },
     "laplace": {
       "title": "Transformada de Laplace",
-      "description": "Transformada directa e inversa y resolución de EDOs. Con soporte de parámetros libres, fracciones parciales y graficación."
+      "shortDesc": "Transformada directa e inversa con fracciones parciales automáticas. Soporte de δ(t) y u(t).",
+      "description": "Transformada directa e inversa con fracciones parciales automáticas. Soporte de δ(t) y u(t).",
+      "features": [
+        "Directa e inversa simbólica",
+        "Fracciones parciales automáticas",
+        "Soporte δ(t) y u(t)",
+        "Resultados en LaTeX"
+      ]
+    },
+    "ode": {
+      "title": "Calculadora de EDOs",
+      "shortDesc": "Solución general, PVI y BVP hasta 3er orden. Incluye modo Laplace para forzamientos con δ(t) y u(t). Motor CAS simbólico con gráfica.",
+      "description": "Solución general (C₁, C₂), PVI y BVP hasta 3er orden. Incluye modo Laplace para forzamientos con δ(t) y u(t). Motor CAS simbólico con gráfica interactiva.",
+      "features": [
+        "General · PVI · BVP",
+        "Hasta 3er orden",
+        "Modo Laplace para δ(t) y u(t)",
+        "Gráfica interactiva de la solución"
+      ]
     },
     "grapher": {
       "title": "Graficador",
-      "description": "Grafica funciones matemáticas de forma interactiva. Soporta múltiples expresiones, colores y zoom."
+      "shortDesc": "Múltiples funciones simultáneas con funciones especiales (erf, Γ, Si, Ci…), zoom y colores por expresión.",
+      "description": "Grafica múltiples funciones simultáneamente con soporte de funciones especiales (erf, Γ, Si, Ci…), zoom y colores por expresión.",
+      "features": [
+        "Múltiples expresiones simultáneas",
+        "Funciones especiales (erf, Γ, Si…)",
+        "Raíces e intersecciones",
+        "Zoom y colores por curva"
+      ]
     }
   },
   "calculator": {
@@ -166,7 +211,10 @@
       "fourierIntegral": "Int. Fourier",
       "laplaceDirect": "Laplace directa",
       "laplaceInverse": "Laplace inversa",
-      "laplaceOde": "Laplace EDO"
+      "laplaceOde": "EDO Laplace",
+      "odeGeneral": "EDO general",
+      "odeIvp": "EDO PVI",
+      "odeBvp": "EDO Frontera"
     },
     "label": "Configura la función y presiona"
   },
@@ -540,7 +588,10 @@
       "fourierIntegral": "Int. Fourier",
       "laplaceDirect": "Laplace directa",
       "laplaceInverse": "Laplace inversa",
-      "laplaceOde": "Laplace EDO"
+      "laplaceOde": "EDO Laplace",
+      "odeGeneral": "EDO general",
+      "odeIvp": "EDO PVI",
+      "odeBvp": "EDO Frontera"
     }
   },
   "auth": {
@@ -786,6 +837,7 @@
       "groupContinuous": "Transformada continua",
       "groupDft": "Transformada Discreta (DFT)",
       "groupLaplace": "Transformada de Laplace",
+      "groupOde": "Ecuaciones Diferenciales (EDO)",
       "groupTools": "Herramientas",
       "features": {
         "trigonometric": "Serie trigonométrica",
@@ -800,6 +852,9 @@
         "laplace_direct": "Laplace directa",
         "laplace_inverse": "Laplace inversa",
         "laplace_ode": "Resolución de EDOs con Laplace",
+        "ode_general": "EDO — solución general",
+        "ode_ivp": "EDO — problema de valor inicial (PVI)",
+        "ode_bvp": "EDO — problema de valor en la frontera (PVF)",
         "grapher": "Graficador de funciones",
         "none": "Ninguna aún"
       },
@@ -993,7 +1048,7 @@
       "f3": "Completamente bilingüe: español e inglés",
       "f4": "Diseño responsive — funciona en escritorio y móvil"
     },
-    "cta": "Empezar a explorar",
+    "cta": "Explora las herramientas",
     "fns": {
       "title": "Funciones especiales soportadas",
       "intro": "Además de las funciones trigonométricas e hiperbólicas estándar, la calculadora reconoce estas funciones propias del análisis de señales, tanto en la entrada simbólica como en la evaluación numérica y las transformadas.",
@@ -1049,7 +1104,74 @@
         "latex": "\\operatorname{sinc}(t) = \\frac{\\sin t}{t}",
         "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
       }
-    }
+    },
+    "ode": {
+      "title": "Ecuaciones Diferenciales",
+      "desc": "Resuelve EDOs de primer y segundo orden de forma simbólica: solución general, problemas de valor inicial (PVI) y problemas de frontera (BVP).",
+      "general": {
+        "title": "Solución general",
+        "desc": "Obtén la solución simbólica completa para EDOs de primer y segundo orden con coeficientes constantes o variables.",
+        "f1": "EDOs lineales de primer y segundo orden",
+        "f2": "Coeficientes constantes y algunos coeficientes variables",
+        "f3": "Constantes de integración C₁, C₂ en forma simbólica",
+        "f4": "Exportación a LaTeX e historial de resultados"
+      },
+      "ivp": {
+        "title": "Problema de Valor Inicial (PVI)",
+        "desc": "Resuelve EDOs con condiciones iniciales y(x₀) e y'(x₀) especificadas para obtener una solución particular.",
+        "f1": "Condiciones iniciales y(x₀) e y'(x₀) configurables",
+        "f2": "Gráfica de la solución particular en el intervalo deseado",
+        "f3": "Soporte para ecuaciones de segundo orden no homogéneas",
+        "f4": "Verificación numérica de la solución"
+      },
+      "bvp": {
+        "title": "Problema de Frontera (BVP)",
+        "desc": "Resuelve EDOs de segundo orden con condiciones en los extremos del intervalo: y(a) e y(b).",
+        "f1": "Condiciones de frontera y(a) e y(b) en dos puntos distintos",
+        "f2": "Intervalo configurable [a, b]",
+        "f3": "Visualización de la solución y los puntos de frontera",
+        "f4": "Historial de BVPs con recuperación completa"
+      }
+    },
+    "grapher": {
+      "title": "Graficador",
+      "desc": "Grafica expresiones matemáticas de forma interactiva con soporte para funciones especiales de análisis matemático.",
+      "features": {
+        "f1": "Múltiples expresiones simultáneas con colores independientes",
+        "f2": "Zoom y paneo interactivo con mouse o touch",
+        "f3": "Detección de discontinuidades para saltos y asíntotas",
+        "f4": "Evaluación numérica de alta precisión con Maxima CAS",
+        "f5": "Exportar gráfica como imagen PNG"
+      },
+      "specialFns": {
+        "label": "Funciones matemáticas especiales disponibles",
+        "integrals": {
+          "label": "Integrales especiales",
+          "Si": "Integral seno",
+          "Ci": "Integral coseno",
+          "Shi": "Integral seno hiperbólica",
+          "Chi": "Integral coseno hiperbólica",
+          "Ei": "Integral exponencial",
+          "E1": "Integral exponencial E₁",
+          "li": "Logaritmo integral"
+        },
+        "error": {
+          "label": "Error y Gamma",
+          "erf": "Función de error",
+          "erfc": "Función de error complementaria",
+          "gamma": "Función Gamma Γ(z)"
+        },
+        "gammaInc": {
+          "label": "Gamma incompleta y Beta",
+          "GammaU": "Gamma superior GammaU(a,z)",
+          "GammaL": "Gamma inferior GammaL(a,z)",
+          "GammaQ": "Gamma regularizada GammaQ(a,z)",
+          "Beta": "Función Beta Beta(a,b)"
+        }
+      }
+    },
+    "sectionOde": "Ecuaciones Diferenciales",
+    "sectionGrapher": "Graficador Interactivo"
   },
   "fourier-integral": {
     "title": "Integral de Fourier",
@@ -1131,6 +1253,97 @@
     "newCalculation": "Nuevo cálculo",
     "result": "Resultado",
     "fullTransform": "Transformada completa",
-    "inverseResult": "Transformada inversa"
+    "inverseResult": "Transformada inversa",
+    "odeRedirectTitle": "¿Necesitas resolver una EDO usando Laplace u otro método?",
+    "odeRedirectDesc": "Para solución general, PVI en cualquier x₀ o condiciones de frontera, usa la Calculadora de EDOs →"
+  },
+  "ode": {
+    "seoTitle": "Calculadora de EDOs — Solución General, PVI y Valor en la Frontera",
+    "seoDescription": "Resuelve ecuaciones diferenciales ordinarias de 1er y 2do orden: solución general, problema de valor inicial (PVI) y problema de frontera (BVP). Motor CAS simbólico con gráfica interactiva.",
+    "seoKeywords": "ecuaciones diferenciales, EDO, ODE, solución general, PVI, BVP, condiciones iniciales, valor en la frontera, Bernoulli, ecuación de Euler, ode2, Maxima, calculadora EDO",
+    "title": "Calculadora de EDOs",
+    "subtitle": "Solución general, problema de valor inicial (PVI) y valor en la frontera (BVP)",
+    "modeGeneral": "General",
+    "modeIvp": "PVI",
+    "modeBvp": "Frontera",
+    "equation": "Ecuación diferencial",
+    "fnName": "Función",
+    "ivar": "Variable",
+    "hint": "Usa notación de primas:",
+    "mathKeyboard": "Teclado matemático",
+    "addCondition": "Agregar condición",
+    "ivpConditions": "Condiciones iniciales",
+    "ivpDy0Hint": "no aplica",
+    "ivpOrder1Hint": "EDO de 1er orden: el campo y'(x₀) no se usa.",
+    "freeConstants": "Constantes libres",
+    "canvasSettings": "Ajustes del gráfico",
+    "lineStyle": "Estilo de línea",
+    "reset": "Restablecer",
+    "adjustInPanel": "ajusta en el panel ⚙",
+    "bvpConditions": "Condiciones de frontera",
+    "examplePlaceholder": "Cargar ejemplo…",
+    "calculate": "Calcular",
+    "calculating": "Calculando…",
+    "newCalculation": "Nueva ecuación",
+    "solution": "Solución",
+    "order": "Orden",
+    "generalSolution": "Solución general — constantes libres",
+    "noSolution": "Maxima no pudo resolver esta ecuación con los métodos analíticos disponibles. Prueba verificar la sintaxis o prueba con otro modo.",
+    "errorNoEq": "Ingresa una ecuación diferencial.",
+    "graphPlaceholder": "La gráfica aparecerá aquí cuando haya una solución explícita",
+    "exSeparable": "Separable: y' = xy",
+    "exBernoulli": "Bernoulli: y' + y = y²",
+    "exHomogeneous": "Homogénea: y' = y/x + 1",
+    "exExact": "Exacta: 2xy + y² + (x² + 2xy)y' = 0",
+    "exLinear1": "Lineal 1er orden: y' + (2/x)y = x²",
+    "exEuler": "Euler: x²y'' + xy' - y = 0",
+    "exConstCoeff": "Coef. constantes: y'' - 5y' + 6y = 0",
+    "exUnderdamped": "Subamortiguado: y'' + 2y' + 5y = 0",
+    "exThirdOrder": "3er orden: y''' + y' = 0",
+    "exThirdOrder2": "3er orden — raíz triple: y''' - 3y'' + 3y' - y = 0",
+    "exIvp1Hom": "1er orden — y' + 3y = 0",
+    "exIvp1NonHom": "1er orden — y' - 2y = 4",
+    "exIvp2Real": "2do orden — raíces reales",
+    "exIvp2Complex": "2do orden — raíces complejas",
+    "exIvp2Repeat": "2do orden — raíz repetida",
+    "exIvp2Sin": "2do orden — forzamiento sinusoidal",
+    "exIvp2ExpForce": "2do orden — forzamiento exponencial",
+    "exBvp1": "y'' + y = 0",
+    "exBvp2": "Viga: y'' = x(1-x)",
+    "exIvp2PolyForce": "2do orden — forzamiento polinomial",
+    "exIvp2CompoundForce": "2do orden — forzamiento compuesto",
+    "exIvp3rdOrder": "3er orden — coeficientes constantes (IVP)",
+    "modeLaplace": "Laplace",
+    "laplaceWhenTitle": "¿Cuándo usar Laplace?",
+    "laplaceWhen1": "Forzamiento con δ(t) (impulso unitario)",
+    "laplaceWhen2": "Forzamiento con u(t) (escalón de Heaviside)",
+    "laplaceWhen3": "Condiciones iniciales en t = 0",
+    "laplaceWhenNot1": "No puede dar solución general (sin ICs)",
+    "laplaceWhenNot2": "No puede resolver problemas de frontera (BVP)",
+    "ode2WhenTitle": "¿Cuándo usar el Solver de EDOs?",
+    "ode2When1": "Solución general (con constantes libres)",
+    "ode2When2": "IVP en cualquier punto x₀",
+    "ode2When3": "BVP con condiciones en dos puntos",
+    "ode2WhenNot1": "No maneja δ(t) ni u(t) como forzamiento",
+    "noSolutionLaplace": "Maxima no pudo resolver esta ecuación con desolve. Verifica que la ecuación tenga condiciones iniciales en t = 0.",
+    "engineLaplace": "Motor: Laplace (desolve)",
+    "exampleLabel": "Cargar ejemplo",
+    "exLap1Hom": "1er orden homogéneo: y' + 3y = 0",
+    "exLap1NonHom": "1er orden no homogéneo: y' − 2y = 4",
+    "exLap2Real": "2do orden — raíces reales",
+    "exLap2Complex": "2do orden — raíces complejas",
+    "exLap2Repeat": "2do orden — raíz repetida",
+    "exLap2Sin": "Forzamiento sinusoidal: y'' + y = sin(t)",
+    "exLap2Exp": "Forzamiento exponencial: y'' − 3y' + 2y = eᵗ",
+    "exLap2Poly": "Forzamiento polinomial: y'' + 4y = t²",
+    "exLap2Compound": "Forzamiento compuesto: y'' + 3y' + 2y = t·e⁻ᵗ",
+    "exLap3rd": "3er orden — coef. constantes",
+    "exLapDirac1": "Impulso unitario: y'' + 2y' + y = δ(t)",
+    "exLapDirac2": "Impulso desplazado: y'' + 4y = δ(t − π)",
+    "exLapStep1": "Escalón desplazado: y'' + y = u(t − π)",
+    "exLapStep2": "Pulso rectangular: y' + y = u(t) − u(t − 2)",
+    "exLapImpulse": "Respuesta al impulso (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
+    "exLap3rdForce": "3er orden — forzamiento exponencial: y'''+ y''= eᵗ",
+    "exLap3rdRepeat": "3er orden — raíz triple: y'''- 3y'' + 3y' - y = 0"
   }
 }

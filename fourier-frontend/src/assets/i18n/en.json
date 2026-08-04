@@ -32,11 +32,14 @@
     "grapherBanner": "Want to plot this function? → Open Grapher"
   },
   "nav": {
+    "tools": "Tools",
     "fourierAnalysis": "Fourier Analysis",
     "series": "Fourier Series",
-    "transforms": "Transforms",
+    "transforms": "Continuous Transform",
+    "dft": "DFT / FFT",
     "fourierIntegral": "Fourier Integral",
     "laplace": "Laplace Transform",
+    "ode": "ODE Solver",
     "login": "Log in",
     "register": "Sign up",
     "logout": "Log out",
@@ -96,32 +99,74 @@
     }
   },
   "home": {
-    "subtitle": "Compute and plot Fourier series, Fourier and Laplace transforms, and Fourier integrals. Solve ODEs with Laplace. Exact symbolic results with real-time graphical reconstruction.",
-    "learnMore": "Learn more about the tool →",
+    "subtitle": "Compute and plot Fourier series, integrals, continuous transforms and DFT/FFT. Solve Laplace transforms and inverse integrals. Solve ordinary differential equations, initial value problems and boundary value problems. Exact symbolic results with LaTeX export.",
+    "learnMore": "Learn more about the tool",
     "toolsTitle": "Tools",
     "analysisTitle": "Fourier Analysis",
     "fourierTitle": "Fourier Analysis",
     "comingSoonTitle": "Coming soon",
     "comingSoon": "Coming soon",
+    "scrollHint": "Explore",
+    "fourierSectionTitle": "Fourier Analysis",
+    "fourierSectionDesc": "Decompose signals into their constituent frequencies. Series, continuous transforms, integrals and DFT/FFT with real-time visualization.",
+    "laplaceSectionTitle": "Laplace Transform",
+    "laplaceSectionDesc": "Essential tool for circuit analysis, control systems and signals. Direct and inverse transform, plus ODE solving with initial conditions.",
+    "odeSectionTitle": "Differential Equations",
+    "odeSectionDesc": "Symbolically solve ordinary differential equations: general solution with free constants, initial value problems (IVP) and boundary value problems (BVP).",
+    "grapherSectionTitle": "Grapher",
+    "grapherSectionDesc": "Visualize mathematical functions interactively with support for multiple simultaneous expressions.",
     "series": {
       "title": "Fourier Series",
+      "shortDesc": "Trigonometric, complex and half-range. Symbolic coefficients, Parseval and animated graph.",
       "description": "Periodic decomposition of piecewise functions into trigonometric, complex and half-range series, with symbolic coefficients and Parseval."
     },
     "integral": {
       "title": "Fourier Integral",
+      "shortDesc": "Representation of non-periodic functions. Trigonometric, cosine, sine and complex forms with graphical reconstruction.",
       "description": "Integral representation of non-periodic functions in trigonometric, cosine, sine and complex forms, with graphical reconstruction."
     },
     "transforms": {
-      "title": "Fourier Transform",
-      "description": "Spectral analysis of non-periodic signals with continuous direct and inverse transform, real and imaginary parts and normalization conventions."
+      "title": "Continuous Transform",
+      "shortDesc": "Direct and inverse. Three normalization conventions and configurable variable pairs.",
+      "description": "Direct and inverse transform with multiple normalization conventions (engineering, physics, ordinary) and configurable variable pairs."
+    },
+    "dft": {
+      "title": "DFT / FFT",
+      "shortDesc": "Discrete transform on sequences or sampled functions. Amplitude and phase spectrum, epicycle visualization.",
+      "description": "Discrete Fourier transform on numerical sequences or sampled functions. Amplitude and phase spectrum, and epicycle visualization."
     },
     "laplace": {
       "title": "Laplace Transform",
-      "description": "Direct and inverse transform and ODE solving. Supports free parameters, partial fractions and graphing."
+      "shortDesc": "Direct and inverse transform with automatic partial fractions. Supports δ(t) and u(t).",
+      "description": "Direct and inverse transform with automatic partial fractions. Supports δ(t) and u(t).",
+      "features": [
+        "Direct & inverse symbolic",
+        "Automatic partial fractions",
+        "Supports δ(t) and u(t)",
+        "LaTeX output"
+      ]
+    },
+    "ode": {
+      "title": "ODE Calculator",
+      "shortDesc": "General solution, IVP and BVP up to 3rd order. Includes Laplace mode for δ(t) and u(t) forcing. Symbolic CAS engine with graph.",
+      "description": "General solution (C₁, C₂), IVP and BVP up to 3rd order. Includes Laplace mode for δ(t) and u(t) forcing. Symbolic CAS engine with interactive graph.",
+      "features": [
+        "General · IVP · BVP",
+        "Up to 3rd order",
+        "Laplace mode for δ(t) and u(t)",
+        "Interactive solution graph"
+      ]
     },
     "grapher": {
       "title": "Grapher",
-      "description": "Plot mathematical functions interactively. Supports multiple expressions, colors and zoom."
+      "shortDesc": "Multiple simultaneous functions with special functions (erf, Γ, Si, Ci…), zoom and per-expression colors.",
+      "description": "Plot multiple functions simultaneously with support for special functions (erf, Γ, Si, Ci…), zoom and per-expression colors.",
+      "features": [
+        "Multiple simultaneous expressions",
+        "Special functions (erf, Γ, Si…)",
+        "Roots and intersections",
+        "Zoom and per-curve colors"
+      ]
     }
   },
   "calculator": {
@@ -166,7 +211,10 @@
       "fourierIntegral": "Fourier Integral",
       "laplaceDirect": "Laplace Direct",
       "laplaceInverse": "Laplace Inverse",
-      "laplaceOde": "Laplace ODE"
+      "laplaceOde": "Laplace ODE",
+      "odeGeneral": "ODE General",
+      "odeIvp": "ODE IVP",
+      "odeBvp": "ODE BVP"
     },
     "label": "Set up the function and press"
   },
@@ -540,7 +588,10 @@
       "fourierIntegral": "Fourier Integral",
       "laplaceDirect": "Laplace direct",
       "laplaceInverse": "Laplace inverse",
-      "laplaceOde": "Laplace ODE"
+      "laplaceOde": "Laplace ODE",
+      "odeGeneral": "ODE General",
+      "odeIvp": "ODE IVP",
+      "odeBvp": "ODE BVP"
     }
   },
   "auth": {
@@ -786,6 +837,7 @@
       "groupContinuous": "Continuous transform",
       "groupDft": "Discrete Transform (DFT)",
       "groupLaplace": "Laplace Transform",
+      "groupOde": "Differential Equations (ODE)",
       "groupTools": "Tools",
       "features": {
         "trigonometric": "Trigonometric series",
@@ -800,6 +852,9 @@
         "laplace_direct": "Direct Laplace Transform",
         "laplace_inverse": "Inverse Laplace Transform",
         "laplace_ode": "ODE solving with Laplace",
+        "ode_general": "ODE — general solution",
+        "ode_ivp": "ODE — initial value problem (IVP)",
+        "ode_bvp": "ODE — boundary value problem (BVP)",
         "grapher": "Function grapher",
         "none": "None yet"
       },
@@ -993,7 +1048,7 @@
       "f3": "Fully bilingual: Spanish and English",
       "f4": "Responsive design — works on desktop and mobile"
     },
-    "cta": "Start exploring",
+    "cta": "Explore the tools",
     "fns": {
       "title": "Supported special functions",
       "intro": "Beyond standard trigonometric and hyperbolic functions, the calculator recognises these signal-analysis functions in symbolic input, numeric evaluation and Fourier transforms.",
@@ -1049,7 +1104,74 @@
         "latex": "\\operatorname{sinc}(t) = \\frac{\\sin t}{t}",
         "ft": "\\mathcal{F}\\{\\operatorname{sinc}(\\pi t)\\} = \\operatorname{rect}\\!\\left(\\frac{\\omega}{2\\pi}\\right)"
       }
-    }
+    },
+    "ode": {
+      "title": "Differential Equations",
+      "desc": "Solve first and second-order ODEs symbolically: general solution, initial value problems (IVP), and boundary value problems (BVP).",
+      "general": {
+        "title": "General solution",
+        "desc": "Obtain the complete symbolic solution for first and second-order ODEs with constant or variable coefficients.",
+        "f1": "First- and second-order linear ODEs",
+        "f2": "Constant coefficients and some variable coefficients",
+        "f3": "Integration constants C₁, C₂ in symbolic form",
+        "f4": "LaTeX export and result history"
+      },
+      "ivp": {
+        "title": "Initial Value Problem (IVP)",
+        "desc": "Solve ODEs with specified initial conditions y(x₀) and y'(x₀) to obtain a particular solution.",
+        "f1": "Configurable initial conditions y(x₀) and y'(x₀)",
+        "f2": "Plot of the particular solution over the desired interval",
+        "f3": "Support for non-homogeneous second-order equations",
+        "f4": "Numerical verification of the solution"
+      },
+      "bvp": {
+        "title": "Boundary Value Problem (BVP)",
+        "desc": "Solve second-order ODEs with boundary conditions at both ends of the interval: y(a) and y(b).",
+        "f1": "Boundary conditions y(a) and y(b) at two distinct points",
+        "f2": "Configurable interval [a, b]",
+        "f3": "Visualization of the solution and boundary points",
+        "f4": "BVP history with full recovery"
+      }
+    },
+    "grapher": {
+      "title": "Grapher",
+      "desc": "Interactively graph mathematical expressions with support for special functions from mathematical analysis.",
+      "features": {
+        "f1": "Multiple simultaneous expressions with independent colors",
+        "f2": "Interactive zoom and pan with mouse or touch",
+        "f3": "Discontinuity detection for jumps and asymptotes",
+        "f4": "High-precision numerical evaluation via Maxima CAS",
+        "f5": "Export graph as PNG image"
+      },
+      "specialFns": {
+        "label": "Available special mathematical functions",
+        "integrals": {
+          "label": "Special integrals",
+          "Si": "Sine integral",
+          "Ci": "Cosine integral",
+          "Shi": "Hyperbolic sine integral",
+          "Chi": "Hyperbolic cosine integral",
+          "Ei": "Exponential integral",
+          "E1": "Exponential integral E₁",
+          "li": "Logarithmic integral"
+        },
+        "error": {
+          "label": "Error and Gamma",
+          "erf": "Error function",
+          "erfc": "Complementary error function",
+          "gamma": "Gamma function Γ(z)"
+        },
+        "gammaInc": {
+          "label": "Incomplete Gamma and Beta",
+          "GammaU": "Upper gamma GammaU(a,z)",
+          "GammaL": "Lower gamma GammaL(a,z)",
+          "GammaQ": "Regularized gamma GammaQ(a,z)",
+          "Beta": "Beta function Beta(a,b)"
+        }
+      }
+    },
+    "sectionOde": "Differential Equations",
+    "sectionGrapher": "Interactive Grapher"
   },
   "fourier-integral": {
     "title": "Fourier Integral",
@@ -1131,6 +1253,97 @@
     "newCalculation": "New calculation",
     "result": "Result",
     "fullTransform": "Full transform",
-    "inverseResult": "Inverse transform"
+    "inverseResult": "Inverse transform",
+    "odeRedirectTitle": "Solving ODEs with the Laplace or other method?",
+    "odeRedirectDesc": "For general solutions, IVP at any x₀, or boundary conditions, use the ODE Solver →"
+  },
+  "ode": {
+    "seoTitle": "ODE Solver — General Solution, IVP and Boundary Value Problems",
+    "seoDescription": "Solve 1st and 2nd order ordinary differential equations: general solution, initial value problem (IVP) and boundary value problem (BVP). Symbolic CAS engine with interactive graph.",
+    "seoKeywords": "ordinary differential equations, ODE, general solution, IVP, BVP, initial conditions, boundary value, Bernoulli, Euler equation, ode2, Maxima, ODE calculator",
+    "title": "ODE Solver",
+    "subtitle": "General solution, initial value problem (IVP) and boundary value problem (BVP)",
+    "modeGeneral": "General",
+    "modeIvp": "IVP",
+    "modeBvp": "Boundary",
+    "equation": "Differential equation",
+    "fnName": "Function",
+    "ivar": "Variable",
+    "hint": "Use prime notation:",
+    "mathKeyboard": "Math keyboard",
+    "addCondition": "Add condition",
+    "ivpConditions": "Initial conditions",
+    "ivpDy0Hint": "n/a",
+    "ivpOrder1Hint": "1st-order ODE: y'(x₀) is not used.",
+    "freeConstants": "Free constants",
+    "canvasSettings": "Graph settings",
+    "lineStyle": "Line style",
+    "reset": "Reset",
+    "adjustInPanel": "adjust in ⚙ panel",
+    "bvpConditions": "Boundary conditions",
+    "examplePlaceholder": "Load example…",
+    "calculate": "Solve",
+    "calculating": "Solving…",
+    "newCalculation": "New equation",
+    "solution": "Solution",
+    "order": "Order",
+    "generalSolution": "General solution — free constants",
+    "noSolution": "Maxima could not solve this equation with the available analytical methods. Check the syntax or try a different mode.",
+    "errorNoEq": "Enter a differential equation.",
+    "graphPlaceholder": "The graph will appear here when an explicit solution is found",
+    "exSeparable": "Separable: y' = xy",
+    "exBernoulli": "Bernoulli: y' + y = y²",
+    "exHomogeneous": "Homogeneous: y' = y/x + 1",
+    "exExact": "Exact: 2xy + y² + (x² + 2xy)y' = 0",
+    "exLinear1": "1st-order linear: y' + (2/x)y = x²",
+    "exEuler": "Euler: x²y'' + xy' - y = 0",
+    "exConstCoeff": "Const. coeff.: y'' - 5y' + 6y = 0",
+    "exUnderdamped": "Underdamped: y'' + 2y' + 5y = 0",
+    "exThirdOrder": "3rd order: y''' + y' = 0",
+    "exThirdOrder2": "3rd order — triple root: y''' - 3y'' + 3y' - y = 0",
+    "exIvp1Hom": "1st order — y' + 3y = 0",
+    "exIvp1NonHom": "1st order — y' - 2y = 4",
+    "exIvp2Real": "2nd order — real roots",
+    "exIvp2Complex": "2nd order — complex roots",
+    "exIvp2Repeat": "2nd order — repeated root",
+    "exIvp2Sin": "2nd order — sinusoidal forcing",
+    "exIvp2ExpForce": "2nd order — exponential forcing",
+    "exBvp1": "y'' + y = 0",
+    "exBvp2": "Beam: y'' = x(1-x)",
+    "exIvp2PolyForce": "2nd order — polynomial forcing",
+    "exIvp2CompoundForce": "2nd order — compound forcing",
+    "exIvp3rdOrder": "3rd order — constant coefficients (IVP)",
+    "modeLaplace": "Laplace",
+    "laplaceWhenTitle": "When to use Laplace?",
+    "laplaceWhen1": "Forcing with δ(t) (unit impulse)",
+    "laplaceWhen2": "Forcing with u(t) (Heaviside step)",
+    "laplaceWhen3": "Initial conditions at t = 0",
+    "laplaceWhenNot1": "Cannot give general solution (no free constants)",
+    "laplaceWhenNot2": "Cannot solve boundary value problems (BVP)",
+    "ode2WhenTitle": "When to use the ODE Solver?",
+    "ode2When1": "General solution (with free constants)",
+    "ode2When2": "IVP at any point x₀",
+    "ode2When3": "BVP with conditions at two points",
+    "ode2WhenNot1": "Cannot handle δ(t) or u(t) as forcing",
+    "noSolutionLaplace": "Maxima could not solve this equation with desolve. Make sure the equation has initial conditions at t = 0.",
+    "engineLaplace": "Engine: Laplace (desolve)",
+    "exampleLabel": "Load example",
+    "exLap1Hom": "1st-order homogeneous: y' + 3y = 0",
+    "exLap1NonHom": "1st-order non-homogeneous: y' − 2y = 4",
+    "exLap2Real": "2nd order — real roots",
+    "exLap2Complex": "2nd order — complex roots",
+    "exLap2Repeat": "2nd order — repeated root",
+    "exLap2Sin": "Sinusoidal forcing: y'' + y = sin(t)",
+    "exLap2Exp": "Exponential forcing: y'' − 3y' + 2y = eᵗ",
+    "exLap2Poly": "Polynomial forcing: y'' + 4y = t²",
+    "exLap2Compound": "Compound forcing: y'' + 3y' + 2y = t·e⁻ᵗ",
+    "exLap3rd": "3rd order — constant coefficients",
+    "exLapDirac1": "Unit impulse: y'' + 2y' + y = δ(t)",
+    "exLapDirac2": "Shifted impulse: y'' + 4y = δ(t − π)",
+    "exLapStep1": "Shifted step: y'' + y = u(t − π)",
+    "exLapStep2": "Rectangular pulse: y' + y = u(t) − u(t − 2)",
+    "exLapImpulse": "Impulse response (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
+    "exLap3rdForce": "3rd order — exponential forcing: y'''+ y'' = eᵗ",
+    "exLap3rdRepeat": "3rd order — triple root: y'''- 3y'' + 3y' - y = 0"
   }
 }

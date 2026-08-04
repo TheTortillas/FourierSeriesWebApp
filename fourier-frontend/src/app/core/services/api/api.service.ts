@@ -42,6 +42,9 @@ import {
   LaplaceDirectResponse,
   LaplaceInverseResponse,
   LaplaceOdeResponse,
+  // ODE
+  OdeRequest,
+  OdeResponse,
   // Simplify
   SimplifyRequest,
   SimplifyResponse,
@@ -226,6 +229,10 @@ export class ApiService {
 
   calculateLaplaceOde(body: LaplaceOdeRequest): Observable<LaplaceOdeResponse> {
     return this.http.post<LaplaceOdeResponse>(`${this.base}/transforms/laplace/ode`, body);
+  }
+
+  calculateOde(body: OdeRequest): Observable<OdeResponse> {
+    return this.http.post<OdeResponse>(`${this.base}/transforms/ode/solve`, body);
   }
 
   calculateDFT(body: DftRequest): Observable<DftResponse> {

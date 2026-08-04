@@ -69,6 +69,11 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'ode',
+        loadComponent: () =>
+          import('./features/ode/ode.component').then((m) => m.OdeComponent),
+      },
+      {
         path: 'transforms',
         loadChildren: () =>
           import('./features/transforms/transforms.routes').then(

@@ -62,9 +62,8 @@ function tokenise(src: string): Token[] {
       continue;
     }
     if (/[a-zA-Z]/.test(ch)) {
-      let name = '';
-      while (i < src.length && /[a-zA-Z0-9]/.test(src[i])) name += src[i++];
-      out.push({ t: 'ident', v: name });
+      out.push({ t: 'ident', v: ch });
+      i++;
       continue;
     }
     if (/[+\-*/^_|=]/.test(ch)) { out.push({ t: 'op', v: ch }); i++; continue; }
@@ -77,7 +76,7 @@ function tokenise(src: string): Token[] {
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 
-interface OdeContext { fn: string; tvar: string; }
+interface OdeContext { fn: string; tvar: string; bareVar?: boolean; }
 
 class Parser {
   private pos = 0;
@@ -167,16 +166,17 @@ class Parser {
         let order = 0;
         while (this.is('prime')) { this.eat(); order++; }
         const { fn, tvar } = this.ode;
-        if (order > 0) return `diff(${fn}(${tvar}),${tvar},${order})`;
+        if (order > 0) return this.ode!.bareVar
+          ? `diff(${fn},${tvar},${order})`
+          : `diff(${fn}(${tvar}),${tvar},${order})`;
         // bare fn name → fn(tvar) unless immediately followed by ( (already a call)
-        if (!this.is('lp')) return `${fn}(${tvar})`;
+        if (!this.is('lp')) return this.ode!.bareVar ? fn : `${fn}(${tvar})`;
       }
 
-      // In ODE context, bare 'e' → %e (Euler), bare 'i' → %i (imaginary unit)
-      if (this.ode && name !== this.ode.fn) {
-        if (name === 'e') return '%e';
-        if (name === 'i') return '%i';
-      }
+      // Bare 'e' → %e (Euler), bare 'i' → %i (imaginary unit) — always, not just in ODE context
+      // Only when NOT immediately followed by ( (which would make them user-defined function calls)
+      if (name === 'e' && !this.is('lp')) return '%e';
+      if (name === 'i' && !this.is('lp')) return '%i';
 
       // Look up in registry (covers both clientSideOnly and standard functions)
       const mx = LATEX_TO_MAXIMA.get(name);
@@ -365,6 +365,14 @@ export class LatexToMaximaService {
   convertOde(latex: string, odeFn: string, odeTvar: string): ConversionResult {
     if (!latex.trim()) return { maxima: '', ok: false, error: 'Expresión vacía' };
     const maxima = clientTranslate(latex, { fn: odeFn, tvar: odeTvar });
+    if (maxima) return { ok: true, maxima };
+    return { maxima: '', ok: false, error: 'No se pudo parsear la ecuación' };
+  }
+
+  /** Like convertOde but produces diff(y,x,2) bare-variable form for ode2/ic1/ic2/bc2. */
+  convertOdeForOde2(latex: string, odeFn: string, odeTvar: string): ConversionResult {
+    if (!latex.trim()) return { maxima: '', ok: false, error: 'Expresión vacía' };
+    const maxima = clientTranslate(latex, { fn: odeFn, tvar: odeTvar, bareVar: true });
     if (maxima) return { ok: true, maxima };
     return { maxima: '', ok: false, error: 'No se pudo parsear la ecuación' };
   }

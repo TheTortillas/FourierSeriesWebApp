@@ -1,0 +1,704 @@
+<div class="min-h-screen flex flex-col bg-paper dark:bg-dark-bg">
+  <app-nav />
+
+  <!-- Page header -->
+  <header class="shrink-0 border-b border-border dark:border-dark-border px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="font-display text-2xl text-ink dark:text-dark-ink">
+        {{ 'ode.title' | transloco }}
+      </h1>
+      <p class="text-sm font-mono text-muted dark:text-dark-muted mt-0.5">
+        {{ 'ode.subtitle' | transloco }}
+      </p>
+    </div>
+  </header>
+
+  <!-- Two-panel layout -->
+  <div class="flex flex-col lg:flex-row flex-1 min-h-0">
+
+    <!-- ── Left panel ─────────────────────────────────────────────────────────── -->
+    <aside class="w-full lg:w-105 xl:w-115 shrink-0 border-b lg:border-b-0 lg:border-r border-border dark:border-dark-border overflow-y-auto">
+      <div class="p-5 flex flex-col gap-5">
+
+        <!-- Mode tabs -->
+        <div class="flex items-center gap-1 bg-paper2 dark:bg-dark-surface rounded-lg p-1 border border-border dark:border-dark-border">
+          @for (m of modes; track m.id) {
+            <button
+              type="button"
+              (click)="mode.set(m.id); startNewCalculation()"
+              [disabled]="hasComputedResult() && mode() !== m.id"
+              class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all"
+              [class]="mode() === m.id
+                ? 'bg-accent text-white dark:text-white shadow-sm cursor-pointer'
+                : hasComputedResult()
+                  ? 'text-muted dark:text-dark-muted opacity-40 cursor-not-allowed'
+                  : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink cursor-pointer'"
+            >
+              {{ m.labelKey | transloco }}
+            </button>
+          }
+        </div>
+
+        <!-- ── Inputs (locked when result exists) ────────────────────────────── -->
+        <div
+          class="flex flex-col gap-5"
+          [class.pointer-events-none]="inputsLocked()"
+          [class.opacity-70]="inputsLocked()"
+        >
+
+          <!-- Examples combobox -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+              {{ 'ode.exampleLabel' | transloco }}
+            </label>
+            <select
+              (change)="loadExample($any($event.target).value); $any($event.target).value = ''"
+              class="w-full px-3 py-2 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono text-muted dark:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+            >
+              <option value="" disabled selected>{{ 'ode.examplePlaceholder' | transloco }}</option>
+              @for (ex of filteredExamples(); track ex.labelKey) {
+                <option [value]="ex.labelKey">{{ ex.labelKey | transloco }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Equation field -->
+          <section #mqEqRef class="flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                {{ 'ode.equation' | transloco }}
+              </label>
+              <button
+                type="button"
+                (click)="showKeyboard = !showKeyboard"
+                class="hidden lg:flex items-center gap-1 px-2 h-6 rounded text-[10px] font-mono border transition-colors cursor-pointer"
+                [class]="showKeyboard
+                  ? 'bg-accent/10 border-accent/40 text-accent'
+                  : 'border-border dark:border-dark-border text-muted hover:border-accent hover:text-accent'"
+              >
+                {{ 'ode.mathKeyboard' | transloco }}
+              </button>
+            </div>
+
+            <div
+              class="w-full px-3 py-2 min-h-10 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+              (click)="eqField?.focus()"
+            >
+              <div [attr.data-mq-eq]="''" class="w-full"></div>
+            </div>
+
+            <p class="text-xs font-mono text-muted dark:text-dark-muted">
+              {{ 'ode.hint' | transloco }}&nbsp;{{ fnName() }}'',&nbsp;{{ fnName() }}',&nbsp;{{ fnName() }}
+            </p>
+          </section>
+
+          <!-- Function name + variable -->
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1.5">
+              <span class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                {{ 'ode.fnName' | transloco }}
+              </span>
+              <input
+                type="text"
+                [value]="fnName()"
+                (input)="fnName.set($any($event.target).value.trim() || 'y')"
+                maxlength="2"
+                class="w-12 px-2 py-1 rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <span class="text-sm font-mono text-muted dark:text-dark-muted">
+                ({{ ivar() }})
+              </span>
+            </div>
+            <div class="ml-auto flex items-center gap-1.5">
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">
+                {{ 'ode.ivar' | transloco }}
+              </span>
+              <select
+                [value]="ivarId()"
+                (change)="ivarId.set($any($event.target).value)"
+                class="px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono text-muted dark:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+              >
+                @for (opt of ivarOptions; track opt.id) {
+                  <option [value]="opt.id">{{ opt.display }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <!-- ── IVP conditions ─────────────────────────────────────────────── -->
+          @if (mode() === 'ivp') {
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                  {{ 'ode.ivpConditions' | transloco }}
+                </label>
+                <button
+                  type="button"
+                  (click)="addIvpIc()"
+                  class="text-xs font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+                >
+                  + {{ 'ode.addCondition' | transloco }}
+                </button>
+              </div>
+
+              <!-- x₀ -->
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
+                  [mathjax]="'\\(' + ivar() + '_0 =\\)'"
+                ></span>
+                <div
+                  class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                  (click)="x0Field?.focus()"
+                >
+                  <div data-mq-x0 class="w-full"></div>
+                </div>
+              </div>
+
+              <!-- Condition rows -->
+              @for (ic of ivpIcs(); track ic.order; let i = $index) {
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
+                    [mathjax]="'\\(' + ivpIcLabel(ic.order) + ' =\\)'"
+                  ></span>
+                  <div
+                    class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                    (click)="ivpFields[i]?.focus()"
+                  >
+                    <div [attr.data-mq-ivp]="i" class="w-full"></div>
+                  </div>
+                  @if (ivpIcs().length > 1) {
+                    <button
+                      type="button"
+                      (click)="removeIvpIc(i)"
+                      class="text-muted dark:text-dark-muted hover:text-red-500 transition-colors cursor-pointer text-sm leading-none shrink-0"
+                    >×</button>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- ── Laplace conditions ────────────────────────────────────────────── -->
+          @if (mode() === 'laplace') {
+            <!-- Info panel: when to use each engine (collapsible) -->
+            <details class="group rounded-lg border border-border dark:border-dark-border text-xs font-mono overflow-hidden">
+              <summary class="flex items-center justify-between px-3 py-2 cursor-pointer select-none text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors bg-paper2 dark:bg-dark-surface list-none">
+                <span class="font-semibold">{{ 'ode.laplaceWhenTitle' | transloco }}</span>
+                <span class="text-[10px] group-open:rotate-180 transition-transform duration-150">▾</span>
+              </summary>
+              <div class="bg-paper2 dark:bg-dark-surface divide-y divide-border dark:divide-dark-border">
+                <div class="px-3 py-2.5 flex flex-col gap-1.5">
+                  <p class="font-semibold text-accent">{{ 'ode.modeLaplace' | transloco }}</p>
+                  <ul class="flex flex-col gap-1 text-muted dark:text-dark-muted pl-2">
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.laplaceWhen1' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.laplaceWhen2' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.laplaceWhen3' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-muted/50 dark:text-dark-muted/50 shrink-0">✗</span>{{ 'ode.laplaceWhenNot1' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-muted/50 dark:text-dark-muted/50 shrink-0">✗</span>{{ 'ode.laplaceWhenNot2' | transloco }}</li>
+                  </ul>
+                </div>
+                <div class="px-3 py-2.5 flex flex-col gap-1.5">
+                  <p class="font-semibold text-accent">{{ 'ode.ode2WhenTitle' | transloco }}</p>
+                  <ul class="flex flex-col gap-1 text-muted dark:text-dark-muted pl-2">
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.ode2When1' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.ode2When2' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-accent shrink-0">✓</span>{{ 'ode.ode2When3' | transloco }}</li>
+                    <li class="flex gap-1.5"><span class="text-muted/50 dark:text-dark-muted/50 shrink-0">✗</span>{{ 'ode.ode2WhenNot1' | transloco }}</li>
+                  </ul>
+                </div>
+              </div>
+            </details>
+
+            <!-- IC conditions (always at t=0) -->
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                  {{ 'ode.ivpConditions' | transloco }}
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted font-normal ml-1">({{ ivar() }} = 0)</span>
+                </label>
+                <button
+                  type="button"
+                  (click)="addLaplaceIc()"
+                  class="text-xs font-mono text-muted dark:text-dark-muted hover:text-accent transition-colors cursor-pointer"
+                >+ {{ 'ode.addCondition' | transloco }}</button>
+              </div>
+
+              @for (ic of laplaceIcs(); track ic.order; let i = $index) {
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
+                    [mathjax]="'\\(' + laplaceIcLabel(ic.order) + ' =\\)'"
+                  ></span>
+                  <div
+                    class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                    (click)="laplaceIcFields[i]?.focus()"
+                  >
+                    <div [attr.data-mq-laplace-ic]="i" class="w-full"></div>
+                  </div>
+                  @if (laplaceIcs().length > 1) {
+                    <button
+                      type="button"
+                      (click)="removeLaplaceIc(i)"
+                      class="text-muted dark:text-dark-muted hover:text-red-500 transition-colors cursor-pointer text-sm leading-none shrink-0"
+                    >×</button>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- ── BVP conditions ─────────────────────────────────────────────── -->
+          @if (mode() === 'bvp') {
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                {{ 'ode.bvpConditions' | transloco }}
+              </label>
+
+              @for (cond of bvpConds(); track $index; let i = $index) {
+                <!-- x_i — MathQuill -->
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
+                    [mathjax]="'\\(' + ivar() + '_' + (i+1) + ' =\\)'"
+                  ></span>
+                  <div
+                    class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                    (click)="bvpXFields[i]?.focus()"
+                  >
+                    <div [attr.data-mq-bvp-x]="i" class="w-full"></div>
+                  </div>
+                </div>
+                <!-- y(x_i) — MathQuill -->
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-xs font-mono text-muted dark:text-dark-muted shrink-0 w-20 text-right"
+                    [mathjax]="'\\(' + bvpLabel(i) + ' =\\)'"
+                  ></span>
+                  <div
+                    class="flex-1 px-3 py-1.5 min-h-8 text-sm rounded border cursor-text bg-paper2 dark:bg-dark-surface2 focus-within:ring-1 transition-colors flex items-center border-border dark:border-dark-border focus-within:border-accent focus-within:ring-accent"
+                    (click)="bvpFields[i]?.focus()"
+                  >
+                    <div [attr.data-mq-bvp]="i" class="w-full"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Desktop math keyboard -->
+          @if (showKeyboard) {
+            <div class="hidden lg:block rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 p-2 space-y-1.5">
+              @for (row of keyGroups; track $index) {
+                <div class="flex flex-wrap gap-1">
+                  @for (btn of row; track btn.label) {
+                    <button
+                      type="button"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="mqs.insertKey(btn)"
+                      class="px-2 h-7 min-w-8 rounded text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink hover:border-accent hover:text-accent transition-colors cursor-pointer select-none"
+                    >{{ btn.label }}</button>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+        <!-- /inputs locked -->
+
+        <!-- Calculate button -->
+        <button
+          type="button"
+          (click)="calculate()"
+          [disabled]="loading() || hasComputedResult()"
+          class="w-full py-2.5 rounded font-semibold text-sm font-body transition-all cursor-pointer bg-accent text-paper hover:bg-accent/90 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          @if (loading()) {
+            <span class="flex items-center justify-center gap-2">
+              <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              {{ 'ode.calculating' | transloco }}
+            </span>
+          } @else {
+            {{ 'ode.calculate' | transloco }}
+          }
+        </button>
+
+        @if (errorMsg()) {
+          <div class="rounded border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-3 py-2">
+            <p class="text-xs font-mono text-red-600 dark:text-red-400">{{ errorMsg() }}</p>
+          </div>
+        }
+
+        @if (hasComputedResult()) {
+          <button
+            type="button"
+            (click)="startNewCalculation()"
+            class="w-full py-1.5 rounded border border-accent text-xs text-accent hover:bg-accent hover:text-white dark:hover:text-white transition-colors cursor-pointer font-mono font-semibold"
+          >
+            {{ 'ode.newCalculation' | transloco }}
+          </button>
+        }
+
+      </div>
+    </aside>
+
+    <!-- ── Right panel ─────────────────────────────────────────────────────────── -->
+    <main class="flex-1 min-h-0 overflow-y-auto flex flex-col">
+      <div class="p-5 flex flex-col gap-5">
+
+        <!-- Canvas wrapper -->
+        <div
+          #canvasWrapperRef
+          class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
+          style="height: 420px"
+        >
+          <app-function-plot [layers]="layers()" class="w-full h-full block" />
+
+          <!-- Overlay buttons (top-left) -->
+          <div class="absolute top-2 left-2 flex gap-1">
+
+            <!-- Fullscreen -->
+            <button
+              type="button"
+              (click)="toggleFullscreen()"
+              [title]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
+              class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
+            >
+              @if (isFullscreen()) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" />
+                  <line x1="10" y1="14" x2="3" y2="21" /><line x1="21" y1="3" x2="14" y2="10" />
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" />
+                  <line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+              }
+            </button>
+
+            <!-- Settings (only when result exists) -->
+            @if (hasComputedResult()) {
+              <button
+                type="button"
+                (click)="showCanvasSettings.set(!showCanvasSettings())"
+                [title]="'ode.canvasSettings' | transloco"
+                [class]="showCanvasSettings()
+                  ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent transition-colors flex items-center justify-center cursor-pointer'
+                  : 'w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+              </button>
+            }
+
+            <!-- Download -->
+            <button
+              type="button"
+              (click)="downloadCanvas()"
+              [title]="'results.downloadImage' | transloco"
+              class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+
+          </div>
+
+          <!-- Settings slide-in panel (desktop) -->
+          @if (hasComputedResult() && showCanvasSettings()) {
+            <div class="absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+              <ng-container *ngTemplateOutlet="settingsPanelTpl" />
+            </div>
+          }
+        </div>
+
+        <!-- Settings panel mobile (below canvas) -->
+        @if (hasComputedResult() && showCanvasSettings()) {
+          <div class="flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-72 overflow-hidden">
+            <ng-container *ngTemplateOutlet="settingsPanelTpl" />
+          </div>
+        }
+
+        <!-- Settings panel template -->
+        <ng-template #settingsPanelTpl>
+          <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+            <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
+              {{ 'ode.canvasSettings' | transloco }}
+            </span>
+            <button type="button" (click)="showCanvasSettings.set(false)"
+              class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light">×</button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
+
+            <!-- Curve style -->
+            <section class="px-5 py-4 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                  {{ 'ode.lineStyle' | transloco }}
+                </p>
+                <button type="button" (click)="resetLineStyles()"
+                  class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2">
+                  {{ 'ode.reset' | transloco }}
+                </button>
+              </div>
+              <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50 -mb-1">
+                {{ fnName() }}({{ ivar() }})
+              </p>
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center gap-2">
+                  <svg width="28" height="12" class="shrink-0">
+                    <line x1="2" y1="6" x2="26" y2="6"
+                      [attr.stroke]="curveColor()"
+                      [attr.stroke-width]="curveLineWidth()"
+                      [attr.stroke-dasharray]="curveDashed() ? '4 3' : 'none'"
+                      stroke-linecap="round"/>
+                  </svg>
+                  <span class="text-xs font-mono text-ink/90 dark:text-dark-ink/90 flex-1">
+                    {{ fnName() }}({{ ivar() }})
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex rounded border border-border dark:border-dark-border overflow-hidden text-[10px] font-mono shrink-0">
+                    <button type="button" (click)="curveDashed.set(false)"
+                      [class]="!curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">—</button>
+                    <button type="button" (click)="curveDashed.set(true)"
+                      [class]="curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
+                  </div>
+                  <input type="color" [value]="curveColor()" (input)="curveColor.set($any($event.target).value)"
+                    class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
+                  <input type="number" [value]="curveLineWidth()" min="0.5" max="5" step="0.5"
+                    (input)="curveLineWidth.set(+$any($event.target).value)"
+                    class="w-0 flex-1 px-2 py-1 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-xs font-mono text-center focus:outline-none focus:border-accent" />
+                  <span class="text-[10px] text-ink/65 dark:text-dark-ink/65 font-mono shrink-0">px</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Free constants sliders -->
+            @if (freeParams().length) {
+              <section class="px-4 py-4 flex flex-col gap-3">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                  {{ 'ode.freeConstants' | transloco }}
+                </p>
+                <app-param-sliders
+                  [params]="freeParams()"
+                  (valuesChange)="onParamValuesChange($event)"
+                />
+              </section>
+            }
+
+            <!-- Hint -->
+            <section class="px-4 py-3">
+              <p class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50">
+                {{ 'transforms.dragToPan' | transloco }}
+              </p>
+            </section>
+
+          </div>
+        </ng-template>
+
+        <!-- ── Result ──────────────────────────────────────────────────────── -->
+        @if (result(); as r) {
+          <div class="flex flex-col gap-3 pt-1">
+
+            <div class="flex items-center gap-2">
+              <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'ode.solution' | transloco }}</h2>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ r.executionTimeMs }} ms</span>
+            </div>
+
+            @if (!r.exists) {
+              <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
+                <p class="text-sm font-mono text-amber-700 dark:text-amber-400">{{ 'ode.noSolution' | transloco }}</p>
+              </div>
+            } @else if (r.solution?.tex) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                  {{ 'ode.solution' | transloco }} {{ fnName() }}({{ ivar() }})
+                </span>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span #odeResultEl [mathjax]="'\\(' + r.solution!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button
+                    [tex]="r.solution!.tex"
+                    [maxima]="r.solution!.maxima"
+                    [mathEl]="odeResultEl"
+                    filename="ode-solution"
+                    [label]="fnName() + '(' + ivar() + ')'"
+                  />
+                </div>
+
+                <!-- Badges: order + method -->
+                <div class="flex flex-wrap gap-2 mt-1">
+                  @if (r.order) {
+                    <span class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted">
+                      {{ 'ode.order' | transloco }} {{ r.order }}
+                    </span>
+                  }
+                  @if (r.method && r.method !== 'failed') {
+                    <span class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted">
+                      {{ r.method }}
+                    </span>
+                  }
+                  @if (r.params?.length) {
+                    <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-[10px] font-mono text-amber-700 dark:text-amber-400">
+                      {{ 'ode.generalSolution' | transloco }}: {{ r.params!.join(', ') }}
+                    </span>
+                  }
+                </div>
+
+                <!-- Alt forms -->
+                <div class="mt-2 pt-2 border-t border-border dark:border-dark-border">
+                  <button
+                    type="button"
+                    (click)="altFormsOpen.set(!altFormsOpen())"
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent transition-colors flex items-center gap-1"
+                  >
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpen() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpen()) {
+                    @if (altFormsLoading()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altForms().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altForms(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #odeAltEl [mathjax]="'\\(' + form.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button
+                                [tex]="form.tex"
+                                [maxima]="form.maxima"
+                                [mathEl]="odeAltEl"
+                                filename="ode-alt"
+                                [label]="fnName() + '(' + ivar() + ') — ' + (form.labelKey | transloco)"
+                              />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ── Laplace result ──────────────────────────────────────────────── -->
+        @if (laplaceResult(); as r) {
+          <div class="flex flex-col gap-3 pt-1">
+
+            <div class="flex items-center gap-2">
+              <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'ode.solution' | transloco }}</h2>
+              <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ r.executionTimeMs }} ms</span>
+            </div>
+
+            @if (!r.exists) {
+              <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
+                <p class="text-sm font-mono text-amber-700 dark:text-amber-400">{{ 'ode.noSolutionLaplace' | transloco }}</p>
+              </div>
+            } @else if (r.solution?.tex) {
+              <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-1">
+
+                <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
+                  {{ 'ode.solution' | transloco }} {{ fnName() }}({{ ivar() }})
+                </span>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span #lapResultEl [mathjax]="'\\(' + r.solution!.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto"></span>
+                  <app-export-button
+                    [tex]="r.solution!.tex"
+                    [maxima]="r.solution!.maxima"
+                    [mathEl]="lapResultEl"
+                    filename="ode-laplace-solution"
+                    [label]="fnName() + '(' + ivar() + ')'"
+                  />
+                </div>
+
+                <!-- Badge: Laplace engine -->
+                <div class="flex flex-wrap gap-2 mt-1">
+                  <span class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] font-mono text-muted dark:text-dark-muted">
+                    {{ 'ode.engineLaplace' | transloco }}
+                  </span>
+                </div>
+
+                <!-- Alt forms -->
+                <div class="mt-2 pt-2 border-t border-border dark:border-dark-border">
+                  <button
+                    type="button"
+                    (click)="altFormsOpen.set(!altFormsOpen())"
+                    class="text-[10px] font-mono text-muted dark:text-dark-muted cursor-pointer select-none hover:text-accent transition-colors flex items-center gap-1"
+                  >
+                    <span>{{ 'transforms.altForms' | transloco }}</span>
+                    <span class="text-[9px]">{{ altFormsOpen() ? '▲' : '▼' }}</span>
+                  </button>
+                  @if (altFormsOpen()) {
+                    @if (altFormsLoading()) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsLoading' | transloco }}</p>
+                    } @else if (altForms().length === 0) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted mt-2">{{ 'transforms.altFormsEmpty' | transloco }}</p>
+                    } @else {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (form of altForms(); track form.labelKey) {
+                          <div class="flex flex-col gap-0.5">
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">{{ form.labelKey | transloco }}</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span #lapAltEl [mathjax]="'\\(' + form.tex + '\\)'" class="text-ink dark:text-dark-ink overflow-x-auto text-sm"></span>
+                              <app-export-button
+                                [tex]="form.tex"
+                                [maxima]="form.maxima"
+                                [mathEl]="lapAltEl"
+                                filename="ode-laplace-alt"
+                                [label]="fnName() + '(' + ivar() + ') — ' + (form.labelKey | transloco)"
+                              />
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+
+              </div>
+            }
+          </div>
+        }
+
+        @if (!result() && !laplaceResult() && !loading()) {
+          <div class="text-center py-6 text-muted dark:text-dark-muted text-sm font-body">
+            {{ 'transforms.hint' | transloco }}
+            <strong class="text-ink dark:text-dark-ink">{{ 'ode.calculate' | transloco }}</strong>.
+          </div>
+        }
+
+      </div>
+    </main>
+
+  </div>
+
+  <div class="lg:hidden">
+    <app-mobile-math-keyboard
+      [extraGroup]="mobileExtraGroup"
+      (close)="showKeyboard = false"
+    />
+  </div>
+
+  <app-footer />
+</div>

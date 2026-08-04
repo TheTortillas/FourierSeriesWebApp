@@ -7,6 +7,8 @@ import {
   OnInit,
   viewChild,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
@@ -30,6 +32,7 @@ interface Waveform {
 export class HomeComponent implements OnInit, OnDestroy {
   readonly theme = inject(ThemeService);
   private readonly seo = inject(SeoService);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   ngOnInit(): void {
     this.seo.setPage('seo.home.title', 'seo.home.description', 'Fourier transform calculator, calculadora transformada de Fourier, series de Fourier, inverse Fourier transform, DFT, FFT, Parseval');
@@ -40,7 +43,26 @@ export class HomeComponent implements OnInit, OnDestroy {
     initialValue: this.transloco.getActiveLang(),
   });
 
-  private readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('heroCanvas');
+  private readonly canvasRef        = viewChild<ElementRef<HTMLCanvasElement>>('heroCanvas');
+  private readonly contentAnchorRef = viewChild<ElementRef<HTMLElement>>('contentAnchor');
+  private readonly sectionFourier   = viewChild<ElementRef<HTMLElement>>('sectionFourier');
+  private readonly sectionLaplace   = viewChild<ElementRef<HTMLElement>>('sectionLaplace');
+  private readonly sectionOde       = viewChild<ElementRef<HTMLElement>>('sectionOde');
+  private readonly sectionGrapher   = viewChild<ElementRef<HTMLElement>>('sectionGrapher');
+
+  scrollToContent(): void {
+    this.contentAnchorRef()?.nativeElement.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  scrollToSection(id: 'fourier' | 'laplace' | 'ode' | 'grapher'): void {
+    const map = {
+      fourier: this.sectionFourier,
+      laplace: this.sectionLaplace,
+      ode:     this.sectionOde,
+      grapher: this.sectionGrapher,
+    };
+    map[id]()?.nativeElement.scrollIntoView({ behavior: 'smooth' });
+  }
   private animId = 0;
   private startTime = 0;
   private lastCycleIndex = -1;
@@ -99,7 +121,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    cancelAnimationFrame(this.animId);
+    if (this.isBrowser) cancelAnimationFrame(this.animId);
   }
 
   private startAnimation(): void {

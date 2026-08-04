@@ -55,7 +55,10 @@ const FEATURE_LABEL: Record<string, string> = {
   dft_epicycles:             'DFT epiciclos',
   laplace_direct:            'Laplace directa',
   laplace_inverse:           'Laplace inversa',
-  laplace_ode:               'Laplace EDO',
+  laplace_ode:               'EDO Laplace',
+  ode_general:               'EDO general',
+  ode_ivp:                   'EDO PVI',
+  ode_bvp:                   'EDO Frontera',
   none:                      'Ninguna',
 };
 const ACADEMIC_LABEL: Record<string, string> = {

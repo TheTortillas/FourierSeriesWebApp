@@ -17,7 +17,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, filter, forkJoin, of, Subject, switchMap, take, timer } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
@@ -96,6 +96,7 @@ const VAR_PAIRS: VarPair[] = [
     ParamSlidersComponent,
     FooterComponent,
     ExportButtonComponent,
+    RouterLink,
   ],
 })
 export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
@@ -166,9 +167,14 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   showKeyboard = false;
 
   readonly mobileExtraGroup: KeyBtn[] = [
-    { label: 'δ(□)', typedText: 'delta(' },
-    { label: 'u(□)', typedText: 'heaviside(' },
+    { label: 'δ(□)', writeWithCursor: '\\operatorname{delta}\\left(\\right)' },
+    { label: 'u(□)', writeWithCursor: '\\operatorname{u}\\left(\\right)' },
+    { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+    { label: 'abs(□)', writeWithCursor: '\\operatorname{abs}\\left(\\right)' },
+    { label: '|□|', writeWithCursor: '\\left|\\right|' },
+    { label: 'i', typedText: 'i' },
     { label: '∞', write: '\\infty' },
+    { label: '-∞', write: '-\\infty' },
   ];
 
   readonly keyGroups: KeyBtn[][] = [
@@ -177,6 +183,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       { label: 'u(□)',    writeWithCursor: '\\operatorname{u}\\left(\\right)' },
       { label: 'δ(□)',    writeWithCursor: '\\operatorname{delta}\\left(\\right)' },
       { label: 'sgn(□)', writeWithCursor: '\\operatorname{sgn}\\left(\\right)' },
+      { label: 'abs(□)', writeWithCursor: '\\operatorname{abs}\\left(\\right)' },
       { label: '|□|',    writeWithCursor: '\\left|\\right|' },
     ],
     // Row 2: Trig + hiperbólicas
@@ -197,7 +204,9 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       { label: '√□', cmd: '\\sqrt' },
       { label: '(□)', writeWithCursor: '\\left(\\right)' },
       { label: 'π', typedText: 'pi' },
+      { label: 'i', typedText: 'i' },
       { label: '∞', write: '\\infty' },
+      { label: '-∞', write: '-\\infty' },
       { label: '−', write: '-' },
       { label: '⌫', keystroke: 'Backspace' },
     ],
@@ -329,7 +338,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly modes: { id: LaplaceMode; labelKey: string }[] = [
     { id: 'direct',  labelKey: 'laplace.modeDirecta' },
     { id: 'inverse', labelKey: 'laplace.modeInversa' },
-    { id: 'ode',     labelKey: 'laplace.modeOde' },
   ];
 
   setMode(m: LaplaceMode): void {

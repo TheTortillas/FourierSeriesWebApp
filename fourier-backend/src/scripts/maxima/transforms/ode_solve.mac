@@ -1,0 +1,184 @@
+/* ode_solve.mac
+   Solves ODEs symbolically.
+   - 1st / 2nd order: uses ode2() with ic1/ic2/bc2 for conditions.
+   - 3rd order (homogeneous, const coeff): char polynomial + multiplicities.
+   - IVP conditions up to 3rd order: y(x0), y'(x0), y''(x0) via linear solve.
+
+   Injected variables:
+     ODE_Y    — dependent variable symbol, e.g. y
+     ODE_X    — independent variable symbol, e.g. x
+     depends(ODE_Y, ODE_X)
+     ODE_EQ   — ODE in Maxima notation
+     ODE_MODE — "general" | "ivp" | "bvp"
+     ODE_X0, ODE_Y0, ODE_DY0, ODE_DDY0  — IVP (up to 3rd order)
+     ODE_X1, ODE_Y1, ODE_X2, ODE_Y2     — BVP
+*/
+display2d: false$
+%iargs:    false$
+radexpand: false$
+
+/* ── Helper: build general solution from characteristic polynomial ────────
+   Works for homogeneous linear const-coeff ODEs of any order.
+   Returns false if the ODE is not of that form (non-zero RHS or non-const coeffs).
+*/
+_charfun_solve(ode_eq, fn, xvar) := block(
+  [_lhs, _rhs, _ord, _coeffs, _d, _c, _isConst,
+   _r, _charpoly, _roots, _mults, _gen_rhs, _ki, _rv, _m, _j],
+  _lhs: lhs(ode_eq),
+  _rhs: rhs(ode_eq),
+  /* Must be homogeneous */
+  if _rhs # 0 then return(false),
+  /* Detect order */
+  _ord: 0,
+  for _k: 1 thru 5 do
+    if not freeof(diff(fn, xvar, _k), _lhs) then _ord: max(_ord, _k),
+  if _ord < 3 then return(false),   /* let ode2 handle 1st/2nd */
+  /* Extract and verify constant coefficients */
+  _coeffs: makelist(0, _k, 0, _ord),
+  _isConst: true,
+  for _k: 0 thru _ord do (
+    _d: if _k = 0 then fn else diff(fn, xvar, _k),
+    _c: ratcoef(_lhs, _d),
+    if not constantp(_c) then _isConst: false,
+    _coeffs[_k + 1]: _c
+  ),
+  if not _isConst then return(false),
+  /* Solve characteristic polynomial */
+  _r: gensym("r"),
+  _charpoly: sum(_coeffs[_k + 1] * _r^_k, _k, 0, _ord),
+  _roots: solve(_charpoly, _r),
+  _mults: multiplicities,
+  /* Build general solution respecting multiplicities */
+  _gen_rhs: 0,
+  _ki: 1,
+  for _i: 1 thru length(_roots) do (
+    _rv: rhs(_roots[_i]),
+    _m:  _mults[_i],
+    for _j: 0 thru _m - 1 do (
+      _gen_rhs: _gen_rhs + concat('%k, _ki) * xvar^_j * %e^(_rv * xvar),
+      _ki: _ki + 1
+    )
+  ),
+  fn = ratsimp(_gen_rhs)
+)$
+
+/* ── 1. Try ode2 (1st / 2nd order) ─────────────────────────────────────── */
+_gen: false$
+_method_used: "failed"$
+block([_r],
+  _r: errcatch(ode2(ODE_EQ, ODE_Y, ODE_X)),
+  if _r # [] then block([_v],
+    _v: first(_r),
+    if listp(_v) then _v: first(_v),
+    if _v # false then (_gen: _v, _method_used: string(method))
+  )
+)$
+
+/* ── 2. Fallback: characteristic equation (3rd+ order homogeneous) ───────── */
+if _gen = false then block([_v],
+  _v: errcatch(_charfun_solve(ODE_EQ, ODE_Y, ODE_X)),
+  if _v # [] and first(_v) # false then
+    (_gen: first(_v), _method_used: "constcoeff")
+)$
+
+/* ── 3. Detect order and constants from general solution ────────────────── */
+_is_first_order: not freeof('%c,  _gen)$
+_is_third_order: not freeof('%k3, _gen)$
+
+/* ── 4. Apply initial / boundary conditions ─────────────────────────────── */
+sol_raw: false$
+
+if _gen # false then block(
+  if ODE_MODE = "general" then (
+    sol_raw: _gen
+
+  ) elseif ODE_MODE = "ivp" then block([_r],
+    if _is_first_order then (
+      _r: errcatch(ic1(_gen, ODE_X = ODE_X0, ODE_Y = ODE_Y0))
+    ) elseif _is_third_order then block(
+      /* ic1/ic2 don't handle 3rd order — solve the %k system manually */
+      [_vars, _eqs, _ksol],
+      _vars: sublist(listofvars(_gen),
+               lambda([_v], string(_v) = "%k1" or string(_v) = "%k2" or string(_v) = "%k3")),
+      _eqs: [
+        subst(ODE_X = ODE_X0, rhs(_gen)) = ODE_Y0,
+        subst(ODE_X = ODE_X0, diff(rhs(_gen), ODE_X, 1)) = ODE_DY0,
+        subst(ODE_X = ODE_X0, diff(rhs(_gen), ODE_X, 2)) = ODE_DDY0
+      ],
+      _ksol: errcatch(solve(_eqs, _vars)),
+      if _ksol # [] and first(_ksol) # [] then
+        _r: [subst(first(_ksol), _gen)]
+      else
+        _r: []
+    ) else (
+      _r: errcatch(ic2(_gen,
+            ODE_X = ODE_X0,
+            ODE_Y = ODE_Y0,
+            'diff(ODE_Y, ODE_X) = ODE_DY0))
+    ),
+    if _r # [] then block([_v],
+      _v: first(_r),
+      if listp(_v) then _v: first(_v),
+      if _v # false then sol_raw: _v
+    )
+
+  ) elseif ODE_MODE = "bvp" then block([_r],
+    _r: errcatch(bc2(_gen,
+          ODE_X = ODE_X1, ODE_Y = ODE_Y1,
+          ODE_X = ODE_X2, ODE_Y = ODE_Y2)),
+    if _r # [] then block([_v],
+      _v: first(_r),
+      if listp(_v) then _v: first(_v),
+      if _v # false then sol_raw: _v
+    )
+  )
+)$
+
+/* ── 5. Simplify ────────────────────────────────────────────────────────── */
+if sol_raw # false then
+  sol_raw: ratsimp(sol_raw)$
+
+/* ── 6. Metadata ────────────────────────────────────────────────────────── */
+exists: is(sol_raw # false)$
+
+ode_order: if _is_third_order then 3
+           else if _is_first_order then 1
+           else 2$
+
+/* Free params in general solution */
+free_params: []$
+if exists and ODE_MODE = "general" then block([_vars],
+  _vars: listofvars(sol_raw),
+  free_params: sublist(_vars, lambda([_v],
+    string(_v) = "%c"  or string(_v) = "%k1" or
+    string(_v) = "%k2" or string(_v) = "%k3"
+  ))
+)$
+
+/* Rename %c/%k1/%k2/%k3 → C/k_1/k_2/k_3 for clean TeX */
+sol_display: sol_raw$
+if exists and length(free_params) > 0 then block([_subs],
+  _subs: [],
+  for _v in free_params do (
+    if string(_v) = "%c"  then _subs: cons(%c  = C,   _subs),
+    if string(_v) = "%k1" then _subs: cons(%k1 = k_1, _subs),
+    if string(_v) = "%k2" then _subs: cons(%k2 = k_2, _subs),
+    if string(_v) = "%k3" then _subs: cons(%k3 = k_3, _subs)
+  ),
+  sol_display: subst(_subs, sol_raw)
+)$
+
+free_params_clean: map(lambda([_v],
+  if string(_v) = "%c"  then "C"   else
+  if string(_v) = "%k1" then "k_1" else
+  if string(_v) = "%k2" then "k_2" else
+  if string(_v) = "%k3" then "k_3" else string(_v)
+), free_params)$
+
+/* ── 7. Output ──────────────────────────────────────────────────────────── */
+print("__EXISTS__")$     print(string(exists))$
+print("__SOL_MAXIMA__")$ print(string(sol_display))$
+print("__SOL_TEX__")$    if exists then tex(sol_display) else print("")$
+print("__PARAMS__")$     print(string(free_params_clean))$
+print("__ORDER__")$      print(string(ode_order))$
+print("__METHOD__")$     print(_method_used)$
