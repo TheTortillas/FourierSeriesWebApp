@@ -8,10 +8,11 @@ export class OdeService {
   async solve(input: OdeInput): Promise<OdeResult> {
     const startTime = Date.now();
 
-    const x0  = input.x0  ?? "0";
-    const y0  = input.y0  ?? "0";
-    const dy0 = input.dy0 ?? "0";
-    const x1  = input.x1  ?? "0";
+    const x0   = input.x0   ?? "0";
+    const y0   = input.y0   ?? "0";
+    const dy0  = input.dy0  ?? "0";
+    const ddy0 = input.ddy0 ?? "0";
+    const x1   = input.x1   ?? "0";
     const y1  = input.y1  ?? "0";
     const x2  = input.x2  ?? "1";
     const y2  = input.y2  ?? "0";
@@ -23,7 +24,7 @@ ODE_X: ${input.ivar}$
 depends(ODE_Y, ODE_X)$
 ODE_EQ:   ${input.equation};
 ODE_MODE: "${input.mode}";
-ODE_X0: ${x0}; ODE_Y0: ${y0}; ODE_DY0: ${dy0};
+ODE_X0: ${x0}; ODE_Y0: ${y0}; ODE_DY0: ${dy0}; ODE_DDY0: ${ddy0};
 ODE_X1: ${x1}; ODE_Y1: ${y1};
 ODE_X2: ${x2}; ODE_Y2: ${y2};
 ${script}

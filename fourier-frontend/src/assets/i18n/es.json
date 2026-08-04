@@ -1338,6 +1338,8 @@
     "exLapDirac2": "Impulso desplazado: y'' + 4y = δ(t − π)",
     "exLapStep1": "Escalón desplazado: y'' + y = u(t − π)",
     "exLapStep2": "Pulso rectangular: y' + y = u(t) − u(t − 2)",
-    "exLapImpulse": "Respuesta al impulso (ICs ≠ 0): y'' + 2y' + 5y = δ(t)"
+    "exLapImpulse": "Respuesta al impulso (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
+    "exLap3rdForce": "3er orden — forzamiento exponencial: y'''+ y''= eᵗ",
+    "exLap3rdRepeat": "3er orden — raíz triple: y'''- 3y'' + 3y' - y = 0"
   }
 }

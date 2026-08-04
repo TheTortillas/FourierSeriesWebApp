@@ -10,7 +10,9 @@ import {
   signal,
   viewChild,
   effect,
+  PLATFORM_ID,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ThemeService } from '../../../core/services/theme/theme.service';
 import { CanvasRendererService } from '../../../core/services/canvas/canvas-renderer.service';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
@@ -112,7 +114,8 @@ type ZoomMode = 'both' | 'x' | 'y';
 })
 export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   // ── Services ──────────────────────────────────────────────────────────────
-  private readonly theme = inject(ThemeService);
+  private readonly theme      = inject(ThemeService);
+  private readonly isBrowser  = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly renderer = inject(CanvasRendererService);
   private readonly plotter = inject(PlottingService);
   private readonly coords = inject(CoordinateTransformService);
@@ -420,6 +423,7 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   redraw(): void { this.scheduleRedraw(); }
 
   private scheduleRedraw(): void {
+    if (!this.isBrowser) return;
     if (this.raf !== null) cancelAnimationFrame(this.raf);
     this.raf = requestAnimationFrame(() => {
       this.raf = null;

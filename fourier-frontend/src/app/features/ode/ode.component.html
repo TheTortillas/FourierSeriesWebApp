@@ -26,10 +26,13 @@
             <button
               type="button"
               (click)="mode.set(m.id); startNewCalculation()"
-              class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all cursor-pointer"
+              [disabled]="hasComputedResult() && mode() !== m.id"
+              class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all"
               [class]="mode() === m.id
-                ? 'bg-accent text-white dark:text-white shadow-sm'
-                : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                ? 'bg-accent text-white dark:text-white shadow-sm cursor-pointer'
+                : hasComputedResult()
+                  ? 'text-muted dark:text-dark-muted opacity-40 cursor-not-allowed'
+                  : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink cursor-pointer'"
             >
               {{ m.labelKey | transloco }}
             </button>

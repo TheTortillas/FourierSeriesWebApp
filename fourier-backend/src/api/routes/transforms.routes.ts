@@ -834,7 +834,7 @@ transformsRouter.post(
         unknown:     body.unknown.trim(),
         ivar:        body.ivar.trim(),
         mode:        body.mode,
-        x0: body.x0, y0: body.y0, dy0: body.dy0,
+        x0: body.x0, y0: body.y0, dy0: body.dy0, ddy0: body.ddy0,
         x1: body.x1, y1: body.y1,
         x2: body.x2, y2: body.y2,
       };

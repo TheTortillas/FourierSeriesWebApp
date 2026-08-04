@@ -186,6 +186,14 @@ const ODE_EXAMPLES: OdeExample[] = [
     labelKey: 'ode.exLap3rd', eqTex: "y'''-6y''+11y'-6y=0", fn: 'y', ivar: 't', mode: 'laplace',
     ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '1', valueTex: '1' }, { order: 2, value: '0', valueTex: '0' }],
   },
+  {
+    labelKey: 'ode.exLap3rdForce', eqTex: "y'''+y''=e^{t}", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '0', valueTex: '0' }, { order: 1, value: '0', valueTex: '0' }, { order: 2, value: '0', valueTex: '0' }],
+  },
+  {
+    labelKey: 'ode.exLap3rdRepeat', eqTex: "y'''-3y''+3y'-y=0", fn: 'y', ivar: 't', mode: 'laplace',
+    ivpIcs: [{ order: 0, value: '1', valueTex: '1' }, { order: 1, value: '0', valueTex: '0' }, { order: 2, value: '0', valueTex: '0' }],
+  },
   // ── Laplace (desolve) — δ y u ──
   {
     labelKey: 'ode.exLapDirac1', eqTex: "y''+2y'+y=\\delta\\left(t\\right)", fn: 'y', ivar: 't', mode: 'laplace',
@@ -449,8 +457,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   );
 
   private readonly submit$ = new Subject<void>();
-  private _urlPopulated  = false;
+  private _urlPopulated    = false;
   private _restoredFromUrl = false;
+  private _loadingExample  = false;
 
   constructor() {
     // Re-parse equation whenever ivar changes
@@ -481,10 +490,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       }
     });
 
-    // Load first example when mode changes (unless coming from URL or result is active)
+    // Load first example when mode changes (unless coming from URL, result active, or triggered by loadExample itself)
     effect(() => {
       const m = this.mode();
-      if (this._restoredFromUrl || this.hasComputedResult()) return;
+      if (this._restoredFromUrl || this.hasComputedResult() || this._loadingExample) return;
       const first = ODE_EXAMPLES.find((e) => e.mode === m);
       if (first) this.loadExample(first.labelKey);
     });
@@ -563,10 +572,12 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             mode:        m as OdeMode,
             x0:    this.ivpX0(),
             x0Tex: this.ivpX0Tex(),
-            y0:    ics[0]?.value    ?? '0',
-            y0Tex: ics[0]?.valueTex ?? '0',
+            y0:     ics[0]?.value    ?? '0',
+            y0Tex:  ics[0]?.valueTex ?? '0',
             dy0:    ics[1]?.value    ?? '0',
             dy0Tex: ics[1]?.valueTex ?? '0',
+            ddy0:    ics[2]?.value    ?? '0',
+            ddy0Tex: ics[2]?.valueTex ?? '0',
             x1:    bvp[0]?.x        ?? '0',
             x1Tex: bvp[0]?.xTex     ?? '0',
             y1:    bvp[0]?.value     ?? '0',
@@ -756,7 +767,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     const ex = ODE_EXAMPLES.find((e) => e.labelKey === labelKey);
     if (!ex) return;
 
+    this._loadingExample = true;
     this.mode.set(ex.mode);
+    this._loadingExample = false;
     this.fnName.set(ex.fn);
     this.ivarId.set(ex.ivar);
     this.eqTex.set(ex.eqTex);
