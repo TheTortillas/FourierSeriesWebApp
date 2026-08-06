@@ -383,6 +383,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
 
   readonly showCanvasSettings = signal(false);
   readonly isFullscreen       = signal(false);
+  readonly isMobile           = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
 
   // ── Curve style ──────────────────────────────────────────────────────────────
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
@@ -617,6 +618,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             this._runAltForms(r.solution);
             this.plotComponent()?.resetView();
           }
+          this.showCanvasSettings.set(!this.isMobile());
         } else {
           const r = res as OdeResponse;
           this.result.set(r);
@@ -627,6 +629,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             this._runAltForms(r.solution);
             this.plotComponent()?.resetView();
           }
+          this.showCanvasSettings.set(!this.isMobile());
         }
       });
 

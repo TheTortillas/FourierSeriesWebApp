@@ -324,7 +324,7 @@
 
           <!-- Settings slide-in panel (desktop) -->
           @if (hasComputedResult() && showCanvasSettings()) {
-            <div class="absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+            <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
               <ng-container *ngTemplateOutlet="settingsPanelContent" />
             </div>
           }
@@ -334,7 +334,7 @@
 
         <!-- Mobile settings panel (below canvas, non-fullscreen) -->
         @if (hasComputedResult() && showCanvasSettings()) {
-          <div class="flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-72 overflow-hidden">
+          <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-72 overflow-hidden">
             <ng-container *ngTemplateOutlet="settingsPanelContent" />
           </div>
         }

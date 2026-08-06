@@ -4,6 +4,7 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
+  PLATFORM_ID,
   ViewChild,
   computed,
   effect,
@@ -12,7 +13,7 @@ import {
   DestroyRef,
   viewChild,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -218,6 +219,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   // ── Canvas overlay state ───────────────────────────────────────────────────
 
+  private readonly isBrowser    = isPlatformBrowser(inject(PLATFORM_ID));
   readonly showCanvasSettings = signal(false);
   readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
   readonly isFullscreen = signal(false);
@@ -763,6 +765,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.altFormsDirect.set([]); this.altFormsOpenDirect.set(false);
         if (r.exists && r.F) this._runAltForms(r.F, this.altFormsDirect, this.altFormsLoadingDirect);
         this.plotComponent()?.resetView();
+        this.showCanvasSettings.set(!this.isMobile());
       }
       if (m === 'inverse') {
         const r = result as LaplaceInverseResponse;
@@ -770,6 +773,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.altFormsInverse.set([]); this.altFormsOpenInverse.set(false);
         if (r.exists && r.f) this._runAltForms(r.f, this.altFormsInverse, this.altFormsLoadingInverse);
         this.plotComponent()?.resetView();
+        this.showCanvasSettings.set(!this.isMobile());
       }
       if (m === 'ode') {
         const r = result as LaplaceOdeResponse;
@@ -777,11 +781,13 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.altFormsOde.set([]); this.altFormsOpenOde.set(false);
         if (r.exists && r.solution) this._runAltForms(r.solution, this.altFormsOde, this.altFormsLoadingOde);
         this.plotComponent()?.resetView();
+        this.showCanvasSettings.set(!this.isMobile());
       }
     });
   }
 
   ngAfterViewChecked(): void {
+    if (!this.isBrowser) return;
     if (!this._mqInverseInited && this.mqInverseRef?.nativeElement) {
       this._mqInverseInited = true;
       void this.initInverseField();
