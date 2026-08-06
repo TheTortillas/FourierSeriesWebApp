@@ -25,7 +25,7 @@
           @for (m of modes; track m.id) {
             <button
               type="button"
-              (click)="mode.set(m.id); startNewCalculation()"
+              (click)="switchMode(m.id)"
               [disabled]="hasComputedResult()"
               class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all"
               [class]="mode() === m.id

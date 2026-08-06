@@ -462,10 +462,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   );
 
   private readonly submit$ = new Subject<void>();
-  private _urlPopulated    = false;
-  private _restoredFromUrl = false;
-  private _loadingExample  = false;
-  private _clearingResult  = false;
+  private _urlPopulated       = false;
+  private _restoredFromUrl    = false;
+  private _loadingExample     = false;
+  private _suppressAutoLoad   = false; // set by startNewCalculation, cleared by explicit tab click
 
   constructor() {
     // Re-parse equation whenever ivar changes
@@ -499,7 +499,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     // Load first example when mode changes (unless coming from URL, result active, or triggered by loadExample itself)
     effect(() => {
       const m = this.mode();
-      if (this._restoredFromUrl || this.hasComputedResult() || this._loadingExample || this._clearingResult) return;
+      if (this._restoredFromUrl || this.hasComputedResult() || this._loadingExample || this._suppressAutoLoad) return;
       const first = ODE_EXAMPLES.find((e) => e.mode === m);
       if (first) this.loadExample(first.labelKey);
     });
@@ -671,7 +671,8 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   calculate(): void { this.submit$.next(); }
 
   startNewCalculation(): void {
-    this._clearingResult = true;
+    // Suppress auto-load until the user explicitly switches tab
+    this._suppressAutoLoad = true;
     this.result.set(null);
     this.laplaceResult.set(null);
     this.errorMsg.set(null);
@@ -679,7 +680,22 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     this.paramValues.set({});
     this.altForms.set([]);
     this.showCanvasSettings.set(false);
-    this._clearingResult = false;
+  }
+
+  switchMode(m: OdeModeTab): void {
+    // Explicit tab click: allow auto-load for the new tab
+    this._suppressAutoLoad = false;
+    this.mode.set(m);
+    // If there was a result, clear it (tab change always resets)
+    if (this.hasComputedResult()) {
+      this.result.set(null);
+      this.laplaceResult.set(null);
+      this.errorMsg.set(null);
+      this.freeParams.set([]);
+      this.paramValues.set({});
+      this.altForms.set([]);
+      this.showCanvasSettings.set(false);
+    }
   }
 
   onParamValuesChange(pv: ParamValues): void { this.paramValues.set(pv); }
