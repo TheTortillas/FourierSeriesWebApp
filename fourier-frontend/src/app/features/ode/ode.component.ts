@@ -385,6 +385,8 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly isFullscreen       = signal(false);
 
   // ── Curve style ──────────────────────────────────────────────────────────────
+  readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
+
   readonly curveColor     = signal('#3b82f6');
   readonly curveLineWidth = signal(2);
   readonly curveDashed    = signal(false);
@@ -463,6 +465,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   private _urlPopulated    = false;
   private _restoredFromUrl = false;
   private _loadingExample  = false;
+  private _clearingResult  = false;
 
   constructor() {
     // Re-parse equation whenever ivar changes
@@ -496,7 +499,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     // Load first example when mode changes (unless coming from URL, result active, or triggered by loadExample itself)
     effect(() => {
       const m = this.mode();
-      if (this._restoredFromUrl || this.hasComputedResult() || this._loadingExample) return;
+      if (this._restoredFromUrl || this.hasComputedResult() || this._loadingExample || this._clearingResult) return;
       const first = ODE_EXAMPLES.find((e) => e.mode === m);
       if (first) this.loadExample(first.labelKey);
     });
@@ -668,6 +671,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   calculate(): void { this.submit$.next(); }
 
   startNewCalculation(): void {
+    this._clearingResult = true;
     this.result.set(null);
     this.laplaceResult.set(null);
     this.errorMsg.set(null);
@@ -675,7 +679,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     this.paramValues.set({});
     this.altForms.set([]);
     this.showCanvasSettings.set(false);
-    this.resetLineStyles();
+    this._clearingResult = false;
   }
 
   onParamValuesChange(pv: ParamValues): void { this.paramValues.set(pv); }

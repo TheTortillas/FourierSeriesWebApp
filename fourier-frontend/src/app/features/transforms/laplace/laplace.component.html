@@ -262,7 +262,7 @@
         >
           <app-function-plot
             [layers]="layers()"
-            [xAxisFormat]="'integer'"
+            [xAxisFormat]="xAxisFormat()"
             class="w-full h-full block"
           />
 
@@ -352,14 +352,29 @@
           <!-- Scrollable content -->
           <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
 
-            <!-- ── 1. Estilo de líneas ─────────────────────────────────── -->
+            <!-- ── 1. Eje X ───────────────────────────────────────────── -->
+            <section class="px-5 py-4 flex flex-col gap-2">
+              <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                {{ 'settingsCanvas.xAxis' | transloco }}
+              </p>
+              <div class="flex rounded border border-border dark:border-dark-border overflow-hidden w-fit text-[11px] font-mono">
+                <button type="button" (click)="xAxisFormat.set('pi')"
+                  [class]="xAxisFormat() === 'pi' ? 'px-2.5 py-1 bg-accent text-white cursor-pointer' : 'px-2.5 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">π</button>
+                <button type="button" (click)="xAxisFormat.set('e')"
+                  [class]="xAxisFormat() === 'e' ? 'px-2.5 py-1 bg-accent text-white cursor-pointer' : 'px-2.5 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">e</button>
+                <button type="button" (click)="xAxisFormat.set('integer')"
+                  [class]="xAxisFormat() === 'integer' ? 'px-2.5 py-1 bg-accent text-white cursor-pointer' : 'px-2.5 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">1,2</button>
+              </div>
+            </section>
+
+            <!-- ── 2. Estilo de líneas ─────────────────────────────────── -->
             <section class="px-5 py-4 flex flex-col gap-3">
               <div class="flex items-center justify-between">
                 <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
                   {{ 'transforms.lineStyle' | transloco }}
                 </p>
                 <button type="button" (click)="resetLineStyles()"
-                  class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2">
+                  class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors cursor-pointer">
                   {{ 'transforms.reset' | transloco }}
                 </button>
               </div>

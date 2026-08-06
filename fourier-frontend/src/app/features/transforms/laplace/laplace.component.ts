@@ -224,6 +224,8 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   // ── Canvas line style ─────────────────────────────────────────────────────
 
+  readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
+
   readonly inputColor     = signal('#dc2626');
   readonly inputLineWidth = signal(2);
   readonly inputDashed    = signal(false);
