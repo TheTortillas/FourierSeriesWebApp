@@ -102,6 +102,7 @@ export const config = {
       user: requireEnv("SMTP_CONTACT_USER"),
       pass: requireEnv("SMTP_CONTACT_PASS"),
       from: requireEnv("SMTP_CONTACT_FROM"),
+      bcc:  optionalEnv("SMTP_CONTACT_BCC", ""),
     },
   },
   app: {

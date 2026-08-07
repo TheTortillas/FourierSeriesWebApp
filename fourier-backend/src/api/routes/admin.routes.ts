@@ -1268,8 +1268,8 @@ adminRouter.post(
         return;
       }
 
-      if (body.length > 4000) {
-        res.status(400).json({ message: "El mensaje no puede superar los 4000 caracteres" });
+      if (body.length > 5000) {
+        res.status(400).json({ message: "El mensaje no puede superar los 5000 caracteres" });
         return;
       }
 

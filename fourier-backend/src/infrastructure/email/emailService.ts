@@ -363,6 +363,7 @@ export async function sendAdminReplyEmail(opts: {
   await contactTransporter.sendMail({
     from: `"${t.brand}" <${config.email.contact.from}>`,
     to: opts.to,
+    ...(config.email.contact.bcc ? { bcc: config.email.contact.bcc } : {}),
     subject: opts.subject,
     html: buildReplyHtml({
       greeting: t.greeting(opts.userName),

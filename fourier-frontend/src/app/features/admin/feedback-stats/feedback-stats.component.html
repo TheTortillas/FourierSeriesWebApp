@@ -261,8 +261,8 @@
       <textarea [(ngModel)]="replyBody" rows="8" placeholder="Escribe tu mensaje aquí…"
         class="px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent resize-y leading-relaxed"></textarea>
       <span class="text-[10px] font-mono self-end"
-        [class]="replyBody.length > 3800 ? 'text-red-400' : 'text-muted dark:text-dark-muted'">
-        {{ replyBody.length }}/4000
+        [class]="replyBody.length > 4800 ? 'text-red-400' : 'text-muted dark:text-dark-muted'">
+        {{ replyBody.length }}/5000
       </span>
     </div>
 
