@@ -1201,7 +1201,7 @@ adminRouter.get(
              FROM survey_responses
              WHERE institution IS NOT NULL AND institution <> '' AND ${dateFilter}
              GROUP BY institution
-             ORDER BY count DESC LIMIT 15
+             ORDER BY count DESC
            ) inst
            UNION ALL
            SELECT type, value, count FROM (
@@ -1209,7 +1209,7 @@ adminRouter.get(
              FROM survey_responses
              WHERE career IS NOT NULL AND career <> '' AND ${dateFilter}
              GROUP BY career
-             ORDER BY count DESC LIMIT 15
+             ORDER BY count DESC
            ) car`,
           params,
         ),

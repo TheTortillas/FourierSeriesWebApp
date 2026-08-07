@@ -47,6 +47,9 @@ export class SurveyService {
   }
 
   submit(req: SurveyRequest): Observable<{ message: string }> {
+    if (this.submitting() || this.submitted() || this.hasDone()) {
+      return new Observable((obs) => obs.complete());
+    }
     this.submitting.set(true);
     return this.http.post<{ message: string }>(`${this.base}/survey`, req).pipe(
       tap(() => {

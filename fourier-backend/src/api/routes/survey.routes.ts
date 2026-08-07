@@ -77,6 +77,10 @@ surveyRouter.post("/", optionalAuth, async (req: AuthenticatedRequest, res): Pro
   // ── Persistencia ────────────────────────────────────────────────────────────
   try {
     if (req.user?.id) {
+      const user = await userRepo.findById(req.user.id);
+      if (user?.hasDoneSurvey) {
+        res.status(200).json({ message: "Survey already received" }); return;
+      }
       await userRepo.markSurveyDone(req.user.id);
     }
 
