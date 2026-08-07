@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
@@ -98,6 +98,18 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  @ViewChild('replyDialog') private replyDialogRef!: ElementRef<HTMLDialogElement>;
+
+  // ── Reply dialog state ──────────────────────────────────────────────────
+  replyTo      = '';
+  replyName    = '';
+  replySubject = '';
+  replyBody    = '';
+  replyLang    = 'es';
+  replySending = false;
+  replySent    = false;
+  replyError   = '';
+
   loading = true;
   error   = false;
   stats: SurveyStats | null = null;
@@ -194,6 +206,49 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
     const days = Math.floor(hrs / 24);
     if (days <  7)  return `${days}d`;
     return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+  }
+
+  // ── Reply dialog ────────────────────────────────────────────────────────────
+
+  openReply(to: string, name: string, subject: string): void {
+    this.replyTo      = to;
+    this.replyName    = name;
+    this.replySubject = subject;
+    this.replyBody    = '';
+    this.replyLang    = 'es';
+    this.replySent    = false;
+    this.replyError   = '';
+    this.replyDialogRef.nativeElement.showModal();
+  }
+
+  closeReply(): void {
+    this.replyDialogRef.nativeElement.close();
+  }
+
+  sendReply(): void {
+    if (!this.replyBody.trim() || this.replySending) return;
+    this.replySending = true;
+    this.replyError   = '';
+    this.replySent    = false;
+    this.api.sendAdminReply({
+      to:       this.replyTo,
+      userName: this.replyName || this.replyTo,
+      subject:  this.replySubject,
+      body:     this.replyBody.trim(),
+      lang:     this.replyLang,
+    }).subscribe({
+      next: () => {
+        this.replySending = false;
+        this.replySent    = true;
+        this.cdr.detectChanges();
+        setTimeout(() => this.closeReply(), 1500);
+      },
+      error: () => {
+        this.replySending = false;
+        this.replyError   = 'No se pudo enviar el correo. Intenta de nuevo.';
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // ── Load ────────────────────────────────────────────────────────────────────

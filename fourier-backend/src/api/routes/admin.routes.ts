@@ -13,6 +13,7 @@ import type {
   AuditFilters,
 } from "../../domain/interfaces/repositories/IAuditRepository";
 import { ipBlocksRouter } from "./admin.ip-blocks.routes";
+import { sendAdminReplyEmail } from "../../infrastructure/email/emailService";
 
 export const adminRouter = Router();
 
@@ -850,17 +851,20 @@ adminRouter.get(
         WHERE message IS NOT NULL AND message <> ''`;
 
       const surveyBlock = `
-        SELECT 'survey' AS source, id, user_id, NULL::VARCHAR AS email,
-               'bug' AS type, bug_description AS content, created_at, NULL::SMALLINT AS rating
-        FROM survey_responses WHERE bug_description IS NOT NULL AND bug_description <> ''
+        SELECT 'survey' AS source, sr.id, sr.user_id, u.email,
+               'bug' AS type, sr.bug_description AS content, sr.created_at, NULL::SMALLINT AS rating
+        FROM survey_responses sr LEFT JOIN users u ON u.id = sr.user_id
+        WHERE sr.bug_description IS NOT NULL AND sr.bug_description <> ''
         UNION ALL
-        SELECT 'survey', id, user_id, NULL::VARCHAR,
-               'comment', general_comments, created_at, NULL::SMALLINT
-        FROM survey_responses WHERE general_comments IS NOT NULL AND general_comments <> ''
+        SELECT 'survey', sr.id, sr.user_id, u.email,
+               'comment', sr.general_comments, sr.created_at, NULL::SMALLINT
+        FROM survey_responses sr LEFT JOIN users u ON u.id = sr.user_id
+        WHERE sr.general_comments IS NOT NULL AND sr.general_comments <> ''
         UNION ALL
-        SELECT 'survey', id, user_id, NULL::VARCHAR,
-               'regression', regressions, created_at, NULL::SMALLINT
-        FROM survey_responses WHERE regressions IS NOT NULL AND regressions <> ''`;
+        SELECT 'survey', sr.id, sr.user_id, u.email,
+               'regression', sr.regressions, sr.created_at, NULL::SMALLINT
+        FROM survey_responses sr LEFT JOIN users u ON u.id = sr.user_id
+        WHERE sr.regressions IS NOT NULL AND sr.regressions <> ''`;
 
       const unionParts = source === 'feedback' ? feedbackBlock
                        : source === 'survey'   ? surveyBlock
@@ -1233,6 +1237,50 @@ adminRouter.get(
         institutions:    institutionRes.rows.filter((r) => r.type === 'institution'),
         careers:         institutionRes.rows.filter((r) => r.type === 'career'),
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Admin reply email ───────────────────────────────────────────────────────
+adminRouter.post(
+  "/reply",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { to, userName, subject, body, lang } = req.body as {
+        to: string;
+        userName: string;
+        subject: string;
+        body: string;
+        lang?: string;
+      };
+
+      if (!to || !subject || !body) {
+        res.status(400).json({ message: "to, subject y body son requeridos" });
+        return;
+      }
+
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRe.test(to)) {
+        res.status(400).json({ message: "Dirección de correo inválida" });
+        return;
+      }
+
+      if (body.length > 4000) {
+        res.status(400).json({ message: "El mensaje no puede superar los 4000 caracteres" });
+        return;
+      }
+
+      await sendAdminReplyEmail({
+        to,
+        userName: userName || "usuario",
+        subject,
+        body,
+        lang,
+      });
+
+      res.json({ message: "Correo enviado" });
     } catch (err) {
       next(err);
     }

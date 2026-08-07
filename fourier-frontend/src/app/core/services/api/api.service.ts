@@ -479,6 +479,10 @@ export class ApiService {
     return this.http.get<import('../../../domain').CalcStats>(`${this.base}/admin/calculations/stats`, { params });
   }
 
+  sendAdminReply(payload: { to: string; userName: string; subject: string; body: string; lang?: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/admin/reply`, payload);
+  }
+
   // ─── Feedback ────────────────────────────────────────────────────────────
 
   submitFeedback(body: import('../../../domain').FeedbackRequest): Observable<{ message: string }> {

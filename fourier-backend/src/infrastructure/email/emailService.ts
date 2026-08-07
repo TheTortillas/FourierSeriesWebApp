@@ -186,7 +186,66 @@ function buildHtml(opts: {
 </html>`;
 }
 
-// ── Transporter ────────────────────────────────────────────────────────────
+// ── Admin reply HTML (no CTA button — plain conversational email) ──────────
+function buildReplyHtml(opts: {
+  greeting: string;
+  body: string;
+  footer: string;
+  brand: string;
+}): string {
+  const { greeting, body, footer, brand } = opts;
+  return `<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${brand}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#ede7d9;font-family:Georgia,'Times New Roman',Times,serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+         style="background-color:#ede7d9;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0"
+               style="max-width:560px;width:100%;">
+          <tr>
+            <td align="center" style="padding-bottom:20px;">
+              <p style="margin:0;font-family:Georgia,serif;font-size:12px;
+                         letter-spacing:0.12em;text-transform:uppercase;color:#6b5e4e;">
+                ${brand}
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f5f0e8;border:1px solid #c8bca8;
+                        border-radius:12px;padding:40px 36px;">
+              <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:#1a1410;line-height:1.3;">
+                ${greeting}
+              </p>
+              <div style="width:40px;height:2px;background-color:#8b2500;margin:12px 0 20px;"></div>
+              <div style="font-size:15px;line-height:1.8;color:#3d3228;white-space:pre-wrap;">${body}</div>
+              <div style="border-top:1px solid #c8bca8;margin:28px 0 0;"></div>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding-top:24px;">
+              <p style="margin:0 0 4px;font-size:11px;color:#8a7a6c;font-family:Georgia,serif;">
+                ${footer}
+              </p>
+              <p style="margin:4px 0 0;font-size:11px;color:#a09080;font-family:Georgia,serif;">
+                © ${new Date().getFullYear()} ${brand}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+// ── Transporters ───────────────────────────────────────────────────────────
 const transporter = nodemailer.createTransport({
   host: config.email.host,
   port: config.email.port,
@@ -194,6 +253,16 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: config.email.user,
     pass: config.email.pass,
+  },
+});
+
+const contactTransporter = nodemailer.createTransport({
+  host: config.email.host,
+  port: config.email.port,
+  secure: config.email.secure,
+  auth: {
+    user: config.email.contact.user,
+    pass: config.email.contact.pass,
   },
 });
 
@@ -276,6 +345,28 @@ export async function sendRecoveryEmail(
       expiry: t.recovery.expiry,
       ignore: t.recovery.ignore,
       linkFallback: t.linkFallback,
+      footer: t.footer,
+      brand: t.brand,
+    }),
+  });
+}
+
+export async function sendAdminReplyEmail(opts: {
+  to: string;
+  userName: string;
+  subject: string;
+  body: string;
+  lang?: string;
+}): Promise<void> {
+  const l = resolveLang(opts.lang);
+  const t = STRINGS[l];
+  await contactTransporter.sendMail({
+    from: `"${t.brand}" <${config.email.contact.from}>`,
+    to: opts.to,
+    subject: opts.subject,
+    html: buildReplyHtml({
+      greeting: t.greeting(opts.userName),
+      body: opts.body,
       footer: t.footer,
       brand: t.brand,
     }),

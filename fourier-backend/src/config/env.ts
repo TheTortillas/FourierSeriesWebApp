@@ -98,6 +98,11 @@ export const config = {
     user: requireEnv("SMTP_USER"),
     pass: requireEnv("SMTP_PASS"),
     from: requireEnv("SMTP_FROM"),
+    contact: {
+      user: requireEnv("SMTP_CONTACT_USER"),
+      pass: requireEnv("SMTP_CONTACT_PASS"),
+      from: requireEnv("SMTP_CONTACT_FROM"),
+    },
   },
   app: {
     url: optionalEnv("APP_URL", "http://localhost:3000"),
