@@ -121,10 +121,20 @@
     </div>
 
     <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-      <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Países (top 10)</span>
+      <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">
+          Países {{ showAllCountries ? '(todos)' : '(top 10)' }}
+        </span>
+        @if (stats.topCountries.length > 10) {
+          <button (click)="toggleCountries()"
+            class="text-[11px] font-mono text-accent hover:underline">
+            {{ showAllCountries ? 'Ver top 10' : 'Ver todos (' + stats.topCountries.length + ')' }}
+          </button>
+        }
       </div>
-      <div class="p-4" style="height:260px;position:relative"><canvas id="svCountry"></canvas></div>
+      <div class="p-4" style="position:relative" [style.height]="showAllCountries ? (stats.topCountries.length * 28 + 24) + 'px' : '260px'">
+        <canvas id="svCountry"></canvas>
+      </div>
     </section>
 
     <!-- Institución y carrera -->

@@ -116,6 +116,7 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
 
   showAllInstitutions = false;
   showAllCareers      = false;
+  showAllCountries    = false;
 
   loadingComments = false;
   errorComments   = false;
@@ -278,6 +279,35 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Countries toggle ────────────────────────────────────────────────────────
+
+  toggleCountries(): void {
+    this.showAllCountries = !this.showAllCountries;
+    this.cdr.detectChanges();
+    this.renderCountryChart();
+  }
+
+  private renderCountryChart(): void {
+    if (!this.stats) return;
+    const slice = this.showAllCountries
+      ? this.stats.topCountries
+      : this.stats.topCountries.slice(0, 10);
+
+    // Destroy existing country chart only
+    const existing = this.charts.findIndex((c) => {
+      const canvas = c.canvas as HTMLCanvasElement | null;
+      return canvas?.id === 'svCountry';
+    });
+    if (existing !== -1) {
+      this.charts[existing].destroy();
+      this.charts.splice(existing, 1);
+    }
+
+    this.hBar('svCountry',
+      slice.map((r) => r.country),
+      slice.map((r) => r.count));
+  }
+
   // ── Charts ──────────────────────────────────────────────────────────────────
 
   private destroyCharts(): void {
@@ -342,9 +372,7 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
       s.byHowFound.map((r) => HOW_FOUND_LABEL[r.how_found] ?? r.how_found),
       s.byHowFound.map((r) => r.count));
 
-    this.hBar('svCountry',
-      s.topCountries.map((r) => r.country),
-      s.topCountries.map((r) => r.count));
+    this.renderCountryChart();
 
     this.hBar('svPurpose',
       s.byPurpose.map((r) => PURPOSE_LABEL[r.purpose] ?? r.purpose),

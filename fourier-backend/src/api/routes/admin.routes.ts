@@ -780,15 +780,16 @@ adminRouter.get(
 
       let query = `
         SELECT
-          id,
-          user_id,
-          email,
-          category::text,
-          rating,
-          message,
-          created_at,
-          (SELECT COUNT(*) FROM feedback f2 WHERE f2.category = feedback.category)::int AS category_total
-        FROM feedback
+          f.id,
+          f.user_id,
+          COALESCE(f.email, u.email) AS email,
+          f.category::text,
+          f.rating,
+          f.message,
+          f.created_at,
+          (SELECT COUNT(*) FROM feedback f2 WHERE f2.category = f.category)::int AS category_total
+        FROM feedback f
+        LEFT JOIN users u ON u.id = f.user_id
       `;
       const params: (string | number)[] = [];
 
@@ -796,11 +797,11 @@ adminRouter.get(
         category &&
         ["bug", "suggestion", "question", "other", "rating"].includes(category)
       ) {
-        query += ` WHERE category = $${params.length + 1}`;
+        query += ` WHERE f.category = $${params.length + 1}`;
         params.push(category);
       }
 
-      query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+      query += ` ORDER BY f.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
       params.push(limit, offset);
 
       const countQuery = `SELECT COUNT(*)::int AS total FROM feedback${category && ["bug", "suggestion", "question", "other", "rating"].includes(category) ? ` WHERE category = $1` : ""}`;
@@ -1110,7 +1111,7 @@ adminRouter.get(
         db.query<{ country: string; count: number }>(
           `SELECT country, COUNT(*)::int AS count
            FROM survey_responses WHERE ${dateFilter}
-           GROUP BY country ORDER BY count DESC LIMIT 10`, params,
+           GROUP BY country ORDER BY count DESC`, params,
         ),
         db.query<{ how_found: string; count: number }>(
           `SELECT how_found::text, COUNT(*)::int AS count
