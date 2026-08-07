@@ -23,9 +23,13 @@ export class SurveyService {
     // Re-evaluate visibility whenever auth state changes (login or logout).
     effect(() => {
       if (!this.store.initialized()) return;
-      if (!this.store.isAuthenticated() || this.store.hasDoneSurvey()) {
+      if (!this.store.isAuthenticated()) {
         this.promptOpen.set(false);
         this.submitted.set(false);
+      } else if (this.store.hasDoneSurvey()) {
+        this.promptOpen.set(false);
+        // Don't reset submitted here — markSurveyDone() triggers this effect
+        // immediately after a successful POST, which would wipe the success state.
       }
     });
   }
@@ -47,7 +51,7 @@ export class SurveyService {
   }
 
   submit(req: SurveyRequest): Observable<{ message: string }> {
-    if (this.submitting() || this.submitted() || this.hasDone()) {
+    if (this.submitting() || this.submitted()) {
       return new Observable((obs) => obs.complete());
     }
     this.submitting.set(true);
