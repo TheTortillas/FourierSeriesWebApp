@@ -361,15 +361,18 @@
         >
           <app-function-plot [layers]="layers()" [xAxisFormat]="xAxisFormat()" class="w-full h-full block" />
 
-          <!-- Overlay buttons (top-left) -->
-          <div class="absolute top-2 left-2 flex gap-1">
+          <!-- Overlay buttons (top-left) — shift right when settings panel is open -->
+          <div
+            class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
+            [style.left]="showCanvasSettings() && !isMobile() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'"
+          >
 
             <!-- Fullscreen -->
             <button
               type="button"
               (click)="toggleFullscreen()"
               [title]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
-              class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
+              class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
             >
               @if (isFullscreen()) {
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -391,8 +394,8 @@
                 (click)="showCanvasSettings.set(!showCanvasSettings())"
                 [title]="'ode.canvasSettings' | transloco"
                 [class]="showCanvasSettings()
-                  ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent transition-colors flex items-center justify-center cursor-pointer'
-                  : 'w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'"
+                  ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent transition-colors flex items-center justify-center cursor-pointer'
+                  : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="3" />
@@ -406,7 +409,7 @@
               type="button"
               (click)="downloadCanvas()"
               [title]="'results.downloadImage' | transloco"
-              class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
+              class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
