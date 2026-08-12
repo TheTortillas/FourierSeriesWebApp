@@ -17,7 +17,7 @@ import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, filter, forkJoin, of, Subject, switchMap, take, timer } from 'rxjs';
+import { catchError, debounceTime, filter, forkJoin, map, of, Subject, switchMap, take, timer } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
@@ -49,6 +49,7 @@ import type {
 export interface AltForm { labelKey: string; tex: string; maxima: string; }
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
+import { HistoryEntry } from '../../../domain';
 
 export type LaplaceMode = 'direct' | 'inverse' | 'ode';
 
@@ -223,6 +224,12 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly showCanvasSettings = signal(false);
   readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
   readonly isFullscreen = signal(false);
+  readonly urlCopied = signal(false);
+  readonly showShareDialog = signal(false);
+  readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
+  readonly favoriteLoading = signal(false);
+  readonly showFavoriteDialog = signal(false);
+  favoriteName = '';
 
   // ── Canvas line style ─────────────────────────────────────────────────────
 
@@ -380,6 +387,10 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.errorMsg.set(null);
     this.paramValues.set({});
     this.showCanvasSettings.set(false);
+    this.latestHistoryEntry.set(null);
+    this.showShareDialog.set(false);
+    this.showFavoriteDialog.set(false);
+    this.urlCopied.set(false);
     this.resetLineStyles();
   }
 
@@ -783,6 +794,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.plotComponent()?.resetView();
         this.showCanvasSettings.set(!this.isMobile());
       }
+      if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
     });
   }
 
@@ -972,4 +984,111 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly hasResult        = computed(() =>
     this.hasDirectResult() || this.hasInverseResult() || this.hasOdeResult()
   );
+
+  // ── Share ─────────────────────────────────────────────────────────────────
+
+  get shareHref(): string {
+    if (typeof window === 'undefined') return '';
+    return window.location.href;
+  }
+
+  openShareDialog(): void {
+    this.showShareDialog.set(true);
+  }
+
+  async copyShareUrl(): Promise<void> {
+    if (typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this.urlCopied.set(true);
+      setTimeout(() => this.urlCopied.set(false), 2000);
+    } catch {
+      // clipboard not available
+    }
+  }
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+
+  openFavoriteDialog(): void {
+    const entry = this.latestHistoryEntry();
+    if (entry) {
+      this.doToggle(entry);
+    } else {
+      this.favoriteLoading.set(true);
+      this.fetchLatestEntry(() => {
+        this.favoriteLoading.set(false);
+        const loaded = this.latestHistoryEntry();
+        if (loaded) this.doToggle(loaded);
+      });
+    }
+  }
+
+  confirmFavorite(): void {
+    const entry = this.latestHistoryEntry();
+    if (!entry) return;
+    this.favoriteLoading.set(true);
+    this.showFavoriteDialog.set(false);
+    this.api
+      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.latestHistoryEntry.set(updated);
+          this.favoriteLoading.set(false);
+          this.favoriteName = '';
+        },
+        error: () => this.favoriteLoading.set(false),
+      });
+  }
+
+  cancelFavoriteDialog(): void {
+    this.showFavoriteDialog.set(false);
+    this.favoriteName = '';
+  }
+
+  private fetchLatestEntry(callback?: () => void): void {
+    this.api
+      .getHistory({ limit: 1 })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((res) => {
+          const latest = res.entries[0] ?? null;
+          if (!latest || latest.isFavorite) return of(latest);
+          return this.api.getHistory({ favorites: true, limit: 1 }).pipe(
+            map((favRes) => {
+              const fav = favRes.entries[0];
+              return fav && JSON.stringify(fav.input) === JSON.stringify(latest.input)
+                ? fav
+                : latest;
+            }),
+            catchError(() => of(latest)),
+          );
+        }),
+      )
+      .subscribe({
+        next: (entry) => {
+          this.latestHistoryEntry.set(entry);
+          callback?.();
+        },
+        error: () => callback?.(),
+      });
+  }
+
+  private doToggle(entry: HistoryEntry): void {
+    if (entry.isFavorite) {
+      this.favoriteLoading.set(true);
+      this.api
+        .toggleFavorite(entry.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (updated) => {
+            this.latestHistoryEntry.set(updated);
+            this.favoriteLoading.set(false);
+          },
+          error: () => this.favoriteLoading.set(false),
+        });
+    } else {
+      this.showFavoriteDialog.set(true);
+    }
+  }
 }

@@ -16,7 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, forkJoin, of, Subject, switchMap } from 'rxjs';
+import { catchError, debounceTime, forkJoin, map, of, Subject, switchMap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 
@@ -45,6 +45,7 @@ import { PlottingService } from '../../core/services/canvas/plotting.service';
 import { formatApiError } from '../../shared/utils/api-error.utils';
 
 import type { OdeMode, OdeRequest, OdeResponse } from '../../domain';
+import { HistoryEntry } from '../../domain';
 import type {
   LaplaceIcCondition,
   LaplaceOdeResponse,
@@ -254,7 +255,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   private readonly isBrowser  = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly api        = inject(ApiService);
   private readonly seo        = inject(SeoService);
-  private readonly userStore  = inject(UserStore);
+  readonly userStore  = inject(UserStore);
   private readonly transloco  = inject(TranslocoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route      = inject(ActivatedRoute);
@@ -384,6 +385,12 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly showCanvasSettings = signal(false);
   readonly isFullscreen       = signal(false);
   readonly isMobile           = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
+  readonly urlCopied          = signal(false);
+  readonly showShareDialog    = signal(false);
+  readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
+  readonly favoriteLoading    = signal(false);
+  readonly showFavoriteDialog = signal(false);
+  favoriteName = '';
 
   // ── Curve style ──────────────────────────────────────────────────────────────
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
@@ -631,6 +638,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
           }
           this.showCanvasSettings.set(!this.isMobile());
         }
+        if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       });
 
     setTimeout(() => this._parseEquation(this.eqTex()), 300);
@@ -683,6 +691,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     this.paramValues.set({});
     this.altForms.set([]);
     this.showCanvasSettings.set(false);
+    this.latestHistoryEntry.set(null);
+    this.showShareDialog.set(false);
+    this.showFavoriteDialog.set(false);
+    this.urlCopied.set(false);
   }
 
   switchMode(m: OdeModeTab): void {
@@ -1045,5 +1057,112 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       'ode.seoDescription',
       this.transloco.translate('ode.seoKeywords'),
     );
+  }
+
+  // ── Share ─────────────────────────────────────────────────────────────────
+
+  get shareHref(): string {
+    if (typeof window === 'undefined') return '';
+    return window.location.href;
+  }
+
+  openShareDialog(): void {
+    this.showShareDialog.set(true);
+  }
+
+  async copyShareUrl(): Promise<void> {
+    if (typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this.urlCopied.set(true);
+      setTimeout(() => this.urlCopied.set(false), 2000);
+    } catch {
+      // clipboard not available
+    }
+  }
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+
+  openFavoriteDialog(): void {
+    const entry = this.latestHistoryEntry();
+    if (entry) {
+      this.doToggle(entry);
+    } else {
+      this.favoriteLoading.set(true);
+      this.fetchLatestEntry(() => {
+        this.favoriteLoading.set(false);
+        const loaded = this.latestHistoryEntry();
+        if (loaded) this.doToggle(loaded);
+      });
+    }
+  }
+
+  confirmFavorite(): void {
+    const entry = this.latestHistoryEntry();
+    if (!entry) return;
+    this.favoriteLoading.set(true);
+    this.showFavoriteDialog.set(false);
+    this.api
+      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.latestHistoryEntry.set(updated);
+          this.favoriteLoading.set(false);
+          this.favoriteName = '';
+        },
+        error: () => this.favoriteLoading.set(false),
+      });
+  }
+
+  cancelFavoriteDialog(): void {
+    this.showFavoriteDialog.set(false);
+    this.favoriteName = '';
+  }
+
+  private fetchLatestEntry(callback?: () => void): void {
+    this.api
+      .getHistory({ limit: 1 })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((res) => {
+          const latest = res.entries[0] ?? null;
+          if (!latest || latest.isFavorite) return of(latest);
+          return this.api.getHistory({ favorites: true, limit: 1 }).pipe(
+            map((favRes) => {
+              const fav = favRes.entries[0];
+              return fav && JSON.stringify(fav.input) === JSON.stringify(latest.input)
+                ? fav
+                : latest;
+            }),
+            catchError(() => of(latest)),
+          );
+        }),
+      )
+      .subscribe({
+        next: (entry) => {
+          this.latestHistoryEntry.set(entry);
+          callback?.();
+        },
+        error: () => callback?.(),
+      });
+  }
+
+  private doToggle(entry: HistoryEntry): void {
+    if (entry.isFavorite) {
+      this.favoriteLoading.set(true);
+      this.api
+        .toggleFavorite(entry.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (updated) => {
+            this.latestHistoryEntry.set(updated);
+            this.favoriteLoading.set(false);
+          },
+          error: () => this.favoriteLoading.set(false),
+        });
+    } else {
+      this.showFavoriteDialog.set(true);
+    }
   }
 }

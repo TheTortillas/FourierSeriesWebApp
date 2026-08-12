@@ -323,6 +323,47 @@
               </svg>
             </button>
 
+            <!-- Favorite (only when result exists and user is authenticated) -->
+            @if (hasComputedResult() && userStore.isAuthenticated()) {
+              <button
+                type="button"
+                (click)="openFavoriteDialog()"
+                [title]="latestHistoryEntry()?.isFavorite ? ('results.removeFav' | transloco) : ('results.addFav' | transloco)"
+                [class]="
+                  latestHistoryEntry()?.isFavorite
+                    ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center'
+                    : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center'
+                "
+              >
+                @if (favoriteLoading()) {
+                  <svg class="w-3.5 h-3.5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                } @else {
+                  <span class="text-sm leading-none">★</span>
+                }
+              </button>
+            }
+
+            <!-- Share URL (only when result exists) -->
+            @if (hasComputedResult()) {
+              <button
+                type="button"
+                (click)="openShareDialog()"
+                [title]="'transforms.shareLink' | transloco"
+                class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+              </button>
+            }
+
           </div>
 
           <!-- Settings slide-in panel (desktop) -->
@@ -481,6 +522,101 @@
 
           </div>
         </ng-template>
+
+        <!-- Share dialog -->
+        @if (showShareDialog()) {
+          <div
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            (click)="showShareDialog.set(false)"
+            (keydown.escape)="showShareDialog.set(false)"
+          >
+            <div
+              class="bg-paper dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl shadow-2xl w-full max-w-sm p-5"
+              (click)="$event.stopPropagation()"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                  <h3 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
+                    {{ 'transforms.shareTitle' | transloco }}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  (click)="showShareDialog.set(false)"
+                  class="w-7 h-7 flex items-center justify-center rounded text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface2 hover:text-ink dark:hover:text-dark-ink transition-colors text-lg leading-none cursor-pointer"
+                >×</button>
+              </div>
+              <p class="text-xs text-muted dark:text-dark-muted font-body mb-3">
+                {{ 'transforms.shareDescription' | transloco }}
+              </p>
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  readonly
+                  [value]="shareHref"
+                  (click)="$any($event.target).select()"
+                  class="flex-1 min-w-0 px-2.5 py-2 text-[11px] font-mono bg-paper2 dark:bg-dark-bg border border-border dark:border-dark-border rounded text-ink dark:text-dark-ink outline-none focus:border-accent cursor-text select-all"
+                />
+                <button
+                  type="button"
+                  (click)="copyShareUrl()"
+                  [class]="urlCopied()
+                    ? 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 transition-colors flex items-center gap-1.5 cursor-pointer'
+                    : 'shrink-0 px-3 py-2 text-xs font-mono rounded bg-accent text-white hover:bg-accent/90 transition-colors flex items-center gap-1.5 cursor-pointer'"
+                >
+                  @if (urlCopied()) {
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {{ 'transforms.copied' | transloco }}
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    {{ 'transforms.copy' | transloco }}
+                  }
+                </button>
+              </div>
+              @if (urlCopied()) {
+                <p class="mt-2.5 text-[11px] font-mono text-green-600 dark:text-green-400 text-center">
+                  {{ 'transforms.urlCopied' | transloco }}
+                </p>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Favorite name dialog -->
+        @if (showFavoriteDialog()) {
+          <div
+            class="border border-amber-300 dark:border-amber-700 rounded-xl p-3 bg-amber-50/60 dark:bg-amber-950/20 flex items-center gap-2 flex-wrap text-xs font-mono"
+          >
+            <span class="text-amber-700 dark:text-amber-400 shrink-0">
+              {{ 'history.favorite.nameLabel' | transloco }}
+            </span>
+            <input
+              type="text"
+              [(ngModel)]="favoriteName"
+              [placeholder]="'history.favorite.namePlaceholder' | transloco"
+              (keydown.enter)="confirmFavorite()"
+              (keydown.escape)="cancelFavoriteDialog()"
+              autofocus
+              class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-800 text-ink dark:text-dark-ink outline-none focus:border-amber-500"
+            />
+            <button type="button" (click)="confirmFavorite()" class="px-3 py-1 rounded bg-amber-400 hover:bg-amber-500 text-white transition-colors cursor-pointer">{{ 'common.save' | transloco }}</button>
+            <button type="button" (click)="cancelFavoriteDialog()" class="px-3 py-1 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer">{{ 'common.cancel' | transloco }}</button>
+          </div>
+        }
 
         <!-- Result cards -->
         @if (!hasResult() && !loading()) {
