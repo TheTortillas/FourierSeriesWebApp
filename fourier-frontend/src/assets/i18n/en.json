@@ -741,8 +741,8 @@
       "description": "Calculate the trigonometric, complex, cosine, and sine Fourier integral of piecewise-defined functions. Visualize the reconstruction and Gibbs phenomenon with an interactive slider."
     },
     "about": {
-      "title": "About Fourier & Laplace Web Calculator",
-      "description": "Fourier Web Calculator: free tool for computing Fourier series, Fourier and Laplace transforms, Fourier integrals, and solving ODEs with Laplace. Exact symbolic results with real-time visualization."
+      "title": "About AEM-Lab",
+      "description": "AEM-Lab: free tool for computing Fourier series, Fourier and Laplace transforms, Fourier integrals, and solving ODEs with Laplace. Exact symbolic results with real-time visualization."
     },
     "laplace": {
       "title": "Laplace Transform Calculator — Direct, Inverse & ODE Solver",
@@ -866,7 +866,7 @@
     },
     "s4": {
       "heading": "Did you know the previous version?",
-      "imgAlt": "Screenshot of the previous version of Fourier & Laplace Web Calculator",
+      "imgAlt": "Screenshot of the previous version of AEM-Lab",
       "usedPreviousLabel": "Had you used this tool before this version?",
       "usedPreviousYes": "Yes, I used the previous version",
       "usedPreviousNo": "No, this is my first time using it",
@@ -936,7 +936,7 @@
   },
   "about": {
     "hero": {
-      "title": "About Fourier & Laplace Web Calculator",
+      "title": "About AEM-Lab",
       "intro": "A free, open-access web tool for computing, visualizing and sharing mathematical analysis — from Fourier series and transforms to the Laplace Transform. Designed for students, engineers and scientists."
     },
     "sectionFourier": "Fourier Analysis",
