@@ -68,6 +68,5 @@ Makefile
 #
 generar_pdf_codigo.py
 benchmark/
-*.docx
 **.pdf
 Esqueleto documentacion tecnica .md

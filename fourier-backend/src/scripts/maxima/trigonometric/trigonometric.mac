@@ -58,11 +58,11 @@ bn_acum: 0;
 for i:1 thru pieces do (
     trozo: FUNC_INPUT[i],
     f_i: trozo[1],
-    a: trozo[2],
-    b: trozo[3],
-    a0_acum: a0_acum + (2/PERIOD) * integrate(f_i, INTVAR, a, b),
-    an_acum: an_acum + (2/PERIOD) * integrate(f_i * cos_core, INTVAR, a, b),
-    bn_acum: bn_acum + (2/PERIOD) * integrate(f_i * sin_core, INTVAR, a, b)
+    _a: trozo[2],
+    _b: trozo[3],
+    a0_acum: a0_acum + (2/PERIOD) * integrate(f_i, INTVAR, _a, _b),
+    an_acum: an_acum + (2/PERIOD) * integrate(f_i * cos_core, INTVAR, _a, _b),
+    bn_acum: bn_acum + (2/PERIOD) * integrate(f_i * sin_core, INTVAR, _a, _b)
 );
 
 /* Coeficientes crudos */

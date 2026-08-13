@@ -442,6 +442,22 @@ export class ResultsSummaryComponent {
     let harmonicFns: Array<{ n: number; fn: (x: number) => number }> = [];
     let dcHarmonicValue: number | null = null;
 
+    // Helper: numerically integrate the piecewise function (with params already substituted)
+    // to compute an / bn when the symbolic formula has 0/0 singularities at integer n.
+    const numericTrigCoeff = (nVal: number, kind: 'an' | 'bn', period: number, w0val: number, originX = 0): number => {
+      if (!origFns.length) return 0;
+      const norm = 2 / period;
+      let sum = 0;
+      for (const seg of origFns) {
+        if (!seg.fn || !isFinite(seg.from) || !isFinite(seg.to)) continue;
+        const kernel = kind === 'an'
+          ? (x: number) => { const y = seg.fn!(x); return isFinite(y) ? y * Math.cos(nVal * w0val * (x - originX)) : 0; }
+          : (x: number) => { const y = seg.fn!(x); return isFinite(y) ? y * Math.sin(nVal * w0val * (x - originX)) : 0; };
+        sum += math.integrateSimpsons(kernel, seg.from, seg.to);
+      }
+      return norm * sum;
+    };
+
     if (result.type === 'trigonometric') {
       const rawTerms = result.terms.terms as TrigNumericTerm[];
       const c = result.data.coefficients;
@@ -451,19 +467,20 @@ export class ResultsSummaryComponent {
       dcHarmonicValue = a0Raw / 2;
       let terms = rawTerms;
       if (hasPv) {
+        const period = origFns.length
+          ? origFns[origFns.length - 1].to - origFns[0].from
+          : 2 * Math.PI;
         const anFn = c.an?.maxima ? math.compile(c.an.maxima, 'n', pv) : null;
         const bnFn = c.bn?.maxima ? math.compile(c.bn.maxima, 'n', pv) : null;
-        if (anFn || bnFn) {
-          terms = rawTerms.map((t) => {
-            const anv = anFn?.(t.n);
-            const bnv = bnFn?.(t.n);
-            return {
-              ...t,
-              anFloat: anv !== undefined && isFinite(anv) ? anv : t.anFloat,
-              bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : t.bnFloat,
-            };
-          });
-        }
+        terms = rawTerms.map((t) => {
+          const anv = anFn?.(t.n);
+          const bnv = bnFn?.(t.n);
+          return {
+            ...t,
+            anFloat: anv !== undefined && isFinite(anv) ? anv : numericTrigCoeff(t.n, 'an', period, w0),
+            bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : numericTrigCoeff(t.n, 'bn', period, w0),
+          };
+        });
       }
       const activeTerms = terms.filter((t) => t.n <= nTerms && isHarmonicEnabled(t.n));
       approxFn = rec.buildTrigonometric(a0Raw, activeTerms, w0, activeTerms.length);
@@ -482,19 +499,20 @@ export class ResultsSummaryComponent {
       const originX = this.evalScalar(result.data.input.segments[0]?.from, undefined) ?? 0;
       let terms = rawTerms;
       if (hasPv) {
+        const period = origFns.length
+          ? origFns[origFns.length - 1].to - origFns[0].from
+          : Math.PI;
         const anFn = c.an?.maxima ? math.compile(c.an.maxima, 'n', pv) : null;
         const bnFn = c.bn?.maxima ? math.compile(c.bn.maxima, 'n', pv) : null;
-        if (anFn || bnFn) {
-          terms = rawTerms.map((t) => {
-            const anv = anFn?.(t.n);
-            const bnv = bnFn?.(t.n);
-            return {
-              ...t,
-              anFloat: anv !== undefined && isFinite(anv) ? anv : t.anFloat,
-              bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : t.bnFloat,
-            };
-          });
-        }
+        terms = rawTerms.map((t) => {
+          const anv = anFn?.(t.n);
+          const bnv = bnFn?.(t.n);
+          return {
+            ...t,
+            anFloat: anv !== undefined && isFinite(anv) ? anv : numericTrigCoeff(t.n, 'an', period, w0, originX),
+            bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : numericTrigCoeff(t.n, 'bn', period, w0, originX),
+          };
+        });
       }
       const activeTerms = terms.filter((t) => t.n <= nTerms && isHarmonicEnabled(t.n));
       if (hrMode === 'cosine') {
@@ -530,6 +548,9 @@ export class ResultsSummaryComponent {
       const c0 = this.evalScalar(c.c0?.maxima, c.c0Float ?? this.parseMaxima(c.c0.maxima)) ?? 0;
       dcHarmonicValue = c0;
       // Re-evaluate cosFloat/sinFloat with current param values, same logic as spectrumComplexTerms
+      const complexPeriod = origFns.length
+        ? origFns[origFns.length - 1].to - origFns[0].from
+        : 2 * Math.PI;
       let terms: ComplexNumericTerm[] = rawTerms;
       if (hasPv) {
         // Re(cn*e^{inw0x} + c-n*e^{-inw0x}) = 2*Re(cn)*cos(nw0x) - 2*Im(cn)*sin(nw0x)
@@ -544,8 +565,8 @@ export class ResultsSummaryComponent {
           const sinV = imV !== undefined && isFinite(imV) ? -2 * imV : null;
           return {
             ...t,
-            cosFloat: cosV !== null ? cosV : t.cosFloat,
-            sinFloat: sinV !== null ? sinV : t.sinFloat,
+            cosFloat: cosV !== null ? cosV : numericTrigCoeff(t.n, 'an', complexPeriod, w0),
+            sinFloat: sinV !== null ? sinV : numericTrigCoeff(t.n, 'bn', complexPeriod, w0),
           };
         });
       }
@@ -1296,8 +1317,8 @@ export class ResultsSummaryComponent {
       const bnv = bnFn?.(t.n);
       return {
         ...t,
-        anFloat: anv !== undefined && isFinite(anv) ? anv : t.anFloat,
-        bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : t.bnFloat,
+        anFloat: anv !== undefined && isFinite(anv) ? anv : 0,
+        bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : 0,
       };
     });
   });
