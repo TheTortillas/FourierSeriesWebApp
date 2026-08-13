@@ -13,7 +13,7 @@ const OG_LOCALE: Record<string, string> = {
   en: 'en_US',
 };
 
-const SITE_NAME = 'Fourier Web Calculator';
+const SITE_NAME = 'AEM-Lab';
 
 /**
  * Centralizes all SEO concerns: page title, meta description, Open Graph,

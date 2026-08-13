@@ -31,7 +31,7 @@ export class CalculatorComponent implements OnInit {
   readonly hasResult = this.store.hasResult;
 
   ngOnInit(): void {
-    this.seo.setPage('seo.calculator.title', 'seo.calculator.description', 'Fourier series calculator, calculadora series de Fourier, coeficientes de Fourier, Parseval identity, trigonometric series, complex Fourier series');
+    this.seo.setPage('seo.calculator.title', 'seo.calculator.description', 'Fourier Web Calculator, Fourier series calculator, calculadora series de Fourier, calculadora de series de Fourier, coeficientes de Fourier, Fourier coefficients, trigonometric Fourier series, serie trigonométrica de Fourier, complex Fourier series, serie compleja de Fourier, cosine series, serie de cosenos, sine series, serie de senos, half-range Fourier series, medio rango, even extension, odd extension, extensión par, extensión impar, Parseval identity, identidad de Parseval, piecewise function, función a trozos, discontinuous function, función discontinua, Gibbs phenomenon, fenómeno de Gibbs, an bn coefficients, coeficientes an bn, online Fourier series, series de Fourier en línea');
   }
 
   /** Set to true when URL state was restored and needs a first calculation */

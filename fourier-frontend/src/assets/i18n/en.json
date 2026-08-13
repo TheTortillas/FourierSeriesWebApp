@@ -66,6 +66,10 @@
       "message": "You're using the free beta — there will always be a free version. Some advanced features may require an account in the future.",
       "dismiss": "Dismiss beta notice"
     },
+    "rebrandBanner": {
+      "message": "Fourier Web Calculator is now AEM-Lab (Advanced Engineering Mathematics Lab) — same tool, new name.",
+      "dismiss": "Dismiss"
+    },
     "grapher": "Grapher"
   },
   "grapher": {
@@ -721,8 +725,8 @@
   },
   "seo": {
     "home": {
-      "title": "Fourier Transform Calculator — Series, IFT and DFT",
-      "description": "Free online Fourier transform calculator. Compute the Fourier transform, inverse Fourier transform, Fourier series, and DFT symbolically. Exact coefficients, real-time graphs and piecewise function support."
+      "title": "AEM-Lab — Fourier Series & Transform Calculator, Laplace and Differential Equations",
+      "description": "AEM-Lab (fouriersolver.com) — free online Fourier series and transform calculator. Compute Fourier series, Fourier transform, Laplace transform and solve ODEs symbolically. Exact coefficients, real-time graphs and piecewise function support."
     },
     "calculator": {
       "title": "Fourier Series Calculator with Interactive Graph",

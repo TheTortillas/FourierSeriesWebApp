@@ -12,6 +12,7 @@ import { FeedbackService } from '../../../core/services/feedback/feedback.servic
 import { LANGUAGES, SUPPORTED_LANG_CODES, saveLang } from '../../../core/config/languages';
 
 const BETA_BANNER_KEY = 'fwc_beta_banner_dismissed';
+const REBRAND_BANNER_KEY = 'fwc_rebrand_banner_dismissed';
 
 @Component({
   selector: 'app-nav',
@@ -41,6 +42,15 @@ export class NavComponent {
   dismissBetaBanner(): void {
     this.platform.setLocalStorageItem(BETA_BANNER_KEY, 'true');
     this.betaBannerVisible.set(false);
+  }
+
+  readonly rebrandBannerVisible = signal(
+    this.platform.getLocalStorageItem(REBRAND_BANNER_KEY) !== 'true',
+  );
+
+  dismissRebrandBanner(): void {
+    this.platform.setLocalStorageItem(REBRAND_BANNER_KEY, 'true');
+    this.rebrandBannerVisible.set(false);
   }
 
   /** Active language as a reactive signal. */

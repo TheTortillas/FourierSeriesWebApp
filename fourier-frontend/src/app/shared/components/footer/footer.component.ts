@@ -9,7 +9,7 @@ import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
   template: `
     <footer class="shrink-0 border-t border-border dark:border-dark-border px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
       <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
-        Fourier Web Calculator · {{ 'nav.footerText' | transloco }}
+        AEM-Lab · {{ 'nav.footerText' | transloco }}
       </p>
       <nav class="flex items-center gap-4">
         <a [routerLink]="'/' + lang() + '/about'"

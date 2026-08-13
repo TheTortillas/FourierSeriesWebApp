@@ -66,6 +66,10 @@
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
+    },
+    "rebrandBanner": {
+      "message": "Fourier Web Calculator ahora es AEM-Lab (Advanced Engineering Mathematics Lab) — la misma herramienta, nuevo nombre.",
+      "dismiss": "Cerrar"
     }
   },
   "grapher": {
@@ -721,8 +725,8 @@
   },
   "seo": {
     "home": {
-      "title": "Calculadora de Transformada de Fourier y Series de Fourier",
-      "description": "Calculadora simbólica de transformada de Fourier, transformada inversa y series de Fourier. Coeficientes exactos, gráficas interactivas en tiempo real y soporte para funciones definidas por tramos. Gratuita y en línea."
+      "title": "AEM-Lab — Calculadora de Series y Transformada de Fourier, Laplace y Ecuaciones Diferenciales",
+      "description": "AEM-Lab (fouriersolver.com) — calculadora simbólica de series de Fourier, transformada de Fourier, transformada de Laplace y resolución de EDOs. Coeficientes exactos, gráficas en tiempo real y soporte para funciones a trozos. Gratuita y en línea."
     },
     "calculator": {
       "title": "Calculadora de Series de Fourier con Gráfica Interactiva",

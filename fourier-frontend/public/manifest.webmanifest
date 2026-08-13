@@ -1,7 +1,7 @@
 {
-  "name": "Fourier Calculator",
-  "short_name": "Fourier",
-  "description": "Calcula series de Fourier trigonométricas, complejas y de medio rango de forma simbólica. Transformada de Fourier y DFT.",
+  "name": "Advanced Engineering Mathematics Lab",
+  "short_name": "AEM-Lab",
+  "description": "AEM-Lab: herramienta para series de Fourier, transformadas de Fourier y Laplace, integrales de Fourier, DFT y resolución de EDOs.",
   "display": "standalone",
   "orientation": "any",
   "scope": "/",

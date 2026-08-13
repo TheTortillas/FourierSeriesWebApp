@@ -1,13 +1,15 @@
-# Fourier & Laplace Web Calculator
+# AEM-Lab — Advanced Engineering Mathematics Lab
 
-A full-stack web application for symbolic computation, visualization, and interactive exploration of Fourier Series and Fourier Transforms. Combines a Maxima-powered mathematical engine with a modern Angular frontend featuring user authentication, calculation history, and a quota system.
+A full-stack web application for symbolic computation, visualization, and interactive exploration of Fourier Series, Fourier Transforms, Laplace Transforms and ODEs. Combines a Maxima-powered mathematical engine with a modern Angular frontend featuring user authentication, calculation history, and a quota system.
+
+> Formerly known as **Fourier Web Calculator** / **Fourier & Laplace Web Calculator**.
 
 **Live:** [fouriersolver.com](https://fouriersolver.com)
 
 ---
 
 <p>
-  <img src="https://img.shields.io/badge/version-v15.0-brightgreen" alt="Version">
+  <img src="https://img.shields.io/badge/version-v15.1-brightgreen" alt="Version">
   <img src="https://img.shields.io/badge/license-Non--Commercial-orange" alt="License">
   <img src="https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa&logoColor=white" alt="PWA">
   <a href="https://deepwiki.com/TheTortillas/FourierSeriesWebApp"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>

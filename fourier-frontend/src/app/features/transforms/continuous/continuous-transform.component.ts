@@ -255,7 +255,7 @@ export class ContinuousTransformComponent implements OnInit {
     this.seo.setPage(
       'seo.transforms.title',
       'seo.transforms.description',
-      'Fourier transform calculator, inverse Fourier transform, calculadora transformada de Fourier, transformada inversa de Fourier, IFT, FT, piecewise, symbolic',
+      'Fourier Web Calculator, Fourier transform calculator, calculadora transformada de Fourier, inverse Fourier transform, transformada inversa de Fourier, transformada de Fourier directa, direct Fourier transform, IFT, FT, amplitude spectrum, espectro de amplitud, phase spectrum, espectro de fase, frequency domain, dominio de la frecuencia, piecewise function, función a trozos, symbolic Fourier transform, transformada simbólica, Fourier transform of piecewise, transformada de Fourier de funciones a trozos, rectangular pulse, pulso rectangular, Gaussian, exponential decay, decaimiento exponencial, convolution theorem, teorema de convolución, online Fourier transform, transformada de Fourier en línea',
     );
   }
   readonly plotter = inject(PlottingService);

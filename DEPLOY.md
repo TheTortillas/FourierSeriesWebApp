@@ -1,4 +1,4 @@
-# Guía de despliegue — Fourier & Laplace Web Calculator
+# Guía de despliegue — AEM-Lab (Advanced Engineering Mathematics Lab)
 
 Servidor limpio (Ubuntu/Debian) → sitio en producción.  
 Ejecuta los pasos en orden. Los pasos del 1 al 16 son de **instalación inicial**; a partir del 17 es el flujo de **deploy continuo**.

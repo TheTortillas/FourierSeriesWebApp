@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# Fourier & Laplace Web Calculator — levantar entorno de dev
+# Advanced Engineering Mathematics Lab — levantar entorno de dev
 # ============================================================
 # Corre backend (tsx watch) y frontend (ng serve) en paralelo,
 # con logs prefijados y apagado limpio con Ctrl+C.
