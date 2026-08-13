@@ -16,6 +16,7 @@ import { forkJoin, finalize, of, switchMap, map, catchError, Subject, takeUntil 
 import { CalculatorStore } from '../../store/calculator.store';
 import {
   FunctionPlotComponent,
+  PlotFn,
   PlotLayer,
 } from '../../../../shared/components/function-plot/function-plot.component';
 import {
@@ -418,17 +419,16 @@ export class ResultsSummaryComponent {
       return [
         {
           curves: [],
-          onDraw(ctx, vp) {
-            for (const { fn, from, to } of origFns) {
-              if (fn && isFinite(from) && isFinite(to)) {
-                plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
-                  color: origColor,
-                  lineWidth: origWidth,
-                  dashed: origDashed,
-                });
-              }
-            }
-          },
+          fns: origFns
+            .filter(({ fn, from, to }) => fn && isFinite(from) && isFinite(to))
+            .map(({ fn, from, to }) => ({
+              fn: fn!,
+              from,
+              to,
+              color: origColor,
+              lineWidth: origWidth,
+              dashed: origDashed,
+            })),
         },
       ];
     }
@@ -583,51 +583,44 @@ export class ResultsSummaryComponent {
       }
     }
 
-    const localApprox = approxFn;
-    const localHarmonics = harmonicFns;
     const selectedN = this.selectedHarmonicN();
     const showDc = this.showDcHarmonic() && showHarmonics;
-    const dcValue = dcHarmonicValue;
 
-    return [
-      {
-        curves: [],
-        onDraw(ctx, vp) {
-          // Harmonics (drawn first, behind everything)
-          if (showDc && dcValue !== null && isFinite(dcValue) && Math.abs(dcValue) > 1e-10) {
-            plotter.plotFn(ctx, () => dcValue, vp, {
-              color: 'rgba(148, 163, 184, 0.78)',
-              lineWidth: 1.3,
-            });
-          }
-          for (let i = 0; i < localHarmonics.length; i++) {
-            const harmonic = localHarmonics[i];
-            const isSelected = selectedN === harmonic.n;
-            const isDimmed = selectedN !== null && !isSelected;
-            plotter.plotFn(ctx, harmonic.fn, vp, {
-              color: isDimmed
-                ? 'rgba(100, 116, 139, 0.22)'
-                : harmonicColors[(harmonic.n - 1) % harmonicColors.length],
-              lineWidth: isSelected ? 2.2 : 1,
-            });
-          }
-          // Original function (bounded to piece intervals)
-          for (const { fn, from, to } of origFns) {
-            if (fn && isFinite(from) && isFinite(to)) {
-              plotter.plotFnRange(ctx, fn, from, to, 400, vp, {
-                color: origColor,
-                lineWidth: origWidth,
-                dashed: origDashed,
-              });
-            }
-          }
-          // Fourier approximation (fills visible range)
-          if (localApprox) {
-            plotter.plotFn(ctx, localApprox, vp, { color: approxColorVal, lineWidth: approxWidth, dashed: approxDashed });
-          }
-        },
-      },
-    ];
+    const fns: PlotFn[] = [];
+
+    // 1. DC harmonic (horizontal constant line)
+    if (showDc && dcHarmonicValue !== null && isFinite(dcHarmonicValue) && Math.abs(dcHarmonicValue) > 1e-10) {
+      const dcVal = dcHarmonicValue;
+      fns.push({ fn: () => dcVal, color: 'rgba(148, 163, 184, 0.78)', lineWidth: 1.3 });
+    }
+
+    // 2. Individual harmonics (drawn behind everything else)
+    for (let i = 0; i < harmonicFns.length; i++) {
+      const harmonic = harmonicFns[i];
+      const isSelected = selectedN === harmonic.n;
+      const isDimmed = selectedN !== null && !isSelected;
+      fns.push({
+        fn: harmonic.fn,
+        color: isDimmed
+          ? 'rgba(100, 116, 139, 0.22)'
+          : harmonicColors[(harmonic.n - 1) % harmonicColors.length],
+        lineWidth: isSelected ? 2.2 : 1,
+      });
+    }
+
+    // 3. Original function — fixed domain per piece
+    for (const { fn, from, to } of origFns) {
+      if (fn && isFinite(from) && isFinite(to)) {
+        fns.push({ fn, from, to, color: origColor, lineWidth: origWidth, dashed: origDashed });
+      }
+    }
+
+    // 4. Fourier approximation — follows visible range
+    if (approxFn) {
+      fns.push({ fn: approxFn, color: approxColorVal, lineWidth: approxWidth, dashed: approxDashed });
+    }
+
+    return [{ curves: [], fns }];
   });
 
   /** LaTeX coefficient strings for display */
