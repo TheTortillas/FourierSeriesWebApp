@@ -8,9 +8,8 @@ import {
   signal,
   DestroyRef,
   viewChild,
-  ElementRef,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -106,8 +105,8 @@ const FI_VAR_PAIRS: FiVarPair[] = [
   selector: 'app-fourier-integral',
   templateUrl: './fourier-integral.component.html',
   imports: [
-    NgTemplateOutlet,
     NavComponent,
+    CanvasShellComponent,
     MathjaxDirective,
     FunctionPlotComponent,
     TransformSegmentComponent,
@@ -266,9 +265,7 @@ export class FourierIntegralComponent implements OnInit {
     return { symbol: name, value: pv[name] ?? 1 };
   });
 
-  // ── Fullscreen / share / favorite / mobile ────────────────────────────────
-  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
-  readonly isFullscreen = signal(false);
+  // ── Share / favorite ─────────────────────────────────────────────────────
   readonly urlCopied = signal(false);
   readonly showShareDialog = signal(false);
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
@@ -278,7 +275,6 @@ export class FourierIntegralComponent implements OnInit {
 
   // ── Canvas / view refs ───────────────────────────────────────────────────
   readonly plotComponent = viewChild(FunctionPlotComponent);
-  readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
   readonly paramSliders = viewChild(ParamSlidersComponent);
 
   // ── Computed ──────────────────────────────────────────────────────────────
@@ -666,19 +662,6 @@ export class FourierIntegralComponent implements OnInit {
       this.customConstName.set(null);
     });
 
-    // Track native fullscreen changes
-    if (typeof document !== 'undefined') {
-      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
-      document.addEventListener('fullscreenchange', handler);
-      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
-    }
-
-    // Track viewport width for mobile panel layout
-    if (typeof window !== 'undefined') {
-      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
-      window.addEventListener('resize', onResize);
-      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
-    }
   }
 
   ngOnInit(): void {
@@ -787,26 +770,6 @@ export class FourierIntegralComponent implements OnInit {
 
   onSliderInput(value: number): void {
     this.upperLimit.set(value);
-  }
-
-  toggleFullscreen(): void {
-    const el = this.canvasWrapper()?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void el.requestFullscreen();
-    }
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapper()?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fourier-integral.png';
-    a.click();
   }
 
   get shareHref(): string {
