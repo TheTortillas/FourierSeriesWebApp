@@ -242,12 +242,20 @@
 
                 <!-- Input preview -->
                 <td class="px-4 py-2.5 max-w-65">
-                  <span
-                    class="text-ink dark:text-dark-ink truncate block"
-                    [title]="inputPreview(entry)"
-                  >
-                    {{ inputPreview(entry) }}
-                  </span>
+                  @if (inputLatex(entry); as tex) {
+                    <span
+                      [mathjax]="tex"
+                      [title]="inputPreview(entry)"
+                      class="text-ink dark:text-dark-ink text-[11px] leading-snug block overflow-hidden"
+                    ></span>
+                  } @else {
+                    <span
+                      class="text-ink dark:text-dark-ink truncate block"
+                      [title]="inputPreview(entry)"
+                    >
+                      {{ inputPreview(entry) }}
+                    </span>
+                  }
                 </td>
 
                 <td class="px-4 py-2.5">
