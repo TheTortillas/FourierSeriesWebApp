@@ -865,12 +865,6 @@
             </app-canvas-shell>
           </section>
 
-          <app-favorite-dialog
-            [visible]="showFavoriteDialog()"
-            (confirmed)="onFavoriteConfirmed($event)"
-            (cancelled)="cancelFavoriteDialog()"
-          />
-
           <!-- Coefficients inspector (below canvas) -->
           @if (epicResult()) {
             <section
@@ -976,6 +970,13 @@
             </section>
           }
         }
+
+        <!-- Favorite dialog — global, aplica a todos los modos -->
+        <app-favorite-dialog
+          [visible]="showFavoriteDialog()"
+          (confirmed)="onFavoriteConfirmed($event)"
+          (cancelled)="cancelFavoriteDialog()"
+        />
 
         <!-- ── Signal chart — always visible (preview before compute, result after) ── -->
         @if (inputMode() !== 'epicycles') {

@@ -6,7 +6,7 @@ import {
   DestroyRef,
   effect,
 } from '@angular/core';
-import { DecimalPipe, LowerCasePipe, NgClass } from '@angular/common';
+import { LowerCasePipe, NgClass } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -52,7 +52,6 @@ import { CsvExportService } from '../../../../core/services/csv-export.service';
 @Component({
   selector: 'app-results-summary',
   imports: [
-    DecimalPipe,
     LowerCasePipe,
     NgClass,
     FunctionPlotComponent,

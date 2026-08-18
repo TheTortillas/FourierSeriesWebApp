@@ -10,7 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -19,7 +19,6 @@ import { filter, firstValueFrom, take } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
-import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component';
 import { FavoriteDialogComponent } from '../../../shared/components/favorite-dialog/favorite-dialog.component';
 import { CanvasColorService } from '../../../core/services/canvas/canvas-color.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
@@ -209,9 +208,7 @@ function makePreset(
     TransformSegmentComponent,
     MobileMathKeyboardComponent,
     DecimalPipe,
-    NgTemplateOutlet,
     CanvasShellComponent,
-    ShareDialogComponent,
     FavoriteDialogComponent,
   ],
 })
