@@ -49,6 +49,7 @@ import { MathquillService, KeyBtn } from '../../../core/services/math/mathquill.
 import { MobileMathKeyboardComponent } from '../../../shared/components/math-keyboard/mobile-math-keyboard.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
+import { CanvasColorService } from '../../../core/services/canvas/canvas-color.service';
 import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component';
 import { FavoriteDialogComponent } from '../../../shared/components/favorite-dialog/favorite-dialog.component';
 import {
@@ -124,58 +125,6 @@ const VAR_PAIRS: VarPair[] = [
   { id: 'custom', time: '', freq: '', timeDisplay: '', freqDisplay: '' },
 ];
 
-interface TransformColorPreset {
-  original: string;
-  originalImag: string;
-  originalMag: string;
-  result: string;
-  imag: string;
-  mag: string;
-}
-
-function getTransformColorPreset(isDark: boolean, isNeutral: boolean): TransformColorPreset {
-  if (!isNeutral && !isDark) {
-    return {
-      original: '#dc2626', // red-600   — Re f(t)
-      originalImag: '#9333ea', // purple-600 — Im f(t)
-      originalMag: '#0891b2', // cyan-600   — |f(t)|
-      result: '#2563eb', // blue-600   — Re F(w)
-      imag: '#d97706', // amber-600  — Im F(w)
-      mag: '#16a34a', // green-600  — |F(w)|
-    };
-  }
-
-  if (!isNeutral && isDark) {
-    return {
-      original: '#f87171', // red-400
-      originalImag: '#c084fc', // purple-400
-      originalMag: '#22d3ee', // cyan-400
-      result: '#60a5fa', // blue-400
-      imag: '#fbbf24', // amber-400
-      mag: '#4ade80', // green-400
-    };
-  }
-
-  if (isNeutral && !isDark) {
-    return {
-      original: '#2563eb', // blue-600
-      originalImag: '#7c3aed', // violet-600
-      originalMag: '#0891b2', // cyan-600
-      result: '#0f766e', // teal-700
-      imag: '#c2410c', // orange-700
-      mag: '#4f46e5', // indigo-600
-    };
-  }
-
-  return {
-    original: '#60a5fa', // blue-400
-    originalImag: '#a78bfa', // violet-400
-    originalMag: '#22d3ee', // cyan-400
-    result: '#2dd4bf', // teal-400
-    imag: '#fb923c', // orange-400
-    mag: '#818cf8', // indigo-400
-  };
-}
 
 @Component({
   selector: 'app-continuous-transform',
@@ -265,6 +214,7 @@ export class ContinuousTransformComponent implements OnInit {
   private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly mathUtils = inject(MathUtilsService);
   readonly theme = inject(ThemeService);
+  readonly colors = inject(CanvasColorService);
   readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -435,8 +385,6 @@ export class ContinuousTransformComponent implements OnInit {
 
   constructor() {
     effect(() => {
-      void this.theme.theme();
-      void this.theme.palette();
       const preset = this.currentColorPreset();
       if (!this.customOriginalColor()) this.originalColor.set(preset.original);
       if (!this.customOriginalImagColor()) this.originalImagColor.set(preset.originalImag);
@@ -600,9 +548,7 @@ export class ContinuousTransformComponent implements OnInit {
     });
   }
 
-  readonly currentColorPreset = computed(() =>
-    getTransformColorPreset(this.theme.isDark, this.theme.isNeutral),
-  );
+  readonly currentColorPreset = this.colors.transformColors;
 
   // ── Computed ──────────────────────────────────────────────────────────────
 

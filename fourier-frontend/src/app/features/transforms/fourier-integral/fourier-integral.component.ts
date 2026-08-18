@@ -34,6 +34,7 @@ import { PlottingService } from '../../../core/services/canvas/plotting.service'
 import { CoordinateTransformService } from '../../../core/services/canvas/coordinate-transform.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import { ThemeService } from '../../../core/services/theme/theme.service';
+import { CanvasColorService } from '../../../core/services/canvas/canvas-color.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { TransformSegmentComponent, TransformSegmentDraft } from '../continuous/transform-segment.component';
 import { MathquillService, KeyBtn } from '../../../core/services/math/mathquill.service';
@@ -127,6 +128,7 @@ export class FourierIntegralComponent implements OnInit {
   readonly mqs = inject(MathquillService);
   readonly userStore = inject(UserStore);
   readonly theme = inject(ThemeService);
+  readonly colors = inject(CanvasColorService);
   readonly plotter = inject(PlottingService);
   readonly coordTransform = inject(CoordinateTransformService);
   readonly mathUtils = inject(MathUtilsService);
@@ -653,10 +655,9 @@ export class FourierIntegralComponent implements OnInit {
 
     // Sync colors with theme
     effect(() => {
-      void this.theme.theme();
-      const isDark = this.theme.isDark;
-      this.originalColor.set(isDark ? '#f87171' : '#dc2626');
-      this.reconstructColor.set(isDark ? '#60a5fa' : '#2563eb');
+      const c = this.colors.integralColors();
+      this.originalColor.set(c.input);
+      this.reconstructColor.set(c.result);
     });
 
     // Reset custom axis name when result changes
@@ -893,9 +894,9 @@ export class FourierIntegralComponent implements OnInit {
   }
 
   resetColors(): void {
-    const isDark = this.theme.isDark;
-    this.originalColor.set(isDark ? '#f87171' : '#dc2626');
-    this.reconstructColor.set(isDark ? '#60a5fa' : '#2563eb');
+    const c = this.colors.integralColors();
+    this.originalColor.set(c.input);
+    this.reconstructColor.set(c.result);
     this.originalLineWidth.set(2);
     this.reconstructLineWidth.set(2);
     this.originalDashed.set(true);

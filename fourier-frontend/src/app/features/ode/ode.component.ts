@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CanvasShellComponent } from '../../shared/components/canvas-shell/canvas-shell.component';
+import { CanvasColorService } from '../../core/services/canvas/canvas-color.service';
 import { ShareDialogComponent } from '../../shared/components/share-dialog/share-dialog.component';
 import { FavoriteDialogComponent } from '../../shared/components/favorite-dialog/favorite-dialog.component';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -258,6 +259,7 @@ const ODE_EXAMPLES: OdeExample[] = [
 export class OdeComponent implements OnInit, AfterViewChecked {
   private readonly isBrowser  = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly api        = inject(ApiService);
+  readonly colors             = inject(CanvasColorService);
   private readonly seo        = inject(SeoService);
   readonly userStore  = inject(UserStore);
   private readonly transloco  = inject(TranslocoService);
@@ -398,7 +400,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly curveDashed    = signal(false);
 
   resetLineStyles(): void {
-    this.curveColor.set('#3b82f6');
+    this.curveColor.set(this.colors.singleCurveDefault());
     this.curveLineWidth.set(2);
     this.curveDashed.set(false);
   }
@@ -474,6 +476,11 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   private _suppressAutoLoad   = false; // set by startNewCalculation, cleared by explicit tab click
 
   constructor() {
+    // Sync default curve color with theme
+    effect(() => {
+      this.curveColor.set(this.colors.singleCurveDefault());
+    });
+
     // Re-parse equation whenever ivar changes
     effect(() => {
       const ivar = this.ivar();

@@ -31,6 +31,7 @@ import { MathjaxDirective } from '../../../../shared/directives/mathjax.directiv
 import { ApiService } from '../../../../core/services/api/api.service';
 import { UserStore } from '../../../../core/services/auth/user.store';
 import { ThemeService } from '../../../../core/services/theme/theme.service';
+import { CanvasColorService } from '../../../../core/services/canvas/canvas-color.service';
 import { SpectrumChartComponent } from '../../../../shared/components/spectrum-chart/spectrum-chart.component';
 import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
@@ -47,79 +48,6 @@ import { ExportButtonComponent } from '../../../../shared/components/export-butt
 import { CsvExportService } from '../../../../core/services/csv-export.service';
 
 /** Cycling hue palette for individual harmonics */
-interface SeriesColorPreset {
-  original: string;
-  approx: string;
-  harmonics: string[];
-}
-
-function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorPreset {
-  if (!isNeutral && !isDark) {
-    return {
-      original: '#8b2500',
-      approx: '#1a4a6b',
-      harmonics: [
-        'hsla(217, 70%, 55%, 0.55)',
-        'hsla(145, 60%, 45%, 0.55)',
-        'hsla(38, 80%, 50%, 0.55)',
-        'hsla(270, 60%, 60%, 0.55)',
-        'hsla(0, 70%, 55%, 0.55)',
-        'hsla(185, 65%, 45%, 0.55)',
-        'hsla(320, 60%, 55%, 0.55)',
-        'hsla(60, 70%, 45%, 0.55)',
-      ],
-    };
-  }
-
-  if (!isNeutral && isDark) {
-    return {
-      original: '#e0ad74',
-      approx: '#79b6de',
-      harmonics: [
-        'hsla(210, 85%, 72%, 0.62)',
-        'hsla(145, 65%, 58%, 0.62)',
-        'hsla(36, 90%, 62%, 0.62)',
-        'hsla(280, 70%, 72%, 0.62)',
-        'hsla(0, 80%, 68%, 0.62)',
-        'hsla(185, 75%, 62%, 0.62)',
-        'hsla(325, 70%, 70%, 0.62)',
-        'hsla(60, 80%, 62%, 0.62)',
-      ],
-    };
-  }
-
-  if (isNeutral && !isDark) {
-    return {
-      original: '#2563eb',
-      approx: '#0f766e',
-      harmonics: [
-        'hsla(217, 78%, 52%, 0.5)',
-        'hsla(162, 70%, 35%, 0.5)',
-        'hsla(280, 60%, 55%, 0.5)',
-        'hsla(29, 92%, 48%, 0.5)',
-        'hsla(348, 78%, 50%, 0.5)',
-        'hsla(198, 80%, 42%, 0.5)',
-        'hsla(83, 62%, 42%, 0.5)',
-        'hsla(44, 90%, 45%, 0.5)',
-      ],
-    };
-  }
-
-  return {
-    original: '#60a5fa',
-    approx: '#2dd4bf',
-    harmonics: [
-      'hsla(213, 90%, 72%, 0.62)',
-      'hsla(168, 80%, 60%, 0.62)',
-      'hsla(280, 80%, 72%, 0.62)',
-      'hsla(32, 95%, 65%, 0.62)',
-      'hsla(350, 90%, 72%, 0.62)',
-      'hsla(190, 88%, 66%, 0.62)',
-      'hsla(96, 75%, 62%, 0.62)',
-      'hsla(48, 95%, 66%, 0.62)',
-    ],
-  };
-}
 
 @Component({
   selector: 'app-results-summary',
@@ -149,6 +77,7 @@ export class ResultsSummaryComponent {
   readonly api = inject(ApiService);
   readonly userStore = inject(UserStore);
   readonly theme = inject(ThemeService);
+  readonly colors = inject(CanvasColorService);
   readonly destroyRef = inject(DestroyRef);
   private readonly csvExport = inject(CsvExportService);
 
@@ -1446,8 +1375,6 @@ export class ResultsSummaryComponent {
 
   constructor() {
     effect(() => {
-      void this.theme.theme();
-      void this.theme.palette();
       const preset = this.currentColorPreset();
       if (!this.customOriginalColor()) this.originalColor.set(preset.original);
       if (!this.customApproxColor()) this.approxColor.set(preset.approx);
@@ -1521,9 +1448,7 @@ export class ResultsSummaryComponent {
 
   }
 
-  readonly currentColorPreset = computed(() =>
-    getSeriesColorPreset(this.theme.isDark, this.theme.isNeutral),
-  );
+  readonly currentColorPreset = this.colors.seriesColors;
 
   readonly harmonicColors = computed(() => this.currentColorPreset().harmonics);
 

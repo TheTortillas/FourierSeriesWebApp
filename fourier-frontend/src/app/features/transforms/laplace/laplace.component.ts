@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
+import { CanvasColorService } from '../../../core/services/canvas/canvas-color.service';
 import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component';
 import { FavoriteDialogComponent } from '../../../shared/components/favorite-dialog/favorite-dialog.component';
 import { FormsModule } from '@angular/forms';
@@ -109,6 +110,7 @@ const VAR_PAIRS: VarPair[] = [
 export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly api        = inject(ApiService);
   readonly userStore  = inject(UserStore);
+  readonly colors     = inject(CanvasColorService);
   private readonly transloco  = inject(TranslocoService);
   private readonly seo        = inject(SeoService);
   private readonly route      = inject(ActivatedRoute);
@@ -133,6 +135,13 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   private _urlPopulated = false;
 
   constructor() {
+    // ── 0. Sync default colors with theme (user override via color picker resets on next theme change) ─
+    effect(() => {
+      const c = this.colors.laplaceColors();
+      this.inputColor.set(c.input);
+      this.resultColor.set(c.result);
+    });
+
     // ── 1. Restore state from URL and auto-calculate ──────────────────────
     const encoded = this.route.snapshot.queryParamMap.get('s');
     if (encoded) {
@@ -244,10 +253,11 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly resultDashed   = signal(false);
 
   resetLineStyles(): void {
-    this.inputColor.set('#dc2626');
+    const c = this.colors.laplaceColors();
+    this.inputColor.set(c.input);
     this.inputLineWidth.set(2);
     this.inputDashed.set(false);
-    this.resultColor.set('#2563eb');
+    this.resultColor.set(c.result);
     this.resultLineWidth.set(2);
     this.resultDashed.set(false);
   }
