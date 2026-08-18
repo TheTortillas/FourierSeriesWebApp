@@ -13,7 +13,8 @@ import {
   DestroyRef,
   viewChild,
 } from '@angular/core';
-import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
+import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -88,8 +89,8 @@ const VAR_PAIRS: VarPair[] = [
   templateUrl: './laplace.component.html',
   imports: [
     NavComponent,
-    NgTemplateOutlet,
     MathjaxDirective,
+    CanvasShellComponent,
     TransformSegmentComponent,
     FormsModule,
     TranslocoPipe,
@@ -116,7 +117,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   @ViewChild('mqInverseExpr')   private mqInverseRef!:   ElementRef<HTMLElement>;
   @ViewChild('mqOdeEquation')   private mqOdeEqRef!:     ElementRef<HTMLElement>;
-  @ViewChild('canvasWrapperRef') private canvasWrapperRef!: ElementRef<HTMLElement>;
   readonly plotComponent = viewChild(FunctionPlotComponent);
 
   inverseField:  MathField | null = null;
@@ -222,8 +222,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   private readonly isBrowser    = isPlatformBrowser(inject(PLATFORM_ID));
   readonly showCanvasSettings = signal(false);
-  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
-  readonly isFullscreen = signal(false);
   readonly urlCopied = signal(false);
   readonly showShareDialog = signal(false);
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
@@ -583,28 +581,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     return isFinite(result) ? result : NaN;
   }
 
-  // ── Canvas overlay actions ─────────────────────────────────────────────────
-
-  toggleFullscreen(): void {
-    const el = this.canvasWrapperRef?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void el.requestFullscreen();
-    }
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapperRef?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'laplace-transform.png';
-    a.click();
-  }
-
   // ── URL state ─────────────────────────────────────────────────────────────
 
   private encodeState(): string {
@@ -690,13 +666,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       'Laplace transform calculator, transformada de Laplace, inverse Laplace transform, transformada inversa de Laplace, ODE solver, resolución de EDOs, differential equations, ecuaciones diferenciales ordinarias, Laplace method, método de Laplace, partial fractions, fracciones parciales, piecewise functions, funciones a trozos, initial conditions, condiciones iniciales, step function, Heaviside, Dirac delta, impulse response, graph Laplace transform, graficar transformada de Laplace, symbolic math, cálculo simbólico',
     );
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', () => this.isMobile.set(window.innerWidth < 1024));
-      document.addEventListener('fullscreenchange', () => {
-        this.isFullscreen.set(!!document.fullscreenElement);
-      });
-    }
-
     this.submit$.pipe(
       debounceTime(50),
       switchMap(() => {
@@ -776,7 +745,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.altFormsDirect.set([]); this.altFormsOpenDirect.set(false);
         if (r.exists && r.F) this._runAltForms(r.F, this.altFormsDirect, this.altFormsLoadingDirect);
         this.plotComponent()?.resetView();
-        this.showCanvasSettings.set(!this.isMobile());
+        this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
       }
       if (m === 'inverse') {
         const r = result as LaplaceInverseResponse;
@@ -784,7 +753,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.altFormsInverse.set([]); this.altFormsOpenInverse.set(false);
         if (r.exists && r.f) this._runAltForms(r.f, this.altFormsInverse, this.altFormsLoadingInverse);
         this.plotComponent()?.resetView();
-        this.showCanvasSettings.set(!this.isMobile());
+        this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
       }
       if (m === 'ode') {
         const r = result as LaplaceOdeResponse;
@@ -792,7 +761,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.altFormsOde.set([]); this.altFormsOpenOde.set(false);
         if (r.exists && r.solution) this._runAltForms(r.solution, this.altFormsOde, this.altFormsLoadingOde);
         this.plotComponent()?.resetView();
-        this.showCanvasSettings.set(!this.isMobile());
+        this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
       }
       if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
     });
