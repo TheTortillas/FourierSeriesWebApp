@@ -1,0 +1,128 @@
+<app-canvas-shell
+  class="h-80 block"
+  [showSettings]="showStylePanel()"
+  [hasResult]="true"
+  [showShare]="false"
+  [showFavorite]="false"
+  filename="spectrum.png"
+  (settingsToggle)="showStylePanel.set(!showStylePanel())"
+>
+  <app-function-plot
+    [layers]="layers()"
+    [initialUnit]="48"
+    [xAxisFormat]="'integer'"
+    (mathPointerMove)="onMathPointerMove($event)"
+  />
+
+  <!-- Hovered point tooltip -->
+  @if (hoveredPoint(); as hov) {
+    <div class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none z-10
+      px-3 py-2 rounded-lg border border-border dark:border-dark-border
+      bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow text-[11px] font-mono
+      flex gap-3 items-center whitespace-nowrap">
+      <span class="font-semibold" [style.color]="stemColor()">{{ hov.label }}</span>
+      <span class="text-ink/60 dark:text-dark-ink/60">= <span class="text-ink dark:text-dark-ink font-semibold">{{ hov.value.toFixed(6) }}</span></span>
+    </div>
+  }
+
+  <ng-template #settingsPanel>
+    <!-- Header -->
+    <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+      <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'settingsCanvas.spectrumSettings' | transloco }}</span>
+      <button type="button" (click)="showStylePanel.set(false)"
+        class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light"
+      >×</button>
+    </div>
+
+    <!-- Scrollable content -->
+    <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
+
+    <!-- ── Vista: selector de modo con color editable por modo ──── -->
+    <section class="px-5 py-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between">
+        <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'settingsCanvas.spectrumView' | transloco }}</p>
+        <button type="button" (click)="resetAllColors()"
+          class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2"
+        >{{ 'settingsCanvas.spectrumResetColors' | transloco }}</button>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        @for (option of displayOptions(); track option.value) {
+          <div
+            class="flex items-center gap-2 px-3 py-1.5 rounded border transition-colors cursor-pointer"
+            [class]="spectrumMode() === option.value
+              ? 'border-transparent'
+              : 'border-border dark:border-dark-border hover:border-accent/50'"
+            [style.borderColor]="spectrumMode() === option.value ? optionColor(option.value) : null"
+            [style.backgroundColor]="spectrumMode() === option.value ? colorWithAlpha(optionColor(option.value), 0.10) : null"
+            (click)="spectrumMode.set(option.value)"
+          >
+            <input type="color"
+              [value]="optionColor(option.value)"
+              (input)="$event.stopPropagation(); spectrumMode.set(option.value); setStemColor($any($event.target).value)"
+              (click)="$event.stopPropagation()"
+              class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0 shrink-0"
+              [style.accentColor]="optionColor(option.value)"
+            />
+            <span class="text-xs font-mono flex-1 select-none"
+              [style.color]="spectrumMode() === option.value ? optionColor(option.value) : null"
+              [class]="spectrumMode() === option.value ? 'font-semibold' : 'text-ink/75 dark:text-dark-ink/75'"
+            >{{ option.label }}</span>
+            @if (customColors()[option.value]) {
+              <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.backgroundColor]="optionColor(option.value)"></span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- ── Forma del stem (global) ─────────────────────────────── -->
+    <section class="px-5 py-4 flex flex-col gap-3">
+      <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'settingsCanvas.spectrumMarkerShape' | transloco }}</p>
+
+      <div class="grid grid-cols-2 gap-2">
+        @for (s of stemStyles; track s.value) {
+          <button type="button"
+            (click)="stemStyle.set(s.value)"
+            class="flex flex-col items-center gap-1.5 py-2.5 rounded border transition-colors cursor-pointer"
+            [class]="stemStyle() === s.value
+              ? 'border-accent bg-accent/10 text-accent'
+              : 'border-border dark:border-dark-border text-ink/70 dark:text-dark-ink/70 hover:border-accent/50'"
+          >
+            <svg width="22" height="28" viewBox="0 0 22 28">
+              <line x1="11" y1="26" x2="11" y2="6"
+                [attr.stroke]="stemStyle() === s.value ? stemColor() : 'currentColor'"
+                stroke-width="1.5" stroke-linecap="round"/>
+              @if (s.value === 'filled') {
+                <circle cx="11" cy="5" r="4" [attr.fill]="stemStyle() === s.value ? stemColor() : 'currentColor'"/>
+              } @else if (s.value === 'open') {
+                <circle cx="11" cy="5" r="3.5"
+                  fill="none"
+                  [attr.stroke]="stemStyle() === s.value ? stemColor() : 'currentColor'"
+                  stroke-width="1.5"/>
+              } @else if (s.value === 'square') {
+                <rect x="7" y="1" width="8" height="8"
+                  [attr.fill]="stemStyle() === s.value ? stemColor() : 'currentColor'"/>
+              } @else if (s.value === 'diamond') {
+                <polygon points="11,1 16,5 11,9 6,5"
+                  [attr.fill]="stemStyle() === s.value ? stemColor() : 'currentColor'"/>
+              }
+            </svg>
+            <span class="text-[10px] font-mono">{{ s.labelKey | transloco }}</span>
+          </button>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono text-ink/90 dark:text-dark-ink/90">{{ 'settingsCanvas.spectrumLineWidth' | transloco }}</span>
+          <span class="text-sm font-semibold font-mono text-ink dark:text-dark-ink tabular-nums">{{ stemWidth().toFixed(1) }}</span>
+        </div>
+        <input type="range" min="0.5" max="5" step="0.1" [value]="stemWidth()"
+          (input)="stemWidth.set(+$any($event.target).value)"
+          class="w-full accent-accent h-1.5" />
+      </div>
+    </section>
+
+    </div><!-- end scrollable -->
+  </ng-template>
+</app-canvas-shell>

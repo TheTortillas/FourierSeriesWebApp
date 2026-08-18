@@ -18,6 +18,10 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { filter, firstValueFrom, take } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
+import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
+import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../../shared/components/favorite-dialog/favorite-dialog.component';
+import { CanvasColorService } from '../../../core/services/canvas/canvas-color.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { ApiService } from '../../../core/services/api/api.service';
 import { UserStore } from '../../../core/services/auth/user.store';
@@ -206,12 +210,16 @@ function makePreset(
     MobileMathKeyboardComponent,
     DecimalPipe,
     NgTemplateOutlet,
+    CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
   ],
 })
 export class DftComponent implements OnInit, OnDestroy {
   private readonly seo = inject(SeoService);
   private readonly api = inject(ApiService);
   private readonly theme = inject(ThemeService);
+  readonly colors = inject(CanvasColorService);
   private readonly du = inject(DrawingUtilsService);
   private readonly coords = inject(CoordinateTransformService);
   private readonly plotter = inject(PlottingService);
@@ -229,9 +237,6 @@ export class DftComponent implements OnInit, OnDestroy {
 
   readonly signalPlotRef = viewChild<FunctionPlotComponent>('signalPlot');
   readonly spectrumPlotRef = viewChild<FunctionPlotComponent>('spectrumPlot');
-  readonly specWrapperRef = viewChild<ElementRef<HTMLDivElement>>('spectrumWrapper');
-  readonly signalWrapperRef = viewChild<ElementRef<HTMLDivElement>>('signalWrapper');
-  readonly epicWrapperRef = viewChild<ElementRef<HTMLDivElement>>('epicWrapper');
 
   // ── Mode / algorithm / normalization ────────────────────────────────────────
   readonly inputMode = signal<DftInputMode>('function');
@@ -341,9 +346,6 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly showReconstruction = signal(true);
   readonly showCanvasSettings = signal(false);
   readonly showSpecSettings = signal(false);
-  readonly isFullscreen = signal(false);
-  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
-
   // ── Spectrum mode ──────────────────────────────────────────────────────────
   readonly specMode = signal<'amplitude' | 'phase'>('amplitude');
   readonly fftShift = signal(true);
@@ -380,7 +382,6 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly showFavoriteDialog = signal(false);
   readonly favoriteLoading = signal(false);
-  favoriteName = '';
 
   // ── Signal canvas X-axis format ─────────────────────────────────────────────
   readonly signalXAxisFormat = signal<'integer' | 'pi' | 'e'>('integer');
@@ -848,18 +849,6 @@ export class DftComponent implements OnInit, OnDestroy {
       this.spectrumPlotRef()?.redraw();
     });
 
-    if (typeof window !== 'undefined') {
-      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
-      window.addEventListener('resize', onResize);
-      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
-    }
-
-    if (typeof document !== 'undefined') {
-      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
-      document.addEventListener('fullscreenchange', handler);
-      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
-    }
-
     // Sync result → URL query param + feedback/survey prompt (function/manual modes)
     effect(() => {
       if (this.result()) {
@@ -1071,8 +1060,8 @@ export class DftComponent implements OnInit, OnDestroy {
     this.selectedCoeff.set(null);
     this.hoveredCoeff.set(null);
     this.dftSortByAmplitude.set(false);
-    this.showCanvasSettings.set(!this.isMobile());
-    this.showSpecSettings.set(!this.isMobile());
+    this.showCanvasSettings.set(true);
+    this.showSpecSettings.set(true);
 
     // Track quota on backend (manual compute is client-side, so we fire a lightweight call)
     this.api
@@ -1150,8 +1139,8 @@ export class DftComponent implements OnInit, OnDestroy {
         this.selectedCoeff.set(null);
         this.hoveredCoeff.set(null);
         this.dftSortByAmplitude.set(false);
-        this.showCanvasSettings.set(!this.isMobile());
-        this.showSpecSettings.set(!this.isMobile());
+        this.showCanvasSettings.set(true);
+        this.showSpecSettings.set(true);
         this.userStore.refreshQuota();
         if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       },
@@ -1435,27 +1424,6 @@ export class DftComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Fullscreen ─────────────────────────────────────────────────────────────
-
-  toggleFullscreen(wrapperRef: ElementRef<HTMLDivElement> | undefined): void {
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void wrapperRef?.nativeElement?.requestFullscreen();
-    }
-  }
-
-  // ── Download ───────────────────────────────────────────────────────────────
-
-  downloadCanvas(wrapperRef: ElementRef<HTMLDivElement> | undefined, filename: string): void {
-    const canvas = wrapperRef?.nativeElement?.querySelector('canvas') as HTMLCanvasElement | null;
-    if (!canvas) return;
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = filename;
-    a.click();
-  }
-
   exportCsv(): void {
     const coeffs = this.allCoeffs();
     if (!coeffs.length) return;
@@ -1490,19 +1458,18 @@ export class DftComponent implements OnInit, OnDestroy {
     });
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -1510,7 +1477,6 @@ export class DftComponent implements OnInit, OnDestroy {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   private fetchLatestEntry(callback?: () => void): void {
@@ -1599,7 +1565,7 @@ export class DftComponent implements OnInit, OnDestroy {
       this.epicTime.set(0);
       this.epicTrace.set([]);
       this.epicSelectedK.set(null);
-      this.showEpicSettings.set(!this.isMobile());
+      this.showEpicSettings.set(true);
       this.userStore.refreshQuota();
       if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
     } catch (err) {

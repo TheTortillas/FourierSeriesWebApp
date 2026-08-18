@@ -43,7 +43,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 @Component({
   selector: 'app-canvas-shell',
   templateUrl: './canvas-shell.component.html',
-  styles: [`:host { display: block; height: 100%; }`],
+  styles: [`:host { display: block; }`],
   imports: [NgTemplateOutlet, TranslocoPipe],
 })
 export class CanvasShellComponent implements OnInit {
@@ -60,6 +60,8 @@ export class CanvasShellComponent implements OnInit {
   readonly favoriteLoading = input<boolean>(false);
   /** Nombre del archivo para la descarga PNG. */
   readonly filename = input<string>('canvas.png');
+  /** Si se debe mostrar el botón de compartir (default true). */
+  readonly showShare = input<boolean>(true);
 
   // ── Outputs ───────────────────────────────────────────────────────────────
   readonly settingsToggle    = output<void>();

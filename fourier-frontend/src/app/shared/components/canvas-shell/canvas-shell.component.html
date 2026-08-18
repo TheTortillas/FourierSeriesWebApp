@@ -100,8 +100,8 @@
       </button>
     }
 
-    <!-- Share (solo cuando hay resultado) -->
-    @if (hasResult()) {
+    <!-- Share (solo cuando hay resultado y el consumer lo habilita) -->
+    @if (hasResult() && showShare()) {
       <button
         type="button"
         (click)="shareRequested.emit()"
