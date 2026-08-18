@@ -13,7 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgTemplateOutlet } from '@angular/common';
+import { CanvasShellComponent } from '../../shared/components/canvas-shell/canvas-shell.component';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, forkJoin, map, of, Subject, switchMap } from 'rxjs';
@@ -243,7 +243,7 @@ const ODE_EXAMPLES: OdeExample[] = [
     FooterComponent,
     MathjaxDirective,
     FormsModule,
-    NgTemplateOutlet,
+    CanvasShellComponent,
     TranslocoPipe,
     MobileMathKeyboardComponent,
     FunctionPlotComponent,
@@ -264,9 +264,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   private readonly tex2max    = inject(LatexToMaximaService);
   private readonly mathUtils  = inject(MathUtilsService);
   private readonly plotter    = inject(PlottingService);
-
-  // ── Canvas ref for fullscreen/download ───────────────────────────────────────
-  @ViewChild('canvasWrapperRef') private canvasWrapperRef!: ElementRef<HTMLElement>;
 
   // ── MathQuill refs ───────────────────────────────────────────────────────────
   @ViewChild('mqEqRef') private mqEqRef!: ElementRef<HTMLElement>;
@@ -383,8 +380,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly inputsLocked = computed(() => this.loading() || this.hasComputedResult());
 
   readonly showCanvasSettings = signal(false);
-  readonly isFullscreen       = signal(false);
-  readonly isMobile           = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
   readonly urlCopied          = signal(false);
   readonly showShareDialog    = signal(false);
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
@@ -519,11 +514,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     const tabParam = this.route.snapshot.queryParamMap.get('tab');
     if (tabParam === 'laplace') { this.mode.set('laplace'); this._restoredFromUrl = true; }
 
-    if (typeof window !== 'undefined') {
-      document.addEventListener('fullscreenchange', () => {
-        this.isFullscreen.set(!!document.fullscreenElement);
-      });
-    }
   }
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
@@ -625,7 +615,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             this._runAltForms(r.solution);
             this.plotComponent()?.resetView();
           }
-          this.showCanvasSettings.set(!this.isMobile());
+          this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
         } else {
           const r = res as OdeResponse;
           this.result.set(r);
@@ -636,7 +626,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             this._runAltForms(r.solution);
             this.plotComponent()?.resetView();
           }
-          this.showCanvasSettings.set(!this.isMobile());
+          this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
         }
         if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       });
@@ -714,23 +704,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   }
 
   onParamValuesChange(pv: ParamValues): void { this.paramValues.set(pv); }
-
-  toggleFullscreen(): void {
-    const el = this.canvasWrapperRef?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void el.requestFullscreen();
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapperRef?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ode-solution.png';
-    a.click();
-  }
 
   // ── IVP management ───────────────────────────────────────────────────────────
   addIvpIc(): void {
