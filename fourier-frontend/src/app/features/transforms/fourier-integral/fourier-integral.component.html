@@ -441,7 +441,7 @@
                 <div class="flex flex-wrap items-center gap-3">
                   <div class="flex items-center gap-2">
                     <span class="text-muted dark:text-dark-muted">{{ 'settingsCanvas.color' | transloco }}</span>
-                    <input type="color" [value]="originalColor()" (input)="originalColor.set($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
+                    <input type="color" [value]="originalColor()" (input)="setOriginalColor($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
                   </div>
                   <div class="flex items-center gap-2">
                     <span class="text-muted dark:text-dark-muted">{{ 'settingsCanvas.width' | transloco }}</span>
@@ -459,7 +459,7 @@
                 <div class="flex flex-wrap items-center gap-3">
                   <div class="flex items-center gap-2">
                     <span class="text-muted dark:text-dark-muted">{{ 'settingsCanvas.color' | transloco }}</span>
-                    <input type="color" [value]="reconstructColor()" (input)="reconstructColor.set($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
+                    <input type="color" [value]="reconstructColor()" (input)="setReconstructColor($any($event.target).value)" class="w-6 h-6 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5" />
                   </div>
                   <div class="flex items-center gap-2">
                     <span class="text-muted dark:text-dark-muted">{{ 'settingsCanvas.width' | transloco }}</span>

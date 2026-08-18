@@ -395,12 +395,15 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   // ── Curve style ──────────────────────────────────────────────────────────────
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
 
-  readonly curveColor     = signal('#3b82f6');
+  private readonly curveColorOverride = signal<string | null>(null);
+  readonly curveColor  = computed(() => this.curveColorOverride() ?? this.colors.singleCurveDefault());
   readonly curveLineWidth = signal(2);
   readonly curveDashed    = signal(false);
 
+  setCurveColor(v: string): void { this.curveColorOverride.set(v); }
+
   resetLineStyles(): void {
-    this.curveColor.set(this.colors.singleCurveDefault());
+    this.curveColorOverride.set(null);
     this.curveLineWidth.set(2);
     this.curveDashed.set(false);
   }
@@ -476,11 +479,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   private _suppressAutoLoad   = false; // set by startNewCalculation, cleared by explicit tab click
 
   constructor() {
-    // Sync default curve color with theme
-    effect(() => {
-      this.curveColor.set(this.colors.singleCurveDefault());
-    });
-
     // Re-parse equation whenever ivar changes
     effect(() => {
       const ivar = this.ivar();

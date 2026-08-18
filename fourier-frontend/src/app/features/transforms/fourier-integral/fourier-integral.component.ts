@@ -237,12 +237,17 @@ export class FourierIntegralComponent implements OnInit {
   readonly showCanvasSettings = signal(false);
   readonly showOriginal = signal(true);
   readonly showReconstruct = signal(true);
-  readonly originalColor = signal('#dc2626');
-  readonly reconstructColor = signal('#2563eb');
+  private readonly originalColorOverride    = signal<string | null>(null);
+  private readonly reconstructColorOverride = signal<string | null>(null);
+  readonly originalColor    = computed(() => this.originalColorOverride()    ?? this.colors.integralColors().input);
+  readonly reconstructColor = computed(() => this.reconstructColorOverride() ?? this.colors.integralColors().result);
   readonly originalLineWidth = signal(2);
   readonly reconstructLineWidth = signal(2);
   readonly originalDashed = signal(true);
   readonly reconstructDashed = signal(false);
+
+  setOriginalColor(v: string):    void { this.originalColorOverride.set(v); }
+  setReconstructColor(v: string): void { this.reconstructColorOverride.set(v); }
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer' | 'custom'>('integer');
 
   // ── Free params ───────────────────────────────────────────────────────────
@@ -653,12 +658,6 @@ export class FourierIntegralComponent implements OnInit {
         this.continuityValidating.set(false);
       });
 
-    // Sync colors with theme
-    effect(() => {
-      const c = this.colors.integralColors();
-      this.originalColor.set(c.input);
-      this.reconstructColor.set(c.result);
-    });
 
     // Reset custom axis name when result changes
     effect(() => {
@@ -894,9 +893,8 @@ export class FourierIntegralComponent implements OnInit {
   }
 
   resetColors(): void {
-    const c = this.colors.integralColors();
-    this.originalColor.set(c.input);
-    this.reconstructColor.set(c.result);
+    this.originalColorOverride.set(null);
+    this.reconstructColorOverride.set(null);
     this.originalLineWidth.set(2);
     this.reconstructLineWidth.set(2);
     this.originalDashed.set(true);

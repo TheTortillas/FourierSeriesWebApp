@@ -135,12 +135,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   private _urlPopulated = false;
 
   constructor() {
-    // ── 0. Sync default colors with theme (user override via color picker resets on next theme change) ─
-    effect(() => {
-      const c = this.colors.laplaceColors();
-      this.inputColor.set(c.input);
-      this.resultColor.set(c.result);
-    });
 
     // ── 1. Restore state from URL and auto-calculate ──────────────────────
     const encoded = this.route.snapshot.queryParamMap.get('s');
@@ -245,19 +239,23 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
 
-  readonly inputColor     = signal('#dc2626');
-  readonly inputLineWidth = signal(2);
-  readonly inputDashed    = signal(false);
-  readonly resultColor    = signal('#2563eb');
+  private readonly inputColorOverride  = signal<string | null>(null);
+  private readonly resultColorOverride = signal<string | null>(null);
+  readonly inputColor  = computed(() => this.inputColorOverride()  ?? this.colors.laplaceColors().input);
+  readonly resultColor = computed(() => this.resultColorOverride() ?? this.colors.laplaceColors().result);
+  readonly inputLineWidth  = signal(2);
+  readonly inputDashed     = signal(false);
   readonly resultLineWidth = signal(2);
-  readonly resultDashed   = signal(false);
+  readonly resultDashed    = signal(false);
+
+  setInputColor(v: string):  void { this.inputColorOverride.set(v); }
+  setResultColor(v: string): void { this.resultColorOverride.set(v); }
 
   resetLineStyles(): void {
-    const c = this.colors.laplaceColors();
-    this.inputColor.set(c.input);
+    this.inputColorOverride.set(null);
     this.inputLineWidth.set(2);
     this.inputDashed.set(false);
-    this.resultColor.set(c.result);
+    this.resultColorOverride.set(null);
     this.resultLineWidth.set(2);
     this.resultDashed.set(false);
   }

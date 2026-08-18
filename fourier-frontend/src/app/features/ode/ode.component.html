@@ -427,7 +427,7 @@
                     <button type="button" (click)="curveDashed.set(true)"
                       [class]="curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
                   </div>
-                  <input type="color" [value]="curveColor()" (input)="curveColor.set($any($event.target).value)"
+                  <input type="color" [value]="curveColor()" (input)="setCurveColor($any($event.target).value)"
                     class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
                   <input type="number" [value]="curveLineWidth()" min="0.5" max="5" step="0.5"
                     (input)="curveLineWidth.set(+$any($event.target).value)"
