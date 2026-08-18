@@ -4,7 +4,7 @@
    Tailwind v4 defaults to media query; override to use the .dark class.     */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Design System — Fourier Calculator ─────────────────────────────────────
+/* ─── Design System — AEM -LAB ─────────────────────────────────────
    Inspirado en funciones_integrales_especiales.html
    Tipografía académica/editorial con paleta papel cálido
    ─────────────────────────────────────────────────────────────────────────── */
@@ -12,31 +12,31 @@
 @theme {
   /* Fuentes */
   --font-display: 'Playfair Display', Georgia, serif;
-  --font-body:    'Source Serif 4', Georgia, serif;
-  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+  --font-body: 'Source Serif 4', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
   /* Paleta Light (tema por defecto) */
-  --color-ink:      #1a1410;
-  --color-paper:    #f5f0e8;
-  --color-paper2:   #ede7d9;
-  --color-border:   #c8bca8;
-  --color-accent:   #8b2500;
-  --color-accent2:  #1a4a6b;
-  --color-accent3:  #2d5a27;
-  --color-gold:     #b8860b;
-  --color-muted:    #6b5e4e;
+  --color-ink: #1a1410;
+  --color-paper: #f5f0e8;
+  --color-paper2: #ede7d9;
+  --color-border: #c8bca8;
+  --color-accent: #8b2500;
+  --color-accent2: #1a4a6b;
+  --color-accent3: #2d5a27;
+  --color-gold: #b8860b;
+  --color-muted: #6b5e4e;
 
   /* Paleta Dark (complementaria cálida) */
-  --color-dark-bg:      #1a1410;
+  --color-dark-bg: #1a1410;
   --color-dark-surface: #2a2018;
   --color-dark-surface2: #332a1e;
-  --color-dark-border:  #4a3d2e;
-  --color-dark-text:    #f5f0e8;
-  --color-dark-ink:     #f5f0e8;   /* alias usado en templates */
-  --color-dark-muted:   #a89880;
-  --color-dark-accent:  #c0402a;
+  --color-dark-border: #4a3d2e;
+  --color-dark-text: #f5f0e8;
+  --color-dark-ink: #f5f0e8; /* alias usado en templates */
+  --color-dark-muted: #a89880;
+  --color-dark-accent: #c0402a;
   --color-dark-accent2: #3a7ab0;
-  --color-dark-gold:    #d4a017;
+  --color-dark-gold: #d4a017;
 }
 
 /* ─── Estrategia de tema: clase 'dark' en <html> ────────────────────────── */
@@ -90,12 +90,20 @@
   }
 
   /* Tipografía base */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     line-height: 1.2;
   }
 
-  code, kbd, pre, samp {
+  code,
+  kbd,
+  pre,
+  samp {
     font-family: var(--font-mono);
   }
 
@@ -133,14 +141,14 @@ html.dark .nav-dropdown {
   min-height: 1.5rem;
   /* Layout */
   display: flex !important;
-  align-items: center;       /* vertical centering inside the field */
+  align-items: center; /* vertical centering inside the field */
   width: 100%;
 }
 
 /* The inner root span holds the actual math — inherit the flex alignment */
 .mq-editable-field .mq-root-block {
   flex: 1;
-  text-align: center;        /* horizontal centering of the expression */
+  text-align: center; /* horizontal centering of the expression */
 }
 
 .mq-editable-field .mq-cursor {
@@ -159,7 +167,7 @@ html.dark .mq-editable-field .mq-cursor {
    ALIGNMENT: controls how the rendered formula is positioned in the preview box.
    To change, edit text-align on mjx-container[display="true"].
    Valid values: left | center | right                                        */
-mjx-container[display="true"] {
+mjx-container[display='true'] {
   text-align: center !important;
   margin: 0 !important;
 }
@@ -172,12 +180,28 @@ mjx-container[display="true"] {
 /* ─── Canvas side panel animations ──────────────────────────────────────────
    Used by results-summary and continuous-transform canvas panels.            */
 @keyframes panel-slide-in-left {
-  from { transform: translateX(-100%); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 @keyframes panel-slide-out-left {
-  from { transform: translateX(0);     opacity: 1; }
-  to   { transform: translateX(-100%); opacity: 0; }
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
 }
-.panel-slide-in  { animation: panel-slide-in-left  200ms ease-out both; }
-.panel-slide-out { animation: panel-slide-out-left 150ms ease-in  both; }
+.panel-slide-in {
+  animation: panel-slide-in-left 200ms ease-out both;
+}
+.panel-slide-out {
+  animation: panel-slide-out-left 150ms ease-in both;
+}

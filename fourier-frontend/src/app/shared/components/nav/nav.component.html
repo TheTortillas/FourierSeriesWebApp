@@ -445,21 +445,21 @@
 </nav>
 
 @if (rebrandBannerVisible()) {
-  <div class="w-full bg-blue-500/8 border-b border-blue-500/25 px-4 py-2 flex items-center justify-center gap-3">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0 text-blue-500" viewBox="0 0 24 24" fill="none"
+  <div class="w-full bg-accent/8 border-b border-accent/25 px-4 py-2 flex items-center justify-center gap-3">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0 text-accent" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />
     </svg>
-    <span class="text-xs font-body text-blue-600 dark:text-blue-400">
+    <span class="text-xs font-body text-accent">
       {{ 'nav.rebrandBanner.message' | transloco }}
     </span>
     <button
       type="button"
       (click)="dismissRebrandBanner()"
       [attr.aria-label]="'nav.rebrandBanner.dismiss' | transloco"
-      class="ml-auto shrink-0 p-1 rounded text-blue-500/60 hover:text-blue-500 hover:bg-blue-500/10 transition-colors cursor-pointer"
+      class="ml-auto shrink-0 p-1 rounded text-accent/60 hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
