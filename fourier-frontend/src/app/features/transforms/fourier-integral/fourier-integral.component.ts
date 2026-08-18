@@ -10,6 +10,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
+import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../../shared/components/favorite-dialog/favorite-dialog.component';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -107,6 +109,8 @@ const FI_VAR_PAIRS: FiVarPair[] = [
   imports: [
     NavComponent,
     CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
     MathjaxDirective,
     FunctionPlotComponent,
     TransformSegmentComponent,
@@ -271,7 +275,6 @@ export class FourierIntegralComponent implements OnInit {
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly favoriteLoading = signal(false);
   readonly showFavoriteDialog = signal(false);
-  favoriteName = '';
 
   // ── Canvas / view refs ───────────────────────────────────────────────────
   readonly plotComponent = viewChild(FunctionPlotComponent);
@@ -714,7 +717,6 @@ export class FourierIntegralComponent implements OnInit {
     this.paramValues.set({});
     this.paramSliders()?.reset();
     this.latestHistoryEntry.set(null);
-    this.favoriteName = '';
     this.showFavoriteDialog.set(false);
     this.urlCopied.set(false);
     this.altFormsA.set([]); this.altFormsOpenA.set(false);
@@ -916,19 +918,18 @@ export class FourierIntegralComponent implements OnInit {
     }
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -936,7 +937,6 @@ export class FourierIntegralComponent implements OnInit {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   private fetchLatestEntry(callback?: () => void): void {

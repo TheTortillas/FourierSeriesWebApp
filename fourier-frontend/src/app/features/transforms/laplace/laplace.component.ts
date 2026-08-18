@@ -15,6 +15,8 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
+import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../../shared/components/favorite-dialog/favorite-dialog.component';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -91,6 +93,8 @@ const VAR_PAIRS: VarPair[] = [
     NavComponent,
     MathjaxDirective,
     CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
     TransformSegmentComponent,
     FormsModule,
     TranslocoPipe,
@@ -227,7 +231,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly favoriteLoading = signal(false);
   readonly showFavoriteDialog = signal(false);
-  favoriteName = '';
 
   // ── Canvas line style ─────────────────────────────────────────────────────
 
@@ -992,19 +995,18 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -1012,7 +1014,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   private fetchLatestEntry(callback?: () => void): void {

@@ -14,6 +14,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CanvasShellComponent } from '../../shared/components/canvas-shell/canvas-shell.component';
+import { ShareDialogComponent } from '../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../shared/components/favorite-dialog/favorite-dialog.component';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, forkJoin, map, of, Subject, switchMap } from 'rxjs';
@@ -244,6 +246,8 @@ const ODE_EXAMPLES: OdeExample[] = [
     MathjaxDirective,
     FormsModule,
     CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
     TranslocoPipe,
     MobileMathKeyboardComponent,
     FunctionPlotComponent,
@@ -385,7 +389,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly favoriteLoading    = signal(false);
   readonly showFavoriteDialog = signal(false);
-  favoriteName = '';
 
   // ── Curve style ──────────────────────────────────────────────────────────────
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
@@ -1070,19 +1073,18 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -1090,7 +1092,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   private fetchLatestEntry(callback?: () => void): void {

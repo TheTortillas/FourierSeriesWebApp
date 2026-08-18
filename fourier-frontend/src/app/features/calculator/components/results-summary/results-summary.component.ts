@@ -18,6 +18,8 @@ import {
   PlotLayer,
 } from '../../../../shared/components/function-plot/function-plot.component';
 import { CanvasShellComponent } from '../../../../shared/components/canvas-shell/canvas-shell.component';
+import { ShareDialogComponent } from '../../../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../../../shared/components/favorite-dialog/favorite-dialog.component';
 import {
   FourierReconstructionService,
   TrigNumericTerm,
@@ -127,6 +129,8 @@ function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorP
     NgClass,
     FunctionPlotComponent,
     CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
     MathjaxDirective,
     FormsModule,
     SpectrumChartComponent,
@@ -224,7 +228,6 @@ export class ResultsSummaryComponent {
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly favoriteLoading = signal(false);
   readonly showFavoriteDialog = signal(false);
-  favoriteName = '';
 
   // ── Simplify state ──────────────────────────────────────────────────────────
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
@@ -1483,7 +1486,6 @@ export class ResultsSummaryComponent {
         this.selectedHarmonicN.set(null);
         this.showFavoriteDialog.set(false);
         this.latestHistoryEntry.set(null);
-        this.favoriteName = '';
         this.customConstName.set(null);
 
         // Pre-fetch the history entry so the star button can resolve immediately on click
@@ -1867,19 +1869,18 @@ export class ResultsSummaryComponent {
     }
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -1887,7 +1888,6 @@ export class ResultsSummaryComponent {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   // ── Simplify actions ──────────────────────────────────────────────────────
