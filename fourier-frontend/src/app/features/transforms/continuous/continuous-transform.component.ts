@@ -7,9 +7,7 @@ import {
   signal,
   DestroyRef,
   viewChild,
-  ElementRef,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -50,6 +48,7 @@ import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxim
 import { MathquillService, KeyBtn } from '../../../core/services/math/mathquill.service';
 import { MobileMathKeyboardComponent } from '../../../shared/components/math-keyboard/mobile-math-keyboard.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
+import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
@@ -190,7 +189,7 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     TranslocoPipe,
     MobileMathKeyboardComponent,
     ExportButtonComponent,
-    NgTemplateOutlet,
+    CanvasShellComponent,
   ],
 })
 export class ContinuousTransformComponent implements OnInit {
@@ -342,7 +341,6 @@ export class ContinuousTransformComponent implements OnInit {
   readonly originalDashed = signal(false);
   readonly resultDashed = signal(false);
   readonly showCanvasSettings = signal(false);
-  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
 
   readonly Math = Math;
 
@@ -422,12 +420,10 @@ export class ContinuousTransformComponent implements OnInit {
     return { symbol: name, value: pv[name] ?? 1 };
   });
 
-  // ── Share / fullscreen ────────────────────────────────────────────────────
+  // ── Share ─────────────────────────────────────────────────────────────────
   readonly showShareDialog = signal(false);
   readonly urlCopied = signal(false);
-  readonly isFullscreen = signal(false);
 
-  readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
   readonly plotComponent = viewChild(FunctionPlotComponent);
 
   readonly varPairs = VAR_PAIRS;
@@ -435,12 +431,6 @@ export class ContinuousTransformComponent implements OnInit {
   private urlPopulated = false;
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
-      window.addEventListener('resize', onResize);
-      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
-    }
-
     effect(() => {
       void this.theme.theme();
       void this.theme.palette();
@@ -532,13 +522,6 @@ export class ContinuousTransformComponent implements OnInit {
           })),
         );
       });
-
-    // Track native fullscreen changes
-    if (typeof document !== 'undefined') {
-      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
-      document.addEventListener('fullscreenchange', handler);
-      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
-    }
 
     // ── 1. Restore state from router navigation state or URL ──────────────
     const navState = this.router.getCurrentNavigation()?.extras.state as
@@ -1563,7 +1546,7 @@ export class ContinuousTransformComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.ftResult.set(res);
-            this.showCanvasSettings.set(!this.isMobile());
+            this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
@@ -1588,7 +1571,7 @@ export class ContinuousTransformComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.iftResult.set(res);
-            this.showCanvasSettings.set(!this.isMobile());
+            this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
@@ -1761,26 +1744,6 @@ export class ContinuousTransformComponent implements OnInit {
       .catch(() => {
         // clipboard unavailable — user can copy from console
       });
-  }
-
-  toggleFullscreen(): void {
-    const el = this.canvasWrapper()?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void el.requestFullscreen();
-    }
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapper()?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fourier-transform.png';
-    a.click();
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
