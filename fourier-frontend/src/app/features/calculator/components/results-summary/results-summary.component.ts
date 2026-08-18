@@ -5,10 +5,8 @@ import {
   signal,
   DestroyRef,
   effect,
-  ElementRef,
-  viewChild,
 } from '@angular/core';
-import { DecimalPipe, LowerCasePipe, NgClass, NgTemplateOutlet } from '@angular/common';
+import { DecimalPipe, LowerCasePipe, NgClass } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,6 +17,7 @@ import {
   PlotFn,
   PlotLayer,
 } from '../../../../shared/components/function-plot/function-plot.component';
+import { CanvasShellComponent } from '../../../../shared/components/canvas-shell/canvas-shell.component';
 import {
   FourierReconstructionService,
   TrigNumericTerm,
@@ -125,9 +124,9 @@ function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorP
   imports: [
     DecimalPipe,
     LowerCasePipe,
-    NgTemplateOutlet,
     NgClass,
     FunctionPlotComponent,
+    CanvasShellComponent,
     MathjaxDirective,
     FormsModule,
     SpectrumChartComponent,
@@ -148,8 +147,6 @@ export class ResultsSummaryComponent {
   readonly theme = inject(ThemeService);
   readonly destroyRef = inject(DestroyRef);
   private readonly csvExport = inject(CsvExportService);
-
-  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
 
   // ── Free-parameter sliders ────────────────────────────────────────────────
   readonly activeParams = computed<string[]>(() => this.store.result()?.data.params ?? []);
@@ -220,7 +217,6 @@ export class ResultsSummaryComponent {
   }
   readonly canvasNTerms = signal(10);
   readonly hadResult = signal(false);
-  readonly isFullscreen = signal(false);
   readonly showShareDialog = signal(false);
   readonly urlCopied = signal(false);
 
@@ -229,9 +225,6 @@ export class ResultsSummaryComponent {
   readonly favoriteLoading = signal(false);
   readonly showFavoriteDialog = signal(false);
   favoriteName = '';
-
-  // ── Canvas wrapper ref (for Fullscreen API) ───────────────────────────────
-  readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
 
   // ── Simplify state ──────────────────────────────────────────────────────────
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
@@ -1449,12 +1442,6 @@ export class ResultsSummaryComponent {
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
-      window.addEventListener('resize', onResize);
-      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
-    }
-
     effect(() => {
       void this.theme.theme();
       void this.theme.palette();
@@ -1530,12 +1517,6 @@ export class ResultsSummaryComponent {
       }
     });
 
-    // Track native fullscreen changes
-    if (typeof document !== 'undefined') {
-      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
-      document.addEventListener('fullscreenchange', handler);
-      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
-    }
   }
 
   readonly currentColorPreset = computed(() =>
@@ -1765,16 +1746,6 @@ export class ResultsSummaryComponent {
 
   // ── Canvas actions ────────────────────────────────────────────────────────
 
-  toggleFullscreen(): void {
-    const el = this.canvasWrapper()?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void el.requestFullscreen();
-    }
-  }
-
   onOriginalColorInput(value: string): void {
     this.customOriginalColor.set(true);
     this.originalColor.set(value);
@@ -1791,16 +1762,6 @@ export class ResultsSummaryComponent {
     this.customApproxColor.set(false);
     this.originalColor.set(preset.original);
     this.approxColor.set(preset.approx);
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapper()?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = canvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fourier-series.png';
-    a.click();
   }
 
   exportTrigCsv(): void {
