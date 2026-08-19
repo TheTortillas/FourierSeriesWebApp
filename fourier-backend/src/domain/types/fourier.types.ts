@@ -514,7 +514,7 @@ export interface LaplacePoleZeroInput {
   freqVar?:   string;   // default "s"
 }
 
-export interface ComplexPoint2 { re: number; im: number; tex: string; }
+export interface ComplexPoint2 { re: number; im: number; mult: number; tex: string; }
 
 export interface LaplacePoleZeroResult {
   input:       LaplacePoleZeroInput;

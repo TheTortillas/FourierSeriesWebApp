@@ -149,17 +149,23 @@ kill(all)$
     const zerosRaw      = this.extractBetween(raw, "__ZEROS__", "__SIGMA0__").trim();
     const sigma0Raw     = this.extractBetween(raw, "__SIGMA0__", "__POLES_TEX__").trim();
     const poleTexRaw    = this.extractBetween(raw, "__POLES_TEX__", "__ZEROS_TEX__").trim();
-    const zeroTexRaw    = this.extractBetween(raw, "__ZEROS_TEX__", "__SIGMA0_TEX__").trim();
+    const zeroTexRaw    = this.extractBetween(raw, "__ZEROS_TEX__", "__POLES_MULTS__").trim();
+    const poleMultsRaw  = this.extractBetween(raw, "__POLES_MULTS__", "__ZEROS_MULTS__").trim();
+    const zeroMultsRaw  = this.extractBetween(raw, "__ZEROS_MULTS__", "__SIGMA0_TEX__").trim();
     const sigma0TexRaw  = this.extractBetween(raw, "__SIGMA0_TEX__", null).trim();
 
-    const poles = this.parseComplexList(polesRaw);
-    const zeros = this.parseComplexList(zerosRaw);
-    const poleTexList = this.parseStringList(poleTexRaw);
-    const zeroTexList = this.parseStringList(zeroTexRaw);
+    const poleTexList  = this.parseStringList(poleTexRaw);
+    const zeroTexList  = this.parseStringList(zeroTexRaw);
+    const poleMultList = this.parseIntList(poleMultsRaw);
+    const zeroMultList = this.parseIntList(zeroMultsRaw);
 
-    // Attach tex to each point
-    poles.forEach((p, i) => { p.tex = poleTexList[i] ?? ''; });
-    zeros.forEach((z, i) => { z.tex = zeroTexList[i] ?? ''; });
+    // Build points from tex+mults (coordinates only needed for plotting, not for display)
+    const poles: ComplexPoint2[] = poleTexList.map((tex, i) => ({
+      re: 0, im: 0, tex, mult: poleMultList[i] ?? 1,
+    }));
+    const zeros: ComplexPoint2[] = zeroTexList.map((tex, i) => ({
+      re: 0, im: 0, tex, mult: zeroMultList[i] ?? 1,
+    }));
 
     return {
       input,
@@ -176,24 +182,33 @@ kill(all)$
     const points: ComplexPoint2[] = [];
     const listMatch = raw.match(/^\[(.+)\]$/s);
     if (!listMatch) return points;
-    // Match pairs: [re, im] — handles nested brackets
-    const pairRe = /\[\s*([^\[\],]+)\s*,\s*([^\[\],]+)\s*\]/g;
+    // Match triples: [re, im, mult]
+    const tripleRe = /\[\s*([^\[\],]+)\s*,\s*([^\[\],]+)\s*,\s*([^\[\],]+)\s*\]/g;
     let m: RegExpExecArray | null;
-    while ((m = pairRe.exec(listMatch[1])) !== null) {
-      const re = parseFloat(m[1]);
-      const im = parseFloat(m[2]);
-      if (isFinite(re) && isFinite(im)) points.push({ re, im, tex: '' });
+    while ((m = tripleRe.exec(listMatch[1])) !== null) {
+      const re   = parseFloat(m[1]);
+      const im   = parseFloat(m[2]);
+      const mult = parseInt(m[3], 10);
+      if (isFinite(re) && isFinite(im)) points.push({ re, im, mult: isFinite(mult) ? mult : 1, tex: '' });
     }
     return points;
   }
 
   private parseStringList(raw: string): string[] {
-    // Maxima prints string lists as ["a","b","c"] — extract quoted tokens
+    // Maxima serializes string lists as ["a","b"] and escapes backslashes as \\
+    // so we unescape \\ -> \ so MathJax receives valid TeX
     const results: string[] = [];
     const re = /"([^"]*)"/g;
     let m: RegExpExecArray | null;
-    while ((m = re.exec(raw)) !== null) results.push(m[1]);
+    while ((m = re.exec(raw)) !== null) results.push(m[1].replace(/\\\\/g, '\\'));
     return results;
+  }
+
+  private parseIntList(raw: string): number[] {
+    // Maxima prints integer lists as [1,2,3]
+    const match = raw.match(/\[([^\]]*)\]/);
+    if (!match) return [];
+    return match[1].split(',').map(s => parseInt(s.trim(), 10)).filter(n => isFinite(n));
   }
 
   private parseSigma0(raw: string): number | null {

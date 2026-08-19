@@ -10,7 +10,7 @@ radexpand: false$
    Values are rounded to 4 significant digits and near-zero parts zeroed. */
 _roots_to_pairs(sol) := block(
   [_pairs, _eq, _val, _re, _im, _thresh],
-  _thresh: 1e-6,
+  _thresh: 1e-3,
   _pairs: [],
   for _eq in sol do (
     _val: errcatch(rhs(_eq)),
@@ -20,8 +20,8 @@ _roots_to_pairs(sol) := block(
       _im: errcatch(float(imagpart(_val))),
       _re: if _re = [] then 0.0 else first(_re),
       _im: if _im = [] then 0.0 else first(_im),
-      _re: if abs(_re) < _thresh then 0.0 else _round_sig(_re, 4),
-      _im: if abs(_im) < _thresh then 0.0 else _round_sig(_im, 4),
+      _re: if abs(_re) < _thresh then 0.0 else _round_sig(_re, 6),
+      _im: if abs(_im) < _thresh then 0.0 else _round_sig(_im, 6),
       _pairs: append(_pairs, [[_re, _im]])
     )
   ),
@@ -36,90 +36,246 @@ _round_sig(x, n) := block(
   float(round(x * _s) / _s)
 )$
 
-/* Convert a rounded float to an exact rational (or integer) for cleaner TeX.
-   e.g. 1.0 -> 1, -3.0 -> -3, 0.5 -> 1/2, 1.4142 stays as float string */
+/* Convert a rounded float to the simplest exact form for clean TeX output.
+   Strategy: snap to integer if within 1e-3, then try small-denominator rationals
+   (halves, thirds, quarters). If nothing matches, return the original float. */
 _to_exact(x) := block(
-  [_r],
-  _r: rat(x),
-  /* If rat() produced a clean rational (denominator <= 1000), keep it */
-  if ratnump(_r) then _r else x
+  [_n, _denoms, _d, _nd],
+  /* Already integer? */
+  _n: round(x),
+  if abs(x - _n) < 1e-3 then return(_n),
+  /* Try small-denominator rationals: 1/2, 1/3, 2/3, 1/4, 3/4 */
+  _denoms: [2, 3, 4, 5, 6, 8],
+  for _d in _denoms do (
+    _nd: round(x * _d),
+    if abs(x - _nd / _d) < 1e-3 then return(_nd / _d)
+  ),
+  /* No clean form found — return as float (tex1 will show decimal) */
+  x
 )$
 
-/* Build a TeX string list for a list of [re,im] pairs.
-   Pairs have already been rounded and zero-snapped by _roots_to_pairs. */
+/* Group [re,im] pairs by value, returning [[re,im,mult],...] with multiplicities */
+_group_roots(pairs) := block(
+  [_seen, _groups, _p, _found, _k],
+  _seen: [],
+  _groups: [],
+  for _p in pairs do (
+    _found: false,
+    for _k: 1 thru length(_seen) do (
+      if not _found and
+         abs(first(_p) - first(_seen[_k])) < 1e-2 and
+         abs(second(_p) - second(_seen[_k])) < 1e-2 then (
+        _groups[_k]: [first(_groups[_k]), second(_groups[_k]), third(_groups[_k]) + 1],
+        _found: true
+      )
+    ),
+    if not _found then (
+      _seen: append(_seen, [_p]),
+      _groups: append(_groups, [[first(_p), second(_p), 1]])
+    )
+  ),
+  _groups
+)$
+
+/* Build a TeX string list for a list of [re,im,mult] triples (tex only, no mult suffix) */
 _pairs_to_tex(pairs) := block(
   [_tex_list, _p, _re, _im, _re_ex, _im_ex, _expr],
   _tex_list: [],
   for _p in pairs do (
-    _re: first(_p),
-    _im: second(_p),
+    _re:   first(_p),
+    _im:   second(_p),
     /* Convert to exact rationals so tex1() renders 1 not 1.0, -3 not -3.0 */
     _re_ex: _to_exact(_re),
     _im_ex: _to_exact(_im),
     /* Build expression: pure real, pure imaginary, or a+bi */
-    _expr: if _im = 0.0 then _re_ex
-           else if _re = 0.0 then _im_ex * %i
+    _expr: if _im = 0.0 or _im = 0 then _re_ex
+           else if _re = 0.0 or _re = 0 then _im_ex * %i
            else _re_ex + _im_ex * %i,
     _tex_list: append(_tex_list, [tex1(_expr)])
   ),
   _tex_list
 )$
 
-/* Map common symbolic names to Maxima built-ins, then float() so allroots sees numeric coefficients */
+/* Extract multiplicities from grouped triples */
+_pairs_to_mults(pairs) := map(lambda([_p], third(_p)), pairs)$
+
+/* Extract [re, im] pairs from solve() symbolic solutions.
+   Each solution is an equation VAR = EXPR; we take realpart/imagpart symbolically,
+   then float only those parts so they can be grouped/compared numerically.
+   The TeX is generated from the original exact expression. */
+_solve_to_pairs(sol, var) := block(
+  [_pairs, _eq, _val, _re_f, _im_f],
+  _pairs: [],
+  for _eq in sol do (
+    _val: errcatch(rhs(_eq)),
+    if _val # [] then (
+      _val: first(_val),
+      _re_f: errcatch(float(realpart(_val))),
+      _im_f: errcatch(float(imagpart(_val))),
+      _re_f: if _re_f = [] then 0.0 else first(_re_f),
+      _im_f: if _im_f = [] then 0.0 else first(_im_f),
+      /* Store [re_float, im_float, exact_expr] so grouping uses floats
+         but TeX generation uses the exact symbolic value */
+      _pairs: append(_pairs, [[_re_f, _im_f, _val]])
+    )
+  ),
+  _pairs
+)$
+
+/* Group symbolic triples [re_f, im_f, expr] by numeric proximity,
+   returning [re_f, im_f, expr, mult] keeping the first expr seen per group */
+_group_solve(pairs) := block(
+  [_seen_re, _seen_im, _groups, _p, _found, _k],
+  _seen_re: [], _seen_im: [],
+  _groups: [],
+  for _p in pairs do (
+    _found: false,
+    for _k: 1 thru length(_seen_re) do (
+      if not _found and
+         abs(first(_p) - _seen_re[_k]) < 1e-2 and
+         abs(second(_p) - _seen_im[_k]) < 1e-2 then (
+        /* Increment mult (4th element) */
+        _groups[_k]: [first(_groups[_k]), second(_groups[_k]),
+                      third(_groups[_k]), fourth(_groups[_k]) + 1],
+        _found: true
+      )
+    ),
+    if not _found then (
+      _seen_re: append(_seen_re, [first(_p)]),
+      _seen_im: append(_seen_im, [second(_p)]),
+      _groups: append(_groups, [[first(_p), second(_p), third(_p), 1]])
+    )
+  ),
+  _groups
+)$
+
+/* Build TeX list from grouped symbolic results [re_f, im_f, expr, mult] */
+_solve_to_tex(groups) := block(
+  [_tex_list, _g],
+  _tex_list: [],
+  for _g in groups do (
+    _tex_list: append(_tex_list, [tex1(third(_g))])
+  ),
+  _tex_list
+)$
+
+/* Extract mults from grouped symbolic results */
+_solve_mults(groups) := map(lambda([_g], fourth(_g)), groups)$
+
+/* Extract numeric [re, im] pairs from grouped symbolic results for sigma0 */
+_solve_re_parts(groups) := map(lambda([_g], first(_g)), groups)$
+
+/* Compute the multiplicity of root r in polynomial poly w.r.t. var.
+   Uses successive GCDs with derivatives: mult = number of times (var-r) divides poly. */
+_root_mult(poly, r, var) := block(
+  [_p, _m, _rem],
+  _p: poly,
+  _m: 0,
+  while true do (
+    _rem: errcatch(remainder(_p, var - r, var)),
+    if _rem = [] then return(_m),
+    _rem: first(_rem),
+    if not(is(_rem = 0)) then return(_m),
+    _p: quotient(_p, var - r, var),
+    _m: _m + 1
+  ),
+  _m
+)$
+
+/* Check if solve() actually solved: returns false if it gave back an unsolved equation
+   (Maxima returns [0 = poly] when it cannot solve — lhs is 0, not the variable) */
+_solve_succeeded(sol, var) :=
+  length(sol) > 0 and
+  not(is(lhs(first(sol)) = 0)) and
+  is(lhs(first(sol)) = var)$
+
+/* Solve polynomial roots: try solve() for exact results first,
+   fall back to allroots() when solve() cannot find closed-form roots.
+   Returns grouped list of [re_f, im_f, expr, mult]. */
+_find_roots(poly, var) := block(
+  [_sol, _pairs, _grouped, _g, _mult, _expr, _re_f, _im_f],
+  _sol: errcatch(solve(poly, var)),
+  if _sol # [] and _solve_succeeded(first(_sol), var) then (
+    _pairs: _solve_to_pairs(first(_sol), var),
+    _grouped: _group_solve(_pairs),
+    /* Recompute multiplicity from polynomial for each unique root */
+    for _k: 1 thru length(_grouped) do (
+      _g: _grouped[_k],
+      _expr: third(_g),
+      _mult: errcatch(_root_mult(expand(poly), _expr, var)),
+      _mult: if _mult = [] or first(_mult) = 0 then 1 else first(_mult),
+      _grouped[_k]: [first(_g), second(_g), _expr, _mult]
+    )
+  ) else (
+    /* Fallback: allroots (numeric) */
+    _sol: errcatch(allroots(poly)),
+    if _sol = [] then return([]),
+    _pairs: _roots_to_pairs(first(_sol)),
+    _grouped: _group_roots(_pairs),
+    /* Convert [re,im,mult] to [re_f,im_f,expr,mult] for uniform interface */
+    _grouped: map(lambda([_g],
+      [first(_g), second(_g),
+       if second(_g) = 0.0 or second(_g) = 0 then _to_exact(first(_g))
+       else if first(_g) = 0.0 or first(_g) = 0 then _to_exact(second(_g)) * %i
+       else _to_exact(first(_g)) + _to_exact(second(_g)) * %i,
+       third(_g)]),
+      _grouped)
+  ),
+  _grouped
+)$
+
+/* Main expression: work symbolically (no float()) so solve() gets exact coefficients */
 _expr: subst(['pi = %pi, 'e = %e], EXPR_INPUT)$
-F_rat: errcatch(ratsimp(float(_expr)))$
-F_rat: if F_rat = [] then false else first(F_rat)$
+F_sym: errcatch(ratsimp(_expr))$
+F_sym: if F_sym = [] then false else first(F_sym)$
 
 is_rational: false$
-poles_raw:   []$
-zeros_raw:   []$
-sigma0_val:  minf$
+poles_grouped: []$
+zeros_grouped: []$
+sigma0_val:    minf$
 
-if F_rat # false then (
-  _n: errcatch(num(F_rat)),
+if F_sym # false then (
+  _n: errcatch(num(F_sym)),
   _n: if _n = [] then 0 else first(_n),
-  _d: errcatch(denom(F_rat)),
+  _d: errcatch(denom(F_sym)),
   _d: if _d = [] then 1 else first(_d),
 
-  /* Expand so allroots can work with explicit polynomial */
   _n: expand(_n),
   _d: expand(_d),
 
   is_rational: not(is(_d = 1) or is(_d = -1) or is(_d = 0)),
 
   /* Poles */
-  if is_rational then (
-    _pr: errcatch(allroots(_d)),
-    if _pr # [] then
-      poles_raw: _roots_to_pairs(first(_pr))
-  ),
+  if is_rational then
+    poles_grouped: _find_roots(_d, TRANSVAR),
 
   /* Zeros: skip constants */
-  if not(is(_n = 0) or is(_n = 1) or is(_n = -1)) and polynomialp(_n, [TRANSVAR]) then (
-    _zr: errcatch(allroots(_n)),
-    if _zr # [] then
-      zeros_raw: _roots_to_pairs(first(_zr))
-  ),
+  if not(is(_n = 0) or is(_n = 1) or is(_n = -1)) and polynomialp(_n, [TRANSVAR]) then
+    zeros_grouped: _find_roots(_n, TRANSVAR),
 
-  /* Abscissa of convergence */
-  if length(poles_raw) > 0 then (
-    _re_parts: map(lambda([_p], first(_p)), poles_raw),
+  /* Abscissa of convergence: max real part of poles */
+  if length(poles_grouped) > 0 then (
+    _re_parts: _solve_re_parts(poles_grouped),
     sigma0_val: apply(max, _re_parts)
   )
 )$
 
-poles_tex: _pairs_to_tex(poles_raw)$
-zeros_tex: _pairs_to_tex(zeros_raw)$
+poles_tex:   _solve_to_tex(poles_grouped)$
+zeros_tex:   _solve_to_tex(zeros_grouped)$
+poles_mults: _solve_mults(poles_grouped)$
+zeros_mults: _solve_mults(zeros_grouped)$
 
-/* sigma0 TeX: round then convert to exact before rendering */
+/* sigma0 TeX */
 sigma0_tex: if sigma0_val # minf and sigma0_val # false
             then tex1(_to_exact(_round_sig(sigma0_val, 4)))
             else ""$
 
-print("__IS_RATIONAL__")$  print(string(is_rational))$
-print("__POLES__")$         print(string(poles_raw))$
-print("__ZEROS__")$         print(string(zeros_raw))$
-print("__SIGMA0__")$        print(string(sigma0_val))$
-print("__POLES_TEX__")$     print(string(poles_tex))$
-print("__ZEROS_TEX__")$     print(string(zeros_tex))$
-print("__SIGMA0_TEX__")$    print(sigma0_tex)$
+print("__IS_RATIONAL__")$   print(string(is_rational))$
+print("__POLES__")$          print(string(poles_grouped))$
+print("__ZEROS__")$          print(string(zeros_grouped))$
+print("__SIGMA0__")$         print(string(sigma0_val))$
+print("__POLES_TEX__")$      print(string(poles_tex))$
+print("__ZEROS_TEX__")$      print(string(zeros_tex))$
+print("__POLES_MULTS__")$    print(string(poles_mults))$
+print("__ZEROS_MULTS__")$    print(string(zeros_mults))$
+print("__SIGMA0_TEX__")$     print(sigma0_tex)$

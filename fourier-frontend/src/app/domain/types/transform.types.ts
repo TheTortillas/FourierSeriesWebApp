@@ -247,7 +247,7 @@ export interface LaplacePoleZeroRequest {
   freqVar?:   string;
 }
 
-export interface ComplexPt { re: number; im: number; tex: string; }
+export interface ComplexPt { re: number; im: number; mult: number; tex: string; }
 
 export interface LaplacePoleZeroResponse {
   isRational:  boolean;
