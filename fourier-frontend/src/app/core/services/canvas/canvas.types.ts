@@ -164,6 +164,52 @@ export const NEUTRAL_DARK_THEME: CanvasTheme = {
 /** Fourier series types supported by the backend */
 export type FourierSeriesType = 'trigonometric' | 'complex' | 'halfRange';
 
+// ── Complex plane (WebGL) types ────────────────────────────────────────────────
+
+/** Domain-coloring color scheme for 2D complex plots */
+export type ColorScheme = 'classic' | 'phase' | 'magnitude';
+
+/** A point in the complex plane with evaluated f(z) */
+export interface ComplexPoint {
+  re: number;
+  im: number;
+  fRe: number;
+  fIm: number;
+  fAbs: number;
+  fArg: number;
+}
+
+/**
+ * Viewport for 2D domain-coloring view.
+ * Maps directly onto CanvasViewport for overlay rendering:
+ *   scale → unit,  centerRe/Im → originMath.{x,y},  scaleX/Y = 1.
+ */
+export interface ComplexViewport2D {
+  cssWidth:  number;
+  cssHeight: number;
+  /** Re coordinate at canvas center */
+  centerRe:  number;
+  /** Im coordinate at canvas center */
+  centerIm:  number;
+  /** CSS pixels per complex unit */
+  scale:     number;
+}
+
+/** Viewport for 3D surface view */
+export interface ComplexViewport3D {
+  cssWidth:    number;
+  cssHeight:   number;
+  rotX:        number;
+  rotY:        number;
+  zoom:        number;
+  /** Visible domain ±range on both Re and Im axes */
+  range:       number;
+  heightScale: number;
+  zClip:       number;
+  showGrid:    boolean;
+  wireframe:   boolean;
+}
+
 // ── Render configuration ───────────────────────────────────────────────────────
 
 /**
