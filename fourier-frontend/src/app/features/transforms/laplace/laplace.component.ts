@@ -67,8 +67,8 @@ function defaultSegment(): TransformSegmentDraft {
     id: mkId(),
     expression: 'sin(t)',
     expressionTex: '\\sin(t)',
-    from: '0',
-    fromTex: '0',
+    from: 'minf',
+    fromTex: '-\\infty',
     to: 'inf',
     toTex: '\\infty',
   };
@@ -83,9 +83,8 @@ interface VarPair {
 }
 
 const VAR_PAIRS: VarPair[] = [
-  { id: 't-s', time: 't', freq: 's', timeDisplay: 't', freqDisplay: 's' },
-  { id: 't-p', time: 't', freq: 'p', timeDisplay: 't', freqDisplay: 'p' },
-  { id: 'x-s', time: 'x', freq: 's', timeDisplay: 'x', freqDisplay: 's' },
+  { id: 't-s',   time: 't',   freq: 's', timeDisplay: 't', freqDisplay: 's' },
+  { id: 'x-s',   time: 'x',   freq: 's', timeDisplay: 'x', freqDisplay: 's' },
   { id: 'tau-s', time: 'tau', freq: 's', timeDisplay: 'τ', freqDisplay: 's' },
 ];
 
@@ -785,6 +784,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         if (r.exists && r.F) this._runAltForms(r.F, this.altFormsDirect, this.altFormsLoadingDirect);
         this.plotComponent()?.resetView();
         this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
+        if (r.exists && !this.showComplexPlane()) this._pulseBtnOnce();
       }
       if (m === 'inverse') {
         const r = result as LaplaceInverseResponse;
@@ -793,6 +793,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         if (r.exists && r.f) this._runAltForms(r.f, this.altFormsInverse, this.altFormsLoadingInverse);
         this.plotComponent()?.resetView();
         this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
+        if (r.exists && !this.showComplexPlane()) this._pulseBtnOnce();
       }
       if (m === 'ode') {
         const r = result as LaplaceOdeResponse;
@@ -1001,7 +1002,8 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   // ── Complex plane panel ───────────────────────────────────────────────────
 
-  readonly showComplexPlane    = signal(false);
+  readonly showComplexPlane       = signal(false);
+  readonly complexPlaneBtnPulse   = signal(false);
   readonly complexPlaneMode    = signal<'2d' | '3d'>('2d');
   readonly complexColorScheme  = signal<'classic' | 'phase' | 'magnitude'>('classic');
   readonly complexWireframe    = signal(false);
@@ -1024,6 +1026,11 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     if (ri) return this.inverseExpr();  // F(s) is the input for inverse mode
     return '';
   });
+
+  private _pulseBtnOnce(): void {
+    this.complexPlaneBtnPulse.set(true);
+    setTimeout(() => this.complexPlaneBtnPulse.set(false), 1800);
+  }
 
   toggleComplexPlane(): void {
     const next = !this.showComplexPlane();

@@ -25,11 +25,14 @@
           @for (m of modes; track m.id) {
             <button
               type="button"
-              (click)="setMode(m.id)"
-              class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all cursor-pointer"
+              (click)="!inputsLocked() && setMode(m.id)"
+              [disabled]="inputsLocked() && mode() !== m.id"
+              class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all"
               [class]="mode() === m.id
-                ? 'bg-accent text-white dark:text-white shadow-sm'
-                : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink'"
+                ? 'bg-accent text-white dark:text-white shadow-sm cursor-default'
+                : inputsLocked()
+                  ? 'text-muted/40 dark:text-dark-muted/40 cursor-not-allowed'
+                  : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink cursor-pointer'"
             >
               {{ m.labelKey | transloco }}
             </button>
@@ -268,21 +271,7 @@
           (shareRequested)="openShareDialog()"
           (favoriteRequested)="openFavoriteDialog()"
         >
-          <!-- Toggle plano-s: integrado en la barra de botones del canvas -->
-          @if (complexPlaneExpr()) {
-            <button
-              slot="toolbar-extra"
-              type="button"
-              (click)="toggleComplexPlaneAndOpenSettings()"
-              class="pointer-events-auto flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-mono border transition-colors cursor-pointer"
-              [class]="showComplexPlane()
-                ? 'bg-accent/20 border-accent/50 text-accent'
-                : 'bg-paper/80 dark:bg-dark-surface/80 border-border dark:border-dark-border text-ink/70 dark:text-dark-ink/70 hover:border-accent hover:text-accent'"
-            >
-              <span>ℂ</span>
-              <span>Plano-s</span>
-            </button>
-          }
+
 
           <!-- Canvas principal: f(t)/F(s) o plano complejo -->
           @if (!showComplexPlane()) {
@@ -327,12 +316,42 @@
           <!-- Scrollable content -->
           <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
 
+            <!-- ══ Toggle plano real ↔ complejo ══════════════════════ -->
+            @if (complexPlaneExpr()) {
+              <section class="px-5 py-3">
+                @if (!showComplexPlane()) {
+                  <!-- Ir al plano complejo -->
+                  <button
+                    type="button"
+                    (click)="toggleComplexPlane()"
+                    class="w-full py-2 rounded border text-xs font-mono font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    [class]="complexPlaneBtnPulse()
+                      ? 'border-accent bg-accent text-white animate-pulse'
+                      : 'border-accent/60 text-accent hover:bg-accent/10'"
+                  >
+                    <span class="text-sm leading-none">ℂ</span>
+                    {{ 'laplace.complexPlaneOpen' | transloco }}
+                  </button>
+                } @else {
+                  <!-- Volver al plano real -->
+                  <button
+                    type="button"
+                    (click)="toggleComplexPlane()"
+                    class="w-full py-1.5 rounded border border-border dark:border-dark-border text-xs font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <span class="text-sm leading-none">ℝ</span>
+                    {{ 'laplace.complexPlaneClose' | transloco }}
+                  </button>
+                }
+              </section>
+            }
+
             <!-- ══ PLANO COMPLEJO: controles ══════════════════════════ -->
             @if (showComplexPlane()) {
 
               <!-- 2D / 3D -->
               <section class="px-5 py-4 flex flex-col gap-2">
-                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">Vista</p>
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'laplace.complexPlaneView' | transloco }}</p>
                 <div class="flex rounded border border-border dark:border-dark-border overflow-hidden w-fit text-[11px] font-mono">
                   <button type="button" (click)="complexPlaneMode.set('2d')"
                     [class]="complexPlaneMode() === '2d' ? 'px-3 py-1 bg-accent text-white cursor-pointer' : 'px-3 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
@@ -348,14 +367,14 @@
               <!-- Color scheme — solo en modo 2D -->
               @if (complexPlaneMode() === '2d') {
                 <section class="px-5 py-4 flex flex-col gap-2">
-                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">Color</p>
+                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'laplace.complexPlaneColor' | transloco }}</p>
                   <div class="flex rounded border border-border dark:border-dark-border overflow-hidden w-fit text-[11px] font-mono">
-                    @for (scheme of [['classic','Clásico'], ['phase','Fase'], ['magnitude','Módulo']]; track scheme[0]) {
+                    @for (scheme of [['classic', 'laplace.complexPlaneColorClassic'], ['phase', 'laplace.complexPlaneColorPhase'], ['magnitude', 'laplace.complexPlaneColorMagnitude']]; track scheme[0]) {
                       <button type="button" (click)="complexColorScheme.set($any(scheme[0]))"
                         [class]="complexColorScheme() === scheme[0]
                           ? 'px-3 py-1 bg-accent text-white cursor-pointer'
                           : 'px-3 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
-                        {{ scheme[1] }}
+                        {{ scheme[1] | transloco }}
                       </button>
                     }
                   </div>
@@ -365,26 +384,26 @@
               <!-- 3D options: wireframe + resolution + range + scale + clip -->
               @if (complexPlaneMode() === '3d') {
                 <section class="px-5 py-4 flex flex-col gap-3">
-                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">Malla 3D</p>
+                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'laplace.complexPlaneMesh3d' | transloco }}</p>
                   <!-- Wireframe + Grid — botones toggle -->
                   <div class="flex gap-1.5 text-[11px] font-mono">
                     <button type="button" (click)="complexWireframe.set(!complexWireframe())"
                       [class]="complexWireframe()
                         ? 'px-3 py-1 rounded border bg-accent text-white border-accent cursor-pointer'
                         : 'px-3 py-1 rounded border border-border dark:border-dark-border text-ink/80 dark:text-dark-ink/80 hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-                      Wireframe
+                      {{ 'laplace.complexPlaneWireframe' | transloco }}
                     </button>
                     <button type="button" (click)="complexShowGrid3d.set(!complexShowGrid3d())"
                       [class]="complexShowGrid3d()
                         ? 'px-3 py-1 rounded border bg-accent text-white border-accent cursor-pointer'
                         : 'px-3 py-1 rounded border border-border dark:border-dark-border text-ink/80 dark:text-dark-ink/80 hover:border-accent hover:text-accent transition-colors cursor-pointer'">
-                      Grid
+                      {{ 'laplace.complexPlaneGrid' | transloco }}
                     </button>
                   </div>
                   <!-- Resolución -->
                   <div class="flex flex-col gap-1">
                     <div class="flex items-center gap-2 text-xs font-mono">
-                      <span class="text-muted dark:text-dark-muted w-20 shrink-0">Resolución</span>
+                      <span class="text-muted dark:text-dark-muted w-20 shrink-0">{{ 'laplace.complexPlaneResolution' | transloco }}</span>
                       <input type="range" min="30" max="300" step="10"
                         [value]="complexResolution()"
                         (input)="complexResolution.set(+$any($event.target).value)"
@@ -393,13 +412,13 @@
                     </div>
                     @if (complexResolution() > 180) {
                       <p class="text-[10px] font-mono text-amber-600 dark:text-amber-400 pl-22">
-                        ⚠ Alta resolución — puede afectar el rendimiento
+                        {{ 'laplace.complexPlaneResolutionWarning' | transloco }}
                       </p>
                     }
                   </div>
                   <!-- Rango -->
                   <div class="flex items-center gap-2 text-xs font-mono">
-                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">Rango</span>
+                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">{{ 'laplace.complexPlaneRange' | transloco }}</span>
                     <input type="range" min="1" max="12" step="0.5"
                       [value]="complexRange3d()"
                       (input)="complexRange3d.set(+$any($event.target).value)"
@@ -408,7 +427,7 @@
                   </div>
                   <!-- Escala vertical -->
                   <div class="flex items-center gap-2 text-xs font-mono">
-                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">Escala Z</span>
+                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">{{ 'laplace.complexPlaneScaleZ' | transloco }}</span>
                     <input type="range" min="0.1" max="5" step="0.1"
                       [value]="complexHeightScale()"
                       (input)="complexHeightScale.set(+$any($event.target).value)"
@@ -417,7 +436,7 @@
                   </div>
                   <!-- Corte Z -->
                   <div class="flex items-center gap-2 text-xs font-mono">
-                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">Corte Z</span>
+                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">{{ 'laplace.complexPlaneClipZ' | transloco }}</span>
                     <input type="range" min="1" max="20" step="0.5"
                       [value]="complexZClip()"
                       (input)="complexZClip.set(+$any($event.target).value)"
@@ -430,7 +449,7 @@
               <!-- Parámetros libres detectados en el plano complejo -->
               @if (complexDetectedParams().length > 0) {
                 <section class="px-5 py-4 flex flex-col gap-2">
-                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">Parámetros libres</p>
+                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'laplace.complexPlaneFreeParams' | transloco }}</p>
                   <app-param-sliders
                     [params]="complexDetectedParams()"
                     (valuesChange)="complexParamValues.set($event)"
@@ -440,7 +459,7 @@
 
               <section class="px-5 py-4">
                 <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
-                  2D: arrastra para pan, scroll para zoom.<br>3D: arrastra para rotar.
+                  {{ 'laplace.complexPlaneNavHint' | transloco }}
                 </p>
               </section>
 
@@ -585,7 +604,7 @@
         @if (showComplexPlane() && hasComputedResult()) {
           <div class="flex flex-col gap-3 pt-1">
             <div class="flex items-center gap-2">
-              <h2 class="font-display text-base text-ink dark:text-dark-ink">Análisis en plano-s</h2>
+              <h2 class="font-display text-base text-ink dark:text-dark-ink">{{ 'laplace.complexPlaneTitle' | transloco }}</h2>
               @if (pzResult(); as pz) {
                 <span class="text-xs font-mono text-muted dark:text-dark-muted">{{ pz.executionTimeMs }} ms</span>
               }
@@ -593,7 +612,7 @@
 
             @if (pzLoading()) {
               <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3">
-                <p class="text-xs font-mono text-muted dark:text-dark-muted">Calculando polos y ceros…</p>
+                <p class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'laplace.complexPlaneLoading' | transloco }}</p>
               </div>
             }
             @if (pzError()) {
@@ -605,7 +624,7 @@
               <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl px-4 py-3 flex flex-col gap-3">
 
                 @if (!pz.isRational) {
-                  <p class="text-xs font-mono text-muted dark:text-dark-muted">F(s) no racional — análisis de polos/ceros no disponible.</p>
+                  <p class="text-xs font-mono text-muted dark:text-dark-muted">{{ 'laplace.complexPlaneNotRational' | transloco }}</p>
                 }
 
                 <!-- Polos / Ceros: two-column layout -->
@@ -613,7 +632,7 @@
 
                   <!-- Polos -->
                   <div class="flex flex-col gap-1.5">
-                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">Polos</span>
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">{{ 'laplace.complexPlanePoles' | transloco }}</span>
                     @if (pz.poles.length === 0) {
                       <span class="text-sm font-mono text-ink/40 dark:text-dark-ink/40">—</span>
                     } @else {
@@ -622,7 +641,7 @@
                           <span class="text-[10px] font-mono text-muted dark:text-dark-muted w-4 shrink-0 text-right">{{ $index + 1 }}</span>
                           <span class="text-sm text-ink dark:text-dark-ink" [mathjax]="'\\(' + p.tex + '\\)'"></span>
                           @if (p.mult > 1) {
-                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">(orden&nbsp;{{ p.mult }})</span>
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">({{ 'laplace.complexPlaneOrder' | transloco: { n: p.mult } }})</span>
                           }
                         </div>
                       }
@@ -631,7 +650,7 @@
 
                   <!-- Ceros -->
                   <div class="flex flex-col gap-1.5">
-                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">Ceros</span>
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">{{ 'laplace.complexPlaneZeros' | transloco }}</span>
                     @if (pz.zeros.length === 0) {
                       <span class="text-sm font-mono text-ink/40 dark:text-dark-ink/40">—</span>
                     } @else {
@@ -640,7 +659,7 @@
                           <span class="text-[10px] font-mono text-muted dark:text-dark-muted w-4 shrink-0 text-right">{{ $index + 1 }}</span>
                           <span class="text-sm text-ink dark:text-dark-ink" [mathjax]="'\\(' + z.tex + '\\)'"></span>
                           @if (z.mult > 1) {
-                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">(orden&nbsp;{{ z.mult }})</span>
+                            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">({{ 'laplace.complexPlaneOrder' | transloco: { n: z.mult } }})</span>
                           }
                         </div>
                       }
@@ -652,7 +671,7 @@
                 <!-- ROC -->
                 @if (pz.sigma0 !== null) {
                   <div class="flex flex-col gap-1 pt-2 border-t border-border dark:border-dark-border">
-                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">Región de convergencia</span>
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted uppercase tracking-wider">{{ 'laplace.complexPlaneRoc' | transloco }}</span>
                     <span class="text-ink dark:text-dark-ink"
                       [mathjax]="'\\(\\operatorname{Re}(' + activePair().freqDisplay + ') > ' + (pz.sigma0Tex || pz.sigma0) + '\\)'">
                     </span>

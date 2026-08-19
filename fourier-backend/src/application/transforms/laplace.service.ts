@@ -220,7 +220,8 @@ kill(all)$
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   private buildFuncInput(segments: PiecewiseSegment[]): string {
-    const rows = segments.map((s) => `[${s.expression}, ${s.from}, ${s.to}]`).join(", ");
+    const normLimit = (v: string) => (v === '-inf' ? 'minf' : v);
+    const rows = segments.map((s) => `[${s.expression}, ${normLimit(s.from)}, ${normLimit(s.to)}]`).join(", ");
     return `matrix(${rows})`;
   }
 
