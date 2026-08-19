@@ -225,22 +225,25 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
       const fmt = this.xAxisFormat();
       const cc = this.customConst();
       this.vp.update((v) => {
-        // When already in 'custom' mode and only the value changes,
-        // rescale X so that pixels-per-T-unit stays constant.
-        // This couples the grid marks and the curves together.
+        // When switching to a different custom symbol, rescale X so the
+        // grid marks land at the same screen positions. When only the value
+        // changes (slider drag on the same symbol), keep the viewport still —
+        // the renderer recalibrates labels automatically.
         if (
           fmt === 'custom' &&
           v.xAxisFormat === 'custom' &&
-          cc.value > 0 &&
-          v.customConst.value > 0 &&
-          Math.abs(cc.value - v.customConst.value) > 1e-10
+          cc.symbol !== v.customConst.symbol
         ) {
-          return {
-            ...v,
-            xAxisFormat: fmt,
-            customConst: cc,
-            scaleX: (v.scaleX * v.customConst.value) / cc.value,
-          };
+          const absNew = Math.abs(cc.value);
+          const absOld = Math.abs(v.customConst.value);
+          if (absNew > 0 && absOld > 0) {
+            return {
+              ...v,
+              xAxisFormat: fmt,
+              customConst: cc,
+              scaleX: (v.scaleX * absOld) / absNew,
+            };
+          }
         }
         return { ...v, xAxisFormat: fmt, customConst: cc };
       });

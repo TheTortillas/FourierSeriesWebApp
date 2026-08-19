@@ -237,7 +237,16 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   // ── Canvas line style ─────────────────────────────────────────────────────
 
-  readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
+  readonly xAxisFormat    = signal<'pi' | 'e' | 'integer' | 'custom'>('integer');
+  readonly customConstName = signal<string | null>(null);
+
+  readonly customConst = computed(() => {
+    const params = this.activeParams();
+    const pv = this.evaluationParams();
+    const name = this.customConstName() ?? params[0];
+    if (!name) return { symbol: 'T', value: 1 };
+    return { symbol: name, value: pv[name] ?? 1 };
+  });
 
   private readonly inputColorOverride  = signal<string | null>(null);
   private readonly resultColorOverride = signal<string | null>(null);
@@ -395,6 +404,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.odeResult.set(null);
     this.errorMsg.set(null);
     this.paramValues.set({});
+    this.customConstName.set(null);
     this.showCanvasSettings.set(false);
     this.latestHistoryEntry.set(null);
     this.showShareDialog.set(false);
@@ -683,6 +693,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.loading.set(true);
         this.errorMsg.set(null);
         this.paramValues.set({});
+        this.customConstName.set(null);
 
         const m = this.mode();
         if (m === 'direct') {
@@ -919,6 +930,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.odeResult.set(null);
     this.errorMsg.set(null);
     this.paramValues.set({});
+    this.customConstName.set(null);
   }
 
   // ── Alt forms ─────────────────────────────────────────────────────────────
