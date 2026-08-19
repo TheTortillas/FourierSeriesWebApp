@@ -162,29 +162,6 @@ function defaultSegment(v = 'x'): TransformSegmentDraft {
   };
 }
 
-interface DftColorPreset {
-  samples: string;
-  reconstruction: string;
-  specAmplitude: string;
-  specPhase: string;
-}
-
-function getDftPreset(isDark: boolean): DftColorPreset {
-  return isDark
-    ? {
-        samples: '#fb923c',
-        reconstruction: '#818cf8',
-        specAmplitude: '#a78bfa',
-        specPhase: '#6ee7b7',
-      }
-    : {
-        samples: '#ea580c',
-        reconstruction: '#6366f1',
-        specAmplitude: '#7c3aed',
-        specPhase: '#059669',
-      };
-}
-
 // ── Manual mode presets ────────────────────────────────────────────────────────
 
 function makePreset(
@@ -351,18 +328,20 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly dftSortByAmplitude = signal(false);
 
   // ── Canvas colors ──────────────────────────────────────────────────────────
-  readonly samplesColor = signal('#ea580c');
-  readonly reconstructionColor = signal('#6366f1');
-  readonly specAmplitudeColor = signal('#7c3aed');
-  readonly specPhaseColor = signal('#059669');
+  // null = follow theme preset; string = user override
+  private readonly _customSamples        = signal<string | null>(null);
+  private readonly _customReconstruction = signal<string | null>(null);
+  private readonly _customSpecAmp        = signal<string | null>(null);
+  private readonly _customSpecPhase      = signal<string | null>(null);
+
+  readonly samplesColor        = computed(() => this._customSamples()        ?? this.colors.dftColors().samples);
+  readonly reconstructionColor = computed(() => this._customReconstruction() ?? this.colors.dftColors().reconstruction);
+  readonly specAmplitudeColor  = computed(() => this._customSpecAmp()        ?? this.colors.dftColors().specAmplitude);
+  readonly specPhaseColor      = computed(() => this._customSpecPhase()      ?? this.colors.dftColors().specPhase);
+
   readonly reconstructionLineWidth = signal(1.8);
   readonly samplesRadius = signal(2.2);
   readonly specStemWidth = signal(1.6);
-
-  private _customSamplesColor = false;
-  private _customReconstructionColor = false;
-  private _customSpecAmpColor = false;
-  private _customSpecPhaseColor = false;
 
   // ── Hover / selection ──────────────────────────────────────────────────────
   readonly hoveredCoeff = signal<DftCoefficient | null>(null);
@@ -436,13 +415,13 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly epicUrlTooLarge = signal(false);
 
   // ── Epicycles canvas colors ────────────────────────────────────────────────
-  readonly epicOriginalColor = signal('#6b7280');
-  readonly epicApproxColor = signal('#22c55e');
-  readonly epicTraceColor = signal('#60a5fa');
-  readonly epicSampledColor = signal('#f59e0b');
+  private readonly _customEpicOriginal = signal<string | null>(null);
+  private readonly _customEpicSampled  = signal<string | null>(null);
 
-  private _customEpicOriginalColor = false;
-  private _customEpicSampledColor = false;
+  readonly epicOriginalColor = computed(() => this._customEpicOriginal() ?? this.colors.dftColors().epicOriginal);
+  readonly epicSampledColor  = computed(() => this._customEpicSampled()  ?? this.colors.dftColors().epicSampled);
+  readonly epicApproxColor   = signal('#22c55e');
+  readonly epicTraceColor    = signal('#60a5fa');
 
   // Draw dialog
   readonly epicDrawDialogOpen = signal(false);
@@ -833,15 +812,8 @@ export class DftComponent implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      const preset = getDftPreset(this.theme.isDark);
-      if (!this._customSamplesColor) this.samplesColor.set(preset.samples);
-      if (!this._customReconstructionColor) this.reconstructionColor.set(preset.reconstruction);
-      if (!this._customSpecAmpColor) this.specAmplitudeColor.set(preset.specAmplitude);
-      if (!this._customSpecPhaseColor) this.specPhaseColor.set(preset.specPhase);
-      if (!this._customEpicOriginalColor)
-        this.epicOriginalColor.set(this.theme.isDark ? '#9ca3af' : '#6b7280');
-      if (!this._customEpicSampledColor)
-        this.epicSampledColor.set(this.theme.isDark ? '#fbbf24' : '#d97706');
+      // Redraw when theme changes so computed colors propagate to canvas
+      this.colors.dftColors();
       this.signalPlotRef()?.redraw();
       this.spectrumPlotRef()?.redraw();
     });
@@ -1164,58 +1136,31 @@ export class DftComponent implements OnInit, OnDestroy {
 
   // ── Color controls ─────────────────────────────────────────────────────────
 
-  onSamplesColorInput(v: string): void {
-    this._customSamplesColor = true;
-    this.samplesColor.set(v);
-  }
-  onReconColorInput(v: string): void {
-    this._customReconstructionColor = true;
-    this.reconstructionColor.set(v);
-  }
-  onSpecAmpColorInput(v: string): void {
-    this._customSpecAmpColor = true;
-    this.specAmplitudeColor.set(v);
-  }
-  onSpecPhaseColorInput(v: string): void {
-    this._customSpecPhaseColor = true;
-    this.specPhaseColor.set(v);
-  }
+  onSamplesColorInput(v: string): void { this._customSamples.set(v); }
+  onReconColorInput(v: string):   void { this._customReconstruction.set(v); }
+  onSpecAmpColorInput(v: string): void { this._customSpecAmp.set(v); }
+  onSpecPhaseColorInput(v: string): void { this._customSpecPhase.set(v); }
 
   resetSignalColors(): void {
-    const p = getDftPreset(this.theme.isDark);
-    this._customSamplesColor = this._customReconstructionColor = false;
-    this.samplesColor.set(p.samples);
-    this.reconstructionColor.set(p.reconstruction);
+    this._customSamples.set(null);
+    this._customReconstruction.set(null);
   }
 
   resetSpecColors(): void {
-    const p = getDftPreset(this.theme.isDark);
-    this._customSpecAmpColor = this._customSpecPhaseColor = false;
-    this.specAmplitudeColor.set(p.specAmplitude);
-    this.specPhaseColor.set(p.specPhase);
+    this._customSpecAmp.set(null);
+    this._customSpecPhase.set(null);
   }
 
-  onEpicOriginalColorInput(v: string): void {
-    this._customEpicOriginalColor = true;
-    this.epicOriginalColor.set(v);
-  }
-  onEpicApproxColorInput(v: string): void {
-    this.epicApproxColor.set(v);
-  }
-  onEpicTraceColorInput(v: string): void {
-    this.epicTraceColor.set(v);
-  }
-  onEpicSampledColorInput(v: string): void {
-    this._customEpicSampledColor = true;
-    this.epicSampledColor.set(v);
-  }
+  onEpicOriginalColorInput(v: string): void { this._customEpicOriginal.set(v); }
+  onEpicApproxColorInput(v: string):   void { this.epicApproxColor.set(v); }
+  onEpicTraceColorInput(v: string):    void { this.epicTraceColor.set(v); }
+  onEpicSampledColorInput(v: string):  void { this._customEpicSampled.set(v); }
 
   resetEpicColors(): void {
-    this._customEpicOriginalColor = this._customEpicSampledColor = false;
-    this.epicOriginalColor.set(this.theme.isDark ? '#9ca3af' : '#6b7280');
+    this._customEpicOriginal.set(null);
+    this._customEpicSampled.set(null);
     this.epicApproxColor.set('#22c55e');
     this.epicTraceColor.set('#60a5fa');
-    this.epicSampledColor.set(this.theme.isDark ? '#fbbf24' : '#d97706');
   }
 
   // ── Spectrum interaction ───────────────────────────────────────────────────

@@ -21,6 +21,15 @@ export interface PairColors {
   result: string;
 }
 
+export interface DftColors {
+  samples:        string;
+  reconstruction: string;
+  specAmplitude:  string;
+  specPhase:      string;
+  epicOriginal:   string;
+  epicSampled:    string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CanvasColorService {
   private readonly theme = inject(ThemeService);
@@ -134,6 +143,49 @@ export class CanvasColorService {
     return {
       input:  dark ? '#f87171' : '#dc2626',
       result: dark ? '#60a5fa' : '#2563eb',
+    };
+  });
+
+  // ── DFT palette ─────────────────────────────────────────────────────────
+  readonly dftColors = computed<DftColors>(() => {
+    const dark    = this.theme.theme() === 'dark';
+    const neutral = this.theme.palette() === 'neutral';
+
+    if (!neutral && !dark) return {
+      samples:        '#ea580c',
+      reconstruction: '#6366f1',
+      specAmplitude:  '#7c3aed',
+      specPhase:      '#059669',
+      epicOriginal:   '#6b7280',
+      epicSampled:    '#d97706',
+    };
+
+    if (!neutral && dark) return {
+      samples:        '#fb923c',
+      reconstruction: '#818cf8',
+      specAmplitude:  '#a78bfa',
+      specPhase:      '#6ee7b7',
+      epicOriginal:   '#9ca3af',
+      epicSampled:    '#fbbf24',
+    };
+
+    if (neutral && !dark) return {
+      samples:        '#c2410c',
+      reconstruction: '#4f46e5',
+      specAmplitude:  '#6d28d9',
+      specPhase:      '#0f766e',
+      epicOriginal:   '#6b7280',
+      epicSampled:    '#b45309',
+    };
+
+    // neutral + dark
+    return {
+      samples:        '#fb923c',
+      reconstruction: '#818cf8',
+      specAmplitude:  '#a78bfa',
+      specPhase:      '#2dd4bf',
+      epicOriginal:   '#9ca3af',
+      epicSampled:    '#fbbf24',
     };
   });
 
