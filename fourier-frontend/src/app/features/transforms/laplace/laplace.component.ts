@@ -39,12 +39,14 @@ import {
   type PlotLayer,
 } from '../../../shared/components/function-plot/function-plot.component';
 import { ParamSlidersComponent, type ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
+import { ComplexPlotComponent } from '../../../shared/components/complex-plot/complex-plot.component';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import type {
   LaplaceDirectResponse,
   LaplaceInverseResponse,
   LaplaceOdeResponse,
+  LaplacePoleZeroResponse,
   LaplaceIcCondition,
   SimplifyRequest,
   SimplifyResponse,
@@ -105,6 +107,7 @@ const VAR_PAIRS: VarPair[] = [
     FooterComponent,
     ExportButtonComponent,
     RouterLink,
+    ComplexPlotComponent,
   ],
 })
 export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
@@ -411,6 +414,11 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.showFavoriteDialog.set(false);
     this.urlCopied.set(false);
     this.resetLineStyles();
+    this.showComplexPlane.set(false);
+    this.pzResult.set(null);
+    this.pzError.set(null);
+    this.complexParamValues.set({});
+    this.complexDetectedParams.set([]);
   }
 
   // ── Free parameters ───────────────────────────────────────────────────────
@@ -761,6 +769,10 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.loading.set(false);
       if (result === null) return;
       const m = this.mode();
+      // Reset complex plane on every new result
+      this.pzResult.set(null);
+      this.pzError.set(null);
+
       if (m === 'direct') {
         const r = result as LaplaceDirectResponse;
         this.directResult.set(r);
@@ -931,6 +943,11 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.errorMsg.set(null);
     this.paramValues.set({});
     this.customConstName.set(null);
+    this.pzResult.set(null);
+    this.pzError.set(null);
+    this.showComplexPlane.set(false);
+    this.complexParamValues.set({});
+    this.complexDetectedParams.set([]);
   }
 
   // ── Alt forms ─────────────────────────────────────────────────────────────
@@ -976,6 +993,56 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly hasResult        = computed(() =>
     this.hasDirectResult() || this.hasInverseResult() || this.hasOdeResult()
   );
+
+  // ── Complex plane panel ───────────────────────────────────────────────────
+
+  readonly showComplexPlane    = signal(false);
+  readonly complexPlaneMode    = signal<'2d' | '3d'>('2d');
+  readonly complexColorScheme  = signal<'classic' | 'phase' | 'magnitude'>('classic');
+  readonly complexWireframe    = signal(false);
+  readonly complexShowGrid3d   = signal(true);
+  readonly complexResolution   = signal(80);
+  readonly complexRange3d      = signal(4);
+  readonly complexHeightScale  = signal(1.0);
+  readonly complexZClip        = signal(5.0);
+  readonly complexParamValues  = signal<ParamValues>({});
+  readonly complexDetectedParams = signal<string[]>([]);
+  readonly pzLoading         = signal(false);
+  readonly pzResult          = signal<LaplacePoleZeroResponse | null>(null);
+  readonly pzError           = signal<string | null>(null);
+
+  /** F(s) expression currently shown in the complex plane (Maxima syntax). */
+  readonly complexPlaneExpr = computed<string>(() => {
+    const r = this.directResult();
+    if (r?.F?.maxima) return r.F.maxima;
+    const ri = this.inverseResult();
+    if (ri) return this.inverseExpr();  // F(s) is the input for inverse mode
+    return '';
+  });
+
+  toggleComplexPlane(): void {
+    const next = !this.showComplexPlane();
+    this.showComplexPlane.set(next);
+    if (next && !this.pzLoading() && this.pzResult() === null) this.loadPoleZero();
+  }
+
+  toggleComplexPlaneAndOpenSettings(): void {
+    this.toggleComplexPlane();
+    if (this.showComplexPlane()) this.showCanvasSettings.set(true);
+  }
+
+  loadPoleZero(): void {
+    const expr = this.complexPlaneExpr();
+    if (!expr) return;
+    this.pzLoading.set(true);
+    this.pzError.set(null);
+    this.api.calculateLaplacePoleZero({ expression: expr, freqVar: this.freqVar() })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) => { this.pzResult.set(r); this.pzLoading.set(false); },
+        error: (e) => { this.pzError.set(formatApiError(e, 'Error al calcular polos/ceros')); this.pzLoading.set(false); },
+      });
+  }
 
   // ── Share ─────────────────────────────────────────────────────────────────
 

@@ -8,7 +8,7 @@
 <div
   class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg h-full"
 >
-  <!-- Contenido principal (app-function-plot proyectado) -->
+  <!-- Contenido principal (app-function-plot u otro canvas proyectado) -->
   <ng-content />
 
   <!-- ── Overlay de botones (top-left, se desplaza cuando el panel está abierto) ── -->
@@ -16,6 +16,9 @@
     class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
     [style.left]="showSettings() && !isMobile() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'"
   >
+    <!-- Slot para botones extra proyectados por el consumer (e.g. toggle plano-s) -->
+    <ng-content select="[slot=toolbar-extra]" />
+
     <!-- Fullscreen toggle -->
     <button
       type="button"

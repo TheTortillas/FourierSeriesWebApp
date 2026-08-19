@@ -226,4 +226,28 @@ export class CanvasColorService {
   readonly singleCurveDefault = computed<string>(() =>
     this.theme.theme() === 'dark' ? '#60a5fa' : '#3b82f6',
   );
+
+  // ── Complex plot overlay colors ──────────────────────────────────────────
+  readonly complexPlotColors = computed(() => {
+    const dark = this.theme.theme() === 'dark';
+    return {
+      // 2D overlay
+      axis:      dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+      gridMajor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)',
+      gridMinor: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+      label:     dark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.65)',
+      // legend ring / 3D legend border & ticks
+      legendStroke: dark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.20)',
+      legendText:   dark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.60)',
+      legendMuted:  dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+      // 3D axes
+      axisRe: dark ? '#f87171' : '#dc2626',
+      axisIm: dark ? '#4ade80' : '#16a34a',
+      axisF:  dark ? '#60a5fa' : '#2563eb',
+      // 3D tick dots
+      tickRe: dark ? 'rgba(241,135,135,0.60)' : 'rgba(220,38,38,0.40)',
+      tickIm: dark ? 'rgba(74,222,128,0.60)'  : 'rgba(22,163,74,0.40)',
+      tickLabel: dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
+    };
+  });
 }

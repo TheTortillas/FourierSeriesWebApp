@@ -240,6 +240,24 @@ export interface LaplaceOdeResponse {
   executionTimeMs: number;
 }
 
+// ─── Laplace: pole-zero analysis ─────────────────────────────────────────────
+
+export interface LaplacePoleZeroRequest {
+  expression: string;
+  freqVar?:   string;
+}
+
+export interface ComplexPt { re: number; im: number; tex: string; }
+
+export interface LaplacePoleZeroResponse {
+  isRational:  boolean;
+  poles:       ComplexPt[];
+  zeros:       ComplexPt[];
+  sigma0:      number | null;
+  sigma0Tex:   string;
+  executionTimeMs: number;
+}
+
 // ─── Standalone ODE solver ────────────────────────────────────────────────────
 
 export type OdeMode = 'general' | 'ivp' | 'bvp';

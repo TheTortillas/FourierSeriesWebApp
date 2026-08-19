@@ -17,6 +17,7 @@ import type {
   LaplaceDirectInput,
   LaplaceInverseInput,
   LaplaceOdeInput,
+  LaplacePoleZeroInput,
   OdeInput,
   OdeMode,
   OdeHistoryInput,
@@ -795,6 +796,37 @@ transformsRouter.post(
           executionMs: result.executionTimeMs,
         });
       }
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Laplace: pole-zero analysis ──────────────────────────────────────────────
+
+transformsRouter.post(
+  "/laplace/pole-zero",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const body = req.body as LaplacePoleZeroInput;
+
+      if (typeof body.expression !== "string" || !body.expression.trim()) {
+        res.status(400).json({ error: "expression required" });
+        return;
+      }
+      const exprCheck = sanitizeExpression(body.expression.trim());
+      if (!exprCheck.valid) { res.status(400).json({ error: exprCheck.error }); return; }
+
+      const freqVarCheck = body.freqVar ? sanitizeVariableName(body.freqVar, "freqVar") : null;
+      if (freqVarCheck && !freqVarCheck.valid) { res.status(400).json({ error: freqVarCheck.error }); return; }
+
+      const input: LaplacePoleZeroInput = {
+        expression: body.expression.trim(),
+        freqVar:    body.freqVar ?? "s",
+      };
+
+      const result = await laplaceService.poleZero(input);
       res.json(result);
     } catch (err) {
       next(err);

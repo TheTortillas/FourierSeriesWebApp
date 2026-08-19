@@ -7,6 +7,9 @@ import type {
   LaplaceInverseResult,
   LaplaceOdeInput,
   LaplaceOdeResult,
+  LaplacePoleZeroInput,
+  LaplacePoleZeroResult,
+  ComplexPoint2,
   PiecewiseSegment,
   SymbolicExpression,
 } from "../../domain/types/fourier.types";
@@ -121,6 +124,82 @@ kill(all)$
       params: params.length ? params : undefined,
       executionTimeMs: Date.now() - startTime,
     };
+  }
+
+  // ── Pole-Zero analysis ────────────────────────────────────────────────────
+
+  async poleZero(input: LaplacePoleZeroInput): Promise<LaplacePoleZeroResult> {
+    const startTime = Date.now();
+    const freqVar = input.freqVar ?? "s";
+
+    const script = await loadScript("transforms", "laplace_pz.mac");
+    const fullScript = `
+display2d: false$
+%iargs: false$
+EXPR_INPUT: ${input.expression};
+TRANSVAR: ${freqVar};
+${script}
+kill(all)$
+`.trim();
+
+    const { raw } = await this.runner.run({ script: fullScript, timeoutMs: 30000 });
+
+    const isRationalRaw = this.extractBetween(raw, "__IS_RATIONAL__", "__POLES__").trim();
+    const polesRaw      = this.extractBetween(raw, "__POLES__", "__ZEROS__").trim();
+    const zerosRaw      = this.extractBetween(raw, "__ZEROS__", "__SIGMA0__").trim();
+    const sigma0Raw     = this.extractBetween(raw, "__SIGMA0__", "__POLES_TEX__").trim();
+    const poleTexRaw    = this.extractBetween(raw, "__POLES_TEX__", "__ZEROS_TEX__").trim();
+    const zeroTexRaw    = this.extractBetween(raw, "__ZEROS_TEX__", "__SIGMA0_TEX__").trim();
+    const sigma0TexRaw  = this.extractBetween(raw, "__SIGMA0_TEX__", null).trim();
+
+    const poles = this.parseComplexList(polesRaw);
+    const zeros = this.parseComplexList(zerosRaw);
+    const poleTexList = this.parseStringList(poleTexRaw);
+    const zeroTexList = this.parseStringList(zeroTexRaw);
+
+    // Attach tex to each point
+    poles.forEach((p, i) => { p.tex = poleTexList[i] ?? ''; });
+    zeros.forEach((z, i) => { z.tex = zeroTexList[i] ?? ''; });
+
+    return {
+      input,
+      isRational:  isRationalRaw.includes("true"),
+      poles,
+      zeros,
+      sigma0:      this.parseSigma0(sigma0Raw),
+      sigma0Tex:   sigma0TexRaw.replace(/^\"|\"$/g, '').trim(),
+      executionTimeMs: Date.now() - startTime,
+    };
+  }
+
+  private parseComplexList(raw: string): ComplexPoint2[] {
+    const points: ComplexPoint2[] = [];
+    const listMatch = raw.match(/^\[(.+)\]$/s);
+    if (!listMatch) return points;
+    // Match pairs: [re, im] — handles nested brackets
+    const pairRe = /\[\s*([^\[\],]+)\s*,\s*([^\[\],]+)\s*\]/g;
+    let m: RegExpExecArray | null;
+    while ((m = pairRe.exec(listMatch[1])) !== null) {
+      const re = parseFloat(m[1]);
+      const im = parseFloat(m[2]);
+      if (isFinite(re) && isFinite(im)) points.push({ re, im, tex: '' });
+    }
+    return points;
+  }
+
+  private parseStringList(raw: string): string[] {
+    // Maxima prints string lists as ["a","b","c"] — extract quoted tokens
+    const results: string[] = [];
+    const re = /"([^"]*)"/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(raw)) !== null) results.push(m[1]);
+    return results;
+  }
+
+  private parseSigma0(raw: string): number | null {
+    if (!raw || raw === "false" || raw.includes("minf") || raw.includes("inf")) return null;
+    const v = parseFloat(raw);
+    return isFinite(v) ? v : null;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

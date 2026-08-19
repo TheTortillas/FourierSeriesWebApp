@@ -254,10 +254,15 @@ export class GlslCompilerService {
    *
    * Throws on unsupported syntax or function names.
    */
-  compile(expr: string): CompileResult {
+  compile(expr: string, options?: { varAlias?: string }): CompileResult {
+    let normalized = this.normalizeConstants(expr);
+    // Rename the frequency variable (e.g. 's' in Laplace) to 'z'
+    if (options?.varAlias && options.varAlias !== 'z') {
+      normalized = normalized.replace(new RegExp(`\\b${options.varAlias}\\b`, 'g'), 'z');
+    }
     const detectedParams = new Set<string>();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const glsl = this.nodeToGLSL((window as any).math.parse(expr), detectedParams);
+    const glsl = this.nodeToGLSL((window as any).math.parse(normalized), detectedParams);
     const params = [...detectedParams];
     const paramUniforms = params.map(p => `uniform float p_${p};`).join('\n') + (params.length ? '\n' : '');
     return { glsl, paramUniforms, params };
@@ -268,11 +273,15 @@ export class GlslCompilerService {
    * Params are injected as complex numbers with Im=0.
    * Returns null if the expression cannot be evaluated.
    */
-  compileMathFn(expr: string, params: string[]): ComplexMathFn | null {
+  compileMathFn(expr: string, params: string[], options?: { varAlias?: string }): ComplexMathFn | null {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const math = (window as any).math;
-      const c = math.compile(expr);
+      let normalized = this.normalizeConstants(expr);
+      if (options?.varAlias && options.varAlias !== 'z') {
+        normalized = normalized.replace(new RegExp(`\\b${options.varAlias}\\b`, 'g'), 'z');
+      }
+      const c = math.compile(normalized);
       return (re: number, im: number, pv: Record<string, number>) => {
         const scope: Record<string, unknown> = { z: math.complex(re, im) };
         for (const p of params) scope[p] = math.complex(pv[p] ?? 0, 0);
@@ -283,6 +292,18 @@ export class GlslCompilerService {
     } catch {
       return null;
     }
+  }
+
+  // ── Private: constant normalisation ──────────────────────────────────────
+
+  /**
+   * Converts Maxima-style constants to numeric literals before mathjs parses the
+   * expression. Mirrors the same substitutions in MathUtilsService.maximaToJs().
+   */
+  private normalizeConstants(expr: string): string {
+    return expr
+      .replace(/%pi\b/g, '(3.141592653589793)')
+      .replace(/%e\b/g,  '(2.718281828459045)');
   }
 
   // ── Private: AST walker ───────────────────────────────────────────────────

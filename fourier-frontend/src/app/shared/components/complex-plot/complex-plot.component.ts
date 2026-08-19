@@ -90,6 +90,8 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   // ── Inputs — free parameters ───────────────────────────────────────────────
   /** Current values for detected free real parameters. */
   readonly paramValues = input<Record<string, number>>({});
+  /** Variable alias to treat as the complex variable z (e.g. 's' for Laplace). */
+  readonly varAlias = input<string>('z');
 
   // ── Outputs ────────────────────────────────────────────────────────────────
   readonly compileError    = output<string>();
@@ -122,8 +124,8 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   private drag3d = false;
   private m3d = { x: 0, y: 0 };
 
-  // ── Theme → overlay theme token ───────────────────────────────────────────
-  private readonly overlayTheme = computed(() => this.colors.singleCurveDefault());
+  // ── Theme tokens ───────────────────────────────────────────────────────────
+  private readonly complexColors = computed(() => this.colors.complexPlotColors());
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -145,7 +147,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     });
 
     // Redraw on theme change
-    effect(() => { void this.overlayTheme(); this.scheduleRender(); });
+    effect(() => { void this.complexColors(); this.scheduleRender(); });
 
     // Sync 3D inputs into mutable vp3d snapshot
     effect(() => {
@@ -203,9 +205,10 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   // ── Compilation ────────────────────────────────────────────────────────────
 
   private compile(expr: string): void {
+    const opts = { varAlias: this.varAlias() };
     let result: CompileResult;
     try {
-      result = this.compiler.compile(expr.trim());
+      result = this.compiler.compile(expr.trim(), opts);
     } catch (e: unknown) {
       const msg = (e as Error).message;
       this.compileErrorMsg.set(msg);
@@ -221,7 +224,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.lastCompile = result;
-    this.mathFn = this.compiler.compileMathFn(expr.trim(), result.params);
+    this.mathFn = this.compiler.compileMathFn(expr.trim(), result.params, opts);
     this.compileErrorMsg.set('');
     this.compileError.emit('');
     this.paramsDetected.emit(result.params);
@@ -296,14 +299,13 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   }
 
   private canvasTheme() {
-    // Use a transparent background so the WebGL canvas shows through
-    const t = this.overlayTheme();
+    const c = this.complexColors();
     return {
       bg: 'rgba(0,0,0,0)',
-      axis: 'rgba(255,255,255,0.45)',
-      gridMajor: 'rgba(255,255,255,0.12)',
-      gridMinor: 'rgba(255,255,255,0.05)',
-      label: 'rgba(255,255,255,0.72)',
+      axis:      c.axis,
+      gridMajor: c.gridMajor,
+      gridMinor: c.gridMinor,
+      label:     c.label,
     };
   }
 
@@ -323,9 +325,10 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
       ctx.arc(cx, cy, R, a1, a1 + Math.PI / 180 + 0.02);
       ctx.closePath(); ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fill();
     }
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+    const c2 = this.complexColors();
+    ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.fillStyle = c2.legendText;
     ctx.font = '9px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('0', cx + R + 7, cy); ctx.fillText('π', cx - R - 7, cy);
     ctx.fillText('π/2', cx, cy - R - 8); ctx.fillText('-π/2', cx, cy + R + 8);
@@ -345,10 +348,11 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
 
   private drawAxes3D(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     const R = this.vp3d.range;
+    const c = this.complexColors();
     const axes = [
-      { from: [0, 0, 0] as [number, number, number], to: [R * 1.15, 0, 0] as [number, number, number], col: '#f87171', lbl: 'Re' },
-      { from: [0, 0, 0] as [number, number, number], to: [0, 0, R * 1.15] as [number, number, number], col: '#4ade80', lbl: 'Im' },
-      { from: [0, 0, 0] as [number, number, number], to: [0, R * 1.15, 0] as [number, number, number], col: '#60a5fa', lbl: '|f|' },
+      { from: [0, 0, 0] as [number, number, number], to: [R * 1.15, 0, 0] as [number, number, number], col: c.axisRe, lbl: 'Re' },
+      { from: [0, 0, 0] as [number, number, number], to: [0, 0, R * 1.15] as [number, number, number], col: c.axisIm, lbl: 'Im' },
+      { from: [0, 0, 0] as [number, number, number], to: [0, R * 1.15, 0] as [number, number, number], col: c.axisF,  lbl: '|f|' },
     ];
     ctx.save();
     for (const ax of axes) {
@@ -363,12 +367,12 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     for (let v = tickStep; v <= R; v += tickStep) {
       const p = this.proj3D(v, 0, 0, W, H);
       ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(241,135,135,0.6)'; ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText(this.fmtN(v), p.x, p.y - 6);
+      ctx.fillStyle = c.tickRe; ctx.fill();
+      ctx.fillStyle = c.tickLabel; ctx.fillText(this.fmtN(v), p.x, p.y - 6);
       const q = this.proj3D(0, 0, v, W, H);
       ctx.beginPath(); ctx.arc(q.x, q.y, 2, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(74,222,128,0.6)'; ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText(this.fmtN(v), q.x, q.y - 6);
+      ctx.fillStyle = c.tickIm; ctx.fill();
+      ctx.fillStyle = c.tickLabel; ctx.fillText(this.fmtN(v), q.x, q.y - 6);
     }
     ctx.restore();
   }
@@ -382,17 +386,18 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
       const [r, g, b] = hsvToRgb(h, 0.92, 0.88);
       ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(bx, by + py, bw, 1);
     }
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
+    const c3 = this.complexColors();
+    ctx.strokeStyle = c3.legendStroke; ctx.lineWidth = 1;
     ctx.strokeRect(bx, by, bw, bh);
     const ticks: [number, string][] = [[0, 'π'], [0.25, 'π/2'], [0.5, '0'], [0.75, '−π/2'], [1, '−π']];
     ctx.font = '10px monospace'; ctx.textAlign = 'left';
     for (const [t, lbl] of ticks) {
       const ty = by + t * bh;
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 0.75;
+      ctx.strokeStyle = c3.legendStroke; ctx.lineWidth = 0.75;
       ctx.beginPath(); ctx.moveTo(bx, ty); ctx.lineTo(bx - 3, ty); ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,0.70)'; ctx.fillText(lbl, bx + bw + 4, ty + 3.5);
+      ctx.fillStyle = c3.legendText; ctx.fillText(lbl, bx + bw + 4, ty + 3.5);
     }
-    ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '9px monospace'; ctx.fillStyle = c3.legendMuted;
     ctx.textAlign = 'center'; ctx.fillText('arg', bx + bw / 2, by - 6);
     ctx.restore();
   }

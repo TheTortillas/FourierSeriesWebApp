@@ -267,12 +267,50 @@
           (shareRequested)="openShareDialog()"
           (favoriteRequested)="openFavoriteDialog()"
         >
-          <app-function-plot
-            [layers]="layers()"
-            [xAxisFormat]="xAxisFormat()"
-            [customConst]="customConst()"
-            class="w-full h-full block"
-          />
+          <!-- Toggle plano-s: integrado en la barra de botones del canvas -->
+          @if (complexPlaneExpr()) {
+            <button
+              slot="toolbar-extra"
+              type="button"
+              (click)="toggleComplexPlaneAndOpenSettings()"
+              class="pointer-events-auto flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-mono border transition-colors cursor-pointer"
+              [class]="showComplexPlane()
+                ? 'bg-accent/20 border-accent/50 text-accent'
+                : 'bg-paper/80 dark:bg-dark-surface/80 border-border dark:border-dark-border text-ink/70 dark:text-dark-ink/70 hover:border-accent hover:text-accent'"
+            >
+              <span>ℂ</span>
+              <span>Plano-s</span>
+            </button>
+          }
+
+          <!-- Canvas principal: f(t)/F(s) o plano complejo -->
+          @if (!showComplexPlane()) {
+            <app-function-plot
+              [layers]="layers()"
+              [xAxisFormat]="xAxisFormat()"
+              [customConst]="customConst()"
+              class="w-full h-full block"
+            />
+          } @else {
+            <app-complex-plot
+              class="block w-full h-full"
+              [expr]="complexPlaneExpr()"
+              varAlias="s"
+              [mode]="complexPlaneMode()"
+              [colorScheme]="complexColorScheme()"
+              [wireframe]="complexWireframe()"
+              [showGrid3d]="complexShowGrid3d()"
+              [resolution]="complexResolution()"
+              [range3d]="complexRange3d()"
+              [heightScale]="complexHeightScale()"
+              [zClip]="complexZClip()"
+              [paramValues]="complexParamValues()"
+              [showModLines]="true"
+              [showAxes]="true"
+              [showGrid2d]="true"
+              (paramsDetected)="complexDetectedParams.set($event)"
+            />
+          }
 
 
           <ng-template #settingsPanel>
@@ -287,6 +325,188 @@
 
           <!-- Scrollable content -->
           <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
+
+            <!-- ══ PLANO COMPLEJO: controles ══════════════════════════ -->
+            @if (showComplexPlane()) {
+
+              <!-- 2D / 3D -->
+              <section class="px-5 py-4 flex flex-col gap-2">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">Vista</p>
+                <div class="flex rounded border border-border dark:border-dark-border overflow-hidden w-fit text-[11px] font-mono">
+                  <button type="button" (click)="complexPlaneMode.set('2d')"
+                    [class]="complexPlaneMode() === '2d' ? 'px-3 py-1 bg-accent text-white cursor-pointer' : 'px-3 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
+                    2D
+                  </button>
+                  <button type="button" (click)="complexPlaneMode.set('3d')"
+                    [class]="complexPlaneMode() === '3d' ? 'px-3 py-1 bg-accent text-white cursor-pointer' : 'px-3 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
+                    3D
+                  </button>
+                </div>
+              </section>
+
+              <!-- Polos y ceros -->
+              <section class="px-5 py-4 flex flex-col gap-2">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">Análisis</p>
+                @if (pzLoading()) {
+                  <p class="text-xs font-mono text-muted dark:text-dark-muted">Calculando…</p>
+                }
+                @if (pzError()) {
+                  <p class="text-xs font-mono text-red-500">{{ pzError() }}</p>
+                }
+                @if (pzResult(); as pz) {
+                  <div class="flex flex-col gap-3">
+
+                    <!-- Polos -->
+                    <div class="flex flex-col gap-1.5">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-red-500 dark:bg-red-400 shrink-0"></span>
+                        <span class="text-[10px] font-mono font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">Polos</span>
+                      </div>
+                      @if (pz.poles.length === 0) {
+                        <span class="text-[11px] font-mono text-muted dark:text-dark-muted italic ml-3.5">ninguno</span>
+                      } @else {
+                        <div class="flex flex-wrap gap-1.5 ml-3.5">
+                          @for (p of pz.poles; track $index) {
+                            <span class="inline-flex items-center rounded-md border border-red-200 dark:border-red-800/60 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 text-red-600 dark:text-red-400"
+                              [mathjax]="'\\(' + p.tex + '\\)'">
+                            </span>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Ceros -->
+                    <div class="flex flex-col gap-1.5">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0"></span>
+                        <span class="text-[10px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Ceros</span>
+                      </div>
+                      @if (pz.zeros.length === 0) {
+                        <span class="text-[11px] font-mono text-muted dark:text-dark-muted italic ml-3.5">ninguno</span>
+                      } @else {
+                        <div class="flex flex-wrap gap-1.5 ml-3.5">
+                          @for (z of pz.zeros; track $index) {
+                            <span class="inline-flex items-center rounded-md border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 text-emerald-700 dark:text-emerald-400"
+                              [mathjax]="'\\(' + z.tex + '\\)'">
+                            </span>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <!-- ROC -->
+                    @if (pz.sigma0 !== null) {
+                      <div class="flex flex-col gap-1 pt-2 border-t border-border dark:border-dark-border">
+                        <span class="text-[10px] font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider">Región de convergencia</span>
+                        <span class="text-sm text-ink dark:text-dark-ink"
+                          [mathjax]="'\\(\\operatorname{Re}(s) > ' + (pz.sigma0Tex || pz.sigma0) + '\\)'">
+                        </span>
+                      </div>
+                    }
+
+                    @if (!pz.isRational) {
+                      <p class="text-[10px] font-mono text-muted dark:text-dark-muted italic">
+                        F(s) no racional — polos/ceros no disponibles
+                      </p>
+                    }
+                  </div>
+                }
+              </section>
+
+              <!-- Color scheme -->
+              <section class="px-5 py-4 flex flex-col gap-2">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">Color</p>
+                <div class="flex flex-col gap-1.5 text-xs font-mono">
+                  @for (scheme of [['classic','Clásico (HSV + módulo)'], ['phase','Solo fase'], ['magnitude','Solo módulo']]; track scheme[0]) {
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="pzScheme"
+                        [value]="scheme[0]"
+                        [ngModel]="complexColorScheme()"
+                        (ngModelChange)="complexColorScheme.set($any($event))"
+                        class="accent-accent" />
+                      <span class="text-ink/80 dark:text-dark-ink/80">{{ scheme[1] }}</span>
+                    </label>
+                  }
+                </div>
+              </section>
+
+              <!-- 3D options: wireframe + resolution + range + scale + clip -->
+              @if (complexPlaneMode() === '3d') {
+                <section class="px-5 py-4 flex flex-col gap-3">
+                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">Malla 3D</p>
+                  <!-- Wireframe -->
+                  <label class="flex items-center gap-2 text-xs font-mono cursor-pointer">
+                    <input type="checkbox"
+                      [checked]="complexWireframe()"
+                      (change)="complexWireframe.set($any($event.target).checked)"
+                      class="accent-accent" />
+                    <span class="text-ink/80 dark:text-dark-ink/80">Wireframe</span>
+                  </label>
+                  <!-- Grid superficie -->
+                  <label class="flex items-center gap-2 text-xs font-mono cursor-pointer">
+                    <input type="checkbox"
+                      [checked]="complexShowGrid3d()"
+                      (change)="complexShowGrid3d.set($any($event.target).checked)"
+                      class="accent-accent" />
+                    <span class="text-ink/80 dark:text-dark-ink/80">Grid en superficie</span>
+                  </label>
+                  <!-- Resolución -->
+                  <div class="flex items-center gap-2 text-xs font-mono">
+                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">Resolución</span>
+                    <input type="range" min="30" max="180" step="10"
+                      [value]="complexResolution()"
+                      (input)="complexResolution.set(+$any($event.target).value)"
+                      class="flex-1 accent-accent" />
+                    <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexResolution() }}</span>
+                  </div>
+                  <!-- Rango -->
+                  <div class="flex items-center gap-2 text-xs font-mono">
+                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">Rango</span>
+                    <input type="range" min="1" max="12" step="0.5"
+                      [value]="complexRange3d()"
+                      (input)="complexRange3d.set(+$any($event.target).value)"
+                      class="flex-1 accent-accent" />
+                    <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexRange3d() }}</span>
+                  </div>
+                  <!-- Escala vertical -->
+                  <div class="flex items-center gap-2 text-xs font-mono">
+                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">Escala Z</span>
+                    <input type="range" min="0.1" max="5" step="0.1"
+                      [value]="complexHeightScale()"
+                      (input)="complexHeightScale.set(+$any($event.target).value)"
+                      class="flex-1 accent-accent" />
+                    <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexHeightScale().toFixed(1) }}</span>
+                  </div>
+                  <!-- Corte Z -->
+                  <div class="flex items-center gap-2 text-xs font-mono">
+                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">Corte Z</span>
+                    <input type="range" min="1" max="20" step="0.5"
+                      [value]="complexZClip()"
+                      (input)="complexZClip.set(+$any($event.target).value)"
+                      class="flex-1 accent-accent" />
+                    <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexZClip() }}</span>
+                  </div>
+                </section>
+              }
+
+              <!-- Parámetros libres detectados en el plano complejo -->
+              @if (complexDetectedParams().length > 0) {
+                <section class="px-5 py-4 flex flex-col gap-2">
+                  <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">Parámetros libres</p>
+                  <app-param-sliders
+                    [params]="complexDetectedParams()"
+                    (valuesChange)="complexParamValues.set($event)"
+                  />
+                </section>
+              }
+
+              <section class="px-5 py-4">
+                <p class="text-[10px] font-mono text-muted dark:text-dark-muted">
+                  2D: arrastra para pan, scroll para zoom.<br>3D: arrastra para rotar.
+                </p>
+              </section>
+
+            } @else {
 
             <!-- ── 1. Eje X ───────────────────────────────────────────── -->
             <section class="px-5 py-4 flex flex-col gap-2">
@@ -416,6 +636,8 @@
                 {{ 'transforms.dragToPan' | transloco }}
               </p>
             </section>
+
+            } <!-- end @else (plano normal) -->
 
           </div>
         </ng-template>

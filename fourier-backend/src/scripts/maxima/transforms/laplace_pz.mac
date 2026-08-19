@@ -1,0 +1,125 @@
+/* laplace_pz.mac
+   Computes poles, zeros and abscissa of convergence for a rational F(s).
+   Injected: EXPR_INPUT (F(s) in Maxima syntax), TRANSVAR (frequency variable, default s)
+*/
+display2d: false$
+%iargs:    false$
+radexpand: false$
+
+/* Helper: extract [re, im] float pairs from allroots() solution list.
+   Values are rounded to 4 significant digits and near-zero parts zeroed. */
+_roots_to_pairs(sol) := block(
+  [_pairs, _eq, _val, _re, _im, _thresh],
+  _thresh: 1e-6,
+  _pairs: [],
+  for _eq in sol do (
+    _val: errcatch(rhs(_eq)),
+    if _val # [] then (
+      _val: first(_val),
+      _re: errcatch(float(realpart(_val))),
+      _im: errcatch(float(imagpart(_val))),
+      _re: if _re = [] then 0.0 else first(_re),
+      _im: if _im = [] then 0.0 else first(_im),
+      _re: if abs(_re) < _thresh then 0.0 else _round_sig(_re, 4),
+      _im: if abs(_im) < _thresh then 0.0 else _round_sig(_im, 4),
+      _pairs: append(_pairs, [[_re, _im]])
+    )
+  ),
+  _pairs
+)$
+
+/* Round a float to N significant digits to clean up allroots() noise */
+_round_sig(x, n) := block(
+  [_s],
+  if x = 0.0 then return(0.0),
+  _s: 10^(n - 1 - floor(log(abs(x)) / log(10))),
+  float(round(x * _s) / _s)
+)$
+
+/* Convert a rounded float to an exact rational (or integer) for cleaner TeX.
+   e.g. 1.0 -> 1, -3.0 -> -3, 0.5 -> 1/2, 1.4142 stays as float string */
+_to_exact(x) := block(
+  [_r],
+  _r: rat(x),
+  /* If rat() produced a clean rational (denominator <= 1000), keep it */
+  if ratnump(_r) then _r else x
+)$
+
+/* Build a TeX string list for a list of [re,im] pairs.
+   Pairs have already been rounded and zero-snapped by _roots_to_pairs. */
+_pairs_to_tex(pairs) := block(
+  [_tex_list, _p, _re, _im, _re_ex, _im_ex, _expr],
+  _tex_list: [],
+  for _p in pairs do (
+    _re: first(_p),
+    _im: second(_p),
+    /* Convert to exact rationals so tex1() renders 1 not 1.0, -3 not -3.0 */
+    _re_ex: _to_exact(_re),
+    _im_ex: _to_exact(_im),
+    /* Build expression: pure real, pure imaginary, or a+bi */
+    _expr: if _im = 0.0 then _re_ex
+           else if _re = 0.0 then _im_ex * %i
+           else _re_ex + _im_ex * %i,
+    _tex_list: append(_tex_list, [tex1(_expr)])
+  ),
+  _tex_list
+)$
+
+/* Map common symbolic names to Maxima built-ins, then float() so allroots sees numeric coefficients */
+_expr: subst(['pi = %pi, 'e = %e], EXPR_INPUT)$
+F_rat: errcatch(ratsimp(float(_expr)))$
+F_rat: if F_rat = [] then false else first(F_rat)$
+
+is_rational: false$
+poles_raw:   []$
+zeros_raw:   []$
+sigma0_val:  minf$
+
+if F_rat # false then (
+  _n: errcatch(num(F_rat)),
+  _n: if _n = [] then 0 else first(_n),
+  _d: errcatch(denom(F_rat)),
+  _d: if _d = [] then 1 else first(_d),
+
+  /* Expand so allroots can work with explicit polynomial */
+  _n: expand(_n),
+  _d: expand(_d),
+
+  is_rational: not(is(_d = 1) or is(_d = -1) or is(_d = 0)),
+
+  /* Poles */
+  if is_rational then (
+    _pr: errcatch(allroots(_d)),
+    if _pr # [] then
+      poles_raw: _roots_to_pairs(first(_pr))
+  ),
+
+  /* Zeros: skip constants */
+  if not(is(_n = 0) or is(_n = 1) or is(_n = -1)) and polynomialp(_n, [TRANSVAR]) then (
+    _zr: errcatch(allroots(_n)),
+    if _zr # [] then
+      zeros_raw: _roots_to_pairs(first(_zr))
+  ),
+
+  /* Abscissa of convergence */
+  if length(poles_raw) > 0 then (
+    _re_parts: map(lambda([_p], first(_p)), poles_raw),
+    sigma0_val: apply(max, _re_parts)
+  )
+)$
+
+poles_tex: _pairs_to_tex(poles_raw)$
+zeros_tex: _pairs_to_tex(zeros_raw)$
+
+/* sigma0 TeX: round then convert to exact before rendering */
+sigma0_tex: if sigma0_val # minf and sigma0_val # false
+            then tex1(_to_exact(_round_sig(sigma0_val, 4)))
+            else ""$
+
+print("__IS_RATIONAL__")$  print(string(is_rational))$
+print("__POLES__")$         print(string(poles_raw))$
+print("__ZEROS__")$         print(string(zeros_raw))$
+print("__SIGMA0__")$        print(string(sigma0_val))$
+print("__POLES_TEX__")$     print(string(poles_tex))$
+print("__ZEROS_TEX__")$     print(string(zeros_tex))$
+print("__SIGMA0_TEX__")$    print(sigma0_tex)$
