@@ -13,7 +13,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgTemplateOutlet } from '@angular/common';
+import { CanvasShellComponent } from '../../shared/components/canvas-shell/canvas-shell.component';
+import { CanvasColorService } from '../../core/services/canvas/canvas-color.service';
+import { ShareDialogComponent } from '../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../shared/components/favorite-dialog/favorite-dialog.component';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, forkJoin, map, of, Subject, switchMap } from 'rxjs';
@@ -243,7 +246,9 @@ const ODE_EXAMPLES: OdeExample[] = [
     FooterComponent,
     MathjaxDirective,
     FormsModule,
-    NgTemplateOutlet,
+    CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
     TranslocoPipe,
     MobileMathKeyboardComponent,
     FunctionPlotComponent,
@@ -254,6 +259,7 @@ const ODE_EXAMPLES: OdeExample[] = [
 export class OdeComponent implements OnInit, AfterViewChecked {
   private readonly isBrowser  = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly api        = inject(ApiService);
+  readonly colors             = inject(CanvasColorService);
   private readonly seo        = inject(SeoService);
   readonly userStore  = inject(UserStore);
   private readonly transloco  = inject(TranslocoService);
@@ -264,9 +270,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   private readonly tex2max    = inject(LatexToMaximaService);
   private readonly mathUtils  = inject(MathUtilsService);
   private readonly plotter    = inject(PlottingService);
-
-  // ── Canvas ref for fullscreen/download ───────────────────────────────────────
-  @ViewChild('canvasWrapperRef') private canvasWrapperRef!: ElementRef<HTMLElement>;
 
   // ── MathQuill refs ───────────────────────────────────────────────────────────
   @ViewChild('mqEqRef') private mqEqRef!: ElementRef<HTMLElement>;
@@ -383,24 +386,24 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly inputsLocked = computed(() => this.loading() || this.hasComputedResult());
 
   readonly showCanvasSettings = signal(false);
-  readonly isFullscreen       = signal(false);
-  readonly isMobile           = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
   readonly urlCopied          = signal(false);
   readonly showShareDialog    = signal(false);
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly favoriteLoading    = signal(false);
   readonly showFavoriteDialog = signal(false);
-  favoriteName = '';
 
   // ── Curve style ──────────────────────────────────────────────────────────────
   readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
 
-  readonly curveColor     = signal('#3b82f6');
+  private readonly curveColorOverride = signal<string | null>(null);
+  readonly curveColor  = computed(() => this.curveColorOverride() ?? this.colors.singleCurveDefault());
   readonly curveLineWidth = signal(2);
   readonly curveDashed    = signal(false);
 
+  setCurveColor(v: string): void { this.curveColorOverride.set(v); }
+
   resetLineStyles(): void {
-    this.curveColor.set('#3b82f6');
+    this.curveColorOverride.set(null);
     this.curveLineWidth.set(2);
     this.curveDashed.set(false);
   }
@@ -519,11 +522,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     const tabParam = this.route.snapshot.queryParamMap.get('tab');
     if (tabParam === 'laplace') { this.mode.set('laplace'); this._restoredFromUrl = true; }
 
-    if (typeof window !== 'undefined') {
-      document.addEventListener('fullscreenchange', () => {
-        this.isFullscreen.set(!!document.fullscreenElement);
-      });
-    }
   }
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
@@ -625,7 +623,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             this._runAltForms(r.solution);
             this.plotComponent()?.resetView();
           }
-          this.showCanvasSettings.set(!this.isMobile());
+          this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
         } else {
           const r = res as OdeResponse;
           this.result.set(r);
@@ -636,7 +634,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             this._runAltForms(r.solution);
             this.plotComponent()?.resetView();
           }
-          this.showCanvasSettings.set(!this.isMobile());
+          this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
         }
         if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       });
@@ -714,23 +712,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   }
 
   onParamValuesChange(pv: ParamValues): void { this.paramValues.set(pv); }
-
-  toggleFullscreen(): void {
-    const el = this.canvasWrapperRef?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void el.requestFullscreen();
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapperRef?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ode-solution.png';
-    a.click();
-  }
 
   // ── IVP management ───────────────────────────────────────────────────────────
   addIvpIc(): void {
@@ -1097,19 +1078,18 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -1117,7 +1097,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   private fetchLatestEntry(callback?: () => void): void {

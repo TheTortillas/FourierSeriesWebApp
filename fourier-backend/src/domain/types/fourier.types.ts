@@ -507,6 +507,25 @@ export interface LaplaceOdeResult {
   executionTimeMs: number;
 }
 
+// ── Laplace: pole-zero analysis ──────────────────────────────────────────────
+
+export interface LaplacePoleZeroInput {
+  expression: string;   // F(s) in Maxima syntax
+  freqVar?:   string;   // default "s"
+}
+
+export interface ComplexPoint2 { re: number; im: number; mult: number; tex: string; }
+
+export interface LaplacePoleZeroResult {
+  input:       LaplacePoleZeroInput;
+  isRational:  boolean;
+  poles:       ComplexPoint2[];
+  zeros:       ComplexPoint2[];
+  sigma0:      number | null;   // abscissa of convergence (null = no poles)
+  sigma0Tex:   string;          // TeX string for the abscissa of convergence
+  executionTimeMs: number;
+}
+
 // ── Standalone ODE solver (ode2 + ic1/ic2/bc2) ───────────────────────────────
 
 export type OdeMode = "general" | "ivp" | "bvp";

@@ -13,7 +13,11 @@ import {
   DestroyRef,
   viewChild,
 } from '@angular/core';
-import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
+import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
+import { CanvasColorService } from '../../../core/services/canvas/canvas-color.service';
+import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../../shared/components/favorite-dialog/favorite-dialog.component';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -35,12 +39,14 @@ import {
   type PlotLayer,
 } from '../../../shared/components/function-plot/function-plot.component';
 import { ParamSlidersComponent, type ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
+import { ComplexPlotComponent } from '../../../shared/components/complex-plot/complex-plot.component';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import type {
   LaplaceDirectResponse,
   LaplaceInverseResponse,
   LaplaceOdeResponse,
+  LaplacePoleZeroResponse,
   LaplaceIcCondition,
   SimplifyRequest,
   SimplifyResponse,
@@ -61,8 +67,8 @@ function defaultSegment(): TransformSegmentDraft {
     id: mkId(),
     expression: 'sin(t)',
     expressionTex: '\\sin(t)',
-    from: '0',
-    fromTex: '0',
+    from: 'minf',
+    fromTex: '-\\infty',
     to: 'inf',
     toTex: '\\infty',
   };
@@ -77,9 +83,8 @@ interface VarPair {
 }
 
 const VAR_PAIRS: VarPair[] = [
-  { id: 't-s', time: 't', freq: 's', timeDisplay: 't', freqDisplay: 's' },
-  { id: 't-p', time: 't', freq: 'p', timeDisplay: 't', freqDisplay: 'p' },
-  { id: 'x-s', time: 'x', freq: 's', timeDisplay: 'x', freqDisplay: 's' },
+  { id: 't-s',   time: 't',   freq: 's', timeDisplay: 't', freqDisplay: 's' },
+  { id: 'x-s',   time: 'x',   freq: 's', timeDisplay: 'x', freqDisplay: 's' },
   { id: 'tau-s', time: 'tau', freq: 's', timeDisplay: 'τ', freqDisplay: 's' },
 ];
 
@@ -88,8 +93,10 @@ const VAR_PAIRS: VarPair[] = [
   templateUrl: './laplace.component.html',
   imports: [
     NavComponent,
-    NgTemplateOutlet,
     MathjaxDirective,
+    CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
     TransformSegmentComponent,
     FormsModule,
     TranslocoPipe,
@@ -99,11 +106,13 @@ const VAR_PAIRS: VarPair[] = [
     FooterComponent,
     ExportButtonComponent,
     RouterLink,
+    ComplexPlotComponent,
   ],
 })
 export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly api        = inject(ApiService);
   readonly userStore  = inject(UserStore);
+  readonly colors     = inject(CanvasColorService);
   private readonly transloco  = inject(TranslocoService);
   private readonly seo        = inject(SeoService);
   private readonly route      = inject(ActivatedRoute);
@@ -116,8 +125,12 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   @ViewChild('mqInverseExpr')   private mqInverseRef!:   ElementRef<HTMLElement>;
   @ViewChild('mqOdeEquation')   private mqOdeEqRef!:     ElementRef<HTMLElement>;
-  @ViewChild('canvasWrapperRef') private canvasWrapperRef!: ElementRef<HTMLElement>;
-  readonly plotComponent = viewChild(FunctionPlotComponent);
+  readonly plotComponent    = viewChild(FunctionPlotComponent);
+  readonly complexPlotRef   = viewChild(ComplexPlotComponent);
+  readonly complexPlotCapture = computed(() => {
+    const ref = this.complexPlotRef();
+    return ref ? () => ref.captureImage() : null;
+  });
 
   inverseField:  MathField | null = null;
   odeEqField:    MathField | null = null;
@@ -129,6 +142,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   private _urlPopulated = false;
 
   constructor() {
+
     // ── 1. Restore state from URL and auto-calculate ──────────────────────
     const encoded = this.route.snapshot.queryParamMap.get('s');
     if (encoded) {
@@ -222,31 +236,42 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   private readonly isBrowser    = isPlatformBrowser(inject(PLATFORM_ID));
   readonly showCanvasSettings = signal(false);
-  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
-  readonly isFullscreen = signal(false);
   readonly urlCopied = signal(false);
   readonly showShareDialog = signal(false);
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly favoriteLoading = signal(false);
   readonly showFavoriteDialog = signal(false);
-  favoriteName = '';
 
   // ── Canvas line style ─────────────────────────────────────────────────────
 
-  readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
+  readonly xAxisFormat    = signal<'pi' | 'e' | 'integer' | 'custom'>('integer');
+  readonly customConstName = signal<string | null>(null);
 
-  readonly inputColor     = signal('#dc2626');
-  readonly inputLineWidth = signal(2);
-  readonly inputDashed    = signal(false);
-  readonly resultColor    = signal('#2563eb');
+  readonly customConst = computed(() => {
+    const params = this.activeParams();
+    const pv = this.evaluationParams();
+    const name = this.customConstName() ?? params[0];
+    if (!name) return { symbol: 'T', value: 1 };
+    return { symbol: name, value: pv[name] ?? 1 };
+  });
+
+  private readonly inputColorOverride  = signal<string | null>(null);
+  private readonly resultColorOverride = signal<string | null>(null);
+  readonly inputColor  = computed(() => this.inputColorOverride()  ?? this.colors.laplaceColors().input);
+  readonly resultColor = computed(() => this.resultColorOverride() ?? this.colors.laplaceColors().result);
+  readonly inputLineWidth  = signal(2);
+  readonly inputDashed     = signal(false);
   readonly resultLineWidth = signal(2);
-  readonly resultDashed   = signal(false);
+  readonly resultDashed    = signal(false);
+
+  setInputColor(v: string):  void { this.inputColorOverride.set(v); }
+  setResultColor(v: string): void { this.resultColorOverride.set(v); }
 
   resetLineStyles(): void {
-    this.inputColor.set('#dc2626');
+    this.inputColorOverride.set(null);
     this.inputLineWidth.set(2);
     this.inputDashed.set(false);
-    this.resultColor.set('#2563eb');
+    this.resultColorOverride.set(null);
     this.resultLineWidth.set(2);
     this.resultDashed.set(false);
   }
@@ -386,12 +411,18 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.odeResult.set(null);
     this.errorMsg.set(null);
     this.paramValues.set({});
+    this.customConstName.set(null);
     this.showCanvasSettings.set(false);
     this.latestHistoryEntry.set(null);
     this.showShareDialog.set(false);
     this.showFavoriteDialog.set(false);
     this.urlCopied.set(false);
     this.resetLineStyles();
+    this.showComplexPlane.set(false);
+    this.pzResult.set(null);
+    this.pzError.set(null);
+    this.complexParamValues.set({});
+    this.complexDetectedParams.set([]);
   }
 
   // ── Free parameters ───────────────────────────────────────────────────────
@@ -583,28 +614,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     return isFinite(result) ? result : NaN;
   }
 
-  // ── Canvas overlay actions ─────────────────────────────────────────────────
-
-  toggleFullscreen(): void {
-    const el = this.canvasWrapperRef?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void el.requestFullscreen();
-    }
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapperRef?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'laplace-transform.png';
-    a.click();
-  }
-
   // ── URL state ─────────────────────────────────────────────────────────────
 
   private encodeState(): string {
@@ -690,19 +699,13 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       'Laplace transform calculator, transformada de Laplace, inverse Laplace transform, transformada inversa de Laplace, ODE solver, resolución de EDOs, differential equations, ecuaciones diferenciales ordinarias, Laplace method, método de Laplace, partial fractions, fracciones parciales, piecewise functions, funciones a trozos, initial conditions, condiciones iniciales, step function, Heaviside, Dirac delta, impulse response, graph Laplace transform, graficar transformada de Laplace, symbolic math, cálculo simbólico',
     );
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', () => this.isMobile.set(window.innerWidth < 1024));
-      document.addEventListener('fullscreenchange', () => {
-        this.isFullscreen.set(!!document.fullscreenElement);
-      });
-    }
-
     this.submit$.pipe(
       debounceTime(50),
       switchMap(() => {
         this.loading.set(true);
         this.errorMsg.set(null);
         this.paramValues.set({});
+        this.customConstName.set(null);
 
         const m = this.mode();
         if (m === 'direct') {
@@ -770,13 +773,18 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.loading.set(false);
       if (result === null) return;
       const m = this.mode();
+      // Reset complex plane on every new result
+      this.pzResult.set(null);
+      this.pzError.set(null);
+
       if (m === 'direct') {
         const r = result as LaplaceDirectResponse;
         this.directResult.set(r);
         this.altFormsDirect.set([]); this.altFormsOpenDirect.set(false);
         if (r.exists && r.F) this._runAltForms(r.F, this.altFormsDirect, this.altFormsLoadingDirect);
         this.plotComponent()?.resetView();
-        this.showCanvasSettings.set(!this.isMobile());
+        this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
+        if (r.exists && !this.showComplexPlane()) this._pulseBtnOnce();
       }
       if (m === 'inverse') {
         const r = result as LaplaceInverseResponse;
@@ -784,7 +792,8 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.altFormsInverse.set([]); this.altFormsOpenInverse.set(false);
         if (r.exists && r.f) this._runAltForms(r.f, this.altFormsInverse, this.altFormsLoadingInverse);
         this.plotComponent()?.resetView();
-        this.showCanvasSettings.set(!this.isMobile());
+        this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
+        if (r.exists && !this.showComplexPlane()) this._pulseBtnOnce();
       }
       if (m === 'ode') {
         const r = result as LaplaceOdeResponse;
@@ -792,7 +801,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.altFormsOde.set([]); this.altFormsOpenOde.set(false);
         if (r.exists && r.solution) this._runAltForms(r.solution, this.altFormsOde, this.altFormsLoadingOde);
         this.plotComponent()?.resetView();
-        this.showCanvasSettings.set(!this.isMobile());
+        this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
       }
       if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
     });
@@ -939,6 +948,12 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.odeResult.set(null);
     this.errorMsg.set(null);
     this.paramValues.set({});
+    this.customConstName.set(null);
+    this.pzResult.set(null);
+    this.pzError.set(null);
+    this.showComplexPlane.set(false);
+    this.complexParamValues.set({});
+    this.complexDetectedParams.set([]);
   }
 
   // ── Alt forms ─────────────────────────────────────────────────────────────
@@ -985,6 +1000,62 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.hasDirectResult() || this.hasInverseResult() || this.hasOdeResult()
   );
 
+  // ── Complex plane panel ───────────────────────────────────────────────────
+
+  readonly showComplexPlane       = signal(false);
+  readonly complexPlaneBtnPulse   = signal(false);
+  readonly complexPlaneMode    = signal<'2d' | '3d'>('2d');
+  readonly complexColorScheme  = signal<'classic' | 'phase' | 'magnitude'>('classic');
+  readonly complexWireframe    = signal(false);
+  readonly complexShowGrid3d   = signal(true);
+  readonly complexResolution   = signal(80);
+  readonly complexRange3d      = signal(4);
+  readonly complexHeightScale  = signal(1.0);
+  readonly complexZClip        = signal(5.0);
+  readonly complexParamValues  = signal<ParamValues>({});
+  readonly complexDetectedParams = signal<string[]>([]);
+  readonly pzLoading         = signal(false);
+  readonly pzResult          = signal<LaplacePoleZeroResponse | null>(null);
+  readonly pzError           = signal<string | null>(null);
+
+  /** F(s) expression currently shown in the complex plane (Maxima syntax). */
+  readonly complexPlaneExpr = computed<string>(() => {
+    const r = this.directResult();
+    if (r?.F?.maxima) return r.F.maxima;
+    const ri = this.inverseResult();
+    if (ri) return this.inverseExpr();  // F(s) is the input for inverse mode
+    return '';
+  });
+
+  private _pulseBtnOnce(): void {
+    this.complexPlaneBtnPulse.set(true);
+    setTimeout(() => this.complexPlaneBtnPulse.set(false), 1800);
+  }
+
+  toggleComplexPlane(): void {
+    const next = !this.showComplexPlane();
+    this.showComplexPlane.set(next);
+    if (next && !this.pzLoading() && this.pzResult() === null) this.loadPoleZero();
+  }
+
+  toggleComplexPlaneAndOpenSettings(): void {
+    this.toggleComplexPlane();
+    if (this.showComplexPlane()) this.showCanvasSettings.set(true);
+  }
+
+  loadPoleZero(): void {
+    const expr = this.complexPlaneExpr();
+    if (!expr) return;
+    this.pzLoading.set(true);
+    this.pzError.set(null);
+    this.api.calculateLaplacePoleZero({ expression: expr, freqVar: this.freqVar() })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) => { this.pzResult.set(r); this.pzLoading.set(false); },
+        error: (e) => { this.pzError.set(formatApiError(e, 'Error al calcular polos/ceros')); this.pzLoading.set(false); },
+      });
+  }
+
   // ── Share ─────────────────────────────────────────────────────────────────
 
   get shareHref(): string {
@@ -1023,19 +1094,18 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -1043,7 +1113,6 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   private fetchLatestEntry(callback?: () => void): void {

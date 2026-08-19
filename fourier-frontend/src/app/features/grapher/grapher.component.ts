@@ -191,21 +191,6 @@ function findRoots(fn: (x: number) => number, xMin: number, xMax: number, steps 
   return roots;
 }
 
-function drawOpenCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number, color: string, r = 4): void {
-  ctx.beginPath();
-  ctx.arc(sx, sy, r, 0, Math.PI * 2);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([]);
-  ctx.stroke();
-}
-
-function drawFilledCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number, color: string, r = 4): void {
-  ctx.beginPath();
-  ctx.arc(sx, sy, r, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-}
 
 @Component({
   selector: 'app-grapher',
@@ -302,7 +287,7 @@ export class GrapherComponent {
               const ry = fn(rx);
               if (!isFinite(ry) || Math.abs(ry) > 1e-4 * (yMax - yMin + 1)) continue;
               const { x: sx, y: sy } = coords.mathToScreen({ x: rx, y: 0 }, vp);
-              drawOpenCircle(ctx, sx, sy, expr.color);
+              this.drawingUtils.drawOpenCircle(ctx, sx, sy, expr.color);
             }
           }
         }
@@ -318,7 +303,7 @@ export class GrapherComponent {
                 const iy = compiled[i].fn(ix);
                 if (!isFinite(iy)) continue;
                 const { x: sx, y: sy } = coords.mathToScreen({ x: ix, y: iy }, vp);
-                drawFilledCircle(ctx, sx, sy, compiled[i].expr.color);
+                this.drawingUtils.drawFilledCircle(ctx, sx, sy, compiled[i].expr.color);
                 count++;
               }
             }

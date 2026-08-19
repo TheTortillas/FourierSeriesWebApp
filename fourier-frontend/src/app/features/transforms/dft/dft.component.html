@@ -745,231 +745,45 @@
           <section
             class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
           >
-            <div class="relative h-120 lg:h-140" #epicWrapper>
+            <app-canvas-shell
+              style="height: 480px; display: block"
+              [showSettings]="showEpicSettings()"
+              [hasResult]="!!epicResult()"
+              [showFavorite]="userStore.isAuthenticated()"
+              [isFavorited]="!!latestHistoryEntry()?.isFavorite"
+              [favoriteLoading]="favoriteLoading()"
+              filename="epicycles.png"
+              (settingsToggle)="showEpicSettings.set(!showEpicSettings())"
+              (shareRequested)="openShareDialog()"
+              (favoriteRequested)="openFavoriteDialog()"
+            >
               <app-function-plot
                 [layers]="epicPlotLayers()"
                 [initialUnit]="100"
                 class="w-full h-full block"
               />
 
-              <!-- Overlay buttons top-left: fullscreen → settings → download → share → favorites -->
-              <div class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
-                   [style.left]="showEpicSettings() && epicResult() && !isMobile() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
-                @if (epicResult()) {
-                  <button
-                    type="button"
-                    (click)="toggleFullscreen(epicWrapperRef())"
-                    [title]="
-                      (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco
-                    "
-                    [attr.aria-label]="
-                      (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco
-                    "
-                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-                  >
-                    @if (isFullscreen()) {
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-3.5 h-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <polyline points="4 14 10 14 10 20" />
-                        <polyline points="20 10 14 10 14 4" />
-                        <line x1="10" y1="14" x2="3" y2="21" />
-                        <line x1="21" y1="3" x2="14" y2="10" />
-                      </svg>
-                    } @else {
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-3.5 h-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <polyline points="15 3 21 3 21 9" />
-                        <polyline points="9 21 3 21 3 15" />
-                        <line x1="21" y1="3" x2="14" y2="10" />
-                        <line x1="3" y1="21" x2="10" y2="14" />
-                      </svg>
-                    }
-                  </button>
-                  <button
-                    type="button"
-                    (click)="showEpicSettings.set(!showEpicSettings())"
-                    [title]="'results.canvasSettings' | transloco"
-                    [attr.aria-label]="'results.canvasSettings' | transloco"
-                    [class]="
-                      showEpicSettings()
-                        ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
-                        : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'
-                    "
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-3.5 h-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="3" />
-                      <path
-                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="downloadCanvas(epicWrapperRef(), 'epicycles.png')"
-                    [title]="'results.downloadImage' | transloco"
-                    [attr.aria-label]="'results.downloadImage' | transloco"
-                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-3.5 h-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="openShareDialog()"
-                    [title]="'transforms.shareLink' | transloco"
-                    [attr.aria-label]="'transforms.shareLink' | transloco"
-                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-3.5 h-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <circle cx="18" cy="5" r="3" />
-                      <circle cx="6" cy="12" r="3" />
-                      <circle cx="18" cy="19" r="3" />
-                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                    </svg>
-                  </button>
-                  @if (userStore.isAuthenticated()) {
-                    <button
-                      type="button"
-                      (click)="openFavoriteDialog()"
-                      [title]="
-                        latestHistoryEntry()?.isFavorite
-                          ? ('results.removeFav' | transloco)
-                          : ('results.addFav' | transloco)
-                      "
-                      [attr.aria-label]="
-                        latestHistoryEntry()?.isFavorite
-                          ? ('results.removeFav' | transloco)
-                          : ('results.addFav' | transloco)
-                      "
-                      [class]="
-                        latestHistoryEntry()?.isFavorite
-                          ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center cursor-pointer'
-                          : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/60 dark:text-dark-ink/60 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'
-                      "
-                    >
-                      @if (favoriteLoading()) {
-                        <svg
-                          class="w-3.5 h-3.5 animate-spin"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                          />
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                        </svg>
-                      } @else {
-                        <span class="text-sm leading-none">★</span>
-                      }
-                    </button>
-                  }
-                }
-              </div>
-
-              <!-- Desktop lg+: slide-in from left -->
-              @if (showEpicSettings() && epicResult()) {
-                <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-                  <ng-container *ngTemplateOutlet="epicPanelContent" />
-                </div>
-              }
-              <!-- Mobile + fullscreen: bottom sheet inside canvas -->
-              @if (showEpicSettings() && epicResult() && isMobile() && isFullscreen()) {
-                <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-                  <ng-container *ngTemplateOutlet="epicPanelContent" />
-                </div>
-              }
-
-              <!-- Legend top-right (only after compute, pushed down if share button present) -->
+              <!-- Legend bottom-left -->
               @if (epicResult()) {
                 <div
                   class="absolute bottom-2 left-2 flex flex-col gap-1 text-[10px] font-mono pointer-events-none px-2 py-1.5 rounded border border-border/40 dark:border-dark-border/40 bg-paper/80 dark:bg-dark-surface/80 backdrop-blur-sm"
                 >
                   <span class="flex items-center gap-1.5 text-ink/70 dark:text-dark-ink/70">
-                    <span
-                      class="w-4 h-px border-t-2 border-dashed shrink-0"
-                      [style.borderColor]="epicOriginalColor()"
-                    ></span>
+                    <span class="w-4 h-px border-t-2 border-dashed shrink-0" [style.borderColor]="epicOriginalColor()"></span>
                     {{ 'transforms.dft.epicycles.layerOriginal' | transloco }}
                   </span>
                   <span class="flex items-center gap-1.5 text-ink/70 dark:text-dark-ink/70">
-                    <span
-                      class="inline-block w-4 h-0.5 rounded shrink-0"
-                      [style.background]="epicApproxColor()"
-                    ></span>
+                    <span class="inline-block w-4 h-0.5 rounded shrink-0" [style.background]="epicApproxColor()"></span>
                     {{ 'transforms.dft.epicycles.layerApprox' | transloco }}
                   </span>
                   <span class="flex items-center gap-1.5 text-ink/70 dark:text-dark-ink/70">
-                    <span
-                      class="inline-block w-4 h-0.5 rounded shrink-0"
-                      [style.background]="epicTraceColor()"
-                    ></span>
+                    <span class="inline-block w-4 h-0.5 rounded shrink-0" [style.background]="epicTraceColor()"></span>
                     {{ 'transforms.dft.epicycles.layerTrace' | transloco }}
                   </span>
                 </div>
               }
-            </div>
 
-            <!-- Mobile < lg (non-fullscreen): inline below epicycles canvas -->
-            @if (showEpicSettings() && epicResult() && !isFullscreen() && isMobile()) {
-              <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
-                <ng-container *ngTemplateOutlet="epicPanelContent" />
-              </div>
-            }
-
-            <ng-template #epicPanelContent>
+              <ng-template #settingsPanel>
               <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
                 <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">{{ 'transforms.panelSettings' | transloco }}</span>
                 <button type="button" (click)="showEpicSettings.set(false)" class="w-5 h-5 flex items-center justify-center rounded text-ink/50 hover:text-ink dark:text-dark-ink/50 dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-base leading-none" [title]="'transforms.closePanel' | transloco">×</button>
@@ -1048,41 +862,8 @@
                 </section>
               </div>
             </ng-template>
+            </app-canvas-shell>
           </section>
-
-          <!-- Favorite name dialog — shown between canvas and coefficients table -->
-          @if (showFavoriteDialog()) {
-            <div
-              class="border border-amber-300 dark:border-amber-700 rounded-xl p-3 bg-amber-50/60 dark:bg-amber-950/20 flex items-center gap-2 flex-wrap text-xs font-mono"
-            >
-              <span class="text-amber-700 dark:text-amber-400 shrink-0">{{
-                'history.favorite.nameLabel' | transloco
-              }}</span>
-              <input
-                type="text"
-                [(ngModel)]="favoriteName"
-                [placeholder]="'history.favorite.namePlaceholder' | transloco"
-                (keydown.enter)="confirmFavorite()"
-                (keydown.escape)="cancelFavoriteDialog()"
-                autofocus
-                class="flex-1 min-w-0 px-2 py-1 rounded border border-amber-300 dark:border-amber-700 bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink outline-none focus:border-amber-500"
-              />
-              <button
-                type="button"
-                (click)="confirmFavorite()"
-                class="px-3 py-1 rounded bg-amber-400 hover:bg-amber-500 text-white transition-colors cursor-pointer"
-              >
-                {{ 'common.save' | transloco }}
-              </button>
-              <button
-                type="button"
-                (click)="cancelFavoriteDialog()"
-                class="px-3 py-1 rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors cursor-pointer"
-              >
-                {{ 'common.cancel' | transloco }}
-              </button>
-            </div>
-          }
 
           <!-- Coefficients inspector (below canvas) -->
           @if (epicResult()) {
@@ -1190,12 +971,30 @@
           }
         }
 
+        <!-- Favorite dialog — global, aplica a todos los modos -->
+        <app-favorite-dialog
+          [visible]="showFavoriteDialog()"
+          (confirmed)="onFavoriteConfirmed($event)"
+          (cancelled)="cancelFavoriteDialog()"
+        />
+
         <!-- ── Signal chart — always visible (preview before compute, result after) ── -->
         @if (inputMode() !== 'epicycles') {
           <section
             class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
           >
-            <div class="relative h-64" #signalWrapper>
+            <app-canvas-shell
+              style="height: 256px; display: block"
+              [showSettings]="showCanvasSettings()"
+              [hasResult]="!!result()"
+              [showFavorite]="userStore.isAuthenticated()"
+              [isFavorited]="!!latestHistoryEntry()?.isFavorite"
+              [favoriteLoading]="favoriteLoading()"
+              filename="dft-signal.png"
+              (settingsToggle)="showCanvasSettings.set(!showCanvasSettings())"
+              (shareRequested)="openShareDialog()"
+              (favoriteRequested)="openFavoriteDialog()"
+            >
               <app-function-plot
                 #signalPlot
                 [layers]="mainSignalLayers()"
@@ -1204,196 +1003,7 @@
                 class="w-full h-full block"
               />
 
-              <!-- Overlay buttons top-left: fullscreen → settings → download → share → favorites -->
-              <div class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
-                   [style.left]="showCanvasSettings() && result() && !isMobile() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
-                @if (result()) {
-                  <button
-                    type="button"
-                    (click)="toggleFullscreen(signalWrapperRef())"
-                    [title]="
-                      (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco
-                    "
-                    [attr.aria-label]="
-                      (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco
-                    "
-                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-                  >
-                    @if (isFullscreen()) {
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-3.5 h-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <polyline points="4 14 10 14 10 20" />
-                        <polyline points="20 10 14 10 14 4" />
-                        <line x1="10" y1="14" x2="3" y2="21" />
-                        <line x1="21" y1="3" x2="14" y2="10" />
-                      </svg>
-                    } @else {
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-3.5 h-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <polyline points="15 3 21 3 21 9" />
-                        <polyline points="9 21 3 21 3 15" />
-                        <line x1="21" y1="3" x2="14" y2="10" />
-                        <line x1="3" y1="21" x2="10" y2="14" />
-                      </svg>
-                    }
-                  </button>
-                  <button
-                    type="button"
-                    (click)="showCanvasSettings.set(!showCanvasSettings())"
-                    [title]="'results.canvasSettings' | transloco"
-                    [attr.aria-label]="'results.canvasSettings' | transloco"
-                    [class]="
-                      showCanvasSettings()
-                        ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
-                        : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'
-                    "
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-3.5 h-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="3" />
-                      <path
-                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="downloadCanvas(signalWrapperRef(), 'dft-signal.png')"
-                    [title]="'results.downloadImage' | transloco"
-                    [attr.aria-label]="'results.downloadImage' | transloco"
-                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-3.5 h-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="openShareDialog()"
-                    [title]="'transforms.shareLink' | transloco"
-                    [attr.aria-label]="'transforms.shareLink' | transloco"
-                    class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-3.5 h-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <circle cx="18" cy="5" r="3" />
-                      <circle cx="6" cy="12" r="3" />
-                      <circle cx="18" cy="19" r="3" />
-                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                    </svg>
-                  </button>
-                  @if (userStore.isAuthenticated()) {
-                    <button
-                      type="button"
-                      (click)="openFavoriteDialog()"
-                      [title]="
-                        latestHistoryEntry()?.isFavorite
-                          ? ('results.removeFav' | transloco)
-                          : ('results.addFav' | transloco)
-                      "
-                      [attr.aria-label]="
-                        latestHistoryEntry()?.isFavorite
-                          ? ('results.removeFav' | transloco)
-                          : ('results.addFav' | transloco)
-                      "
-                      [class]="
-                        latestHistoryEntry()?.isFavorite
-                          ? 'pointer-events-auto w-7 h-7 bg-amber-400/90 border border-amber-400 rounded text-white transition-colors flex items-center justify-center cursor-pointer'
-                          : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/60 dark:text-dark-ink/60 hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:text-amber-500 hover:border-amber-400 transition-colors flex items-center justify-center cursor-pointer'
-                      "
-                    >
-                      @if (favoriteLoading()) {
-                        <svg
-                          class="w-3.5 h-3.5 animate-spin"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                          />
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                        </svg>
-                      } @else {
-                        <span class="text-sm leading-none">★</span>
-                      }
-                    </button>
-                  }
-                }
-              </div>
-
-
-              <!-- Desktop lg+: slide-in from left -->
-              @if (showCanvasSettings()) {
-                <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-                  <ng-container *ngTemplateOutlet="signalPanelContent" />
-                </div>
-              }
-              <!-- Mobile + fullscreen: bottom sheet inside canvas -->
-              @if (showCanvasSettings() && isMobile() && isFullscreen()) {
-                <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-                  <ng-container *ngTemplateOutlet="signalPanelContent" />
-                </div>
-              }
-            </div>
-
-            <!-- Mobile < lg, non-fullscreen: inline below canvas -->
-            @if (showCanvasSettings() && !isFullscreen() && isMobile()) {
-              <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
-                <ng-container *ngTemplateOutlet="signalPanelContent" />
-              </div>
-            }
-
-            <ng-template #signalPanelContent>
+              <ng-template #settingsPanel>
               <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
                 <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">{{ 'transforms.panelSettings' | transloco }}</span>
                 <button type="button" (click)="showCanvasSettings.set(false)" class="w-5 h-5 flex items-center justify-center rounded text-ink/50 hover:text-ink dark:text-dark-ink/50 dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-base leading-none" [title]="'transforms.closePanel' | transloco">×</button>
@@ -1462,6 +1072,7 @@
                 </section>
               </div>
             </ng-template>
+            </app-canvas-shell>
           </section>
 
           @if (result(); as res) {
@@ -1530,202 +1141,36 @@
             }
 
             <!-- ── Spectrum chart ──────────────────────────────────────────── -->
-            <section
-              class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
+            <app-canvas-shell
+              style="height: 256px; display: block"
+              [showSettings]="showSpecSettings()"
+              [hasResult]="!!result()"
+              [showFavorite]="false"
+              [showShare]="false"
+              filename="dft-spectrum.png"
+              (settingsToggle)="showSpecSettings.set(!showSpecSettings())"
             >
-              <div
-                class="relative h-64"
-                #spectrumWrapper
+              <app-function-plot
+                #spectrumPlot
+                [layers]="spectrumLayers()"
+                [initialUnit]="24"
+                [xAxisFormat]="'integer'"
+                class="w-full h-full block"
                 (mousemove)="onSpecMouseMove($event)"
                 (mouseleave)="onSpecMouseLeave()"
-              >
-                <app-function-plot
-                  #spectrumPlot
-                  [layers]="spectrumLayers()"
-                  [initialUnit]="24"
-                  [xAxisFormat]="'integer'"
-                  class="w-full h-full block"
-                />
+              />
 
-                <!-- Action buttons overlay top-left: fullscreen → settings → download → share -->
-                <div class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
-                     [style.left]="showSpecSettings() && !isMobile() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'">
-                  @if (result()) {
-                    <button
-                      type="button"
-                      (click)="toggleFullscreen(specWrapperRef())"
-                      [title]="
-                        (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen')
-                          | transloco
-                      "
-                      [attr.aria-label]="
-                        (isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen')
-                          | transloco
-                      "
-                      class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-                    >
-                      @if (isFullscreen()) {
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="w-3.5 h-3.5"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="4 14 10 14 10 20" />
-                          <polyline points="20 10 14 10 14 4" />
-                          <line x1="10" y1="14" x2="3" y2="21" />
-                          <line x1="21" y1="3" x2="14" y2="10" />
-                        </svg>
-                      } @else {
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="w-3.5 h-3.5"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="15 3 21 3 21 9" />
-                          <polyline points="9 21 3 21 3 15" />
-                          <line x1="21" y1="3" x2="14" y2="10" />
-                          <line x1="3" y1="21" x2="10" y2="14" />
-                        </svg>
-                      }
-                    </button>
-                    <button
-                      type="button"
-                      (click)="showSpecSettings.set(!showSpecSettings())"
-                      [title]="'results.canvasSettings' | transloco"
-                      [attr.aria-label]="'results.canvasSettings' | transloco"
-                      [class]="
-                        showSpecSettings()
-                          ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent flex items-center justify-center transition-colors cursor-pointer'
-                          : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'
-                      "
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-3.5 h-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="3" />
-                        <path
-                          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      (click)="downloadCanvas(specWrapperRef(), 'dft-spectrum.png')"
-                      [title]="'results.downloadImage' | transloco"
-                      [attr.aria-label]="'results.downloadImage' | transloco"
-                      class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-3.5 h-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      (click)="openShareDialog()"
-                      [title]="'transforms.shareLink' | transloco"
-                      [attr.aria-label]="'transforms.shareLink' | transloco"
-                      class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-3.5 h-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <circle cx="18" cy="5" r="3" />
-                        <circle cx="6" cy="12" r="3" />
-                        <circle cx="18" cy="19" r="3" />
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                      </svg>
-                    </button>
-                  }
-                </div>
-
-
-                <!-- Hover tooltip -->
-                @if (hoveredCoeff(); as hov) {
-                  <div
-                    class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none z-10 px-3 py-2 rounded-lg border border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow text-[11px] font-mono flex gap-3 items-center whitespace-nowrap"
-                  >
-                    <span class="text-muted dark:text-dark-muted"
-                      >k =
-                      <span class="text-ink dark:text-dark-ink font-semibold">{{
-                        kDisplay(hov)
-                      }}</span></span
-                    >
-                    <span class="text-muted dark:text-dark-muted"
-                      >|X[k]| =
-                      <span class="text-ink dark:text-dark-ink font-semibold">{{
-                        hov.amplitude | number: '1.4-4'
-                      }}</span></span
-                    >
-                    <span class="text-muted dark:text-dark-muted"
-                      >∠ =
-                      <span class="text-ink dark:text-dark-ink font-semibold"
-                        >{{ phaseInDeg(hov.phase) }}°</span
-                      ></span
-                    >
-                    <span class="text-muted dark:text-dark-muted"
-                      >{{ hov.amplitudePercent | number: '1.1-1' }}%</span
-                    >
-                  </div>
-                }
-
-                <!-- Desktop lg+: slide-in from left -->
-                @if (showSpecSettings()) {
-                  <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-                    <ng-container *ngTemplateOutlet="specPanelContent" />
-                  </div>
-                }
-                <!-- Mobile + fullscreen: bottom sheet inside canvas -->
-                @if (showSpecSettings() && isMobile() && isFullscreen()) {
-                  <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-                    <ng-container *ngTemplateOutlet="specPanelContent" />
-                  </div>
-                }
-              </div>
-
-              <!-- Mobile < lg, non-fullscreen: inline below canvas -->
-              @if (showSpecSettings() && !isFullscreen() && isMobile()) {
-                <div class="panel-slide-in flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-64 overflow-hidden">
-                  <ng-container *ngTemplateOutlet="specPanelContent" />
+              <!-- Hover tooltip -->
+              @if (hoveredCoeff(); as hov) {
+                <div class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none z-10 px-3 py-2 rounded-lg border border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow text-[11px] font-mono flex gap-3 items-center whitespace-nowrap">
+                  <span class="text-muted dark:text-dark-muted">k = <span class="text-ink dark:text-dark-ink font-semibold">{{ kDisplay(hov) }}</span></span>
+                  <span class="text-muted dark:text-dark-muted">|X[k]| = <span class="text-ink dark:text-dark-ink font-semibold">{{ hov.amplitude | number: '1.4-4' }}</span></span>
+                  <span class="text-muted dark:text-dark-muted">∠ = <span class="text-ink dark:text-dark-ink font-semibold">{{ phaseInDeg(hov.phase) }}°</span></span>
+                  <span class="text-muted dark:text-dark-muted">{{ hov.amplitudePercent | number: '1.1-1' }}%</span>
                 </div>
               }
 
-              <ng-template #specPanelContent>
+              <ng-template #settingsPanel>
                 <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
                   <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">{{ 'transforms.panelSettings' | transloco }}</span>
                   <button type="button" (click)="showSpecSettings.set(false)" class="w-5 h-5 flex items-center justify-center rounded text-ink/50 hover:text-ink dark:text-dark-ink/50 dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-base leading-none" [title]="'transforms.closePanel' | transloco">×</button>
@@ -1784,12 +1229,12 @@
                   </section>
                 </div>
               </ng-template>
-              <p
-                class="px-4 py-2 text-[10px] font-mono text-muted dark:text-dark-muted border-t border-border dark:border-dark-border"
-              >
-                {{ (normalize() ? 'transforms.dft.spectrumNoteNorm' : 'transforms.dft.spectrumNoteRaw') | transloco }}
-              </p>
-            </section>
+            </app-canvas-shell>
+            <p
+              class="px-4 py-2 text-[10px] font-mono text-muted dark:text-dark-muted border border-border dark:border-dark-border rounded-b-xl -mt-1 bg-paper2 dark:bg-dark-surface"
+            >
+              {{ (normalize() ? 'transforms.dft.spectrumNoteNorm' : 'transforms.dft.spectrumNoteRaw') | transloco }}
+            </p>
 
             <!-- ── Coefficients table ──────────────────────────────────────── -->
             <section

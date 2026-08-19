@@ -5,10 +5,8 @@ import {
   signal,
   DestroyRef,
   effect,
-  ElementRef,
-  viewChild,
 } from '@angular/core';
-import { DecimalPipe, LowerCasePipe, NgClass, NgTemplateOutlet } from '@angular/common';
+import { LowerCasePipe, NgClass } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,6 +17,9 @@ import {
   PlotFn,
   PlotLayer,
 } from '../../../../shared/components/function-plot/function-plot.component';
+import { CanvasShellComponent } from '../../../../shared/components/canvas-shell/canvas-shell.component';
+import { ShareDialogComponent } from '../../../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../../../shared/components/favorite-dialog/favorite-dialog.component';
 import {
   FourierReconstructionService,
   TrigNumericTerm,
@@ -30,6 +31,7 @@ import { MathjaxDirective } from '../../../../shared/directives/mathjax.directiv
 import { ApiService } from '../../../../core/services/api/api.service';
 import { UserStore } from '../../../../core/services/auth/user.store';
 import { ThemeService } from '../../../../core/services/theme/theme.service';
+import { CanvasColorService } from '../../../../core/services/canvas/canvas-color.service';
 import { SpectrumChartComponent } from '../../../../shared/components/spectrum-chart/spectrum-chart.component';
 import type { ParamValues } from '../../../../shared/components/param-sliders/param-sliders.component';
 import { SimplifyProfile, HistoryEntry } from '../../../../domain';
@@ -46,88 +48,16 @@ import { ExportButtonComponent } from '../../../../shared/components/export-butt
 import { CsvExportService } from '../../../../core/services/csv-export.service';
 
 /** Cycling hue palette for individual harmonics */
-interface SeriesColorPreset {
-  original: string;
-  approx: string;
-  harmonics: string[];
-}
-
-function getSeriesColorPreset(isDark: boolean, isNeutral: boolean): SeriesColorPreset {
-  if (!isNeutral && !isDark) {
-    return {
-      original: '#8b2500',
-      approx: '#1a4a6b',
-      harmonics: [
-        'hsla(217, 70%, 55%, 0.55)',
-        'hsla(145, 60%, 45%, 0.55)',
-        'hsla(38, 80%, 50%, 0.55)',
-        'hsla(270, 60%, 60%, 0.55)',
-        'hsla(0, 70%, 55%, 0.55)',
-        'hsla(185, 65%, 45%, 0.55)',
-        'hsla(320, 60%, 55%, 0.55)',
-        'hsla(60, 70%, 45%, 0.55)',
-      ],
-    };
-  }
-
-  if (!isNeutral && isDark) {
-    return {
-      original: '#e0ad74',
-      approx: '#79b6de',
-      harmonics: [
-        'hsla(210, 85%, 72%, 0.62)',
-        'hsla(145, 65%, 58%, 0.62)',
-        'hsla(36, 90%, 62%, 0.62)',
-        'hsla(280, 70%, 72%, 0.62)',
-        'hsla(0, 80%, 68%, 0.62)',
-        'hsla(185, 75%, 62%, 0.62)',
-        'hsla(325, 70%, 70%, 0.62)',
-        'hsla(60, 80%, 62%, 0.62)',
-      ],
-    };
-  }
-
-  if (isNeutral && !isDark) {
-    return {
-      original: '#2563eb',
-      approx: '#0f766e',
-      harmonics: [
-        'hsla(217, 78%, 52%, 0.5)',
-        'hsla(162, 70%, 35%, 0.5)',
-        'hsla(280, 60%, 55%, 0.5)',
-        'hsla(29, 92%, 48%, 0.5)',
-        'hsla(348, 78%, 50%, 0.5)',
-        'hsla(198, 80%, 42%, 0.5)',
-        'hsla(83, 62%, 42%, 0.5)',
-        'hsla(44, 90%, 45%, 0.5)',
-      ],
-    };
-  }
-
-  return {
-    original: '#60a5fa',
-    approx: '#2dd4bf',
-    harmonics: [
-      'hsla(213, 90%, 72%, 0.62)',
-      'hsla(168, 80%, 60%, 0.62)',
-      'hsla(280, 80%, 72%, 0.62)',
-      'hsla(32, 95%, 65%, 0.62)',
-      'hsla(350, 90%, 72%, 0.62)',
-      'hsla(190, 88%, 66%, 0.62)',
-      'hsla(96, 75%, 62%, 0.62)',
-      'hsla(48, 95%, 66%, 0.62)',
-    ],
-  };
-}
 
 @Component({
   selector: 'app-results-summary',
   imports: [
-    DecimalPipe,
     LowerCasePipe,
-    NgTemplateOutlet,
     NgClass,
     FunctionPlotComponent,
+    CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
     MathjaxDirective,
     FormsModule,
     SpectrumChartComponent,
@@ -146,10 +76,9 @@ export class ResultsSummaryComponent {
   readonly api = inject(ApiService);
   readonly userStore = inject(UserStore);
   readonly theme = inject(ThemeService);
+  readonly colors = inject(CanvasColorService);
   readonly destroyRef = inject(DestroyRef);
   private readonly csvExport = inject(CsvExportService);
-
-  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
 
   // ── Free-parameter sliders ────────────────────────────────────────────────
   readonly activeParams = computed<string[]>(() => this.store.result()?.data.params ?? []);
@@ -220,7 +149,6 @@ export class ResultsSummaryComponent {
   }
   readonly canvasNTerms = signal(10);
   readonly hadResult = signal(false);
-  readonly isFullscreen = signal(false);
   readonly showShareDialog = signal(false);
   readonly urlCopied = signal(false);
 
@@ -228,10 +156,6 @@ export class ResultsSummaryComponent {
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly favoriteLoading = signal(false);
   readonly showFavoriteDialog = signal(false);
-  favoriteName = '';
-
-  // ── Canvas wrapper ref (for Fullscreen API) ───────────────────────────────
-  readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
 
   // ── Simplify state ──────────────────────────────────────────────────────────
   readonly simplifyProfile = signal<SimplifyProfile>('raw');
@@ -1449,15 +1373,7 @@ export class ResultsSummaryComponent {
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
-      window.addEventListener('resize', onResize);
-      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
-    }
-
     effect(() => {
-      void this.theme.theme();
-      void this.theme.palette();
       const preset = this.currentColorPreset();
       if (!this.customOriginalColor()) this.originalColor.set(preset.original);
       if (!this.customApproxColor()) this.approxColor.set(preset.approx);
@@ -1496,7 +1412,6 @@ export class ResultsSummaryComponent {
         this.selectedHarmonicN.set(null);
         this.showFavoriteDialog.set(false);
         this.latestHistoryEntry.set(null);
-        this.favoriteName = '';
         this.customConstName.set(null);
 
         // Pre-fetch the history entry so the star button can resolve immediately on click
@@ -1530,17 +1445,9 @@ export class ResultsSummaryComponent {
       }
     });
 
-    // Track native fullscreen changes
-    if (typeof document !== 'undefined') {
-      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
-      document.addEventListener('fullscreenchange', handler);
-      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
-    }
   }
 
-  readonly currentColorPreset = computed(() =>
-    getSeriesColorPreset(this.theme.isDark, this.theme.isNeutral),
-  );
+  readonly currentColorPreset = this.colors.seriesColors;
 
   readonly harmonicColors = computed(() => this.currentColorPreset().harmonics);
 
@@ -1765,16 +1672,6 @@ export class ResultsSummaryComponent {
 
   // ── Canvas actions ────────────────────────────────────────────────────────
 
-  toggleFullscreen(): void {
-    const el = this.canvasWrapper()?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void el.requestFullscreen();
-    }
-  }
-
   onOriginalColorInput(value: string): void {
     this.customOriginalColor.set(true);
     this.originalColor.set(value);
@@ -1791,16 +1688,6 @@ export class ResultsSummaryComponent {
     this.customApproxColor.set(false);
     this.originalColor.set(preset.original);
     this.approxColor.set(preset.approx);
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapper()?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = canvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fourier-series.png';
-    a.click();
   }
 
   exportTrigCsv(): void {
@@ -1906,19 +1793,18 @@ export class ResultsSummaryComponent {
     }
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -1926,7 +1812,6 @@ export class ResultsSummaryComponent {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   // ── Simplify actions ──────────────────────────────────────────────────────

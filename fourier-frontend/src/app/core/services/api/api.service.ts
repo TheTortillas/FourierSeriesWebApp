@@ -39,9 +39,11 @@ import {
   LaplaceDirectRequest,
   LaplaceInverseRequest,
   LaplaceOdeRequest,
+  LaplacePoleZeroRequest,
   LaplaceDirectResponse,
   LaplaceInverseResponse,
   LaplaceOdeResponse,
+  LaplacePoleZeroResponse,
   // ODE
   OdeRequest,
   OdeResponse,
@@ -229,6 +231,10 @@ export class ApiService {
 
   calculateLaplaceOde(body: LaplaceOdeRequest): Observable<LaplaceOdeResponse> {
     return this.http.post<LaplaceOdeResponse>(`${this.base}/transforms/laplace/ode`, body);
+  }
+
+  calculateLaplacePoleZero(body: LaplacePoleZeroRequest): Observable<LaplacePoleZeroResponse> {
+    return this.http.post<LaplacePoleZeroResponse>(`${this.base}/transforms/laplace/pole-zero`, body);
   }
 
   calculateOde(body: OdeRequest): Observable<OdeResponse> {
