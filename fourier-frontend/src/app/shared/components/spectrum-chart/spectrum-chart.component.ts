@@ -11,8 +11,8 @@ import { FunctionPlotComponent, PlotLayer } from '../function-plot/function-plot
 import { CanvasShellComponent } from '../canvas-shell/canvas-shell.component';
 import { CanvasViewport } from '../../../core/services/canvas/canvas.types';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
+import { CanvasColorService, SpectrumColors } from '../../../core/services/canvas/canvas-color.service';
 import { TrigonometricTerm, ComplexTerm } from '../../../domain/types/fourier.types';
-import { ThemeService } from '../../../core/services/theme/theme.service';
 
 type SpectrumMode =
   | 'trigAmp'
@@ -39,7 +39,7 @@ interface StemPoint {
 })
 export class SpectrumChartComponent {
   private readonly drawingUtils = inject(DrawingUtilsService);
-  private readonly theme = inject(ThemeService);
+  private readonly colors = inject(CanvasColorService);
 
   readonly seriesType = input<'trigonometric' | 'halfRange' | 'complex'>('trigonometric');
   readonly trigTerms = input<TrigonometricTerm[] | null>(null);
@@ -64,12 +64,10 @@ export class SpectrumChartComponent {
     { value: 'square',  labelKey: 'settingsCanvas.spectrumMarkerSquare' },
     { value: 'diamond', labelKey: 'settingsCanvas.spectrumMarkerDiamond' },
   ];
-  /** Resolved color for the active mode (manual override or theme default). */
+  /** Resolved color for the active mode (manual override or theme preset). */
   readonly stemColor = computed(() => {
     const mode = this.spectrumMode();
-    void this.theme.theme();
-    void this.theme.palette();
-    return this.customColors()[mode] ?? this.defaultColorForMode(mode);
+    return this.customColors()[mode] ?? this.colors.spectrumColors()[mode as keyof SpectrumColors];
   });
 
   readonly useAutoColor = computed(() => !this.customColors()[this.spectrumMode()]);
@@ -174,37 +172,12 @@ export class SpectrumChartComponent {
   }
 
   optionColor(mode: SpectrumMode): string {
-    return this.customColors()[mode] ?? this.defaultColorForMode(mode);
+    return this.customColors()[mode] ?? this.colors.spectrumColors()[mode as keyof SpectrumColors];
   }
 
   /** Delegates to DrawingUtilsService.colorWithAlpha — supports hsl(), #rgb, #rrggbb. */
   colorWithAlpha(color: string, alpha: number): string {
     return this.drawingUtils.colorWithAlpha(color, alpha);
-  }
-
-  private defaultColorForMode(mode: SpectrumMode): string {
-    const isDark = this.theme.isDark;
-    const isNeutral = this.theme.isNeutral;
-
-    switch (mode) {
-      case 'trigAn':
-      case 'trigAnAbs':
-        return isDark ? '#7db7e8' : '#2563eb';
-      case 'trigBn':
-      case 'trigBnAbs':
-        return !isNeutral ? (isDark ? '#e0ad74' : '#c14030') : isDark ? '#fb923c' : '#c2410c';
-      case 'trigAmp':
-        return isDark ? '#c4b5fd' : '#7c3aed';
-      case 'complexRe':
-        return isDark ? '#7db7e8' : '#2563eb';
-      case 'complexIm':
-        return isDark ? '#7dd3a0' : '#059669';
-      case 'complexPhase':
-        return isDark ? '#f6b26b' : '#d97706';
-      case 'complexAbs':
-      default:
-        return isDark ? '#c4b5fd' : '#7c3aed';
-    }
   }
 
   /**
@@ -375,8 +348,7 @@ export class SpectrumChartComponent {
   ): void {
     if (points.length === 0) return;
 
-    const isDark = this.theme.isDark;
-    const highlightColor = isDark ? '#fbbf24' : '#d97706';
+    const highlightColor = this.colors.spectrumColors().highlight;
     const markerRadius = Math.max(2.5, width + 1.2);
     for (const point of points) {
       const isHovered = hovered?.x === point.x && hovered?.label === point.label;

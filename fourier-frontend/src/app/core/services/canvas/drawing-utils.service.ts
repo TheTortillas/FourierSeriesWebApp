@@ -324,4 +324,24 @@ export class DrawingUtilsService {
   withAlpha(color: string, alpha: number): string {
     return this.colorWithAlpha(color, alpha);
   }
+
+  // ── Screen-space circle primitives ────────────────────────────────────────
+
+  /** Draws a stroked (open) circle at screen-space coordinates (sx, sy). */
+  drawOpenCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number, color: string, r = 4): void {
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([]);
+    ctx.stroke();
+  }
+
+  /** Draws a filled circle at screen-space coordinates (sx, sy). */
+  drawFilledCircle(ctx: CanvasRenderingContext2D, sx: number, sy: number, color: string, r = 4): void {
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
 }

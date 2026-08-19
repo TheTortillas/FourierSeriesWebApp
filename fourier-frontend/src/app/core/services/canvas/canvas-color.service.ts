@@ -30,6 +30,20 @@ export interface DftColors {
   epicSampled:    string;
 }
 
+/** Colors for each SpectrumChart display mode (Fourier Series spectrum). */
+export interface SpectrumColors {
+  trigAn:       string; // cosine coefficients aₙ
+  trigAnAbs:    string; // |aₙ|
+  trigBn:       string; // sine coefficients bₙ
+  trigBnAbs:    string; // |bₙ|
+  trigAmp:      string; // amplitude spectrum cₙ
+  complexRe:    string; // Re Cₙ
+  complexIm:    string; // Im Cₙ
+  complexPhase: string; // ∠Cₙ
+  complexAbs:   string; // |Cₙ|
+  highlight:    string; // hovered stem highlight
+}
+
 @Injectable({ providedIn: 'root' })
 export class CanvasColorService {
   private readonly theme = inject(ThemeService);
@@ -186,6 +200,25 @@ export class CanvasColorService {
       specPhase:      '#2dd4bf',
       epicOriginal:   '#9ca3af',
       epicSampled:    '#fbbf24',
+    };
+  });
+
+  // ── Fourier Series spectrum palette ─────────────────────────────────────
+  readonly spectrumColors = computed<SpectrumColors>(() => {
+    const dark    = this.theme.theme() === 'dark';
+    const neutral = this.theme.palette() === 'neutral';
+
+    return {
+      trigAn:       dark ? '#7db7e8' : '#2563eb',
+      trigAnAbs:    dark ? '#7db7e8' : '#2563eb',
+      trigBn:       !neutral ? (dark ? '#e0ad74' : '#c14030') : (dark ? '#fb923c' : '#c2410c'),
+      trigBnAbs:    !neutral ? (dark ? '#e0ad74' : '#c14030') : (dark ? '#fb923c' : '#c2410c'),
+      trigAmp:      dark ? '#c4b5fd' : '#7c3aed',
+      complexRe:    dark ? '#7db7e8' : '#2563eb',
+      complexIm:    dark ? '#7dd3a0' : '#059669',
+      complexPhase: dark ? '#f6b26b' : '#d97706',
+      complexAbs:   dark ? '#c4b5fd' : '#7c3aed',
+      highlight:    dark ? '#fbbf24' : '#d97706',
     };
   });
 
