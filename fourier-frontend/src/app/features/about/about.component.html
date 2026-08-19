@@ -205,7 +205,7 @@
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
         <!-- Directa -->
         <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
@@ -273,6 +273,29 @@
           </p>
           <ul class="flex flex-col gap-1.5">
             @for (key of laplaceOdeItems; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+        </div>
+
+        <!-- Plano complejo -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <span class="font-display text-xl text-accent leading-none select-none">ℂ</span>
+            </div>
+            <h3 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.laplace.complex.title' | transloco }}
+            </h3>
+          </div>
+          <p class="font-body text-sm text-muted dark:text-dark-muted leading-relaxed">
+            {{ 'about.laplace.complex.desc' | transloco }}
+          </p>
+          <ul class="flex flex-col gap-1.5">
+            @for (key of laplaceComplexItems; track key) {
               <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
                 <span class="text-accent mt-px shrink-0">✓</span>
                 {{ key | transloco }}

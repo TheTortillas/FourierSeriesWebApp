@@ -103,7 +103,7 @@
     }
   },
   "home": {
-    "subtitle": "Compute and plot Fourier series, integrals, continuous transforms and DFT/FFT. Solve Laplace transforms and inverse integrals. Solve ordinary differential equations, initial value problems and boundary value problems. Exact symbolic results with LaTeX export.",
+    "subtitle": "Compute and plot Fourier series, integrals, continuous transforms and DFT/FFT. Solve Laplace transforms with pole-zero and ROC analysis in the complex plane. Solve ordinary differential equations, IVP and BVP. Exact symbolic results with LaTeX export.",
     "learnMore": "Learn more about the tool",
     "toolsTitle": "Tools",
     "analysisTitle": "Fourier Analysis",
@@ -175,7 +175,7 @@
   },
   "calculator": {
     "title": "Fourier Series",
-    "subtitle": "Enter the piecewise-defined function and select the series type.",
+    "subtitle": "Calculate exact Fourier coefficients (aₙ, bₙ, cₙ) for piecewise-defined functions, continuous or discontinuous. Choose between trigonometric, complex, or half-range series, obtain the Parseval identity, and visualise the graphical reconstruction, amplitude spectrum, and phase spectrum.",
     "piecewiseFunction": "Piecewise function",
     "addSegment": "+ add piece",
     "variable": "Variable",
@@ -362,7 +362,7 @@
   },
   "transforms": {
     "title": "Fourier Transform",
-    "subtitle": "Compute the continuous or inverse transform of a piecewise-defined function.",
+    "subtitle": "Compute the direct and inverse Fourier transform of piecewise-defined functions over any interval. Exact symbolic results, amplitude and phase spectrum, and free parameters with interactive sliders.",
     "continuous": "Continuous",
     "continuousDesc": "f(ω) = ∫f(t)e⁻ⁱωᵗdt",
     "fourierIntegral": "Fourier Integral",
@@ -433,7 +433,7 @@
     "conventionIftLabel": "IFT: {{ factor }} ∫ F({{ w }}) e^{iωt} d{{ w }}",
     "dft": {
       "title": "Discrete Fourier Transform",
-      "subtitle": "Analyze the frequency spectrum of a sampled function or a discrete sequence.",
+      "subtitle": "Analyse the frequency spectrum of sampled functions or discrete sequences using FFT O(N log N) or naive DFT O(N²). Visualise amplitude, phase, and signal reconstruction with animated epicycles.",
       "modeFn": "Continuous function",
       "modeFnDesc": "piecewise f(x)",
       "modeManual": "Discrete sequence",
@@ -726,23 +726,23 @@
   "seo": {
     "home": {
       "title": "AEM-Lab — Fourier Series & Transform Calculator, Laplace and Differential Equations",
-      "description": "AEM-Lab (fouriersolver.com) — free online Fourier series and transform calculator. Compute Fourier series, Fourier transform, Laplace transform and solve ODEs symbolically. Exact coefficients, real-time graphs and piecewise function support."
+      "description": "AEM-Lab (fouriersolver.com) — free online Fourier series and transform calculator. Compute Fourier series, Fourier transform, Laplace transform and solve ODEs symbolically. Exact coefficients, Laplace pole-zero analysis with complex plane visualisation, real-time graphs and piecewise function support."
     },
     "calculator": {
       "title": "Fourier Series Calculator with Interactive Graph",
-      "description": "Calculate trigonometric, complex, and half-range Fourier series with exact symbolic coefficients. Animated graphical reconstruction, Parseval identity, and support for discontinuous piecewise functions."
+      "description": "Online Fourier series calculator with exact symbolic results. Compute aₙ and bₙ coefficients for trigonometric series, cₙ for complex series, and half-range expansions (sine or cosine) of piecewise-defined, continuous, or discontinuous functions. Spectral analysis with amplitude and phase spectrum graphs, Parseval identity, animated graphical reconstruction with the Gibbs phenomenon, and even/odd extensions. Supports any interval [a, b]."
     },
     "transforms": {
       "title": "Fourier Transform Calculator — Direct and Inverse",
-      "description": "Calculate the Fourier transform and inverse Fourier transform symbolically. Visualize amplitude and phase spectrum in real time. Supports piecewise functions, complex inputs, and all standard conventions."
+      "description": "Calculate the continuous Fourier transform F(ω) and inverse Fourier transform f(t) symbolically. Supports piecewise functions, free parameters with interactive sliders, multiple conventions (engineering, physics, mathematics), and real-time amplitude and phase spectrum visualisation."
     },
     "dft": {
       "title": "DFT Calculator — Discrete Fourier Transform with Epicycles",
-      "description": "Calculate the DFT and FFT with amplitude and phase spectrum visualization. Reconstruct signals with animated epicycles. Perfect for signal processing and frequency analysis."
+      "description": "Calculate the DFT and FFT of sampled functions and discrete sequences. Visualise amplitude and phase spectrum, reconstruct signals with animated 2D epicycles, and analyse Lissajous figures. FFT O(N log N) for up to 4096 points with configurable normalisation."
     },
     "fourierIntegral": {
       "title": "Fourier Integral Calculator — A(ω) and B(ω) Coefficients",
-      "description": "Calculate the trigonometric, complex, cosine, and sine Fourier integral of piecewise-defined functions. Visualize the reconstruction and Gibbs phenomenon with an interactive slider."
+      "description": "Compute the Fourier integral of non-periodic piecewise-defined functions. Obtain trigonometric A(ω)/B(ω), cosine integral, sine integral, and complex integral representations in exact symbolic form. Visualise the reconstruction with an interactive slider and observe the Gibbs phenomenon for discontinuous functions."
     },
     "about": {
       "title": "About AEM-Lab",
@@ -750,7 +750,10 @@
     },
     "laplace": {
       "title": "Laplace Transform Calculator — Direct, Inverse & ODE Solver",
-      "description": "Compute direct and inverse Laplace transforms of piecewise functions. Solve ODEs with initial conditions via the Laplace method. Interactive graph and exact symbolic results."
+      "description": "Calculate the direct and inverse Laplace transform of piecewise functions with exact symbolic results. Automatic partial fractions, time-shifting property (e^{-as}F(s)), pole-zero analysis, ROC, and complex-plane visualisation. Solve linear ODEs with initial conditions via the Laplace method."
+    },
+    "ode": {
+      "description": "Solve linear ordinary differential equations up to 3rd order. Obtain the general solution with integration constants, apply initial conditions (IVP) or boundary conditions (BVP), and visualise the solution with an interactive graph. Exact symbolic CAS engine powered by Maxima."
     }
   },
   "dev": {
@@ -976,6 +979,14 @@
         "f2": "Adjustable initial conditions y(0) and y'(0)",
         "f3": "Shows the exact symbolic solution and its graph",
         "f4": "Result history with full recovery"
+      },
+      "complex": {
+        "title": "Complex plane",
+        "desc": "After computing a transform, F(s) is analysed in the complex plane s = σ + jω: poles govern the transient behaviour of the system and zeros shape the frequency response. The Region of Convergence (ROC) marks the values of s for which the Laplace integral converges.",
+        "f1": "Pole-zero diagram with multiplicities",
+        "f2": "ROC computed automatically from the poles",
+        "f3": "Domain coloring of |F(s)| and arg(F(s)) in the plane",
+        "f4": "3D view of the magnitude |F(s)| as mesh or solid surface"
       }
     },
     "series": {
@@ -1179,7 +1190,7 @@
   },
   "fourier-integral": {
     "title": "Fourier Integral",
-    "subtitle": "Integral representation of non-periodic functions",
+    "subtitle": "Represent non-periodic functions via the Fourier integral — trigonometric A(ω)/B(ω), cosine, sine, and complex forms. Exact reconstruction with an interactive slider and visualization of the Gibbs phenomenon.",
     "trigonometric": "Trigonometric",
     "complex": "Complex",
     "cosine": "Cosine Integral",
@@ -1214,7 +1225,7 @@
   },
   "laplace": {
     "title": "Laplace Transform",
-    "subtitle": "Direct transform, inverse, and ODE solving via the Laplace method",
+    "subtitle": "Compute the direct and inverse Laplace transform of piecewise functions with automatic partial fractions and time-shifting support. Solve ODEs with initial conditions, analyse poles and zeros, and visualise F(s) in the complex plane.",
     "modeDirecta": "Direct",
     "modeInversa": "Inverse",
     "modeOde": "ODE",
@@ -1286,11 +1297,11 @@
     "complexPlaneClose": "View real plane"
   },
   "ode": {
-    "seoTitle": "ODE Solver — General Solution, IVP and Boundary Value Problems",
-    "seoDescription": "Solve 1st and 2nd order ordinary differential equations: general solution, initial value problem (IVP) and boundary value problem (BVP). Symbolic CAS engine with interactive graph.",
+    "seoTitle": "ODE Solver — General Solution, IVP and BVP up to 3rd Order",
+    "seoDescription": "Solve linear ordinary differential equations up to 3rd order with exact symbolic results. Compute the general solution with integration constants, apply initial conditions (IVP) with y(0), y'(0), or boundary conditions (BVP), and visualise the solution with an interactive graph. Includes Laplace mode for forcing terms with δ(t) and u(t). Exact CAS engine powered by Maxima.",
     "seoKeywords": "ordinary differential equations, ODE, general solution, IVP, BVP, initial conditions, boundary value, Bernoulli, Euler equation, ode2, Maxima, ODE calculator",
     "title": "ODE Solver",
-    "subtitle": "General solution, initial value problem (IVP) and boundary value problem (BVP)",
+    "subtitle": "Solve ordinary differential equations up to 3rd order: general solution with constants C₁, C₂, initial value problem (IVP) and boundary value problem (BVP). Exact symbolic CAS engine with interactive graph.",
     "modeGeneral": "General",
     "modeIvp": "IVP",
     "modeBvp": "Boundary",
