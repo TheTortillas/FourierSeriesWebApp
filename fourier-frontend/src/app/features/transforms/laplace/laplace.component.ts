@@ -126,7 +126,12 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   @ViewChild('mqInverseExpr')   private mqInverseRef!:   ElementRef<HTMLElement>;
   @ViewChild('mqOdeEquation')   private mqOdeEqRef!:     ElementRef<HTMLElement>;
-  readonly plotComponent = viewChild(FunctionPlotComponent);
+  readonly plotComponent    = viewChild(FunctionPlotComponent);
+  readonly complexPlotRef   = viewChild(ComplexPlotComponent);
+  readonly complexPlotCapture = computed(() => {
+    const ref = this.complexPlotRef();
+    return ref ? () => ref.captureImage() : null;
+  });
 
   inverseField:  MathField | null = null;
   odeEqField:    MathField | null = null;

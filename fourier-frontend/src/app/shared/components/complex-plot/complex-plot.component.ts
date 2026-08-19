@@ -402,6 +402,24 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     ctx.restore();
   }
 
+  // ── Public capture ─────────────────────────────────────────────────────────
+
+  /** Composites all canvas layers (WebGL + overlays) into a single PNG dataURL. */
+  captureImage(): string {
+    const wgl = this.wglRef()?.nativeElement;
+    if (!wgl) return '';
+    const W = wgl.width, H = wgl.height;
+    const tmp = document.createElement('canvas');
+    tmp.width = W; tmp.height = H;
+    const ctx = tmp.getContext('2d')!;
+    ctx.drawImage(wgl, 0, 0);
+    const ov2 = this.overlay2dRef()?.nativeElement;
+    if (ov2) ctx.drawImage(ov2, 0, 0);
+    const ov3 = this.overlay3dRef()?.nativeElement;
+    if (ov3) ctx.drawImage(ov3, 0, 0);
+    return tmp.toDataURL('image/png');
+  }
+
   // ── Resize ─────────────────────────────────────────────────────────────────
 
   private resizeCanvases(): void {

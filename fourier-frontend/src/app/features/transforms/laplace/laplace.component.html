@@ -263,6 +263,7 @@
           [isFavorited]="!!latestHistoryEntry()?.isFavorite"
           [favoriteLoading]="favoriteLoading()"
           filename="laplace-result.png"
+          [captureImage]="showComplexPlane() ? complexPlotCapture() : null"
           (settingsToggle)="showCanvasSettings.set(!showCanvasSettings())"
           (shareRequested)="openShareDialog()"
           (favoriteRequested)="openFavoriteDialog()"
@@ -315,7 +316,7 @@
 
           <ng-template #settingsPanel>
           <!-- Panel header -->
-          <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border shrink-0">
             <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
               {{ 'transforms.panelSettings' | transloco }}
             </span>
@@ -381,13 +382,20 @@
                     </button>
                   </div>
                   <!-- Resolución -->
-                  <div class="flex items-center gap-2 text-xs font-mono">
-                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">Resolución</span>
-                    <input type="range" min="30" max="180" step="10"
-                      [value]="complexResolution()"
-                      (input)="complexResolution.set(+$any($event.target).value)"
-                      class="flex-1 accent-accent" />
-                    <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexResolution() }}</span>
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2 text-xs font-mono">
+                      <span class="text-muted dark:text-dark-muted w-20 shrink-0">Resolución</span>
+                      <input type="range" min="30" max="300" step="10"
+                        [value]="complexResolution()"
+                        (input)="complexResolution.set(+$any($event.target).value)"
+                        class="flex-1 accent-accent" />
+                      <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexResolution() }}</span>
+                    </div>
+                    @if (complexResolution() > 180) {
+                      <p class="text-[10px] font-mono text-amber-600 dark:text-amber-400 pl-22">
+                        ⚠ Alta resolución — puede afectar el rendimiento
+                      </p>
+                    }
                   </div>
                   <!-- Rango -->
                   <div class="flex items-center gap-2 text-xs font-mono">
@@ -572,20 +580,6 @@
           </div>
         </ng-template>
         </app-canvas-shell>
-
-        <app-share-dialog
-          [visible]="showShareDialog()"
-          [shareHref]="shareHref"
-          [urlCopied]="urlCopied()"
-          (closed)="showShareDialog.set(false)"
-          (copy)="copyShareUrl()"
-        />
-
-        <app-favorite-dialog
-          [visible]="showFavoriteDialog()"
-          (confirmed)="onFavoriteConfirmed($event)"
-          (cancelled)="cancelFavoriteDialog()"
-        />
 
         <!-- ── PLANO COMPLEJO: análisis de polos, ceros y ROC ──────────── -->
         @if (showComplexPlane() && hasComputedResult()) {
@@ -842,6 +836,20 @@
     </main>
 
   </div>
+
+  <!-- Dialogs (outside layout flow so they don't affect flex spacing) -->
+  <app-share-dialog
+    [visible]="showShareDialog()"
+    [shareHref]="shareHref"
+    [urlCopied]="urlCopied()"
+    (closed)="showShareDialog.set(false)"
+    (copy)="copyShareUrl()"
+  />
+  <app-favorite-dialog
+    [visible]="showFavoriteDialog()"
+    (confirmed)="onFavoriteConfirmed($event)"
+    (cancelled)="cancelFavoriteDialog()"
+  />
 
   <!-- Mobile math keyboard (< lg only) -->
   <div class="lg:hidden">

@@ -60,6 +60,9 @@ export class CanvasShellComponent implements OnInit {
   readonly favoriteLoading = input<boolean>(false);
   /** Nombre del archivo para la descarga PNG. */
   readonly filename = input<string>('canvas.png');
+  /** Optional capture function — when provided, used instead of canvas.toDataURL().
+   *  Use this when the canvas is a WebGL composite (e.g. ComplexPlotComponent). */
+  readonly captureImage = input<(() => string) | null>(null);
   /** Si se debe mostrar el botón de compartir (default true). */
   readonly showShare = input<boolean>(true);
 
@@ -105,10 +108,13 @@ export class CanvasShellComponent implements OnInit {
   }
 
   downloadCanvas(): void {
-    const canvas = this.el.nativeElement.querySelector('canvas') as HTMLCanvasElement | null;
-    if (!canvas) return;
+    const captureFn = this.captureImage();
+    const dataUrl = captureFn
+      ? captureFn()
+      : (this.el.nativeElement.querySelector('canvas') as HTMLCanvasElement | null)?.toDataURL('image/png');
+    if (!dataUrl) return;
     const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
+    a.href = dataUrl;
     a.download = this.filename();
     document.body.appendChild(a);
     a.click();

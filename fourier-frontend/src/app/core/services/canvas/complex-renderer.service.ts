@@ -103,8 +103,8 @@ void main(){
   if(u_showGrid!=0){
     vec2 c=v_coord/u_gridStep;
     vec2 df=min(fract(c),1.0-fract(c));
-    float onLine=max(step(df.x,0.034),step(df.y,0.034));
-    color=mix(color,color*0.25,onLine*0.60);
+    float onLine=max(step(df.x,0.018),step(df.y,0.018));
+    color=mix(color,color*0.22,onLine*0.70);
   }
   gl_FragColor=vec4(color,1.0);
 }`;
@@ -144,7 +144,8 @@ export class ComplexRendererService implements OnDestroy {
    * Returns false if WebGL is unavailable.
    */
   init(canvas: HTMLCanvasElement): boolean {
-    const ctx = canvas.getContext('webgl') ?? canvas.getContext('experimental-webgl');
+    const opts = { preserveDrawingBuffer: true };
+    const ctx = canvas.getContext('webgl', opts) ?? canvas.getContext('experimental-webgl', opts);
     if (!ctx) return false;
     this.gl = ctx as WebGLRenderingContext;
 
