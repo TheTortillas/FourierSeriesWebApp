@@ -1,15 +1,18 @@
 /* laplace_inverse.mac
-   Computes f(t) = L⁻¹{F(s)} for a rational expression in s.
+   Computes f(t) = L⁻¹{F(s)} for a rational/exponential expression in s.
    Injected variables: EXPR_INPUT (F(s) as Maxima expr), TRANSVAR (s), INTVAR (t)
-   Strategy: try ilt() directly; if it fails, try partfrac first; report method used.
+
+   Strategies (in order):
+     1. Direct ilt()
+     2. partfrac then ilt()
+     3. Time-shifting: expand into additive terms, detect e^{-a*s} factor per
+        term, compute ilt(G(s)) = g(t), assemble unit_step(t-a)*g(t-a).
 */
 display2d: false$
 %iargs:    false$
 radexpand: false$
 
-/* Declare free parameters so ilt() doesn't hang on sign queries.
-   Variables named n, m, k are declared integer >= 0 (for t^n patterns).
-   All other free params are assumed positive (covers a, b, omega, etc.). */
+/* Declare free parameters so ilt() doesn't hang on sign queries. */
 block([_allvars, _reserved, _freevars],
   _allvars: listofvars(EXPR_INPUT),
   _reserved: [TRANSVAR, INTVAR],
@@ -23,33 +26,139 @@ block([_allvars, _reserved, _freevars],
   )
 )$
 
+/* ── helpers ─────────────────────────────────────────────────────────────── */
+
+_safe_op(e) := if atom(e) then false else op(e)$
+
+_is_exp_s(f, s) := (_safe_op(f) = "^" and part(f,1) = %e and not freeof(s, part(f,2)))$
+
+_product_of(lst) := if length(lst) = 0 then 1
+  else if length(lst) = 1 then first(lst)
+  else apply("*", lst)$
+
+/* Split a flat factor list into [exp_in_s_factors, other_factors] */
+_split_product_factors(expr, s) := block([_fs],
+  _fs: if _safe_op(expr) = "*" then args(expr) else [expr],
+  [sublist(_fs, lambda([f], _is_exp_s(f, s))),
+   sublist(_fs, lambda([f], not _is_exp_s(f, s)))]
+)$
+
+/* Extract e^{coeff*s} factor from a multiplicative term.
+   Returns [coeff, G(s)] where term = e^{coeff*s} * G(s).
+   Returns [0, expr] when no exponential factor in s is found. */
+_extract_exp_factor(expr, s) := block(
+  [_op, _p, _ef, _rf, _coeff, _exponent, _n, _d],
+  _op: _safe_op(expr),
+  if _op = false then return([0, expr]),
+  if _op = "*" then (
+    _p: _split_product_factors(expr, s),
+    _ef: first(_p),  _rf: second(_p),
+    if length(_ef) = 0 then return([0, expr]),
+    _exponent: part(first(_ef), 2),
+    _coeff: ratcoef(_exponent, s, 1),
+    if not freeof(s, _coeff) or _coeff = 0 then return([0, expr]),
+    return([_coeff, _product_of(_rf)])
+  ) else if _op = "/" then (
+    _n: part(expr, 1),
+    _d: part(expr, 2),
+    if _is_exp_s(_n, s) then (
+      _exponent: part(_n, 2),
+      _coeff: ratcoef(_exponent, s, 1),
+      if freeof(s, _coeff) and _coeff # 0 then return([_coeff, 1/_d])
+    ) else if _safe_op(_n) = "*" then (
+      _p: _split_product_factors(_n, s),
+      _ef: first(_p),  _rf: second(_p),
+      if length(_ef) > 0 then (
+        _exponent: part(first(_ef), 2),
+        _coeff: ratcoef(_exponent, s, 1),
+        if freeof(s, _coeff) and _coeff # 0 then
+          return([_coeff, _product_of(_rf) / _d])
+      )
+    ),
+    return([0, expr])
+  ) else if _is_exp_s(expr, s) then (
+    _exponent: part(expr, 2),
+    _coeff: ratcoef(_exponent, s, 1),
+    if freeof(s, _coeff) and _coeff # 0 then return([_coeff, 1])
+    else return([0, expr])
+  ) else
+    return([0, expr])
+)$
+
+/* Try ilt on G(s); returns false if it fails or leaves ilt unevaluated. */
+_try_ilt(G, s, t) := block([_r, _v],
+  _r: errcatch(ilt(G, s, t)),
+  if _r = [] then return(false),
+  _v: first(_r),
+  if not freeof('ilt, _v) then return(false),
+  ratsimp(_v)
+)$
+
+/* Compute ilt of a single term (no sum), trying partfrac if direct fails. */
+_ilt_term(G, s, t) := block([_v, _pf],
+  _v: _try_ilt(G, s, t),
+  if _v # false then return(_v),
+  _pf: errcatch(partfrac(G, s)),
+  if _pf = [] then return(false),
+  _try_ilt(first(_pf), s, t)
+)$
+
+/* ── Strategy 3: time-shifting property ─────────────────────────────────── */
+_timeshifted_inverse(F, s, t) := block(
+  [_terms, _result, _term, _pair, _a, _G, _g, _c, _ok],
+  /* Do NOT expand — expanding would move e^{-as} into denominator and break extraction */
+  _terms: if _safe_op(F) = "+" then args(F) else [F],
+  _result: 0,  _ok: true,
+  for _term in _terms while _ok do (
+    _pair: _extract_exp_factor(_term, s),
+    _a: first(_pair),   /* coefficient of s in exponent */
+    _G: second(_pair),  /* G(s) without the exp factor */
+    _g: _ilt_term(_G, s, t),
+    if _g = false then _ok: false
+    else if _a = 0 then _result: _result + _g
+    else (
+      _c: -_a,   /* delay: e^{-c*s}*G(s) <-> u(t-c)*g(t-c), c > 0 */
+      if _c <= 0 then _ok: false
+      else _result: _result + unit_step(t - _c) * subst(t - _c, t, _g)
+    )
+  ),
+  if not _ok then false else _result
+)$
+
+/* ══ Main logic ══════════════════════════════════════════════════════════════ */
+
 inverse_method: "failed"$
 f_raw: false$
 
 /* Strategy 1: direct ilt */
-block([_r],
-  _r: errcatch(ilt(EXPR_INPUT, TRANSVAR, INTVAR)),
-  if _r # [] then block([_v],
-    _v: first(_r),
-    /* ilt returns unevaluated if it can't solve — check for ilt() in result */
-    if not(freeof('ilt, _v)) then false
-    else block([], f_raw: ratsimp(_v), inverse_method: "ilt")
-  )
+block([_v],
+  _v: _try_ilt(EXPR_INPUT, TRANSVAR, INTVAR),
+  if _v # false then block([], f_raw: _v, inverse_method: "ilt")
 )$
 
 /* Strategy 2: partfrac then ilt */
-if f_raw = false then block([_pf, _r],
+if f_raw = false then block([_pf, _v],
   _pf: errcatch(partfrac(EXPR_INPUT, TRANSVAR)),
-  if _pf # [] then block([],
-    _r: errcatch(ilt(first(_pf), TRANSVAR, INTVAR)),
-    if _r # [] then block([_v],
-      _v: first(_r),
-      if freeof('ilt, _v) then block([], f_raw: ratsimp(_v), inverse_method: "ilt")
-    )
+  if _pf # [] then (
+    _v: _try_ilt(first(_pf), TRANSVAR, INTVAR),
+    if _v # false then block([], f_raw: _v, inverse_method: "ilt")
   )
 )$
 
+/* Strategy 3: time-shifting */
+if f_raw = false then block([_v],
+  _v: _timeshifted_inverse(EXPR_INPUT, TRANSVAR, INTVAR),
+  if _v # false then block([], f_raw: _v, inverse_method: "time-shift")
+)$
+
 exists: is(f_raw # false)$
+
+/* Normalize output: replace Maxima's unit_step with u (project convention).
+   texput gives u a clean TeX rendering: u(t-a) → \operatorname{u}(t-a). */
+if exists then (
+  f_raw: subst(u, unit_step, f_raw),
+  texput(u, "\\operatorname{u}")
+)$
 
 /* Extract free parameters from the result */
 free_params: []$

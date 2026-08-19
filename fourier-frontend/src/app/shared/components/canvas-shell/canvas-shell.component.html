@@ -8,7 +8,7 @@
 <div
   class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg h-full"
 >
-  <!-- Contenido principal (app-function-plot proyectado) -->
+  <!-- Contenido principal (app-function-plot u otro canvas proyectado) -->
   <ng-content />
 
   <!-- ── Overlay de botones (top-left, se desplaza cuando el panel está abierto) ── -->
@@ -16,6 +16,9 @@
     class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-300"
     [style.left]="showSettings() && !isMobile() ? 'calc(max(33.333%, 14rem) + 8px)' : '8px'"
   >
+    <!-- Slot para botones extra proyectados por el consumer (e.g. toggle plano-s) -->
+    <ng-content select="[slot=toolbar-extra]" />
+
     <!-- Fullscreen toggle -->
     <button
       type="button"
@@ -121,12 +124,12 @@
 
   <!-- ── Panel de configuración: desktop slide-in (lg+) ── -->
   @if (hasResult() && showSettings() && settingsPanelTpl()) {
-    <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+    <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper dark:bg-dark-bg">
       <ng-container *ngTemplateOutlet="settingsPanelTpl()!" />
     </div>
 
     <!-- ── Panel de configuración: mobile bottom-sheet (solo en fullscreen) ── -->
-    <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
+    <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper dark:bg-dark-bg">
       <ng-container *ngTemplateOutlet="settingsPanelTpl()!" />
     </div>
   }

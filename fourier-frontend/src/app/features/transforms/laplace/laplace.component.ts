@@ -39,12 +39,14 @@ import {
   type PlotLayer,
 } from '../../../shared/components/function-plot/function-plot.component';
 import { ParamSlidersComponent, type ParamValues } from '../../../shared/components/param-sliders/param-sliders.component';
+import { ComplexPlotComponent } from '../../../shared/components/complex-plot/complex-plot.component';
 import { PlottingService } from '../../../core/services/canvas/plotting.service';
 import { MathUtilsService } from '../../../core/services/math/math-utils.service';
 import type {
   LaplaceDirectResponse,
   LaplaceInverseResponse,
   LaplaceOdeResponse,
+  LaplacePoleZeroResponse,
   LaplaceIcCondition,
   SimplifyRequest,
   SimplifyResponse,
@@ -65,8 +67,8 @@ function defaultSegment(): TransformSegmentDraft {
     id: mkId(),
     expression: 'sin(t)',
     expressionTex: '\\sin(t)',
-    from: '0',
-    fromTex: '0',
+    from: 'minf',
+    fromTex: '-\\infty',
     to: 'inf',
     toTex: '\\infty',
   };
@@ -81,9 +83,8 @@ interface VarPair {
 }
 
 const VAR_PAIRS: VarPair[] = [
-  { id: 't-s', time: 't', freq: 's', timeDisplay: 't', freqDisplay: 's' },
-  { id: 't-p', time: 't', freq: 'p', timeDisplay: 't', freqDisplay: 'p' },
-  { id: 'x-s', time: 'x', freq: 's', timeDisplay: 'x', freqDisplay: 's' },
+  { id: 't-s',   time: 't',   freq: 's', timeDisplay: 't', freqDisplay: 's' },
+  { id: 'x-s',   time: 'x',   freq: 's', timeDisplay: 'x', freqDisplay: 's' },
   { id: 'tau-s', time: 'tau', freq: 's', timeDisplay: 'τ', freqDisplay: 's' },
 ];
 
@@ -105,6 +106,7 @@ const VAR_PAIRS: VarPair[] = [
     FooterComponent,
     ExportButtonComponent,
     RouterLink,
+    ComplexPlotComponent,
   ],
 })
 export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
@@ -123,7 +125,12 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   @ViewChild('mqInverseExpr')   private mqInverseRef!:   ElementRef<HTMLElement>;
   @ViewChild('mqOdeEquation')   private mqOdeEqRef!:     ElementRef<HTMLElement>;
-  readonly plotComponent = viewChild(FunctionPlotComponent);
+  readonly plotComponent    = viewChild(FunctionPlotComponent);
+  readonly complexPlotRef   = viewChild(ComplexPlotComponent);
+  readonly complexPlotCapture = computed(() => {
+    const ref = this.complexPlotRef();
+    return ref ? () => ref.captureImage() : null;
+  });
 
   inverseField:  MathField | null = null;
   odeEqField:    MathField | null = null;
@@ -411,6 +418,11 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.showFavoriteDialog.set(false);
     this.urlCopied.set(false);
     this.resetLineStyles();
+    this.showComplexPlane.set(false);
+    this.pzResult.set(null);
+    this.pzError.set(null);
+    this.complexParamValues.set({});
+    this.complexDetectedParams.set([]);
   }
 
   // ── Free parameters ───────────────────────────────────────────────────────
@@ -761,6 +773,10 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
       this.loading.set(false);
       if (result === null) return;
       const m = this.mode();
+      // Reset complex plane on every new result
+      this.pzResult.set(null);
+      this.pzError.set(null);
+
       if (m === 'direct') {
         const r = result as LaplaceDirectResponse;
         this.directResult.set(r);
@@ -768,6 +784,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         if (r.exists && r.F) this._runAltForms(r.F, this.altFormsDirect, this.altFormsLoadingDirect);
         this.plotComponent()?.resetView();
         this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
+        if (r.exists && !this.showComplexPlane()) this._pulseBtnOnce();
       }
       if (m === 'inverse') {
         const r = result as LaplaceInverseResponse;
@@ -776,6 +793,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
         if (r.exists && r.f) this._runAltForms(r.f, this.altFormsInverse, this.altFormsLoadingInverse);
         this.plotComponent()?.resetView();
         this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
+        if (r.exists && !this.showComplexPlane()) this._pulseBtnOnce();
       }
       if (m === 'ode') {
         const r = result as LaplaceOdeResponse;
@@ -931,6 +949,11 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.errorMsg.set(null);
     this.paramValues.set({});
     this.customConstName.set(null);
+    this.pzResult.set(null);
+    this.pzError.set(null);
+    this.showComplexPlane.set(false);
+    this.complexParamValues.set({});
+    this.complexDetectedParams.set([]);
   }
 
   // ── Alt forms ─────────────────────────────────────────────────────────────
@@ -976,6 +999,62 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly hasResult        = computed(() =>
     this.hasDirectResult() || this.hasInverseResult() || this.hasOdeResult()
   );
+
+  // ── Complex plane panel ───────────────────────────────────────────────────
+
+  readonly showComplexPlane       = signal(false);
+  readonly complexPlaneBtnPulse   = signal(false);
+  readonly complexPlaneMode    = signal<'2d' | '3d'>('2d');
+  readonly complexColorScheme  = signal<'classic' | 'phase' | 'magnitude'>('classic');
+  readonly complexWireframe    = signal(false);
+  readonly complexShowGrid3d   = signal(true);
+  readonly complexResolution   = signal(80);
+  readonly complexRange3d      = signal(4);
+  readonly complexHeightScale  = signal(1.0);
+  readonly complexZClip        = signal(5.0);
+  readonly complexParamValues  = signal<ParamValues>({});
+  readonly complexDetectedParams = signal<string[]>([]);
+  readonly pzLoading         = signal(false);
+  readonly pzResult          = signal<LaplacePoleZeroResponse | null>(null);
+  readonly pzError           = signal<string | null>(null);
+
+  /** F(s) expression currently shown in the complex plane (Maxima syntax). */
+  readonly complexPlaneExpr = computed<string>(() => {
+    const r = this.directResult();
+    if (r?.F?.maxima) return r.F.maxima;
+    const ri = this.inverseResult();
+    if (ri) return this.inverseExpr();  // F(s) is the input for inverse mode
+    return '';
+  });
+
+  private _pulseBtnOnce(): void {
+    this.complexPlaneBtnPulse.set(true);
+    setTimeout(() => this.complexPlaneBtnPulse.set(false), 1800);
+  }
+
+  toggleComplexPlane(): void {
+    const next = !this.showComplexPlane();
+    this.showComplexPlane.set(next);
+    if (next && !this.pzLoading() && this.pzResult() === null) this.loadPoleZero();
+  }
+
+  toggleComplexPlaneAndOpenSettings(): void {
+    this.toggleComplexPlane();
+    if (this.showComplexPlane()) this.showCanvasSettings.set(true);
+  }
+
+  loadPoleZero(): void {
+    const expr = this.complexPlaneExpr();
+    if (!expr) return;
+    this.pzLoading.set(true);
+    this.pzError.set(null);
+    this.api.calculateLaplacePoleZero({ expression: expr, freqVar: this.freqVar() })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) => { this.pzResult.set(r); this.pzLoading.set(false); },
+        error: (e) => { this.pzError.set(formatApiError(e, 'Error al calcular polos/ceros')); this.pzLoading.set(false); },
+      });
+  }
 
   // ── Share ─────────────────────────────────────────────────────────────────
 

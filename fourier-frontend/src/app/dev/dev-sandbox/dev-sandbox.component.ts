@@ -34,5 +34,7 @@ export class DevSandboxComponent {
       phase: 'F4',
       ready: true,
     },
+    // Plano complejo
+    { label: 'ℂ Complex Grapher (WebGL)', route: 'complex-grapher', phase: 'ℂ', ready: true },
   ];
 }

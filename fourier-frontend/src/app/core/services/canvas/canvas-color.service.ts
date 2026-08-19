@@ -226,4 +226,30 @@ export class CanvasColorService {
   readonly singleCurveDefault = computed<string>(() =>
     this.theme.theme() === 'dark' ? '#60a5fa' : '#3b82f6',
   );
+
+  // ── Complex plot overlay colors ──────────────────────────────────────────
+  // The WebGL canvas always has a black background regardless of app theme,
+  // so overlay colors (axes, grid, labels) are always white-on-black.
+  readonly complexPlotColors = computed(() => {
+    const dark = this.theme.theme() === 'dark';
+    return {
+      // 2D overlay — always white-on-black (WebGL background is always dark)
+      axis:      'rgba(255,255,255,0.45)',
+      gridMajor: 'rgba(255,255,255,0.12)',
+      gridMinor: 'rgba(255,255,255,0.05)',
+      label:     'rgba(255,255,255,0.75)',
+      // legend ring — always white-on-black
+      legendStroke: 'rgba(255,255,255,0.30)',
+      legendText:   'rgba(255,255,255,0.75)',
+      legendMuted:  'rgba(255,255,255,0.45)',
+      // 3D axes labels (rendered as CSS overlay, not WebGL)
+      axisRe: dark ? '#f87171' : '#dc2626',
+      axisIm: dark ? '#4ade80' : '#16a34a',
+      axisF:  dark ? '#60a5fa' : '#2563eb',
+      // 3D tick dots
+      tickRe:    'rgba(241,135,135,0.65)',
+      tickIm:    'rgba(74,222,128,0.65)',
+      tickLabel: 'rgba(255,255,255,0.60)',
+    };
+  });
 }
