@@ -401,47 +401,53 @@
                     </button>
                   </div>
                   <!-- Resolución -->
-                  <div class="flex flex-col gap-1">
-                    <div class="flex items-center gap-2 text-xs font-mono">
-                      <span class="text-muted dark:text-dark-muted w-20 shrink-0">{{ 'laplace.complexPlaneResolution' | transloco }}</span>
-                      <input type="range" min="30" max="300" step="10"
-                        [value]="complexResolution()"
-                        (input)="complexResolution.set(+$any($event.target).value)"
-                        class="flex-1 accent-accent" />
-                      <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexResolution() }}</span>
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'laplace.complexPlaneResolution' | transloco }}</span>
+                      <span class="text-xs font-mono text-accent tabular-nums">{{ complexResolution() }}</span>
                     </div>
+                    <input type="range" min="30" max="300" step="10"
+                      [value]="complexResolution()"
+                      (input)="complexResolution.set(+$any($event.target).value)"
+                      class="w-full accent-accent cursor-pointer h-1.5" />
                     @if (complexResolution() > 180) {
-                      <p class="text-[10px] font-mono text-amber-600 dark:text-amber-400 pl-22">
+                      <p class="text-[10px] font-mono text-amber-600 dark:text-amber-400">
                         {{ 'laplace.complexPlaneResolutionWarning' | transloco }}
                       </p>
                     }
                   </div>
                   <!-- Rango -->
-                  <div class="flex items-center gap-2 text-xs font-mono">
-                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">{{ 'laplace.complexPlaneRange' | transloco }}</span>
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'laplace.complexPlaneRange' | transloco }}</span>
+                      <span class="text-xs font-mono text-accent tabular-nums">{{ complexRange3d() }}</span>
+                    </div>
                     <input type="range" min="1" max="12" step="0.5"
                       [value]="complexRange3d()"
                       (input)="complexRange3d.set(+$any($event.target).value)"
-                      class="flex-1 accent-accent" />
-                    <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexRange3d() }}</span>
+                      class="w-full accent-accent cursor-pointer h-1.5" />
                   </div>
                   <!-- Escala vertical -->
-                  <div class="flex items-center gap-2 text-xs font-mono">
-                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">{{ 'laplace.complexPlaneScaleZ' | transloco }}</span>
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'laplace.complexPlaneScaleZ' | transloco }}</span>
+                      <span class="text-xs font-mono text-accent tabular-nums">{{ complexHeightScale().toFixed(1) }}</span>
+                    </div>
                     <input type="range" min="0.1" max="5" step="0.1"
                       [value]="complexHeightScale()"
                       (input)="complexHeightScale.set(+$any($event.target).value)"
-                      class="flex-1 accent-accent" />
-                    <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexHeightScale().toFixed(1) }}</span>
+                      class="w-full accent-accent cursor-pointer h-1.5" />
                   </div>
                   <!-- Corte Z -->
-                  <div class="flex items-center gap-2 text-xs font-mono">
-                    <span class="text-muted dark:text-dark-muted w-20 shrink-0">{{ 'laplace.complexPlaneClipZ' | transloco }}</span>
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'laplace.complexPlaneClipZ' | transloco }}</span>
+                      <span class="text-xs font-mono text-accent tabular-nums">{{ complexZClip() }}</span>
+                    </div>
                     <input type="range" min="1" max="20" step="0.5"
                       [value]="complexZClip()"
                       (input)="complexZClip.set(+$any($event.target).value)"
-                      class="flex-1 accent-accent" />
-                    <span class="text-ink/70 dark:text-dark-ink/70 w-8 text-right tabular-nums">{{ complexZClip() }}</span>
+                      class="w-full accent-accent cursor-pointer h-1.5" />
                   </div>
                 </section>
               }

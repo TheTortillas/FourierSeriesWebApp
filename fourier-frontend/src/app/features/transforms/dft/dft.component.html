@@ -334,7 +334,7 @@
                     step="1"
                     [value]="dftCustomN()"
                     (input)="dftCustomN.set(+$any($event.target).value)"
-                    class="flex-1 accent-accent cursor-pointer"
+                    class="flex-1 accent-accent cursor-pointer h-1.5"
                   />
                   <input
                     type="number"
@@ -443,7 +443,7 @@
                     step="1"
                     [value]="manualN()"
                     (input)="setManualN(+$any($event.target).value)"
-                    class="flex-1 accent-accent cursor-pointer"
+                    class="flex-1 accent-accent cursor-pointer h-1.5"
                   />
                   <span class="text-xs font-mono text-ink dark:text-dark-ink w-8 text-center">{{
                     manualN()
