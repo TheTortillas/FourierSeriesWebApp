@@ -6,7 +6,8 @@
 
 <!-- Canvas wrapper: posición relativa para que overlay y paneles se anclen aquí -->
 <div
-  class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg h-full"
+  class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
+  [style.height]="isFullscreen() ? '100%' : canvasHeight()"
 >
   <!-- Contenido principal (app-function-plot u otro canvas proyectado) -->
   <ng-content />
@@ -129,9 +130,11 @@
     </div>
 
     <!-- ── Panel de configuración: mobile bottom-sheet (solo en fullscreen) ── -->
-    <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper dark:bg-dark-bg">
-      <ng-container *ngTemplateOutlet="settingsPanelTpl()!" />
-    </div>
+    @if (isFullscreen()) {
+      <div class="panel-slide-in absolute bottom-0 left-0 right-0 z-20 flex lg:hidden flex-col max-h-[40%] border-t border-border dark:border-dark-border bg-paper dark:bg-dark-bg">
+        <ng-container *ngTemplateOutlet="settingsPanelTpl()!" />
+      </div>
+    }
   }
 </div>
 

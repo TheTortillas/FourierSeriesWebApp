@@ -65,6 +65,9 @@ export class CanvasShellComponent implements OnInit {
   readonly captureImage = input<(() => string) | null>(null);
   /** Si se debe mostrar el botón de compartir (default true). */
   readonly showShare = input<boolean>(true);
+  /** Altura del área del canvas (p.ej. "420px"). Se aplica al div interno para
+   *  que el host pueda crecer y acomodar el panel inline en móvil. */
+  readonly canvasHeight = input<string>('420px');
 
   // ── Outputs ───────────────────────────────────────────────────────────────
   readonly settingsToggle    = output<void>();

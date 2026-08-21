@@ -746,7 +746,7 @@
             class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
           >
             <app-canvas-shell
-              style="height: 480px; display: block"
+              canvasHeight="480px"
               [showSettings]="showEpicSettings()"
               [hasResult]="!!epicResult()"
               [showFavorite]="userStore.isAuthenticated()"
@@ -984,7 +984,7 @@
             class="rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface overflow-hidden"
           >
             <app-canvas-shell
-              style="height: 256px; display: block"
+              canvasHeight="256px"
               [showSettings]="showCanvasSettings()"
               [hasResult]="!!result()"
               [showFavorite]="userStore.isAuthenticated()"
@@ -1142,7 +1142,7 @@
 
             <!-- ── Spectrum chart ──────────────────────────────────────────── -->
             <app-canvas-shell
-              style="height: 256px; display: block"
+              canvasHeight="256px"
               [showSettings]="showSpecSettings()"
               [hasResult]="!!result()"
               [showFavorite]="false"

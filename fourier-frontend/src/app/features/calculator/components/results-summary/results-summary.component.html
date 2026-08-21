@@ -2,6 +2,7 @@
   <!-- ── Canvas ──────────────────────────────────────────────────────────── -->
   <app-canvas-shell
     class="h-64 sm:h-80 shrink-0 block"
+    canvasHeight="100%"
     [showSettings]="showCanvasSettings()"
     [hasResult]="store.hasResult()"
     [showFavorite]="userStore.isAuthenticated()"
