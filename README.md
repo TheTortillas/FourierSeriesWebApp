@@ -111,7 +111,7 @@ A full-stack web application for symbolic computation, visualization, and intera
 - Audit log (all auth events and calculations)
 - SEO: per-page meta tags, Open Graph, hreflang, sitemap, robots.txt
 - Google Analytics 4 (production only — zero dev pollution)
-- Bilingual UI: Spanish and English (Transloco)
+- Multilingual UI: Spanish, English, Portuguese, German (Transloco)
 - PWA-ready (service worker, manifest)
 - SSR via Angular Universal
 
