@@ -320,6 +320,7 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly showReconstruction = signal(true);
   readonly showCanvasSettings = signal(false);
   readonly showSpecSettings = signal(false);
+  readonly showTopKExpanded = signal(true);
   // ── Spectrum mode ──────────────────────────────────────────────────────────
   readonly specMode = signal<'amplitude' | 'phase'>('amplitude');
   readonly fftShift = signal(true);
