@@ -730,7 +730,20 @@
     "weeklyLimitReached": "Límite semanal alcanzado. Tu cuota se renueva el {{ date }}.",
     "tooManyRequests": "Demasiadas solicitudes. Intenta de nuevo en un momento.",
     "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos.",
-    "emailRecentlyDeleted": "Esta dirección fue usada en una cuenta eliminada esta semana. Puedes volver a registrarte cuando inicie la nueva semana."
+    "emailRecentlyDeleted": "Esta dirección fue usada en una cuenta eliminada esta semana. Puedes volver a registrarte cuando inicie la nueva semana.",
+    "emailAlreadyRegistered": "Este correo ya está registrado.",
+    "emailPendingVerification": "Este correo ya está registrado pero no verificado. Revisa tu bandeja de entrada o solicita un nuevo correo de verificación.",
+    "invalidCredentials": "Correo o contraseña incorrectos.",
+    "accountDeactivated": "Esta cuenta está desactivada.",
+    "invalidGoogleToken": "No se pudo verificar tu cuenta de Google.",
+    "userNotFound": "Usuario no encontrado.",
+    "invalidOrExpiredToken": "El enlace es inválido o ha expirado.",
+    "googleAccountNoPassword": "Tu cuenta usa acceso con Google — usa \"olvidé mi contraseña\" para establecer una.",
+    "currentPasswordIncorrect": "La contraseña actual es incorrecta.",
+    "allFieldsRequired": "Todos los campos son obligatorios.",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+    "emailAndPasswordRequired": "Correo y contraseña son obligatorios.",
+    "nameTooLong": "Los nombres no pueden superar los 100 caracteres."
   },
   "seo": {
     "home": {

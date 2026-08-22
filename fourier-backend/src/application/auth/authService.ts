@@ -57,7 +57,7 @@ export class AuthService {
 
     if (existing) {
       if (existing.emailVerified) {
-        throw new Error("Email already registered");
+        throw new Error("EMAIL_ALREADY_REGISTERED");
       }
 
       const pendingToken = await this.tokenRepo.findPendingVerificationToken(
@@ -65,9 +65,7 @@ export class AuthService {
       );
 
       if (pendingToken && new Date() < pendingToken.expiresAt) {
-        throw new Error(
-          "Email already registered but not verified. Check your inbox or request a new verification email.",
-        );
+        throw new Error("EMAIL_PENDING_VERIFICATION");
       }
 
       await this.userRepo.hardDeleteUnverified(existing.id);
@@ -129,16 +127,16 @@ export class AuthService {
   }): Promise<AuthServiceResult> {
     const user = await this.userRepo.findByEmail(input.email);
     if (!user || !user.passwordHash) {
-      throw new Error("Invalid credentials");
+      throw new Error("INVALID_CREDENTIALS");
     }
 
     if (!user.isActive) {
-      throw new Error("Account is deactivated");
+      throw new Error("ACCOUNT_DEACTIVATED");
     }
 
     const valid = await bcrypt.compare(input.password, user.passwordHash);
     if (!valid) {
-      throw new Error("Invalid credentials");
+      throw new Error("INVALID_CREDENTIALS");
     }
 
     const tokens = this.tokenService.generateTokenPair(user);
@@ -177,7 +175,7 @@ export class AuthService {
 
     const payload = ticket.getPayload();
     if (!payload?.email || !payload.sub) {
-      throw new Error("Invalid Google token");
+      throw new Error("INVALID_GOOGLE_TOKEN");
     }
 
     // Upgrade Google picture to 200px and strip trailing size param variations.
@@ -223,7 +221,7 @@ export class AuthService {
     }
 
     if (!user.isActive) {
-      throw new Error("Account is deactivated");
+      throw new Error("ACCOUNT_DEACTIVATED");
     }
 
     // Sync avatar on every Google login so photo changes are picked up automatically.
@@ -263,21 +261,21 @@ export class AuthService {
     const stored = await this.tokenRepo.findRefreshToken(tokenHash);
 
     if (!stored) {
-      throw new Error("Invalid refresh token");
+      throw new Error("INVALID_REFRESH_TOKEN");
     }
 
     if (stored.revokedAt) {
       await this.tokenRepo.revokeFamily(stored.familyId);
-      throw new Error("Refresh token reuse detected");
+      throw new Error("REFRESH_TOKEN_REUSE_DETECTED");
     }
 
     if (new Date() > stored.expiresAt) {
-      throw new Error("Refresh token expired");
+      throw new Error("REFRESH_TOKEN_EXPIRED");
     }
 
     const user = await this.userRepo.findById(stored.userId);
     if (!user || !user.isActive) {
-      throw new Error("User not found or deactivated");
+      throw new Error("USER_NOT_FOUND_OR_DEACTIVATED");
     }
 
     const newTokens = this.tokenService.generateTokenPair(
@@ -344,15 +342,15 @@ export class AuthService {
     );
 
     if (!record) {
-      throw new Error("Invalid verification token");
+      throw new Error("INVALID_VERIFICATION_TOKEN");
     }
 
     if (record.usedAt) {
-      throw new Error("Token already used");
+      throw new Error("TOKEN_ALREADY_USED");
     }
 
     if (new Date() > record.expiresAt) {
-      throw new Error("Token expired");
+      throw new Error("TOKEN_EXPIRED");
     }
 
     await this.tokenRepo.markEmailTokenUsed(record.id);
@@ -388,7 +386,7 @@ export class AuthService {
     const record = await this.tokenRepo.findPasswordReset(hash);
 
     if (!record || record.usedAt || new Date() > record.expiresAt) {
-      throw new Error("Invalid or expired reset token");
+      throw new Error("INVALID_OR_EXPIRED_RESET_TOKEN");
     }
 
     const passwordHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
@@ -411,14 +409,14 @@ export class AuthService {
     ipAddress?: string;
   }): Promise<void> {
     const user = await this.userRepo.findById(input.userId);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error("USER_NOT_FOUND");
 
     if (!user.passwordHash) {
-      throw new Error("Account uses Google sign-in. Use forgot password to set a password.");
+      throw new Error("GOOGLE_ACCOUNT_NO_PASSWORD");
     }
 
     const valid = await bcrypt.compare(input.currentPassword, user.passwordHash);
-    if (!valid) throw new Error("Current password is incorrect");
+    if (!valid) throw new Error("CURRENT_PASSWORD_INCORRECT");
 
     const newHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
     await this.userRepo.updatePassword(input.userId, newHash);

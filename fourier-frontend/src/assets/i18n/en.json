@@ -730,7 +730,20 @@
     "weeklyLimitReached": "Weekly limit reached. Your quota resets on {{ date }}.",
     "tooManyRequests": "Too many requests. Please try again in a moment.",
     "tooManyRequestsMinutes": "Too many requests. Please try again in {{ minutes }} minutes.",
-    "emailRecentlyDeleted": "This address was used in an account deleted this week. You can register again when the new week begins."
+    "emailRecentlyDeleted": "This address was used in an account deleted this week. You can register again when the new week begins.",
+    "emailAlreadyRegistered": "This email is already registered.",
+    "emailPendingVerification": "This email is already registered but not verified. Check your inbox or request a new verification email.",
+    "invalidCredentials": "Invalid email or password.",
+    "accountDeactivated": "This account is deactivated.",
+    "invalidGoogleToken": "We couldn't verify your Google account.",
+    "userNotFound": "User not found.",
+    "invalidOrExpiredToken": "The link is invalid or has expired.",
+    "googleAccountNoPassword": "Your account uses Google sign-in — use \"forgot password\" to set one.",
+    "currentPasswordIncorrect": "Current password is incorrect.",
+    "allFieldsRequired": "All fields are required.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "emailAndPasswordRequired": "Email and password are required.",
+    "nameTooLong": "Name fields must be 100 characters or less."
   },
   "seo": {
     "home": {

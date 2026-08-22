@@ -65,14 +65,12 @@ authRouter.post(
       };
 
       if (!firstName || !lastName || !email || !password) {
-        res.status(400).json({ error: "All fields are required" });
+        res.status(400).json({ error: "ALL_FIELDS_REQUIRED" });
         return;
       }
 
       if (password.length < 8) {
-        res
-          .status(400)
-          .json({ error: "Password must be at least 8 characters" });
+        res.status(400).json({ error: "PASSWORD_TOO_SHORT" });
         return;
       }
 
@@ -88,7 +86,11 @@ authRouter.post(
       setRefreshCookie(res, refreshToken);
       res.status(201).json(clientResult);
     } catch (err) {
-      if (err instanceof Error && err.message === "Email already registered") {
+      if (
+        err instanceof Error &&
+        (err.message === "EMAIL_ALREADY_REGISTERED" ||
+          err.message === "EMAIL_PENDING_VERIFICATION")
+      ) {
         res.status(400).json({ error: err.message });
         return;
       }
@@ -134,7 +136,7 @@ authRouter.post(
       };
 
       if (!email || !password) {
-        res.status(400).json({ error: "Email and password are required" });
+        res.status(400).json({ error: "EMAIL_AND_PASSWORD_REQUIRED" });
         return;
       }
 
@@ -150,8 +152,8 @@ authRouter.post(
     } catch (err) {
       if (
         err instanceof Error &&
-        (err.message === "Invalid credentials" ||
-          err.message === "Account is deactivated")
+        (err.message === "INVALID_CREDENTIALS" ||
+          err.message === "ACCOUNT_DEACTIVATED")
       ) {
         res.status(401).json({ error: err.message });
         return;
@@ -190,7 +192,7 @@ authRouter.post(
       const { idToken } = req.body as { idToken: string };
 
       if (!idToken) {
-        res.status(400).json({ error: "idToken is required" });
+        res.status(400).json({ error: "ID_TOKEN_REQUIRED" });
         return;
       }
 
@@ -203,7 +205,7 @@ authRouter.post(
       setRefreshCookie(res, refreshToken);
       res.json(clientResult);
     } catch (err) {
-      if (err instanceof Error && err.message === "Invalid Google token") {
+      if (err instanceof Error && err.message === "INVALID_GOOGLE_TOKEN") {
         res.status(401).json({ error: err.message });
         return;
       }
@@ -238,7 +240,7 @@ authRouter.post(
       const token: string | undefined = req.cookies?.[REFRESH_COOKIE];
 
       if (!token) {
-        res.status(400).json({ error: "refreshToken is required" });
+        res.status(400).json({ error: "REFRESH_TOKEN_REQUIRED" });
         return;
       }
 
@@ -314,7 +316,7 @@ authRouter.get(
     try {
       const user = await userRepository.findById(req.user!.id);
       if (!user) {
-        res.status(401).json({ error: "User not found" });
+        res.status(401).json({ error: "USER_NOT_FOUND" });
         return;
       }
       const providers = await userRepository.getProviders(req.user!.id);
@@ -351,7 +353,7 @@ authRouter.get(
     try {
       const { token } = req.query as { token: string };
       if (!token) {
-        res.status(400).json({ error: "Token is required" });
+        res.status(400).json({ error: "TOKEN_REQUIRED" });
         return;
       }
       await authService.verifyEmail(token);
@@ -392,7 +394,7 @@ authRouter.post(
     try {
       const { email, lang } = req.body as { email: string; lang?: string };
       if (!email) {
-        res.status(400).json({ error: "Email is required" });
+        res.status(400).json({ error: "EMAIL_REQUIRED" });
         return;
       }
       await authService.forgotPassword(email, req.ip, lang);
@@ -437,13 +439,11 @@ authRouter.post(
         newPassword: string;
       };
       if (!token || !newPassword) {
-        res.status(400).json({ error: "Token and newPassword are required" });
+        res.status(400).json({ error: "TOKEN_AND_NEW_PASSWORD_REQUIRED" });
         return;
       }
       if (newPassword.length < 8) {
-        res
-          .status(400)
-          .json({ error: "Password must be at least 8 characters" });
+        res.status(400).json({ error: "PASSWORD_TOO_SHORT" });
         return;
       }
       await authService.resetPassword({
@@ -488,7 +488,7 @@ authRouter.post(
     try {
       const { email, lang } = req.body as { email: string; lang?: string };
       if (!email) {
-        res.status(400).json({ error: "Email is required" });
+        res.status(400).json({ error: "EMAIL_REQUIRED" });
         return;
       }
       await authService.resendVerification(email, req.ip, lang);
@@ -581,11 +581,11 @@ authRouter.patch(
       const trimmedLast = lastName?.trim();
 
       if (!trimmedFirst || !trimmedLast) {
-        res.status(400).json({ error: "firstName and lastName are required" });
+        res.status(400).json({ error: "FIRST_AND_LAST_NAME_REQUIRED" });
         return;
       }
       if (trimmedFirst.length > 100 || trimmedLast.length > 100) {
-        res.status(400).json({ error: "Name fields must be 100 characters or less" });
+        res.status(400).json({ error: "NAME_TOO_LONG" });
         return;
       }
 
@@ -593,7 +593,7 @@ authRouter.patch(
 
       const user = await userRepository.findById(req.user!.id);
       if (!user) {
-        res.status(404).json({ error: "User not found" });
+        res.status(404).json({ error: "USER_NOT_FOUND" });
         return;
       }
       const providers = await userRepository.getProviders(req.user!.id);
@@ -618,14 +618,12 @@ authRouter.post(
       if (!currentPassword || !newPassword) {
         res
           .status(400)
-          .json({ error: "currentPassword and newPassword are required" });
+          .json({ error: "CURRENT_AND_NEW_PASSWORD_REQUIRED" });
         return;
       }
 
       if (newPassword.length < 8) {
-        res
-          .status(400)
-          .json({ error: "Password must be at least 8 characters" });
+        res.status(400).json({ error: "PASSWORD_TOO_SHORT" });
         return;
       }
 

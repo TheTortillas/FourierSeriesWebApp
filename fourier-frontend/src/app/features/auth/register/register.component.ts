@@ -16,6 +16,7 @@ import { AuthService } from '../../../core/services/auth/auth.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { GoogleSignInComponent } from '../../../shared/components/google-sign-in/google-sign-in.component';
+import { mapApiError } from '../../../core/utils/api-error';
 
 function passwordsMatch(ctrl: AbstractControl): ValidationErrors | null {
   const pw = ctrl.get('password')?.value;
@@ -85,7 +86,7 @@ export class RegisterComponent {
     this.auth.loginWithGoogle({ idToken }).subscribe({
       next: () => this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']),
       error: (err) => {
-        this.apiError.set(this.mapError(err?.error?.error));
+        this.apiError.set(mapApiError(this.transloco, err?.error?.error));
         this.loading.set(false);
       },
     });
@@ -105,16 +106,9 @@ export class RegisterComponent {
         this.success.set(true);
       },
       error: (err) => {
-        this.apiError.set(this.mapError(err?.error?.error));
+        this.apiError.set(mapApiError(this.transloco, err?.error?.error));
         this.loading.set(false);
       },
     });
-  }
-
-  private mapError(code: string | undefined): string {
-    if (code === 'EMAIL_RECENTLY_DELETED') {
-      return this.transloco.translate('errors.emailRecentlyDeleted');
-    }
-    return code ?? this.transloco.translate('errors.generic');
   }
 }
