@@ -6,6 +6,7 @@ import { ApiService } from '../../../core/services/api/api.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
+import { mapApiError } from '../../../core/utils/api-error';
 
 type State = 'loading' | 'success' | 'error';
 
@@ -36,7 +37,7 @@ export class VerifyEmailComponent implements OnInit {
     this.api.verifyEmail(token).subscribe({
       next: () => { this.state.set('success'); this.auth.refreshUser(); },
       error: (err) => {
-        this.errorMsg.set(err?.error?.error ?? 'El enlace es inválido o ha expirado');
+        this.errorMsg.set(mapApiError(this.transloco, err?.error?.error));
         this.state.set('error');
       },
     });

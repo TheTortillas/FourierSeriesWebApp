@@ -8,6 +8,7 @@ import { AuthService } from '../../../core/services/auth/auth.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
 import { GoogleSignInComponent } from '../../../shared/components/google-sign-in/google-sign-in.component';
+import { mapApiError } from '../../../core/utils/api-error';
 
 @Component({
   selector: 'app-login',
@@ -48,7 +49,7 @@ export class LoginComponent {
     this.auth.loginWithGoogle({ idToken }).subscribe({
       next: () => this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']),
       error: (err) => {
-        this.apiError.set(err?.error?.error ?? 'Error al iniciar sesión con Google');
+        this.apiError.set(mapApiError(this.transloco, err?.error?.error));
         this.loading.set(false);
       },
     });
@@ -66,7 +67,7 @@ export class LoginComponent {
         this.router.navigate(['/' + this.transloco.getActiveLang() + '/home']);
       },
       error: (err) => {
-        this.apiError.set(err?.error?.error ?? 'Error al iniciar sesión');
+        this.apiError.set(mapApiError(this.transloco, err?.error?.error));
         this.loading.set(false);
       },
     });

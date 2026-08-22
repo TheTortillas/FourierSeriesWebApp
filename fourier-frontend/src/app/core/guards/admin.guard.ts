@@ -4,9 +4,10 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, map, take } from 'rxjs';
 
 import { UserStore } from '../services/auth/user.store';
+import { DEFAULT_LANG } from '../config/languages';
 
 function getLang(route: ActivatedRouteSnapshot): string {
-  return route.parent?.paramMap.get('lang') ?? 'es';
+  return route.parent?.paramMap.get('lang') ?? DEFAULT_LANG;
 }
 
 /** Protege rutas exclusivas del administrador. */

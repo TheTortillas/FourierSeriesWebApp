@@ -7,11 +7,12 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../core/services/api/api.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { NavComponent } from '../../../shared/components/nav/nav.component';
+import { mapApiError } from '../../../core/utils/api-error';
 
 function passwordsMatch(ctrl: AbstractControl): ValidationErrors | null {
   const pw  = ctrl.get('password')?.value;
@@ -30,6 +31,7 @@ export class ResetPasswordComponent implements OnInit {
   private readonly route  = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly seo    = inject(SeoService);
+  private readonly transloco = inject(TranslocoService);
 
   private token = '';
 
@@ -69,7 +71,7 @@ export class ResetPasswordComponent implements OnInit {
     this.api.resetPassword(this.token, this.password.value).subscribe({
       next: () => this.success.set(true),
       error: (err) => {
-        this.apiError.set(err?.error?.error ?? 'El enlace es inválido o ha expirado');
+        this.apiError.set(mapApiError(this.transloco, err?.error?.error));
         this.loading.set(false);
       },
     });

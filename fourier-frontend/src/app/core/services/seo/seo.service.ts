@@ -6,12 +6,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { take } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
-
-/** Maps Transloco language codes to BCP 47 / OG locale format. */
-const OG_LOCALE: Record<string, string> = {
-  es: 'es_ES',
-  en: 'en_US',
-};
+import { SUPPORTED_LANG_CODES, getOgLocale } from '../../config/languages';
 
 const SITE_NAME = 'AEM-Lab';
 
@@ -53,7 +48,7 @@ export class SeoService {
         const description = this.transloco.translate(descriptionKey);
         const fullTitle = `${pageTitle} | ${SITE_NAME}`;
         const canonical = this.buildCanonical();
-        const ogLocale = OG_LOCALE[lang] ?? 'es_ES';
+        const ogLocale = getOgLocale(lang);
 
         // ── Basic ────────────────────────────────────────────────────────────
         this.titleSvc.setTitle(fullTitle);
@@ -110,7 +105,7 @@ export class SeoService {
             alternateName: 'Fourier Web Calculator',
             url: base,
             description: t('seo.home.description'),
-            inLanguage: ['es', 'en'],
+            inLanguage: SUPPORTED_LANG_CODES,
           },
           {
             '@context': 'https://schema.org',
