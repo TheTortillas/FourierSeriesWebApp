@@ -3,22 +3,32 @@ export interface LangOption {
   code: string;
   /** Native name shown in the language switcher. */
   label: string;
+  /** BCP 47 / Open Graph locale, e.g. 'es_ES', 'en_US'. */
+  ogLocale: string;
 }
 
 /** Single source of truth for every supported language.
  *  To add a new language:
- *    1. Add an entry here.
+ *    1. Add an entry here (including its ogLocale).
  *    2. Create  src/assets/i18n/<code>.json  with all translation strings.
- *    That's it — routing, guards, hreflang and the nav dropdown update automatically.
+ *    That's it — routing, guards, hreflang, SEO tags and the nav dropdown update automatically.
  */
 export const LANGUAGES: LangOption[] = [
-  { code: 'es', label: 'Español' },
-  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Español', ogLocale: 'es_ES' },
+  { code: 'en', label: 'English', ogLocale: 'en_US' },
+  { code: 'pt', label: 'Português', ogLocale: 'pt_BR' },
+  { code: 'de', label: 'Deutsch', ogLocale: 'de_DE' },
 ];
 
 export const SUPPORTED_LANG_CODES = LANGUAGES.map((l) => l.code);
 
 export const DEFAULT_LANG = 'es';
+
+/** Looks up the Open Graph locale for a given language code, falling back to the default language's. */
+export function getOgLocale(code: string): string {
+  return LANGUAGES.find((l) => l.code === code)?.ogLocale
+    ?? LANGUAGES.find((l) => l.code === DEFAULT_LANG)!.ogLocale;
+}
 
 /** localStorage key used to persist the user's language preference. */
 export const LANG_STORAGE_KEY = 'fourier-lang';
