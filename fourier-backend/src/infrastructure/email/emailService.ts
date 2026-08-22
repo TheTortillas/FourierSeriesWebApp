@@ -2,10 +2,10 @@ import nodemailer from "nodemailer";
 import { config } from "../../config/env";
 
 // ── Supported languages ────────────────────────────────────────────────────
-type Lang = "es" | "en" | "pt" | "de";
+type Lang = "es" | "en" | "pt" | "de" | "it";
 
 function resolveLang(lang?: string): Lang {
-  return lang === "en" || lang === "pt" || lang === "de" ? lang : "es";
+  return lang === "en" || lang === "pt" || lang === "de" || lang === "it" ? lang : "es";
 }
 
 // ── i18n strings ───────────────────────────────────────────────────────────
@@ -118,6 +118,33 @@ const STRINGS = {
       cta: "Konto wiederherstellen",
       expiry: "Dieser Link läuft in 24 Stunden ab.",
       ignore: "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren.",
+    },
+  },
+  it: {
+    greeting: (name: string) => `Ciao, ${name}`,
+    footer: "Per qualsiasi domanda, rispondi a questa email.",
+    brand: "AEM -LAB",
+    linkFallback: "Oppure copia questo link nel tuo browser:",
+    verify: {
+      subject: "Verifica il tuo account · AEM -LAB",
+      body: "Grazie per esserti registrato su AEM -LAB. Fai clic sul pulsante per verificare la tua email e attivare il tuo account.",
+      cta: "Verifica account",
+      expiry: "Questo link scade tra 24 ore.",
+      ignore: "Se non hai creato questo account, puoi ignorare tranquillamente questa email.",
+    },
+    resetPassword: {
+      subject: "Reimposta la tua password · AEM -LAB",
+      body: "Abbiamo ricevuto una richiesta per reimpostare la password del tuo account. Fai clic sul pulsante per sceglierne una nuova.",
+      cta: "Reimposta password",
+      expiry: "Questo link scade tra 1 ora.",
+      ignore: "Se non hai richiesto questo, puoi ignorare tranquillamente questa email.",
+    },
+    recovery: {
+      subject: "Recupera il tuo account · AEM -LAB",
+      body: "Abbiamo ricevuto una richiesta per recuperare l'accesso al tuo account. Fai clic sul pulsante per continuare.",
+      cta: "Recupera account",
+      expiry: "Questo link scade tra 24 ore.",
+      ignore: "Se non hai richiesto questo, puoi ignorare tranquillamente questa email.",
     },
   },
 } as const;
