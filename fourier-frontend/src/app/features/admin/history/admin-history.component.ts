@@ -200,20 +200,21 @@ export class AdminHistoryComponent implements OnInit {
     if (!inp) return '';
     type Seg = { expressionTex?: string; expression?: string; fromTex?: string; from?: string; toTex?: string; to?: string };
     const segments = inp['segments'] as Seg[] | undefined;
+    const v = (inp['intVar'] as string | undefined) ?? (inp['timeVar'] as string | undefined) ?? 'x';
     if (segments?.length) {
       if (segments.length === 1) {
         const s = segments[0];
         const e = s.expressionTex ?? s.expression ?? '?';
         const f = s.fromTex ?? s.from ?? '';
         const t = s.toTex ?? s.to ?? '';
-        return `\\(${e},\\; x \\in [${f},\\,${t}]\\)`;
+        return `\\(${e},\\; ${v} \\in [${f},\\,${t}]\\)`;
       }
       const cases = segments
         .map((s) => {
           const e = s.expressionTex ?? s.expression ?? '?';
           const f = s.fromTex ?? s.from ?? '';
           const t = s.toTex ?? s.to ?? '';
-          return `${e} & x \\in [${f},\\,${t}]`;
+          return `${e} & ${v} \\in [${f},\\,${t}]`;
         })
         .join(' \\\\ ');
       return `\\(\\begin{cases}${cases}\\end{cases}\\)`;

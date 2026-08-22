@@ -267,9 +267,11 @@
                 </div>
 
                 <!-- Input summary -->
-                <p class="text-xs font-mono text-ink dark:text-dark-ink break-all">
-                  {{ inputSummary(entry) }}
-                </p>
+                @if (inputLatex(entry); as tex) {
+                  <span [mathjax]="tex" class="text-ink dark:text-dark-ink text-[11px] leading-snug block"></span>
+                } @else {
+                  <p class="text-xs font-mono text-ink dark:text-dark-ink break-all">{{ inputSummaryFallback(entry) }}</p>
+                }
 
                 <!-- Raw JSON toggle -->
                 <details class="mt-1">

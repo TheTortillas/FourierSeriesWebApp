@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { ApiService } from '../../../core/services/api/api.service';
 import { CalcStats, CALC_TYPE_LABEL } from '../../../domain';
+import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
 
 Chart.register(...registerables);
 
@@ -63,7 +64,7 @@ function dateNDaysAgo(days: number): string {
 @Component({
   selector: 'app-calc-stats',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MathjaxDirective],
   templateUrl: './calc-stats.component.html',
 })
 export class CalcStatsComponent implements OnInit, OnDestroy {
@@ -142,36 +143,56 @@ export class CalcStatsComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  inputSummary(entry: CalcStats['topCalcs'][number]): string {
+  inputLatex(entry: CalcStats['topCalcs'][number]): string {
     const inp = entry.input;
-    if (!inp) return '—';
+    if (!inp) return '';
 
-    // Inputs with segments (series, transforms, dft_function)
-    const segments = inp['segments'] as
-      | Array<{ expression?: string; from?: string; to?: string }>
-      | undefined;
+    type Seg = { expressionTex?: string; expression?: string; fromTex?: string; from?: string; toTex?: string; to?: string };
+    const segments = inp['segments'] as Seg[] | undefined;
+    const v = (inp['intVar'] as string | undefined) ?? (inp['timeVar'] as string | undefined) ?? 'x';
 
     if (segments?.length) {
-      const first = segments[0];
-      const expr  = fmtMaxima(first.expression ?? '?');
-      const range = first.from !== undefined && first.to !== undefined
-        ? ` [${fmtMaxima(first.from)}, ${fmtMaxima(first.to)}]`
-        : '';
-      const more   = segments.length > 1
-        ? ` +${segments.length - 1} tramo${segments.length > 2 ? 's' : ''}`
-        : '';
-      const nStr   = inp['N'] !== undefined ? `, N=${inp['N']}` : '';
-      const varStr = inp['intVar'] ? ` (var: ${inp['intVar']})` : '';
-      return `${expr}${range}${more}${nStr}${varStr}`;
+      if (segments.length === 1) {
+        const s = segments[0];
+        const e = s.expressionTex ?? s.expression ?? '?';
+        const f = s.fromTex ?? s.from ?? '';
+        const t = s.toTex ?? s.to ?? '';
+        const nStr = inp['N'] !== undefined ? `,\\; N=${inp['N']}` : '';
+        return `\\(${e},\\; ${v} \\in [${f},\\,${t}]${nStr}\\)`;
+      }
+      const cases = segments
+        .map((s) => {
+          const e = s.expressionTex ?? s.expression ?? '?';
+          const f = s.fromTex ?? s.from ?? '';
+          const t = s.toTex ?? s.to ?? '';
+          return `${e} & ${v} \\in [${f},\\,${t}]`;
+        })
+        .join(' \\\\ ');
+      return `\\(\\begin{cases}${cases}\\end{cases}\\)`;
     }
 
-    // DFT from points (dft_signal, dft_epicycles)
+    // Single expression (transforms, Laplace)
+    const exprTex = inp['expressionTex'] as string | undefined;
+    const expr    = inp['expression']    as string | undefined;
+    if (exprTex || expr) return `\\(${exprTex ?? expr}\\)`;
+
+    // ODE
+    const eqTex = inp['equationTex'] as string | undefined;
+    const eq    = inp['equation']    as string | undefined;
+    if (eqTex || eq) return `\\(${eqTex ?? eq}\\)`;
+
+    // DFT from points — no LaTeX, return empty (fallback handled in template)
+    return '';
+  }
+
+  inputSummaryFallback(entry: CalcStats['topCalcs'][number]): string {
+    const inp = entry.input;
+    if (!inp) return '—';
     const points = inp['points'] as unknown[] | undefined;
     if (points) {
       const n = inp['N'] !== undefined ? `, N=${inp['N']}` : '';
       return `${points.length} puntos${n}`;
     }
-
     return JSON.stringify(inp).slice(0, 80);
   }
 
