@@ -109,6 +109,12 @@ export class UsersComponent implements OnInit {
     setTimeout(() => this.actionErr.set(null), 3000);
   }
 
+  initials(user: AdminUser): string {
+    const f = user.firstName?.[0] ?? '';
+    const l = user.lastName?.[0] ?? '';
+    return (f + l).toUpperCase() || user.email[0].toUpperCase();
+  }
+
   readonly copiedId = signal<string | null>(null);
 
   copyId(id: string): void {

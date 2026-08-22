@@ -85,8 +85,8 @@
   <!-- ── Skeleton ──────────────────────────────────────────────────────────── -->
   @if (loading) {
     <div class="flex flex-col gap-4 animate-pulse">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        @for (i of [1,2,3,4]; track i) {
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        @for (i of [1,2,3,4,5]; track i) {
           <div class="h-20 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
         }
       </div>
@@ -102,7 +102,7 @@
   @if (!loading && stats) {
 
     <!-- ── Summary cards ─────────────────────────────────────────────────── -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
 
       <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1">
         <span class="text-xs font-mono text-muted dark:text-dark-muted">Total ejecuciones</span>
@@ -136,6 +136,20 @@
         </span>
       </div>
 
+      <div class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl p-4 flex flex-col gap-1">
+        <span class="text-xs font-mono text-muted dark:text-dark-muted">Promedio por día</span>
+        <span class="font-mono text-2xl font-bold text-ink dark:text-dark-ink">
+          @if (avgPerDay !== null) {
+            {{ avgPerDay }}<span class="text-sm font-normal text-muted dark:text-dark-muted ml-1">ej/día</span>
+          } @else {
+            <span class="text-base text-muted dark:text-dark-muted">—</span>
+          }
+        </span>
+        @if (stats.daily.length > 0) {
+          <span class="text-[10px] font-mono text-muted dark:text-dark-muted">en {{ stats.daily.length }} días</span>
+        }
+      </div>
+
     </div>
 
     <!-- ── Row 1: Group donut + Auth donut ───────────────────────────────── -->
@@ -144,7 +158,7 @@
       <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
           <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Por grupo</span>
-          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">Series · Transformadas · DFT</p>
+          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">Series · Integral · T. Fourier · Laplace · EDO · DFT</p>
         </div>
         <div class="p-4" style="height:240px; position:relative">
           <canvas id="csGroup"></canvas>
@@ -176,21 +190,44 @@
 
     <!-- ── Trend line ────────────────────────────────────────────────────── -->
     <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-      <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
-        <div>
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Tendencia de ejecuciones</span>
-          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">
-            @if (dateFrom && dateTo) { De {{ dateFrom }} a {{ dateTo }} }
-            @else if (dateFrom)      { Desde {{ dateFrom }} }
-            @else if (dateTo)        { Hasta {{ dateTo }} }
-            @else                    { Todo el historial }
-          </p>
+      <div class="px-4 py-3 border-b border-border dark:border-dark-border flex flex-col gap-2">
+        <!-- Row 1: title + granularity toggle -->
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Tendencia de ejecuciones</span>
+            <p class="text-xs text-muted dark:text-dark-muted mt-0.5">
+              @if (dateFrom && dateTo) { De {{ dateFrom }} a {{ dateTo }} }
+              @else if (dateFrom)      { Desde {{ dateFrom }} }
+              @else if (dateTo)        { Hasta {{ dateTo }} }
+              @else                    { Todo el historial }
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono text-muted dark:text-dark-muted">
+              {{ stats.daily.length }} {{ stats.daily.length === 1 ? 'día' : 'días' }}
+            </span>
+            <!-- Granularity toggle -->
+            <div class="flex gap-1">
+              <button
+                (click)="setTrendGranularity('day')"
+                [ngClass]="trendGranularity === 'day'
+                  ? 'bg-accent text-white border-accent'
+                  : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+                class="px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-colors cursor-pointer"
+              >Días</button>
+              <button
+                (click)="setTrendGranularity('week')"
+                [ngClass]="trendGranularity === 'week'
+                  ? 'bg-accent text-white border-accent'
+                  : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+                class="px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-colors cursor-pointer"
+              >Semanas</button>
+            </div>
+          </div>
         </div>
-        <span class="text-xs font-mono text-muted dark:text-dark-muted">
-          {{ stats.daily.length }} {{ stats.daily.length === 1 ? 'día' : 'días' }} en el período
-        </span>
+
       </div>
-      <div class="p-4" style="height:220px; position:relative">
+      <div class="p-4" style="height:240px; position:relative">
         <canvas id="csTrend"></canvas>
       </div>
     </section>
@@ -250,10 +287,10 @@
                     [class.dark\:bg-lime-900\/30]="groupLabel(entry.type) === 'Integral'"
                     [class.text-lime-700]="groupLabel(entry.type) === 'Integral'"
                     [class.dark\:text-lime-400]="groupLabel(entry.type) === 'Integral'"
-                    [class.bg-emerald-100]="groupLabel(entry.type) === 'Transformadas'"
-                    [class.dark\:bg-emerald-900\/30]="groupLabel(entry.type) === 'Transformadas'"
-                    [class.text-emerald-700]="groupLabel(entry.type) === 'Transformadas'"
-                    [class.dark\:text-emerald-300]="groupLabel(entry.type) === 'Transformadas'"
+                    [class.bg-emerald-100]="groupLabel(entry.type) === 'T. Fourier'"
+                    [class.dark\:bg-emerald-900\/30]="groupLabel(entry.type) === 'T. Fourier'"
+                    [class.text-emerald-700]="groupLabel(entry.type) === 'T. Fourier'"
+                    [class.dark\:text-emerald-300]="groupLabel(entry.type) === 'T. Fourier'"
                     [class.bg-orange-100]="groupLabel(entry.type) === 'Laplace'"
                     [class.dark\:bg-orange-900\/30]="groupLabel(entry.type) === 'Laplace'"
                     [class.text-orange-700]="groupLabel(entry.type) === 'Laplace'"
@@ -271,6 +308,22 @@
                   <span [mathjax]="tex" class="text-ink dark:text-dark-ink text-[11px] leading-snug block"></span>
                 } @else {
                   <p class="text-xs font-mono text-ink dark:text-dark-ink break-all">{{ inputSummaryFallback(entry) }}</p>
+                }
+
+                <!-- Ratio bar: unique users / total executions -->
+                @if (entry.total_executions > 0) {
+                  <div class="mt-1.5 flex items-center gap-2">
+                    <div class="flex-1 h-1.5 rounded-full bg-border dark:bg-dark-border overflow-hidden">
+                      <div
+                        class="h-full rounded-full bg-accent/70"
+                        [style.width.%]="Math.min(100, (entry.unique_users / entry.total_executions) * 100)"
+                      ></div>
+                    </div>
+                    <span class="text-[10px] font-mono text-muted dark:text-dark-muted shrink-0">
+                      {{ entry.unique_users }}/{{ entry.total_executions }}
+                      <span class="opacity-60">usuarios/ejecuciones</span>
+                    </span>
+                  </div>
                 }
 
                 <!-- Raw JSON toggle -->

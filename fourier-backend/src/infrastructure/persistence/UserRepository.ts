@@ -347,6 +347,7 @@ export class UserRepository implements IUserRepository {
             u.updated_at as "updatedAt",
             u.last_login_at as "lastLoginAt",
             u.deleted_at as "deletedAt",
+            u.avatar_url as "avatarUrl",
             p.first_name as "firstName",
             p.last_name as "lastName"
      FROM users u
