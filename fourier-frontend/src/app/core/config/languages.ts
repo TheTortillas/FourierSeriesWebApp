@@ -21,6 +21,7 @@ export const LANGUAGES: LangOption[] = [
   { code: 'en', label: 'English', ogLocale: 'en_US', gsiLocale: 'en' },
   { code: 'pt', label: 'Português', ogLocale: 'pt_BR', gsiLocale: 'pt-BR' },
   { code: 'de', label: 'Deutsch', ogLocale: 'de_DE', gsiLocale: 'de' },
+  { code: 'it', label: 'Italiano', ogLocale: 'it_IT', gsiLocale: 'it' },
 ];
 
 export const SUPPORTED_LANG_CODES = LANGUAGES.map((l) => l.code);
