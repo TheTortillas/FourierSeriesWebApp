@@ -49,6 +49,12 @@ export class SpectrumChartComponent {
   readonly halfRangeMode = input<'cosine' | 'sine'>('cosine');
   /** When true, opens the settings panel on first render (e.g. after computing). */
   readonly openPanel = input(false);
+  /**
+   * Optional per-stem color function. When provided, each stem at index n is colored
+   * with the returned value instead of the uniform stemColor. Used to match harmonic
+   * palette when the harmonics layer is active in the parent component.
+   */
+  readonly harmonicColorFn = input<((n: number) => string) | null>(null);
 
   readonly Math = Math;
   readonly spectrumMode = signal<SpectrumMode>('trigAmp');
@@ -129,11 +135,12 @@ export class SpectrumChartComponent {
     const width = this.stemWidth();
     const style = this.stemStyle();
     const hovered = this.hoveredPoint();
+    const harmonicColorFn = this.harmonicColorFn();
 
     return [
       {
         curves: [],
-        onDraw: (ctx, vp) => this.drawStemChart(ctx, vp, points, color, width, style, hovered),
+        onDraw: (ctx, vp) => this.drawStemChart(ctx, vp, points, color, width, style, hovered, harmonicColorFn),
       },
     ];
   });
@@ -345,6 +352,7 @@ export class SpectrumChartComponent {
     width: number,
     style: 'filled' | 'open' | 'square' | 'diamond',
     hovered: StemPoint | null,
+    harmonicColorFn: ((n: number) => string) | null = null,
   ): void {
     if (points.length === 0) return;
 
@@ -352,9 +360,10 @@ export class SpectrumChartComponent {
     const markerRadius = Math.max(2.5, width + 1.2);
     for (const point of points) {
       const isHovered = hovered?.x === point.x && hovered?.label === point.label;
+      const baseColor = harmonicColorFn ? harmonicColorFn(point.x) : color;
       this.drawingUtils.drawStem(
         ctx, vp, point.x, point.y,
-        isHovered ? highlightColor : color,
+        isHovered ? highlightColor : baseColor,
         isHovered ? width * 2 : width,
         isHovered ? markerRadius + 2 : markerRadius,
         isHovered ? 'filled' : style,

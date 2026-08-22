@@ -1451,6 +1451,13 @@ export class ResultsSummaryComponent {
 
   readonly harmonicColors = computed(() => this.currentColorPreset().harmonics);
 
+  /** Passed to spectrum-chart to color each stem by its harmonic palette slot when harmonics are shown. */
+  readonly spectrumHarmonicColorFn = computed<((n: number) => string) | null>(() => {
+    if (!this.showHarmonics()) return null;
+    const palette = this.harmonicColors();
+    return (n: number) => palette[(Math.abs(n) - 1) % palette.length] ?? palette[0];
+  });
+
   // ── Tab & mode actions ────────────────────────────────────────────────────
 
   setTab(tab: 'coefficients' | 'terms' | 'spectrum' | 'validation' | 'parseval'): void {
