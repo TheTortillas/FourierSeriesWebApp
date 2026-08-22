@@ -1014,6 +1014,7 @@
               [complexZero]="type === 'complex' ? (complexCtx?.c0Float ?? null) : null"
               [halfRangeMode]="halfRangeMode()"
               [openPanel]="showSpectrumSettings()"
+              [harmonicColorFn]="spectrumHarmonicColorFn()"
             />
           } @else {
             <div
