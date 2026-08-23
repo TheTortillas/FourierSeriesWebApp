@@ -763,6 +763,12 @@ transformsRouter.post(
       if (!eqCheck.valid) { res.status(400).json({ error: eqCheck.error }); return; }
       const timeVarCheckOde = body.timeVar ? sanitizeVariableName(body.timeVar, "timeVar") : null;
       if (timeVarCheckOde && !timeVarCheckOde.valid) { res.status(400).json({ error: timeVarCheckOde.error }); return; }
+      const unknownCheckOde = sanitizeExpression(body.unknown.trim());
+      if (!unknownCheckOde.valid) { res.status(400).json({ error: unknownCheckOde.error }); return; }
+      for (const ic of body.initialConditions) {
+        const icValueCheck = sanitizeExpression(String(ic.value).trim());
+        if (!icValueCheck.valid) { res.status(400).json({ error: icValueCheck.error }); return; }
+      }
 
       const bodyAny = body as unknown as Record<string, unknown>;
       const input: LaplaceOdeInput & { equationTex?: string } = {
@@ -860,6 +866,19 @@ transformsRouter.post(
       if (!eqCheck.valid) { res.status(400).json({ error: eqCheck.error }); return; }
       const ivarCheck = sanitizeVariableName(body.ivar.trim(), "ivar");
       if (!ivarCheck.valid) { res.status(400).json({ error: ivarCheck.error }); return; }
+      const unknownCheckSolve = sanitizeExpression(body.unknown.trim());
+      if (!unknownCheckSolve.valid) { res.status(400).json({ error: unknownCheckSolve.error }); return; }
+
+      const icFields: Array<[string, string | undefined]> = [
+        ["x0", body.x0], ["y0", body.y0], ["dy0", body.dy0], ["ddy0", body.ddy0],
+        ["x1", body.x1], ["y1", body.y1], ["x2", body.x2], ["y2", body.y2],
+      ];
+      for (const [name, value] of icFields) {
+        if (value === undefined) continue;
+        if (typeof value !== "string") { res.status(400).json({ error: `${name} must be a string` }); return; }
+        const check = sanitizeExpression(value.trim());
+        if (!check.valid) { res.status(400).json({ error: `${name}: ${check.error}` }); return; }
+      }
 
       const input: OdeInput = {
         equation:    body.equation.trim(),
