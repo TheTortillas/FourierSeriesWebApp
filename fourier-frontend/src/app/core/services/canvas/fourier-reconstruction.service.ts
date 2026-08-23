@@ -55,7 +55,8 @@ export class FourierReconstructionService {
       let sum = dc;
       for (const { n, anFloat, bnFloat } of slice) {
         const arg = n * w0 * x;
-        sum += anFloat * Math.cos(arg) + bnFloat * Math.sin(arg);
+        if (isFinite(anFloat)) sum += anFloat * Math.cos(arg);
+        if (isFinite(bnFloat)) sum += bnFloat * Math.sin(arg);
       }
       return sum;
     };
@@ -82,7 +83,7 @@ export class FourierReconstructionService {
     return (x: number): number => {
       let sum = dc;
       for (const { n, anFloat } of slice) {
-        sum += anFloat * Math.cos(n * w0 * (x - originX));
+        if (isFinite(anFloat)) sum += anFloat * Math.cos(n * w0 * (x - originX));
       }
       return sum;
     };
@@ -105,7 +106,7 @@ export class FourierReconstructionService {
     return (x: number): number => {
       let sum = 0;
       for (const { n, bnFloat } of slice) {
-        sum += bnFloat * Math.sin(n * w0 * (x - originX));
+        if (isFinite(bnFloat)) sum += bnFloat * Math.sin(n * w0 * (x - originX));
       }
       return sum;
     };
@@ -138,7 +139,8 @@ export class FourierReconstructionService {
       let sum = c0;
       for (const { n, cosFloat, sinFloat } of slice) {
         const arg = n * w0 * x;
-        sum += cosFloat * Math.cos(arg) + sinFloat * Math.sin(arg);
+        if (isFinite(cosFloat)) sum += cosFloat * Math.cos(arg);
+        if (isFinite(sinFloat)) sum += sinFloat * Math.sin(arg);
       }
       return sum;
     };

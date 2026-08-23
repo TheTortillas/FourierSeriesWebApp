@@ -39,9 +39,11 @@ import {
   LaplaceDirectRequest,
   LaplaceInverseRequest,
   LaplaceOdeRequest,
+  LaplacePoleZeroRequest,
   LaplaceDirectResponse,
   LaplaceInverseResponse,
   LaplaceOdeResponse,
+  LaplacePoleZeroResponse,
   // ODE
   OdeRequest,
   OdeResponse,
@@ -229,6 +231,10 @@ export class ApiService {
 
   calculateLaplaceOde(body: LaplaceOdeRequest): Observable<LaplaceOdeResponse> {
     return this.http.post<LaplaceOdeResponse>(`${this.base}/transforms/laplace/ode`, body);
+  }
+
+  calculateLaplacePoleZero(body: LaplacePoleZeroRequest): Observable<LaplacePoleZeroResponse> {
+    return this.http.post<LaplacePoleZeroResponse>(`${this.base}/transforms/laplace/pole-zero`, body);
   }
 
   calculateOde(body: OdeRequest): Observable<OdeResponse> {
@@ -477,6 +483,10 @@ export class ApiService {
     if (query?.topN)     params = params.set('topN',     query.topN);
     if (query?.tz)       params = params.set('tz',       query.tz);
     return this.http.get<import('../../../domain').CalcStats>(`${this.base}/admin/calculations/stats`, { params });
+  }
+
+  sendAdminReply(payload: { to: string; userName: string; subject: string; body: string; lang?: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/admin/reply`, payload);
   }
 
   // ─── Feedback ────────────────────────────────────────────────────────────

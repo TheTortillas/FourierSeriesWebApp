@@ -25,11 +25,13 @@
           @for (m of modes; track m.id) {
             <button
               type="button"
-              (click)="mode.set(m.id); startNewCalculation()"
-              [disabled]="hasComputedResult() && mode() !== m.id"
+              (click)="switchMode(m.id)"
+              [disabled]="hasComputedResult()"
               class="flex-1 text-xs font-mono py-1.5 rounded-md transition-all"
               [class]="mode() === m.id
-                ? 'bg-accent text-white dark:text-white shadow-sm cursor-pointer'
+                ? hasComputedResult()
+                  ? 'bg-accent text-white dark:text-white shadow-sm opacity-60 cursor-not-allowed'
+                  : 'bg-accent text-white dark:text-white shadow-sm cursor-pointer'
                 : hasComputedResult()
                   ? 'text-muted dark:text-dark-muted opacity-40 cursor-not-allowed'
                   : 'text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink cursor-pointer'"
@@ -352,86 +354,20 @@
       <div class="p-5 flex flex-col gap-5">
 
         <!-- Canvas wrapper -->
-        <div
-          #canvasWrapperRef
-          class="relative rounded-xl overflow-hidden border border-border dark:border-dark-border bg-paper dark:bg-dark-bg"
-          style="height: 420px"
+        <app-canvas-shell
+          canvasHeight="420px"
+          [showSettings]="showCanvasSettings()"
+          [hasResult]="hasComputedResult()"
+          [showFavorite]="userStore.isAuthenticated()"
+          [isFavorited]="!!latestHistoryEntry()?.isFavorite"
+          [favoriteLoading]="favoriteLoading()"
+          filename="ode-solution.png"
+          (settingsToggle)="showCanvasSettings.set(!showCanvasSettings())"
+          (shareRequested)="openShareDialog()"
+          (favoriteRequested)="openFavoriteDialog()"
         >
-          <app-function-plot [layers]="layers()" class="w-full h-full block" />
-
-          <!-- Overlay buttons (top-left) -->
-          <div class="absolute top-2 left-2 flex gap-1">
-
-            <!-- Fullscreen -->
-            <button
-              type="button"
-              (click)="toggleFullscreen()"
-              [title]="(isFullscreen() ? 'results.exitFullscreen' : 'results.fullscreen') | transloco"
-              class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-            >
-              @if (isFullscreen()) {
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" />
-                  <line x1="10" y1="14" x2="3" y2="21" /><line x1="21" y1="3" x2="14" y2="10" />
-                </svg>
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" />
-                  <line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
-                </svg>
-              }
-            </button>
-
-            <!-- Settings (only when result exists) -->
-            @if (hasComputedResult()) {
-              <button
-                type="button"
-                (click)="showCanvasSettings.set(!showCanvasSettings())"
-                [title]="'ode.canvasSettings' | transloco"
-                [class]="showCanvasSettings()
-                  ? 'w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent transition-colors flex items-center justify-center cursor-pointer'
-                  : 'w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer'"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-              </button>
-            }
-
-            <!-- Download -->
-            <button
-              type="button"
-              (click)="downloadCanvas()"
-              [title]="'results.downloadImage' | transloco"
-              class="w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 border border-border dark:border-dark-border rounded text-ink/70 dark:text-dark-ink/70 hover:bg-paper dark:hover:bg-dark-surface hover:text-ink dark:hover:text-dark-ink transition-colors flex items-center justify-center cursor-pointer"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-            </button>
-
-          </div>
-
-          <!-- Settings slide-in panel (desktop) -->
-          @if (hasComputedResult() && showCanvasSettings()) {
-            <div class="absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 hidden lg:flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-              <ng-container *ngTemplateOutlet="settingsPanelTpl" />
-            </div>
-          }
-        </div>
-
-        <!-- Settings panel mobile (below canvas) -->
-        @if (hasComputedResult() && showCanvasSettings()) {
-          <div class="flex lg:hidden flex-col border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-surface shrink-0 max-h-72 overflow-hidden">
-            <ng-container *ngTemplateOutlet="settingsPanelTpl" />
-          </div>
-        }
-
-        <!-- Settings panel template -->
-        <ng-template #settingsPanelTpl>
+          <app-function-plot [layers]="layers()" [xAxisFormat]="xAxisFormat()" class="w-full h-full block" />
+          <ng-template #settingsPanel>
           <div class="flex items-center justify-between px-4 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
             <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/60 dark:text-dark-ink/60 font-mono">
               {{ 'ode.canvasSettings' | transloco }}
@@ -442,6 +378,21 @@
 
           <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
 
+            <!-- Axis format -->
+            <section class="px-5 py-4 flex flex-col gap-2">
+              <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">
+                {{ 'settingsCanvas.xAxis' | transloco }}
+              </p>
+              <div class="flex rounded border border-border dark:border-dark-border overflow-hidden w-fit text-[11px] font-mono">
+                <button type="button" (click)="xAxisFormat.set('pi')"
+                  [class]="xAxisFormat() === 'pi' ? 'px-2.5 py-1 bg-accent text-white cursor-pointer' : 'px-2.5 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">π</button>
+                <button type="button" (click)="xAxisFormat.set('e')"
+                  [class]="xAxisFormat() === 'e' ? 'px-2.5 py-1 bg-accent text-white cursor-pointer' : 'px-2.5 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">e</button>
+                <button type="button" (click)="xAxisFormat.set('integer')"
+                  [class]="xAxisFormat() === 'integer' ? 'px-2.5 py-1 bg-accent text-white cursor-pointer' : 'px-2.5 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">1,2</button>
+              </div>
+            </section>
+
             <!-- Curve style -->
             <section class="px-5 py-4 flex flex-col gap-3">
               <div class="flex items-center justify-between">
@@ -449,7 +400,7 @@
                   {{ 'ode.lineStyle' | transloco }}
                 </p>
                 <button type="button" (click)="resetLineStyles()"
-                  class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2">
+                  class="px-2 py-0.5 rounded border border-border dark:border-dark-border text-[10px] text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors cursor-pointer">
                   {{ 'ode.reset' | transloco }}
                 </button>
               </div>
@@ -476,7 +427,7 @@
                     <button type="button" (click)="curveDashed.set(true)"
                       [class]="curveDashed() ? 'px-2 py-0.5 bg-accent text-white cursor-pointer' : 'px-2 py-0.5 text-ink/75 dark:text-dark-ink/75 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">- -</button>
                   </div>
-                  <input type="color" [value]="curveColor()" (input)="curveColor.set($any($event.target).value)"
+                  <input type="color" [value]="curveColor()" (input)="setCurveColor($any($event.target).value)"
                     class="w-7 h-7 rounded cursor-pointer border border-border dark:border-dark-border bg-transparent p-0.5 shrink-0" />
                   <input type="number" [value]="curveLineWidth()" min="0.5" max="5" step="0.5"
                     (input)="curveLineWidth.set(+$any($event.target).value)"
@@ -508,6 +459,21 @@
 
           </div>
         </ng-template>
+        </app-canvas-shell>
+
+        <app-share-dialog
+          [visible]="showShareDialog()"
+          [shareHref]="shareHref"
+          [urlCopied]="urlCopied()"
+          (closed)="showShareDialog.set(false)"
+          (copy)="copyShareUrl()"
+        />
+
+        <app-favorite-dialog
+          [visible]="showFavoriteDialog()"
+          (confirmed)="onFavoriteConfirmed($event)"
+          (cancelled)="cancelFavoriteDialog()"
+        />
 
         <!-- ── Result ──────────────────────────────────────────────────────── -->
         @if (result(); as r) {

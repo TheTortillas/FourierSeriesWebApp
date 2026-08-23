@@ -1,5 +1,6 @@
 import { Component, input, output, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 export interface ParamValues {
   [name: string]: number;
@@ -22,64 +23,60 @@ interface ParamRange {
  */
 @Component({
   selector: 'app-param-sliders',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslocoPipe],
   template: `
     @if (params().length > 0) {
-      <div class="mt-3 space-y-2">
-        <!-- <p
-          class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide px-0.5"
-        >
-          {{ 'settingsCanvas.freeParams' | transloco }}
-        </p> -->
-
-        @for (name of params(); track name) {
-          <div
-            class="rounded border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface2 px-3 py-2 space-y-1.5"
-          >
-            <!-- Row 1: param name + current value -->
-            <div class="flex items-center justify-between gap-2">
-              <span
-                class="text-xs font-mono font-semibold text-ink dark:text-dark-ink shrink-0"
-              >
-                {{ name }} =
-              </span>
+      <div class="flex flex-col gap-4">
+      @for (name of params(); track name) {
+        <div class="flex flex-col gap-2">
+          <!-- Row 1: param name + editable value -->
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-mono font-bold text-accent shrink-0">{{ name }}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50">{{ 'settingsCanvas.paramCurrent' | transloco }}</span>
               <input
                 type="number"
-                class="w-20 px-2 py-0.5 text-xs text-right font-mono rounded border border-accent/40 bg-accent/5 dark:bg-accent/10 text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+                class="w-20 px-2 py-0.5 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center text-sm font-semibold font-mono focus:outline-none focus:border-accent tabular-nums"
                 [step]="step()"
                 [ngModel]="getValue(name)"
                 (ngModelChange)="setValue(name, +$event)"
               />
             </div>
-
-            <!-- Row 2: min ── slider ── max -->
-            <div class="flex items-center gap-2">
+          </div>
+          <!-- Row 2: full-width slider -->
+          <input
+            type="range"
+            class="w-full accent-accent cursor-pointer h-1.5"
+            [min]="getMin(name)"
+            [max]="getMax(name)"
+            [step]="step()"
+            [ngModel]="getValue(name)"
+            (ngModelChange)="setValue(name, $event)"
+          />
+          <!-- Row 3: editable min / max -->
+          <div class="flex items-end gap-2">
+            <div class="flex flex-col items-center gap-0.5 flex-1">
+              <span class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50">{{ 'settingsCanvas.paramMin' | transloco }}</span>
               <input
                 type="number"
-                title="Mínimo"
-                class="w-12 px-1.5 py-0.5 text-[10px] text-center font-mono rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted focus:outline-none focus:border-accent"
+                class="w-full px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center text-xs font-mono focus:outline-none focus:border-accent"
                 [ngModel]="getMin(name)"
                 (ngModelChange)="setMin(name, +$event)"
               />
-              <input
-                type="range"
-                class="flex-1 accent-accent cursor-pointer"
-                [min]="getMin(name)"
-                [max]="getMax(name)"
-                [step]="step()"
-                [ngModel]="getValue(name)"
-                (ngModelChange)="setValue(name, $event)"
-              />
+            </div>
+            <span class="text-ink/30 dark:text-dark-ink/30 font-mono shrink-0 pb-1">—</span>
+            <div class="flex flex-col items-center gap-0.5 flex-1">
+              <span class="text-[10px] font-mono text-ink/50 dark:text-dark-ink/50">{{ 'settingsCanvas.paramMax' | transloco }}</span>
               <input
                 type="number"
-                title="Máximo"
-                class="w-12 px-1.5 py-0.5 text-[10px] text-center font-mono rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted focus:outline-none focus:border-accent"
+                class="w-full px-2 py-1 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-ink dark:text-dark-ink text-center text-xs font-mono focus:outline-none focus:border-accent"
                 [ngModel]="getMax(name)"
                 (ngModelChange)="setMax(name, +$event)"
               />
             </div>
           </div>
-        }
+        </div>
+      }
       </div>
     }
   `,

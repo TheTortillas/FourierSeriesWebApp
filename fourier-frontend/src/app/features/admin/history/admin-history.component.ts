@@ -7,6 +7,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../../core/services/api/api.service';
 import { HistoryEntry, CALC_TYPE_LABEL, AdminHistoryQuery } from '../../../domain';
 import { AdminDatePipe } from '../../../shared/pipes/admin-date.pipe';
+import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
 
 const PAGE_SIZE = 20;
 
@@ -21,7 +22,7 @@ const CALC_TYPES = Object.keys(CALC_TYPE_LABEL);
 @Component({
   selector: 'app-admin-history',
   templateUrl: './admin-history.component.html',
-  imports: [NgClass, FormsModule, AdminDatePipe],
+  imports: [NgClass, FormsModule, AdminDatePipe, MathjaxDirective],
 })
 export class AdminHistoryComponent implements OnInit {
   private readonly api      = inject(ApiService);
@@ -192,6 +193,39 @@ export class AdminHistoryComponent implements OnInit {
     if (points) return `${points.length} puntos`;
 
     return JSON.stringify(inp).slice(0, 60);
+  }
+
+  inputLatex(entry: HistoryEntry): string {
+    const inp = entry.input;
+    if (!inp) return '';
+    type Seg = { expressionTex?: string; expression?: string; fromTex?: string; from?: string; toTex?: string; to?: string };
+    const segments = inp['segments'] as Seg[] | undefined;
+    const v = (inp['intVar'] as string | undefined) ?? (inp['timeVar'] as string | undefined) ?? 'x';
+    if (segments?.length) {
+      if (segments.length === 1) {
+        const s = segments[0];
+        const e = s.expressionTex ?? s.expression ?? '?';
+        const f = s.fromTex ?? s.from ?? '';
+        const t = s.toTex ?? s.to ?? '';
+        return `\\(${e},\\; ${v} \\in [${f},\\,${t}]\\)`;
+      }
+      const cases = segments
+        .map((s) => {
+          const e = s.expressionTex ?? s.expression ?? '?';
+          const f = s.fromTex ?? s.from ?? '';
+          const t = s.toTex ?? s.to ?? '';
+          return `${e} & ${v} \\in [${f},\\,${t}]`;
+        })
+        .join(' \\\\ ');
+      return `\\(\\begin{cases}${cases}\\end{cases}\\)`;
+    }
+    const exprTex = inp['expressionTex'] as string | undefined;
+    const expr    = inp['expression']    as string | undefined;
+    if (exprTex || expr) return `\\(${exprTex ?? expr}\\)`;
+    const eqTex = inp['equationTex'] as string | undefined;
+    const eq    = inp['equation']    as string | undefined;
+    if (eqTex || eq) return `\\(${eqTex ?? eq}\\)`;
+    return '';
   }
 
   inputJson(entry: HistoryEntry): string {

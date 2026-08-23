@@ -10,7 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -18,6 +18,9 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { filter, firstValueFrom, take } from 'rxjs';
 
 import { NavComponent } from '../../../shared/components/nav/nav.component';
+import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
+import { FavoriteDialogComponent } from '../../../shared/components/favorite-dialog/favorite-dialog.component';
+import { CanvasColorService } from '../../../core/services/canvas/canvas-color.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { ApiService } from '../../../core/services/api/api.service';
 import { UserStore } from '../../../core/services/auth/user.store';
@@ -159,29 +162,6 @@ function defaultSegment(v = 'x'): TransformSegmentDraft {
   };
 }
 
-interface DftColorPreset {
-  samples: string;
-  reconstruction: string;
-  specAmplitude: string;
-  specPhase: string;
-}
-
-function getDftPreset(isDark: boolean): DftColorPreset {
-  return isDark
-    ? {
-        samples: '#fb923c',
-        reconstruction: '#818cf8',
-        specAmplitude: '#a78bfa',
-        specPhase: '#6ee7b7',
-      }
-    : {
-        samples: '#ea580c',
-        reconstruction: '#6366f1',
-        specAmplitude: '#7c3aed',
-        specPhase: '#059669',
-      };
-}
-
 // ── Manual mode presets ────────────────────────────────────────────────────────
 
 function makePreset(
@@ -205,13 +185,15 @@ function makePreset(
     TransformSegmentComponent,
     MobileMathKeyboardComponent,
     DecimalPipe,
-    NgTemplateOutlet,
+    CanvasShellComponent,
+    FavoriteDialogComponent,
   ],
 })
 export class DftComponent implements OnInit, OnDestroy {
   private readonly seo = inject(SeoService);
   private readonly api = inject(ApiService);
   private readonly theme = inject(ThemeService);
+  readonly colors = inject(CanvasColorService);
   private readonly du = inject(DrawingUtilsService);
   private readonly coords = inject(CoordinateTransformService);
   private readonly plotter = inject(PlottingService);
@@ -229,9 +211,6 @@ export class DftComponent implements OnInit, OnDestroy {
 
   readonly signalPlotRef = viewChild<FunctionPlotComponent>('signalPlot');
   readonly spectrumPlotRef = viewChild<FunctionPlotComponent>('spectrumPlot');
-  readonly specWrapperRef = viewChild<ElementRef<HTMLDivElement>>('spectrumWrapper');
-  readonly signalWrapperRef = viewChild<ElementRef<HTMLDivElement>>('signalWrapper');
-  readonly epicWrapperRef = viewChild<ElementRef<HTMLDivElement>>('epicWrapper');
 
   // ── Mode / algorithm / normalization ────────────────────────────────────────
   readonly inputMode = signal<DftInputMode>('function');
@@ -341,9 +320,7 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly showReconstruction = signal(true);
   readonly showCanvasSettings = signal(false);
   readonly showSpecSettings = signal(false);
-  readonly isFullscreen = signal(false);
-  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
-
+  readonly showTopKExpanded = signal(true);
   // ── Spectrum mode ──────────────────────────────────────────────────────────
   readonly specMode = signal<'amplitude' | 'phase'>('amplitude');
   readonly fftShift = signal(true);
@@ -352,22 +329,192 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly dftSortByAmplitude = signal(false);
 
   // ── Canvas colors ──────────────────────────────────────────────────────────
-  readonly samplesColor = signal('#ea580c');
-  readonly reconstructionColor = signal('#6366f1');
-  readonly specAmplitudeColor = signal('#7c3aed');
-  readonly specPhaseColor = signal('#059669');
+  // null = follow theme preset; string = user override
+  private readonly _customSamples        = signal<string | null>(null);
+  private readonly _customReconstruction = signal<string | null>(null);
+  private readonly _customSpecAmp        = signal<string | null>(null);
+  private readonly _customSpecPhase      = signal<string | null>(null);
+
+  readonly samplesColor        = computed(() => this._customSamples()        ?? this.colors.dftColors().samples);
+  readonly reconstructionColor = computed(() => this._customReconstruction() ?? this.colors.dftColors().reconstruction);
+  readonly specAmplitudeColor  = computed(() => this._customSpecAmp()        ?? this.colors.dftColors().specAmplitude);
+  readonly specPhaseColor      = computed(() => this._customSpecPhase()      ?? this.colors.dftColors().specPhase);
+
   readonly reconstructionLineWidth = signal(1.8);
   readonly samplesRadius = signal(2.2);
   readonly specStemWidth = signal(1.6);
 
-  private _customSamplesColor = false;
-  private _customReconstructionColor = false;
-  private _customSpecAmpColor = false;
-  private _customSpecPhaseColor = false;
-
   // ── Hover / selection ──────────────────────────────────────────────────────
   readonly hoveredCoeff = signal<DftCoefficient | null>(null);
   readonly selectedCoeff = signal<DftCoefficient | null>(null);
+
+  // ── Partial reconstruction (Top-K slider + per-coeff toggles) ─────────────
+  /** Number of top coefficients (or pairs in conjugate mode) to include. Default set on compute. */
+  readonly dftTopK = signal(0);
+  readonly dftTopKOrder = signal<'amplitude' | 'frequency'>('amplitude');
+  /**
+   * 'individual' — each k is an independent term (current behaviour).
+   * 'conjugate'  — c_k and c_{-k} are grouped as one real sinusoid; slider counts pairs.
+   */
+  readonly dftPairMode = signal<'individual' | 'conjugate'>('individual');
+  /** k values manually disabled by the user (unchecked in the table). */
+  readonly dftDisabledKs = signal<Set<number>>(new Set<number>());
+  /** Show partial IDFT layer instead of full IDFT. */
+  readonly showPartialReconstruction = signal(false);
+  /** Show individual component waves on the signal chart (like Fourier Series harmonics). */
+  readonly showDftHarmonics = signal(false);
+  /** Focused coeff k — its wave is bright, others dimmed. Null = no focus. */
+  readonly dftFocusedK = signal<number | null>(null);
+
+  /** Coefficients sorted by the Top-K order criterion. */
+  readonly dftOrderedCoeffs = computed<DftCoefficient[]>(() => {
+    const res = this.result();
+    if (!res) return [];
+    if (this.dftTopKOrder() === 'frequency') {
+      return [...res.coefficients].sort((a, b) => {
+        const half = res.N / 2;
+        const fa = a.k <= half ? a.k : a.k - res.N;
+        const fb = b.k <= half ? b.k : b.k - res.N;
+        const d = Math.abs(fa) - Math.abs(fb);
+        return d !== 0 ? d : fa - fb;
+      });
+    }
+    return [...res.coefficients].sort((a, b) => b.amplitude - a.amplitude);
+  });
+
+  /**
+   * In conjugate mode, ordered list of unique |k| pairs (k=0 and k=N/2 are singletons).
+   * Each entry is the canonical k from dftOrderedCoeffs (the one appearing first).
+   */
+  readonly dftOrderedPairs = computed<number[]>(() => {
+    const res = this.result();
+    if (!res) return [];
+    const N = res.N;
+    const seen = new Set<number>();
+    const pairs: number[] = [];
+    for (const c of this.dftOrderedCoeffs()) {
+      const mirror = c.k === 0 ? 0 : (N - c.k) % N;
+      const canonical = Math.min(c.k, mirror);
+      if (!seen.has(canonical)) {
+        seen.add(canonical);
+        pairs.push(c.k); // keep original k as entry point
+      }
+    }
+    return pairs;
+  });
+
+  /** Max slider value: N in individual mode, number of unique pairs in conjugate mode. */
+  readonly dftTopKMax = computed<number>(() => {
+    const res = this.result();
+    if (!res) return 0;
+    return this.dftPairMode() === 'conjugate'
+      ? this.dftOrderedPairs().length
+      : res.N;
+  });
+
+  /** Set of k values included in the Top-K window. */
+  readonly dftTopKSet = computed<Set<number>>(() => {
+    const res = this.result();
+    if (!res) return new Set<number>();
+    const k = Math.min(this.dftTopK(), this.dftTopKMax());
+
+    if (this.dftPairMode() === 'conjugate') {
+      const pairs = this.dftOrderedPairs().slice(0, k);
+      const N = res.N;
+      const set = new Set<number>();
+      for (const pk of pairs) {
+        set.add(pk);
+        const mirror = pk === 0 ? 0 : (N - pk) % N;
+        if (mirror !== pk) set.add(mirror);
+      }
+      return set;
+    }
+
+    const ordered = this.dftOrderedCoeffs();
+    return new Set(ordered.slice(0, k).map((c) => c.k));
+  });
+
+  /** Active coefficients = inside Top-K AND not manually disabled. */
+  readonly dftActiveCoeffs = computed<DftCoefficient[]>(() => {
+    const topKSet = this.dftTopKSet();
+    const disabled = this.dftDisabledKs();
+    const res = this.result();
+    if (!res) return [];
+    return res.coefficients.filter((c) => topKSet.has(c.k) && !disabled.has(c.k));
+  });
+
+  /**
+   * In conjugate mode: list of pair groups [{k, mirror, coeffs[]}] for harmonic drawing.
+   * Each group draws c_k + c_{mirror} together as one real sinusoid with a single color.
+   * In individual mode: each active coeff is its own group of one.
+   */
+  readonly dftHarmonicGroups = computed<{ canonicalK: number; coeffs: DftCoefficient[] }[]>(() => {
+    const res = this.result();
+    if (!res) return [];
+    const active = this.dftActiveCoeffs();
+    if (this.dftPairMode() === 'individual') {
+      return active.map(c => ({ canonicalK: c.k, coeffs: [c] }));
+    }
+    const N = res.N;
+    const seen = new Set<number>();
+    const groups: { canonicalK: number; coeffs: DftCoefficient[] }[] = [];
+    const activeMap = new Map(active.map(c => [c.k, c]));
+    for (const c of active) {
+      const mirror = c.k === 0 ? 0 : (N - c.k) % N;
+      const canonical = Math.min(c.k, mirror);
+      if (seen.has(canonical)) continue;
+      seen.add(canonical);
+      const group: DftCoefficient[] = [c];
+      if (mirror !== c.k && activeMap.has(mirror)) group.push(activeMap.get(mirror)!);
+      groups.push({ canonicalK: canonical, coeffs: group });
+    }
+    return groups;
+  });
+
+  /** Partial IDFT using only active coefficients. Null when full reconstruction is shown. */
+  readonly dftPartialReconstructed = computed<{ pts: DftPoint[]; rms: number } | null>(() => {
+    if (!this.showPartialReconstruction()) return null;
+    const res = this.result();
+    if (!res) return null;
+    const active = this.dftActiveCoeffs();
+    const norm = this.normalize();
+    const xs = res.sampledPoints.map((p) => p.x);
+    const pts = this.dftCompute.reconstruct(active, res.N, xs.length === res.N ? xs : undefined, norm);
+    const ys = res.sampledPoints.map((p) => p.y);
+    const rms = this.dftCompute.rmsError(ys, pts);
+    return { pts, rms };
+  });
+
+  /**
+   * Maps every active k → a palette color, stable as Top-K changes.
+   * In conjugate mode, c_k and c_{-k} share the same color (keyed to canonicalK).
+   */
+  readonly dftHarmonicColorMap = computed<Map<number, string>>(() => {
+    const groups = this.dftHarmonicGroups();
+    const palette = this.colors.seriesColors().harmonics;
+    const res = this.result();
+    const N = res?.N ?? 0;
+    // Stable slot: use position of canonicalK in allCoeffs
+    const allKs = this.allCoeffs().map(c => c.k);
+    const map = new Map<number, string>();
+    for (const g of groups) {
+      const slot = allKs.indexOf(g.canonicalK) % palette.length;
+      const color = palette[slot < 0 ? 0 : slot];
+      for (const c of g.coeffs) map.set(c.k, color);
+    }
+    void N; // reactivity guard
+    return map;
+  });
+
+  /** Coverage: % of total amplitude covered by the active coefficients. */
+  readonly dftTopKCoverage = computed<number>(() => {
+    const res = this.result();
+    if (!res) return 0;
+    const active = this.dftActiveCoeffs();
+    const total = res.coefficients.reduce((s, c) => s + c.amplitude, 0);
+    const activeAmp = active.reduce((s, c) => s + c.amplitude, 0);
+    return total > 0 ? (activeAmp / total) * 100 : 0;
+  });
 
   private _lastSpecVp: CanvasViewport | null = null;
 
@@ -380,7 +527,6 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly showFavoriteDialog = signal(false);
   readonly favoriteLoading = signal(false);
-  favoriteName = '';
 
   // ── Signal canvas X-axis format ─────────────────────────────────────────────
   readonly signalXAxisFormat = signal<'integer' | 'pi' | 'e'>('integer');
@@ -438,13 +584,13 @@ export class DftComponent implements OnInit, OnDestroy {
   readonly epicUrlTooLarge = signal(false);
 
   // ── Epicycles canvas colors ────────────────────────────────────────────────
-  readonly epicOriginalColor = signal('#6b7280');
-  readonly epicApproxColor = signal('#22c55e');
-  readonly epicTraceColor = signal('#60a5fa');
-  readonly epicSampledColor = signal('#f59e0b');
+  private readonly _customEpicOriginal = signal<string | null>(null);
+  private readonly _customEpicSampled  = signal<string | null>(null);
 
-  private _customEpicOriginalColor = false;
-  private _customEpicSampledColor = false;
+  readonly epicOriginalColor = computed(() => this._customEpicOriginal() ?? this.colors.dftColors().epicOriginal);
+  readonly epicSampledColor  = computed(() => this._customEpicSampled()  ?? this.colors.dftColors().epicSampled);
+  readonly epicApproxColor   = signal('#22c55e');
+  readonly epicTraceColor    = signal('#60a5fa');
 
   // Draw dialog
   readonly epicDrawDialogOpen = signal(false);
@@ -578,13 +724,42 @@ export class DftComponent implements OnInit, OnDestroy {
     const rColor = this.reconstructionColor();
     const rLW = this.reconstructionLineWidth();
     const sRad = this.samplesRadius();
+    const partial = this.dftPartialReconstructed();
+    const showHarmonics = this.showDftHarmonics();
+    const focusedK = this.dftFocusedK();
+    const colorMap = this.dftHarmonicColorMap();
+    const groups = this.dftHarmonicGroups();
+    const norm = this.normalize();
     void this.theme.isDark;
 
     return [
       {
         curves: [],
         onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
-          if (showR) this._drawReconstruction(ctx, vp, res, rColor, rLW);
+          const xs = res.sampledPoints.map((p) => p.x);
+          const xsArg = xs.length === res.N ? xs : undefined;
+
+          // 1. Component waves — one draw call per group (pair in conjugate mode, single in individual)
+          if (showHarmonics) {
+            for (const g of groups) {
+              const pts = this.dftCompute.reconstruct(g.coeffs, res.N, xsArg, norm);
+              const baseColor = colorMap.get(g.coeffs[0].k) ?? '#6366f1';
+              const groupKs = g.coeffs.map(c => c.k);
+              const isFocused = focusedK !== null && groupKs.includes(focusedK);
+              const isDimmed = focusedK !== null && !isFocused;
+              this._drawReconstructionPts(
+                ctx, vp, pts,
+                isDimmed ? 'rgba(100,116,139,0.18)' : baseColor,
+                isFocused ? rLW + 1 : 1,
+              );
+            }
+          }
+
+          // 2. Full or partial IDFT
+          if (showR && !partial) this._drawReconstruction(ctx, vp, res, rColor, rLW);
+          if (showR && partial)  this._drawReconstructionPts(ctx, vp, partial.pts, rColor, rLW);
+
+          // 3. Sampled points on top
           if (showS) this.du.drawPoints(ctx, vp, res.sampledPoints, sColor, sRad);
         },
       },
@@ -600,6 +775,11 @@ export class DftComponent implements OnInit, OnDestroy {
     const lw = this.specStemWidth();
     const hovered = this.hoveredCoeff();
     const selected = this.selectedCoeff();
+    const topKSet = this.dftTopKSet();
+    const disabledKs = this.dftDisabledKs();
+    const soloK = this.dftFocusedK();
+    const showHarmonics = this.showDftHarmonics();
+    const colorMap = this.dftHarmonicColorMap();
     void this.theme.isDark;
 
     return [
@@ -608,17 +788,24 @@ export class DftComponent implements OnInit, OnDestroy {
         onDraw: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => {
           this._lastSpecVp = vp;
           for (const c of res.coefficients) {
-            const kDisplay = shift ? (c.k <= res.N / 2 ? c.k : c.k - res.N) : c.k;
+            const kDsp = shift ? (c.k <= res.N / 2 ? c.k : c.k - res.N) : c.k;
             const val = mode === 'amplitude' ? c.amplitude : c.phase;
-            const highlighted = hovered?.k === c.k || selected?.k === c.k;
+            const isHighlighted = hovered?.k === c.k || selected?.k === c.k;
+            const isSoloK = soloK === c.k;
+            const isActive = topKSet.has(c.k) && !disabledKs.has(c.k);
+            const harmonicColor = showHarmonics ? colorMap.get(c.k) : undefined;
+            const stemColor = isSoloK
+              ? (this.theme.isDark ? '#fbbf24' : '#d97706')
+              : isHighlighted
+                ? (this.theme.isDark ? '#fbbf24' : '#d97706')
+                : isActive
+                  ? (harmonicColor ?? color)
+                  : color + '3A';
             this.du.drawStem(
-              ctx,
-              vp,
-              kDisplay,
-              val,
-              highlighted ? (this.theme.isDark ? '#fbbf24' : '#d97706') : color,
-              highlighted ? lw * 2 : lw,
-              highlighted ? 5 : 3,
+              ctx, vp, kDsp, val,
+              stemColor,
+              (isHighlighted || isSoloK) ? lw * 2 : lw,
+              (isHighlighted || isSoloK) ? 5 : isActive ? 3 : 2,
             );
           }
         },
@@ -835,30 +1022,11 @@ export class DftComponent implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      const preset = getDftPreset(this.theme.isDark);
-      if (!this._customSamplesColor) this.samplesColor.set(preset.samples);
-      if (!this._customReconstructionColor) this.reconstructionColor.set(preset.reconstruction);
-      if (!this._customSpecAmpColor) this.specAmplitudeColor.set(preset.specAmplitude);
-      if (!this._customSpecPhaseColor) this.specPhaseColor.set(preset.specPhase);
-      if (!this._customEpicOriginalColor)
-        this.epicOriginalColor.set(this.theme.isDark ? '#9ca3af' : '#6b7280');
-      if (!this._customEpicSampledColor)
-        this.epicSampledColor.set(this.theme.isDark ? '#fbbf24' : '#d97706');
+      // Redraw when theme changes so computed colors propagate to canvas
+      this.colors.dftColors();
       this.signalPlotRef()?.redraw();
       this.spectrumPlotRef()?.redraw();
     });
-
-    if (typeof window !== 'undefined') {
-      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
-      window.addEventListener('resize', onResize);
-      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
-    }
-
-    if (typeof document !== 'undefined') {
-      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
-      document.addEventListener('fullscreenchange', handler);
-      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
-    }
 
     // Sync result → URL query param + feedback/survey prompt (function/manual modes)
     effect(() => {
@@ -1071,8 +1239,13 @@ export class DftComponent implements OnInit, OnDestroy {
     this.selectedCoeff.set(null);
     this.hoveredCoeff.set(null);
     this.dftSortByAmplitude.set(false);
-    this.showCanvasSettings.set(!this.isMobile());
-    this.showSpecSettings.set(!this.isMobile());
+    this.dftTopK.set(topCoefficients.length);
+    this.dftDisabledKs.set(new Set());
+    this.showPartialReconstruction.set(false);
+    this.showDftHarmonics.set(false);
+    this.dftFocusedK.set(null);
+    this.showCanvasSettings.set(true);
+    this.showSpecSettings.set(true);
 
     // Track quota on backend (manual compute is client-side, so we fire a lightweight call)
     this.api
@@ -1150,8 +1323,13 @@ export class DftComponent implements OnInit, OnDestroy {
         this.selectedCoeff.set(null);
         this.hoveredCoeff.set(null);
         this.dftSortByAmplitude.set(false);
-        this.showCanvasSettings.set(!this.isMobile());
-        this.showSpecSettings.set(!this.isMobile());
+        this.dftTopK.set(topCoefficients.length);
+        this.dftDisabledKs.set(new Set());
+        this.showPartialReconstruction.set(false);
+        this.showDftHarmonics.set(false);
+        this.dftFocusedK.set(null);
+        this.showCanvasSettings.set(true);
+        this.showSpecSettings.set(true);
         this.userStore.refreshQuota();
         if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       },
@@ -1172,64 +1350,71 @@ export class DftComponent implements OnInit, OnDestroy {
     this.selectedCoeff.set(null);
     this.hoveredCoeff.set(null);
     this.dftSortByAmplitude.set(false);
+    this.dftTopK.set(0);
+    this.dftDisabledKs.set(new Set());
+    this.showPartialReconstruction.set(false);
+    this.showDftHarmonics.set(false);
+    this.dftFocusedK.set(null);
     this.latestHistoryEntry.set(null);
     this.showFavoriteDialog.set(false);
   }
 
+  // ── Partial reconstruction helpers ────────────────────────────────────────
+
+  toggleDftCoeff(k: number): void {
+    this.dftDisabledKs.update((s) => {
+      const next = new Set(s);
+      if (next.has(k)) next.delete(k); else next.add(k);
+      return next;
+    });
+  }
+
+  isDftCoeffActive(k: number): boolean {
+    return this.dftTopKSet().has(k) && !this.dftDisabledKs().has(k);
+  }
+
+  focusDftCoeff(c: DftCoefficient): void {
+    // Auto-enable harmonics layer on first click
+    if (!this.showDftHarmonics()) this.showDftHarmonics.set(true);
+    this.dftFocusedK.set(this.dftFocusedK() === c.k ? null : c.k);
+  }
+
+  setDftPairMode(mode: 'individual' | 'conjugate'): void {
+    this.dftPairMode.set(mode);
+    // Clamp current Top-K to new max and clear focus (k identity changes meaning)
+    const max = this.dftTopKMax();
+    if (this.dftTopK() > max) this.dftTopK.set(max);
+    this.dftFocusedK.set(null);
+    this.dftDisabledKs.set(new Set());
+  }
+
   // ── Color controls ─────────────────────────────────────────────────────────
 
-  onSamplesColorInput(v: string): void {
-    this._customSamplesColor = true;
-    this.samplesColor.set(v);
-  }
-  onReconColorInput(v: string): void {
-    this._customReconstructionColor = true;
-    this.reconstructionColor.set(v);
-  }
-  onSpecAmpColorInput(v: string): void {
-    this._customSpecAmpColor = true;
-    this.specAmplitudeColor.set(v);
-  }
-  onSpecPhaseColorInput(v: string): void {
-    this._customSpecPhaseColor = true;
-    this.specPhaseColor.set(v);
-  }
+  onSamplesColorInput(v: string): void { this._customSamples.set(v); }
+  onReconColorInput(v: string):   void { this._customReconstruction.set(v); }
+  onSpecAmpColorInput(v: string): void { this._customSpecAmp.set(v); }
+  onSpecPhaseColorInput(v: string): void { this._customSpecPhase.set(v); }
 
   resetSignalColors(): void {
-    const p = getDftPreset(this.theme.isDark);
-    this._customSamplesColor = this._customReconstructionColor = false;
-    this.samplesColor.set(p.samples);
-    this.reconstructionColor.set(p.reconstruction);
+    this._customSamples.set(null);
+    this._customReconstruction.set(null);
   }
 
   resetSpecColors(): void {
-    const p = getDftPreset(this.theme.isDark);
-    this._customSpecAmpColor = this._customSpecPhaseColor = false;
-    this.specAmplitudeColor.set(p.specAmplitude);
-    this.specPhaseColor.set(p.specPhase);
+    this._customSpecAmp.set(null);
+    this._customSpecPhase.set(null);
   }
 
-  onEpicOriginalColorInput(v: string): void {
-    this._customEpicOriginalColor = true;
-    this.epicOriginalColor.set(v);
-  }
-  onEpicApproxColorInput(v: string): void {
-    this.epicApproxColor.set(v);
-  }
-  onEpicTraceColorInput(v: string): void {
-    this.epicTraceColor.set(v);
-  }
-  onEpicSampledColorInput(v: string): void {
-    this._customEpicSampledColor = true;
-    this.epicSampledColor.set(v);
-  }
+  onEpicOriginalColorInput(v: string): void { this._customEpicOriginal.set(v); }
+  onEpicApproxColorInput(v: string):   void { this.epicApproxColor.set(v); }
+  onEpicTraceColorInput(v: string):    void { this.epicTraceColor.set(v); }
+  onEpicSampledColorInput(v: string):  void { this._customEpicSampled.set(v); }
 
   resetEpicColors(): void {
-    this._customEpicOriginalColor = this._customEpicSampledColor = false;
-    this.epicOriginalColor.set(this.theme.isDark ? '#9ca3af' : '#6b7280');
+    this._customEpicOriginal.set(null);
+    this._customEpicSampled.set(null);
     this.epicApproxColor.set('#22c55e');
     this.epicTraceColor.set('#60a5fa');
-    this.epicSampledColor.set(this.theme.isDark ? '#fbbf24' : '#d97706');
   }
 
   // ── Spectrum interaction ───────────────────────────────────────────────────
@@ -1435,27 +1620,6 @@ export class DftComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Fullscreen ─────────────────────────────────────────────────────────────
-
-  toggleFullscreen(wrapperRef: ElementRef<HTMLDivElement> | undefined): void {
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void wrapperRef?.nativeElement?.requestFullscreen();
-    }
-  }
-
-  // ── Download ───────────────────────────────────────────────────────────────
-
-  downloadCanvas(wrapperRef: ElementRef<HTMLDivElement> | undefined, filename: string): void {
-    const canvas = wrapperRef?.nativeElement?.querySelector('canvas') as HTMLCanvasElement | null;
-    if (!canvas) return;
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = filename;
-    a.click();
-  }
-
   exportCsv(): void {
     const coeffs = this.allCoeffs();
     if (!coeffs.length) return;
@@ -1490,19 +1654,18 @@ export class DftComponent implements OnInit, OnDestroy {
     });
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -1510,7 +1673,6 @@ export class DftComponent implements OnInit, OnDestroy {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   private fetchLatestEntry(callback?: () => void): void {
@@ -1599,7 +1761,7 @@ export class DftComponent implements OnInit, OnDestroy {
       this.epicTime.set(0);
       this.epicTrace.set([]);
       this.epicSelectedK.set(null);
-      this.showEpicSettings.set(!this.isMobile());
+      this.showEpicSettings.set(true);
       this.userStore.refreshQuota();
       if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
     } catch (err) {
@@ -1968,7 +2130,16 @@ export class DftComponent implements OnInit, OnDestroy {
     color: string,
     lineWidth: number,
   ): void {
-    const pts = res.reconstructed;
+    this._drawReconstructionPts(ctx, vp, res.reconstructed, color, lineWidth);
+  }
+
+  private _drawReconstructionPts(
+    ctx: CanvasRenderingContext2D,
+    vp: CanvasViewport,
+    pts: DftPoint[],
+    color: string,
+    lineWidth: number,
+  ): void {
     if (pts.length === 0) return;
     ctx.save();
     ctx.strokeStyle = color;

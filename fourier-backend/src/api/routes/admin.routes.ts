@@ -13,6 +13,7 @@ import type {
   AuditFilters,
 } from "../../domain/interfaces/repositories/IAuditRepository";
 import { ipBlocksRouter } from "./admin.ip-blocks.routes";
+import { sendAdminReplyEmail } from "../../infrastructure/email/emailService";
 
 export const adminRouter = Router();
 
@@ -779,15 +780,16 @@ adminRouter.get(
 
       let query = `
         SELECT
-          id,
-          user_id,
-          email,
-          category::text,
-          rating,
-          message,
-          created_at,
-          (SELECT COUNT(*) FROM feedback f2 WHERE f2.category = feedback.category)::int AS category_total
-        FROM feedback
+          f.id,
+          f.user_id,
+          COALESCE(f.email, u.email) AS email,
+          f.category::text,
+          f.rating,
+          f.message,
+          f.created_at,
+          (SELECT COUNT(*) FROM feedback f2 WHERE f2.category = f.category)::int AS category_total
+        FROM feedback f
+        LEFT JOIN users u ON u.id = f.user_id
       `;
       const params: (string | number)[] = [];
 
@@ -795,11 +797,11 @@ adminRouter.get(
         category &&
         ["bug", "suggestion", "question", "other", "rating"].includes(category)
       ) {
-        query += ` WHERE category = $${params.length + 1}`;
+        query += ` WHERE f.category = $${params.length + 1}`;
         params.push(category);
       }
 
-      query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+      query += ` ORDER BY f.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
       params.push(limit, offset);
 
       const countQuery = `SELECT COUNT(*)::int AS total FROM feedback${category && ["bug", "suggestion", "question", "other", "rating"].includes(category) ? ` WHERE category = $1` : ""}`;
@@ -850,17 +852,20 @@ adminRouter.get(
         WHERE message IS NOT NULL AND message <> ''`;
 
       const surveyBlock = `
-        SELECT 'survey' AS source, id, user_id, NULL::VARCHAR AS email,
-               'bug' AS type, bug_description AS content, created_at, NULL::SMALLINT AS rating
-        FROM survey_responses WHERE bug_description IS NOT NULL AND bug_description <> ''
+        SELECT 'survey' AS source, sr.id, sr.user_id, u.email,
+               'bug' AS type, sr.bug_description AS content, sr.created_at, NULL::SMALLINT AS rating
+        FROM survey_responses sr LEFT JOIN users u ON u.id = sr.user_id
+        WHERE sr.bug_description IS NOT NULL AND sr.bug_description <> ''
         UNION ALL
-        SELECT 'survey', id, user_id, NULL::VARCHAR,
-               'comment', general_comments, created_at, NULL::SMALLINT
-        FROM survey_responses WHERE general_comments IS NOT NULL AND general_comments <> ''
+        SELECT 'survey', sr.id, sr.user_id, u.email,
+               'comment', sr.general_comments, sr.created_at, NULL::SMALLINT
+        FROM survey_responses sr LEFT JOIN users u ON u.id = sr.user_id
+        WHERE sr.general_comments IS NOT NULL AND sr.general_comments <> ''
         UNION ALL
-        SELECT 'survey', id, user_id, NULL::VARCHAR,
-               'regression', regressions, created_at, NULL::SMALLINT
-        FROM survey_responses WHERE regressions IS NOT NULL AND regressions <> ''`;
+        SELECT 'survey', sr.id, sr.user_id, u.email,
+               'regression', sr.regressions, sr.created_at, NULL::SMALLINT
+        FROM survey_responses sr LEFT JOIN users u ON u.id = sr.user_id
+        WHERE sr.regressions IS NOT NULL AND sr.regressions <> ''`;
 
       const unionParts = source === 'feedback' ? feedbackBlock
                        : source === 'survey'   ? surveyBlock
@@ -1106,7 +1111,7 @@ adminRouter.get(
         db.query<{ country: string; count: number }>(
           `SELECT country, COUNT(*)::int AS count
            FROM survey_responses WHERE ${dateFilter}
-           GROUP BY country ORDER BY count DESC LIMIT 10`, params,
+           GROUP BY country ORDER BY count DESC`, params,
         ),
         db.query<{ how_found: string; count: number }>(
           `SELECT how_found::text, COUNT(*)::int AS count
@@ -1201,7 +1206,7 @@ adminRouter.get(
              FROM survey_responses
              WHERE institution IS NOT NULL AND institution <> '' AND ${dateFilter}
              GROUP BY institution
-             ORDER BY count DESC LIMIT 15
+             ORDER BY count DESC
            ) inst
            UNION ALL
            SELECT type, value, count FROM (
@@ -1209,7 +1214,7 @@ adminRouter.get(
              FROM survey_responses
              WHERE career IS NOT NULL AND career <> '' AND ${dateFilter}
              GROUP BY career
-             ORDER BY count DESC LIMIT 15
+             ORDER BY count DESC
            ) car`,
           params,
         ),
@@ -1233,6 +1238,50 @@ adminRouter.get(
         institutions:    institutionRes.rows.filter((r) => r.type === 'institution'),
         careers:         institutionRes.rows.filter((r) => r.type === 'career'),
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── Admin reply email ───────────────────────────────────────────────────────
+adminRouter.post(
+  "/reply",
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { to, userName, subject, body, lang } = req.body as {
+        to: string;
+        userName: string;
+        subject: string;
+        body: string;
+        lang?: string;
+      };
+
+      if (!to || !subject || !body) {
+        res.status(400).json({ message: "to, subject y body son requeridos" });
+        return;
+      }
+
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRe.test(to)) {
+        res.status(400).json({ message: "Dirección de correo inválida" });
+        return;
+      }
+
+      if (body.length > 5000) {
+        res.status(400).json({ message: "El mensaje no puede superar los 5000 caracteres" });
+        return;
+      }
+
+      await sendAdminReplyEmail({
+        to,
+        userName: userName || "usuario",
+        subject,
+        body,
+        lang,
+      });
+
+      res.json({ message: "Correo enviado" });
     } catch (err) {
       next(err);
     }

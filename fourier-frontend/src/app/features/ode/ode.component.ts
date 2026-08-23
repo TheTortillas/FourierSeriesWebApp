@@ -13,10 +13,13 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgTemplateOutlet } from '@angular/common';
+import { CanvasShellComponent } from '../../shared/components/canvas-shell/canvas-shell.component';
+import { CanvasColorService } from '../../core/services/canvas/canvas-color.service';
+import { ShareDialogComponent } from '../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../shared/components/favorite-dialog/favorite-dialog.component';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, forkJoin, of, Subject, switchMap } from 'rxjs';
+import { catchError, debounceTime, forkJoin, map, of, Subject, switchMap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 
@@ -45,6 +48,7 @@ import { PlottingService } from '../../core/services/canvas/plotting.service';
 import { formatApiError } from '../../shared/utils/api-error.utils';
 
 import type { OdeMode, OdeRequest, OdeResponse } from '../../domain';
+import { HistoryEntry } from '../../domain';
 import type {
   LaplaceIcCondition,
   LaplaceOdeResponse,
@@ -242,7 +246,9 @@ const ODE_EXAMPLES: OdeExample[] = [
     FooterComponent,
     MathjaxDirective,
     FormsModule,
-    NgTemplateOutlet,
+    CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
     TranslocoPipe,
     MobileMathKeyboardComponent,
     FunctionPlotComponent,
@@ -253,8 +259,9 @@ const ODE_EXAMPLES: OdeExample[] = [
 export class OdeComponent implements OnInit, AfterViewChecked {
   private readonly isBrowser  = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly api        = inject(ApiService);
+  readonly colors             = inject(CanvasColorService);
   private readonly seo        = inject(SeoService);
-  private readonly userStore  = inject(UserStore);
+  readonly userStore  = inject(UserStore);
   private readonly transloco  = inject(TranslocoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route      = inject(ActivatedRoute);
@@ -263,9 +270,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   private readonly tex2max    = inject(LatexToMaximaService);
   private readonly mathUtils  = inject(MathUtilsService);
   private readonly plotter    = inject(PlottingService);
-
-  // ── Canvas ref for fullscreen/download ───────────────────────────────────────
-  @ViewChild('canvasWrapperRef') private canvasWrapperRef!: ElementRef<HTMLElement>;
 
   // ── MathQuill refs ───────────────────────────────────────────────────────────
   @ViewChild('mqEqRef') private mqEqRef!: ElementRef<HTMLElement>;
@@ -382,15 +386,24 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   readonly inputsLocked = computed(() => this.loading() || this.hasComputedResult());
 
   readonly showCanvasSettings = signal(false);
-  readonly isFullscreen       = signal(false);
+  readonly urlCopied          = signal(false);
+  readonly showShareDialog    = signal(false);
+  readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
+  readonly favoriteLoading    = signal(false);
+  readonly showFavoriteDialog = signal(false);
 
   // ── Curve style ──────────────────────────────────────────────────────────────
-  readonly curveColor     = signal('#3b82f6');
+  readonly xAxisFormat = signal<'pi' | 'e' | 'integer'>('integer');
+
+  private readonly curveColorOverride = signal<string | null>(null);
+  readonly curveColor  = computed(() => this.curveColorOverride() ?? this.colors.singleCurveDefault());
   readonly curveLineWidth = signal(2);
   readonly curveDashed    = signal(false);
 
+  setCurveColor(v: string): void { this.curveColorOverride.set(v); }
+
   resetLineStyles(): void {
-    this.curveColor.set('#3b82f6');
+    this.curveColorOverride.set(null);
     this.curveLineWidth.set(2);
     this.curveDashed.set(false);
   }
@@ -460,9 +473,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   );
 
   private readonly submit$ = new Subject<void>();
-  private _urlPopulated    = false;
-  private _restoredFromUrl = false;
-  private _loadingExample  = false;
+  private _urlPopulated       = false;
+  private _restoredFromUrl    = false;
+  private _loadingExample     = false;
+  private _suppressAutoLoad   = false; // set by startNewCalculation, cleared by explicit tab click
 
   constructor() {
     // Re-parse equation whenever ivar changes
@@ -496,7 +510,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     // Load first example when mode changes (unless coming from URL, result active, or triggered by loadExample itself)
     effect(() => {
       const m = this.mode();
-      if (this._restoredFromUrl || this.hasComputedResult() || this._loadingExample) return;
+      if (this._restoredFromUrl || this.hasComputedResult() || this._loadingExample || this._suppressAutoLoad) return;
       const first = ODE_EXAMPLES.find((e) => e.mode === m);
       if (first) this.loadExample(first.labelKey);
     });
@@ -508,11 +522,6 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     const tabParam = this.route.snapshot.queryParamMap.get('tab');
     if (tabParam === 'laplace') { this.mode.set('laplace'); this._restoredFromUrl = true; }
 
-    if (typeof window !== 'undefined') {
-      document.addEventListener('fullscreenchange', () => {
-        this.isFullscreen.set(!!document.fullscreenElement);
-      });
-    }
   }
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
@@ -614,6 +623,7 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             this._runAltForms(r.solution);
             this.plotComponent()?.resetView();
           }
+          this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
         } else {
           const r = res as OdeResponse;
           this.result.set(r);
@@ -624,7 +634,9 @@ export class OdeComponent implements OnInit, AfterViewChecked {
             this._runAltForms(r.solution);
             this.plotComponent()?.resetView();
           }
+          this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
         }
+        if (this.userStore.isAuthenticated()) this.fetchLatestEntry();
       });
 
     setTimeout(() => this._parseEquation(this.eqTex()), 300);
@@ -668,6 +680,8 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   calculate(): void { this.submit$.next(); }
 
   startNewCalculation(): void {
+    // Suppress auto-load until the user explicitly switches tab
+    this._suppressAutoLoad = true;
     this.result.set(null);
     this.laplaceResult.set(null);
     this.errorMsg.set(null);
@@ -675,27 +689,29 @@ export class OdeComponent implements OnInit, AfterViewChecked {
     this.paramValues.set({});
     this.altForms.set([]);
     this.showCanvasSettings.set(false);
-    this.resetLineStyles();
+    this.latestHistoryEntry.set(null);
+    this.showShareDialog.set(false);
+    this.showFavoriteDialog.set(false);
+    this.urlCopied.set(false);
+  }
+
+  switchMode(m: OdeModeTab): void {
+    // Explicit tab click: allow auto-load for the new tab
+    this._suppressAutoLoad = false;
+    this.mode.set(m);
+    // If there was a result, clear it (tab change always resets)
+    if (this.hasComputedResult()) {
+      this.result.set(null);
+      this.laplaceResult.set(null);
+      this.errorMsg.set(null);
+      this.freeParams.set([]);
+      this.paramValues.set({});
+      this.altForms.set([]);
+      this.showCanvasSettings.set(false);
+    }
   }
 
   onParamValuesChange(pv: ParamValues): void { this.paramValues.set(pv); }
-
-  toggleFullscreen(): void {
-    const el = this.canvasWrapperRef?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void el.requestFullscreen();
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapperRef?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ode-solution.png';
-    a.click();
-  }
 
   // ── IVP management ───────────────────────────────────────────────────────────
   addIvpIc(): void {
@@ -1022,5 +1038,110 @@ export class OdeComponent implements OnInit, AfterViewChecked {
       'ode.seoDescription',
       this.transloco.translate('ode.seoKeywords'),
     );
+  }
+
+  // ── Share ─────────────────────────────────────────────────────────────────
+
+  get shareHref(): string {
+    if (typeof window === 'undefined') return '';
+    return window.location.href;
+  }
+
+  openShareDialog(): void {
+    this.showShareDialog.set(true);
+  }
+
+  async copyShareUrl(): Promise<void> {
+    if (typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this.urlCopied.set(true);
+      setTimeout(() => this.urlCopied.set(false), 2000);
+    } catch {
+      // clipboard not available
+    }
+  }
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+
+  openFavoriteDialog(): void {
+    const entry = this.latestHistoryEntry();
+    if (entry) {
+      this.doToggle(entry);
+    } else {
+      this.favoriteLoading.set(true);
+      this.fetchLatestEntry(() => {
+        this.favoriteLoading.set(false);
+        const loaded = this.latestHistoryEntry();
+        if (loaded) this.doToggle(loaded);
+      });
+    }
+  }
+
+  onFavoriteConfirmed(name: string): void {
+    const entry = this.latestHistoryEntry();
+    if (!entry) return;
+    this.favoriteLoading.set(true);
+    this.showFavoriteDialog.set(false);
+    this.api
+      .toggleFavorite(entry.id, name.trim() || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.latestHistoryEntry.set(updated);
+          this.favoriteLoading.set(false);
+        },
+        error: () => this.favoriteLoading.set(false),
+      });
+  }
+
+  cancelFavoriteDialog(): void {
+    this.showFavoriteDialog.set(false);
+  }
+
+  private fetchLatestEntry(callback?: () => void): void {
+    this.api
+      .getHistory({ limit: 1 })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap((res) => {
+          const latest = res.entries[0] ?? null;
+          if (!latest || latest.isFavorite) return of(latest);
+          return this.api.getHistory({ favorites: true, limit: 1 }).pipe(
+            map((favRes) => {
+              const fav = favRes.entries[0];
+              return fav && JSON.stringify(fav.input) === JSON.stringify(latest.input)
+                ? fav
+                : latest;
+            }),
+            catchError(() => of(latest)),
+          );
+        }),
+      )
+      .subscribe({
+        next: (entry) => {
+          this.latestHistoryEntry.set(entry);
+          callback?.();
+        },
+        error: () => callback?.(),
+      });
+  }
+
+  private doToggle(entry: HistoryEntry): void {
+    if (entry.isFavorite) {
+      this.favoriteLoading.set(true);
+      this.api
+        .toggleFavorite(entry.id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (updated) => {
+            this.latestHistoryEntry.set(updated);
+            this.favoriteLoading.set(false);
+          },
+          error: () => this.favoriteLoading.set(false),
+        });
+    } else {
+      this.showFavoriteDialog.set(true);
+    }
   }
 }

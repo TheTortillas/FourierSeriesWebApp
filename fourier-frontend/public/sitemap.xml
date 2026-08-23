@@ -3,12 +3,13 @@
   xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml"
 >
-
-  <!-- ── Home ─────────────────────────────────────────────────────────────── -->
   <url>
     <loc>https://fouriersolver.com/es/home</loc>
     <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/home"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/home"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/home"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/home"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/home"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/home"/>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
@@ -17,34 +18,53 @@
     <loc>https://fouriersolver.com/en/home</loc>
     <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/home"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/home"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/home"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/home"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/home"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/home"/>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
-
-  <!-- ── Series de Fourier ─────────────────────────────────────────────────── -->
   <url>
-    <loc>https://fouriersolver.com/es/calculator</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/calculator"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/calculator"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/calculator"/>
+    <loc>https://fouriersolver.com/pt/home</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/home"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/home"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/home"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/home"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/home"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/home"/>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://fouriersolver.com/en/calculator</loc>
-    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/calculator"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/calculator"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/calculator"/>
+    <loc>https://fouriersolver.com/de/home</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/home"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/home"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/home"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/home"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/home"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/home"/>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>1.0</priority>
   </url>
-
-  <!-- ── Transformada Continua ─────────────────────────────────────────────── -->
+  <url>
+    <loc>https://fouriersolver.com/it/home</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/home"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/home"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/home"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/home"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/home"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/home"/>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
   <url>
     <loc>https://fouriersolver.com/es/transforms/continuous</loc>
     <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/continuous"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/continuous"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/continuous"/>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
@@ -53,16 +73,53 @@
     <loc>https://fouriersolver.com/en/transforms/continuous</loc>
     <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/continuous"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/continuous"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/continuous"/>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
-
-  <!-- ── Transformada Discreta (DFT) ───────────────────────────────────────── -->
+  <url>
+    <loc>https://fouriersolver.com/pt/transforms/continuous</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/de/transforms/continuous</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/it/transforms/continuous</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/continuous"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/continuous"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
   <url>
     <loc>https://fouriersolver.com/es/transforms/dft</loc>
     <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/dft"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/dft"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/dft"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -71,9 +128,319 @@
     <loc>https://fouriersolver.com/en/transforms/dft</loc>
     <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/dft"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/dft"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/dft"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-
+  <url>
+    <loc>https://fouriersolver.com/pt/transforms/dft</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/dft"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/de/transforms/dft</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/dft"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/it/transforms/dft</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/transforms/dft"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/transforms/dft"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/es/fourier-integral</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/fourier-integral"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/en/fourier-integral</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/fourier-integral"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/pt/fourier-integral</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/fourier-integral"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/de/fourier-integral</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/fourier-integral"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/it/fourier-integral</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/fourier-integral"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/fourier-integral"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/es/laplace</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/laplace"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/laplace"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/laplace"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/laplace"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/laplace"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/laplace"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/en/laplace</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/laplace"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/laplace"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/laplace"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/laplace"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/laplace"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/laplace"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/pt/laplace</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/laplace"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/laplace"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/laplace"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/laplace"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/laplace"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/laplace"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/de/laplace</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/laplace"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/laplace"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/laplace"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/laplace"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/laplace"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/laplace"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/it/laplace</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/laplace"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/laplace"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/laplace"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/laplace"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/laplace"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/laplace"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/es/ode</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/ode"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/ode"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/ode"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/ode"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/ode"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/ode"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/en/ode</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/ode"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/ode"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/ode"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/ode"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/ode"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/ode"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/pt/ode</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/ode"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/ode"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/ode"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/ode"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/ode"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/ode"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/de/ode</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/ode"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/ode"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/ode"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/ode"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/ode"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/ode"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/it/ode</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/ode"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/ode"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/ode"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/ode"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/ode"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/ode"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/es/grapher</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/grapher"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/grapher"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/grapher"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/grapher"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/grapher"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/grapher"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/en/grapher</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/grapher"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/grapher"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/grapher"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/grapher"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/grapher"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/grapher"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/pt/grapher</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/grapher"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/grapher"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/grapher"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/grapher"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/grapher"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/grapher"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/de/grapher</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/grapher"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/grapher"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/grapher"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/grapher"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/grapher"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/grapher"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/it/grapher</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/grapher"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/grapher"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/grapher"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/grapher"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/grapher"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/grapher"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/es/about</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/about"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/about"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/en/about</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/about"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/about"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/pt/about</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/about"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/about"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/de/about</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/about"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/about"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://fouriersolver.com/it/about</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://fouriersolver.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://fouriersolver.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://fouriersolver.com/pt/about"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://fouriersolver.com/de/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://fouriersolver.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fouriersolver.com/es/about"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
 </urlset>

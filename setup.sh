@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# Fourier & Laplace Web Calculator — setup de entorno local
+# Advanced Engineering Mathematics Lab — setup de entorno local
 # ============================================================
 # Valida/instala las dependencias del sistema (Maxima, Node,
 # PostgreSQL, Redis), genera fourier-backend/.env con llaves

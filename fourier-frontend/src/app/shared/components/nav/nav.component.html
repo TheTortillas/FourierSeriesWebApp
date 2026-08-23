@@ -23,9 +23,9 @@
       />
     </svg>
     <span class="hidden lg:flex flex-col items-start leading-none gap-0.5">
-      <span class="font-display text-base leading-none">Fourier Web Calculator</span>
+      <span class="font-display text-base leading-none">AEM-Lab</span>
       <span class="text-[9px] font-mono text-muted dark:text-dark-muted tracking-wide select-none"
-        >Beta · v15.0</span
+        >Beta · v16.0</span
       >
     </span>
   </a>
@@ -444,6 +444,31 @@
   </div>
 </nav>
 
+@if (rebrandBannerVisible()) {
+  <div class="w-full bg-accent/8 border-b border-accent/25 px-4 py-2 flex items-center justify-center gap-3">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0 text-accent" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    <span class="text-xs font-body text-accent">
+      {{ 'nav.rebrandBanner.message' | transloco }}
+    </span>
+    <button
+      type="button"
+      (click)="dismissRebrandBanner()"
+      [attr.aria-label]="'nav.rebrandBanner.dismiss' | transloco"
+      class="ml-auto shrink-0 p-1 rounded text-accent/60 hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+  </div>
+}
 @if (betaBannerVisible()) {
   <div class="w-full bg-accent/8 border-b border-accent/25 px-4 py-2 flex items-center justify-center gap-3">
     <span class="text-xs font-body text-accent">

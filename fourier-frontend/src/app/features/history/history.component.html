@@ -218,15 +218,20 @@
                         </svg>
                       </button>
                     </div>
+                  }
+                  @if (inputLatex(entry); as tex) {
                     <span
-                      class="text-muted dark:text-dark-muted truncate block"
+                      [mathjax]="tex"
                       [title]="inputPreview(entry)"
-                    >
-                      {{ inputPreview(entry) }}
-                    </span>
+                      class="text-muted dark:text-dark-muted text-[11px] leading-snug block overflow-hidden"
+                      [class.text-ink]="!(entry.isFavorite && entry.favoriteName)"
+                      [class.dark:text-dark-ink]="!(entry.isFavorite && entry.favoriteName)"
+                    ></span>
                   } @else {
                     <span
                       class="text-ink dark:text-dark-ink truncate block"
+                      [class.text-muted]="entry.isFavorite && entry.favoriteName"
+                      [class.dark:text-dark-muted]="entry.isFavorite && entry.favoriteName"
                       [title]="inputPreview(entry)"
                     >
                       {{ inputPreview(entry) }}

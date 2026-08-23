@@ -2,10 +2,10 @@ import nodemailer from "nodemailer";
 import { config } from "../../config/env";
 
 // ── Supported languages ────────────────────────────────────────────────────
-type Lang = "es" | "en";
+type Lang = "es" | "en" | "pt" | "de" | "it";
 
 function resolveLang(lang?: string): Lang {
-  return lang === "en" ? "en" : "es";
+  return lang === "en" || lang === "pt" || lang === "de" || lang === "it" ? lang : "es";
 }
 
 // ── i18n strings ───────────────────────────────────────────────────────────
@@ -13,17 +13,17 @@ const STRINGS = {
   es: {
     greeting: (name: string) => `Hola, ${name}`,
     footer: "Si tienes dudas, contáctanos respondiendo este correo.",
-    brand: "Fourier Calculator",
+    brand: "AEM -LAB",
     linkFallback: "O copia este enlace en tu navegador:",
     verify: {
-      subject: "Verifica tu cuenta · Fourier Calculator",
-      body: "Gracias por registrarte en Fourier Calculator. Haz clic en el botón para verificar tu correo y activar tu cuenta.",
+      subject: "Verifica tu cuenta · AEM -LAB",
+      body: "Gracias por registrarte en AEM -LAB. Haz clic en el botón para verificar tu correo y activar tu cuenta.",
       cta: "Verificar cuenta",
       expiry: "Este enlace expira en 24 horas.",
       ignore: "Si no creaste esta cuenta, puedes ignorar este correo.",
     },
     resetPassword: {
-      subject: "Restablece tu contraseña · Fourier Calculator",
+      subject: "Restablece tu contraseña · AEM -LAB",
       body: "Recibimos una solicitud para restablecer la contraseña de tu cuenta. Haz clic en el botón para elegir una nueva.",
       cta: "Restablecer contraseña",
       expiry: "Este enlace expira en 1 hora.",
@@ -31,7 +31,7 @@ const STRINGS = {
         "Si no solicitaste esto, puedes ignorar este correo con seguridad.",
     },
     recovery: {
-      subject: "Recupera tu cuenta · Fourier Calculator",
+      subject: "Recupera tu cuenta · AEM -LAB",
       body: "Recibimos una solicitud para recuperar el acceso a tu cuenta. Haz clic en el botón para continuar.",
       cta: "Recuperar cuenta",
       expiry: "Este enlace expira en 24 horas.",
@@ -42,34 +42,116 @@ const STRINGS = {
   en: {
     greeting: (name: string) => `Hi, ${name}`,
     footer: "If you have any questions, reply to this email.",
-    brand: "Fourier Calculator",
+    brand: "AEM -LAB",
     linkFallback: "Or copy this link into your browser:",
     verify: {
-      subject: "Verify your account · Fourier Calculator",
-      body: "Thanks for signing up for Fourier Calculator. Click the button below to verify your email and activate your account.",
+      subject: "Verify your account · AEM -LAB",
+      body: "Thanks for signing up for AEM -LAB. Click the button below to verify your email and activate your account.",
       cta: "Verify account",
       expiry: "This link expires in 24 hours.",
       ignore: "If you didn't create this account, you can safely ignore this email.",
     },
     resetPassword: {
-      subject: "Reset your password · Fourier Calculator",
+      subject: "Reset your password · AEM -LAB",
       body: "We received a request to reset your account password. Click the button below to choose a new one.",
       cta: "Reset password",
       expiry: "This link expires in 1 hour.",
       ignore: "If you didn't request this, you can safely ignore this email.",
     },
     recovery: {
-      subject: "Recover your account · Fourier Calculator",
+      subject: "Recover your account · AEM -LAB",
       body: "We received a request to recover access to your account. Click the button below to continue.",
       cta: "Recover account",
       expiry: "This link expires in 24 hours.",
       ignore: "If you didn't request this, you can safely ignore this email.",
     },
   },
+  pt: {
+    greeting: (name: string) => `Olá, ${name}`,
+    footer: "Se tiver dúvidas, responda a este e-mail.",
+    brand: "AEM -LAB",
+    linkFallback: "Ou copie este link no seu navegador:",
+    verify: {
+      subject: "Verifique sua conta · AEM -LAB",
+      body: "Obrigado por se cadastrar no AEM -LAB. Clique no botão para verificar seu e-mail e ativar sua conta.",
+      cta: "Verificar conta",
+      expiry: "Este link expira em 24 horas.",
+      ignore: "Se você não criou esta conta, pode ignorar este e-mail com segurança.",
+    },
+    resetPassword: {
+      subject: "Redefina sua senha · AEM -LAB",
+      body: "Recebemos uma solicitação para redefinir a senha da sua conta. Clique no botão para escolher uma nova.",
+      cta: "Redefinir senha",
+      expiry: "Este link expira em 1 hora.",
+      ignore: "Se você não solicitou isso, pode ignorar este e-mail com segurança.",
+    },
+    recovery: {
+      subject: "Recupere sua conta · AEM -LAB",
+      body: "Recebemos uma solicitação para recuperar o acesso à sua conta. Clique no botão para continuar.",
+      cta: "Recuperar conta",
+      expiry: "Este link expira em 24 horas.",
+      ignore: "Se você não solicitou isso, pode ignorar este e-mail com segurança.",
+    },
+  },
+  de: {
+    greeting: (name: string) => `Hallo, ${name}`,
+    footer: "Bei Fragen antworten Sie einfach auf diese E-Mail.",
+    brand: "AEM -LAB",
+    linkFallback: "Oder kopieren Sie diesen Link in Ihren Browser:",
+    verify: {
+      subject: "Bestätigen Sie Ihr Konto · AEM -LAB",
+      body: "Vielen Dank für Ihre Registrierung bei AEM -LAB. Klicken Sie auf die Schaltfläche, um Ihre E-Mail-Adresse zu bestätigen und Ihr Konto zu aktivieren.",
+      cta: "Konto bestätigen",
+      expiry: "Dieser Link läuft in 24 Stunden ab.",
+      ignore: "Wenn Sie dieses Konto nicht erstellt haben, können Sie diese E-Mail ignorieren.",
+    },
+    resetPassword: {
+      subject: "Passwort zurücksetzen · AEM -LAB",
+      body: "Wir haben eine Anfrage zum Zurücksetzen des Passworts Ihres Kontos erhalten. Klicken Sie auf die Schaltfläche, um ein neues Passwort zu wählen.",
+      cta: "Passwort zurücksetzen",
+      expiry: "Dieser Link läuft in 1 Stunde ab.",
+      ignore: "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren.",
+    },
+    recovery: {
+      subject: "Konto wiederherstellen · AEM -LAB",
+      body: "Wir haben eine Anfrage zur Wiederherstellung des Zugriffs auf Ihr Konto erhalten. Klicken Sie auf die Schaltfläche, um fortzufahren.",
+      cta: "Konto wiederherstellen",
+      expiry: "Dieser Link läuft in 24 Stunden ab.",
+      ignore: "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren.",
+    },
+  },
+  it: {
+    greeting: (name: string) => `Ciao, ${name}`,
+    footer: "Per qualsiasi domanda, rispondi a questa email.",
+    brand: "AEM -LAB",
+    linkFallback: "Oppure copia questo link nel tuo browser:",
+    verify: {
+      subject: "Verifica il tuo account · AEM -LAB",
+      body: "Grazie per esserti registrato su AEM -LAB. Fai clic sul pulsante per verificare la tua email e attivare il tuo account.",
+      cta: "Verifica account",
+      expiry: "Questo link scade tra 24 ore.",
+      ignore: "Se non hai creato questo account, puoi ignorare tranquillamente questa email.",
+    },
+    resetPassword: {
+      subject: "Reimposta la tua password · AEM -LAB",
+      body: "Abbiamo ricevuto una richiesta per reimpostare la password del tuo account. Fai clic sul pulsante per sceglierne una nuova.",
+      cta: "Reimposta password",
+      expiry: "Questo link scade tra 1 ora.",
+      ignore: "Se non hai richiesto questo, puoi ignorare tranquillamente questa email.",
+    },
+    recovery: {
+      subject: "Recupera il tuo account · AEM -LAB",
+      body: "Abbiamo ricevuto una richiesta per recuperare l'accesso al tuo account. Fai clic sul pulsante per continuare.",
+      cta: "Recupera account",
+      expiry: "Questo link scade tra 24 ore.",
+      ignore: "Se non hai richiesto questo, puoi ignorare tranquillamente questa email.",
+    },
+  },
 } as const;
 
 // ── HTML template ──────────────────────────────────────────────────────────
 function buildHtml(opts: {
+  lang: Lang;
   greeting: string;
   body: string;
   ctaLabel: string;
@@ -80,12 +162,12 @@ function buildHtml(opts: {
   footer: string;
   brand: string;
 }): string {
-  const { greeting, body, ctaLabel, ctaUrl, expiry, ignore, linkFallback, footer, brand } = opts;
+  const { lang, greeting, body, ctaLabel, ctaUrl, expiry, ignore, linkFallback, footer, brand } = opts;
 
   // Design system: paper #f5f0e8 · paper2 #ede7d9 · ink #1a1410
   //                accent #8b2500 · border #c8bca8 · muted #6b5e4e
   return `<!DOCTYPE html>
-<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="${lang}" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -186,7 +268,67 @@ function buildHtml(opts: {
 </html>`;
 }
 
-// ── Transporter ────────────────────────────────────────────────────────────
+// ── Admin reply HTML (no CTA button — plain conversational email) ──────────
+function buildReplyHtml(opts: {
+  lang: Lang;
+  greeting: string;
+  body: string;
+  footer: string;
+  brand: string;
+}): string {
+  const { lang, greeting, body, footer, brand } = opts;
+  return `<!DOCTYPE html>
+<html lang="${lang}" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${brand}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#ede7d9;font-family:Georgia,'Times New Roman',Times,serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+         style="background-color:#ede7d9;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0"
+               style="max-width:560px;width:100%;">
+          <tr>
+            <td align="center" style="padding-bottom:20px;">
+              <p style="margin:0;font-family:Georgia,serif;font-size:12px;
+                         letter-spacing:0.12em;text-transform:uppercase;color:#6b5e4e;">
+                ${brand}
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f5f0e8;border:1px solid #c8bca8;
+                        border-radius:12px;padding:40px 36px;">
+              <p style="margin:0 0 4px;font-size:22px;font-weight:bold;color:#1a1410;line-height:1.3;">
+                ${greeting}
+              </p>
+              <div style="width:40px;height:2px;background-color:#8b2500;margin:12px 0 20px;"></div>
+              <div style="font-size:15px;line-height:1.8;color:#3d3228;white-space:pre-wrap;">${body}</div>
+              <div style="border-top:1px solid #c8bca8;margin:28px 0 0;"></div>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding-top:24px;">
+              <p style="margin:0 0 4px;font-size:11px;color:#8a7a6c;font-family:Georgia,serif;">
+                ${footer}
+              </p>
+              <p style="margin:4px 0 0;font-size:11px;color:#a09080;font-family:Georgia,serif;">
+                © ${new Date().getFullYear()} ${brand}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+// ── Transporters ───────────────────────────────────────────────────────────
 const transporter = nodemailer.createTransport({
   host: config.email.host,
   port: config.email.port,
@@ -194,6 +336,16 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: config.email.user,
     pass: config.email.pass,
+  },
+});
+
+const contactTransporter = nodemailer.createTransport({
+  host: config.email.host,
+  port: config.email.port,
+  secure: config.email.secure,
+  auth: {
+    user: config.email.contact.user,
+    pass: config.email.contact.pass,
   },
 });
 
@@ -213,6 +365,7 @@ export async function sendVerificationEmail(
     to,
     subject: t.verify.subject,
     html: buildHtml({
+      lang: l,
       greeting: t.greeting(firstName),
       body: t.verify.body,
       ctaLabel: t.verify.cta,
@@ -241,6 +394,7 @@ export async function sendPasswordResetEmail(
     to,
     subject: t.resetPassword.subject,
     html: buildHtml({
+      lang: l,
       greeting: t.greeting(firstName),
       body: t.resetPassword.body,
       ctaLabel: t.resetPassword.cta,
@@ -269,6 +423,7 @@ export async function sendRecoveryEmail(
     to,
     subject: t.recovery.subject,
     html: buildHtml({
+      lang: l,
       greeting: t.greeting(firstName),
       body: t.recovery.body,
       ctaLabel: t.recovery.cta,
@@ -276,6 +431,30 @@ export async function sendRecoveryEmail(
       expiry: t.recovery.expiry,
       ignore: t.recovery.ignore,
       linkFallback: t.linkFallback,
+      footer: t.footer,
+      brand: t.brand,
+    }),
+  });
+}
+
+export async function sendAdminReplyEmail(opts: {
+  to: string;
+  userName: string;
+  subject: string;
+  body: string;
+  lang?: string;
+}): Promise<void> {
+  const l = resolveLang(opts.lang);
+  const t = STRINGS[l];
+  await contactTransporter.sendMail({
+    from: `"${t.brand}" <${config.email.contact.from}>`,
+    to: opts.to,
+    ...(config.email.contact.bcc ? { bcc: config.email.contact.bcc } : {}),
+    subject: opts.subject,
+    html: buildReplyHtml({
+      lang: l,
+      greeting: t.greeting(opts.userName),
+      body: opts.body,
       footer: t.footer,
       brand: t.brand,
     }),

@@ -79,7 +79,11 @@ export function createApp(): Application {
 
   app.use(generalLimiter);
 
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  // Swagger UI expone la forma completa de la API (rutas, params, qué
+  // requiere auth) — reconocimiento gratis para scanners. Solo en no-prod.
+  if (config.server.nodeEnv !== "production") {
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  }
   app.use("/api/cache", cacheRouter);
 
   // Endpoints de cálculo: requieren auth + email verificado + rate limit

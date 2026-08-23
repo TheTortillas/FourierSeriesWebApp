@@ -35,7 +35,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   ngOnInit(): void {
-    this.seo.setPage('seo.home.title', 'seo.home.description', 'Fourier transform calculator, calculadora transformada de Fourier, series de Fourier, inverse Fourier transform, DFT, FFT, Parseval');
+    this.seo.setPage('seo.home.title', 'seo.home.description', 'Fourier Web Calculator, Fourier Web Calculator online, AEM-Lab, fourier solver, fouriersolver, fouriersolver.com, Fourier transform calculator, calculadora transformada de Fourier, Fourier series calculator, calculadora series de Fourier, inverse Fourier transform, transformada inversa de Fourier, Laplace transform calculator, calculadora transformada de Laplace, Laplace complex plane, Laplace complex grapher, Laplace pole zero diagram, graficador plano complejo Laplace, diagrama polos ceros Laplace, ROC Laplace, region of convergence Laplace, ODE solver, resolutor de EDOs, DFT, FFT, Parseval, advanced engineering mathematics, matemáticas de ingeniería, free online math calculator, calculadora matemática en línea');
+    this.seo.setStructuredData();
   }
 
   private readonly transloco = inject(TranslocoService);

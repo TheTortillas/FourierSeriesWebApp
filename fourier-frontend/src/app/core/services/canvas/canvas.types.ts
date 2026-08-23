@@ -65,6 +65,34 @@ export interface Discontinuity {
   y2: number;
 }
 
+/**
+ * A function declared in a PlotLayer that FunctionPlotComponent samples and
+ * caches automatically. Re-sampling only happens when the visible X range
+ * changes by more than a small threshold — so pan is essentially free and
+ * zoom triggers one resample per function instead of one per frame.
+ *
+ * Use this for curves that are mathematically static (don't change every
+ * animation frame). Keep `onDraw` for genuinely dynamic content (epicycles,
+ * crosshairs, animated traces).
+ *
+ * `from`/`to` pin the curve to a fixed domain (e.g. piecewise pieces).
+ * Without them the visible X range is used and the cache follows the pan.
+ */
+export interface PlotFn {
+  fn: (x: number) => number;
+  color: string;
+  lineWidth: number;
+  dashed?: boolean;
+  dashPattern?: number[];
+  jumpStyle?: JumpStyle;
+  /** Fixed left bound. When set, the curve is only drawn over [from, to]. */
+  from?: number;
+  /** Fixed right bound. Requires `from`. */
+  to?: number;
+  /** Sample count override. Defaults to cssWidth × oversample. */
+  steps?: number;
+}
+
 /** A continuous curve to be rendered */
 export interface Curve {
   /** Sampled points in math space */
@@ -135,6 +163,52 @@ export const NEUTRAL_DARK_THEME: CanvasTheme = {
 
 /** Fourier series types supported by the backend */
 export type FourierSeriesType = 'trigonometric' | 'complex' | 'halfRange';
+
+// ── Complex plane (WebGL) types ────────────────────────────────────────────────
+
+/** Domain-coloring color scheme for 2D complex plots */
+export type ColorScheme = 'classic' | 'phase' | 'magnitude';
+
+/** A point in the complex plane with evaluated f(z) */
+export interface ComplexPoint {
+  re: number;
+  im: number;
+  fRe: number;
+  fIm: number;
+  fAbs: number;
+  fArg: number;
+}
+
+/**
+ * Viewport for 2D domain-coloring view.
+ * Maps directly onto CanvasViewport for overlay rendering:
+ *   scale → unit,  centerRe/Im → originMath.{x,y},  scaleX/Y = 1.
+ */
+export interface ComplexViewport2D {
+  cssWidth:  number;
+  cssHeight: number;
+  /** Re coordinate at canvas center */
+  centerRe:  number;
+  /** Im coordinate at canvas center */
+  centerIm:  number;
+  /** CSS pixels per complex unit */
+  scale:     number;
+}
+
+/** Viewport for 3D surface view */
+export interface ComplexViewport3D {
+  cssWidth:    number;
+  cssHeight:   number;
+  rotX:        number;
+  rotY:        number;
+  zoom:        number;
+  /** Visible domain ±range on both Re and Im axes */
+  range:       number;
+  heightScale: number;
+  zClip:       number;
+  showGrid:    boolean;
+  wireframe:   boolean;
+}
 
 // ── Render configuration ───────────────────────────────────────────────────────
 

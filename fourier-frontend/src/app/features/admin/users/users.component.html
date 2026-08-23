@@ -140,6 +140,7 @@
             <tr
               class="border-b border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted text-left"
             >
+              <th class="px-3 py-2.5 w-10"></th>
               <th class="px-4 py-2.5 font-medium">Usuario</th>
               <th class="px-4 py-2.5 font-medium">Rol</th>
               <th class="px-4 py-2.5 font-medium">Tier</th>
@@ -155,6 +156,22 @@
                 class="hover:bg-paper dark:hover:bg-dark-bg transition-colors"
                 [class.opacity-50]="!user.isActive"
               >
+                <!-- Avatar -->
+                <td class="px-3 py-3">
+                  @if (user.avatarUrl) {
+                    <img
+                      [src]="user.avatarUrl"
+                      [alt]="user.firstName"
+                      class="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-border dark:ring-dark-border"
+                      (error)="$any($event.target).style.display='none'"
+                    />
+                  } @else {
+                    <div class="w-8 h-8 rounded-full shrink-0 bg-accent/15 flex items-center justify-center ring-1 ring-border dark:ring-dark-border">
+                      <span class="text-[11px] font-bold text-accent select-none">{{ initials(user) }}</span>
+                    </div>
+                  }
+                </td>
+
                 <!-- User info -->
                 <td class="px-4 py-3">
                   <div class="flex flex-col gap-0.5">
@@ -290,7 +307,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="7" class="px-4 py-8 text-center text-muted dark:text-dark-muted">
+                <td colspan="8" class="px-4 py-8 text-center text-muted dark:text-dark-muted">
                   No se encontraron usuarios
                 </td>
               </tr>

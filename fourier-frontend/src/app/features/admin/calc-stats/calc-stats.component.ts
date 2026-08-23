@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Chart, registerables } from 'chart.js';
+import { Chart, ChartDataset, registerables } from 'chart.js';
 import { ApiService } from '../../../core/services/api/api.service';
 import { CalcStats, CALC_TYPE_LABEL } from '../../../domain';
+import { MathjaxDirective } from '../../../shared/directives/mathjax.directive';
 
 Chart.register(...registerables);
 
@@ -63,7 +64,7 @@ function dateNDaysAgo(days: number): string {
 @Component({
   selector: 'app-calc-stats',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MathjaxDirective],
   templateUrl: './calc-stats.component.html',
 })
 export class CalcStatsComponent implements OnInit, OnDestroy {
@@ -79,6 +80,13 @@ export class CalcStatsComponent implements OnInit, OnDestroy {
   dateTo   = '';
   topN     = 10;
   readonly topNOptions = [10, 20, 50, 100];
+
+  // Trend chart view mode
+  trendGranularity: 'day' | 'week' = 'day';
+
+  // Day-of-week filter (0=Sun … 6=Sat). Empty set = show all.
+  readonly DOW_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  trendDowFilter = new Set<number>();
 
   readonly typeLabel = (t: string) => CALC_TYPE_LABEL[t] ?? t;
   readonly Math = Math;
@@ -135,44 +143,106 @@ export class CalcStatsComponent implements OnInit, OnDestroy {
   groupLabel(type: string): string {
     if (SERIES_TYPES.has(type))    return 'Series';
     if (INTEGRAL_TYPES.has(type))  return 'Integral';
-    if (TRANSFORM_TYPES.has(type)) return 'Transformadas';
+    if (TRANSFORM_TYPES.has(type)) return 'T. Fourier';
     if (LAPLACE_TYPES.has(type))   return 'Laplace';
     if (ODE_TYPES.has(type))       return 'EDO';
     if (DFT_TYPES.has(type))       return 'DFT';
     return '';
   }
 
-  inputSummary(entry: CalcStats['topCalcs'][number]): string {
+  inputLatex(entry: CalcStats['topCalcs'][number]): string {
     const inp = entry.input;
-    if (!inp) return '—';
+    if (!inp) return '';
 
-    // Inputs with segments (series, transforms, dft_function)
-    const segments = inp['segments'] as
-      | Array<{ expression?: string; from?: string; to?: string }>
-      | undefined;
+    type Seg = { expressionTex?: string; expression?: string; fromTex?: string; from?: string; toTex?: string; to?: string };
+    const segments = inp['segments'] as Seg[] | undefined;
+    const v = (inp['intVar'] as string | undefined) ?? (inp['timeVar'] as string | undefined) ?? 'x';
 
     if (segments?.length) {
-      const first = segments[0];
-      const expr  = fmtMaxima(first.expression ?? '?');
-      const range = first.from !== undefined && first.to !== undefined
-        ? ` [${fmtMaxima(first.from)}, ${fmtMaxima(first.to)}]`
-        : '';
-      const more   = segments.length > 1
-        ? ` +${segments.length - 1} tramo${segments.length > 2 ? 's' : ''}`
-        : '';
-      const nStr   = inp['N'] !== undefined ? `, N=${inp['N']}` : '';
-      const varStr = inp['intVar'] ? ` (var: ${inp['intVar']})` : '';
-      return `${expr}${range}${more}${nStr}${varStr}`;
+      if (segments.length === 1) {
+        const s = segments[0];
+        const e = s.expressionTex ?? s.expression ?? '?';
+        const f = s.fromTex ?? s.from ?? '';
+        const t = s.toTex ?? s.to ?? '';
+        const nStr = inp['N'] !== undefined ? `,\\; N=${inp['N']}` : '';
+        return `\\(${e},\\; ${v} \\in [${f},\\,${t}]${nStr}\\)`;
+      }
+      const cases = segments
+        .map((s) => {
+          const e = s.expressionTex ?? s.expression ?? '?';
+          const f = s.fromTex ?? s.from ?? '';
+          const t = s.toTex ?? s.to ?? '';
+          return `${e} & ${v} \\in [${f},\\,${t}]`;
+        })
+        .join(' \\\\ ');
+      return `\\(\\begin{cases}${cases}\\end{cases}\\)`;
     }
 
-    // DFT from points (dft_signal, dft_epicycles)
+    // Single expression (transforms, Laplace)
+    const exprTex = inp['expressionTex'] as string | undefined;
+    const expr    = inp['expression']    as string | undefined;
+    if (exprTex || expr) return `\\(${exprTex ?? expr}\\)`;
+
+    // ODE
+    const eqTex = inp['equationTex'] as string | undefined;
+    const eq    = inp['equation']    as string | undefined;
+    if (eqTex || eq) return `\\(${eqTex ?? eq}\\)`;
+
+    // DFT from points — no LaTeX, return empty (fallback handled in template)
+    return '';
+  }
+
+  inputSummaryFallback(entry: CalcStats['topCalcs'][number]): string {
+    const inp = entry.input;
+    if (!inp) return '—';
     const points = inp['points'] as unknown[] | undefined;
     if (points) {
       const n = inp['N'] !== undefined ? `, N=${inp['N']}` : '';
       return `${points.length} puntos${n}`;
     }
-
     return JSON.stringify(inp).slice(0, 80);
+  }
+
+  // ── Trend granularity ─────────────────────────────────────────────────────
+
+  setTrendGranularity(g: 'day' | 'week'): void {
+    this.trendGranularity = g;
+    if (g === 'week') this.trendDowFilter = new Set(); // DOW filter only makes sense daily
+    this.rebuildTrendChart();
+  }
+
+
+  /** Collapses daily rows into ISO-week buckets (Mon–Sun). */
+  private aggregateWeekly(daily: CalcStats['daily']): { day: string; executions: number }[] {
+    const map = new Map<string, number>();
+    for (const row of daily) {
+      const d = new Date(row.day + 'T00:00:00');
+      const dow = d.getDay(); // 0=Sun
+      const offset = dow === 0 ? -6 : 1 - dow; // shift to Monday
+      const mon = new Date(d);
+      mon.setDate(d.getDate() + offset);
+      const key = mon.toISOString().slice(0, 10);
+      map.set(key, (map.get(key) ?? 0) + row.executions);
+    }
+    return [...map.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, executions]) => ({ day, executions }));
+  }
+
+  /** 7-day simple moving average over daily data. */
+  private movingAverage(data: number[], window = 7): (number | null)[] {
+    return data.map((_, i) => {
+      if (i < window - 1) return null;
+      const slice = data.slice(i - window + 1, i + 1);
+      return Math.round(slice.reduce((a, b) => a + b, 0) / window);
+    });
+  }
+
+  /** Average executions per day in the current period. */
+  get avgPerDay(): number | null {
+    if (!this.stats?.daily.length) return null;
+    const total = this.stats.daily.reduce((s, r) => s + r.executions, 0);
+    return Math.round((total / this.stats.daily.length) * 10) / 10;
   }
 
   // ── Data loading ───────────────────────────────────────────────────────────
@@ -256,15 +326,25 @@ export class CalcStatsComponent implements OnInit, OnDestroy {
     const byType = this.stats.byType;
     const sum    = (types: Set<string>) =>
       byType.filter((r) => types.has(r.type)).reduce((a, r) => a + r.total_executions, 0);
+
+    const groups = [
+      { label: 'Series de Fourier',    value: sum(SERIES_TYPES),    ...GROUP_COLORS.series    },
+      { label: 'Integral de Fourier',  value: sum(INTEGRAL_TYPES),  ...GROUP_COLORS.integral  },
+      { label: 'T. Fourier',           value: sum(TRANSFORM_TYPES), ...GROUP_COLORS.transform },
+      { label: 'Laplace',              value: sum(LAPLACE_TYPES),   ...GROUP_COLORS.laplace   },
+      { label: 'EDO',                  value: sum(ODE_TYPES),       ...GROUP_COLORS.ode       },
+      { label: 'DFT',                  value: sum(DFT_TYPES),       ...GROUP_COLORS.dft       },
+    ].filter((g) => g.value > 0);
+
     this.charts.push(
       new Chart(canvas, {
         type: 'doughnut',
         data: {
-          labels: ['Series de Fourier', 'Integral de Fourier', 'Transformadas', 'Laplace', 'EDO', 'DFT'],
+          labels:   groups.map((g) => g.label),
           datasets: [{
-            data: [sum(SERIES_TYPES), sum(INTEGRAL_TYPES), sum(TRANSFORM_TYPES), sum(LAPLACE_TYPES), sum(ODE_TYPES), sum(DFT_TYPES)],
-            backgroundColor: [GROUP_COLORS.series.bg, GROUP_COLORS.integral.bg, GROUP_COLORS.transform.bg, GROUP_COLORS.laplace.bg, GROUP_COLORS.ode.bg, GROUP_COLORS.dft.bg],
-            borderColor:     [GROUP_COLORS.series.border, GROUP_COLORS.integral.border, GROUP_COLORS.transform.border, GROUP_COLORS.laplace.border, GROUP_COLORS.ode.border, GROUP_COLORS.dft.border],
+            data:            groups.map((g) => g.value),
+            backgroundColor: groups.map((g) => g.bg),
+            borderColor:     groups.map((g) => g.border),
             borderWidth: 2,
             hoverOffset: 6,
           }],
@@ -354,7 +434,14 @@ export class CalcStatsComponent implements OnInit, OnDestroy {
           plugins: {
             legend: { display: false },
             tooltip: {
-              callbacks: { label: (ctx) => ` ${(ctx.parsed.x as number).toLocaleString()} ejecuciones` },
+              callbacks: {
+                label: (ctx) => ` ${(ctx.parsed.x as number).toLocaleString()} ejecuciones`,
+                afterLabel: (ctx) => {
+                  const row = rows[ctx.dataIndex];
+                  if (row?.avg_execution_ms != null) return ` ⏱ ${row.avg_execution_ms.toLocaleString()} ms promedio`;
+                  return '';
+                },
+              },
             },
           },
           scales: {
@@ -366,35 +453,148 @@ export class CalcStatsComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Destroys and rebuilds only the trend chart (used when toggling granularity). */
+  private rebuildTrendChart(): void {
+    const idx = this.charts.findIndex((c) => (c.canvas as HTMLCanvasElement).id === 'csTrend');
+    if (idx !== -1) { this.charts[idx].destroy(); this.charts.splice(idx, 1); }
+    const grid = this.gridColor();
+    const text = this.textColor();
+    this.buildTrendLine(grid, text);
+  }
+
   private buildTrendLine(grid: string, text: string): void {
     const canvas = document.getElementById('csTrend') as HTMLCanvasElement | null;
     if (!canvas || !this.stats) return;
-    this.charts.push(
-      new Chart(canvas, {
-        type: 'line',
-        data: {
-          labels: this.stats.daily.map((r) => r.day),
-          datasets: [{
-            label: 'Ejecuciones',
-            data:            this.stats.daily.map((r) => r.executions),
-            borderColor:     TREND_COLOR.border,
-            backgroundColor: TREND_COLOR.bg,
-            tension: 0.35,
-            fill: true,
-            pointRadius: 3,
-            pointHoverRadius: 5,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks: { color: text, maxTicksLimit: 12 }, grid: { display: false } },
-            y: { ticks: { color: text, precision: 0 }, grid: { color: grid } },
+
+    const isWeekly = this.trendGranularity === 'week';
+    let rows = isWeekly ? this.aggregateWeekly(this.stats.daily) : this.stats.daily;
+
+    // Apply day-of-week filter (daily mode only)
+    if (!isWeekly && this.trendDowFilter.size > 0) {
+      rows = rows.filter((r) => {
+        const dow = new Date(r.day + 'T00:00:00').getDay();
+        return this.trendDowFilter.has(dow);
+      });
+    }
+
+    const labels = rows.map((r) => r.day);
+    const values = rows.map((r) => r.executions);
+
+    // Peak & valley (valley ignores zero-fill gaps)
+    const maxVal = values.length ? Math.max(...values) : 0;
+    const maxIdx = values.indexOf(maxVal);
+    const nonZero = values.filter((v) => v > 0);
+    const minVal = nonZero.length > 1 ? Math.min(...nonZero) : -1; // need >1 active point for valley to be meaningful
+    const minIdx = minVal >= 0 && minVal !== maxVal ? values.indexOf(minVal) : -1;
+
+    const defaultR = isWeekly ? 4 : 2;
+    const pointRadii = values.map((_, i) =>
+      i === maxIdx || i === minIdx ? 6 : defaultR,
+    );
+    const pointColors = values.map((_, i) => {
+      if (i === maxIdx) return 'rgb(245,158,11)';   // amber — peak
+      if (i === minIdx) return 'rgb(99,102,241)';   // indigo — valley
+      return TREND_COLOR.border;
+    });
+
+    // Moving average (only for daily; weekly already smooths naturally)
+    const maValues = isWeekly ? [] : this.movingAverage(values, 7);
+
+    const datasets: ChartDataset<'line'>[] = [
+      {
+        label: isWeekly ? 'Ejecuciones (semana)' : 'Ejecuciones',
+        data:            values,
+        borderColor:     TREND_COLOR.border,
+        backgroundColor: TREND_COLOR.bg,
+        tension: 0.3,
+        fill: true,
+        pointRadius:      pointRadii,
+        pointHoverRadius: pointRadii.map((r) => r + 2),
+        pointBackgroundColor: pointColors,
+        pointBorderColor:     pointColors,
+      },
+    ];
+
+    if (!isWeekly) {
+      datasets.push({
+        label: 'Media 7 días',
+        data:        maValues,
+        borderColor: 'rgba(168,85,247,0.75)',
+        backgroundColor: 'transparent',
+        borderWidth: 1.5,
+        borderDash: [4, 3],
+        tension: 0.4,
+        fill: false,
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        spanGaps: false,
+      });
+    }
+
+    const chart = new Chart(canvas, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: !isWeekly,
+            labels: { color: text, font: { family: 'monospace', size: 11 }, boxWidth: 24, padding: 10 },
+          },
+          tooltip: {
+            callbacks: {
+              title: (items) => {
+                const idx = items[0]?.dataIndex;
+                const row = idx !== undefined ? rows[idx] : undefined;
+                if (!row) return '';
+                const d = new Date(row.day + 'T00:00:00');
+                const fmt = (date: Date) => {
+                  const dd = String(date.getDate()).padStart(2, '0');
+                  const mm = String(date.getMonth() + 1).padStart(2, '0');
+                  const yyyy = date.getFullYear();
+                  return `${dd}/${mm}/${yyyy}`;
+                };
+                if (isWeekly) {
+                  // row.day is Monday of the week; calculate Sunday
+                  const sun = new Date(d);
+                  sun.setDate(d.getDate() + 6);
+                  return `Semana ${fmt(d)} – ${fmt(sun)}`;
+                }
+                const DOW_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+                return `${DOW_FULL[d.getDay()]}, ${fmt(d)}`;
+              },
+              label: (ctx) => ` ${(ctx.parsed.y as number).toLocaleString('es-MX')} ejecuciones`,
+              afterLabel: (items) => {
+                const i = items.dataIndex;
+                if (i === maxIdx) return '⚑ Pico máximo del período';
+                if (i === minIdx) return '▼ Valle mínimo del período';
+                return '';
+              },
+            },
           },
         },
-      }),
-    );
+        scales: {
+          x: {
+            ticks: {
+              color: text,
+              maxTicksLimit: isWeekly ? 14 : 12,
+              callback: (_val, idx) => {
+                const row = rows[idx];
+                if (!row) return '';
+                const d = new Date(row.day + 'T00:00:00');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                if (isWeekly) return `${dd}/${mm}`;
+                return `${dd}/${mm}`;
+              },
+            },
+            grid: { display: false },
+          },
+          y: { ticks: { color: text, precision: 0 }, grid: { color: grid }, beginAtZero: true },
+        },
+      },
+    });
+    this.charts.push(chart);
   }
 }

@@ -4,10 +4,11 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, map, take } from 'rxjs';
 
 import { UserStore } from '../services/auth/user.store';
+import { DEFAULT_LANG } from '../config/languages';
 
 /** Lee el parámetro `:lang` del segmento padre para construir redirects correctos. */
 function getLang(route: ActivatedRouteSnapshot): string {
-  return route.parent?.paramMap.get('lang') ?? 'es';
+  return route.parent?.paramMap.get('lang') ?? DEFAULT_LANG;
 }
 
 /** Protege rutas que requieren autenticación. */

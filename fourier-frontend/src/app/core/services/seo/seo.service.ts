@@ -6,14 +6,9 @@ import { TranslocoService } from '@jsverse/transloco';
 import { take } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import { SUPPORTED_LANG_CODES, getOgLocale } from '../../config/languages';
 
-/** Maps Transloco language codes to BCP 47 / OG locale format. */
-const OG_LOCALE: Record<string, string> = {
-  es: 'es_ES',
-  en: 'en_US',
-};
-
-const SITE_NAME = 'Fourier Web Calculator';
+const SITE_NAME = 'AEM-Lab';
 
 /**
  * Centralizes all SEO concerns: page title, meta description, Open Graph,
@@ -53,7 +48,7 @@ export class SeoService {
         const description = this.transloco.translate(descriptionKey);
         const fullTitle = `${pageTitle} | ${SITE_NAME}`;
         const canonical = this.buildCanonical();
-        const ogLocale = OG_LOCALE[lang] ?? 'es_ES';
+        const ogLocale = getOgLocale(lang);
 
         // ── Basic ────────────────────────────────────────────────────────────
         this.titleSvc.setTitle(fullTitle);
@@ -87,6 +82,93 @@ export class SeoService {
     this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });
   }
 
+  /**
+   * Injects Schema.org JSON-LD structured data into <head>.
+   * Replaces any previously injected block with the same id.
+   * Call from home.component.ts after setPage() so translations are loaded.
+   */
+  setStructuredData(): void {
+    const lang = this.transloco.getActiveLang();
+    this.transloco
+      .selectTranslation(lang)
+      .pipe(take(1))
+      .subscribe(() => {
+        const t = (key: string) => this.transloco.translate(key);
+        const base = environment.baseUrl;
+        const langPrefix = `/${lang}`;
+
+        const data = [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: SITE_NAME,
+            alternateName: 'Fourier Web Calculator',
+            url: base,
+            description: t('seo.home.description'),
+            inLanguage: SUPPORTED_LANG_CODES,
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: SITE_NAME,
+            alternateName: 'Fourier Web Calculator',
+            url: base,
+            applicationCategory: 'EducationalApplication',
+            operatingSystem: 'Web',
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            featureList: [
+              t('home.series.description'),
+              t('home.transforms.description'),
+              t('home.integral.description'),
+              t('home.dft.description'),
+              t('home.laplace.description'),
+              t('home.ode.description'),
+            ],
+            hasPart: [
+              {
+                '@type': 'WebPage',
+                name: t('nav.series'),
+                url: `${base}${langPrefix}/calculator`,
+                description: t('home.series.description'),
+              },
+              {
+                '@type': 'WebPage',
+                name: t('nav.transforms'),
+                url: `${base}${langPrefix}/transforms/continuous`,
+                description: t('home.transforms.description'),
+              },
+              {
+                '@type': 'WebPage',
+                name: t('nav.laplace'),
+                url: `${base}${langPrefix}/transforms/laplace`,
+                description: t('home.laplace.description'),
+              },
+              {
+                '@type': 'WebPage',
+                name: t('nav.ode'),
+                url: `${base}${langPrefix}/ode`,
+                description: t('home.ode.description'),
+              },
+              {
+                '@type': 'WebPage',
+                name: t('nav.fourierIntegral'),
+                url: `${base}${langPrefix}/transforms/fourier-integral`,
+                description: t('home.integral.description'),
+              },
+              {
+                '@type': 'WebPage',
+                name: t('nav.dft'),
+                url: `${base}${langPrefix}/transforms/dft`,
+                description: t('home.dft.description'),
+              },
+            ],
+          },
+        ];
+
+        this.upsertJsonLd('aem-lab-structured-data', data);
+      });
+  }
+
   // ── Private helpers ──────────────────────────────────────────────────────
 
   private buildCanonical(): string {
@@ -104,5 +186,14 @@ export class SeoService {
       link.setAttribute('href', url);
       this.doc.head.appendChild(link);
     }
+  }
+
+  private upsertJsonLd(id: string, data: object[]): void {
+    const existing = this.doc.getElementById(id);
+    const script = existing ?? this.doc.createElement('script');
+    script.setAttribute('type', 'application/ld+json');
+    script.id = id;
+    script.textContent = JSON.stringify(data);
+    if (!existing) this.doc.head.appendChild(script);
   }
 }

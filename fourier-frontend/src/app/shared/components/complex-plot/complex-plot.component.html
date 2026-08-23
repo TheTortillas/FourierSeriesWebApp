@@ -1,0 +1,20 @@
+<div #wrapper class="relative w-full h-full select-none">
+
+  <!-- WebGL canvas: domain coloring / 3D surface (background layer) -->
+  <canvas #canvasWgl class="absolute inset-0 w-full h-full"></canvas>
+
+  <!-- Canvas2D overlay: grid + axes + labels + phase legend (2D mode) -->
+  <canvas #overlay2d
+    [class]="mode() === '2d'
+      ? 'absolute inset-0 w-full h-full cursor-crosshair'
+      : 'absolute inset-0 w-full h-full pointer-events-none hidden'">
+  </canvas>
+
+  <!-- Canvas2D overlay: 3D axis arrows + labels + color bar (3D mode) -->
+  <canvas #overlay3d
+    [class]="mode() === '3d'
+      ? 'absolute inset-0 w-full h-full cursor-grab'
+      : 'absolute inset-0 w-full h-full pointer-events-none hidden'">
+  </canvas>
+
+</div>

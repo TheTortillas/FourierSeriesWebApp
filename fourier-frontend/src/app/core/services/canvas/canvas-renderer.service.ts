@@ -201,7 +201,7 @@ export class CanvasRendererService {
     if (vp.xAxisFormat === 'pi') return this.formatPi(x, step);
     if (vp.xAxisFormat === 'e') return this.formatE(x, step);
     if (vp.xAxisFormat === 'custom')
-      return this.formatCustom(x, step, vp.customConst.symbol, vp.customConst.value);
+      return this.formatCustom(x, step, vp.customConst.symbol, Math.abs(vp.customConst.value));
     return this.formatNumber(x, step);
   }
 
@@ -278,7 +278,7 @@ export class CanvasRendererService {
     const unitPx = vp.unit * vp.scaleX;
     if (vp.xAxisFormat === 'pi') return this.niceStepConst(unitPx, Math.PI, config);
     if (vp.xAxisFormat === 'e') return this.niceStepConst(unitPx, Math.E, config);
-    if (vp.xAxisFormat === 'custom') return this.niceStepConst(unitPx, vp.customConst.value, config);
+    if (vp.xAxisFormat === 'custom') return this.niceStepConst(unitPx, Math.abs(vp.customConst.value), config);
     return this.t.niceStep(config.targetGridPx, unitPx);
   }
 

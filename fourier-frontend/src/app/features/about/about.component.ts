@@ -33,9 +33,10 @@ export class AboutComponent implements OnInit {
   readonly transformItems     = ['f1','f3','f4','f5','f7','f8','f9','f6'].map(k => `about.transforms.${k}`);
   readonly integralItems      = ['f1','f2','f3','f4','f5','f6'].map(k => `about.integral.${k}`);
   readonly dftItems           = ['f1','f2','f3','f4','f5','f6','f7','f8','f9'].map(k => `about.dft.${k}`);
-  readonly laplaceDirectItems = ['f1','f2','f3','f4'].map(k => `about.laplace.direct.${k}`);
-  readonly laplaceInverseItems= ['f1','f2','f3','f4'].map(k => `about.laplace.inverse.${k}`);
-  readonly laplaceOdeItems    = ['f1','f2','f3','f4'].map(k => `about.laplace.ode.${k}`);
+  readonly laplaceDirectItems  = ['f1','f2','f3','f4'].map(k => `about.laplace.direct.${k}`);
+  readonly laplaceInverseItems = ['f1','f2','f3','f4'].map(k => `about.laplace.inverse.${k}`);
+  readonly laplaceOdeItems     = ['f1','f2','f3','f4'].map(k => `about.laplace.ode.${k}`);
+  readonly laplaceComplexItems = ['f1','f2','f3','f4'].map(k => `about.laplace.complex.${k}`);
   readonly odeGeneralItems    = ['f1','f2','f3','f4'].map(k => `about.ode.general.${k}`);
   readonly odeIvpItems        = ['f1','f2','f3','f4'].map(k => `about.ode.ivp.${k}`);
   readonly odeBvpItems        = ['f1','f2','f3','f4'].map(k => `about.ode.bvp.${k}`);

@@ -7,9 +7,7 @@ import {
   signal,
   DestroyRef,
   viewChild,
-  ElementRef,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -50,6 +48,10 @@ import { LatexToMaximaService } from '../../../core/services/math/latex-to-maxim
 import { MathquillService, KeyBtn } from '../../../core/services/math/mathquill.service';
 import { MobileMathKeyboardComponent } from '../../../shared/components/math-keyboard/mobile-math-keyboard.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
+import { CanvasShellComponent } from '../../../shared/components/canvas-shell/canvas-shell.component';
+import { CanvasColorService } from '../../../core/services/canvas/canvas-color.service';
+import { ShareDialogComponent } from '../../../shared/components/share-dialog/share-dialog.component';
+import { FavoriteDialogComponent } from '../../../shared/components/favorite-dialog/favorite-dialog.component';
 import {
   FourierTransformResponse,
   InverseFourierTransformResponse,
@@ -123,58 +125,6 @@ const VAR_PAIRS: VarPair[] = [
   { id: 'custom', time: '', freq: '', timeDisplay: '', freqDisplay: '' },
 ];
 
-interface TransformColorPreset {
-  original: string;
-  originalImag: string;
-  originalMag: string;
-  result: string;
-  imag: string;
-  mag: string;
-}
-
-function getTransformColorPreset(isDark: boolean, isNeutral: boolean): TransformColorPreset {
-  if (!isNeutral && !isDark) {
-    return {
-      original: '#dc2626', // red-600   — Re f(t)
-      originalImag: '#9333ea', // purple-600 — Im f(t)
-      originalMag: '#0891b2', // cyan-600   — |f(t)|
-      result: '#2563eb', // blue-600   — Re F(w)
-      imag: '#d97706', // amber-600  — Im F(w)
-      mag: '#16a34a', // green-600  — |F(w)|
-    };
-  }
-
-  if (!isNeutral && isDark) {
-    return {
-      original: '#f87171', // red-400
-      originalImag: '#c084fc', // purple-400
-      originalMag: '#22d3ee', // cyan-400
-      result: '#60a5fa', // blue-400
-      imag: '#fbbf24', // amber-400
-      mag: '#4ade80', // green-400
-    };
-  }
-
-  if (isNeutral && !isDark) {
-    return {
-      original: '#2563eb', // blue-600
-      originalImag: '#7c3aed', // violet-600
-      originalMag: '#0891b2', // cyan-600
-      result: '#0f766e', // teal-700
-      imag: '#c2410c', // orange-700
-      mag: '#4f46e5', // indigo-600
-    };
-  }
-
-  return {
-    original: '#60a5fa', // blue-400
-    originalImag: '#a78bfa', // violet-400
-    originalMag: '#22d3ee', // cyan-400
-    result: '#2dd4bf', // teal-400
-    imag: '#fb923c', // orange-400
-    mag: '#818cf8', // indigo-400
-  };
-}
 
 @Component({
   selector: 'app-continuous-transform',
@@ -190,7 +140,9 @@ function getTransformColorPreset(isDark: boolean, isNeutral: boolean): Transform
     TranslocoPipe,
     MobileMathKeyboardComponent,
     ExportButtonComponent,
-    NgTemplateOutlet,
+    CanvasShellComponent,
+    ShareDialogComponent,
+    FavoriteDialogComponent,
   ],
 })
 export class ContinuousTransformComponent implements OnInit {
@@ -255,13 +207,14 @@ export class ContinuousTransformComponent implements OnInit {
     this.seo.setPage(
       'seo.transforms.title',
       'seo.transforms.description',
-      'Fourier transform calculator, inverse Fourier transform, calculadora transformada de Fourier, transformada inversa de Fourier, IFT, FT, piecewise, symbolic',
+      'Fourier Web Calculator, Fourier transform calculator, calculadora transformada de Fourier, inverse Fourier transform, transformada inversa de Fourier, transformada de Fourier directa, direct Fourier transform, IFT, FT, amplitude spectrum, espectro de amplitud, phase spectrum, espectro de fase, frequency domain, dominio de la frecuencia, piecewise function, función a trozos, symbolic Fourier transform, transformada simbólica, Fourier transform of piecewise, transformada de Fourier de funciones a trozos, rectangular pulse, pulso rectangular, Gaussian, exponential decay, decaimiento exponencial, convolution theorem, teorema de convolución, online Fourier transform, transformada de Fourier en línea',
     );
   }
   readonly plotter = inject(PlottingService);
   private readonly drawingUtils = inject(DrawingUtilsService);
   private readonly mathUtils = inject(MathUtilsService);
   readonly theme = inject(ThemeService);
+  readonly colors = inject(CanvasColorService);
   readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -342,7 +295,6 @@ export class ContinuousTransformComponent implements OnInit {
   readonly originalDashed = signal(false);
   readonly resultDashed = signal(false);
   readonly showCanvasSettings = signal(false);
-  readonly isMobile = signal(typeof window !== 'undefined' && window.innerWidth < 1024);
 
   readonly Math = Math;
 
@@ -350,7 +302,6 @@ export class ContinuousTransformComponent implements OnInit {
   readonly latestHistoryEntry = signal<HistoryEntry | null>(null);
   readonly favoriteLoading = signal(false);
   readonly showFavoriteDialog = signal(false);
-  favoriteName = '';
 
   // ── Free parameter sliders ────────────────────────────────────────────────
   readonly paramValues = signal<ParamValues>({});
@@ -422,12 +373,10 @@ export class ContinuousTransformComponent implements OnInit {
     return { symbol: name, value: pv[name] ?? 1 };
   });
 
-  // ── Share / fullscreen ────────────────────────────────────────────────────
+  // ── Share ─────────────────────────────────────────────────────────────────
   readonly showShareDialog = signal(false);
   readonly urlCopied = signal(false);
-  readonly isFullscreen = signal(false);
 
-  readonly canvasWrapper = viewChild<ElementRef<HTMLDivElement>>('canvasWrapper');
   readonly plotComponent = viewChild(FunctionPlotComponent);
 
   readonly varPairs = VAR_PAIRS;
@@ -435,15 +384,7 @@ export class ContinuousTransformComponent implements OnInit {
   private urlPopulated = false;
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      const onResize = () => this.isMobile.set(window.innerWidth < 1024);
-      window.addEventListener('resize', onResize);
-      this.destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
-    }
-
     effect(() => {
-      void this.theme.theme();
-      void this.theme.palette();
       const preset = this.currentColorPreset();
       if (!this.customOriginalColor()) this.originalColor.set(preset.original);
       if (!this.customOriginalImagColor()) this.originalImagColor.set(preset.originalImag);
@@ -533,13 +474,6 @@ export class ContinuousTransformComponent implements OnInit {
         );
       });
 
-    // Track native fullscreen changes
-    if (typeof document !== 'undefined') {
-      const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
-      document.addEventListener('fullscreenchange', handler);
-      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
-    }
-
     // ── 1. Restore state from router navigation state or URL ──────────────
     const navState = this.router.getCurrentNavigation()?.extras.state as
       | { restoreInput?: Record<string, unknown> }
@@ -614,9 +548,7 @@ export class ContinuousTransformComponent implements OnInit {
     });
   }
 
-  readonly currentColorPreset = computed(() =>
-    getTransformColorPreset(this.theme.isDark, this.theme.isNeutral),
-  );
+  readonly currentColorPreset = this.colors.transformColors;
 
   // ── Computed ──────────────────────────────────────────────────────────────
 
@@ -1144,7 +1076,6 @@ export class ContinuousTransformComponent implements OnInit {
     this.paramSliderMins.set({});
     this.paramSliderMaxs.set({});
     this.latestHistoryEntry.set(null);
-    this.favoriteName = '';
     this.showFavoriteDialog.set(false);
   }
 
@@ -1563,7 +1494,7 @@ export class ContinuousTransformComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.ftResult.set(res);
-            this.showCanvasSettings.set(!this.isMobile());
+            this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
@@ -1588,7 +1519,7 @@ export class ContinuousTransformComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.iftResult.set(res);
-            this.showCanvasSettings.set(!this.isMobile());
+            this.showCanvasSettings.set(typeof window !== 'undefined' && window.innerWidth >= 1024);
             this.loading.set(false);
             this.plotComponent()?.resetView();
             this.userStore.refreshQuota();
@@ -1763,26 +1694,6 @@ export class ContinuousTransformComponent implements OnInit {
       });
   }
 
-  toggleFullscreen(): void {
-    const el = this.canvasWrapper()?.nativeElement;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void el.requestFullscreen();
-    }
-  }
-
-  downloadCanvas(): void {
-    const canvas = this.canvasWrapper()?.nativeElement?.querySelector('canvas');
-    if (!canvas) return;
-    const url = (canvas as HTMLCanvasElement).toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fourier-transform.png';
-    a.click();
-  }
-
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   display(tex: string): string {
@@ -1890,19 +1801,18 @@ export class ContinuousTransformComponent implements OnInit {
     }
   }
 
-  confirmFavorite(): void {
+  onFavoriteConfirmed(name: string): void {
     const entry = this.latestHistoryEntry();
     if (!entry) return;
     this.favoriteLoading.set(true);
     this.showFavoriteDialog.set(false);
     this.api
-      .toggleFavorite(entry.id, this.favoriteName.trim() || undefined)
+      .toggleFavorite(entry.id, name.trim() || undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
           this.latestHistoryEntry.set(updated);
           this.favoriteLoading.set(false);
-          this.favoriteName = '';
         },
         error: () => this.favoriteLoading.set(false),
       });
@@ -1910,7 +1820,6 @@ export class ContinuousTransformComponent implements OnInit {
 
   cancelFavoriteDialog(): void {
     this.showFavoriteDialog.set(false);
-    this.favoriteName = '';
   }
 
   private fetchLatestEntry(callback?: () => void): void {

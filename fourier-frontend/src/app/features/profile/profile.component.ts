@@ -10,6 +10,7 @@ import { AuthService } from '../../core/services/auth/auth.service';
 import { SeoService } from '../../core/services/seo/seo.service';
 import { NavComponent } from '../../shared/components/nav/nav.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
+import { mapApiError } from '../../core/utils/api-error';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const pw  = control.get('newPassword')?.value;
@@ -82,7 +83,7 @@ export class ProfileComponent {
         this.editingName.set(false);
       },
       error: (err) => {
-        this.nameError.set(err?.error?.error ?? 'Error al guardar');
+        this.nameError.set(mapApiError(this.transloco, err?.error?.error));
         this.nameLoading.set(false);
       },
     });
@@ -119,7 +120,7 @@ export class ProfileComponent {
         this.passwordForm.reset();
       },
       error: (err) => {
-        this.pwError.set(err?.error?.error ?? 'Error al cambiar contraseña');
+        this.pwError.set(mapApiError(this.transloco, err?.error?.error));
         this.pwLoading.set(false);
       },
     });
@@ -164,7 +165,7 @@ export class ProfileComponent {
         window.location.href = `/${this.lang()}/home`;
       },
       error: (err) => {
-        this.deleteError.set(err?.error?.error ?? 'Error al eliminar la cuenta');
+        this.deleteError.set(mapApiError(this.transloco, err?.error?.error));
         this.deleteLoading.set(false);
       },
     });

@@ -1,5 +1,4 @@
 <div class="p-6 flex flex-col gap-6 max-w-5xl">
-
   <!-- ── Header ─────────────────────────────────────────────────────────────── -->
   <div>
     <h1 class="font-display text-xl text-ink dark:text-dark-ink">Encuesta</h1>
@@ -16,39 +15,65 @@
         @for (p of quickPeriods; track p.days) {
           <button
             (click)="setQuickPeriod(p.days)"
-            [ngClass]="activeQuickDays() === p.days
-              ? 'bg-accent text-white border-accent'
-              : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+            [ngClass]="
+              activeQuickDays() === p.days
+                ? 'bg-accent text-white border-accent'
+                : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'
+            "
             class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer border transition-colors"
-          >{{ p.label }}</button>
+          >
+            {{ p.label }}
+          </button>
         }
         <button
           (click)="clearDates()"
-          [ngClass]="!hasFilter
-            ? 'bg-accent text-white border-accent'
-            : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'"
+          [ngClass]="
+            !hasFilter
+              ? 'bg-accent text-white border-accent'
+              : 'text-muted dark:text-dark-muted border-border dark:border-dark-border hover:border-accent hover:text-accent'
+          "
           class="px-2.5 py-1.5 rounded-lg text-xs font-mono cursor-pointer border transition-colors"
-        >Todo</button>
+        >
+          Todo
+        </button>
       </div>
     </div>
 
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Desde</label>
-      <input type="date" [(ngModel)]="dateFrom" (change)="applyDates()"
-        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+      <input
+        type="date"
+        [(ngModel)]="dateFrom"
+        (change)="applyDates()"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      />
     </div>
 
     <div class="flex flex-col gap-1">
       <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Hasta</label>
-      <input type="date" [(ngModel)]="dateTo" (change)="applyDates()" [min]="dateFrom"
-        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"/>
+      <input
+        type="date"
+        [(ngModel)]="dateTo"
+        (change)="applyDates()"
+        [min]="dateFrom"
+        class="px-2 py-1.5 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      />
     </div>
 
     @if (hasFilter) {
-      <button (click)="clearDates()"
-        class="mb-0.5 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted hover:text-red-500 hover:border-red-400 transition-colors self-end">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
-          <path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z"/>
+      <button
+        (click)="clearDates()"
+        class="mb-0.5 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-muted dark:text-dark-muted hover:text-red-500 hover:border-red-400 transition-colors self-end"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          class="w-3 h-3"
+        >
+          <path
+            d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z"
+          />
         </svg>
         Limpiar
       </button>
@@ -57,9 +82,20 @@
 
   <!-- ── Error ──────────────────────────────────────────────────────────────── -->
   @if (error) {
-    <div class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 shrink-0">
-        <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+    <div
+      class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-mono bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="w-4 h-4 shrink-0"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+          clip-rule="evenodd"
+        />
       </svg>
       No se pudieron cargar las estadísticas de la encuesta.
     </div>
@@ -68,15 +104,27 @@
   <!-- ── Skeleton ───────────────────────────────────────────────────────────── -->
   @if (loading && !stats) {
     <div class="flex flex-col gap-4 animate-pulse">
-      <div class="h-10 w-32 rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+      <div
+        class="h-10 w-32 rounded-lg bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+      ></div>
       <div class="grid grid-cols-2 gap-4">
-        <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
-        <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+        <div
+          class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+        ></div>
+        <div
+          class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+        ></div>
       </div>
-      <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+      <div
+        class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+      ></div>
       <div class="grid grid-cols-2 gap-4">
-        <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
-        <div class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"></div>
+        <div
+          class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+        ></div>
+        <div
+          class="h-48 rounded-xl bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border"
+        ></div>
       </div>
     </div>
   }
@@ -84,72 +132,137 @@
   @if (stats) {
     <!-- Total badge -->
     <div class="flex items-center gap-2">
-      <span class="font-mono text-3xl font-bold text-ink dark:text-dark-ink">{{ stats.total }}</span>
-      <span class="text-sm text-muted dark:text-dark-muted font-mono">respuestas en el período</span>
+      <span class="font-mono text-3xl font-bold text-ink dark:text-dark-ink">{{
+        stats.total
+      }}</span>
+      <span class="text-sm text-muted dark:text-dark-muted font-mono"
+        >respuestas en el período</span
+      >
     </div>
 
     <!-- ════════════════════════════════════════════════════════════════════════
          PERFIL DEL USUARIO
          ════════════════════════════════════════════════════════════════════════ -->
-    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
+    <h2
+      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
+    >
       Perfil del usuario
     </h2>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <section
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Rol académico</span>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+            >Rol académico</span
+          >
         </div>
-        <div class="p-4" style="height:200px;position:relative"><canvas id="svRole"></canvas></div>
+        <div class="p-4" style="height: 200px; position: relative">
+          <canvas id="svRole"></canvas>
+        </div>
       </section>
 
       @if (stats.byAcademicLevel.length) {
-        <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+        <section
+          class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+        >
           <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-            <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Nivel académico</span>
+            <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+              >Nivel académico</span
+            >
           </div>
-          <div class="p-4" style="height:200px;position:relative"><canvas id="svAcademicLevel"></canvas></div>
+          <div class="p-4" style="height: 200px; position: relative">
+            <canvas id="svAcademicLevel"></canvas>
+          </div>
         </section>
       }
 
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <section
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">¿Cómo encontraron la app?</span>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+            >¿Cómo encontraron la app?</span
+          >
         </div>
-        <div class="p-4" style="height:200px;position:relative"><canvas id="svHowFound"></canvas></div>
+        <div class="p-4" style="height: 200px; position: relative">
+          <canvas id="svHowFound"></canvas>
+        </div>
       </section>
     </div>
 
-    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-      <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Países (top 10)</span>
+    <section
+      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+    >
+      <div
+        class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between"
+      >
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">
+          Países {{ showAllCountries ? '(todos)' : '(top 10)' }}
+        </span>
+        @if (stats.topCountries.length > 10) {
+          <button
+            (click)="toggleCountries()"
+            class="text-[11px] font-mono text-accent hover:underline"
+          >
+            {{ showAllCountries ? 'Ver top 10' : 'Ver todos (' + stats.topCountries.length + ')' }}
+          </button>
+        }
       </div>
-      <div class="p-4" style="height:260px;position:relative"><canvas id="svCountry"></canvas></div>
+      <div
+        class="p-4"
+        style="position: relative"
+        [style.height]="showAllCountries ? stats.topCountries.length * 28 + 24 + 'px' : '260px'"
+      >
+        <canvas id="svCountry"></canvas>
+      </div>
     </section>
 
     <!-- Institución y carrera -->
     @if (stats.institutions.length || stats.careers.length) {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         @if (stats.institutions.length) {
-          <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-            <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+          <section
+            class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+          >
+            <div
+              class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between"
+            >
               <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">
                 Instituciones (top {{ stats.institutions.length }})
               </span>
               @if (stats.institutions.length > 5) {
-                <button type="button" (click)="showAllInstitutions = !showAllInstitutions"
-                  class="text-[11px] font-mono text-accent hover:underline underline-offset-2">
-                  {{ showAllInstitutions ? 'Ver menos' : 'Ver todas (' + stats.institutions.length + ')' }}
+                <button
+                  type="button"
+                  (click)="showAllInstitutions = !showAllInstitutions"
+                  class="text-[11px] font-mono text-accent hover:underline underline-offset-2"
+                >
+                  {{
+                    showAllInstitutions
+                      ? 'Ver menos'
+                      : 'Ver todas (' + stats.institutions.length + ')'
+                  }}
                 </button>
               }
             </div>
             <div class="divide-y divide-border dark:divide-dark-border">
-              @for (row of (showAllInstitutions ? stats.institutions : stats.institutions.slice(0, 5)); track row.value; let i = $index) {
+              @for (
+                row of showAllInstitutions ? stats.institutions : stats.institutions.slice(0, 5);
+                track row.value;
+                let i = $index
+              ) {
                 <div class="px-4 py-2 flex items-center justify-between gap-2">
-                  <span class="text-xs font-mono text-ink dark:text-dark-ink truncate" [title]="row.value">
-                    <span class="text-muted dark:text-dark-muted mr-1.5">{{ i + 1 }}.</span>{{ row.value }}
+                  <span
+                    class="text-xs font-mono text-ink dark:text-dark-ink truncate"
+                    [title]="row.value"
+                  >
+                    <span class="text-muted dark:text-dark-muted mr-1.5">{{ i + 1 }}.</span
+                    >{{ row.value }}
                   </span>
-                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{ row.count }}</span>
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{
+                    row.count
+                  }}</span>
                 </div>
               }
             </div>
@@ -157,25 +270,42 @@
         }
 
         @if (stats.careers.length) {
-          <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-            <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+          <section
+            class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+          >
+            <div
+              class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between"
+            >
               <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">
                 Carreras (top {{ stats.careers.length }})
               </span>
               @if (stats.careers.length > 5) {
-                <button type="button" (click)="showAllCareers = !showAllCareers"
-                  class="text-[11px] font-mono text-accent hover:underline underline-offset-2">
+                <button
+                  type="button"
+                  (click)="showAllCareers = !showAllCareers"
+                  class="text-[11px] font-mono text-accent hover:underline underline-offset-2"
+                >
                   {{ showAllCareers ? 'Ver menos' : 'Ver todas (' + stats.careers.length + ')' }}
                 </button>
               }
             </div>
             <div class="divide-y divide-border dark:divide-dark-border">
-              @for (row of (showAllCareers ? stats.careers : stats.careers.slice(0, 5)); track row.value; let i = $index) {
+              @for (
+                row of showAllCareers ? stats.careers : stats.careers.slice(0, 5);
+                track row.value;
+                let i = $index
+              ) {
                 <div class="px-4 py-2 flex items-center justify-between gap-2">
-                  <span class="text-xs font-mono text-ink dark:text-dark-ink truncate" [title]="row.value">
-                    <span class="text-muted dark:text-dark-muted mr-1.5">{{ i + 1 }}.</span>{{ row.value }}
+                  <span
+                    class="text-xs font-mono text-ink dark:text-dark-ink truncate"
+                    [title]="row.value"
+                  >
+                    <span class="text-muted dark:text-dark-muted mr-1.5">{{ i + 1 }}.</span
+                    >{{ row.value }}
                   </span>
-                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{ row.count }}</span>
+                  <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{
+                    row.count
+                  }}</span>
                 </div>
               }
             </div>
@@ -186,25 +316,47 @@
 
     <!-- Campos "otro" -->
     @if (otherByField.length) {
-      <details class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden group">
-        <summary class="px-4 py-3 cursor-pointer flex items-center justify-between select-none list-none">
+      <details
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden group"
+      >
+        <summary
+          class="px-4 py-3 cursor-pointer flex items-center justify-between select-none list-none"
+        >
           <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">
             Respuestas libres "Otro"
           </span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-            class="w-4 h-4 text-muted dark:text-dark-muted transition-transform group-open:rotate-180">
-            <path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            class="w-4 h-4 text-muted dark:text-dark-muted transition-transform group-open:rotate-180"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z"
+              clip-rule="evenodd"
+            />
           </svg>
         </summary>
-        <div class="border-t border-border dark:border-dark-border divide-y divide-border dark:divide-dark-border">
+        <div
+          class="border-t border-border dark:border-dark-border divide-y divide-border dark:divide-dark-border"
+        >
           @for (group of otherByField; track group.field) {
             <div class="px-4 py-3">
-              <p class="text-[11px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide mb-2">{{ group.label }}</p>
+              <p
+                class="text-[11px] font-mono text-muted dark:text-dark-muted uppercase tracking-wide mb-2"
+              >
+                {{ group.label }}
+              </p>
               <div class="flex flex-col gap-1">
                 @for (entry of group.entries; track entry.value) {
                   <div class="flex items-center justify-between gap-2">
-                    <span class="text-xs font-mono text-ink dark:text-dark-ink">{{ entry.value }}</span>
-                    <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{ entry.count }}</span>
+                    <span class="text-xs font-mono text-ink dark:text-dark-ink">{{
+                      entry.value
+                    }}</span>
+                    <span class="text-xs font-mono text-muted dark:text-dark-muted shrink-0">{{
+                      entry.count
+                    }}</span>
                   </div>
                 }
               </div>
@@ -217,187 +369,350 @@
     <!-- ════════════════════════════════════════════════════════════════════════
          USO DE LA APLICACIÓN
          ════════════════════════════════════════════════════════════════════════ -->
-    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
+    <h2
+      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
+    >
       Uso de la aplicación
     </h2>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <section
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Propósito de uso</span>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+            >Propósito de uso</span
+          >
         </div>
-        <div class="p-4" style="height:220px;position:relative"><canvas id="svPurpose"></canvas></div>
+        <div class="p-4" style="height: 220px; position: relative">
+          <canvas id="svPurpose"></canvas>
+        </div>
       </section>
 
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <section
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Funcionalidades usadas</span>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+            >Funcionalidades usadas</span
+          >
         </div>
-        <div class="p-4" style="height:220px;position:relative"><canvas id="svFeature"></canvas></div>
+        <div class="p-4" style="height: 220px; position: relative">
+          <canvas id="svFeature"></canvas>
+        </div>
       </section>
     </div>
 
     <!-- ════════════════════════════════════════════════════════════════════════
          DISPOSITIVO Y VERSIÓN ANTERIOR
          ════════════════════════════════════════════════════════════════════════ -->
-    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
+    <h2
+      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
+    >
       Dispositivo y versión anterior
     </h2>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <section
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
           <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Dispositivo</span>
         </div>
-        <div class="p-4" style="height:220px;position:relative"><canvas id="svDevice"></canvas></div>
+        <div class="p-4" style="height: 220px; position: relative">
+          <canvas id="svDevice"></canvas>
+        </div>
       </section>
 
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <section
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">¿Usó versión anterior?</span>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+            >¿Usó versión anterior?</span
+          >
         </div>
-        <div class="p-4" style="height:220px;position:relative"><canvas id="svUsedPrev"></canvas></div>
+        <div class="p-4" style="height: 220px; position: relative">
+          <canvas id="svUsedPrev"></canvas>
+        </div>
       </section>
     </div>
 
-    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+    <section
+      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+    >
       <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Mejoras solicitadas</span>
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+          >Mejoras notadas vs. versión anterior</span
+        >
       </div>
       @if (stats.improvements.length === 0) {
-        <div class="px-4 py-6 text-center text-sm font-mono text-muted dark:text-dark-muted">Sin datos todavía</div>
+        <div class="px-4 py-6 text-center text-sm font-mono text-muted dark:text-dark-muted">
+          Sin datos todavía
+        </div>
       } @else {
-        <div class="p-4" style="height:220px;position:relative"><canvas id="svImprove"></canvas></div>
+        <div class="p-4" style="height: 220px; position: relative">
+          <canvas id="svImprove"></canvas>
+        </div>
       }
     </section>
 
     <!-- ════════════════════════════════════════════════════════════════════════
          CALIDAD PERCIBIDA
          ════════════════════════════════════════════════════════════════════════ -->
-    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
+    <h2
+      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
+    >
       Calidad percibida
     </h2>
 
-    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+    <section
+      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+    >
       <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Promedios (escala 1–5)</span>
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+          >Promedios (escala 1–5)</span
+        >
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 pt-4">
-        <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border">
-          <span class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide">Utilidad</span>
-          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{ stats.avgRatings.usefulness | number:'1.1-1' }}</span>
+        <div
+          class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border"
+        >
+          <span
+            class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide"
+            >Utilidad</span
+          >
+          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{
+            stats.avgRatings.usefulness | number: '1.1-1'
+          }}</span>
         </div>
-        <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border">
-          <span class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide">Facilidad</span>
-          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{ stats.avgRatings.ease | number:'1.1-1' }}</span>
+        <div
+          class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border"
+        >
+          <span
+            class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide"
+            >Facilidad</span
+          >
+          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{
+            stats.avgRatings.ease | number: '1.1-1'
+          }}</span>
         </div>
-        <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border">
-          <span class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide">vs Otras herram.</span>
-          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{ stats.avgRatings.vs_other | number:'1.1-1' }}</span>
+        <div
+          class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border"
+        >
+          <span
+            class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide"
+            >vs Otras herram.</span
+          >
+          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{
+            stats.avgRatings.vs_other | number: '1.1-1'
+          }}</span>
         </div>
-        <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border">
-          <span class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide">Recomendaría</span>
-          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{ stats.avgRatings.recommend | number:'1.1-1' }}</span>
+        <div
+          class="flex flex-col gap-0.5 px-3 py-2 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border"
+        >
+          <span
+            class="text-[10px] text-muted dark:text-dark-muted font-mono uppercase tracking-wide"
+            >Recomendaría</span
+          >
+          <span class="font-mono text-lg font-semibold text-ink dark:text-dark-ink">{{
+            stats.avgRatings.recommend | number: '1.1-1'
+          }}</span>
         </div>
       </div>
-      <div class="p-4" style="height:180px;position:relative"><canvas id="svRatings"></canvas></div>
+      <div class="p-4" style="height: 180px; position: relative">
+        <canvas id="svRatings"></canvas>
+      </div>
     </section>
 
     <!-- Distribución de ratings -->
     @if (stats.ratingDist.length) {
-      <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
+      <section
+        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+      >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Distribución de calificaciones por estrella</span>
-          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">Cuántos usuarios dieron cada puntuación en cada dimensión</p>
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+            >Distribución de calificaciones por estrella</span
+          >
+          <p class="text-xs text-muted dark:text-dark-muted mt-0.5">
+            Cuántos usuarios dieron cada puntuación en cada dimensión
+          </p>
         </div>
-        <div class="p-4" style="height:240px;position:relative"><canvas id="svRatingDist"></canvas></div>
+        <div class="p-4" style="height: 240px; position: relative">
+          <canvas id="svRatingDist"></canvas>
+        </div>
       </section>
     }
 
     <!-- ════════════════════════════════════════════════════════════════════════
          ACTIVIDAD
          ════════════════════════════════════════════════════════════════════════ -->
-    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
+    <h2
+      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
+    >
       Actividad
     </h2>
 
-    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-      <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Tendencia de respuestas</span>
+    <section
+      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+    >
+      <div
+        class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between"
+      >
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+          >Tendencia de respuestas</span
+        >
         <span class="text-xs font-mono text-muted dark:text-dark-muted">
-          @if (dateFrom && dateTo) { De {{ dateFrom }} a {{ dateTo }} }
-          @else if (dateFrom)      { Desde {{ dateFrom }} }
-          @else if (dateTo)        { Hasta {{ dateTo }} }
-          @else                    { Todo el historial }
+          @if (dateFrom && dateTo) {
+            De {{ dateFrom }} a {{ dateTo }}
+          } @else if (dateFrom) {
+            Desde {{ dateFrom }}
+          } @else if (dateTo) {
+            Hasta {{ dateTo }}
+          } @else {
+            Todo el historial
+          }
         </span>
       </div>
-      <div class="p-4" style="height:220px;position:relative"><canvas id="svDay"></canvas></div>
+      <div class="p-4" style="height: 220px; position: relative"><canvas id="svDay"></canvas></div>
     </section>
 
     <!-- ════════════════════════════════════════════════════════════════════════
          COMENTARIOS DE LA ENCUESTA
          ════════════════════════════════════════════════════════════════════════ -->
-    <h2 class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2">
+    <h2
+      class="font-display text-base text-ink dark:text-dark-ink border-b border-border dark:border-dark-border pb-2"
+    >
       Comentarios recibidos
     </h2>
 
-    <section class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden">
-      <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
-        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Textos libres de la encuesta</span>
+    <section
+      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+    >
+      <div
+        class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between"
+      >
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
+          >Textos libres de la encuesta</span
+        >
         @if (commentsList) {
           <span class="text-xs font-mono text-muted dark:text-dark-muted">
-            {{ commentsList.offset + 1 }}–{{ Math.min(commentsList.offset + commentsList.limit, commentsList.total) }}
+            {{ commentsList.offset + 1 }}–{{
+              Math.min(commentsList.offset + commentsList.limit, commentsList.total)
+            }}
             de {{ commentsList.total }}
           </span>
         }
       </div>
 
       @if (loadingComments) {
-        <div class="p-4 text-center text-sm text-muted dark:text-dark-muted font-mono">Cargando…</div>
+        <div class="p-4 text-center text-sm text-muted dark:text-dark-muted font-mono">
+          Cargando…
+        </div>
       } @else if (errorComments) {
-        <div class="p-4 text-sm text-red-600 dark:text-red-400 font-mono bg-red-50 dark:bg-red-950/30">Error al cargar comentarios</div>
+        <div
+          class="p-4 text-sm text-red-600 dark:text-red-400 font-mono bg-red-50 dark:bg-red-950/30"
+        >
+          Error al cargar comentarios
+        </div>
       } @else if (!commentsList || commentsList.data.length === 0) {
-        <div class="p-6 text-center text-sm text-muted dark:text-dark-muted font-mono">Sin comentarios todavía</div>
+        <div class="p-6 text-center text-sm text-muted dark:text-dark-muted font-mono">
+          Sin comentarios todavía
+        </div>
       } @else {
         <div class="divide-y divide-border dark:divide-dark-border">
           @for (item of commentsList.data; track item.id) {
             <div class="p-4 hover:bg-paper3 dark:hover:bg-dark-surface/80 transition-colors">
               <div class="flex items-center justify-between mb-2">
-                <span class="inline-flex items-center px-2 py-1 text-xs font-mono rounded-md"
+                <span
+                  class="inline-flex items-center px-2 py-1 text-xs font-mono rounded-md"
                   [ngClass]="{
-                    'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300':         item.type === 'bug',
-                    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300': item.type === 'comment',
-                    'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300': item.type === 'regression',
-                    'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300':        true
-                  }">
+                    'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300':
+                      item.type === 'bug',
+                    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300':
+                      item.type === 'comment',
+                    'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300':
+                      item.type === 'regression',
+                    'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300': true,
+                  }"
+                >
                   @switch (item.type) {
-                    @case ('bug')        { Error reportado }
-                    @case ('comment')    { Comentario general }
-                    @case ('regression') { Regresión }
-                    @default             { {{ item.type }} }
+                    @case ('bug') {
+                      Error reportado
+                    }
+                    @case ('comment') {
+                      Comentario general
+                    }
+                    @case ('regression') {
+                      Regresión
+                    }
+                    @default {
+                      {{ item.type }}
+                    }
                   }
                 </span>
-                <span class="text-xs text-muted dark:text-dark-muted font-mono">{{ formatDate(item.created_at) }}</span>
+                <span class="text-xs text-muted dark:text-dark-muted font-mono">{{
+                  formatDate(item.created_at)
+                }}</span>
               </div>
-              <p class="text-sm text-ink dark:text-dark-ink whitespace-pre-wrap wrap-break-word">{{ item.content }}</p>
-              <div class="mt-2 text-xs text-muted dark:text-dark-muted font-mono">
-                @if (item.user_id) { Usuario autenticado } @else { Anónimo }
+              <p class="text-sm text-ink dark:text-dark-ink whitespace-pre-wrap wrap-break-word">
+                {{ item.content }}
+              </p>
+              <div class="mt-2 flex items-center justify-between gap-2">
+                <span class="text-xs text-muted dark:text-dark-muted font-mono">
+                  @if (item.email) {
+                    {{ item.email }}
+                  } @else if (item.user_id) {
+                    Usuario autenticado
+                  } @else {
+                    Anónimo
+                  }
+                </span>
+                @if (item.email) {
+                  <button
+                    (click)="openReply(item.email, '', 'Re: Encuesta — AEM -LAB')"
+                    class="flex items-center gap-1 px-2 py-1 text-[11px] font-mono rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      class="w-3 h-3"
+                    >
+                      <path
+                        d="M1.92.506a.5.5 0 0 1 .434.14L15 7.146V8l-1.01.5L3 4.5v2.236l4.646 2.582L3 11.9V14a.5.5 0 0 1-.783.412L.25 12.604A.5.5 0 0 1 0 12.17V1a.5.5 0 0 1 .5-.5h1.42Z"
+                      />
+                    </svg>
+                    Responder
+                  </button>
+                }
               </div>
             </div>
           }
         </div>
 
         @if (commentsList.total > commentsList.limit) {
-          <div class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between">
-            <button (click)="loadPrevComments()" [disabled]="commentsList.offset === 0 || loadingComments"
-              class="px-3 py-1.5 text-xs font-mono rounded border border-border dark:border-dark-border hover:bg-paper3 dark:hover:bg-dark-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          <div
+            class="px-4 py-3 border-t border-border dark:border-dark-border flex items-center justify-between"
+          >
+            <button
+              (click)="loadPrevComments()"
+              [disabled]="commentsList.offset === 0 || loadingComments"
+              class="px-3 py-1.5 text-xs font-mono rounded border border-border dark:border-dark-border hover:bg-paper3 dark:hover:bg-dark-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               ← Anterior
             </button>
             <span class="text-xs text-muted dark:text-dark-muted font-mono">
-              Página {{ commentsList.offset / commentsList.limit + 1 }} de {{ Math.ceil(commentsList.total / commentsList.limit) }}
+              Página {{ commentsList.offset / commentsList.limit + 1 }} de
+              {{ Math.ceil(commentsList.total / commentsList.limit) }}
             </span>
-            <button (click)="loadNextComments()" [disabled]="commentsList.offset + commentsList.limit >= commentsList.total || loadingComments"
-              class="px-3 py-1.5 text-xs font-mono rounded border border-border dark:border-dark-border hover:bg-paper3 dark:hover:bg-dark-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <button
+              (click)="loadNextComments()"
+              [disabled]="
+                commentsList.offset + commentsList.limit >= commentsList.total || loadingComments
+              "
+              class="px-3 py-1.5 text-xs font-mono rounded border border-border dark:border-dark-border hover:bg-paper3 dark:hover:bg-dark-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Siguiente →
             </button>
           </div>
@@ -406,3 +721,178 @@
     </section>
   }
 </div>
+
+<!-- ── Reply dialog ──────────────────────────────────────────────────────── -->
+<dialog
+  #replyDialog
+  style="
+    margin: auto;
+    width: min(520px, calc(100vw - 2rem));
+    border-radius: 12px;
+    padding: 0;
+    border: none;
+  "
+  class="bg-paper dark:bg-dark-bg shadow-2xl"
+>
+  <div
+    class="px-5 py-4 border-b border-border dark:border-dark-border flex items-center justify-between"
+  >
+    <div class="flex items-center gap-2">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        fill="currentColor"
+        class="w-4 h-4 text-accent"
+      >
+        <path
+          d="M1.92.506a.5.5 0 0 1 .434.14L15 7.146V8l-1.01.5L3 4.5v2.236l4.646 2.582L3 11.9V14a.5.5 0 0 1-.783.412L.25 12.604A.5.5 0 0 1 0 12.17V1a.5.5 0 0 1 .5-.5h1.42Z"
+        />
+      </svg>
+      <span class="font-mono text-sm font-medium text-ink dark:text-dark-ink"
+        >Responder por correo</span
+      >
+    </div>
+    <button
+      (click)="closeReply()"
+      class="text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors p-1 rounded hover:bg-paper2 dark:hover:bg-dark-surface"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        fill="currentColor"
+        class="w-4 h-4"
+      >
+        <path
+          d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <div class="p-5 flex flex-col gap-4">
+    <!-- Para + Idioma en la misma fila -->
+    <div class="flex gap-3">
+      <div class="flex flex-col gap-1 flex-1 min-w-0">
+        <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Para</label>
+        <input
+          type="email"
+          [value]="replyTo"
+          readonly
+          class="px-3 py-2 rounded-lg text-xs font-mono bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border text-muted dark:text-dark-muted cursor-default focus:outline-none w-full"
+        />
+      </div>
+      <div class="flex flex-col gap-1 w-24 shrink-0">
+        <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Idioma</label>
+        <select
+          [(ngModel)]="replyLang"
+          class="px-2 py-2 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent cursor-pointer"
+        >
+          <option value="es">🇲🇽 ES</option>
+          <option value="en">🇺🇸 EN</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Asunto -->
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Asunto</label>
+      <input
+        type="text"
+        [(ngModel)]="replySubject"
+        class="px-3 py-2 rounded-lg text-xs font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent"
+      />
+    </div>
+
+    <!-- Mensaje -->
+    <div class="flex flex-col gap-1">
+      <label class="text-[11px] font-mono text-muted dark:text-dark-muted">Mensaje</label>
+      <textarea
+        [(ngModel)]="replyBody"
+        rows="8"
+        placeholder="Escribe tu mensaje aquí…"
+        class="px-3 py-2 rounded-lg text-sm font-mono bg-paper dark:bg-dark-bg border border-border dark:border-dark-border text-ink dark:text-dark-ink focus:outline-none focus:border-accent resize-y leading-relaxed"
+      ></textarea>
+      <span
+        class="text-[10px] font-mono self-end"
+        [class]="replyBody.length > 4800 ? 'text-red-400' : 'text-muted dark:text-dark-muted'"
+      >
+        {{ replyBody.length }}/5000
+      </span>
+    </div>
+
+    @if (replyError) {
+      <p class="text-xs font-mono text-red-500 flex items-center gap-1">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          class="w-3.5 h-3.5 shrink-0"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm0-10a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 5Zm0 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        {{ replyError }}
+      </p>
+    }
+    @if (replySent) {
+      <p class="text-xs font-mono text-green-600 dark:text-green-400 flex items-center gap-1">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          class="w-3.5 h-3.5 shrink-0"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        Correo enviado correctamente.
+      </p>
+    }
+  </div>
+
+  <div class="px-5 py-3 border-t border-border dark:border-dark-border flex justify-end gap-2">
+    <button
+      (click)="closeReply()"
+      class="px-3 py-1.5 text-xs font-mono rounded border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+    >
+      Cancelar
+    </button>
+    <button
+      (click)="sendReply()"
+      [disabled]="replySending || !replyBody.trim()"
+      class="px-4 py-1.5 text-xs font-mono rounded bg-accent text-white hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+    >
+      @if (replySending) {
+        <svg
+          class="w-3 h-3 animate-spin"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
+          ></path>
+        </svg>
+        Enviando…
+      } @else {
+        Enviar correo
+      }
+    </button>
+  </div>
+</dialog>

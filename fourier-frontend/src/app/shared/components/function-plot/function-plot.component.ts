@@ -23,16 +23,23 @@ import {
   DEFAULT_RENDER_CONFIG,
   Curve,
   MathPoint,
+  PlotFn,
   DARK_THEME,
   LIGHT_THEME,
   NEUTRAL_DARK_THEME,
   NEUTRAL_LIGHT_THEME,
 } from '../../../core/services/canvas/canvas.types';
-export type { AxisConst, CanvasRenderConfig } from '../../../core/services/canvas/canvas.types';
+export type { AxisConst, CanvasRenderConfig, PlotFn } from '../../../core/services/canvas/canvas.types';
 
 export interface PlotLayer {
   curves: Curve[];
-  /** Called every frame — use for dynamic/animated content */
+  /**
+   * Declarative functions sampled and cached by FunctionPlotComponent.
+   * Re-sampled only when the visible X range changes meaningfully (> ~5%).
+   * Use instead of `onDraw` + `plotFn` for static mathematical curves.
+   */
+  fns?: PlotFn[];
+  /** Called every frame — reserve for genuinely dynamic content (animation, crosshair). */
   onDraw?: (ctx: CanvasRenderingContext2D, vp: CanvasViewport) => void;
 }
 
@@ -189,11 +196,21 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
   private lastPinchDist = 0;
   private resizeObserver: ResizeObserver | null = null;
 
+  // ── PlotFn sample cache ───────────────────────────────────────────────────
+  // Keyed by PlotFn object identity. Stores the last sampled xMin/xMax and the
+  // resulting Curve so re-sampling only happens when the visible range changes
+  // by more than FN_CACHE_THRESHOLD (fraction of visible width).
+  private readonly fnCache = new Map<PlotFn, { xMin: number; xMax: number; curve: Curve }>();
+  private static readonly FN_CACHE_THRESHOLD = 0.05;
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   constructor() {
     effect(() => {
       void this.layers();
+      // Clear the fn cache whenever layers change so stale PlotFn entries
+      // from the previous computed result don't accumulate.
+      this.fnCache.clear();
       this.scheduleRedraw();
     });
     effect(() => {
@@ -208,22 +225,25 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
       const fmt = this.xAxisFormat();
       const cc = this.customConst();
       this.vp.update((v) => {
-        // When already in 'custom' mode and only the value changes,
-        // rescale X so that pixels-per-T-unit stays constant.
-        // This couples the grid marks and the curves together.
+        // When switching to a different custom symbol, rescale X so the
+        // grid marks land at the same screen positions. When only the value
+        // changes (slider drag on the same symbol), keep the viewport still —
+        // the renderer recalibrates labels automatically.
         if (
           fmt === 'custom' &&
           v.xAxisFormat === 'custom' &&
-          cc.value > 0 &&
-          v.customConst.value > 0 &&
-          Math.abs(cc.value - v.customConst.value) > 1e-10
+          cc.symbol !== v.customConst.symbol
         ) {
-          return {
-            ...v,
-            xAxisFormat: fmt,
-            customConst: cc,
-            scaleX: (v.scaleX * v.customConst.value) / cc.value,
-          };
+          const absNew = Math.abs(cc.value);
+          const absOld = Math.abs(v.customConst.value);
+          if (absNew > 0 && absOld > 0) {
+            return {
+              ...v,
+              xAxisFormat: fmt,
+              customConst: cc,
+              scaleX: (v.scaleX * absOld) / absNew,
+            };
+          }
         }
         return { ...v, xAxisFormat: fmt, customConst: cc };
       });
@@ -454,8 +474,68 @@ export class FunctionPlotComponent implements AfterViewInit, OnDestroy {
       for (const curve of layer.curves) {
         this.plotter.drawCurve(ctx, curve, vp, cfg);
       }
+      if (layer.fns?.length) {
+        for (const plotFn of layer.fns) {
+          const curve = this.cachedSample(plotFn, vp, cfg);
+          this.plotter.drawCurve(ctx, curve, vp, cfg);
+        }
+      }
       layer.onDraw?.(ctx, vp);
     }
+  }
+
+  /**
+   * Returns a cached Curve for the given PlotFn, re-sampling only when the
+   * visible X range has drifted more than FN_CACHE_THRESHOLD from the cached range.
+   * Fixed-domain fns ([from, to]) are sampled once and never invalidated by pan.
+   */
+  private cachedSample(plotFn: PlotFn, vp: CanvasViewport, cfg: CanvasRenderConfig): Curve {
+    const range = this.coords.visibleRange(vp);
+    const isFixed = plotFn.from !== undefined && plotFn.to !== undefined;
+
+    const cached = this.fnCache.get(plotFn);
+    if (cached) {
+      if (isFixed) {
+        // Fixed domain: only re-sample when cssWidth changes (resize).
+        // The cached xMin/xMax store cssWidth for this purpose.
+        if (cached.xMin === vp.cssWidth) return cached.curve;
+      } else {
+        const cachedWidth = cached.xMax - cached.xMin;
+        const drift = Math.max(
+          Math.abs(range.xMin - cached.xMin),
+          Math.abs(range.xMax - cached.xMax),
+        );
+        if (drift < cachedWidth * FunctionPlotComponent.FN_CACHE_THRESHOLD) {
+          return cached.curve;
+        }
+      }
+    }
+
+    // Sample with extra margin (2×) so short pans never show an edge.
+    let xMin: number, xMax: number, points: MathPoint[];
+    if (isFixed) {
+      xMin = vp.cssWidth; // sentinel: re-sample only on resize
+      xMax = vp.cssWidth;
+      const steps = plotFn.steps ?? Math.round(vp.cssWidth * cfg.defaultOversample);
+      points = this.plotter.sampleRange(plotFn.fn, plotFn.from!, plotFn.to!, steps);
+    } else {
+      const margin = (range.xMax - range.xMin) * 0.5;
+      xMin = range.xMin - margin;
+      xMax = range.xMax + margin;
+      const steps = plotFn.steps ?? Math.round(vp.cssWidth * cfg.defaultOversample * 2);
+      points = this.plotter.sampleRange(plotFn.fn, xMin, xMax, steps);
+    }
+
+    const curve: Curve = {
+      points,
+      color: plotFn.color,
+      lineWidth: plotFn.lineWidth,
+      dashed: plotFn.dashed,
+      dashPattern: plotFn.dashPattern,
+      jumpStyle: plotFn.jumpStyle,
+    };
+    this.fnCache.set(plotFn, { xMin, xMax, curve });
+    return curve;
   }
 
   // ── Resize ────────────────────────────────────────────────────────────────

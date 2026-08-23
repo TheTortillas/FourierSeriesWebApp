@@ -12,6 +12,7 @@ export interface AdminUser {
   createdAt: string;
   updatedAt: string;
   lastLogin?: string;
+  avatarUrl?: string | null;
 }
 
 export interface AdminUsersQuery {
@@ -179,8 +180,8 @@ export const CALC_TYPE_LABEL: Record<string, string> = {
   trigonometric:             'Trigonométrica',
   half_range:                'Medio rango',
   complex:                   'Compleja',
-  fourier_transform:         'Transformada',
-  inverse_fourier_transform: 'T. Inversa',
+  fourier_transform:         'T. Fourier',
+  inverse_fourier_transform: 'T. Fourier Inversa',
   dft_signal:                'DFT señal',
   dft_function:              'DFT función',
   dft_epicycles:             'DFT epiciclos',

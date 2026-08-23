@@ -1,20 +1,18 @@
 import {
   Component,
   computed,
-  DestroyRef,
   effect,
-  ElementRef,
   inject,
   input,
   signal,
-  viewChild,
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { FunctionPlotComponent, PlotLayer } from '../function-plot/function-plot.component';
+import { CanvasShellComponent } from '../canvas-shell/canvas-shell.component';
 import { CanvasViewport } from '../../../core/services/canvas/canvas.types';
 import { DrawingUtilsService } from '../../../core/services/canvas/drawing-utils.service';
+import { CanvasColorService, SpectrumColors } from '../../../core/services/canvas/canvas-color.service';
 import { TrigonometricTerm, ComplexTerm } from '../../../domain/types/fourier.types';
-import { ThemeService } from '../../../core/services/theme/theme.service';
 
 type SpectrumMode =
   | 'trigAmp'
@@ -36,190 +34,12 @@ interface StemPoint {
 
 @Component({
   selector: 'app-spectrum-chart',
-  imports: [FunctionPlotComponent, TranslocoPipe],
-  template: `
-    <div
-      #chartWrapper
-      class="relative h-80 border border-border dark:border-dark-border rounded bg-paper dark:bg-dark-bg overflow-hidden"
-    >
-      <app-function-plot
-        [layers]="layers()"
-        [initialUnit]="48"
-        [xAxisFormat]="'integer'"
-        (mathPointerMove)="onMathPointerMove($event)"
-      />
-
-      <!-- Overlay buttons — shift right when side panel open -->
-      <div
-        class="absolute top-2 flex gap-1 pointer-events-none transition-[left] duration-200"
-        [style.left]="showStylePanel() ? 'calc(33.333% + 8px)' : '8px'"
-      >
-        <!-- Fullscreen -->
-        <button
-          type="button"
-          (click)="toggleFullscreen()"
-          [title]="isFullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'"
-          class="pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 backdrop-blur-sm border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors flex items-center justify-center"
-        >
-          @if (isFullscreen()) {
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" />
-              <line x1="10" y1="14" x2="3" y2="21" /><line x1="21" y1="3" x2="14" y2="10" />
-            </svg>
-          } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" />
-              <line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
-            </svg>
-          }
-        </button>
-
-        <!-- Settings toggle -->
-        <button
-          type="button"
-          (click)="showStylePanel.set(!showStylePanel())"
-          title="Ajustes del espectro"
-          [class]="showStylePanel()
-            ? 'pointer-events-auto w-7 h-7 bg-accent/20 border border-accent/50 rounded text-accent transition-colors flex items-center justify-center'
-            : 'pointer-events-auto w-7 h-7 bg-paper/80 dark:bg-dark-surface/80 backdrop-blur-sm border border-border dark:border-dark-border rounded text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:border-accent transition-colors flex items-center justify-center'"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Hovered point tooltip -->
-      @if (hoveredPoint(); as hov) {
-        <div class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none z-10
-          px-3 py-2 rounded-lg border border-border dark:border-dark-border
-          bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm shadow text-[11px] font-mono
-          flex gap-3 items-center whitespace-nowrap">
-          <span class="font-semibold" [style.color]="stemColor()">{{ hov.label }}</span>
-          <span class="text-ink/60 dark:text-dark-ink/60">= <span class="text-ink dark:text-dark-ink font-semibold">{{ hov.value.toFixed(6) }}</span></span>
-        </div>
-      }
-
-      <!-- ── Side panel ─────────────────────────────────────────────────── -->
-      @if (showStylePanel()) {
-        <div class="panel-slide-in absolute top-0 left-0 bottom-0 w-1/3 min-w-56 z-20 flex flex-col border-r border-border dark:border-dark-border shadow-xl bg-paper/95 dark:bg-dark-surface/95 backdrop-blur-sm">
-
-          <!-- Header -->
-          <div class="flex items-center justify-between px-5 py-3 border-b border-border dark:border-dark-border shrink-0 bg-paper2/60 dark:bg-dark-surface2/60">
-            <span class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'settingsCanvas.spectrumSettings' | transloco }}</span>
-            <button type="button" (click)="showStylePanel.set(false)"
-              class="w-6 h-6 flex items-center justify-center rounded text-ink/75 dark:text-dark-ink/75 hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer text-lg leading-none font-light"
-            >×</button>
-          </div>
-
-          <!-- Scrollable content -->
-          <div class="flex-1 overflow-y-auto flex flex-col divide-y divide-border dark:divide-dark-border pt-1">
-
-            <!-- ── Vista: selector de modo con color editable por modo ──── -->
-            <section class="px-5 py-4 flex flex-col gap-2.5">
-              <div class="flex items-center justify-between">
-                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'settingsCanvas.spectrumView' | transloco }}</p>
-                <button type="button" (click)="resetAllColors()"
-                  class="text-[10px] font-mono text-ink/75 dark:text-dark-ink/75 hover:text-accent transition-colors cursor-pointer underline underline-offset-2"
-                >{{ 'settingsCanvas.spectrumResetColors' | transloco }}</button>
-              </div>
-              <div class="flex flex-col gap-1.5">
-                @for (option of displayOptions(); track option.value) {
-                  <div
-                    class="flex items-center gap-2 px-3 py-1.5 rounded border transition-colors cursor-pointer"
-                    [class]="spectrumMode() === option.value
-                      ? 'border-transparent'
-                      : 'border-border dark:border-dark-border hover:border-accent/50'"
-                    [style.borderColor]="spectrumMode() === option.value ? optionColor(option.value) : null"
-                    [style.backgroundColor]="spectrumMode() === option.value ? colorWithAlpha(optionColor(option.value), 0.10) : null"
-                    (click)="spectrumMode.set(option.value)"
-                  >
-                    <!-- Color picker por modo (no propaga el click al modo) -->
-                    <input type="color"
-                      [value]="optionColor(option.value)"
-                      (input)="$event.stopPropagation(); spectrumMode.set(option.value); setStemColor($any($event.target).value)"
-                      (click)="$event.stopPropagation()"
-                      class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0 shrink-0"
-                      [style.accentColor]="optionColor(option.value)"
-                    />
-                    <span class="text-xs font-mono flex-1 select-none"
-                      [style.color]="spectrumMode() === option.value ? optionColor(option.value) : null"
-                      [class]="spectrumMode() === option.value ? 'font-semibold' : 'text-ink/75 dark:text-dark-ink/75'"
-                    >{{ option.label }}</span>
-                    <!-- Indicador de override manual -->
-                    @if (customColors()[option.value]) {
-                      <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.backgroundColor]="optionColor(option.value)"></span>
-                    }
-                  </div>
-                }
-              </div>
-            </section>
-
-            <!-- ── Forma del stem (global) ─────────────────────────────── -->
-            <section class="px-5 py-4 flex flex-col gap-3">
-              <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'settingsCanvas.spectrumMarkerShape' | transloco }}</p>
-
-              <!-- Selector de estilo: 4 opciones con preview SVG -->
-              <div class="grid grid-cols-2 gap-2">
-                @for (s of stemStyles; track s.value) {
-                  <button type="button"
-                    (click)="stemStyle.set(s.value)"
-                    class="flex flex-col items-center gap-1.5 py-2.5 rounded border transition-colors cursor-pointer"
-                    [class]="stemStyle() === s.value
-                      ? 'border-accent bg-accent/10 text-accent'
-                      : 'border-border dark:border-dark-border text-ink/70 dark:text-dark-ink/70 hover:border-accent/50'"
-                  >
-                    <svg width="22" height="28" viewBox="0 0 22 28">
-                      <line x1="11" y1="26" x2="11" y2="6"
-                        [attr.stroke]="stemStyle() === s.value ? stemColor() : 'currentColor'"
-                        stroke-width="1.5" stroke-linecap="round"/>
-                      @if (s.value === 'filled') {
-                        <circle cx="11" cy="5" r="4" [attr.fill]="stemStyle() === s.value ? stemColor() : 'currentColor'"/>
-                      } @else if (s.value === 'open') {
-                        <circle cx="11" cy="5" r="3.5"
-                          fill="none"
-                          [attr.stroke]="stemStyle() === s.value ? stemColor() : 'currentColor'"
-                          stroke-width="1.5"/>
-                      } @else if (s.value === 'square') {
-                        <rect x="7" y="1" width="8" height="8"
-                          [attr.fill]="stemStyle() === s.value ? stemColor() : 'currentColor'"/>
-                      } @else if (s.value === 'diamond') {
-                        <polygon points="11,1 16,5 11,9 6,5"
-                          [attr.fill]="stemStyle() === s.value ? stemColor() : 'currentColor'"/>
-                      }
-                    </svg>
-                    <span class="text-[10px] font-mono">{{ s.labelKey | transloco }}</span>
-                  </button>
-                }
-              </div>
-
-              <!-- Grosor -->
-              <div class="flex flex-col gap-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-mono text-ink/90 dark:text-dark-ink/90">{{ 'settingsCanvas.spectrumLineWidth' | transloco }}</span>
-                  <span class="text-sm font-semibold font-mono text-ink dark:text-dark-ink tabular-nums">{{ stemWidth().toFixed(1) }}</span>
-                </div>
-                <input type="range" min="0.5" max="5" step="0.1" [value]="stemWidth()"
-                  (input)="stemWidth.set(+$any($event.target).value)"
-                  class="w-full accent-accent h-1.5" />
-              </div>
-            </section>
-
-          </div>
-        </div>
-      }
-    </div>
-  `,
+  imports: [FunctionPlotComponent, CanvasShellComponent, TranslocoPipe],
+  templateUrl: './spectrum-chart.component.html',
 })
 export class SpectrumChartComponent {
   private readonly drawingUtils = inject(DrawingUtilsService);
-  private readonly theme = inject(ThemeService);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly chartWrapper = viewChild<ElementRef<HTMLDivElement>>('chartWrapper');
+  private readonly colors = inject(CanvasColorService);
 
   readonly seriesType = input<'trigonometric' | 'halfRange' | 'complex'>('trigonometric');
   readonly trigTerms = input<TrigonometricTerm[] | null>(null);
@@ -229,6 +49,12 @@ export class SpectrumChartComponent {
   readonly halfRangeMode = input<'cosine' | 'sine'>('cosine');
   /** When true, opens the settings panel on first render (e.g. after computing). */
   readonly openPanel = input(false);
+  /**
+   * Optional per-stem color function. When provided, each stem at index n is colored
+   * with the returned value instead of the uniform stemColor. Used to match harmonic
+   * palette when the harmonics layer is active in the parent component.
+   */
+  readonly harmonicColorFn = input<((n: number) => string) | null>(null);
 
   readonly Math = Math;
   readonly spectrumMode = signal<SpectrumMode>('trigAmp');
@@ -244,14 +70,10 @@ export class SpectrumChartComponent {
     { value: 'square',  labelKey: 'settingsCanvas.spectrumMarkerSquare' },
     { value: 'diamond', labelKey: 'settingsCanvas.spectrumMarkerDiamond' },
   ];
-  readonly isFullscreen = signal(false);
-
-  /** Resolved color for the active mode (manual override or theme default). */
+  /** Resolved color for the active mode (manual override or theme preset). */
   readonly stemColor = computed(() => {
     const mode = this.spectrumMode();
-    void this.theme.theme();
-    void this.theme.palette();
-    return this.customColors()[mode] ?? this.defaultColorForMode(mode);
+    return this.customColors()[mode] ?? this.colors.spectrumColors()[mode as keyof SpectrumColors];
   });
 
   readonly useAutoColor = computed(() => !this.customColors()[this.spectrumMode()]);
@@ -313,11 +135,12 @@ export class SpectrumChartComponent {
     const width = this.stemWidth();
     const style = this.stemStyle();
     const hovered = this.hoveredPoint();
+    const harmonicColorFn = this.harmonicColorFn();
 
     return [
       {
         curves: [],
-        onDraw: (ctx, vp) => this.drawStemChart(ctx, vp, points, color, width, style, hovered),
+        onDraw: (ctx, vp) => this.drawStemChart(ctx, vp, points, color, width, style, hovered, harmonicColorFn),
       },
     ];
   });
@@ -339,28 +162,6 @@ export class SpectrumChartComponent {
     });
 
 
-    if (typeof document !== 'undefined') {
-      const handler = () => {
-        const wrapper = this.chartWrapper()?.nativeElement;
-        this.isFullscreen.set(!!wrapper && document.fullscreenElement === wrapper);
-      };
-      document.addEventListener('fullscreenchange', handler);
-      this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
-    }
-  }
-
-  toggleFullscreen(): void {
-    const wrapper = this.chartWrapper()?.nativeElement;
-    if (!wrapper) return;
-
-    if (document.fullscreenElement === wrapper) {
-      void document.exitFullscreen();
-      return;
-    }
-
-    if (!document.fullscreenElement) {
-      void wrapper.requestFullscreen();
-    }
   }
 
   setStemColor(value: string): void {
@@ -378,37 +179,12 @@ export class SpectrumChartComponent {
   }
 
   optionColor(mode: SpectrumMode): string {
-    return this.customColors()[mode] ?? this.defaultColorForMode(mode);
+    return this.customColors()[mode] ?? this.colors.spectrumColors()[mode as keyof SpectrumColors];
   }
 
   /** Delegates to DrawingUtilsService.colorWithAlpha — supports hsl(), #rgb, #rrggbb. */
   colorWithAlpha(color: string, alpha: number): string {
     return this.drawingUtils.colorWithAlpha(color, alpha);
-  }
-
-  private defaultColorForMode(mode: SpectrumMode): string {
-    const isDark = this.theme.isDark;
-    const isNeutral = this.theme.isNeutral;
-
-    switch (mode) {
-      case 'trigAn':
-      case 'trigAnAbs':
-        return isDark ? '#7db7e8' : '#2563eb';
-      case 'trigBn':
-      case 'trigBnAbs':
-        return !isNeutral ? (isDark ? '#e0ad74' : '#c14030') : isDark ? '#fb923c' : '#c2410c';
-      case 'trigAmp':
-        return isDark ? '#c4b5fd' : '#7c3aed';
-      case 'complexRe':
-        return isDark ? '#7db7e8' : '#2563eb';
-      case 'complexIm':
-        return isDark ? '#7dd3a0' : '#059669';
-      case 'complexPhase':
-        return isDark ? '#f6b26b' : '#d97706';
-      case 'complexAbs':
-      default:
-        return isDark ? '#c4b5fd' : '#7c3aed';
-    }
   }
 
   /**
@@ -576,17 +352,18 @@ export class SpectrumChartComponent {
     width: number,
     style: 'filled' | 'open' | 'square' | 'diamond',
     hovered: StemPoint | null,
+    harmonicColorFn: ((n: number) => string) | null = null,
   ): void {
     if (points.length === 0) return;
 
-    const isDark = this.theme.isDark;
-    const highlightColor = isDark ? '#fbbf24' : '#d97706';
+    const highlightColor = this.colors.spectrumColors().highlight;
     const markerRadius = Math.max(2.5, width + 1.2);
     for (const point of points) {
       const isHovered = hovered?.x === point.x && hovered?.label === point.label;
+      const baseColor = harmonicColorFn ? harmonicColorFn(point.x) : color;
       this.drawingUtils.drawStem(
         ctx, vp, point.x, point.y,
-        isHovered ? highlightColor : color,
+        isHovered ? highlightColor : baseColor,
         isHovered ? width * 2 : width,
         isHovered ? markerRadius + 2 : markerRadius,
         isHovered ? 'filled' : style,

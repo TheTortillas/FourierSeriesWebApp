@@ -6,6 +6,7 @@ import { ApiService } from '../../core/services/api/api.service';
 import { SeoService } from '../../core/services/seo/seo.service';
 import { HistoryEntry, CALC_TYPE_LABEL } from '../../domain';
 import { NavComponent } from '../../shared/components/nav/nav.component';
+import { MathjaxDirective } from '../../shared/directives/mathjax.directive';
 
 const PAGE_SIZE = 15;
 
@@ -29,7 +30,7 @@ const TYPE_KEY: Record<string, string> = {
 @Component({
   selector: 'app-history',
   templateUrl: './history.component.html',
-  imports: [NavComponent, FormsModule, TranslocoPipe],
+  imports: [NavComponent, FormsModule, TranslocoPipe, MathjaxDirective],
 })
 export class HistoryComponent implements OnInit {
   private readonly api = inject(ApiService);
@@ -389,6 +390,48 @@ export class HistoryComponent implements OnInit {
     const points = inp['points'] as unknown[] | undefined;
     if (points) return `${points.length} ${this.transloco.translate('history.points')}`;
     return JSON.stringify(inp).slice(0, 80);
+  }
+
+  inputLatex(entry: HistoryEntry): string {
+    const inp = entry.input;
+    if (!inp) return '';
+
+    type Seg = { expressionTex?: string; expression?: string; fromTex?: string; from?: string; toTex?: string; to?: string };
+
+    // ── Piecewise / series (segments array) ──────────────────────────────────
+    const segments = inp['segments'] as Seg[] | undefined;
+    const v = (inp['intVar'] as string | undefined) ?? (inp['timeVar'] as string | undefined) ?? 'x';
+    if (segments?.length) {
+      if (segments.length === 1) {
+        const s = segments[0];
+        const e = s.expressionTex ?? s.expression ?? '?';
+        const f = s.fromTex ?? s.from ?? '';
+        const t = s.toTex ?? s.to ?? '';
+        return `\\(${e},\\; ${v} \\in [${f},\\,${t}]\\)`;
+      }
+      const cases = segments
+        .map((s) => {
+          const e = s.expressionTex ?? s.expression ?? '?';
+          const f = s.fromTex ?? s.from ?? '';
+          const t = s.toTex ?? s.to ?? '';
+          return `${e} & ${v} \\in [${f},\\,${t}]`;
+        })
+        .join(' \\\\ ');
+      return `\\(\\begin{cases}${cases}\\end{cases}\\)`;
+    }
+
+    // ── Single expression (transforms, Laplace direct/inverse) ───────────────
+    const exprTex = inp['expressionTex'] as string | undefined;
+    const expr    = inp['expression']    as string | undefined;
+    if (exprTex || expr) return `\\(${exprTex ?? expr}\\)`;
+
+    // ── ODE equation ─────────────────────────────────────────────────────────
+    const eqTex = inp['equationTex'] as string | undefined;
+    const eq    = inp['equation']    as string | undefined;
+    if (eqTex || eq) return `\\(${eqTex ?? eq}\\)`;
+
+    // ── DFT points — fallback to plain text ─────────────────────────────────
+    return '';
   }
 
   inputJson(entry: HistoryEntry): string {

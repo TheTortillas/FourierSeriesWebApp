@@ -881,8 +881,27 @@ FT_raw(f_expr, t_var, w_var, a, b) := block(
     else (
         raw : first(raw),
         if not freeof('gamma_incomplete, raw) then (
-            cleaned : errcatch(clean_integral(raw, t_var)),
-            if cleaned # [] then raw : first(cleaned)
+            /* When gamma_incomplete appears in the raw integral result, first
+               attempt Re/Im separation (ratsimp(realpart/imagpart) works well
+               for gamma_incomplete with complex arguments in w_var). If that
+               succeeds, rewrite as re + i*im so the result is free of complex
+               gamma_incomplete. Only then fall through to clean_integral which
+               handles gamma_incomplete(0, k*t_var) → Si/Ci patterns. */
+            block([_rp, _ip],
+                _rp: errcatch(ratsimp(realpart(raw))),
+                _ip: errcatch(ratsimp(imagpart(raw))),
+                if _rp # [] and _ip # [] and
+                   freeof('realpart, first(_rp)) and freeof('imagpart, first(_rp)) and
+                   freeof('realpart, first(_ip)) and freeof('imagpart, first(_ip))
+                then raw: first(_rp) + %i * first(_ip)
+            ),
+            /* clean_integral: converts gamma_incomplete(0, k*t_var) → Si/Ci.
+               May be a no-op if argument depends on w_var rather than t_var. */
+            if not freeof('gamma_incomplete, raw) then (
+                cleaned : errcatch(clean_integral(raw, t_var)),
+                if cleaned # [] and freeof('clean_integral, first(cleaned))
+                then raw : first(cleaned)
+            )
         )
     ),
     raw
@@ -929,10 +948,13 @@ FT_simplify(expr) := block(
     if ef # [] then first(ef) else e
 )$
 
+/* A result exists when Maxima produced a closed form — no pending integrals or
+   limits. gamma_incomplete is a valid closed-form special function and must NOT
+   be treated as a failure: FT[t·e^{-t²}] on a finite interval legitimately
+   resolves to gamma_incomplete(1/2, …). */
 FT_exists(expr) :=
-    freeof('integrate,        expr) and
-    freeof('limit,            expr) and
-    freeof('gamma_incomplete, expr)$
+    freeof('integrate, expr) and
+    freeof('limit,     expr)$
 
 /* IFT_extract_u_window: detect F(w) = k * G(w) * (u(w+a) - u(w-b))
    Returns [G_core, lo, hi, k] where the integral runs from lo=-a to hi=b,
@@ -1160,10 +1182,10 @@ FT_pick_display_expr_algebraic(expr) := block(
         expr
 )$
 
+/* Same rationale as FT_exists: gamma_incomplete is a valid closed form. */
 IFT_exists(expr) :=
-    freeof('integrate,        expr) and
-    freeof('limit,            expr) and
-    freeof('gamma_incomplete, expr)$
+    freeof('integrate, expr) and
+    freeof('limit,     expr)$
 
 /* FT_sinpow_to_sinc: rewrite k*(sin(b*t+c))^n / (d*t+e)^n → k/b^n * sinc(b*t+c)^n
    when (d*t+e) is proportional to the argument of sin (d/b = e/c or e=0,c=0).
@@ -6690,9 +6712,19 @@ FT(FUNC_INPUT, t_var, w_var) := block(
         exists : FT_exists(F) and not had_error,
 
         F_real : errcatch(ratsimp(realpart(F))),
-        F_real : if F_real = [] then 'unknown else first(F_real),
+        F_real : if F_real = [] then false
+                 else block([_fr: first(F_real)],
+                     /* If Maxima could not resolve realpart() (e.g. gamma_incomplete
+                        with complex argument), the result still contains unevaluated
+                        realpart/imagpart — treat as unavailable rather than showing
+                        a wrapped expression. F itself (the full complex form) remains valid. */
+                     if not freeof('realpart, _fr) or not freeof('imagpart, _fr)
+                     then false else _fr),
         F_imag : errcatch(ratsimp(imagpart(F))),
-        F_imag : if F_imag = [] then 'unknown else first(F_imag)
+        F_imag : if F_imag = [] then false
+                 else block([_fi: first(F_imag)],
+                     if not freeof('realpart, _fi) or not freeof('imagpart, _fi)
+                     then false else _fi)
     ),
 
     /* Union of params from result F and from input limits/exprs.

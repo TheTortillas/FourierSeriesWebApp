@@ -66,6 +66,10 @@
     "betaBanner": {
       "message": "Estás usando la beta gratuita — siempre habrá una versión gratuita. En el futuro algunas funciones avanzadas pueden requerir una cuenta.",
       "dismiss": "Cerrar aviso beta"
+    },
+    "rebrandBanner": {
+      "message": "Fourier Web Calculator ahora es AEM-Lab (Advanced Engineering Mathematics Lab) — la misma herramienta, nuevo nombre.",
+      "dismiss": "Cerrar"
     }
   },
   "grapher": {
@@ -99,7 +103,7 @@
     }
   },
   "home": {
-    "subtitle": "Calcula y grafica series de Fourier, integrales, transformadas continuas y DFT/FFT. Resuelve transformadas de Laplace e integrales inversas. Resuelve ecuaciones diferenciales ordinarias, problemas de valor inicial (PVI) y problemas de frontera (BVP). Resultados simbólicos exactos con exportación a LaTeX.",
+    "subtitle": "Calcula y grafica series de Fourier, integrales, transformadas continuas y DFT/FFT. Resuelve transformadas de Laplace con análisis de polos, ceros y ROC en el plano complejo. Resuelve ecuaciones diferenciales ordinarias, PVI y BVP. Resultados simbólicos exactos con exportación a LaTeX.",
     "learnMore": "Conoce más sobre la herramienta",
     "toolsTitle": "Herramientas",
     "analysisTitle": "Análisis de Fourier",
@@ -171,7 +175,7 @@
   },
   "calculator": {
     "title": "Serie de Fourier",
-    "subtitle": "Ingresa la función a trozos y selecciona el tipo de serie.",
+    "subtitle": "Calcula coeficientes de Fourier exactos (aₙ, bₙ, cₙ) de funciones a trozos, continuas o discontinuas. Elige entre serie trigonométrica, compleja o de medio rango, obtén la identidad de Parseval y visualiza la reconstrucción gráfica, el espectro de amplitud y el espectro de fase.",
     "piecewiseFunction": "Función a trozos",
     "addSegment": "+ añadir tramo",
     "variable": "Variable",
@@ -358,7 +362,7 @@
   },
   "transforms": {
     "title": "Transformada de Fourier",
-    "subtitle": "Calcula la transformada continua o inversa de una función definida por tramos.",
+    "subtitle": "Calcula la transformada de Fourier directa e inversa de funciones a trozos definidas en cualquier intervalo. Resultados simbólicos exactos, espectro de amplitud y fase, y parámetros libres con sliders interactivos.",
     "continuous": "Continua",
     "continuousDesc": "f(ω) = ∫f(t)e⁻ⁱωᵗdt",
     "fourierIntegral": "Integral de Fourier",
@@ -429,7 +433,7 @@
     "conventionIftLabel": "TFI: {{ factor }} ∫ F({{ w }}) e^{iωt} d{{ w }}",
     "dft": {
       "title": "Transformada Discreta de Fourier",
-      "subtitle": "Analiza el espectro de frecuencias de una función muestreada o una señal discreta.",
+      "subtitle": "Analiza el espectro de frecuencias de funciones muestreadas o secuencias discretas mediante FFT O(N log N) o DFT ingenua O(N²). Visualiza amplitud, fase y reconstrucción con epiciclos animados.",
       "modeFn": "Función continua",
       "modeFnDesc": "f(x) por tramos",
       "modeManual": "Señal discreta",
@@ -471,10 +475,14 @@
       "showReconstruction": "IDFT",
       "dftAnyN": "DFT acepta cualquier N — no requiere potencia de 2",
       "coeffsTitle": "Todos los coeficientes",
-      "coeffsNote": "— filas resaltadas = top por amplitud",
+      "coeffsNote": "— filas resaltadas = en Top-K activo",
       "colWeight": "Peso",
       "colWeightTitle": "Contribución relativa de cada frecuencia a la amplitud total",
+      "colToggleTitle": "Incluir en IDFT parcial",
+      "colSoloTitle": "Ver onda individual",
       "clearSelection": "Limpiar selección",
+      "partialTopK": "Top-{{k}} / {{n}} coeficientes",
+      "partialShow": "Mostrar IDFT parcial en señal",
       "placeholderDesc": "Introduce una función o secuencia discreta, selecciona el algoritmo y obtén el espectro de frecuencias y la reconstrucción por IDFT.",
       "placeholderFx": "Señal de entrada",
       "placeholderDft": "Coeficientes X[k]",
@@ -526,7 +534,12 @@
       "errorWeeklyLimit": "Límite semanal de cálculos alcanzado.",
       "errorCompleteFields": "Completa todos los campos de los tramos.",
       "errorEvalFunction": "Error al evaluar la función.",
-      "errorMinPoints": "Se necesitan al menos 3 puntos."
+      "errorMinPoints": "Se necesitan al menos 3 puntos.",
+      "showComponents": "Componentes individuales",
+      "componentsLabel": "componentes activos",
+      "pairModeIndividual": "Coeficiente individual",
+      "pairModeConjugate": "Par conjugado (c_k + c_{-k})",
+      "pairModeLabel": "Modo de término"
     },
     "hint": "Configura la función y presiona"
   },
@@ -717,36 +730,52 @@
     "weeklyLimitReached": "Límite semanal alcanzado. Tu cuota se renueva el {{ date }}.",
     "tooManyRequests": "Demasiadas solicitudes. Intenta de nuevo en un momento.",
     "tooManyRequestsMinutes": "Demasiadas solicitudes. Intenta de nuevo en {{ minutes }} minutos.",
-    "emailRecentlyDeleted": "Esta dirección fue usada en una cuenta eliminada esta semana. Puedes volver a registrarte cuando inicie la nueva semana."
+    "emailRecentlyDeleted": "Esta dirección fue usada en una cuenta eliminada esta semana. Puedes volver a registrarte cuando inicie la nueva semana.",
+    "emailAlreadyRegistered": "Este correo ya está registrado.",
+    "emailPendingVerification": "Este correo ya está registrado pero no verificado. Revisa tu bandeja de entrada o solicita un nuevo correo de verificación.",
+    "invalidCredentials": "Correo o contraseña incorrectos.",
+    "accountDeactivated": "Esta cuenta está desactivada.",
+    "invalidGoogleToken": "No se pudo verificar tu cuenta de Google.",
+    "userNotFound": "Usuario no encontrado.",
+    "invalidOrExpiredToken": "El enlace es inválido o ha expirado.",
+    "googleAccountNoPassword": "Tu cuenta usa acceso con Google — usa \"olvidé mi contraseña\" para establecer una.",
+    "currentPasswordIncorrect": "La contraseña actual es incorrecta.",
+    "allFieldsRequired": "Todos los campos son obligatorios.",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+    "emailAndPasswordRequired": "Correo y contraseña son obligatorios.",
+    "nameTooLong": "Los nombres no pueden superar los 100 caracteres."
   },
   "seo": {
     "home": {
-      "title": "Calculadora de Transformada de Fourier y Series de Fourier",
-      "description": "Calculadora simbólica de transformada de Fourier, transformada inversa y series de Fourier. Coeficientes exactos, gráficas interactivas en tiempo real y soporte para funciones definidas por tramos. Gratuita y en línea."
+      "title": "AEM-Lab — Calculadora de Series y Transformada de Fourier, Laplace y Ecuaciones Diferenciales",
+      "description": "AEM-Lab (fouriersolver.com) — calculadora simbólica de series de Fourier, transformada de Fourier, transformada de Laplace y resolución de EDOs. Coeficientes exactos, análisis de polos y ceros de Laplace con visualización en el plano complejo, gráficas en tiempo real y soporte para funciones a trozos. Gratuita y en línea."
     },
     "calculator": {
       "title": "Calculadora de Series de Fourier con Gráfica Interactiva",
-      "description": "Calcula series de Fourier trigonométricas, complejas y de medio rango con coeficientes simbólicos exactos. Reconstrucción gráfica animada, identidad de Parseval y soporte para funciones discontinuas."
+      "description": "Calculadora de series de Fourier en línea con resultados simbólicos exactos. Calcula coeficientes aₙ y bₙ de la serie trigonométrica, cₙ de la serie compleja y la serie de medio rango (senos o cosenos) de funciones a trozos, continuas o discontinuas. Análisis espectral con gráficas de amplitud y fase, identidad de Parseval, reconstrucción gráfica animada con el fenómeno de Gibbs y extensiones par e impar. Compatible con funciones definidas en cualquier intervalo [a, b]."
     },
     "transforms": {
       "title": "Calculadora de Transformada de Fourier — Directa e Inversa",
-      "description": "Calcula la transformada de Fourier y la transformada inversa de Fourier de forma simbólica. Visualiza el espectro de amplitud y fase. Compatible con funciones a trozos, convolución, series de Taylor y más."
+      "description": "Calcula la transformada de Fourier continua directa F(ω) e inversa f(t) de forma simbólica exacta. Soporte para funciones a trozos, parámetros libres con variación por sliders, múltiples convenciones (ingeniería, física, matemáticas) y visualización del espectro de amplitud y fase en tiempo real."
     },
     "dft": {
       "title": "Calculadora de DFT — Transformada Discreta de Fourier con Epiciclos",
-      "description": "Calcula la DFT y la FFT con visualización del espectro de amplitud y fase. Reconstruye señales con epiciclos animados. Ideal para procesamiento de señales y análisis de frecuencias."
+      "description": "Calcula la DFT y FFT de funciones muestreadas y secuencias discretas. Visualiza el espectro de amplitud y fase, reconstruye señales con epiciclos animados en 2D y analiza figuras de Lissajous. FFT O(N log N) para hasta 4096 puntos, con normalización configurable."
     },
     "fourierIntegral": {
       "title": "Integral de Fourier — Representación continua A(ω) y B(ω)",
-      "description": "Calcula la integral de Fourier trigonométrica, compleja, coseno y seno de funciones definidas por tramos. Visualiza la reconstrucción con el fenómeno de Gibbs mediante un slider interactivo."
+      "description": "Calcula la integral de Fourier de funciones no periódicas definidas por tramos. Obtén las representaciones trigonométrica A(ω)/B(ω), integral de coseno, integral de seno e integral compleja de forma exacta. Visualiza la reconstrucción con slider interactivo y observa el fenómeno de Gibbs en funciones discontinuas."
     },
     "about": {
-      "title": "Acerca de Fourier & Laplace Web Calculator",
-      "description": "Fourier Web Calculator: herramienta gratuita para calcular series de Fourier, transformadas de Fourier y Laplace, integrales de Fourier y resolver EDOs con Laplace. Resultados simbólicos exactos con visualización en tiempo real."
+      "title": "Acerca de AEM-Lab",
+      "description": "AEM-Lab: herramienta gratuita para calcular series de Fourier, transformadas de Fourier y Laplace, integrales de Fourier y resolver EDOs con Laplace. Resultados simbólicos exactos con visualización en tiempo real."
     },
     "laplace": {
       "title": "Transformada de Laplace — Directa, Inversa y EDOs con Gráfica",
-      "description": "Calcula la transformada de Laplace directa e inversa de funciones a trozos. Resuelve EDOs con condiciones iniciales por el método de Laplace. Gráfica interactiva y resultados simbólicos exactos."
+      "description": "Calcula la transformada de Laplace directa e inversa de funciones a trozos con resultados simbólicos exactos. Fracciones parciales automáticas, propiedad de desplazamiento temporal (e^{-as}F(s)), análisis de polos y ceros, ROC y visualización en el plano complejo. Resuelve EDOs lineales con condiciones iniciales mediante el método de Laplace."
+    },
+    "ode": {
+      "description": "Resuelve ecuaciones diferenciales ordinarias lineales hasta 3er orden. Obtén la solución general con constantes de integración, aplica condiciones iniciales (PVI) o condiciones de frontera (BVP) y visualiza la solución con gráfica interactiva. Motor CAS simbólico exacto basado en Maxima."
     }
   },
   "dev": {
@@ -866,7 +895,7 @@
     },
     "s4": {
       "heading": "¿Conociste la versión anterior?",
-      "imgAlt": "Captura de la versión anterior de Fourier & Laplace Web Calculator",
+      "imgAlt": "Captura de la versión anterior de AEM-Lab",
       "usedPreviousLabel": "¿Habías usado esta herramienta antes de esta versión?",
       "usedPreviousYes": "Sí, usé la versión anterior",
       "usedPreviousNo": "No, es la primera vez que la uso",
@@ -936,7 +965,7 @@
   },
   "about": {
     "hero": {
-      "title": "Acerca de Fourier & Laplace Web Calculator",
+      "title": "Acerca de AEM-Lab",
       "intro": "Una herramienta web gratuita y de acceso abierto para calcular, visualizar y compartir análisis matemático — desde series y transformadas de Fourier hasta la Transformada de Laplace. Diseñada para estudiantes, ingenieros y científicos."
     },
     "sectionFourier": "Análisis de Fourier",
@@ -972,6 +1001,14 @@
         "f2": "Condiciones iniciales y(0) e y'(0) ajustables",
         "f3": "Muestra la solución simbólica exacta y su gráfica",
         "f4": "Historial de resultados con recuperación completa"
+      },
+      "complex": {
+        "title": "Plano complejo",
+        "desc": "Al calcular una transformada, F(s) se analiza en el plano complejo s = σ + jω: los polos determinan el comportamiento transitorio del sistema y los ceros moldean la respuesta en frecuencia. La Región de Convergencia (ROC) delimita los valores de s para los que la integral de Laplace converge.",
+        "f1": "Diagrama de polos y ceros con multiplicidades",
+        "f2": "ROC calculada automáticamente a partir de los polos",
+        "f3": "Coloración de dominio para |F(s)| y arg(F(s)) en el plano",
+        "f4": "Vista 3D del módulo |F(s)| con malla o superficie sólida"
       }
     },
     "series": {
@@ -1045,7 +1082,7 @@
       "desc": "Una interfaz enfocada y sin distracciones que se adapta a tu dispositivo y preferencias.",
       "f1": "Modo claro y oscuro",
       "f2": "Dos paletas de color: Neutral y Coffee",
-      "f3": "Completamente bilingüe: español e inglés",
+      "f3": "Interfaz multilingüe",
       "f4": "Diseño responsive — funciona en escritorio y móvil"
     },
     "cta": "Explora las herramientas",
@@ -1175,7 +1212,7 @@
   },
   "fourier-integral": {
     "title": "Integral de Fourier",
-    "subtitle": "Representación integral de funciones no periódicas",
+    "subtitle": "Representa funciones no periódicas mediante la integral de Fourier — formas trigonométrica A(ω)/B(ω), coseno, seno y compleja. Reconstrucción exacta con slider interactivo y visualización del fenómeno de Gibbs.",
     "trigonometric": "Trigonométrica",
     "complex": "Compleja",
     "cosine": "Integral Coseno",
@@ -1210,7 +1247,7 @@
   },
   "laplace": {
     "title": "Transformada de Laplace",
-    "subtitle": "Transformada directa, inversa y resolución de EDOs mediante el método de Laplace",
+    "subtitle": "Calcula la transformada de Laplace directa e inversa de funciones a trozos con fracciones parciales automáticas y soporte de desplazamiento temporal. Resuelve EDOs con condiciones iniciales, analiza polos y ceros, y visualiza F(s) en el plano complejo.",
     "modeDirecta": "Directa",
     "modeInversa": "Inversa",
     "modeOde": "EDO",
@@ -1255,14 +1292,38 @@
     "fullTransform": "Transformada completa",
     "inverseResult": "Transformada inversa",
     "odeRedirectTitle": "¿Necesitas resolver una EDO usando Laplace u otro método?",
-    "odeRedirectDesc": "Para solución general, PVI en cualquier x₀ o condiciones de frontera, usa la Calculadora de EDOs →"
+    "odeRedirectDesc": "Para solución general, PVI en cualquier x₀ o condiciones de frontera, usa la Calculadora de EDOs →",
+    "complexPlaneTitle": "Análisis en plano-s",
+    "complexPlaneLoading": "Calculando polos y ceros…",
+    "complexPlaneNotRational": "F(s) no racional — análisis de polos/ceros no disponible.",
+    "complexPlanePoles": "Polos",
+    "complexPlaneZeros": "Ceros",
+    "complexPlaneOrder": "orden {{n}}",
+    "complexPlaneRoc": "Región de convergencia",
+    "complexPlaneView": "Vista",
+    "complexPlaneColor": "Color",
+    "complexPlaneColorClassic": "Clásico",
+    "complexPlaneColorPhase": "Fase",
+    "complexPlaneColorMagnitude": "Módulo",
+    "complexPlaneMesh3d": "Malla 3D",
+    "complexPlaneWireframe": "Wireframe",
+    "complexPlaneGrid": "Grid",
+    "complexPlaneResolution": "Resolución",
+    "complexPlaneResolutionWarning": "⚠ Alta resolución — puede afectar el rendimiento",
+    "complexPlaneRange": "Rango",
+    "complexPlaneScaleZ": "Escala Z",
+    "complexPlaneClipZ": "Corte Z",
+    "complexPlaneFreeParams": "Parámetros libres",
+    "complexPlaneNavHint": "2D: arrastra para pan, scroll para zoom. 3D: arrastra para rotar.",
+    "complexPlaneOpen": "Ver plano complejo",
+    "complexPlaneClose": "Ver plano real"
   },
   "ode": {
-    "seoTitle": "Calculadora de EDOs — Solución General, PVI y Valor en la Frontera",
-    "seoDescription": "Resuelve ecuaciones diferenciales ordinarias de 1er y 2do orden: solución general, problema de valor inicial (PVI) y problema de frontera (BVP). Motor CAS simbólico con gráfica interactiva.",
+    "seoTitle": "Calculadora de EDOs — Solución General, PVI y BVP hasta 3er Orden",
+    "seoDescription": "Resuelve ecuaciones diferenciales ordinarias lineales hasta 3er orden de forma simbólica exacta. Obtén la solución general con constantes de integración, aplica condiciones iniciales (PVI) con y(0), y'(0) o condiciones de frontera (BVP), y visualiza la solución con gráfica interactiva. Incluye modo Laplace para forzamientos con δ(t) y u(t). Motor CAS basado en Maxima.",
     "seoKeywords": "ecuaciones diferenciales, EDO, ODE, solución general, PVI, BVP, condiciones iniciales, valor en la frontera, Bernoulli, ecuación de Euler, ode2, Maxima, calculadora EDO",
     "title": "Calculadora de EDOs",
-    "subtitle": "Solución general, problema de valor inicial (PVI) y valor en la frontera (BVP)",
+    "subtitle": "Resuelve ecuaciones diferenciales ordinarias hasta 3er orden: solución general con constantes C₁, C₂, problema de valor inicial (PVI) y problema de valor en la frontera (BVP). Motor CAS simbólico exacto con gráfica interactiva.",
     "modeGeneral": "General",
     "modeIvp": "PVI",
     "modeBvp": "Frontera",

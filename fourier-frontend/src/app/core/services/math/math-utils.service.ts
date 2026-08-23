@@ -390,6 +390,23 @@ export class MathUtilsService {
   }
 
   /**
+   * Composite Simpson's 1/3 rule numerical integration of fn over [from, to].
+   * Uses 512 sub-intervals (513 points). Returns NaN if fn is undefined.
+   */
+  integrateSimpsons(fn: (x: number) => number, from: number, to: number, n = 512): number {
+    if (!isFinite(from) || !isFinite(to) || from >= to) return NaN;
+    const steps = n % 2 === 0 ? n : n + 1;
+    const h = (to - from) / steps;
+    let sum = fn(from) + fn(to);
+    for (let i = 1; i < steps; i++) {
+      const y = fn(from + i * h);
+      if (!isFinite(y)) continue;
+      sum += (i % 2 === 0 ? 2 : 4) * y;
+    }
+    return (h / 3) * sum;
+  }
+
+  /**
    * Parses a Maxima expression and returns the position and weight of every
    * Dirac delta term it contains.
    *
