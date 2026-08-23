@@ -9,7 +9,7 @@ A full-stack web application for symbolic computation, visualization, and intera
 ---
 
 <p>
-  <img src="https://img.shields.io/badge/version-v15.1-brightgreen" alt="Version">
+  <img src="https://img.shields.io/badge/version-v16.0-brightgreen" alt="Version">
   <img src="https://img.shields.io/badge/license-Non--Commercial-orange" alt="License">
   <img src="https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa&logoColor=white" alt="PWA">
   <a href="https://deepwiki.com/TheTortillas/FourierSeriesWebApp"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
