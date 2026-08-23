@@ -166,15 +166,131 @@ function defaultSegment(v = 'x'): TransformSegmentDraft {
   };
 }
 
-// ── Manual mode presets ────────────────────────────────────────────────────────
+// ── Function mode examples (fixed N + algorithm) ──────────────────────────────
 
-function makePreset(
-  name: string,
-  fn: (n: number, N: number) => number,
-  N: number,
-): { name: string; values: number[] } {
-  return { name, values: Array.from({ length: N }, (_, i) => fn(i, N)) };
+type DftSegmentSeed = Omit<TransformSegmentDraft, 'id'>;
+
+interface FunctionExample {
+  labelKey: string;
+  N: number;
+  algorithm: DftAlgorithm;
+  segments: DftSegmentSeed[];
 }
+
+function dftSeg(
+  expression: string,
+  expressionTex: string,
+  from: string,
+  fromTex: string,
+  to: string,
+  toTex: string,
+): DftSegmentSeed {
+  return { expression, expressionTex, from, fromTex, to, toTex };
+}
+
+const FUNCTION_DFT_EXAMPLES: FunctionExample[] = [
+  {
+    labelKey: 'transforms.dft.exFnSine',
+    N: 64,
+    algorithm: 'fft',
+    segments: [dftSeg('sin(x)', '\\sin(x)', '-%pi', '-\\pi', '%pi', '\\pi')],
+  },
+  {
+    labelKey: 'transforms.dft.exFnRectPulse',
+    N: 32,
+    algorithm: 'dft',
+    segments: [
+      dftSeg('0', '0', '-%pi', '-\\pi', '-%pi/2', '-\\frac{\\pi}{2}'),
+      dftSeg('1', '1', '-%pi/2', '-\\frac{\\pi}{2}', '%pi/2', '\\frac{\\pi}{2}'),
+      dftSeg('0', '0', '%pi/2', '\\frac{\\pi}{2}', '%pi', '\\pi'),
+    ],
+  },
+  {
+    labelKey: 'transforms.dft.exFnTwoTones',
+    N: 128,
+    algorithm: 'fft',
+    segments: [
+      dftSeg(
+        'cos(2*x)+sin(5*x)',
+        '\\cos\\left(2x\\right)+\\sin\\left(5x\\right)',
+        '-%pi', '-\\pi', '%pi', '\\pi',
+      ),
+    ],
+  },
+  {
+    labelKey: 'transforms.dft.exFnDecayingExp',
+    N: 64,
+    algorithm: 'fft',
+    segments: [dftSeg('exp(-x)', 'e^{-x}', '0', '0', '2*%pi', '2\\pi')],
+  },
+];
+
+// ── Manual mode examples (fixed N + algorithm, replaces the old preset buttons) ──
+
+interface ManualExample {
+  labelKey: string;
+  N: number;
+  algorithm: DftAlgorithm;
+  values: number[];
+}
+
+function manualValues(fn: (n: number, N: number) => number, N: number): number[] {
+  return Array.from({ length: N }, (_, i) => +fn(i, N).toFixed(4));
+}
+
+const MANUAL_DFT_EXAMPLES: ManualExample[] = [
+  {
+    labelKey: 'transforms.dft.exManualDelta',
+    N: 8,
+    algorithm: 'fft',
+    values: manualValues((n) => (n === 0 ? 1 : 0), 8),
+  },
+  {
+    labelKey: 'transforms.dft.exManualStep',
+    N: 8,
+    algorithm: 'fft',
+    values: manualValues(() => 1, 8),
+  },
+  {
+    labelKey: 'transforms.dft.exManualSquare',
+    N: 8,
+    algorithm: 'fft',
+    values: manualValues((n, N) => (n < N / 2 ? 1 : -1), 8),
+  },
+  {
+    labelKey: 'transforms.dft.exManualCosine',
+    N: 16,
+    algorithm: 'fft',
+    values: manualValues((n, N) => Math.cos((2 * Math.PI * n) / N), 16),
+  },
+  {
+    labelKey: 'transforms.dft.exManualSine',
+    N: 16,
+    algorithm: 'fft',
+    values: manualValues((n, N) => Math.sin((2 * Math.PI * n) / N), 16),
+  },
+  {
+    labelKey: 'transforms.dft.exManualRamp',
+    N: 8,
+    algorithm: 'fft',
+    values: manualValues((n) => n, 8),
+  },
+  {
+    labelKey: 'transforms.dft.exManualTwoTones',
+    N: 32,
+    algorithm: 'fft',
+    values: manualValues(
+      (n, N) => Math.cos((2 * Math.PI * n) / N) + 0.5 * Math.sin((2 * Math.PI * 3 * n) / N),
+      32,
+    ),
+  },
+  {
+    labelKey: 'transforms.dft.exManualOddN',
+    N: 10,
+    algorithm: 'dft',
+    values: manualValues((n, N) => (n < N / 2 ? 1 : -1), 10),
+  },
+];
 
 @Component({
   selector: 'app-dft',
@@ -1004,20 +1120,45 @@ export class DftComponent implements OnInit, OnDestroy {
     return this.mathUtils.evaluate(s, 0, '_');
   }
 
-  // ── Manual presets ─────────────────────────────────────────────────────────
+  // ── Examples (function + manual modes) ────────────────────────────────────
 
-  manualPresets(N: number) {
-    return [
-      makePreset('δ[n]', (_n) => (_n === 0 ? 1 : 0), N),
-      makePreset('u[n]', () => 1, N),
-      makePreset('□', (_n) => (_n < N / 2 ? 1 : -1), N),
-      makePreset('cos', (_n) => Math.cos((2 * Math.PI * _n) / N), N),
-      makePreset('sin', (_n) => Math.sin((2 * Math.PI * _n) / N), N),
-    ];
+  readonly functionExampleOptions: ExampleOption[] = FUNCTION_DFT_EXAMPLES.map((e) => ({
+    id: e.labelKey,
+    labelKey: e.labelKey,
+  }));
+
+  readonly manualExampleOptions: ExampleOption[] = MANUAL_DFT_EXAMPLES.map((e) => ({
+    id: e.labelKey,
+    labelKey: e.labelKey,
+  }));
+
+  loadFunctionExample(labelKey: string): void {
+    const ex = FUNCTION_DFT_EXAMPLES.find((e) => e.labelKey === labelKey);
+    if (!ex) return;
+
+    this.reset();
+    this.algorithm.set(ex.algorithm);
+    if (ex.algorithm === 'fft') {
+      this.N.set(ex.N);
+    } else {
+      this.dftCustomN.set(ex.N);
+    }
+    this.segments.set(ex.segments.map((s) => ({ ...s, id: mkId() })));
   }
 
-  applyPreset(values: number[]): void {
-    this.manualRaw.set(values.map((v) => +v.toFixed(4)).join(', '));
+  loadManualExample(labelKey: string): void {
+    const ex = MANUAL_DFT_EXAMPLES.find((e) => e.labelKey === labelKey);
+    if (!ex) return;
+
+    this.reset();
+    this.algorithm.set(ex.algorithm);
+    this.manualN.set(ex.N);
+    if (ex.algorithm === 'fft') {
+      this.N.set(ex.N);
+    } else {
+      this.dftCustomN.set(ex.N);
+    }
+    this.manualRaw.set(ex.values.join(', '));
   }
 
   setManualN(n: number): void {

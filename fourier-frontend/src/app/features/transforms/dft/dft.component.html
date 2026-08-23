@@ -128,6 +128,14 @@
             </div>
           }
 
+          <!-- Examples -->
+          <app-example-selector
+            [label]="'transforms.exampleLabel' | transloco"
+            [placeholder]="'transforms.examplePlaceholder' | transloco"
+            [options]="functionExampleOptions"
+            (select)="loadFunctionExample($event)"
+          />
+
           <!-- Algorithm toggle — below preview, above variable -->
           <section
             class="flex flex-col gap-2"
@@ -357,6 +365,14 @@
 
         <!-- ══ MANUAL MODE ═══════════════════════════════════════════════ -->
         @if (inputMode() === 'manual') {
+          <!-- Examples -->
+          <app-example-selector
+            [label]="'transforms.dft.presets' | transloco"
+            [placeholder]="'transforms.examplePlaceholder' | transloco"
+            [options]="manualExampleOptions"
+            (select)="loadManualExample($event)"
+          />
+
           <!-- Algorithm toggle (manual mode) -->
           <section
             class="flex flex-col gap-2"
@@ -455,23 +471,6 @@
               }
             </section>
 
-            <!-- Presets -->
-            <section
-              class="flex flex-col gap-2 border-t border-border dark:border-dark-border pt-4"
-            >
-              <p class="text-xs text-muted font-mono">{{ 'transforms.dft.presets' | transloco }}</p>
-              <div class="flex flex-wrap gap-1.5">
-                @for (preset of manualPresets(manualN()); track preset.name) {
-                  <button
-                    type="button"
-                    (click)="applyPreset(preset.values)"
-                    class="px-2.5 py-1 rounded-lg text-xs font-mono border border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors cursor-pointer"
-                  >
-                    {{ preset.name }}
-                  </button>
-                }
-              </div>
-            </section>
 
             <!-- Values editor -->
             <section
