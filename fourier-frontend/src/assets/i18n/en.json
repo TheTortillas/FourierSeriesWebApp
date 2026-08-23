@@ -209,6 +209,8 @@
     "exHalfRangeParabola": "Parabola: f(x) = x(L−x) on [0, L]",
     "exHalfRangeConstant": "Constant: f(x) = 1 on [0, L]",
     "exHalfRangeSine": "f(x) = sin(πx/L) on [0, L]",
+    "exHalfRangeExpDecay": "Exponential decay: f(x) = e⁻ˣ on [0, 1]",
+    "exHalfRangeThreeStep": "3-piece step: 1, 0, -1",
     "segment": {
       "from": "from",
       "to": "to",

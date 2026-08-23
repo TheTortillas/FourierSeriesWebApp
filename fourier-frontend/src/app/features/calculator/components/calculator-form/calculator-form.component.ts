@@ -193,6 +193,22 @@ const CALCULATOR_EXAMPLES: FourierExample[] = [
       ),
     ],
   },
+  {
+    labelKey: 'calculator.exHalfRangeExpDecay',
+    seriesType: 'halfRange',
+    intVar: 'x',
+    segments: [seg('exp(-x)', 'e^{-x}', '0', '0', '1', '1')],
+  },
+  {
+    labelKey: 'calculator.exHalfRangeThreeStep',
+    seriesType: 'halfRange',
+    intVar: 'x',
+    segments: [
+      seg('1', '1', '0', '0', '1', '1'),
+      seg('0', '0', '1', '1', '3', '3'),
+      seg('-1', '-1', '3', '3', '5', '5'),
+    ],
+  },
 ];
 
 @Component({

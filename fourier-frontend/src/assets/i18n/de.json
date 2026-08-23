@@ -209,6 +209,8 @@
     "exHalfRangeParabola": "Parabel: f(x) = x(L−x) auf [0, L]",
     "exHalfRangeConstant": "Konstante: f(x) = 1 auf [0, L]",
     "exHalfRangeSine": "f(x) = sin(πx/L) auf [0, L]",
+    "exHalfRangeExpDecay": "Exponentieller Abfall: f(x) = e⁻ˣ auf [0, 1]",
+    "exHalfRangeThreeStep": "3-teiliger Sprung: 1, 0, -1",
     "segment": {
       "from": "von",
       "to": "bis",
