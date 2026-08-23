@@ -88,6 +88,14 @@
           [class.pointer-events-none]="inputsLocked()"
           [class.opacity-70]="inputsLocked()"
         >
+          <!-- Examples combobox -->
+          <app-example-selector
+            [label]="'transforms.exampleLabel' | transloco"
+            [placeholder]="'transforms.examplePlaceholder' | transloco"
+            [options]="exampleOptions()"
+            (select)="loadExample($event)"
+          />
+
           <!-- Segments + Variables (sección unificada) -->
           <section class="flex flex-col gap-3">
             <!-- Header: título + botón teclado -->
