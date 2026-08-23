@@ -358,6 +358,171 @@ const TRANSFORM_EXAMPLES: TransformExample[] = [
       '\\frac{1}{\\sqrt{iw+1}}',
     ),
   },
+  // ── FT — favoritos del usuario ──
+  {
+    labelKey: 'transforms.exFtGaussianPhase',
+    mode: 'ft',
+    segments: wholeLine(
+      'exp(-t^2)*cos(2*t+a)',
+      'e^{-t^{2}}\\cos\\left(2t+a\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtGaussianPhase1',
+    mode: 'ft',
+    segments: wholeLine(
+      'exp(-t^2)*cos(2*t+1)',
+      'e^{-t^{2}}\\cos\\left(2t+1\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtTriangle2',
+    mode: 'ft',
+    segments: [
+      tseg('a+t', 'a+t', '-a', '-a', '0', '0'),
+      tseg('a-t', 'a-t', '0', '0', 'a', 'a'),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtTriangle3',
+    mode: 'ft',
+    segments: [
+      tseg(
+        '(1/n^2)*(n+x)',
+        '\\frac{1}{n^{2}}\\left(n+x\\right)',
+        '-n', '-n', '0', '0',
+      ),
+      tseg(
+        '(1/n^2)*(n-x)',
+        '\\frac{1}{n^{2}}\\left(n-x\\right)',
+        '0', '0', 'n', 'n',
+      ),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtNormalDist',
+    mode: 'ft',
+    segments: wholeLine(
+      '(1/(sqrt(2*%pi)*a))*exp(-(1/2)*((t-b)/c)^2)',
+      '\\frac{1}{\\sqrt{2\\pi}\\cdot a}e^{-\\frac{1}{2}\\left(\\frac{t-b}{c}\\right)^{2}}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtHeavisideVariant',
+    mode: 'ft',
+    segments: [
+      tseg('0', '0', 'minf', '-\\infty', 'a/2', '\\frac{a}{2}'),
+      tseg('1', '1', 'a/2', '\\frac{a}{2}', 'b/2', '\\frac{b}{2}'),
+      tseg('2', '2', 'b/2', '\\frac{b}{2}', 'inf', '\\infty'),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtBandpassFilter',
+    mode: 'ft',
+    segments: wholeLine(
+      '(sin(3*t)-sin(t))/(%pi*t)',
+      '\\frac{\\sin\\left(3t\\right)-\\sin\\left(t\\right)}{\\pi t}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtWeirdSpring',
+    mode: 'ft',
+    segments: wholeLine(
+      '5*((5*exp(-a*t)*sin(b*t)*u(t))/(c))',
+      '5\\cdot\\frac{5\\cdot e^{-a\\cdot t}\\cdot\\sin\\left(b\\cdot t\\right)\\cdot u\\left(t\\right)}{c}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtExpToSine',
+    mode: 'ft',
+    segments: wholeLine(
+      '-a*t*exp(-(t-b)^2)',
+      '-a\\cdot t\\cdot e^{-\\left(t-b\\right)^{2}}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtBoundedCosine',
+    mode: 'ft',
+    segments: [
+      tseg('-cos(t)', '-\\cos\\left(t\\right)', '-%pi/3', '-\\frac{\\pi}{3}', '%pi/3', '\\frac{\\pi}{3}'),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtShiftedGaussian',
+    mode: 'ft',
+    segments: wholeLine(
+      'c*exp(-b*(t-a)^2)',
+      'c\\cdot\\exp\\left(-b\\cdot\\left(t-a\\right)^{2}\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtDelayedRamp',
+    mode: 'ft',
+    segments: wholeLine(
+      '(t-3)*exp(-4*t)*u(t-3)',
+      '\\left(t-3\\right)e^{-4t}\\operatorname{u}\\left(t-3\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtSincVariant',
+    mode: 'ft',
+    segments: wholeLine(
+      'sin(a*t)/(a*%pi*t)',
+      '\\frac{\\sin\\left(at\\right)}{a\\pi t}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtCausalCosineParam',
+    mode: 'ft',
+    segments: [
+      tseg(
+        'k*exp(-a*t)*cos(b*t)*u(t)',
+        'k\\cdot e^{-a\\cdot t}\\cos\\left(b\\cdot t\\right)\\operatorname{u}\\left(t\\right)',
+        '0', '0', 'inf', '\\infty',
+      ),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtBoundedCosineHeaviside',
+    mode: 'ft',
+    segments: wholeLine(
+      'cos(t)*(u(t+%pi/2)-u(t-%pi/2))',
+      '\\cos\\left(t\\right)\\cdot\\left(\\operatorname{u}\\left(t+\\frac{\\pi}{2}\\right)-\\operatorname{u}\\left(t-\\frac{\\pi}{2}\\right)\\right)',
+    ),
+  },
+  // ── IFT — favoritos del usuario ──
+  {
+    labelKey: 'transforms.exIftComplexHeavy',
+    mode: 'ift',
+    segments: wholeLine(
+      '(sqrt(2*%pi)*(exp(4*w+2*%i)+1)*exp(-(w^2/2)-2*w-%i-2))/2',
+      '\\frac{\\sqrt{2\\pi}\\left(e^{\\left(4w+2i\\right)}+1\\right)e^{-\\left(w^{2}/2\\right)-2w-i-2}}{2}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftComplexSine',
+    mode: 'ift',
+    segments: wholeLine(
+      '(6*exp(4*%i*w)*sin(2*w))/(9+w^2)',
+      '\\frac{6e^{4iw}\\sin\\left(2w\\right)}{9+w^{2}}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftGaussianSine',
+    mode: 'ift',
+    segments: wholeLine(
+      'exp(-w^2/a)*sin(b*w)',
+      'e^{-w^{2}/a}\\sin\\left(b\\cdot w\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftSpring',
+    mode: 'ift',
+    segments: wholeLine(
+      '((1)/((1+a*%i)+%i*w))*((1)/(%i*w+(1-a*%i)))',
+      '\\frac{1}{\\left(1+a\\cdot i\\right)+iw}\\cdot\\frac{1}{iw+\\left(1-a\\cdot i\\right)}',
+    ),
+  },
 ];
 
 const VAR_PAIRS: VarPair[] = [
