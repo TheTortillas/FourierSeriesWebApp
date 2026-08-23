@@ -24,6 +24,14 @@
     [class.pointer-events-none]="store.inputsLocked()"
     [class.opacity-70]="store.inputsLocked()"
   >
+    <!-- Examples combobox -->
+    <app-example-selector
+      [label]="'calculator.exampleLabel' | transloco"
+      [placeholder]="'calculator.examplePlaceholder' | transloco"
+      [options]="exampleOptions"
+      (select)="loadExample($event)"
+    />
+
     <!-- ── Tramos ─────────────────────────────────────────────────────────── -->
     <section class="space-y-2">
       <div class="flex items-center justify-between">
