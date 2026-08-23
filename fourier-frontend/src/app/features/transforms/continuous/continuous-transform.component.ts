@@ -221,6 +221,34 @@ const TRANSFORM_EXAMPLES: TransformExample[] = [
     mode: 'ft',
     segments: wholeLine('atan(t)', '\\operatorname{atan}\\left(t\\right)'),
   },
+  {
+    labelKey: 'transforms.exFtArctanDiff',
+    mode: 'ft',
+    segments: wholeLine(
+      'atan(2*t)-atan(t)',
+      '\\operatorname{atan}\\left(2t\\right)-\\operatorname{atan}\\left(t\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtRectFn',
+    mode: 'ft',
+    segments: wholeLine('rect(t)', '\\operatorname{rect}\\left(t\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtRectParam',
+    mode: 'ft',
+    segments: wholeLine('k*rect(a*t)', 'k\\cdot\\operatorname{rect}\\left(a\\cdot t\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtTri',
+    mode: 'ft',
+    segments: wholeLine('tri(t)', '\\operatorname{tri}\\left(t\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtSincSquared',
+    mode: 'ft',
+    segments: wholeLine('sinc(t)^2', '\\operatorname{sinc}\\left(t\\right)^{2}'),
+  },
   // ── FT — avanzados ──
   {
     labelKey: 'transforms.exFtGaussianModulated',
@@ -284,6 +312,16 @@ const TRANSFORM_EXAMPLES: TransformExample[] = [
     labelKey: 'transforms.exIftGaussian',
     mode: 'ift',
     segments: wholeLine('exp(-w^2)', 'e^{-w^{2}}'),
+  },
+  {
+    labelKey: 'transforms.exIftTri',
+    mode: 'ift',
+    segments: wholeLine('tri(w/2)', '\\operatorname{tri}\\left(\\frac{w}{2}\\right)'),
+  },
+  {
+    labelKey: 'transforms.exIftSincSquared',
+    mode: 'ift',
+    segments: wholeLine('sinc(w)^2', '\\operatorname{sinc}\\left(w\\right)^{2}'),
   },
   {
     labelKey: 'transforms.exIftDelta',
@@ -428,8 +466,8 @@ const TRANSFORM_EXAMPLES: TransformExample[] = [
     labelKey: 'transforms.exFtWeirdSpring',
     mode: 'ft',
     segments: wholeLine(
-      '5*((5*exp(-a*t)*sin(b*t)*u(t))/(c))',
-      '5\\cdot\\frac{5\\cdot e^{-a\\cdot t}\\cdot\\sin\\left(b\\cdot t\\right)\\cdot u\\left(t\\right)}{c}',
+      'c*((exp(-a*t)*sin(b*t)*u(t)))',
+      'c\\cdot e^{-a\\cdot t}\\cdot\\sin\\left(b\\cdot t\\right)\\cdot u\\left(t\\right)',
     ),
   },
   {
