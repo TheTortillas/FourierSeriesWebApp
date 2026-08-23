@@ -144,13 +144,97 @@ mkdir -p /etc/nginx/ssl/fouriersolver
 
 ## 8. Certificados SSL
 
-Desde tu máquina local, sube los archivos del certificado:
+### 8.1 Qué archivos entrega el proveedor y para qué sirve cada uno
+
+Al comprar el certificado wildcard `*.fouriersolver.com` (CA: Sectigo), el
+proveedor entrega un paquete con estos archivos:
+
+| Archivo                                             | Qué es                                        | Contiene                                                                 |
+| ---------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
+| `_.fouriersolver.com_private_key.key`                | Llave privada del dominio                      | La clave privada RSA/EC generada al crear el CSR. **Nunca sale del servidor**, nunca va a git. |
+| `fouriersolver.com_ssl_certificate.cer`              | Certificado hoja (*leaf*)                      | La llave pública de `*.fouriersolver.com`, firmada digitalmente por la CA emisora. |
+| `_.fouriersolver.com_ssl_certificate_INTERMEDIATE.zip` | Paquete de CAs intermedias                    | Al descomprimir: `intermediate1.cer` e `intermediate2.cer`.               |
+| `intermediate1.cer`                                  | CA intermedia 1                                | Certificado de `Sectigo Public Server Authentication CA DV R36` — la CA que firmó directamente tu leaf. |
+| `intermediate2.cer`                                  | CA intermedia 2                                | Certificado de `Sectigo Public Server Authentication Root R46` — firmó a la intermedia 1. |
+
+La CA raíz final (`USERTrust RSA Certification Authority`) **no se entrega**
+porque no hace falta: viene preinstalada en el almacén de confianza de todo
+sistema operativo/navegador/librería TLS moderna. El servidor solo necesita
+mandar el camino *hasta* esa raíz, no la raíz misma.
+
+### 8.2 Por qué existe una cadena y no un solo certificado
+
+Cada certificado de la cadena está firmado con la clave privada del
+certificado siguiente, formando una cadena de confianza verificable:
+
+```
+*.fouriersolver.com  --firmado por-->  Sectigo CA DV R36  --firmado por-->  Sectigo Root R46  --firmado por-->  USERTrust RSA CA
+     (leaf, tuyo)                      (intermediate1)                      (intermediate2)                    (raíz, ya confiada
+                                                                                                                  por el cliente)
+```
+
+`openssl x509 -noout -subject -issuer` en cada archivo confirma esta cadena:
+
+```
+leaf:            subject = *.fouriersolver.com          issuer = Sectigo CA DV R36
+intermediate1:    subject = Sectigo CA DV R36             issuer = Sectigo Root R46
+intermediate2:    subject = Sectigo Root R46               issuer = USERTrust RSA CA
+```
+
+El `issuer` de un eslabón siempre coincide con el `subject` del siguiente —
+así el cliente reconstruye la cadena y valida cada firma hasta llegar a una
+raíz en la que ya confía.
+
+### 8.3 El error: mandar solo el leaf
+
+`ssl_certificate` en nginx debe apuntar a un archivo con la cadena completa
+(leaf + intermedias), **no solo al `.cer` que llega primero**. El servidor
+TLS no reconstruye nada por su cuenta — envía tal cual la lista de
+certificados que tiene configurada. Si solo tiene el leaf, solo manda el leaf.
+
+Esto no rompe el *handshake* criptográfico (la sesión cifrada se establece
+igual, ver diagrama 8.5), pero sí rompe la *validación de confianza*: el
+cliente recibe una llave pública válida, pero no puede demostrar que el
+camino hasta una raíz confiable esté completo, y debe decidir qué hacer con
+esa cadena incompleta.
+
+- **Chrome/Firefox** hacen *AIA chasing*: el leaf trae una extensión
+  (`Authority Information Access`) con la URL de descarga del intermedio que
+  falta, y el navegador va a buscarlo por su cuenta. Por eso "funcionaba" en
+  el navegador.
+- **curl, bots, healthchecks, la mayoría de HTTP clients de librerías**
+  (Python `requests`, Node `fetch`, etc.) no hacen ese trabajo extra —
+  reciben una cadena incompleta y **rechazan la conexión**:
+  `unable to get local issuer certificate`.
+
+Esto es puramente un problema de la capa TLS (antes de que exista cualquier
+request HTTP) — no tiene relación con el rate limiting ni el bloqueo de IPs
+de la aplicación (sección 20), que actúan en una capa posterior y no se ven
+afectados por este fix en ningún sentido.
+
+### 8.4 Armar el fullchain y subir los archivos
+
+El orden es obligatorio: leaf primero, luego las intermedias en el mismo
+orden en que firman hacia la raíz.
+
+Desde tu máquina local:
 
 ```bash
-rsync tu_cert.cer \
-  root@fouriersolver.com:/etc/nginx/ssl/fouriersolver/fouriersolver.com_ssl_certificate.cer
+cat fouriersolver.com_ssl_certificate.cer intermediate1.cer intermediate2.cer \
+  > fouriersolver.com_fullchain.cer
 
-rsync tu_key.key \
+# Verificación local antes de subir — confirma que la cadena es válida
+# hasta una raíz de confianza sin necesidad de tocar el servidor:
+openssl verify -untrusted <(cat intermediate1.cer intermediate2.cer) \
+  fouriersolver.com_ssl_certificate.cer
+# fouriersolver.com_ssl_certificate.cer: OK
+
+rsync -e "ssh -i ~/.ssh/fourier_deploy" \
+  fouriersolver.com_fullchain.cer \
+  root@fouriersolver.com:/etc/nginx/ssl/fouriersolver/fouriersolver.com_fullchain.cer
+
+rsync -e "ssh -i ~/.ssh/fourier_deploy" \
+  _.fouriersolver.com_private_key.key \
   root@fouriersolver.com:/etc/nginx/ssl/fouriersolver/_.fouriersolver.com_private_key.key
 ```
 
@@ -159,6 +243,88 @@ En el servidor:
 ```bash
 chmod 600 /etc/nginx/ssl/fouriersolver/*
 chown root:root /etc/nginx/ssl/fouriersolver/*
+```
+
+`ssl_certificate` en el vhost (sección 9) apunta a `fouriersolver.com_fullchain.cer`,
+no al `.cer` suelto. `ssl_certificate_key` no cambia.
+
+Verificar que la cadena viaja completa (debe mostrar 3 certificados, no 1):
+
+```bash
+echo | openssl s_client -connect fouriersolver.com:443 -servername fouriersolver.com -showcerts 2>/dev/null | grep -c "BEGIN CERTIFICATE"
+```
+
+Y que un cliente estricto ya no falla:
+
+```bash
+curl -I https://fouriersolver.com/
+# HTTP/2 200 — sin error de SSL
+```
+
+### 8.5 Flujo criptográfico completo (TLS 1.3)
+
+Diagrama del handshake una vez el fullchain está bien configurado — desde la
+conexión TCP hasta la primera respuesta HTTP cifrada:
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente (curl/navegador/bot)
+    participant N as nginx (fouriersolver.com:443)
+
+    Note over C,N: 1. Handshake TLS 1.3
+    C->>N: ClientHello (cifrados soportados, SNI=fouriersolver.com)
+    N->>C: ServerHello + Certificate (leaf + intermediate1 + intermediate2)
+    N->>C: CertificateVerify (firmado con la llave privada del leaf)
+    N->>C: Finished
+
+    Note over C: 2. Validación de confianza (offline, solo el cliente)
+    C->>C: Verifica firma leaf con clave pública de intermediate1
+    C->>C: Verifica firma intermediate1 con clave pública de intermediate2
+    C->>C: Verifica firma intermediate2 contra raíz USERTrust (ya en su almacén)
+    C->>C: Verifica CertificateVerify con la clave pública del leaf
+    C->>C: Verifica que subject/SAN del leaf == fouriersolver.com
+
+    Note over C,N: 3. Canal cifrado establecido
+    C->>N: Application Data (GET / cifrado)
+    N->>C: Application Data (200 OK cifrado)
+```
+
+Con el leaf solo (configuración anterior), el paso 2 no puede completarse en
+un cliente estricto — no tiene forma de verificar la firma de `intermediate1`
+sobre el leaf porque nunca la recibió, y aborta antes de llegar al paso 3:
+
+```mermaid
+sequenceDiagram
+    participant C as curl / bot estricto
+    participant N as nginx (solo leaf configurado)
+
+    C->>N: ClientHello
+    N->>C: ServerHello + Certificate (SOLO leaf)
+    N->>C: CertificateVerify + Finished
+    C->>C: Intenta verificar firma del leaf...
+    C->>C: Busca intermediate1 en la cadena recibida → no está
+    C->>C: No puede construir camino hasta una raíz confiable
+    C--xN: Alert: unknown_ca / unable to get local issuer certificate
+    Note over C,N: Conexión abortada — nunca se llega a Application Data
+```
+
+Un navegador con AIA chasing inserta un paso extra entre la validación y el
+abort, que es lo que enmascaraba el problema:
+
+```mermaid
+sequenceDiagram
+    participant C as Chrome/Firefox
+    participant N as nginx (solo leaf configurado)
+    participant CA as sectigo.com (AIA endpoint)
+
+    C->>N: ClientHello
+    N->>C: ServerHello + Certificate (SOLO leaf)
+    C->>C: Falta intermediate1 en la cadena recibida
+    C->>CA: GET AIA URL del leaf (fuera del canal TLS con N)
+    CA->>C: intermediate1.cer
+    C->>C: intermediate2/raíz ya en caché o almacén local
+    C->>C: Reconstruye cadena completa → válida
+    Note over C,N: Canal aceptado — el usuario nunca nota el problema
 ```
 
 ---
@@ -190,7 +356,7 @@ server {
     listen 443 ssl;
     server_name fouriersolver.com www.fouriersolver.com;
 
-    ssl_certificate     /etc/nginx/ssl/fouriersolver/fouriersolver.com_ssl_certificate.cer;
+    ssl_certificate     /etc/nginx/ssl/fouriersolver/fouriersolver.com_fullchain.cer;
     ssl_certificate_key /etc/nginx/ssl/fouriersolver/_.fouriersolver.com_private_key.key;
 
     ssl_protocols       TLSv1.2 TLSv1.3;
