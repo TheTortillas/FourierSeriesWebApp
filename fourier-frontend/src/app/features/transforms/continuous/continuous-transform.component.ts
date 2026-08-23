@@ -200,7 +200,7 @@ const TRANSFORM_EXAMPLES: TransformExample[] = [
     mode: 'ft',
     segments: wholeLine(
       't*exp(-t)*u(t)',
-      't\\,e^{-t}\\operatorname{u}\\left(t\\right)',
+      'te^{-t}\\operatorname{u}\\left(t\\right)',
     ),
   },
   {
