@@ -49,20 +49,12 @@
         >
 
           <!-- Examples combobox -->
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-semibold font-mono text-muted dark:text-dark-muted uppercase tracking-wider">
-              {{ 'ode.exampleLabel' | transloco }}
-            </label>
-            <select
-              (change)="loadExample($any($event.target).value); $any($event.target).value = ''"
-              class="w-full px-3 py-2 rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-bg text-xs font-mono text-muted dark:text-dark-muted focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
-            >
-              <option value="" disabled selected>{{ 'ode.examplePlaceholder' | transloco }}</option>
-              @for (ex of filteredExamples(); track ex.labelKey) {
-                <option [value]="ex.labelKey">{{ ex.labelKey | transloco }}</option>
-              }
-            </select>
-          </div>
+          <app-example-selector
+            [label]="'ode.exampleLabel' | transloco"
+            [placeholder]="'ode.examplePlaceholder' | transloco"
+            [options]="exampleOptions()"
+            (select)="loadExample($event)"
+          />
 
           <!-- Equation field -->
           <section #mqEqRef class="flex flex-col gap-2">

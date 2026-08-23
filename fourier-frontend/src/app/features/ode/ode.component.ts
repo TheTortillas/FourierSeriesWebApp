@@ -33,6 +33,10 @@ import {
   type ParamValues,
 } from '../../shared/components/param-sliders/param-sliders.component';
 import { ExportButtonComponent } from '../../shared/components/export-button/export-button.component';
+import {
+  ExampleSelectorComponent,
+  type ExampleOption,
+} from '../../shared/components/example-selector/example-selector.component';
 
 import { ApiService } from '../../core/services/api/api.service';
 import { SeoService } from '../../core/services/seo/seo.service';
@@ -254,6 +258,7 @@ const ODE_EXAMPLES: OdeExample[] = [
     FunctionPlotComponent,
     ParamSlidersComponent,
     ExportButtonComponent,
+    ExampleSelectorComponent,
   ],
 })
 export class OdeComponent implements OnInit, AfterViewChecked {
@@ -470,6 +475,10 @@ export class OdeComponent implements OnInit, AfterViewChecked {
   // ── Examples ─────────────────────────────────────────────────────────────────
   readonly filteredExamples = computed(() =>
     ODE_EXAMPLES.filter((e) => e.mode === this.mode()),
+  );
+
+  readonly exampleOptions = computed<ExampleOption[]>(() =>
+    this.filteredExamples().map((e) => ({ id: e.labelKey, labelKey: e.labelKey })),
   );
 
   private readonly submit$ = new Subject<void>();

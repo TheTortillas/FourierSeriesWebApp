@@ -493,6 +493,7 @@
       "modeEpicyclesDesc": "2D-Form → DFT",
       "epicycles": {
         "presetsLabel": "Vordefinierte Formen",
+        "presetsPlaceholder": "Form wählen…",
         "presetCircle": "Kreis",
         "presetStar": "Stern",
         "presetLissajous": "Lissajous 3:2",

@@ -493,6 +493,7 @@
       "modeEpicyclesDesc": "2D shape → DFT",
       "epicycles": {
         "presetsLabel": "Shape presets",
+        "presetsPlaceholder": "Choose a shape…",
         "presetCircle": "Circle",
         "presetStar": "Star",
         "presetLissajous": "Lissajous 3:2",

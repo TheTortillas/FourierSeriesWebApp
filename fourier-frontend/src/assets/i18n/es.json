@@ -493,6 +493,7 @@
       "modeEpicyclesDesc": "figura 2D → DFT",
       "epicycles": {
         "presetsLabel": "Figuras predefinidas",
+        "presetsPlaceholder": "Elegir figura…",
         "presetCircle": "Círculo",
         "presetStar": "Estrella",
         "presetLissajous": "Lissajous 3:2",

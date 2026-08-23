@@ -94,6 +94,10 @@ function extractFreeSymbols(expr: string, intVar: string): string[] {
 }
 
 import { CAT_PRESET, TREX_PRESET, HOMER_PRESET } from './presets';
+import {
+  ExampleSelectorComponent,
+  type ExampleOption,
+} from '../../../shared/components/example-selector/example-selector.component';
 
 // ── Epicycles helpers ──────────────────────────────────────────────────────────
 
@@ -187,6 +191,7 @@ function makePreset(
     DecimalPipe,
     CanvasShellComponent,
     FavoriteDialogComponent,
+    ExampleSelectorComponent,
   ],
 })
 export class DftComponent implements OnInit, OnDestroy {
@@ -542,6 +547,11 @@ export class DftComponent implements OnInit, OnDestroy {
     { id: 'trex',      label: 'transforms.dft.epicycles.presetTrex',      points: TREX_PRESET           },
     { id: 'homer',     label: 'transforms.dft.epicycles.presetHomer',     points: HOMER_PRESET          },
   ];
+
+  readonly epicPresetOptions: ExampleOption[] = this.epicPresets.map((p) => ({
+    id: p.id,
+    labelKey: p.label,
+  }));
 
   readonly epicRawPoints = signal('');
   readonly epicLoading = signal(false);
