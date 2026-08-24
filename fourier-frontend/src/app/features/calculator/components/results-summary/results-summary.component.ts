@@ -1234,8 +1234,8 @@ export class ResultsSummaryComponent {
       const bnv = bnFn?.(t.n);
       return {
         ...t,
-        anFloat: anv !== undefined && isFinite(anv) ? anv : 0,
-        bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : 0,
+        anFloat: anv !== undefined && isFinite(anv) ? anv : t.anFloat,
+        bnFloat: bnv !== undefined && isFinite(bnv) ? bnv : t.bnFloat,
       };
     });
   });
