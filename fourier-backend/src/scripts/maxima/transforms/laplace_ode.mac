@@ -4,7 +4,11 @@
      1. Substitute u() → hside() so Maxima knows it's the Heaviside step.
      2. Take the Laplace transform of both sides (including IC contributions).
      3. Solve for Y(s) algebraically.
-     4. Invert with pwilt() which handles hside/delta shifts correctly.
+     4. Invert Y(s): split into e^(-c*s)-bearing terms (per distinct shift c)
+        and the remaining unshifted terms, invert each group with ilt()
+        separately, then reassemble with hstep(t-c) on the shifted pieces.
+        This avoids pwilt() mixing plain and shifted poles over a shared
+        denominator, which was found to leak spurious residue terms.
    Falls back to desolve+atvalue for equations where the manual pipeline fails.
 
    Injected variables:
@@ -64,19 +68,62 @@ _rhs_s: if _rhs_s = [] then false else first(_rhs_s)$
 /* ── 4. Solve Y(s) and invert ───────────────────────────────────────────── */
 sol_raw: false$
 
+/* Coefficient of _s in the exponent of a %e^(-c*_s) factor of tm (c>0), else 0.
+   Used to split Y(s)'s numerator into groups sharing a common time-shift, so
+   each group can be inverted on its own instead of handing pwilt() a mix of
+   plain and shifted poles over one denominator (observed to leak spurious
+   residue terms once more than one shift/pole combination is present). */
+_shiftof(tm) := block([_facs, _f, _ex, _cf, _res],
+  _res: 0,
+  _facs: if atom(tm) then [] elseif op(tm) = "*" then args(tm) else [tm],
+  for _f in _facs do
+    if not atom(_f) and op(_f) = "^" and args(_f)[1] = %e then (
+      _ex: args(_f)[2],
+      _cf: ratcoeff(_ex, _s),
+      if _cf # 0 and _cf < 0 then _res: -_cf
+    ),
+  _res
+)$
+
 if _rhs_s # false and not member('laplace, listofops(_rhs_s)) then block(
-  [_Ysol, _sol],
+  [_Ysol],
   _Ysol: errcatch(solve(_lhs_s = _rhs_s, _Y)),
   if _Ysol # [] and _Ysol # [[]] then block(
-    [_Yexpr],
+    [_Yexpr, _num, _den, _terms, _groups, _c, _tm, _done, _g, _total, _gc, _gnum, _ginv],
     _Yexpr: rhs(first(first(_Ysol))),
-    /* Invert using pwilt (handles hside shifts, delta shifts) */
-    _sol: errcatch(pwilt(_Yexpr, _s, _tvar)),
-    if _sol # [] and first(_sol) # false then block(
-      [_v],
-      _v: first(_sol),
-      sol_raw: ratsimp(_v)
-    )
+    _num: expand(num(_Yexpr)),
+    _den: denom(_Yexpr),
+    _terms: if not atom(_num) and op(_num) = "+" then args(_num) else [_num],
+    _groups: [],
+    for _tm in _terms do block([],
+      _c: _shiftof(_tm),
+      _done: false,
+      for _g in _groups do
+        if _g[1] = _c then (
+          _g[2]: _g[2] + (if _c = 0 then _tm else ratsimp(_tm * exp(_c*_s))),
+          _done: true
+        ),
+      if not _done then
+        _groups: cons([_c, if _c = 0 then _tm else ratsimp(_tm * exp(_c*_s))], _groups)
+    ),
+    _total: false,
+    for _g in _groups do block([],
+      _gc: _g[1], _gnum: _g[2],
+      _ginv: errcatch(ilt(_gnum/_den, _s, _tvar)),
+      if _ginv = [] or not freeof('ilt, first(_ginv)) then (
+        /* ilt() couldn't fully resolve this group (e.g. delta terms) —
+           fall back to pwilt on this group alone, still isolated from
+           the other shift groups */
+        _ginv: errcatch(pwilt(_gnum/_den * (if _gc = 0 then 1 else exp(-_gc*_s)), _s, _tvar)),
+        if _ginv # [] then
+          _total: (if _total = false then 0 else _total) + first(_ginv)
+      ) else (
+        _ginv: first(_ginv),
+        _total: (if _total = false then 0 else _total)
+                + (if _gc = 0 then _ginv else hstep(_tvar - _gc) * subst(_tvar = _tvar - _gc, _ginv))
+      )
+    ),
+    if _total # false then sol_raw: ratsimp(_total)
   )
 )$
 
