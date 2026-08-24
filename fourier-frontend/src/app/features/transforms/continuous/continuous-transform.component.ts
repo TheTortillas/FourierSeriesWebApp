@@ -60,6 +60,10 @@ import {
   SimplifyResponse,
 } from '../../../domain/types/transform.types';
 import { HistoryEntry } from '../../../domain';
+import {
+  ExampleSelectorComponent,
+  type ExampleOption,
+} from '../../../shared/components/example-selector/example-selector.component';
 
 export interface AltForm {
   labelKey: string;
@@ -116,6 +120,449 @@ interface VarPair {
   freqDisplay: string;
 }
 
+type TransformSegmentSeed = Omit<TransformSegmentDraft, 'id'>;
+
+interface TransformExample {
+  labelKey: string;
+  mode: 'ft' | 'ift';
+  segments: TransformSegmentSeed[];
+}
+
+function tseg(
+  expression: string,
+  expressionTex: string,
+  from: string,
+  fromTex: string,
+  to: string,
+  toTex: string,
+): TransformSegmentSeed {
+  return { expression, expressionTex, from, fromTex, to, toTex };
+}
+
+const INF = { from: 'minf', fromTex: '-\\infty', to: 'inf', toTex: '\\infty' };
+
+/** Single-segment example spanning (-∞, ∞). */
+function wholeLine(expression: string, expressionTex: string): TransformSegmentSeed[] {
+  return [tseg(expression, expressionTex, INF.from, INF.fromTex, INF.to, INF.toTex)];
+}
+
+const TRANSFORM_EXAMPLES: TransformExample[] = [
+  // ── FT — básicos ──
+  {
+    labelKey: 'transforms.exFtSinc',
+    mode: 'ft',
+    segments: wholeLine('sin(%pi*t)/(%pi*t)', '\\frac{\\sin\\left(\\pi t\\right)}{\\pi t}'),
+  },
+  {
+    labelKey: 'transforms.exFtRect',
+    mode: 'ft',
+    segments: [tseg('1', '1', '-1', '-1', '1', '1')],
+  },
+  {
+    labelKey: 'transforms.exFtDelta',
+    mode: 'ft',
+    segments: wholeLine('delta(t-2)', '\\delta\\left(t-2\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtBilateralExp',
+    mode: 'ft',
+    segments: wholeLine('exp(-abs(t))', 'e^{-\\left|t\\right|}'),
+  },
+  {
+    labelKey: 'transforms.exFtCausalExp',
+    mode: 'ft',
+    segments: wholeLine(
+      'exp(-t)*u(t)',
+      'e^{-t}\\operatorname{u}\\left(t\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtGaussian',
+    mode: 'ft',
+    segments: wholeLine('exp(-t^2)', 'e^{-t^{2}}'),
+  },
+  {
+    labelKey: 'transforms.exFtCosine',
+    mode: 'ft',
+    segments: wholeLine('cos(3*t)', '\\cos\\left(3t\\right)'),
+  },
+  // ── FT — elaborados ──
+  {
+    labelKey: 'transforms.exFtCausalModulated',
+    mode: 'ft',
+    segments: wholeLine(
+      'exp(-2*t)*cos(3*t)*u(t)',
+      'e^{-2t}\\cos\\left(3t\\right)\\operatorname{u}\\left(t\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtDoublePole',
+    mode: 'ft',
+    segments: wholeLine(
+      't*exp(-t)*u(t)',
+      'te^{-t}\\operatorname{u}\\left(t\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtSech',
+    mode: 'ft',
+    segments: wholeLine('sech(t)', '\\operatorname{sech}\\left(t\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtSinSinh',
+    mode: 'ft',
+    segments: wholeLine(
+      'sin(2*t)/sinh(t)',
+      '\\frac{\\sin\\left(2t\\right)}{\\sinh\\left(t\\right)}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtArctan',
+    mode: 'ft',
+    segments: wholeLine('atan(t)', '\\operatorname{atan}\\left(t\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtArctanDiff',
+    mode: 'ft',
+    segments: wholeLine(
+      'atan(2*t)-atan(t)',
+      '\\operatorname{atan}\\left(2t\\right)-\\operatorname{atan}\\left(t\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtRectFn',
+    mode: 'ft',
+    segments: wholeLine('rect(t)', '\\operatorname{rect}\\left(t\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtRectParam',
+    mode: 'ft',
+    segments: wholeLine('k*rect(a*t)', 'k\\cdot\\operatorname{rect}\\left(a\\cdot t\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtTri',
+    mode: 'ft',
+    segments: wholeLine('tri(t)', '\\operatorname{tri}\\left(t\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtSincSquared',
+    mode: 'ft',
+    segments: wholeLine('sinc(t)^2', '\\operatorname{sinc}\\left(t\\right)^{2}'),
+  },
+  // ── FT — avanzados ──
+  {
+    labelKey: 'transforms.exFtGaussianModulated',
+    mode: 'ft',
+    segments: wholeLine(
+      'exp(-t^2)*cos(5*t)',
+      'e^{-t^{2}}\\cos\\left(5t\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtGaussianLorentzian',
+    mode: 'ft',
+    segments: wholeLine(
+      'exp(-t^2)/(t^2+1)',
+      '\\frac{e^{-t^{2}}}{t^{2}+1}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtAntiCausal',
+    mode: 'ft',
+    segments: wholeLine(
+      'exp(2*t)*u(-t)',
+      'e^{2t}\\operatorname{u}\\left(-t\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtErf',
+    mode: 'ft',
+    segments: wholeLine('erf(t)', '\\operatorname{erf}\\left(t\\right)'),
+  },
+  {
+    labelKey: 'transforms.exFtHermite',
+    mode: 'ft',
+    segments: wholeLine('t^2*exp(-t^2)', 't^{2}e^{-t^{2}}'),
+  },
+  {
+    labelKey: 'transforms.exFtImpulseTrain5',
+    mode: 'ft',
+    segments: wholeLine(
+      'delta(t)+delta(t-1)+delta(t-2)+delta(t-3)+delta(t-4)',
+      '\\delta\\left(t\\right)+\\delta\\left(t-1\\right)+\\delta\\left(t-2\\right)+\\delta\\left(t-3\\right)+\\delta\\left(t-4\\right)',
+    ),
+  },
+  // ── IFT — básicos ──
+  {
+    labelKey: 'transforms.exIftCausalExp',
+    mode: 'ift',
+    segments: wholeLine('1/(a+%i*w)', '\\frac{1}{a+iw}'),
+  },
+  {
+    labelKey: 'transforms.exIftLorentzian',
+    mode: 'ift',
+    segments: wholeLine('1/(a^2+w^2)', '\\frac{1}{a^{2}+w^{2}}'),
+  },
+  {
+    labelKey: 'transforms.exIftRect',
+    mode: 'ift',
+    segments: [tseg('1', '1', '-2', '-2', '2', '2')],
+  },
+  {
+    labelKey: 'transforms.exIftGaussian',
+    mode: 'ift',
+    segments: wholeLine('exp(-w^2)', 'e^{-w^{2}}'),
+  },
+  {
+    labelKey: 'transforms.exIftTri',
+    mode: 'ift',
+    segments: wholeLine('tri(w/2)', '\\operatorname{tri}\\left(\\frac{w}{2}\\right)'),
+  },
+  {
+    labelKey: 'transforms.exIftSincSquared',
+    mode: 'ift',
+    segments: wholeLine('sinc(w)^2', '\\operatorname{sinc}\\left(w\\right)^{2}'),
+  },
+  {
+    labelKey: 'transforms.exIftDelta',
+    mode: 'ift',
+    segments: wholeLine('2*%pi*delta(w-3)', '2\\pi\\delta\\left(w-3\\right)'),
+  },
+  // ── IFT — elaborados ──
+  {
+    labelKey: 'transforms.exIftDoublePole',
+    mode: 'ift',
+    segments: wholeLine('1/(%i*w+2)^2', '\\frac{1}{\\left(iw+2\\right)^{2}}'),
+  },
+  {
+    labelKey: 'transforms.exIftModulatedCausal',
+    mode: 'ift',
+    segments: wholeLine(
+      '(%i*w+2)/((%i*w+2)^2+9)',
+      '\\frac{iw+2}{\\left(iw+2\\right)^{2}+9}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftTwoPoles',
+    mode: 'ift',
+    segments: wholeLine(
+      '1/((%i*w+1)*(%i*w+3))',
+      '\\frac{1}{\\left(iw+1\\right)\\left(iw+3\\right)}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftSech',
+    mode: 'ift',
+    segments: wholeLine(
+      'sech(%pi*w/2)',
+      '\\operatorname{sech}\\left(\\frac{\\pi w}{2}\\right)',
+    ),
+  },
+  // ── IFT — avanzados ──
+  {
+    labelKey: 'transforms.exIftThreePoles',
+    mode: 'ift',
+    segments: wholeLine(
+      '1/((%i*w+1)^2*(%i*w+2))',
+      '\\frac{1}{\\left(iw+1\\right)^{2}\\left(iw+2\\right)}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftTimeShift',
+    mode: 'ift',
+    segments: wholeLine(
+      'exp(2*%i*w)/(%i*w+3)',
+      '\\frac{e^{2iw}}{iw+3}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftAntiCausal',
+    mode: 'ift',
+    segments: wholeLine('1/(2-%i*w)', '\\frac{1}{2-iw}'),
+  },
+  {
+    labelKey: 'transforms.exIftGaussianLorentzian',
+    mode: 'ift',
+    segments: wholeLine(
+      'exp(-w^2)/(w^2+1)',
+      '\\frac{e^{-w^{2}}}{w^{2}+1}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftFractionalPole',
+    mode: 'ift',
+    segments: wholeLine(
+      '1/sqrt(%i*w+1)',
+      '\\frac{1}{\\sqrt{iw+1}}',
+    ),
+  },
+  // ── FT — favoritos del usuario ──
+  {
+    labelKey: 'transforms.exFtGaussianPhase',
+    mode: 'ft',
+    segments: wholeLine(
+      'exp(-t^2)*cos(2*t+a)',
+      'e^{-t^{2}}\\cos\\left(2t+a\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtGaussianPhase1',
+    mode: 'ft',
+    segments: wholeLine(
+      'exp(-t^2)*cos(2*t+1)',
+      'e^{-t^{2}}\\cos\\left(2t+1\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtTriangle2',
+    mode: 'ft',
+    segments: [
+      tseg('a+t', 'a+t', '-a', '-a', '0', '0'),
+      tseg('a-t', 'a-t', '0', '0', 'a', 'a'),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtTriangle3',
+    mode: 'ft',
+    segments: [
+      tseg(
+        '(1/n^2)*(n+x)',
+        '\\frac{1}{n^{2}}\\left(n+x\\right)',
+        '-n', '-n', '0', '0',
+      ),
+      tseg(
+        '(1/n^2)*(n-x)',
+        '\\frac{1}{n^{2}}\\left(n-x\\right)',
+        '0', '0', 'n', 'n',
+      ),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtNormalDist',
+    mode: 'ft',
+    segments: wholeLine(
+      '(1/(sqrt(2*%pi)*a))*exp(-(1/2)*((t-b)/c)^2)',
+      '\\frac{1}{\\sqrt{2\\pi}\\cdot a}e^{-\\frac{1}{2}\\left(\\frac{t-b}{c}\\right)^{2}}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtHeavisideVariant',
+    mode: 'ft',
+    segments: [
+      tseg('0', '0', 'minf', '-\\infty', 'a/2', '\\frac{a}{2}'),
+      tseg('1', '1', 'a/2', '\\frac{a}{2}', 'b/2', '\\frac{b}{2}'),
+      tseg('2', '2', 'b/2', '\\frac{b}{2}', 'inf', '\\infty'),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtBandpassFilter',
+    mode: 'ft',
+    segments: wholeLine(
+      '(sin(3*t)-sin(t))/(%pi*t)',
+      '\\frac{\\sin\\left(3t\\right)-\\sin\\left(t\\right)}{\\pi t}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtWeirdSpring',
+    mode: 'ft',
+    segments: wholeLine(
+      'c*((exp(-a*t)*sin(b*t)*u(t)))',
+      'c\\cdot e^{-a\\cdot t}\\cdot\\sin\\left(b\\cdot t\\right)\\cdot u\\left(t\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtExpToSine',
+    mode: 'ft',
+    segments: wholeLine(
+      '-a*t*exp(-(t-b)^2)',
+      '-a\\cdot t\\cdot e^{-\\left(t-b\\right)^{2}}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtBoundedCosine',
+    mode: 'ft',
+    segments: [
+      tseg('-cos(t)', '-\\cos\\left(t\\right)', '-%pi/3', '-\\frac{\\pi}{3}', '%pi/3', '\\frac{\\pi}{3}'),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtShiftedGaussian',
+    mode: 'ft',
+    segments: wholeLine(
+      'c*exp(-b*(t-a)^2)',
+      'c\\cdot\\exp\\left(-b\\cdot\\left(t-a\\right)^{2}\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtDelayedRamp',
+    mode: 'ft',
+    segments: wholeLine(
+      '(t-3)*exp(-4*t)*u(t-3)',
+      '\\left(t-3\\right)e^{-4t}\\operatorname{u}\\left(t-3\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtSincVariant',
+    mode: 'ft',
+    segments: wholeLine(
+      'sin(a*t)/(a*%pi*t)',
+      '\\frac{\\sin\\left(at\\right)}{a\\pi t}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exFtCausalCosineParam',
+    mode: 'ft',
+    segments: [
+      tseg(
+        'k*exp(-a*t)*cos(b*t)*u(t)',
+        'k\\cdot e^{-a\\cdot t}\\cos\\left(b\\cdot t\\right)\\operatorname{u}\\left(t\\right)',
+        '0', '0', 'inf', '\\infty',
+      ),
+    ],
+  },
+  {
+    labelKey: 'transforms.exFtBoundedCosineHeaviside',
+    mode: 'ft',
+    segments: wholeLine(
+      'cos(t)*(u(t+%pi/2)-u(t-%pi/2))',
+      '\\cos\\left(t\\right)\\cdot\\left(\\operatorname{u}\\left(t+\\frac{\\pi}{2}\\right)-\\operatorname{u}\\left(t-\\frac{\\pi}{2}\\right)\\right)',
+    ),
+  },
+  // ── IFT — favoritos del usuario ──
+  {
+    labelKey: 'transforms.exIftComplexHeavy',
+    mode: 'ift',
+    segments: wholeLine(
+      '(sqrt(2*%pi)*(exp(4*w+2*%i)+1)*exp(-(w^2/2)-2*w-%i-2))/2',
+      '\\frac{\\sqrt{2\\pi}\\left(e^{\\left(4w+2i\\right)}+1\\right)e^{-\\left(w^{2}/2\\right)-2w-i-2}}{2}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftComplexSine',
+    mode: 'ift',
+    segments: wholeLine(
+      '(6*exp(4*%i*w)*sin(2*w))/(9+w^2)',
+      '\\frac{6e^{4iw}\\sin\\left(2w\\right)}{9+w^{2}}',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftGaussianSine',
+    mode: 'ift',
+    segments: wholeLine(
+      'exp(-w^2/a)*sin(b*w)',
+      'e^{-w^{2}/a}\\sin\\left(b\\cdot w\\right)',
+    ),
+  },
+  {
+    labelKey: 'transforms.exIftSpring',
+    mode: 'ift',
+    segments: wholeLine(
+      '((1)/((1+a*%i)+%i*w))*((1)/(%i*w+(1-a*%i)))',
+      '\\frac{1}{\\left(1+a\\cdot i\\right)+iw}\\cdot\\frac{1}{iw+\\left(1-a\\cdot i\\right)}',
+    ),
+  },
+];
+
 const VAR_PAIRS: VarPair[] = [
   { id: 't-w', time: 't', freq: 'w', timeDisplay: 't', freqDisplay: 'ω' },
   { id: 't-f', time: 't', freq: 'f', timeDisplay: 't', freqDisplay: 'f' },
@@ -143,6 +590,7 @@ const VAR_PAIRS: VarPair[] = [
     CanvasShellComponent,
     ShareDialogComponent,
     FavoriteDialogComponent,
+    ExampleSelectorComponent,
   ],
 })
 export class ContinuousTransformComponent implements OnInit {
@@ -1086,6 +1534,29 @@ export class ContinuousTransformComponent implements OnInit {
     this.ftResult.set(null);
     this.iftResult.set(null);
     this.errorMsg.set(null);
+  }
+
+  // ── Examples ──────────────────────────────────────────────────────────────
+
+  readonly filteredExamples = computed(() =>
+    TRANSFORM_EXAMPLES.filter((e) => e.mode === this.mode()),
+  );
+
+  readonly exampleOptions = computed<ExampleOption[]>(() =>
+    this.filteredExamples().map((e) => ({ id: e.labelKey, labelKey: e.labelKey })),
+  );
+
+  loadExample(labelKey: string): void {
+    const ex = TRANSFORM_EXAMPLES.find((e) => e.labelKey === labelKey);
+    if (!ex) return;
+
+    this.mode.set(ex.mode);
+    this.varPairId.set('t-w');
+    this.segments.set(ex.segments.map((s) => ({ ...s, id: mkId() })));
+    this.ftResult.set(null);
+    this.iftResult.set(null);
+    this.errorMsg.set(null);
+    this.paramValues.set({});
   }
 
   // ── Variable replacement helpers ─────────────────────────────────────────

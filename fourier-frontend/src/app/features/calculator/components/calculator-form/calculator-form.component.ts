@@ -1,7 +1,7 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { debounceTime, of, switchMap, tap } from 'rxjs';
-import { CalculatorStore } from '../../store/calculator.store';
+import { CalculatorStore, SegmentDraft, SeriesType } from '../../store/calculator.store';
 import { SegmentInputComponent } from '../segment-input/segment-input.component';
 import { SeriesTypeSelectorComponent } from '../series-type-selector/series-type-selector.component';
 import { MathjaxDirective } from '../../../../shared/directives/mathjax.directive';
@@ -10,9 +10,218 @@ import { LatexToMaximaService } from '../../../../core/services/math/latex-to-ma
 import { MathquillService, KeyBtn } from '../../../../core/services/math/mathquill.service';
 import { MobileMathKeyboardComponent } from '../../../../shared/components/math-keyboard/mobile-math-keyboard.component';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button.component';
+import {
+  ExampleSelectorComponent,
+  type ExampleOption,
+} from '../../../../shared/components/example-selector/example-selector.component';
+
+type SegmentSeed = Omit<SegmentDraft, 'id'>;
+
+interface FourierExample {
+  labelKey: string;
+  seriesType: SeriesType;
+  intVar: string;
+  segments: SegmentSeed[];
+}
+
+function seg(
+  expression: string,
+  expressionTex: string,
+  from: string,
+  fromTex: string,
+  to: string,
+  toTex: string,
+): SegmentSeed {
+  return { expression, expressionTex, from, fromTex, to, toTex };
+}
+
+const CALCULATOR_EXAMPLES: FourierExample[] = [
+  // ── Trigonométrica — numéricos ──
+  {
+    labelKey: 'calculator.exSquareWave',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [
+      seg('-1', '-1', '-%pi', '-\\pi', '0', '0'),
+      seg('1', '1', '0', '0', '%pi', '\\pi'),
+    ],
+  },
+  {
+    labelKey: 'calculator.exSawtooth',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [seg('x', 'x', '-%pi', '-\\pi', '%pi', '\\pi')],
+  },
+  {
+    labelKey: 'calculator.exTriangle',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [seg('abs(x)', '\\left|x\\right|', '-%pi', '-\\pi', '%pi', '\\pi')],
+  },
+  {
+    labelKey: 'calculator.exPulseTrain',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [
+      seg('0', '0', '-%pi', '-\\pi', '-%pi/2', '-\\frac{\\pi}{2}'),
+      seg('1', '1', '-%pi/2', '-\\frac{\\pi}{2}', '%pi/2', '\\frac{\\pi}{2}'),
+      seg('0', '0', '%pi/2', '\\frac{\\pi}{2}', '%pi', '\\pi'),
+    ],
+  },
+  {
+    labelKey: 'calculator.exHalfWaveRect',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [
+      seg('sin(x)', '\\sin\\left(x\\right)', '0', '0', '%pi', '\\pi'),
+      seg('0', '0', '%pi', '\\pi', '2*%pi', '2\\pi'),
+    ],
+  },
+  {
+    labelKey: 'calculator.exFullWaveRect',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [seg('abs(sin(x))', '\\left|\\sin\\left(x\\right)\\right|', '-%pi', '-\\pi', '%pi', '\\pi')],
+  },
+  {
+    labelKey: 'calculator.exParabola',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [seg('x^2', 'x^{2}', '-%pi', '-\\pi', '%pi', '\\pi')],
+  },
+  {
+    labelKey: 'calculator.exAbs',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [seg('abs(x)', '\\left|x\\right|', '-%pi', '-\\pi', '%pi', '\\pi')],
+  },
+  {
+    labelKey: 'calculator.exSinh',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [seg('sinh(x)', '\\sinh\\left(x\\right)', '-%pi', '-\\pi', '%pi', '\\pi')],
+  },
+  // ── Trigonométrica — parámetros simbólicos ──
+  {
+    labelKey: 'calculator.exSquareWaveSym',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [
+      seg('-1', '-1', '-T/2', '-\\frac{T}{2}', '0', '0'),
+      seg('1', '1', '0', '0', 'T/2', '\\frac{T}{2}'),
+    ],
+  },
+  {
+    labelKey: 'calculator.exSawtoothSym',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [seg('x', 'x', '-L', '-L', 'L', 'L')],
+  },
+  {
+    labelKey: 'calculator.exPulseTrainSym',
+    seriesType: 'trigonometric',
+    intVar: 'x',
+    segments: [
+      seg('0', '0', '-T/2', '-\\frac{T}{2}', '-a', '-a'),
+      seg('1', '1', '-a', '-a', 'a', 'a'),
+      seg('0', '0', 'a', 'a', 'T/2', '\\frac{T}{2}'),
+    ],
+  },
+  // ── Compleja ──
+  {
+    labelKey: 'calculator.exComplexSquareWave',
+    seriesType: 'complex',
+    intVar: 'x',
+    segments: [
+      seg('-1', '-1', '-%pi', '-\\pi', '0', '0'),
+      seg('1', '1', '0', '0', '%pi', '\\pi'),
+    ],
+  },
+  {
+    labelKey: 'calculator.exComplexExp',
+    seriesType: 'complex',
+    intVar: 'x',
+    segments: [seg('exp(x)', 'e^{x}', '-%pi', '-\\pi', '%pi', '\\pi')],
+  },
+  {
+    labelKey: 'calculator.exComplexSawtoothSym',
+    seriesType: 'complex',
+    intVar: 'x',
+    segments: [seg('x', 'x', '-L', '-L', 'L', 'L')],
+  },
+  {
+    labelKey: 'calculator.exComplexPulseSym',
+    seriesType: 'complex',
+    intVar: 'x',
+    segments: [
+      seg('0', '0', '-T/2', '-\\frac{T}{2}', '-a', '-a'),
+      seg('1', '1', '-a', '-a', 'a', 'a'),
+      seg('0', '0', 'a', 'a', 'T/2', '\\frac{T}{2}'),
+    ],
+  },
+  // ── Medio rango ──
+  {
+    labelKey: 'calculator.exHalfRangeRamp',
+    seriesType: 'halfRange',
+    intVar: 'x',
+    segments: [seg('x', 'x', '0', '0', 'L', 'L')],
+  },
+  {
+    labelKey: 'calculator.exHalfRangeParabola',
+    seriesType: 'halfRange',
+    intVar: 'x',
+    segments: [seg('x*(L-x)', 'x\\left(L-x\\right)', '0', '0', 'L', 'L')],
+  },
+  {
+    labelKey: 'calculator.exHalfRangeConstant',
+    seriesType: 'halfRange',
+    intVar: 'x',
+    segments: [seg('1', '1', '0', '0', 'L', 'L')],
+  },
+  {
+    labelKey: 'calculator.exHalfRangeSine',
+    seriesType: 'halfRange',
+    intVar: 'x',
+    segments: [
+      seg(
+        'sin(%pi*x/L)',
+        '\\sin\\left(\\frac{\\pi x}{L}\\right)',
+        '0',
+        '0',
+        'L',
+        'L',
+      ),
+    ],
+  },
+  {
+    labelKey: 'calculator.exHalfRangeExpDecay',
+    seriesType: 'halfRange',
+    intVar: 'x',
+    segments: [seg('exp(-x)', 'e^{-x}', '0', '0', '1', '1')],
+  },
+  {
+    labelKey: 'calculator.exHalfRangeThreeStep',
+    seriesType: 'halfRange',
+    intVar: 'x',
+    segments: [
+      seg('1', '1', '0', '0', '1', '1'),
+      seg('0', '0', '1', '1', '3', '3'),
+      seg('-1', '-1', '3', '3', '5', '5'),
+    ],
+  },
+];
+
 @Component({
   selector: 'app-calculator-form',
-  imports: [SegmentInputComponent, SeriesTypeSelectorComponent, MathjaxDirective, TranslocoPipe, MobileMathKeyboardComponent, ExportButtonComponent],
+  imports: [
+    SegmentInputComponent,
+    SeriesTypeSelectorComponent,
+    MathjaxDirective,
+    TranslocoPipe,
+    MobileMathKeyboardComponent,
+    ExportButtonComponent,
+    ExampleSelectorComponent,
+  ],
   templateUrl: './calculator-form.component.html',
 })
 export class CalculatorFormComponent {
@@ -22,6 +231,28 @@ export class CalculatorFormComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   showKeyboard = false;
+
+  readonly exampleOptions: ExampleOption[] = CALCULATOR_EXAMPLES.map((ex) => ({
+    id: ex.labelKey,
+    labelKey: ex.labelKey,
+  }));
+
+  private _exampleSegId = 0;
+
+  loadExample(labelKey: string): void {
+    const ex = CALCULATOR_EXAMPLES.find((e) => e.labelKey === labelKey);
+    if (!ex) return;
+
+    this.store.clearComputedResult();
+    // Set intVar directly (not via setIntVar) — that method rewrites existing
+    // segment expressions to the new variable, which would corrupt the
+    // example's expressions since they're already written in terms of ex.intVar.
+    this.store.intVar.set(ex.intVar);
+    this.store.segments.set(
+      ex.segments.map((s) => ({ ...s, id: `seg-ex-${++this._exampleSegId}` })),
+    );
+    this.store.setSeriesType(ex.seriesType);
+  }
 
   readonly mobileExtraGroup: KeyBtn[] = [
     { label: '|□|', writeWithCursor: '\\left|\\right|' },

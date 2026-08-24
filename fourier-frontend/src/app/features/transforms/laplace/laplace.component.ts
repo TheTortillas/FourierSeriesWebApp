@@ -56,6 +56,10 @@ export interface AltForm { labelKey: string; tex: string; maxima: string; }
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button.component';
 import { HistoryEntry } from '../../../domain';
+import {
+  ExampleSelectorComponent,
+  type ExampleOption,
+} from '../../../shared/components/example-selector/example-selector.component';
 
 export type LaplaceMode = 'direct' | 'inverse' | 'ode';
 
@@ -88,6 +92,225 @@ const VAR_PAIRS: VarPair[] = [
   { id: 'tau-s', time: 'tau', freq: 's', timeDisplay: 'τ', freqDisplay: 's' },
 ];
 
+// ── Direct-mode examples (f(t) → F(s)) ────────────────────────────────────────
+
+type LpSegmentSeed = Omit<TransformSegmentDraft, 'id'>;
+
+interface LaplaceDirectExample {
+  labelKey: string;
+  segments: LpSegmentSeed[];
+}
+
+function lpSeg(
+  expression: string,
+  expressionTex: string,
+  from: string,
+  fromTex: string,
+  to: string,
+  toTex: string,
+): LpSegmentSeed {
+  return { expression, expressionTex, from, fromTex, to, toTex };
+}
+
+/** Single-segment example spanning [0, ∞) — the domain laplace() actually integrates over. */
+function lpCausal(expression: string, expressionTex: string): LpSegmentSeed[] {
+  return [lpSeg(expression, expressionTex, '0', '0', 'inf', '\\infty')];
+}
+
+const LAPLACE_DIRECT_EXAMPLES: LaplaceDirectExample[] = [
+  // ── Continuous (no step functions) — verified against a practice sheet ──
+  {
+    labelKey: 'laplace.exDirectContExp',
+    segments: lpCausal('exp(4*t)+5', 'e^{4t}+5'),
+  },
+  {
+    labelKey: 'laplace.exDirectContTrig',
+    segments: lpCausal('cos(2*t)+7*sin(2*t)', '\\cos\\left(2t\\right)+7\\sin\\left(2t\\right)'),
+  },
+  {
+    labelKey: 'laplace.exDirectContDampedTrig',
+    segments: lpCausal(
+      'exp(-2*t)*cos(3*t)+5*exp(-2*t)*sin(3*t)',
+      'e^{-2t}\\cos\\left(3t\\right)+5e^{-2t}\\sin\\left(3t\\right)',
+    ),
+  },
+  {
+    labelKey: 'laplace.exDirectContPoly',
+    segments: lpCausal('10+5*t+t^2-4*t^3', '10+5t+t^{2}-4t^{3}'),
+  },
+  {
+    labelKey: 'laplace.exDirectContPolyExp',
+    segments: lpCausal('(t^2+4*t+2)*exp(3*t)', '\\left(t^{2}+4t+2\\right)e^{3t}'),
+  },
+  {
+    labelKey: 'laplace.exDirectContMixed',
+    segments: lpCausal('6*exp(5*t)*cos(2*t)-exp(7*t)', '6e^{5t}\\cos\\left(2t\\right)-e^{7t}'),
+  },
+  // ── Discontinuous (step functions) — verified against a practice sheet, ──
+  // ── all 7 confirmed correct after fixing laplace_direct.mac's handling  ──
+  // ── of multi-term sums and negative coefficients on heaviside terms.    ──
+  {
+    labelKey: 'laplace.exDirectStepBasic',
+    segments: lpCausal('3*u(t-6)', '3\\operatorname{u}\\left(t-6\\right)'),
+  },
+  {
+    labelKey: 'laplace.exDirectStepThreeTerms',
+    segments: lpCausal(
+      '3+7*u(t-5)-10*u(t-8)',
+      '3+7\\operatorname{u}\\left(t-5\\right)-10\\operatorname{u}\\left(t-8\\right)',
+    ),
+  },
+  {
+    labelKey: 'laplace.exDirectStepTrig',
+    segments: lpCausal(
+      '6*u(t-3)*sin(t-3)',
+      '6\\operatorname{u}\\left(t-3\\right)\\sin\\left(t-3\\right)',
+    ),
+  },
+  {
+    labelKey: 'laplace.exDirectStepPolyExp',
+    segments: lpCausal(
+      '4+5*u(t-2)*(t-2)*exp(t-2)',
+      '4+5\\operatorname{u}\\left(t-2\\right)\\left(t-2\\right)e^{t-2}',
+    ),
+  },
+  {
+    labelKey: 'laplace.exDirectStepCube',
+    segments: lpCausal(
+      '(t-7)^3*u(t-7)',
+      '\\left(t-7\\right)^{3}\\operatorname{u}\\left(t-7\\right)',
+    ),
+  },
+  {
+    labelKey: 'laplace.exDirectStepRamp',
+    segments: lpCausal(
+      '5+u(t-1)*(t-5)',
+      '5+\\operatorname{u}\\left(t-1\\right)\\left(t-5\\right)',
+    ),
+  },
+  {
+    labelKey: 'laplace.exDirectStepPoly',
+    segments: lpCausal(
+      '2+u(t-4)*(t^2-2)',
+      '2+\\operatorname{u}\\left(t-4\\right)\\left(t^{2}-2\\right)',
+    ),
+  },
+  // ── Free parameters (drive the param sliders) ──
+  {
+    labelKey: 'laplace.exDirectParamExp',
+    segments: lpCausal('k*exp(-a*t)', 'ke^{-at}'),
+  },
+  {
+    labelKey: 'laplace.exDirectParamDampedTrig',
+    segments: lpCausal('k*exp(-a*t)*cos(b*t)', 'ke^{-at}\\cos\\left(bt\\right)'),
+  },
+  {
+    labelKey: 'laplace.exDirectParamStep',
+    segments: lpCausal('k*u(t-a)', 'k\\operatorname{u}\\left(t-a\\right)'),
+  },
+  {
+    labelKey: 'laplace.exDirectParamRamp',
+    segments: lpCausal('u(t-c)*(t-c)', '\\operatorname{u}\\left(t-c\\right)\\left(t-c\\right)'),
+  },
+];
+
+// ── Inverse-mode examples (F(s) → f(t)) ───────────────────────────────────────
+
+interface LaplaceInverseExample {
+  labelKey: string;
+  expr: string;
+  exprTex: string;
+}
+
+const LAPLACE_INVERSE_EXAMPLES: LaplaceInverseExample[] = [
+  // ── Continuous (already in partial-fraction form) ──
+  {
+    labelKey: 'laplace.exInverseContSimplePoles',
+    expr: '4/(s-2)-3/(s+5)',
+    exprTex: '\\frac{4}{s-2}-\\frac{3}{s+5}',
+  },
+  {
+    labelKey: 'laplace.exInverseContTrig',
+    expr: 's/(s^2+9)+5/(s^2+9)',
+    exprTex: '\\frac{s}{s^{2}+9}+\\frac{5}{s^{2}+9}',
+  },
+  {
+    labelKey: 'laplace.exInverseContDampedTrig',
+    expr: '(5*(s+2)-4)/((s+2)^2+9)',
+    exprTex: '\\frac{5\\left(s+2\\right)-4}{\\left(s+2\\right)^{2}+9}',
+  },
+  {
+    labelKey: 'laplace.exInverseContPoly',
+    expr: '4/s-1/s^2+5/s^3+2/s^4',
+    exprTex: '\\frac{4}{s}-\\frac{1}{s^{2}}+\\frac{5}{s^{3}}+\\frac{2}{s^{4}}',
+  },
+  {
+    labelKey: 'laplace.exInverseContRepeatedPole',
+    expr: '10/(s-5)^2+2/(s-5)^3',
+    exprTex: '\\frac{10}{\\left(s-5\\right)^{2}}+\\frac{2}{\\left(s-5\\right)^{3}}',
+  },
+  {
+    labelKey: 'laplace.exInverseContCompleteSquare',
+    expr: '1/(s^2+6*s+13)',
+    exprTex: '\\frac{1}{s^{2}+6s+13}',
+  },
+  // ── Delta distribution — ℒ⁻¹{k} = kδ(t), not the constant k ──
+  {
+    labelKey: 'laplace.exInverseDelta',
+    expr: '7',
+    exprTex: '7',
+  },
+  // ── Discontinuous (step functions from time-shift) — verified against a ──
+  // ── practice sheet (6 of 7; the constant-only problem was replaced by   ──
+  // ── the delta example above, see conversation for why).                ──
+  {
+    labelKey: 'laplace.exInverseStepBasic',
+    expr: 'exp(-2*s)/s+6*exp(-3*s)/s',
+    exprTex: '\\frac{e^{-2s}}{s}+\\frac{6e^{-3s}}{s}',
+  },
+  {
+    labelKey: 'laplace.exInverseStepPoly',
+    expr: 'exp(-3*s)*(1/s^2+5/s^3)',
+    exprTex: 'e^{-3s}\\left(\\frac{1}{s^{2}}+\\frac{5}{s^{3}}\\right)',
+  },
+  {
+    labelKey: 'laplace.exInverseStepDampedTrig',
+    expr: 'exp(-5*s)*(s+1)/((s+1)^2+16)',
+    exprTex: '\\frac{e^{-5s}\\left(s+1\\right)}{\\left(s+1\\right)^{2}+16}',
+  },
+  {
+    labelKey: 'laplace.exInverseStepTwoExp',
+    expr: '4*exp(-2*s)/(s-3)+exp(-5*s)/(s+9)',
+    exprTex: '\\frac{4e^{-2s}}{s-3}+\\frac{e^{-5s}}{s+9}',
+  },
+  {
+    labelKey: 'laplace.exInverseStepRepeatedPole',
+    expr: 'exp(-10*s)/(s-3)^2',
+    exprTex: '\\frac{e^{-10s}}{\\left(s-3\\right)^{2}}',
+  },
+  {
+    labelKey: 'laplace.exInverseStepCube',
+    expr: 'exp(-7*s)/s+exp(-11*s)/(s-2)^3',
+    exprTex: '\\frac{e^{-7s}}{s}+\\frac{e^{-11s}}{\\left(s-2\\right)^{3}}',
+  },
+  // ── Free parameters (drive the param sliders) ──
+  {
+    labelKey: 'laplace.exInverseParamSimplePole',
+    expr: 'k/(s-a)',
+    exprTex: '\\frac{k}{s-a}',
+  },
+  {
+    labelKey: 'laplace.exInverseParamRepeatedPole',
+    expr: 'k/(s-a)^2',
+    exprTex: '\\frac{k}{\\left(s-a\\right)^{2}}',
+  },
+  {
+    labelKey: 'laplace.exInverseParamStep',
+    expr: 'k*exp(-c*s)/(s-a)',
+    exprTex: '\\frac{ke^{-cs}}{s-a}',
+  },
+];
+
 @Component({
   selector: 'app-laplace',
   templateUrl: './laplace.component.html',
@@ -107,6 +330,7 @@ const VAR_PAIRS: VarPair[] = [
     ExportButtonComponent,
     RouterLink,
     ComplexPlotComponent,
+    ExampleSelectorComponent,
   ],
 })
 export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
@@ -470,6 +694,20 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.segments.update(segs => segs.map(s => s.id === id ? { ...s, ...changes } : s));
   }
 
+  readonly directExampleOptions: ExampleOption[] = LAPLACE_DIRECT_EXAMPLES.map((e) => ({
+    id: e.labelKey,
+    labelKey: e.labelKey,
+  }));
+
+  loadDirectExample(labelKey: string): void {
+    const ex = LAPLACE_DIRECT_EXAMPLES.find((e) => e.labelKey === labelKey);
+    if (!ex) return;
+
+    this.startNewCalculation();
+    this.varPairId.set('t-s');
+    this.segments.set(ex.segments.map((s) => ({ ...s, id: mkId() })));
+  }
+
   // ── Inverse mode ─────────────────────────────────────────────────────────
 
   readonly altFormsInverse        = signal<AltForm[]>([]);
@@ -480,6 +718,22 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly inverseExprTex = signal('\\frac{1}{s^2+1}');
   readonly inverseResult  = signal<LaplaceInverseResponse | null>(null);
   readonly inverseDefault = '\\frac{1}{s^2+1}';
+
+  readonly inverseExampleOptions: ExampleOption[] = LAPLACE_INVERSE_EXAMPLES.map((e) => ({
+    id: e.labelKey,
+    labelKey: e.labelKey,
+  }));
+
+  loadInverseExample(labelKey: string): void {
+    const ex = LAPLACE_INVERSE_EXAMPLES.find((e) => e.labelKey === labelKey);
+    if (!ex) return;
+
+    this.startNewCalculation();
+    this.varPairId.set('t-s');
+    this.inverseExpr.set(ex.expr);
+    this.inverseExprTex.set(ex.exprTex);
+    this.inverseField?.latex(ex.exprTex);
+  }
 
   // ── ODE mode ─────────────────────────────────────────────────────────────
 

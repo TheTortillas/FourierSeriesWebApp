@@ -51,6 +51,10 @@ import type {
 } from '../../../domain/types/transform.types';
 import { HistoryEntry } from '../../../domain';
 import { forkJoin } from 'rxjs';
+import {
+  ExampleSelectorComponent,
+  type ExampleOption,
+} from '../../../shared/components/example-selector/example-selector.component';
 
 export interface AltForm {
   labelKey: string;
@@ -104,6 +108,92 @@ const FI_VAR_PAIRS: FiVarPair[] = [
   { id: 'custom', intVar: '', transVar: '',    intDisplay: '', transDisplay: '' },
 ];
 
+type FiSegmentSeed = Omit<TransformSegmentDraft, 'id'>;
+
+interface FourierIntegralExample {
+  labelKey: string;
+  variant: FourierIntegralVariant;
+  segments: FiSegmentSeed[];
+}
+
+function fiSeg(
+  expression: string,
+  expressionTex: string,
+  from: string,
+  fromTex: string,
+  to: string,
+  toTex: string,
+): FiSegmentSeed {
+  return { expression, expressionTex, from, fromTex, to, toTex };
+}
+
+const FOURIER_INTEGRAL_EXAMPLES: FourierIntegralExample[] = [
+  // ── Trigonométrica ──
+  {
+    labelKey: 'fourier-integral.exTrigPulse',
+    variant: 'trigonometric',
+    segments: [fiSeg('1', '1', '0', '0', '1', '1')],
+  },
+  {
+    labelKey: 'fourier-integral.exTrigExp',
+    variant: 'trigonometric',
+    segments: [fiSeg('exp(-t)', 'e^{-t}', '0', '0', 'inf', '\\infty')],
+  },
+  {
+    labelKey: 'fourier-integral.exTrigRamp',
+    variant: 'trigonometric',
+    segments: [fiSeg('t', 't', '0', '0', '1', '1')],
+  },
+  // ── Coseno ──
+  {
+    labelKey: 'fourier-integral.exCosinePulse',
+    variant: 'cosine',
+    segments: [fiSeg('1', '1', '0', '0', 'a', 'a')],
+  },
+  {
+    labelKey: 'fourier-integral.exCosineExp',
+    variant: 'cosine',
+    segments: [fiSeg('exp(-t)', 'e^{-t}', '0', '0', 'inf', '\\infty')],
+  },
+  {
+    labelKey: 'fourier-integral.exCosineGaussian',
+    variant: 'cosine',
+    segments: [fiSeg('exp(-t^2)', 'e^{-t^{2}}', '0', '0', 'inf', '\\infty')],
+  },
+  // ── Seno ──
+  {
+    labelKey: 'fourier-integral.exSinePulse',
+    variant: 'sine',
+    segments: [fiSeg('1', '1', '0', '0', 'a', 'a')],
+  },
+  {
+    labelKey: 'fourier-integral.exSineExp',
+    variant: 'sine',
+    segments: [fiSeg('exp(-t)', 'e^{-t}', '0', '0', 'inf', '\\infty')],
+  },
+  {
+    labelKey: 'fourier-integral.exSineRamp',
+    variant: 'sine',
+    segments: [fiSeg('t', 't', '0', '0', '1', '1')],
+  },
+  // ── Compleja ──
+  {
+    labelKey: 'fourier-integral.exComplexRect',
+    variant: 'complex',
+    segments: [fiSeg('rect(t)', '\\operatorname{rect}\\left(t\\right)', 'minf', '-\\infty', 'inf', '\\infty')],
+  },
+  {
+    labelKey: 'fourier-integral.exComplexBilateralExp',
+    variant: 'complex',
+    segments: [fiSeg('exp(-abs(t))', 'e^{-\\left|t\\right|}', 'minf', '-\\infty', 'inf', '\\infty')],
+  },
+  {
+    labelKey: 'fourier-integral.exComplexCausalExp',
+    variant: 'complex',
+    segments: [fiSeg('exp(-t)', 'e^{-t}', '0', '0', 'inf', '\\infty')],
+  },
+];
+
 @Component({
   selector: 'app-fourier-integral',
   templateUrl: './fourier-integral.component.html',
@@ -121,6 +211,7 @@ const FI_VAR_PAIRS: FiVarPair[] = [
     ExportButtonComponent,
     ParamSlidersComponent,
     RouterLink,
+    ExampleSelectorComponent,
   ],
 })
 export class FourierIntegralComponent implements OnInit {
@@ -682,6 +773,26 @@ export class FourierIntegralComponent implements OnInit {
   setVariant(v: FourierIntegralVariant): void {
     if (this.inputsLocked()) return;
     this.variant.set(v);
+  }
+
+  // ── Examples ──────────────────────────────────────────────────────────────
+
+  readonly filteredExamples = computed(() =>
+    FOURIER_INTEGRAL_EXAMPLES.filter((e) => e.variant === this.variant()),
+  );
+
+  readonly exampleOptions = computed<ExampleOption[]>(() =>
+    this.filteredExamples().map((e) => ({ id: e.labelKey, labelKey: e.labelKey })),
+  );
+
+  loadExample(labelKey: string): void {
+    const ex = FOURIER_INTEGRAL_EXAMPLES.find((e) => e.labelKey === labelKey);
+    if (!ex) return;
+
+    this.startNewCalculation();
+    this.selectedPairId.set('t-w');
+    this.variant.set(ex.variant);
+    this.segments.set(ex.segments.map((s) => ({ ...s, id: mkId() })));
   }
 
   addSegment(): void {
