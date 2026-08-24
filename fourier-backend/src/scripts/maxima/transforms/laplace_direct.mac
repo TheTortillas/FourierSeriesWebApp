@@ -34,7 +34,7 @@ block([_allvars, _reserved, _freevars],
 /* Helper: L{expr} handling heaviside() by splitting the integral at the
    heaviside shift point instead of passing heaviside to laplace(). */
 _laplace_seg(expr, t, s, a, b) := block(
-  [_factors, _hw, _other, _shift, _lower, _fi],
+  [_factors, _hw, _other, _shift, _lower, _fi, _terms, _acc, _term_fi, _failed],
   if freeof('heaviside, expr) then block(
     /* No heaviside — use regular laplace() for [0,inf), integrate otherwise */
     if b = inf and (a = 0 or a = 0.0) then
@@ -45,6 +45,33 @@ _laplace_seg(expr, t, s, a, b) := block(
       if _fi = [] then [] else [exp(-a*s) * first(_fi)]
     ) else
       errcatch(integrate(expr * exp(-s*t), t, a, b))
+  ) elseif op(expr) = "-" then block(
+    /* Unary negation (e.g. -10*heaviside(t-8), which Maxima represents as
+       op="-" with a single positive-coefficient argument, NOT as op="*").
+       Recurse on the negated term and flip the sign of the result — without
+       this, the negated term fell through to the "else [expr]" branch below,
+       treating "-10*heaviside(t-8)" as one indivisible factor and extracting
+       a bogus shift point from it, silently producing F(s)=0. */
+    _fi: _laplace_seg(-expr, t, s, a, b),
+    if _fi = [] then [] else [-first(_fi)]
+  ) elseif op(expr) = "+" then block(
+    /* Sum of terms (e.g. 3 + 7*heaviside(t-5) - 10*heaviside(t-8)) — apply
+       linearity: Laplace each summand independently (recursing so a summand
+       that is itself a heaviside product is still handled below) and add.
+       Without this, treating the whole sum as a single "factor" made the
+       shift-point extraction below operate on the sum itself rather than on
+       an individual heaviside(...) term, silently collapsing the result. */
+    _terms: args(expr),
+    _acc: 0,
+    _failed: false,
+    for _term in _terms do (
+      if not _failed then (
+        _term_fi: _laplace_seg(_term, t, s, a, b),
+        if _term_fi = [] then _failed: true
+        else _acc: _acc + first(_term_fi)
+      )
+    ),
+    if _failed then [] else [_acc]
   ) else block(
     /* Has heaviside: decompose f(t)*heaviside(t-c) and integrate from c to b */
     _factors: if atom(expr) then [expr]
@@ -58,7 +85,22 @@ _laplace_seg(expr, t, s, a, b) := block(
       _other: if length(_other) = 0 then 1 else apply("*", _other),
       /* effective lower bound is max(a, _lower) */
       _lower: if _lower > a then _lower else a,
-      errcatch(integrate(_other * exp(-s*t), t, _lower, b))
+      if b = inf then block(
+        /* Prefer laplace() with a time-shift over a raw improper integral:
+           integrate() on [_lower, inf) can hit Maxima sign queries it can't
+           resolve on its own (e.g. (t-c)*exp(t-c) needs "is s-1 positive?"
+           to confirm convergence, which errcatch can't answer, so it just
+           fails). laplace() already carries the convergence conditions
+           for the standard forms (t^n, exp(at), trig, products thereof)
+           without asking, mirroring the no-heaviside branch above. */
+        _shifted: subst(t = t + _lower, _other),
+        _fi: errcatch(laplace(_shifted, t, s)),
+        if _fi = [] or first(_fi) = false then
+          /* Fall back to direct integration for forms laplace() can't match */
+          errcatch(integrate(_other * exp(-s*t), t, _lower, b))
+        else [exp(-_lower*s) * first(_fi)]
+      ) else
+        errcatch(integrate(_other * exp(-s*t), t, _lower, b))
     )
   )
 )$
