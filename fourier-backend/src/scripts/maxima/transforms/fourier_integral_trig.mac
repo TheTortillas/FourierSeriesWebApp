@@ -35,6 +35,25 @@ if VARIANT = "cosine" then (
   B_scale: 1/%pi
 )$
 
+/* Declare free (symbolic) parameters appearing in the pieces or bounds so
+   integrate() doesn't stop to ask "is a positive, negative or zero?" —
+   same pattern used in laplace_direct.mac. */
+block([_allvars, _reserved, _freevars, _v],
+  _allvars: [],
+  for _i: 1 thru length(FUNC_INPUT) do
+    _allvars: append(_allvars, listofvars(FUNC_INPUT[_i][1]),
+                      listofvars(FUNC_INPUT[_i][2]), listofvars(FUNC_INPUT[_i][3])),
+  _reserved: [INTVAR, TRANSVAR],
+  _freevars: sublist(_allvars, lambda([_v], not member(_v, _reserved))),
+  for _v in _freevars do (
+    if member(_v, [n, m, k]) then (
+      declare(_v, integer),
+      assume(_v >= 0)
+    ) else
+      assume(_v > 0)
+  )
+)$
+
 /* Integrate each segment separately and accumulate.
    For cosine/sine variants the user provides f on [0,∞) only,
    so we integrate exactly over the given [a,b] bounds. */
@@ -63,13 +82,13 @@ block([_i, _e, _a, _b, _Ai, _Bi],
 /* Apply scale and simplify */
 A_raw: if VARIANT = "sine" then false
   else errcatch(ratsimp(A_scale * A_acc))$
-A_raw: if A_raw = [] then false else first(A_raw)$
+A_raw: if A_raw = false or A_raw = [] then false else first(A_raw)$
 A_raw: if A_raw # false and not freeof(gamma_incomplete, A_raw)
        then clean_integral(A_raw, TRANSVAR) else A_raw$
 
 B_raw: if VARIANT = "cosine" then false
   else errcatch(ratsimp(B_scale * B_acc))$
-B_raw: if B_raw = [] then false else first(B_raw)$
+B_raw: if B_raw = false or B_raw = [] then false else first(B_raw)$
 B_raw: if B_raw # false and not freeof(gamma_incomplete, B_raw)
        then clean_integral(B_raw, TRANSVAR) else B_raw$
 
