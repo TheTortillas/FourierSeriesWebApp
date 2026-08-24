@@ -48,6 +48,14 @@
 
           <!-- ── DIRECT MODE ──────────────────────────────────────────────── -->
           @if (mode() === 'direct') {
+            <!-- Examples -->
+            <app-example-selector
+              [label]="'transforms.exampleLabel' | transloco"
+              [placeholder]="'transforms.examplePlaceholder' | transloco"
+              [options]="directExampleOptions"
+              (select)="loadDirectExample($event)"
+            />
+
             <section class="flex flex-col gap-3">
               <!-- Header: title + keyboard btn -->
               <div class="flex items-center justify-between">
@@ -130,6 +138,14 @@
 
           <!-- ── INVERSE MODE ─────────────────────────────────────────────── -->
           @if (mode() === 'inverse') {
+            <!-- Examples -->
+            <app-example-selector
+              [label]="'transforms.exampleLabel' | transloco"
+              [placeholder]="'transforms.examplePlaceholder' | transloco"
+              [options]="inverseExampleOptions"
+              (select)="loadInverseExample($event)"
+            />
+
             <section class="flex flex-col gap-3">
               <div class="flex items-center justify-between">
                 <h2 class="text-sm font-semibold text-ink dark:text-dark-ink font-body">
