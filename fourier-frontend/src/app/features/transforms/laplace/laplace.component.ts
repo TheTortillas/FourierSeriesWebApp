@@ -195,6 +195,23 @@ const LAPLACE_DIRECT_EXAMPLES: LaplaceDirectExample[] = [
       '2+\\operatorname{u}\\left(t-4\\right)\\left(t^{2}-2\\right)',
     ),
   },
+  // ── Free parameters (drive the param sliders) ──
+  {
+    labelKey: 'laplace.exDirectParamExp',
+    segments: lpCausal('k*exp(-a*t)', 'ke^{-at}'),
+  },
+  {
+    labelKey: 'laplace.exDirectParamDampedTrig',
+    segments: lpCausal('k*exp(-a*t)*cos(b*t)', 'ke^{-at}\\cos\\left(bt\\right)'),
+  },
+  {
+    labelKey: 'laplace.exDirectParamStep',
+    segments: lpCausal('k*u(t-a)', 'k\\operatorname{u}\\left(t-a\\right)'),
+  },
+  {
+    labelKey: 'laplace.exDirectParamRamp',
+    segments: lpCausal('u(t-c)*(t-c)', '\\operatorname{u}\\left(t-c\\right)\\left(t-c\\right)'),
+  },
 ];
 
 // ── Inverse-mode examples (F(s) → f(t)) ───────────────────────────────────────
@@ -275,6 +292,22 @@ const LAPLACE_INVERSE_EXAMPLES: LaplaceInverseExample[] = [
     labelKey: 'laplace.exInverseStepCube',
     expr: 'exp(-7*s)/s+exp(-11*s)/(s-2)^3',
     exprTex: '\\frac{e^{-7s}}{s}+\\frac{e^{-11s}}{\\left(s-2\\right)^{3}}',
+  },
+  // ── Free parameters (drive the param sliders) ──
+  {
+    labelKey: 'laplace.exInverseParamSimplePole',
+    expr: 'k/(s-a)',
+    exprTex: '\\frac{k}{s-a}',
+  },
+  {
+    labelKey: 'laplace.exInverseParamRepeatedPole',
+    expr: 'k/(s-a)^2',
+    exprTex: '\\frac{k}{\\left(s-a\\right)^{2}}',
+  },
+  {
+    labelKey: 'laplace.exInverseParamStep',
+    expr: 'k*exp(-c*s)/(s-a)',
+    exprTex: '\\frac{ke^{-cs}}{s-a}',
   },
 ];
 
