@@ -506,6 +506,8 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 13b | $k\,\operatorname{sgn}(t-t_0)$            | $\dfrac{2k\,e^{-i\omega t_0}}{i\omega}$                                                                                           | $k$ cte., $t_0\neq0$                          |
 | 14  | $\dfrac{\sin(at)}{\pi t}$                 | $u(\omega+a)-u(\omega-a)$                                                                                                         | rect en frecuencia                            |
 | 14b | $k\,u(\omega+a)-k\,u(\omega-a)$           | $\dfrac{k\sin(at)}{\pi t}$                                                                                                        | rect en frecuencia                            |
+| 14c | $k\,\operatorname{Si}(at)$                | $\dfrac{k\pi\,\operatorname{sgn}(a)}{i\omega}\bigl[u(\omega+a)-u(\omega-a)\bigr]$                                                 | $a\neq0$; vía diferenciación temporal sobre #14 ($\tfrac{d}{dt}\operatorname{Si}(at)=a\cdot\text{sinc}(at)$) |
+| 14d | $k\,\operatorname{sgn}(t)\cdot\text{sinc}(at)$ | $\dfrac{-ik}{a}\ln\left\lvert\dfrac{\omega+a}{\omega-a}\right\rvert$                                                         | $a>0$; vía convolución en frecuencia de $\operatorname{sgn}(t)$ y $\text{sinc}(at)$ |
 | 15  | $\dfrac{k}{t}$                            | $-ik\pi\,\operatorname{sgn}(\omega)$                                                                                              | V.P. de Cauchy, $n=1$                         |
 | 15b | $\dfrac{k}{ct}$                           | $-\dfrac{ik\pi}{c}\,\operatorname{sgn}(\omega)$                                                                                   | $c\neq0$ cte.; equiv. a #15 con $k\to k/c$    |
 | 16  | $\dfrac{k}{t^n}$                          | $\dfrac{k(-i\omega)^{n-1}}{(n-1)!}\left(-i\pi\,\operatorname{sgn}(\omega)\right)$                                                 | V.P., $n\geq1$ entero                         |
@@ -552,6 +554,8 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 31  | $e^{-t^2/(2\sigma^2)}$ (gaussiana)          | $\sigma\sqrt{2\pi}\,e^{-\sigma^2\omega^2/2}$                                              | $\sigma > 0$                                                                        |
 | 32  | $e^{i\omega_0 t}\,g(t)$                     | $G(\omega - \omega_0)$                                                                    | desplazamiento en $\omega$                                                          |
 | 32b | $e^{bt}\,e^{-c\,e^{bt}}$ (Gumbel / doble-exponencial) | $\dfrac{c^{\,i\omega/b}}{bc}\,\Gamma\!\left(1-\dfrac{i\omega}{b}\right)$        | $b,c>0$; definida en todo $\mathbb{R}$ (no causal); sustitución $u=c\,e^{bt}$ reduce la integral a la de Euler para $\Gamma$; caso base $b=c=1$: $e^{t}e^{-e^{t}}\to\Gamma(1-i\omega)$ |
+| 32c | $k\,\lvert t\rvert^\alpha$ (par, exponente no entero)   | $\dfrac{-2k\sin(\alpha\pi/2)\,\Gamma(\alpha+1)}{\lvert\omega\rvert^{\alpha+1}}$ | $\alpha>-1$; caso base $\alpha=-1/2$: $\lvert t\rvert^{-1/2}\to\sqrt{2\pi/\lvert\omega\rvert}$ |
+| 32d | $k\,\lvert t\rvert^\alpha\operatorname{sgn}(t)$ (impar) | $\dfrac{-2ik\cos(\alpha\pi/2)\,\Gamma(\alpha+1)\,\operatorname{sgn}(\omega)}{\lvert\omega\rvert^{\alpha+1}}$ | $\alpha>-1$ |
 
 ---
 
