@@ -2301,6 +2301,60 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── CHIRPGAUSS: k*exp(-pi*(alpha+i*beta)^2*t^2) -> k/(alpha+i*beta) * exp(-w^2/(4*pi*(alpha+i*beta)^2))
+       Complex-parameter generalization of the plain gaussian pair below: same
+       formula sqrt(pi/A)*e^{-w^2/(4A)} with A = pi*(alpha+i*beta)^2, valid
+       whenever Re(A) > 0 (i.e. alpha >= |beta|, alpha+i*beta != 0), which is
+       exactly the book's convergence condition. Runs BEFORE the plain gaussian
+       matcher because that one requires the t^2 coefficient to be a real
+       negative constant (line ~2333's `is(first(_gg_cn) < 0)`), which rejects
+       this genuinely complex A — so this case would otherwise fall through
+       silently. Verified numerically (both FT and IFT direction) before
+       implementing. ── */
+    if is(res = false) then block(
+        [_cg_k, _cg_A, _cg_facs, _cg_f, _cg_exparg, _cg_cn, _cg_found, _cg_bad],
+        _cg_k: 1, _cg_A: false, _cg_found: false, _cg_bad: false,
+        _cg_facs: if not atom(e) and is(op(e) = "*") then args(e) else [e],
+        for _cg_f in _cg_facs do (
+            if not atom(_cg_f) and is(op(_cg_f) = "^") and is(part(_cg_f,1) = %e) then (
+                _cg_exparg: part(_cg_f, 2),
+                _cg_cn: errcatch(ratsimp(_cg_exparg / t_var^2)),
+                if _cg_cn # [] and freeof(t_var, first(_cg_cn))
+                   and ratsimp(_cg_exparg - first(_cg_cn)*t_var^2) = 0 then (
+                    _cg_A: -first(_cg_cn),
+                    _cg_found: true
+                ) else _cg_bad: true
+            ) else if freeof(t_var, _cg_f) then _cg_k: _cg_k * _cg_f
+            else _cg_bad: true
+        ),
+        /* Require A to genuinely involve %i (otherwise this is the plain real
+           gaussian, already handled correctly by the next block) and Re(A) > 0
+           for convergence. */
+        if _cg_found and not _cg_bad and freeof(t_var, _cg_k)
+           and not freeof(%i, _cg_A) then (
+            /* Divide by %pi before comparing: Maxima's `is()` can prove
+               alpha^2 > beta^2 from an assumption but often can't scale
+               that through an extra symbolic %pi factor on its own.
+               When multiple free params are involved (e.g. plain alpha,beta
+               with only alpha>0 and beta>0 declared, no cross-relation), `is()`
+               returns 'unknown' rather than true/false — accept the match in
+               that case too (under the pair's documented domain promise,
+               alpha>=|beta|) rather than falling through to FT_raw's generic
+               integrate() fallback, which has no assumption on alpha-beta and
+               hangs asking Maxima's interactive sign question. Only reject
+               outright when is() can actually DISPROVE convergence (false). */
+            block([_cg_reA: errcatch(ratsimp(realpart(_cg_A) / %pi)), _cg_test],
+                if _cg_reA # [] and freeof(t_var, first(_cg_reA)) then (
+                    _cg_test: is(first(_cg_reA) > 0),
+                    if not is(_cg_test = false) then
+                        res: [_cg_k * sqrt(%pi/_cg_A) * exp(-w_var^2/(4*_cg_A)),
+                              concat("k*exp(-pi*(alpha+i*beta)^2*t^2) -> k/(alpha+ib)*exp(-w^2/(4*pi*(alpha+ib)^2)), A=",
+                                     string(_cg_A))]
+                )
+            )
+        )
+    ),
+
     /* ── k*exp(-a*t^2)*trig(b*t+theta) — familia gaussiana ──────────────────
        FT[e^{-at²}] = √(π/a) · e^{-ω²/(4a)}                (par #G0)
        FT[e^{-at²}·cos(bt+θ)] = √(π/a)·e^{-(ω-b)²/(4a)/2 ...}
@@ -6689,6 +6743,74 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                     res: [_ig_result,
                           concat("IFT k*e^{-pw^2}*sin(bw)->gaussian*sinh, p=",
                                  string(_ig_p), ", b=", string(_ig_b))]
+                )
+            )
+        )
+    ),
+
+    /* ── CHIRPGAUSS inverse: k*exp(-w^2/(4*pi*(alpha+i*beta)^2)) -> k*(alpha+i*beta)*exp(-pi*(alpha+i*beta)^2*t^2)
+       IFT counterpart of the FT_pattern_lookup CHIRPGAUSS handler; the complex
+       gaussian pair is self-dual (same functional form both directions, only
+       the overall 1/(alpha+i*beta) prefactor moves to the other side), just
+       like the plain real gaussian is. Detection: denominator's t^2-analog
+       coefficient in the exponent is -1/(4*pi*A) for some complex A with
+       Re(A) > 0; same "divide by %pi before comparing" fix as the FT direction. ── */
+    if is(res = false) then block(
+        [_ci_k, _ci_A, _ci_facs, _ci_f, _ci_exparg, _ci_cn, _ci_found, _ci_bad, _ci_src],
+        _ci_k: 1, _ci_A: false, _ci_found: false, _ci_bad: false,
+        /* Use F_expr (unexpanded) rather than the shared `e` (already
+           expand()'d earlier in IFT_pattern_lookup): with symbolic alpha,beta
+           in the 1/(alpha+i*beta) prefactor, expand() merges that prefactor
+           into the exponential's denominator (turning 1/(a+ib)*exp(...) into
+           1/(i*beta*exp(...)+alpha*exp(...))), destroying the "*" structure
+           this matcher needs — expand() only does this when the prefactor's
+           denominator involves free variables, so the earlier numeric-alpha
+           test cases (which use `e`) never hit it. */
+        /* With symbolic alpha,beta, Maxima represents F_expr as a bare "/"
+           node (1/(alpha+i*beta)) / exp(...)^-1-ish, not a flat "*" product —
+           split numerator/denominator into the factor list explicitly. */
+        _ci_src: F_expr,
+        _ci_facs: if not atom(_ci_src) and is(op(_ci_src) = "*") then args(_ci_src)
+                  elseif not atom(_ci_src) and is(op(_ci_src) = "/") then
+                      block([_ci_num: part(_ci_src,1), _ci_den: part(_ci_src,2)],
+                          append(
+                              if not atom(_ci_num) and is(op(_ci_num) = "*")
+                                  then args(_ci_num) else [_ci_num],
+                              [1/_ci_den]
+                          ))
+                  else [_ci_src],
+        for _ci_f in _ci_facs do (
+            if not atom(_ci_f) and is(op(_ci_f) = "^") and is(part(_ci_f,1) = %e) then (
+                _ci_exparg: part(_ci_f, 2),
+                _ci_cn: errcatch(ratsimp(_ci_exparg / w_var^2)),
+                if _ci_cn # [] and freeof(w_var, first(_ci_cn))
+                   and ratsimp(_ci_exparg - first(_ci_cn)*w_var^2) = 0 then (
+                    /* _ci_exparg = _ci_cn * w_var^2 = -w_var^2/(4*pi*A) => A = -1/(4*pi*_ci_cn) */
+                    _ci_A: errcatch(ratsimp(-1/(4*%pi*first(_ci_cn)))),
+                    if _ci_A # [] then (_ci_A: first(_ci_A), _ci_found: true)
+                    else _ci_bad: true
+                ) else _ci_bad: true
+            ) else if freeof(w_var, _ci_f) then _ci_k: _ci_k * _ci_f
+            else _ci_bad: true
+        ),
+        if _ci_found and not _ci_bad and freeof(w_var, _ci_k)
+           and not freeof(%i, _ci_A) then (
+            /* _ci_A here is B^2 where B=alpha+i*beta (the exponent's full
+               coefficient pi*B^2); the closed form uses sqrt(_ci_A)=B, not
+               _ci_A itself — verified numerically before implementing. */
+            /* See the FT-direction CHIRPGAUSS comment: accept whenever is()
+               can't actively DISPROVE Re(A)>0 (i.e. treat 'unknown same as
+               true), since with independent alpha>0/beta>0 assumptions
+               Maxima can't derive the cross-relation alpha>=|beta| the pair
+               requires, and forcing the proof would fall through to a
+               generic integrate() that hangs on an interactive sign prompt. */
+            block([_ci_reA: errcatch(ratsimp(realpart(_ci_A) / %pi)), _ci_test],
+                if _ci_reA # [] and freeof(w_var, first(_ci_reA)) then (
+                    _ci_test: is(first(_ci_reA) > 0),
+                    if not is(_ci_test = false) then
+                        res: [_ci_k * sqrt(_ci_A) * exp(-%pi*_ci_A*t_var^2),
+                              concat("IFT k*exp(-w^2/(4*pi*A)) -> k*sqrt(A)*exp(-pi*A*t^2), A=",
+                                     string(_ci_A))]
                 )
             )
         )
