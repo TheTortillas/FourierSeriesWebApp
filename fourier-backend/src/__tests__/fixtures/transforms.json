@@ -11532,5 +11532,417 @@
       "exists": true,
       "F": "%e^(-t/2)*%e^(-%e^(-t/2))"
     }
+  },
+  {
+    "id": "ABP01",
+    "type": "ft",
+    "description": "FT de |t|^(-1/2) — potencia bilateral no entera, caso original reportado con error 500",
+    "input": {
+      "segments": [
+        {
+          "expression": "abs(t)^(-1/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "sqrt(2)*sqrt(%pi)/sqrt(abs(w))"
+    }
+  },
+  {
+    "id": "ABP02",
+    "type": "ft",
+    "description": "FT de |t|^(1/3) — potencia bilateral no entera positiva",
+    "input": {
+      "segments": [
+        {
+          "expression": "abs(t)^(1/3)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*sin(%pi/6)*gamma(4/3)/abs(w)^(4/3)"
+    }
+  },
+  {
+    "id": "ABP03",
+    "type": "ft",
+    "description": "FT de 3*|t|^(-1/2) con coeficiente escalar",
+    "input": {
+      "segments": [
+        {
+          "expression": "3*abs(t)^(-1/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "3*sqrt(2)*sqrt(%pi)/sqrt(abs(w))"
+    }
+  },
+  {
+    "id": "ABP04",
+    "type": "ft",
+    "description": "FT de |t|^alpha con exponente simbólico",
+    "input": {
+      "segments": [
+        {
+          "expression": "abs(t)^alpha",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*sin(alpha*%pi/2)*gamma(alpha+1)/abs(w)^(alpha+1)",
+      "params": [
+        "alpha"
+      ]
+    }
+  },
+  {
+    "id": "ABP05",
+    "type": "ft",
+    "description": "FT de |t|^(5/2) — exponente semientero mayor",
+    "input": {
+      "segments": [
+        {
+          "expression": "abs(t)^(5/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*sin(5*%pi/4)*gamma(7/2)/abs(w)^(7/2)"
+    }
+  },
+  {
+    "id": "ABS01",
+    "type": "ft",
+    "description": "FT de |t|^(1/3)*sgn(t) — potencia bilateral impar",
+    "input": {
+      "segments": [
+        {
+          "expression": "abs(t)^(1/3)*sgn(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*%i*cos(%pi/6)*gamma(4/3)*sgn(w)/abs(w)^(4/3)"
+    }
+  },
+  {
+    "id": "ABS02",
+    "type": "ft",
+    "description": "FT de 2*|t|^(-1/2)*sgn(t) con coeficiente",
+    "input": {
+      "segments": [
+        {
+          "expression": "2*abs(t)^(-1/2)*sgn(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*2*%i*cos(-%pi/4)*gamma(1/2)*sgn(w)/abs(w)^(1/2)"
+    }
+  },
+  {
+    "id": "ABS03",
+    "type": "ft",
+    "description": "FT de |t|^alpha*sgn(t) con exponente simbólico",
+    "input": {
+      "segments": [
+        {
+          "expression": "abs(t)^alpha*sgn(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*%i*cos(alpha*%pi/2)*gamma(alpha+1)*sgn(w)/abs(w)^(alpha+1)",
+      "params": [
+        "alpha"
+      ]
+    }
+  },
+  {
+    "id": "ABS04",
+    "type": "ft",
+    "description": "FT de sgn(t)*|t|^(1/2) — orden de factores invertido",
+    "input": {
+      "segments": [
+        {
+          "expression": "sgn(t)*abs(t)^(1/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*%i*cos(%pi/4)*gamma(3/2)*sgn(w)/abs(w)^(3/2)"
+    }
+  },
+  {
+    "id": "ABS05",
+    "type": "ft",
+    "description": "FT de -|t|^(1/3)*sgn(t) con signo negativo global",
+    "input": {
+      "segments": [
+        {
+          "expression": "-abs(t)^(1/3)*sgn(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "2*%i*cos(%pi/6)*gamma(4/3)*sgn(w)/abs(w)^(4/3)"
+    }
+  },
+  {
+    "id": "SII01",
+    "type": "ft",
+    "description": "FT de Si(t) — integral senoidal, caso base",
+    "input": {
+      "segments": [
+        {
+          "expression": "expintegral_si(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%pi*(u(w+1)-u(w-1))/(%i*w)"
+    }
+  },
+  {
+    "id": "SII02",
+    "type": "ft",
+    "description": "FT de Si(2*t) — integral senoidal con escalado",
+    "input": {
+      "segments": [
+        {
+          "expression": "expintegral_si(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%pi*(u(w+2)-u(w-2))/(%i*w)"
+    }
+  },
+  {
+    "id": "SII03",
+    "type": "ft",
+    "description": "FT de 3*Si(t) con coeficiente",
+    "input": {
+      "segments": [
+        {
+          "expression": "3*expintegral_si(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "3*%pi*(u(w+1)-u(w-1))/(%i*w)"
+    }
+  },
+  {
+    "id": "SII04",
+    "type": "ft",
+    "description": "FT de Si(-2*t) — argumento con escala negativa (función impar)",
+    "input": {
+      "segments": [
+        {
+          "expression": "expintegral_si(-2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-%pi*(u(w+2)-u(w-2))/(%i*w)"
+    }
+  },
+  {
+    "id": "SII05",
+    "type": "ft",
+    "description": "FT de Si(a*t) con escala simbólica",
+    "input": {
+      "segments": [
+        {
+          "expression": "expintegral_si(a*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%pi*signum(a)*(u(w+a)-u(w-a))/(%i*w)",
+      "params": [
+        "a"
+      ]
+    }
+  },
+  {
+    "id": "SGS01",
+    "type": "ft",
+    "description": "FT de sgn(t)*sinc(t) — producto escalón de signo por sinc",
+    "input": {
+      "segments": [
+        {
+          "expression": "sgn(t)*sinc(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-%i*log(abs((w+1)/(w-1)))"
+    }
+  },
+  {
+    "id": "SGS02",
+    "type": "ft",
+    "description": "FT de sgn(t)*sinc(2*t) con escalado",
+    "input": {
+      "segments": [
+        {
+          "expression": "sgn(t)*sinc(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-%i/2*log(abs((w+2)/(w-2)))"
+    }
+  },
+  {
+    "id": "SGS03",
+    "type": "ft",
+    "description": "FT de 5*sgn(t)*sinc(3*t) con coeficiente y escala",
+    "input": {
+      "segments": [
+        {
+          "expression": "5*sgn(t)*sinc(3*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-5*%i/3*log(abs((w+3)/(w-3)))"
+    }
+  },
+  {
+    "id": "SGS04",
+    "type": "ft",
+    "description": "FT de sinc(t)*sgn(t) — orden de factores invertido",
+    "input": {
+      "segments": [
+        {
+          "expression": "sinc(t)*sgn(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-%i*log(abs((w+1)/(w-1)))"
+    }
+  },
+  {
+    "id": "SGS05",
+    "type": "ft",
+    "description": "FT de sgn(t)*sinc(a*t) con escala simbólica",
+    "input": {
+      "segments": [
+        {
+          "expression": "sgn(t)*sinc(a*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-%i/a*log(abs((w+a)/(w-a)))",
+      "params": [
+        "a"
+      ]
+    }
   }
 ]
