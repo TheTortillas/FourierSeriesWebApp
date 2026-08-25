@@ -1260,6 +1260,7 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
   readonly complexPlaneBtnPulse   = signal(false);
   readonly complexPlaneMode    = signal<'2d' | '3d'>('2d');
   readonly complexColorScheme  = signal<'classic' | 'phase' | 'magnitude'>('classic');
+  readonly complexLegendStyle  = signal<'strip' | 'circle'>('strip');
   readonly complexWireframe    = signal(false);
   readonly complexShowGrid3d   = signal(true);
   readonly complexResolution   = signal(80);

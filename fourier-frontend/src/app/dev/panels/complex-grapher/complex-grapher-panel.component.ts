@@ -24,6 +24,7 @@ export class ComplexGrapherPanelComponent {
   readonly zClip       = signal(5.0);
   readonly showGrid3d  = signal(true);
   readonly wireframe   = signal(false);
+  readonly legendStyle = signal<'strip' | 'circle'>('strip');
 
   readonly compileError = signal('');
   readonly coordRe = signal('0.0000');

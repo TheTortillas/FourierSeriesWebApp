@@ -136,6 +136,7 @@ export class ComplexRendererService implements OnDestroy {
   private ibo3DLines: WebGLBuffer | null = null;
   private iCount = 0;
   private iCountLines = 0;
+  private uintIndexExt: OES_element_index_uint | null = null;
 
   // ── Initialization ─────────────────────────────────────────────────────────
 
@@ -150,6 +151,9 @@ export class ComplexRendererService implements OnDestroy {
     this.gl = ctx as WebGLRenderingContext;
 
     const gl = this.gl;
+    // Enable 32-bit index buffers so high-resolution grids (N > 255) don't overflow Uint16.
+    this.uintIndexExt = gl.getExtension('OES_element_index_uint');
+
     this.vbo2D = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo2D);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -194,7 +198,9 @@ export class ComplexRendererService implements OnDestroy {
   buildSurface(resolution: number, range: number): void {
     const gl = this.gl;
     if (!gl) return;
-    const N = resolution, R = range, step = 2 * R / (N - 1);
+    // Clamp to 255 if OES_element_index_uint is unavailable (N²>65535 overflows Uint16).
+    const N = this.uintIndexExt ? resolution : Math.min(resolution, 255);
+    const R = range, step = 2 * R / (N - 1);
 
     const verts = new Float32Array(N * N * 2);
     let vi = 0;
@@ -204,17 +210,15 @@ export class ComplexRendererService implements OnDestroy {
         verts[vi++] = -R + j * step;
       }
 
-    const ids = new Uint16Array((N - 1) * (N - 1) * 6);
-    let ii = 0;
+    const ids      = new Uint32Array((N - 1) * (N - 1) * 6);
+    const lineIds  = new Uint32Array(N * (N - 1) * 4);
+    let ii = 0, li = 0;
     for (let i = 0; i < N - 1; i++)
       for (let j = 0; j < N - 1; j++) {
         const a = i * N + j, b = (i + 1) * N + j, c = i * N + (j + 1), d = (i + 1) * N + (j + 1);
         ids[ii++] = a; ids[ii++] = b; ids[ii++] = c;
         ids[ii++] = b; ids[ii++] = d; ids[ii++] = c;
       }
-
-    const lineIds = new Uint16Array(N * (N - 1) * 4);
-    let li = 0;
     for (let i = 0; i < N; i++)
       for (let j = 0; j < N - 1; j++) { lineIds[li++] = i * N + j; lineIds[li++] = i * N + j + 1; }
     for (let j = 0; j < N; j++)
@@ -293,12 +297,13 @@ export class ComplexRendererService implements OnDestroy {
     gl.uniform1f(this.u3D['gridStep'], this.niceStep3D(vp.range));
     gl.uniform1i(this.u3D['showGrid'], vp.showGrid ? 1 : 0);
 
+    const idxType = this.uintIndexExt ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
     if (vp.wireframe) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo3DLines!);
-      gl.drawElements(gl.LINES, this.iCountLines, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.LINES, this.iCountLines, idxType, 0);
     } else {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo3D!);
-      gl.drawElements(gl.TRIANGLES, this.iCount, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.TRIANGLES, this.iCount, idxType, 0);
     }
   }
 

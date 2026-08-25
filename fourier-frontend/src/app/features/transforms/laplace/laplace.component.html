@@ -311,6 +311,7 @@
               [heightScale]="complexHeightScale()"
               [zClip]="complexZClip()"
               [paramValues]="complexParamValues()"
+              [legendStyle]="complexLegendStyle()"
               [showModLines]="true"
               [showAxes]="true"
               [showGrid2d]="true"
@@ -396,6 +397,25 @@
                   </div>
                 </section>
               }
+
+              <!-- Leyenda — disponible en 2D y 3D -->
+              <section class="px-5 py-4 flex flex-col gap-2">
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-ink/75 dark:text-dark-ink/75 font-mono">{{ 'laplace.complexPlaneLegend' | transloco }}</p>
+                <div class="flex rounded border border-border dark:border-dark-border overflow-hidden w-fit text-[11px] font-mono">
+                  <button type="button" (click)="complexLegendStyle.set('strip')"
+                    [class]="complexLegendStyle() === 'strip'
+                      ? 'px-3 py-1 bg-accent text-white cursor-pointer'
+                      : 'px-3 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
+                    {{ 'laplace.complexPlaneLegendStrip' | transloco }}
+                  </button>
+                  <button type="button" (click)="complexLegendStyle.set('circle')"
+                    [class]="complexLegendStyle() === 'circle'
+                      ? 'px-3 py-1 bg-accent text-white cursor-pointer'
+                      : 'px-3 py-1 text-ink/90 dark:text-dark-ink/90 hover:bg-paper2 dark:hover:bg-dark-surface2 transition-colors cursor-pointer'">
+                    {{ 'laplace.complexPlaneLegendCircle' | transloco }}
+                  </button>
+                </div>
+              </section>
 
               <!-- 3D options: wireframe + resolution + range + scale + clip -->
               @if (complexPlaneMode() === '3d') {

@@ -86,6 +86,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   readonly zClip        = input<number>(5.0);
   readonly showGrid3d   = input<boolean>(true);
   readonly wireframe    = input<boolean>(false);
+  readonly legendStyle  = input<'strip' | 'circle'>('strip');
 
   // ── Inputs — free parameters ───────────────────────────────────────────────
   /** Current values for detected free real parameters. */
@@ -141,7 +142,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
       void this.mode(); void this.colorScheme(); void this.showModLines();
       void this.showAxes(); void this.showGrid2d();
       void this.range3d(); void this.heightScale(); void this.zClip();
-      void this.showGrid3d(); void this.wireframe();
+      void this.showGrid3d(); void this.wireframe(); void this.legendStyle();
       void this.paramValues();
       this.scheduleRender();
     });
@@ -279,7 +280,11 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     const ctx = overlay.getContext('2d')!;
     ctx.clearRect(0, 0, w, h);
     this.drawAxes3D(ctx, w, h);
-    this.drawLegend3D(ctx, w, h);
+    if (this.legendStyle() === 'strip') {
+      this.drawLegend3D(ctx, w, h);
+    } else {
+      this.drawLegendCircle2D(ctx, w, h);
+    }
   }
 
   // ── CanvasViewport mapping (2D overlay uses CanvasRendererService) ─────────
@@ -312,11 +317,47 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   // ── Canvas2D overlays ──────────────────────────────────────────────────────
 
   private drawLegend2D(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const R = 28, cx = W - 46, cy = H - 46;
-    ctx.save();
-    ctx.globalAlpha = 0.85;
+    if (this.legendStyle() === 'strip') {
+      this.drawLegendStrip2D(ctx, W, H);
+    } else {
+      this.drawLegendCircle2D(ctx, W, H);
+    }
+  }
+
+  private drawLegendStrip2D(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const bh = 160, bw = 14, bx = W - 66, by = Math.round(H / 2 - bh / 2);
     const scheme = this.colorScheme();
     const modLines = this.showModLines();
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    for (let py = 0; py < bh; py++) {
+      const argV = Math.PI * (1 - 2 * py / bh);
+      const [r, g, b] = phaseColorJS(argV, 1.5, scheme, modLines);
+      ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(bx, by + py, bw, 1);
+    }
+    const c2 = this.complexColors();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+    const ticks: [number, string][] = [[0, 'π'], [0.25, 'π/2'], [0.5, '0'], [0.75, '−π/2'], [1, '−π']];
+    ctx.font = '10px monospace'; ctx.textAlign = 'left';
+    for (const [t, lbl] of ticks) {
+      const ty = by + t * bh;
+      ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 0.75;
+      ctx.beginPath(); ctx.moveTo(bx, ty); ctx.lineTo(bx - 3, ty); ctx.stroke();
+      ctx.fillStyle = c2.legendText; ctx.fillText(lbl, bx + bw + 4, ty + 3.5);
+    }
+    ctx.font = '9px monospace'; ctx.fillStyle = c2.legendMuted;
+    ctx.textAlign = 'center'; ctx.fillText('arg', bx + bw / 2, by - 6);
+    ctx.restore();
+  }
+
+  private drawLegendCircle2D(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const R = 50, cx = W - 76, cy = H - 76;
+    const scheme = this.colorScheme();
+    const modLines = this.showModLines();
+    ctx.save();
+    ctx.globalAlpha = 0.9;
     for (let a = 0; a < 360; a++) {
       const argW = (a / 360) * 2 * Math.PI - Math.PI;
       const [r, g, b] = phaseColorJS(argW, 1.5, scheme, modLines);
@@ -326,12 +367,15 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
       ctx.closePath(); ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fill();
     }
     const c2 = this.complexColors();
+    ctx.globalAlpha = 1;
     ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
     ctx.fillStyle = c2.legendText;
-    ctx.font = '9px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('0', cx + R + 7, cy); ctx.fillText('π', cx - R - 7, cy);
-    ctx.fillText('π/2', cx, cy - R - 8); ctx.fillText('-π/2', cx, cy + R + 8);
+    ctx.font = '10px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('0',    cx + R + 9,  cy);
+    ctx.fillText('π',   cx - R - 9,  cy);
+    ctx.fillText('π/2',  cx,          cy - R - 10);
+    ctx.fillText('−π/2', cx,          cy + R + 10);
     ctx.restore();
   }
 
@@ -378,7 +422,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   }
 
   private drawLegend3D(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const bh = 160, bw = 14, bx = W - 52, by = Math.round(H / 2 - bh / 2);
+    const bh = 160, bw = 14, bx = W - 66, by = Math.round(H / 2 - bh / 2);
     ctx.save();
     for (let py = 0; py < bh; py++) {
       const argV = Math.PI * (1 - 2 * py / bh);

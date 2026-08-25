@@ -59,6 +59,21 @@
           <span class="text-gray-300">Grid</span>
           <input type="checkbox" [ngModel]="showGrid2d()" (ngModelChange)="showGrid2d.set($event)" class="accent-indigo-500" />
         </label>
+        <div class="flex items-center justify-between">
+          <span class="text-gray-300">Leyenda</span>
+          <div class="flex rounded overflow-hidden border border-white/15 text-xs">
+            <button
+              type="button"
+              (click)="legendStyle.set('strip')"
+              [class]="legendStyle() === 'strip' ? 'px-2 py-0.5 bg-indigo-600 text-white' : 'px-2 py-0.5 text-gray-400 hover:text-white'"
+            >Tira</button>
+            <button
+              type="button"
+              (click)="legendStyle.set('circle')"
+              [class]="legendStyle() === 'circle' ? 'px-2 py-0.5 bg-indigo-600 text-white' : 'px-2 py-0.5 text-gray-400 hover:text-white'"
+            >Círculo</button>
+          </div>
+        </div>
       </section>
     }
 
@@ -162,6 +177,7 @@
     [zClip]="zClip()"
     [showGrid3d]="showGrid3d()"
     [wireframe]="wireframe()"
+    [legendStyle]="legendStyle()"
     [paramValues]="paramValues()"
     (paramsDetected)="onParamsDetected($event)"
     (compileError)="onCompileError($event)"
