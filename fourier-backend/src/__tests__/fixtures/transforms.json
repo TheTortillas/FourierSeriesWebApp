@@ -850,7 +850,13 @@
     "type": "ift",
     "description": "GCONV-1 IFT b=2: IFT[e^{-w²}/(w²+4)] — forma cerrada en erfc",
     "input": {
-      "segments": [{ "expression": "%e^(-(w^2))/(w^2+4)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(-(w^2))/(w^2+4)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -864,7 +870,13 @@
     "type": "ift",
     "description": "GCONV-1 IFT k=2: IFT[2·e^{-w²}/(w²+1)]",
     "input": {
-      "segments": [{ "expression": "2*%e^(-(w^2))/(w^2+1)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*%e^(-(w^2))/(w^2+1)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -878,7 +890,13 @@
     "type": "ift",
     "description": "GCONV-1 IFT k negativo: IFT[-e^{-w²}/(w²+1)]",
     "input": {
-      "segments": [{ "expression": "-%e^(-(w^2))/(w^2+1)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-%e^(-(w^2))/(w^2+1)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -892,7 +910,13 @@
     "type": "ft",
     "description": "GCONV-1 FT a=1,b=1: FT[e^{-t²}/(t²+1)]",
     "input": {
-      "segments": [{ "expression": "%e^(-(t^2))/(t^2+1)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(-(t^2))/(t^2+1)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -906,7 +930,13 @@
     "type": "ft",
     "description": "GCONV-1 FT a=2,b=1: FT[e^{-2t²}/(t²+1)]",
     "input": {
-      "segments": [{ "expression": "%e^(-(2*t^2))/(t^2+1)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(-(2*t^2))/(t^2+1)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -920,7 +950,13 @@
     "type": "ft",
     "description": "GCONV-1 FT a=1,b=2: FT[e^{-t²}/(t²+4)]",
     "input": {
-      "segments": [{ "expression": "%e^(-(t^2))/(t^2+4)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(-(t^2))/(t^2+4)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -934,7 +970,13 @@
     "type": "ft",
     "description": "TGAUSS n=1: FT[t·e^{-t²}] = -i√π·ω/2·e^{-ω²/4}",
     "input": {
-      "segments": [{ "expression": "t*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t*%e^(-t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -948,7 +990,13 @@
     "type": "ft",
     "description": "TGAUSS n=1, a=2: FT[t·e^{-2t²}]",
     "input": {
-      "segments": [{ "expression": "t*%e^(-2*t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t*%e^(-2*t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -962,7 +1010,13 @@
     "type": "ft",
     "description": "TGAUSS n=1, k=2: FT[2t·e^{-t²}] — linealidad",
     "input": {
-      "segments": [{ "expression": "2*t*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*t*%e^(-t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -976,7 +1030,13 @@
     "type": "ft",
     "description": "TGAUSS n=1, k=-1: FT[-t·e^{-t²}] — función impar negada",
     "input": {
-      "segments": [{ "expression": "-t*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-t*%e^(-t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -990,7 +1050,13 @@
     "type": "ft",
     "description": "TGAUSS n=2: FT[t²·e^{-t²}] — función par, resultado real",
     "input": {
-      "segments": [{ "expression": "t^2*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t^2*%e^(-t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1004,7 +1070,13 @@
     "type": "ft",
     "description": "TGAUSS n=3: FT[t³·e^{-t²}] — función impar, resultado imaginario",
     "input": {
-      "segments": [{ "expression": "t^3*%e^(-t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t^3*%e^(-t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1018,7 +1090,13 @@
     "type": "ft",
     "description": "Gaussiana·cos: FT[e^{-t²}·cos(2t)] — desplazamiento en frecuencia",
     "input": {
-      "segments": [{ "expression": "%e^(-t^2)*cos(2*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(-t^2)*cos(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1032,7 +1110,13 @@
     "type": "ft",
     "description": "Gaussiana·sin: FT[e^{-t²}·sin(t)] — resultado imaginario impar",
     "input": {
-      "segments": [{ "expression": "%e^(-t^2)*sin(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(-t^2)*sin(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1046,7 +1130,13 @@
     "type": "ft",
     "description": "Gaussiana·cos con k=2: FT[2·e^{-t²}·cos(t)]",
     "input": {
-      "segments": [{ "expression": "2*%e^(-t^2)*cos(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*%e^(-t^2)*cos(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1060,7 +1150,13 @@
     "type": "ft",
     "description": "Gaussiana·cos a=2,b=3: FT[e^{-2t²}·cos(3t)]",
     "input": {
-      "segments": [{ "expression": "%e^(-2*t^2)*cos(3*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(-2*t^2)*cos(3*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1074,7 +1170,13 @@
     "type": "ft",
     "description": "Gaussiana·sin k=3,b=2: FT[3·e^{-t²}·sin(2t)]",
     "input": {
-      "segments": [{ "expression": "3*%e^(-t^2)*sin(2*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "3*%e^(-t^2)*sin(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1088,7 +1190,13 @@
     "type": "ft",
     "description": "Gaussiana·sin a=1/2: FT[e^{-t²/2}·sin(2t)]",
     "input": {
-      "segments": [{ "expression": "%e^(-(t^2/2))*sin(2*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(-(t^2/2))*sin(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1102,7 +1210,13 @@
     "type": "ft",
     "description": "Exponencial bilateral: FT[e^{-|t|}] = 2/(w²+1)",
     "input": {
-      "segments": [{ "expression": "%e^(-abs(t))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(-abs(t))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1116,7 +1230,13 @@
     "type": "ft",
     "description": "Exponencial bilateral k=2,a=3: FT[2·e^{-3|t|}] = 12/(w²+9)",
     "input": {
-      "segments": [{ "expression": "2*%e^(-3*abs(t))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*%e^(-3*abs(t))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1130,7 +1250,13 @@
     "type": "ft",
     "description": "TGAUSS a=1/4: FT[t·e^{-t²/4}] — a no entero",
     "input": {
-      "segments": [{ "expression": "t*%e^(-(t^2/4))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t*%e^(-(t^2/4))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1144,7 +1270,13 @@
     "type": "ft",
     "description": "TGAUSS n=2,a=2: FT[t²·e^{-2t²}]",
     "input": {
-      "segments": [{ "expression": "t^2*%e^(-2*t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t^2*%e^(-2*t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1158,7 +1290,13 @@
     "type": "ft",
     "description": "TPOW p=-1/2: FT[θ(t)/√t] = √π·|w|^{-1/2}·e^{-iπ/4·sgn(w)}",
     "input": {
-      "segments": [{ "expression": "t^(-1/2)", "from": "0", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t^(-1/2)",
+          "from": "0",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1172,7 +1310,13 @@
     "type": "ft",
     "description": "TPOW p=1/2: FT[θ(t)·√t] = (√π/2)·|w|^{-3/2}·e^{-3iπ/4·sgn(w)}",
     "input": {
-      "segments": [{ "expression": "t^(1/2)", "from": "0", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t^(1/2)",
+          "from": "0",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1186,7 +1330,13 @@
     "type": "ft",
     "description": "TPOW p=1/3: FT[θ(t)·t^{1/3}] = Γ(4/3)·|w|^{-4/3}·e^{-i2π/3·sgn(w)}",
     "input": {
-      "segments": [{ "expression": "t^(1/3)", "from": "0", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t^(1/3)",
+          "from": "0",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1200,7 +1350,13 @@
     "type": "ft",
     "description": "TPOW coef: FT[3·θ(t)/√t] = 3√π·|w|^{-1/2}·e^{-iπ/4·sgn(w)}",
     "input": {
-      "segments": [{ "expression": "3*t^(-1/2)", "from": "0", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "3*t^(-1/2)",
+          "from": "0",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1214,7 +1370,13 @@
     "type": "ft",
     "description": "TPOW negativo: FT[-θ(t)·√t]",
     "input": {
-      "segments": [{ "expression": "-t^(1/2)", "from": "0", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-t^(1/2)",
+          "from": "0",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1228,7 +1390,13 @@
     "type": "ft",
     "description": "REGR: FT_match_u bug — u(t)/t debe dar FALLBACK, no fórmula con t en resultado",
     "input": {
-      "segments": [{ "expression": "u(t)/t", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "u(t)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1241,7 +1409,13 @@
     "type": "ft",
     "description": "REGR: FT_match_u bug — u(t)/t^2 debe dar FALLBACK, no fórmula con t en resultado",
     "input": {
-      "segments": [{ "expression": "u(t)/t^2", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "u(t)/t^2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1252,27 +1426,41 @@
   {
     "id": "TP08",
     "type": "ft",
-    "description": "REGR: TPOW scope bug — sqrt(t)*e^{-t}*u(t) no debe dar FT con |w-i| (wrong freq-shift)",
+    "description": "TPOW/Gamma p=1/2: FT[sqrt(t)*e^{-t}*u(t)] = Gamma(3/2)/(iw+1)^{3/2} — antes bloqueado por bug scope de freq-shift (ahora resuelto por el matcher t^p*e^{-at}*u(t))",
     "input": {
-      "segments": [{ "expression": "t^(1/2)*%e^(-t)*u(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t^(1/2)*%e^(-t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
     "expected": {
-      "exists": false
+      "exists": true,
+      "F": "sqrt(%pi)/(2*(%i*w+1)^(3/2))"
     }
   },
   {
     "id": "TP09",
     "type": "ft",
-    "description": "REGR: freq-shift complex w0 — t^{1/3}*e^{-t}*u(t) no debe usar freq-shift con w0=i",
+    "description": "TPOW/Gamma p=1/3: FT[t^{1/3}*e^{-t}*u(t)] = Gamma(4/3)/(iw+1)^{4/3} — antes bloqueado por bug scope de freq-shift w0=i (ahora resuelto por el matcher t^p*e^{-at}*u(t))",
     "input": {
-      "segments": [{ "expression": "t^(1/3)*%e^(-t)*u(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "t^(1/3)*%e^(-t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
     "expected": {
-      "exists": false
+      "exists": true,
+      "F": "gamma(1/3)/(3*(%i*w+1)^(4/3))"
     }
   },
   {
@@ -1280,7 +1468,13 @@
     "type": "ft",
     "description": "REGR: freq-shift real sigue funcionando — e^{3it}*u(t) debe dar G(w-3)",
     "input": {
-      "segments": [{ "expression": "%e^(%i*3*t)*u(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "%e^(%i*3*t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -1294,7 +1488,13 @@
     "type": "ft",
     "description": "REGR: u(t)/2 sigue reconocido como k*u(t) con k=1/2",
     "input": {
-      "segments": [{ "expression": "u(t)/2", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "u(t)/2",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5424,7 +5624,13 @@
     "type": "ft",
     "description": "FT TH-8: FT[sech³(t)] = (π/2)(1+(πω/2)²)·sech(πω/2)",
     "input": {
-      "segments": [{ "expression": "1/cosh(t)^3", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "1/cosh(t)^3",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5438,7 +5644,13 @@
     "type": "ft",
     "description": "FT TH-8: FT[sech⁵(t)] = (π/24)(9+10(πω/2)²+(πω/2)⁴)·sech(πω/2)",
     "input": {
-      "segments": [{ "expression": "1/cosh(t)^5", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "1/cosh(t)^5",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5452,7 +5664,13 @@
     "type": "ft",
     "description": "FT TH-9: FT[tanh²(t)·sech(t)] = (π/2)(1-(πω/2)²)·sech(πω/2)",
     "input": {
-      "segments": [{ "expression": "tanh(t)^2/cosh(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "tanh(t)^2/cosh(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5466,7 +5684,13 @@
     "type": "ft",
     "description": "FT TH-9: FT[tanh²(t)·sech³(t)] = (π/2)[(1+(πω/2)²)-(1/12)(9+10(πω/2)²+(πω/2)⁴)]·sech(πω/2)",
     "input": {
-      "segments": [{ "expression": "tanh(t)^2/cosh(t)^3", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "tanh(t)^2/cosh(t)^3",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5480,7 +5704,13 @@
     "type": "ft",
     "description": "FT TH-9odd: FT[tanh(t)·sech(t)] = -iπω·sech(πω/2)",
     "input": {
-      "segments": [{ "expression": "tanh(t)/cosh(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "tanh(t)/cosh(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5494,7 +5724,13 @@
     "type": "ft",
     "description": "FT TH-9odd scaled: FT[2·tanh(3t)·sech(3t)] = -2iπω/(3·cosh(πω/6))",
     "input": {
-      "segments": [{ "expression": "2*tanh(3*t)/cosh(3*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*tanh(3*t)/cosh(3*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5508,7 +5744,13 @@
     "type": "ft",
     "description": "FT TH-8 general: FT[sech⁷(t)] — recurrence n=3",
     "input": {
-      "segments": [{ "expression": "1/cosh(t)^7", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "1/cosh(t)^7",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5522,7 +5764,13 @@
     "type": "ift",
     "description": "IFT TH-8 general: IFT[FT[sech⁷(t)]] = sech⁷(t)",
     "input": {
-      "segments": [{ "expression": "(%pi*(%pi^6*w^6+140*%pi^4*w^4+4144*%pi^2*w^2+14400))/(46080*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "(%pi*(%pi^6*w^6+140*%pi^4*w^4+4144*%pi^2*w^2+14400))/(46080*cosh((%pi*w)/2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -5536,7 +5784,13 @@
     "type": "ft",
     "description": "FT TH-9 general: FT[tanh⁴(t)·sech(t)] — binomial m=2, n=0",
     "input": {
-      "segments": [{ "expression": "tanh(t)^4/cosh(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "tanh(t)^4/cosh(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5550,7 +5804,13 @@
     "type": "ift",
     "description": "IFT TH-9 general: IFT[FT[tanh⁴(t)·sech(t)]] = tanh⁴(t)·sech(t)",
     "input": {
-      "segments": [{ "expression": "(%pi*(%pi^4*w^4-56*%pi^2*w^2+144))/(384*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "(%pi*(%pi^4*w^4-56*%pi^2*w^2+144))/(384*cosh((%pi*w)/2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -5564,7 +5824,13 @@
     "type": "ft",
     "description": "FT TH-9 general: FT[tanh²(t)·sech⁵(t)] — binomial m=1, n=2",
     "input": {
-      "segments": [{ "expression": "tanh(t)^2/cosh(t)^5", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "tanh(t)^2/cosh(t)^5",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5578,7 +5844,13 @@
     "type": "ift",
     "description": "IFT TH-9 general: IFT[FT[tanh²(t)·sech⁵(t)]] = tanh²(t)·sech⁵(t)",
     "input": {
-      "segments": [{ "expression": "-((%pi*(%pi^6*w^6+20*%pi^4*w^4-656*%pi^2*w^2-2880))/(46080*cosh((%pi*w)/2)))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-((%pi*(%pi^6*w^6+20*%pi^4*w^4-656*%pi^2*w^2-2880))/(46080*cosh((%pi*w)/2)))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -5592,7 +5864,13 @@
     "type": "ft",
     "description": "FT TH-9 general: FT[tanh⁴(t)·sech³(t)] — binomial m=2, n=1",
     "input": {
-      "segments": [{ "expression": "tanh(t)^4/cosh(t)^3", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "tanh(t)^4/cosh(t)^3",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -5606,7 +5884,13 @@
     "type": "ift",
     "description": "IFT TH-9 general: IFT[FT[tanh⁴(t)·sech³(t)]] = tanh⁴(t)·sech³(t)",
     "input": {
-      "segments": [{ "expression": "(%pi*(%pi^6*w^6-100*%pi^4*w^4+304*%pi^2*w^2+2880))/(46080*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "(%pi*(%pi^6*w^6-100*%pi^4*w^4+304*%pi^2*w^2+2880))/(46080*cosh((%pi*w)/2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -5620,7 +5904,13 @@
     "type": "ift",
     "description": "IFT TH-9: IFT of FT[tanh²(t)·sech³(t)] = tanh²(t)·sech³(t)",
     "input": {
-      "segments": [{ "expression": "(%pi*(-(((%pi^4*w^4)/16+(5*%pi^2*w^2)/2+9)/12)+(%pi^2*w^2)/4+1))/(2*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "(%pi*(-(((%pi^4*w^4)/16+(5*%pi^2*w^2)/2+9)/12)+(%pi^2*w^2)/4+1))/(2*cosh((%pi*w)/2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -5634,7 +5924,13 @@
     "type": "ift",
     "description": "IFT TH-8: IFT[(π/2)(1+(πω/2)²)·sech(πω/2)] = sech³(t)",
     "input": {
-      "segments": [{ "expression": "(%pi*((%pi^2*w^2)/4+1))/(2*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "(%pi*((%pi^2*w^2)/4+1))/(2*cosh((%pi*w)/2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -5648,7 +5944,13 @@
     "type": "ift",
     "description": "IFT TH-8: IFT[(π/24)(9+10(πω/2)²+(πω/2)⁴)·sech(πω/2)] = sech⁵(t)",
     "input": {
-      "segments": [{ "expression": "(%pi*((%pi^4*w^4)/16+(5*%pi^2*w^2)/2+9))/(24*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "(%pi*((%pi^4*w^4)/16+(5*%pi^2*w^2)/2+9))/(24*cosh((%pi*w)/2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -5662,7 +5964,13 @@
     "type": "ift",
     "description": "IFT TH-9: IFT[(π/2)(1-(πω/2)²)·sech(πω/2)] = tanh²(t)·sech(t)",
     "input": {
-      "segments": [{ "expression": "(%pi*(1-(%pi^2*w^2)/4))/(2*cosh((%pi*w)/2))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "(%pi*(1-(%pi^2*w^2)/4))/(2*cosh((%pi*w)/2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -9748,7 +10056,13 @@
     "type": "ft",
     "description": "FT AT-1: FT[arctan(t)] = -iπ·e^{-|w|}/w",
     "input": {
-      "segments": [{ "expression": "atan(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9762,7 +10076,13 @@
     "type": "ft",
     "description": "FT AT-1 escalado: FT[arctan(2t)] = -iπ·e^{-|w|/2}/(2w)",
     "input": {
-      "segments": [{ "expression": "atan(2*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9776,7 +10096,13 @@
     "type": "ft",
     "description": "FT AT-1 con coef y escala: FT[2·arctan(t/3)] = -6iπ·e^{-3|w|}/w",
     "input": {
-      "segments": [{ "expression": "2*atan(t/3)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*atan(t/3)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9790,7 +10116,13 @@
     "type": "ift",
     "description": "IFT AT-1: IFT[-iπ·e^{-|w|}/w] = arctan(t)",
     "input": {
-      "segments": [{ "expression": "-((%i*%pi*%e^-abs(w))/w)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-((%i*%pi*%e^-abs(w))/w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -9804,7 +10136,13 @@
     "type": "ift",
     "description": "IFT AT-1 escalado: IFT[-iπ·e^{-|w|/2}/(2w)] = arctan(2t)",
     "input": {
-      "segments": [{ "expression": "-((%i*%pi*%e^-(abs(w)/2))/(2*w))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-((%i*%pi*%e^-(abs(w)/2))/(2*w))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -9818,7 +10156,13 @@
     "type": "ift",
     "description": "IFT AT-1 coef: IFT[-6iπ·e^{-3|w|}/w] = 2·arctan(t/3)",
     "input": {
-      "segments": [{ "expression": "-((6*%i*%pi*%e^-(3*abs(w)))/w)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-((6*%i*%pi*%e^-(3*abs(w)))/w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -9832,7 +10176,13 @@
     "type": "ft",
     "description": "FT AT-1 desplazado: FT[arctan(t-2)] = -iπ·e^{-|w|-2iw}/w (teorema traslación)",
     "input": {
-      "segments": [{ "expression": "atan(t-2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(t-2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9846,7 +10196,13 @@
     "type": "ft",
     "description": "FT AT-1 desplazado escalado: FT[arctan(2t-1)] = -iπ·e^{-|w|/2-iw/2}/(2w)",
     "input": {
-      "segments": [{ "expression": "atan(2*t-1)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(2*t-1)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9860,7 +10216,13 @@
     "type": "ft",
     "description": "FT AT-3 diferencia: FT[arctan(t)-arctan(2t)] = -iπ/w·(e^{-|w|} - e^{-|w|/2}/2) (linealidad)",
     "input": {
-      "segments": [{ "expression": "atan(t)-atan(2*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(t)-atan(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9874,7 +10236,13 @@
     "type": "ft",
     "description": "FT AT-3 diferencia escalada: FT[arctan(2t)-arctan(3t)]",
     "input": {
-      "segments": [{ "expression": "atan(2*t)-atan(3*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(2*t)-atan(3*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9888,7 +10256,13 @@
     "type": "ft",
     "description": "FT AT-2: FT[arctan(1/t)] = iπ(e^{-|w|}-1)/w",
     "input": {
-      "segments": [{ "expression": "atan(1/t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(1/t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9902,7 +10276,13 @@
     "type": "ft",
     "description": "FT AT-2 escalado: FT[arctan(1/(2t))] = iπ(e^{-|w|/2}/2-1)/(2w)",
     "input": {
-      "segments": [{ "expression": "atan(1/(2*t))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(1/(2*t))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9916,7 +10296,13 @@
     "type": "ft",
     "description": "FT AT-2 con coef: FT[2·arctan(1/t)] = 2iπ(e^{-|w|}-1)/w",
     "input": {
-      "segments": [{ "expression": "2*atan(1/t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*atan(1/t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9930,7 +10316,13 @@
     "type": "ft",
     "description": "FT AT-4: FT[arctan(t)/t] = -π·Ei(-|w|)",
     "input": {
-      "segments": [{ "expression": "atan(t)/t", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(t)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9944,7 +10336,13 @@
     "type": "ft",
     "description": "FT AT-4 escalado: FT[arctan(2t)/t] = -π·Ei(-|w|/2)",
     "input": {
-      "segments": [{ "expression": "atan(2*t)/t", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(2*t)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9958,7 +10356,13 @@
     "type": "ft",
     "description": "FT AT-4 con coef: FT[2·arctan(t)/t] = -2π·Ei(-|w|)",
     "input": {
-      "segments": [{ "expression": "2*atan(t)/t", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*atan(t)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9972,7 +10376,13 @@
     "type": "ft",
     "description": "FT AT-4 k negativo: FT[-arctan(t)/t] = π·Ei(-|w|)",
     "input": {
-      "segments": [{ "expression": "-atan(t)/t", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-atan(t)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -9986,7 +10396,13 @@
     "type": "ft",
     "description": "FT AT-4 coef y escala: FT[arctan(3t)/(2t)] = -π/2·Ei(-|w|/3)",
     "input": {
-      "segments": [{ "expression": "atan(3*t)/(2*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(3*t)/(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10000,7 +10416,13 @@
     "type": "ft",
     "description": "FT AT-5: FT[arctan(1/(2t²))] = 2π·e^{-|w|/2}·sin(w/2)/w",
     "input": {
-      "segments": [{ "expression": "atan(1/(2*t^2))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(1/(2*t^2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10014,7 +10436,13 @@
     "type": "ft",
     "description": "FT AT-5 c=1: FT[arctan(1/t²)] = 2π·e^{-|w|/√2}·sin(w/√2)/w",
     "input": {
-      "segments": [{ "expression": "atan(1/t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "atan(1/t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10028,7 +10456,13 @@
     "type": "ft",
     "description": "FT AT-5 con coef: FT[3·arctan(4/t²)] = 6π·e^{-√2|w|}·sin(√2·w)/w",
     "input": {
-      "segments": [{ "expression": "3*atan(4/t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "3*atan(4/t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10042,7 +10476,13 @@
     "type": "ft",
     "description": "FT AT-5 negativo: FT[-arctan(1/(2t²))] = -2π·e^{-|w|/2}·sin(w/2)/w",
     "input": {
-      "segments": [{ "expression": "-atan(1/(2*t^2))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-atan(1/(2*t^2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10056,7 +10496,13 @@
     "type": "ft",
     "description": "FT ERF-1: FT[erf(t)] = -2i·e^{-w²/4}/w",
     "input": {
-      "segments": [{ "expression": "erf(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "erf(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10070,7 +10516,13 @@
     "type": "ft",
     "description": "FT ERF-1 escalado: FT[erf(2t)] = -2i·e^{-w²/16}/w",
     "input": {
-      "segments": [{ "expression": "erf(2*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "erf(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10084,7 +10536,13 @@
     "type": "ft",
     "description": "FT ERF-1 con coef: FT[2·erf(t)] = -4i·e^{-w²/4}/w",
     "input": {
-      "segments": [{ "expression": "2*erf(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*erf(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10098,7 +10556,13 @@
     "type": "ft",
     "description": "FT ERF-1 k negativo: FT[-erf(t)] = 2i·e^{-w²/4}/w",
     "input": {
-      "segments": [{ "expression": "-erf(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-erf(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10112,7 +10576,13 @@
     "type": "ft",
     "description": "FT ERF-1 coef y escala: FT[3·erf(2t)] = -6i·e^{-w²/16}/w",
     "input": {
-      "segments": [{ "expression": "3*erf(2*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "3*erf(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10126,7 +10596,13 @@
     "type": "ift",
     "description": "IFT ERF-1: IFT[-2i·e^{-w²/4}/w] = erf(t)",
     "input": {
-      "segments": [{ "expression": "-((2*%i*%e^-(w^2/4))/w)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-((2*%i*%e^-(w^2/4))/w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -10140,7 +10616,13 @@
     "type": "ift",
     "description": "IFT ERF-1 escalado: IFT[-2i·e^{-w²/16}/w] = erf(2t)",
     "input": {
-      "segments": [{ "expression": "-((2*%i*%e^-(w^2/16))/w)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-((2*%i*%e^-(w^2/16))/w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -10154,7 +10636,13 @@
     "type": "ift",
     "description": "IFT ERF-1 con coef: IFT[-4i·e^{-w²/4}/w] = 2·erf(t)",
     "input": {
-      "segments": [{ "expression": "-((4*%i*%e^-(w^2/4))/w)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-((4*%i*%e^-(w^2/4))/w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -10168,7 +10656,13 @@
     "type": "ft",
     "description": "FT ERFC-1: FT[erfc(t)] = 2π·δ(w) - 2i·e^{-w²/4}/w",
     "input": {
-      "segments": [{ "expression": "erfc(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "erfc(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10182,7 +10676,13 @@
     "type": "ft",
     "description": "FT ERFC-1 escalado: FT[erfc(2t)] = 2π·δ(w) - 2i·e^{-w²/16}/w",
     "input": {
-      "segments": [{ "expression": "erfc(2*t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "erfc(2*t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10196,7 +10696,13 @@
     "type": "ft",
     "description": "FT ERFC-1 con coef: FT[2·erfc(t)] = 4π·δ(w) - 4i·e^{-w²/4}/w",
     "input": {
-      "segments": [{ "expression": "2*erfc(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*erfc(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10210,7 +10716,13 @@
     "type": "ft",
     "description": "FT ERFC-1 k negativo: FT[-erfc(t)] = 2i·e^{-w²/4}/w - 2π·δ(w)",
     "input": {
-      "segments": [{ "expression": "-erfc(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-erfc(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10224,7 +10736,13 @@
     "type": "ift",
     "description": "IFT ERFC-1: IFT[2π·δ(w) - 2i·e^{-w²/4}/w] = erfc(t)",
     "input": {
-      "segments": [{ "expression": "2*%pi*delta(w)-(2*%i*%e^-(w^2/4))/w", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*%pi*delta(w)-(2*%i*%e^-(w^2/4))/w",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -10238,7 +10756,13 @@
     "type": "ift",
     "description": "IFT ERFC-1 escalado: IFT[2π·δ(w) - 2i·e^{-w²/16}/w] = erfc(2t)",
     "input": {
-      "segments": [{ "expression": "2*%pi*delta(w)-(2*%i*%e^-(w^2/16))/w", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "2*%pi*delta(w)-(2*%i*%e^-(w^2/16))/w",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -10252,7 +10776,13 @@
     "type": "ift",
     "description": "IFT ERFC-1 k negativo: IFT[2i·e^{-w²/4}/w - 2π·δ(w)] = -erfc(t)",
     "input": {
-      "segments": [{ "expression": "(2*%i*%e^-(w^2/4))/w-2*%pi*delta(w)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "(2*%i*%e^-(w^2/4))/w-2*%pi*delta(w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "w",
       "transVar": "t"
     },
@@ -10266,7 +10796,13 @@
     "type": "ft",
     "description": "Signo negativo: FT[-e^{-at}·u(t)] = -1/(iw+a) — regresión bug TGAUSS scope",
     "input": {
-      "segments": [{ "expression": "-%e^(-2*t)*u(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-%e^(-2*t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10280,7 +10816,13 @@
     "type": "ft",
     "description": "Signo negativo: FT[-t·e^{-at}·u(t)] = -1/(iw+a)^2 — regresión bug TGAUSS scope",
     "input": {
-      "segments": [{ "expression": "-t*%e^(-2*t)*u(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-t*%e^(-2*t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10294,7 +10836,13 @@
     "type": "ft",
     "description": "Signo negativo: FT[-e^{-at²}] = -√(π/a)·e^{-ω²/(4a)} — regresión bug TGAUSS scope",
     "input": {
-      "segments": [{ "expression": "-%e^(-2*t^2)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-%e^(-2*t^2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10308,7 +10856,13 @@
     "type": "ft",
     "description": "Signo negativo: FT[-e^{-a|t|}] = -2a/(ω²+a²) — handler e^{-a|t|} sigue correcto",
     "input": {
-      "segments": [{ "expression": "-%e^(-2*abs(t))", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-%e^(-2*abs(t))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10322,7 +10876,13 @@
     "type": "ft",
     "description": "Signo negativo: FT[-e^{-at}·cos(bt)·u(t)] = -(iw+a)/((iw+a)²+b²) — regresión bug TGAUSS scope",
     "input": {
-      "segments": [{ "expression": "-%e^(-t)*cos(2*t)*u(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-%e^(-t)*cos(2*t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
@@ -10336,13 +10896,641 @@
     "type": "ft",
     "description": "Signo negativo: FT[-e^{-at}·sin(bt)·u(t)] = -b/((iw+a)²+b²) — regresión bug TGAUSS scope",
     "input": {
-      "segments": [{ "expression": "-%e^(-t)*sin(2*t)*u(t)", "from": "minf", "to": "inf" }],
+      "segments": [
+        {
+          "expression": "-%e^(-t)*sin(2*t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
       "intVar": "t",
       "transVar": "w"
     },
     "expected": {
       "exists": true,
       "F": "-(2/((%i*w+1)^2+4))"
+    }
+  },
+  {
+    "id": "URT01",
+    "type": "ft",
+    "description": "FT de u(-t) — escalón reflejado en tiempo",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(-t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%pi*delta(w) + %i/w"
+    }
+  },
+  {
+    "id": "URT02",
+    "type": "ft",
+    "description": "FT de 3*u(-t) — escalado sobre escalón reflejado",
+    "input": {
+      "segments": [
+        {
+          "expression": "3*u(-t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "3*(%pi*delta(w) + %i/w)"
+    }
+  },
+  {
+    "id": "URT03",
+    "type": "ft",
+    "description": "FT de u(2-t) — escalón reflejado y desplazado, t0=2 numérico",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(2-t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%pi*delta(w) + %i*%e^(-2*%i*w)/w"
+    }
+  },
+  {
+    "id": "URT04",
+    "type": "ft",
+    "description": "FT de k*u(t0-t) — escalón reflejado y desplazado, t0 simbólico",
+    "input": {
+      "segments": [
+        {
+          "expression": "5*u(a-t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "5*(%pi*delta(w) - %e^(-%i*w*a)/(%i*w))",
+      "params": [
+        "a"
+      ]
+    }
+  },
+  {
+    "id": "URT05",
+    "type": "ft",
+    "description": "FT de u(-t) - u(t) — diferencia de escalones reflejado y directo",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(-t) - u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "2*%i/w"
+    }
+  },
+  {
+    "id": "URT06",
+    "type": "ift",
+    "description": "IFT de pi*delta(w) + i/w → u(-t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "%pi*delta(w) + %i/w",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "u(-t)"
+    }
+  },
+  {
+    "id": "URT07",
+    "type": "ift",
+    "description": "IFT de 3*(pi*delta(w) + i/w) → 3*u(-t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "3*%pi*delta(w) + 3*%i/w",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "3*u(-t)"
+    }
+  },
+  {
+    "id": "URT08",
+    "type": "ift",
+    "description": "IFT con desplazamiento t0=2 numérico → u(2-t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "%pi*delta(w) + %i*%e^(-2*%i*w)/w",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "u(2-t)"
+    }
+  },
+  {
+    "id": "URT09",
+    "type": "ift",
+    "description": "IFT con coeficiente y desplazamiento simbólico t0=a → k*u(a-t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "5*%pi*delta(w) - 5*%e^(-%i*w*a)/(%i*w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "5*u(a-t)",
+      "params": [
+        "a"
+      ]
+    }
+  },
+  {
+    "id": "URT10",
+    "type": "ift",
+    "description": "IFT de -2*i/w (sin delta) → u(t) - u(-t) = sgn(t) reescrito vía escalones reflejados",
+    "input": {
+      "segments": [
+        {
+          "expression": "-2*%i/w",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "u(t) - u(-t)"
+    }
+  },
+  {
+    "id": "EGD01",
+    "type": "ft",
+    "description": "FT de t^(1/2)*e^{-t}*u(t) — Erlang/Gamma, exponente semientero p=1/2",
+    "input": {
+      "segments": [
+        {
+          "expression": "t^(1/2)*%e^(-t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "gamma(3/2)/(%i*w+1)^(3/2)"
+    }
+  },
+  {
+    "id": "EGD02",
+    "type": "ft",
+    "description": "FT de 2*t^(3/2)*e^{-3*t}*u(t) — Erlang/Gamma con k y a numéricos",
+    "input": {
+      "segments": [
+        {
+          "expression": "2*t^(3/2)*%e^(-3*t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "2*gamma(5/2)/(%i*w+3)^(5/2)"
+    }
+  },
+  {
+    "id": "EGD03",
+    "type": "ft",
+    "description": "FT de t^(nu-1)*e^{-a*t}*u(t) — Erlang/Gamma con exponente y decaimiento simbólicos",
+    "input": {
+      "segments": [
+        {
+          "expression": "t^(nu-1)*%e^(-a*t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "gamma(nu)/(%i*w+a)^nu",
+      "params": [
+        "a",
+        "nu"
+      ]
+    }
+  },
+  {
+    "id": "EGD04",
+    "type": "ft",
+    "description": "FT de la densidad Erlang/Gamma normalizada completa alpha^nu*t^(nu-1)*e^{-alpha*t}*u(t)/Gamma(nu)",
+    "input": {
+      "segments": [
+        {
+          "expression": "alpha^nu*t^(nu-1)*%e^(-alpha*t)*u(t)/gamma(nu)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "(alpha/(%i*w+alpha))^nu",
+      "params": [
+        "alpha",
+        "nu"
+      ]
+    }
+  },
+  {
+    "id": "EGD05",
+    "type": "ft",
+    "description": "FT de t^(5/2)*e^{-t}*u(t) — Erlang/Gamma exponente p=5/2 (Gamma no trivial)",
+    "input": {
+      "segments": [
+        {
+          "expression": "t^(5/2)*%e^(-t)*u(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "gamma(7/2)/(%i*w+1)^(7/2)"
+    }
+  },
+  {
+    "id": "EGD06",
+    "type": "ift",
+    "description": "IFT de gamma(3/2)/(iw+1)^(3/2) → t^(1/2)*e^{-t}*u(t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "gamma(3/2)/(%i*w+1)^(3/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "t^(1/2)*%e^(-t)*u(t)"
+    }
+  },
+  {
+    "id": "EGD07",
+    "type": "ift",
+    "description": "IFT de 2*gamma(5/2)/(iw+3)^(5/2) → 2*t^(3/2)*e^{-3t}*u(t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "2*gamma(5/2)/(%i*w+3)^(5/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "2*t^(3/2)*%e^(-3*t)*u(t)"
+    }
+  },
+  {
+    "id": "EGD08",
+    "type": "ift",
+    "description": "IFT de k/(a+iw)^p con p, a simbólicos → k*t^(p-1)/Gamma(p)*e^{-at}*u(t)",
+    "input": {
+      "segments": [
+        {
+          "expression": "7/(a+%i*w)^p",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "7*t^(p-1)/gamma(p)*%e^(-a*t)*u(t)",
+      "params": [
+        "a",
+        "p"
+      ]
+    }
+  },
+  {
+    "id": "EGD09",
+    "type": "ift",
+    "description": "IFT del par completo (alpha/(a+iw))^nu → densidad Erlang/Gamma normalizada (round-trip de EGD04)",
+    "input": {
+      "segments": [
+        {
+          "expression": "(alpha/(alpha+%i*w))^nu",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "alpha^nu*t^(nu-1)*%e^(-alpha*t)*u(t)/gamma(nu)",
+      "params": [
+        "alpha",
+        "nu"
+      ]
+    }
+  },
+  {
+    "id": "EGD10",
+    "type": "ift",
+    "description": "IFT de gamma(7/2)/(iw+1)^(7/2) → t^(5/2)*e^{-t}*u(t) (round-trip de EGD05)",
+    "input": {
+      "segments": [
+        {
+          "expression": "gamma(7/2)/(%i*w+1)^(7/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "t^(5/2)*%e^(-t)*u(t)"
+    }
+  },
+  {
+    "id": "GUM01",
+    "type": "ft",
+    "description": "FT de e^t*e^{-e^t} — Gumbel caso base b=1,c=1",
+    "input": {
+      "segments": [
+        {
+          "expression": "%e^t*%e^(-%e^t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "gamma(1-%i*w)"
+    }
+  },
+  {
+    "id": "GUM02",
+    "type": "ft",
+    "description": "FT de e^{2t}*e^{-3*e^{2t}} — Gumbel con b=2,c=3",
+    "input": {
+      "segments": [
+        {
+          "expression": "%e^(2*t)*%e^(-3*%e^(2*t))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "3^(%i*w/2-1)/2*gamma(1-%i*w/2)"
+    }
+  },
+  {
+    "id": "GUM03",
+    "type": "ft",
+    "description": "FT de e^{5t}*e^{-e^{5t}} — Gumbel con b=5,c=1",
+    "input": {
+      "segments": [
+        {
+          "expression": "%e^(5*t)*%e^(-%e^(5*t))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "gamma(1-%i*w/5)/5"
+    }
+  },
+  {
+    "id": "GUM04",
+    "type": "ft",
+    "description": "FT de e^{t}*e^{-7*e^{t}} — Gumbel con c grande, b=1",
+    "input": {
+      "segments": [
+        {
+          "expression": "%e^t*%e^(-7*%e^t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "7^(%i*w-1)*gamma(1-%i*w)"
+    }
+  },
+  {
+    "id": "GUM05",
+    "type": "ft",
+    "description": "FT de e^{t/2}*e^{-e^{t/2}} — Gumbel con b=1/2 (decaimiento lento)",
+    "input": {
+      "segments": [
+        {
+          "expression": "%e^(t/2)*%e^(-%e^(t/2))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "2*gamma(1-2*%i*w)"
+    }
+  },
+  {
+    "id": "GUM06",
+    "type": "ift",
+    "description": "IFT de Gamma(1+iw) → e^{-t}*e^{-e^{-t}} — Gumbel inverso, caso base (round-trip de GUM01 reflejado)",
+    "input": {
+      "segments": [
+        {
+          "expression": "gamma(1+%i*w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%e^(-t)*%e^(-%e^(-t))"
+    }
+  },
+  {
+    "id": "GUM07",
+    "type": "ift",
+    "description": "IFT de 3^(-iw/2-1)/2*Gamma(1+iw/2) → e^{-2t}*e^{-3*e^{-2t}} — Gumbel inverso con b=2,c=3 (round-trip de GUM02)",
+    "input": {
+      "segments": [
+        {
+          "expression": "3^(-%i*w/2-1)/2*gamma(1+%i*w/2)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%e^(-2*t)*%e^(-3*%e^(-2*t))"
+    }
+  },
+  {
+    "id": "GUM08",
+    "type": "ift",
+    "description": "IFT de Gamma(1+iw/5)/5 → e^{-5t}*e^{-e^{-5t}} (round-trip de GUM03)",
+    "input": {
+      "segments": [
+        {
+          "expression": "gamma(1+%i*w/5)/5",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%e^(-5*t)*%e^(-%e^(-5*t))"
+    }
+  },
+  {
+    "id": "GUM09",
+    "type": "ift",
+    "description": "IFT de 7^(-iw-1)*Gamma(1+iw) → e^{-t}*e^{-7*e^{-t}} (round-trip de GUM04)",
+    "input": {
+      "segments": [
+        {
+          "expression": "7^(-%i*w-1)*gamma(1+%i*w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%e^(-t)*%e^(-7*%e^(-t))"
+    }
+  },
+  {
+    "id": "GUM10",
+    "type": "ift",
+    "description": "IFT de 2*Gamma(1+2iw) → e^{-t/2}*e^{-e^{-t/2}} (round-trip de GUM05)",
+    "input": {
+      "segments": [
+        {
+          "expression": "2*gamma(1+2*%i*w)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "%e^(-t/2)*%e^(-%e^(-t/2))"
     }
   }
 ]
