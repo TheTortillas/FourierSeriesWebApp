@@ -556,6 +556,7 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 32b | $e^{bt}\,e^{-c\,e^{bt}}$ (Gumbel / doble-exponencial) | $\dfrac{c^{\,i\omega/b}}{bc}\,\Gamma\!\left(1-\dfrac{i\omega}{b}\right)$        | $b,c>0$; definida en todo $\mathbb{R}$ (no causal); sustitución $u=c\,e^{bt}$ reduce la integral a la de Euler para $\Gamma$; caso base $b=c=1$: $e^{t}e^{-e^{t}}\to\Gamma(1-i\omega)$ |
 | 32c | $k\,\lvert t\rvert^\alpha$ (par, exponente no entero)   | $\dfrac{-2k\sin(\alpha\pi/2)\,\Gamma(\alpha+1)}{\lvert\omega\rvert^{\alpha+1}}$ | $\alpha>-1$; caso base $\alpha=-1/2$: $\lvert t\rvert^{-1/2}\to\sqrt{2\pi/\lvert\omega\rvert}$ |
 | 32d | $k\,\lvert t\rvert^\alpha\operatorname{sgn}(t)$ (impar) | $\dfrac{-2ik\cos(\alpha\pi/2)\,\Gamma(\alpha+1)\,\operatorname{sgn}(\omega)}{\lvert\omega\rvert^{\alpha+1}}$ | $\alpha>-1$ |
+| 32e | $e^{-\pi(\alpha+i\beta)^2 t^2}$ (gaussiana compleja generalizada) | $\dfrac{e^{-\omega^2/(4\pi(\alpha+i\beta)^2)}}{\alpha+i\beta}$ | $\alpha\geq\lvert\beta\rvert$, $\alpha+i\beta\neq0$; generaliza #31 a exponente cuadrático complejo, par auto-dual (misma forma en IFT) |
 
 ---
 
@@ -599,6 +600,7 @@ Pares adicionales expresados desde el dominio de frecuencia, útiles al aplicar 
 | 63  | $\dfrac{k}{(a+i\omega)^{p}}$ (exponente real/no entero)              | $\dfrac{k\,t^{p-1}}{\Gamma(p)}\,e^{-at}u(t)$                                            | $a>0,\;p>-1$; generaliza #42 vía la función Gamma                                     |
 | 64  | $\left(\dfrac{\alpha}{a+i\omega}\right)^{\nu}$                       | $\dfrac{\alpha^{\nu}\,t^{\nu-1}\,e^{-\alpha t}\,u(t)}{\Gamma(\nu)}$                     | $\alpha>0,\;\nu>0$; par IFT de la densidad Erlang/Gamma (#24c)                        |
 | 65  | $\Gamma\!\left(1+\dfrac{i\omega}{b}\right)$                          | $e^{-bt}\,e^{-c\,e^{-bt}}$                                                              | $b,c>0$ (caso base $b=c=1$: $\Gamma(1+i\omega)\to e^{-t}e^{-e^{-t}}$); par IFT del Gumbel (#32b) vía reflexión $b\to-b$ |
+| 66  | $\dfrac{e^{-\omega^2/(4\pi A)}}{}$, $A=(\alpha+i\beta)^2$            | $\sqrt{A}\,e^{-\pi A t^2}$                                                              | $\alpha\geq\lvert\beta\rvert$, $\alpha+i\beta\neq0$; par IFT de la gaussiana compleja generalizada (#32e), auto-dual |
 
 ---
 
