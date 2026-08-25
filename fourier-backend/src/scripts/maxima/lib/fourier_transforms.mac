@@ -889,13 +889,21 @@ FT_raw(f_expr, t_var, w_var, a, b) := block(
        the positive branch. Otherwise keep the positive-branch result
        (still safer than re-running integrate() with no assumption, which
        is exactly what produces the interactive prompt). */
+    /* radexpand:true locally: integrate() with a fractional power (sqrt(t),
+       t^(1/3), ...) in the integrand combined with radexpand:false and an
+       active sign assumption on w_var/t_var is known to exhaust the SBCL
+       control stack inside Maxima's integrator (a Maxima-internal crash,
+       reproduced with a bare integrate() call, nothing to do with the
+       matchers above). radexpand only affects how nthroots display/simplify,
+       not correctness of the assumption-based branch split, so it's safe to
+       relax locally for this call and restore it via the block scope. */
     _ctx: supcontext(),
     assume(w_var > 0),
-    _raw_pos: errcatch(integrate(kernel, t_var, a, b)),
+    _raw_pos: block([radexpand: true], errcatch(integrate(kernel, t_var, a, b))),
     killcontext(_ctx),
     _ctx: supcontext(),
     assume(w_var < 0),
-    _raw_neg: errcatch(integrate(kernel, t_var, a, b)),
+    _raw_neg: block([radexpand: true], errcatch(integrate(kernel, t_var, a, b))),
     killcontext(_ctx),
     raw : if _raw_pos = [] then _raw_neg
           else if _raw_neg = [] then _raw_pos
@@ -1116,13 +1124,15 @@ IFT_raw(F_expr, w_var, t_var, a, b) := block(
        integrate() ask an interactive question that errcatch() can't
        catch. Try both signs in isolated contexts and reconstruct with
        abs(t_var) when the branches are mirror images of each other. */
+    /* radexpand:true locally: see FT_raw for why (fractional-power integrand
+       + radexpand:false + a sign assumption can crash Maxima's integrator). */
     _ctx: supcontext(),
     assume(t_var > 0),
-    _raw_pos: errcatch(integrate(kernel, w_var, a, b)),
+    _raw_pos: block([radexpand: true], errcatch(integrate(kernel, w_var, a, b))),
     killcontext(_ctx),
     _ctx: supcontext(),
     assume(t_var < 0),
-    _raw_neg: errcatch(integrate(kernel, w_var, a, b)),
+    _raw_neg: block([radexpand: true], errcatch(integrate(kernel, w_var, a, b))),
     killcontext(_ctx),
     raw : if _raw_pos = [] then _raw_neg
           else if _raw_neg = [] then _raw_pos
@@ -2443,6 +2453,13 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 else if not atom(_s) and is(op(_s) = "^")
                      and is(part(_s, 1) = t_var)
                 then _t_pow: _s
+                /* Maxima represents t^(1/2) with op='sqrt (a distinct node
+                   with a single argument, not "^"), so p=1/2 needs its own
+                   case — flagged with the sentinel exponent 1/2 directly,
+                   since part(sqrt(t), 2) doesn't exist. */
+                else if not atom(_s) and is(op(_s) = 'sqrt)
+                     and is(part(_s, 1) = t_var)
+                then _t_pow: 'sqrt_sentinel
                 else if is(_s = t_var)
                 then _t_pow: _s
                 else _const_k: _const_k * _s
@@ -2451,7 +2468,9 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 _u_arg: part(_u_part, 1),
                 _exp_arg: part(_exp_part, 2),
                 _aa: ratsimp(_exp_arg / (-t_var)),
-                _pp: if is(_t_pow = t_var) then 1 else part(_t_pow, 2),
+                _pp: if is(_t_pow = t_var) then 1
+                     elseif is(_t_pow = 'sqrt_sentinel) then 1/2
+                     else part(_t_pow, 2),
                 if ratsimp(t_var - _u_arg) = 0 and freeof(t_var, _aa) and is(_aa > 0)
                    and freeof(t_var, _pp) and not integerp(_pp) then
                     res: [_const_k * gamma(_pp + 1) / (%i*w_var + _aa)^(_pp + 1),
@@ -4433,18 +4452,34 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
        (alpha/(a+iw))^nu -> alpha^nu*t^(nu-1)*e^{-a*t}*u(t)/Gamma(nu). ── */
     if is(res = false) then (
         if not atom(e) and is(op(e) = "/") then block(
-            [_gp_num, _gp_den, _gp_base, _gp_pp, _gp_aa],
+            [_gp_num, _gp_den, _gp_base, _gp_pp, _gp_aa, _gp_pow, _gp_extra],
             _gp_num: part(e, 1),
             _gp_den: part(e, 2),
-            if freeof(w_var, _gp_num) and not atom(_gp_den) and is(op(_gp_den) = "^") then (
-                _gp_base: part(_gp_den, 1),
-                _gp_pp: part(_gp_den, 2),
-                if freeof(w_var, _gp_pp) and not integerp(_gp_pp) and is(_gp_pp > 0) then (
+            /* Denominator may be a bare (base)^p, or a constant times it —
+               e.g. gamma(3/2) simplifies to sqrt(%pi)/2, and expand() folds
+               that /2 into the denominator alongside (iw+a)^(3/2), giving
+               op="*" instead of the bare op="^" this used to require. */
+            _gp_pow: false, _gp_extra: 1,
+            if not atom(_gp_den) and is(op(_gp_den) = "^") then
+                _gp_pow: _gp_den
+            else if not atom(_gp_den) and is(op(_gp_den) = "*") then (
+                for _s in args(_gp_den) do (
+                    if not atom(_s) and is(op(_s) = "^") and not freeof(w_var, _s)
+                    then _gp_pow: _s
+                    else _gp_extra: _gp_extra * _s
+                )
+            ),
+            if freeof(w_var, _gp_num) and is(_gp_pow # false) then (
+                _gp_base: part(_gp_pow, 1),
+                _gp_pp: part(_gp_pow, 2),
+                if freeof(w_var, _gp_pp) and not integerp(_gp_pp) and is(_gp_pp > 0)
+                   and freeof(w_var, _gp_extra) then (
                     _gp_aa: errcatch(ratsimp(subst(w_var=0, _gp_base))),
                     if _gp_aa # [] and freeof(w_var, first(_gp_aa)) and is(first(_gp_aa) > 0)
                        and ratsimp(diff(_gp_base, w_var) - %i) = 0 then (
                         _gp_aa: first(_gp_aa),
-                        res: [_gp_num * t_var^(_gp_pp-1) / gamma(_gp_pp) * exp(-_gp_aa*t_var) * u(t_var),
+                        res: [_gp_num / _gp_extra * t_var^(_gp_pp-1) / gamma(_gp_pp)
+                                   * exp(-_gp_aa*t_var) * u(t_var),
                               concat("k/(a+iw)^p -> k*t^(p-1)/Gamma(p)*e^{-at}*u(t), p=",
                                      string(_gp_pp), ", a=", string(_gp_aa))]
                     )
