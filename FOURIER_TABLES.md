@@ -500,6 +500,8 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 10  | $u(t)$                                    | $\pi\,\delta(\omega)+\dfrac{1}{i\omega}$                                                                                          |                                               |
 | 11  | $u(t-t_0)$                                | $\left(\pi\,\delta(\omega)+\dfrac{1}{i\omega}\right)e^{-i\omega t_0}$                                                             |                                               |
 | 12  | $k\,u(t-t_0)$                             | $k\left(\pi\,\delta(\omega)+\dfrac{e^{-i\omega t_0}}{i\omega}\right)$                                                             |                                               |
+| 12b | $u(-t)$                                   | $\pi\,\delta(\omega)+\dfrac{i}{\omega}$                                                                                           | reflexión temporal de #10                    |
+| 12c | $k\,u(t_0-t)$                             | $k\left(\pi\,\delta(\omega)-\dfrac{e^{-i\omega t_0}}{i\omega}\right)$                                                             | reflexión temporal de #12; $u(t_0-t)=u(-(t-t_0))$ |
 | 13  | $\operatorname{sgn}(t)$                   | $\dfrac{2}{i\omega}$                                                                                                              |                                               |
 | 13b | $k\,\operatorname{sgn}(t-t_0)$            | $\dfrac{2k\,e^{-i\omega t_0}}{i\omega}$                                                                                           | $k$ cte., $t_0\neq0$                          |
 | 14  | $\dfrac{\sin(at)}{\pi t}$                 | $u(\omega+a)-u(\omega-a)$                                                                                                         | rect en frecuencia                            |
@@ -530,6 +532,8 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 22  | $k\,e^{-at}\sin(bt)\,u(t)$ | $\dfrac{k\,b}{(i\omega + a)^2 + b^2}$                                                                                    | $a, b > 0$            |
 | 23  | $\sin(\omega_0 t)\,u(t)$   | $\dfrac{\omega_0}{\omega_0^2 - \omega^2} + \dfrac{\pi}{2i}\bigl[\delta(\omega-\omega_0) - \delta(\omega+\omega_0)\bigr]$ | $\omega_0 > 0$        |
 | 24  | $\cos(\omega_0 t)\,u(t)$   | $\dfrac{i\omega}{\omega_0^2 - \omega^2} + \dfrac{\pi}{2}\bigl[\delta(\omega-\omega_0) + \delta(\omega+\omega_0)\bigr]$   | $\omega_0 > 0$        |
+| 24b | $k\,t^{p}\,e^{-at}u(t)$ (potencia real/no entera) | $\dfrac{k\,\Gamma(p+1)}{(i\omega+a)^{p+1}}$ | $a>0,\;p>-1$; generaliza #17–19 a $p$ no entero vía la función Gamma |
+| 24c | $\dfrac{\alpha^{\nu}\,t^{\nu-1}\,e^{-\alpha t}\,u(t)}{\Gamma(\nu)}$ (densidad Erlang/Gamma) | $\left(\dfrac{\alpha}{i\omega+\alpha}\right)^{\nu}$ | $\alpha>0,\;\nu>0$; caso normalizado de #24b con $p=\nu-1,\;k=\alpha^\nu/\Gamma(\nu)$ |
 
 ---
 
@@ -547,6 +551,7 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 30  | $\dfrac{\sin(bt)}{a^2 + t^2}$               | $\dfrac{\pi}{2ai}\bigl[e^{-a\lvert\omega - b\rvert} - e^{-a\lvert\omega + b\rvert}\bigr]$ | $a, b > 0$                                                                          |
 | 31  | $e^{-t^2/(2\sigma^2)}$ (gaussiana)          | $\sigma\sqrt{2\pi}\,e^{-\sigma^2\omega^2/2}$                                              | $\sigma > 0$                                                                        |
 | 32  | $e^{i\omega_0 t}\,g(t)$                     | $G(\omega - \omega_0)$                                                                    | desplazamiento en $\omega$                                                          |
+| 32b | $e^{bt}\,e^{-c\,e^{bt}}$ (Gumbel / doble-exponencial) | $\dfrac{c^{\,i\omega/b}}{bc}\,\Gamma\!\left(1-\dfrac{i\omega}{b}\right)$        | $b,c>0$; definida en todo $\mathbb{R}$ (no causal); sustitución $u=c\,e^{bt}$ reduce la integral a la de Euler para $\Gamma$; caso base $b=c=1$: $e^{t}e^{-e^{t}}\to\Gamma(1-i\omega)$ |
 
 ---
 
@@ -585,6 +590,11 @@ Pares adicionales expresados desde el dominio de frecuencia, útiles al aplicar 
 | 58  | $\sin(b\,\omega)$                                                    | $\dfrac{i}{2}\bigl[\delta(t-b) - \delta(t+b)\bigr]$                                    | $b \in \mathbb{R}$                                                                    |
 | 59  | $A\,\cos(b\,\omega + \theta)$                                        | $\dfrac{A}{2}\bigl[e^{i\theta}\,\delta(t+b) + e^{-i\theta}\,\delta(t-b)\bigr]$         | $A, b, \theta \in \mathbb{R}$; generaliza #57                                         |
 | 60  | $A\,\sin(b\,\omega + \theta)$                                        | $\dfrac{A}{2i}\bigl[e^{i\theta}\,\delta(t+b) - e^{-i\theta}\,\delta(t-b)\bigr]$        | $A, b, \theta \in \mathbb{R}$; generaliza #58                                         |
+| 61  | $\pi\,\delta(\omega) + \dfrac{i}{\omega}$                            | $u(-t)$                                                                                 | reflexión temporal de #39                                                             |
+| 62  | $k\left(\pi\,\delta(\omega) - \dfrac{e^{-i\omega t_0}}{i\omega}\right)$ | $k\,u(t_0-t)$                                                                        | reflexión temporal de #12                                                             |
+| 63  | $\dfrac{k}{(a+i\omega)^{p}}$ (exponente real/no entero)              | $\dfrac{k\,t^{p-1}}{\Gamma(p)}\,e^{-at}u(t)$                                            | $a>0,\;p>-1$; generaliza #42 vía la función Gamma                                     |
+| 64  | $\left(\dfrac{\alpha}{a+i\omega}\right)^{\nu}$                       | $\dfrac{\alpha^{\nu}\,t^{\nu-1}\,e^{-\alpha t}\,u(t)}{\Gamma(\nu)}$                     | $\alpha>0,\;\nu>0$; par IFT de la densidad Erlang/Gamma (#24c)                        |
+| 65  | $\Gamma\!\left(1+\dfrac{i\omega}{b}\right)$                          | $e^{-bt}\,e^{-c\,e^{-bt}}$                                                              | $b,c>0$ (caso base $b=c=1$: $\Gamma(1+i\omega)\to e^{-t}e^{-e^{-t}}$); par IFT del Gumbel (#32b) vía reflexión $b\to-b$ |
 
 ---
 
