@@ -864,7 +864,7 @@ FT_subst_sgn_per_piece(pieces, intvar) := block(
 )$
 
 FT_raw(f_expr, t_var, w_var, a, b) := block(
-    [kernel, raw, cleaned],
+    [kernel, raw, cleaned, _ctx, _raw_pos, _raw_neg],
     /* Garantizar contexto antes de integrate */
     if not featurep(w_var, real) then declare(w_var, real),
     for sym in listofvars(f_expr) do (
@@ -876,7 +876,41 @@ FT_raw(f_expr, t_var, w_var, a, b) := block(
         )
     ),
     kernel : f_expr * exp(-%i * w_var * t_var),
-    raw    : errcatch(integrate(kernel, t_var, a, b)),
+    /* integrate() may ask an interactive "is w positive, negative or zero?"
+       question when w_var's sign is undetermined — errcatch() does NOT
+       protect against that prompt (it only catches thrown errors), so it
+       must never run without an assumption in place. Try both signs in
+       isolated contexts (supcontext/killcontext so the assumption doesn't
+       leak into later calls). If both branches agree, w_var's sign never
+       mattered. If the negative branch is the w_var -> -w_var mirror of
+       the positive one (the common case: an even/odd dependence on w_var
+       that integrate() can only resolve once a sign is fixed), reconstruct
+       the two-sided closed form by substituting w_var -> abs(w_var) into
+       the positive branch. Otherwise keep the positive-branch result
+       (still safer than re-running integrate() with no assumption, which
+       is exactly what produces the interactive prompt). */
+    /* radexpand:true locally: integrate() with a fractional power (sqrt(t),
+       t^(1/3), ...) in the integrand combined with radexpand:false and an
+       active sign assumption on w_var/t_var is known to exhaust the SBCL
+       control stack inside Maxima's integrator (a Maxima-internal crash,
+       reproduced with a bare integrate() call, nothing to do with the
+       matchers above). radexpand only affects how nthroots display/simplify,
+       not correctness of the assumption-based branch split, so it's safe to
+       relax locally for this call and restore it via the block scope. */
+    _ctx: supcontext(),
+    assume(w_var > 0),
+    _raw_pos: block([radexpand: true], errcatch(integrate(kernel, t_var, a, b))),
+    killcontext(_ctx),
+    _ctx: supcontext(),
+    assume(w_var < 0),
+    _raw_neg: block([radexpand: true], errcatch(integrate(kernel, t_var, a, b))),
+    killcontext(_ctx),
+    raw : if _raw_pos = [] then _raw_neg
+          else if _raw_neg = [] then _raw_pos
+          else if is(first(_raw_pos) = first(_raw_neg)) then _raw_pos
+          else if is(ratsimp(subst(w_var = -w_var, first(_raw_pos)) - first(_raw_neg)) = 0)
+          then [subst(w_var = abs(w_var), first(_raw_pos))]
+          else _raw_pos,
     if raw = [] then raw: 'failed
     else (
         raw : first(raw),
@@ -1074,7 +1108,7 @@ IFT_expand_abs(trozo, w_var) := block(
 )$
 
 IFT_raw(F_expr, w_var, t_var, a, b) := block(
-    [kernel, raw, cleaned],
+    [kernel, raw, cleaned, _ctx, _raw_pos, _raw_neg],
     /* Garantizar contexto antes de integrate */
     if not featurep(t_var, real) then declare(t_var, real),
     for sym in listofvars(F_expr) do (
@@ -1086,7 +1120,26 @@ IFT_raw(F_expr, w_var, t_var, a, b) := block(
         )
     ),
     kernel : (1/(2*%pi)) * F_expr * exp(%i * w_var * t_var),
-    raw    : errcatch(integrate(kernel, w_var, a, b)),
+    /* Same rationale as FT_raw: t_var's undetermined sign can make
+       integrate() ask an interactive question that errcatch() can't
+       catch. Try both signs in isolated contexts and reconstruct with
+       abs(t_var) when the branches are mirror images of each other. */
+    /* radexpand:true locally: see FT_raw for why (fractional-power integrand
+       + radexpand:false + a sign assumption can crash Maxima's integrator). */
+    _ctx: supcontext(),
+    assume(t_var > 0),
+    _raw_pos: block([radexpand: true], errcatch(integrate(kernel, w_var, a, b))),
+    killcontext(_ctx),
+    _ctx: supcontext(),
+    assume(t_var < 0),
+    _raw_neg: block([radexpand: true], errcatch(integrate(kernel, w_var, a, b))),
+    killcontext(_ctx),
+    raw : if _raw_pos = [] then _raw_neg
+          else if _raw_neg = [] then _raw_pos
+          else if is(first(_raw_pos) = first(_raw_neg)) then _raw_pos
+          else if is(ratsimp(subst(t_var = -t_var, first(_raw_pos)) - first(_raw_neg)) = 0)
+          then [subst(t_var = abs(t_var), first(_raw_pos))]
+          else _raw_pos,
     if raw = [] then raw: 'failed
     else (
         raw : first(raw),
@@ -1361,6 +1414,50 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── Gumbel / double-exponential: e^{bt-c*e^{bt}} -> c^{iw/b}/(bc) * Gamma(1-iw/b)
+       (b,c > 0). Maxima pre-simplifies k*exp(b*t)*exp(-c*exp(b*t)) into a
+       single exp() node whose exponent is the sum b*t + (-c*e^{bt}), so this
+       must match the "^" node structurally rather than looking for a "*" of
+       two exp() factors. Substitution u=c*e^{bt} in the FT integral reduces
+       it to the Euler integral for Gamma; verified numerically before
+       implementing (the engineering e^{-iwt} kernel gives Gamma(1-iw/b), the
+       sign flips relative to sources using the e^{+2*pi*i*s*t} convention). ── */
+    if is(res = false) then block(
+        [_gb_terms, _gb_lin, _gb_exp_term, _gb_b, _gb_c],
+        if not atom(e) and is(op(e) = "^") and is(part(e,1) = %e) then (
+            arg: part(e, 2),
+            _gb_terms: if not atom(arg) and is(op(arg) = "+") then args(arg) else [arg],
+            _gb_lin: false, _gb_exp_term: false,
+            /* Classify each additive term of the exponent: if dividing it by
+               t_var still leaves t_var in the result, the term is nonlinear
+               in t_var (it must be the -c*e^{b*t} piece, the only nonlinear
+               shape this exponent can take here); otherwise it's the b*t
+               linear piece. */
+            for _t in _gb_terms do (
+                if not freeof(t_var, ratsimp(_t / t_var))
+                then _gb_exp_term: _t
+                else _gb_lin: if _gb_lin = false then _t else _gb_lin + _t
+            ),
+            if is(_gb_lin # false) and is(_gb_exp_term # false)
+               and freeof(t_var, ratsimp(_gb_lin / t_var)) then (
+                _gb_b: ratsimp(_gb_lin / t_var),
+                if is(_gb_b > 0) then (
+                    /* _gb_exp_term should be -c*e^{b*t}; extract c (negative
+                       sign expected, so c comes out positive) */
+                    _gb_c: errcatch(ratsimp(-_gb_exp_term / exp(_gb_b * t_var))),
+                    if _gb_c # [] then (
+                        _gb_c: first(_gb_c),
+                        if freeof(t_var, _gb_c) and is(_gb_c > 0) then
+                            res: [_gb_c^(%i*w_var/_gb_b) / (_gb_b*_gb_c)
+                                       * gamma(1 - %i*w_var/_gb_b),
+                                  concat("e^{bt-c*e^{bt}} -> c^{iw/b}/(bc)*Gamma(1-iw/b), b=",
+                                         string(_gb_b), ", c=", string(_gb_c))]
+                    )
+                )
+            )
+        )
+    ),
+
     /* ── cos(w0t + theta) — incluye k*cos(w0t+theta) y -cos(...) ──
        Cuando Maxima pre-simplifica cos(t-pi) -> -cos(t) o similares,
        el op es "-" (negación) o "*" con escalar constante (freeof t_var).
@@ -1527,6 +1624,162 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── ABSPOW: k*|t|^alpha -> -2k*sin(alpha*pi/2)*Gamma(alpha+1)/|w|^(alpha+1)
+       (bilateral, even function — alpha > -1, alpha not a nonneg even integer
+       where |t|^alpha degenerates to the plain polynomial t^alpha, which other
+       matchers already handle correctly without needing this formula).
+       Verified numerically (causal pair + time-reversal derivation, matches
+       independent closed-form cross-check) before implementing.
+       Structural cases for the |t|^alpha factor: bare abs(t)^p (op="^"), or
+       1/abs(t)^p in a "/" node, or the p=-1/2 special case where Maxima
+       rewrites abs(t)^(-1/2) as 1/sqrt(abs(t)) (denominator op='sqrt). ── */
+    if is(res = false) then block(
+        [_ap_k, _ap_p, _ap_facs, _ap_f, _ap_bad, _ap_num, _ap_den, _ap_a],
+        _ap_k: 1, _ap_p: false, _ap_bad: false,
+        /* Returns exponent p such that f = abs(t_var)^p, or false. */
+        _ap_get_exp: lambda([_f],
+            if not atom(_f) and is(op(_f) = "^") and is(part(_f,1) = abs(t_var))
+            then part(_f,2)
+            elseif not atom(_f) and is(op(_f) = 'sqrt) and is(part(_f,1) = abs(t_var))
+            then 1/2
+            else false
+        ),
+        if not atom(e) and is(op(e) = "*") then _ap_facs: args(e)
+        else if not atom(e) and is(op(e) = "/") then block([],
+            _ap_num: part(e,1),
+            _ap_den: part(e,2),
+            _ap_p: _ap_get_exp(_ap_den),
+            if is(_ap_p # false) then (
+                _ap_p: -_ap_p,
+                _ap_facs: if not atom(_ap_num) and is(op(_ap_num) = "*")
+                          then args(_ap_num) else [_ap_num]
+            ) else _ap_bad: true
+        )
+        else _ap_facs: [e],
+        if not _ap_bad then
+            for _ap_f in _ap_facs do (
+                _ap_a: _ap_get_exp(_ap_f),
+                if is(_ap_a # false) then
+                    _ap_p: if _ap_p = false then _ap_a else _ap_p + _ap_a
+                else if freeof(t_var, _ap_f) then
+                    _ap_k: _ap_k * _ap_f
+                else
+                    _ap_bad: true
+            ),
+        if not _ap_bad and is(_ap_p # false) and freeof(t_var, _ap_k)
+           and is(_ap_p > -1) then
+            res: [-2 * _ap_k * sin(%pi*_ap_p/2) * gamma(_ap_p+1) / abs(w_var)^(_ap_p+1),
+                  concat("k*|t|^alpha -> -2k*sin(alpha*pi/2)*Gamma(alpha+1)/|w|^(alpha+1), alpha=",
+                         string(_ap_p))]
+    ),
+
+    /* ── ABSPOW·sgn: k*|t|^alpha*sgn(t) -> -2ik*cos(alpha*pi/2)*Gamma(alpha+1)*sgn(w)/|w|^(alpha+1)
+       (bilateral, odd function — same alpha domain and verification approach as ABSPOW above).
+       Same structural detection as ABSPOW, but requires an extra sgn(t_var) factor. ── */
+    if is(res = false) then block(
+        [_as_k, _as_p, _as_facs, _as_f, _as_bad, _as_num, _as_den, _as_a, _as_sgn],
+        _as_k: 1, _as_p: false, _as_bad: false, _as_sgn: false,
+        _as_get_exp: lambda([_f],
+            if not atom(_f) and is(op(_f) = "^") and is(part(_f,1) = abs(t_var))
+            then part(_f,2)
+            elseif not atom(_f) and is(op(_f) = 'sqrt) and is(part(_f,1) = abs(t_var))
+            then 1/2
+            else false
+        ),
+        if not atom(e) and is(op(e) = "*") then _as_facs: args(e)
+        else if not atom(e) and is(op(e) = "/") then block([],
+            _as_num: part(e,1),
+            _as_den: part(e,2),
+            _as_p: _as_get_exp(_as_den),
+            if is(_as_p # false) then (
+                _as_p: -_as_p,
+                _as_facs: if not atom(_as_num) and is(op(_as_num) = "*")
+                          then args(_as_num) else [_as_num]
+            ) else _as_bad: true
+        )
+        else _as_bad: true,
+        if not _as_bad then
+            for _as_f in _as_facs do (
+                _as_a: _as_get_exp(_as_f),
+                if is(_as_a # false) then
+                    _as_p: if _as_p = false then _as_a else _as_p + _as_a
+                else if not atom(_as_f) and is(op(_as_f) = 'sgn)
+                     and ratsimp(part(_as_f,1) - t_var) = 0 then
+                    _as_sgn: true
+                else if freeof(t_var, _as_f) then
+                    _as_k: _as_k * _as_f
+                else
+                    _as_bad: true
+            ),
+        if not _as_bad and is(_as_sgn = true) and is(_as_p # false)
+           and freeof(t_var, _as_k) and is(_as_p > -1) then
+            res: [-2 * %i * _as_k * cos(%pi*_as_p/2) * gamma(_as_p+1) * sgn(w_var)
+                     / abs(w_var)^(_as_p+1),
+                  concat("k*|t|^alpha*sgn(t) -> -2ik*cos(alpha*pi/2)*Gamma(alpha+1)*sgn(w)/|w|^(alpha+1), alpha=",
+                         string(_as_p))]
+    ),
+
+    /* ── SININT: k*Si(a*t) -> k*pi*sgn(a)/(i*w) * [u(w+a)-u(w-a)]  (a real, a≠0)
+       Derived via the time-differentiation property: d/dt Si(a*t) = a*sinc(a*t)
+       (our sinc(x)=sin(x)/x), and FT[sinc(a*t)] = (pi/|a|)*rect(w/(2a)) is already
+       an existing pair (Section 11). So FT[a*sinc(a*t)] = pi*sgn(a)*rect(w/(2a)),
+       and FT[f'(t)]=iw*F(w) gives F(w) = pi*sgn(a)*rect(w/(2a))/(iw). rect is
+       expressed here as u(w+a)-u(w-a) directly (equivalent, avoids depending on
+       the rect() helper's own argument convention). Si doesn't decay (Si(±∞)=±π/2)
+       but this still holds pointwise for w≠0, verified by splitting Si(t) into
+       (pi/2)*sgn(t) [whose own FT is the plain 2/(iw) term, no extra delta] plus a
+       decaying remainder whose FT vanishes inside the passband — checked numerically
+       via truncated quadrature before implementing. ── */
+    if is(res = false) then block(
+        [_si_k, _si_a, _si_arg],
+        _si_k: 1, _si_a: false,
+        if not atom(e) and is(op(e) = 'expintegral_si) then (
+            _si_arg: part(e, 1),
+            _si_a: ratsimp(_si_arg / t_var)
+        )
+        else if not atom(e) and is(op(e) = "*") then (
+            for _s in args(e) do (
+                if not atom(_s) and is(op(_s) = 'expintegral_si) then (
+                    _si_arg: part(_s, 1),
+                    _si_a: ratsimp(_si_arg / t_var)
+                ) else _si_k: _si_k * _s
+            )
+        ),
+        if is(_si_a # false) and freeof(t_var, _si_a) and is(_si_a # 0)
+           and freeof(t_var, _si_k) then
+            res: [_si_k * %piexact * signum(_si_a) / (%i*w_var)
+                       * (u(w_var + _si_a) - u(w_var - _si_a)),
+                  concat("k*Si(a*t) -> k*pi*sgn(a)/(iw)*[u(w+a)-u(w-a)], a=", string(_si_a))]
+    ),
+
+    /* ── SGNSINC: k*sgn(t)*sinc(a*t) -> -i*k/a * ln|(w+a)/(w-a)|  (a>0)
+       Derived via frequency-domain convolution: FT[sgn(t)*sinc(a*t)] =
+       (1/(2*pi)) * (FT[sgn(t)] * FT[sinc(a*t)]), i.e. 2/(i*u) convolved with
+       (pi/a)*rect(u/(2a)) evaluated at w. The rect confines the convolution to a
+       principal-value integral of 1/u over (w-a, w+a), which has the closed form
+       ln|(w+a)/(w-a)| (verified both by direct PV computation and by cross-checking
+       the resulting closed form numerically against the convolution derivation). ── */
+    if is(res = false) then block(
+        [_ss_k, _ss_a, _ss_sinc, _ss_sgn, _ss_arg],
+        _ss_k: 1, _ss_a: false, _ss_sinc: false, _ss_sgn: false,
+        if not atom(e) and is(op(e) = "*") then (
+            for _s in args(e) do (
+                if not atom(_s) and is(op(_s) = 'sinc) then (
+                    _ss_arg: part(_s, 1),
+                    _ss_a: ratsimp(_ss_arg / t_var),
+                    _ss_sinc: true
+                ) else if not atom(_s) and is(op(_s) = 'sgn)
+                     and ratsimp(part(_s,1) - t_var) = 0 then
+                    _ss_sgn: true
+                else _ss_k: _ss_k * _s
+            )
+        ),
+        if is(_ss_sinc = true) and is(_ss_sgn = true) and is(_ss_a # false)
+           and freeof(t_var, _ss_a) and is(_ss_a > 0) and freeof(t_var, _ss_k) then
+            res: [-%i * _ss_k / _ss_a * log(abs((w_var + _ss_a)/(w_var - _ss_a))),
+                  concat("k*sgn(t)*sinc(a*t) -> -i*k/a*ln|(w+a)/(w-a)|, a=", string(_ss_a))]
+    ),
+
     /* ── u(t) con coeficiente constante ── */
     if is(res = false) then (
         um: FT_match_u(e, t_var),
@@ -1562,6 +1815,42 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 if freeof(t_var, t0) and not equal(t0, 0) then
                     res: [coef_k * (%piexact*delta(w_var) + exp(-%i*w_var*t0)/(%i*w_var)),
                         concat("k*u(t-t0) -> k*(pi*delta(w)+1/(iw))*exp(-i*w*t0), t0=",
+                                string(t0))]
+            )
+        )
+    ),
+
+    /* ── k*u(t0-t) -> k*(pi*delta(w) - exp(-i*w*t0)/(iw))  (time-reversed step)
+       u(t0-t) = u(-(t-t0)) is the time-reversal of u(t-t0), not a shift of u(t):
+       FT_match_u only accepts positive slope, so k*u(-t), k*u(b-t) fall through
+       to here. Detects u(arg) with arg linear in t_var and negative slope. ── */
+    if is(res = false) then block(
+        [u_part, coef_k, u_arg, t0, slope],
+        u_part: false,
+        coef_k: 1,
+        /* detecta u(t0-t) directo */
+        if not atom(e) and is(op(e) = 'u) then (
+            u_arg: part(e, 1),
+            slope: ratsimp(diff(u_arg, t_var)),
+            t0: ratsimp(subst(t_var=0, u_arg) / (-slope)),
+            if freeof(t_var, slope) and is(slope < 0) and freeof(t_var, t0) then
+                res: [%piexact*delta(w_var) - exp(-%i*w_var*t0)/(%i*w_var),
+                    concat("u(t0-t) -> pi*delta(w) - exp(-i*w*t0)/(iw), t0=", string(t0))]
+        ),
+        /* detecta k*u(t0-t) — k DEBE ser constante en t */
+        if is(res = false) and not atom(e) and is(op(e) = "*") then (
+            for s in args(e) do (
+                if not atom(s) and is(op(s) = 'u)
+                then u_part: s
+                else coef_k: coef_k * s
+            ),
+            if is(u_part # false) and freeof(t_var, coef_k) then (
+                u_arg: part(u_part, 1),
+                slope: ratsimp(diff(u_arg, t_var)),
+                t0: ratsimp(subst(t_var=0, u_arg) / (-slope)),
+                if freeof(t_var, slope) and is(slope < 0) and freeof(t_var, t0) then
+                    res: [coef_k * (%piexact*delta(w_var) - exp(-%i*w_var*t0)/(%i*w_var)),
+                        concat("k*u(t0-t) -> k*(pi*delta(w)-exp(-i*w*t0)/(iw)), t0=",
                                 string(t0))]
             )
         )
@@ -2012,6 +2301,60 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── CHIRPGAUSS: k*exp(-pi*(alpha+i*beta)^2*t^2) -> k/(alpha+i*beta) * exp(-w^2/(4*pi*(alpha+i*beta)^2))
+       Complex-parameter generalization of the plain gaussian pair below: same
+       formula sqrt(pi/A)*e^{-w^2/(4A)} with A = pi*(alpha+i*beta)^2, valid
+       whenever Re(A) > 0 (i.e. alpha >= |beta|, alpha+i*beta != 0), which is
+       exactly the book's convergence condition. Runs BEFORE the plain gaussian
+       matcher because that one requires the t^2 coefficient to be a real
+       negative constant (line ~2333's `is(first(_gg_cn) < 0)`), which rejects
+       this genuinely complex A — so this case would otherwise fall through
+       silently. Verified numerically (both FT and IFT direction) before
+       implementing. ── */
+    if is(res = false) then block(
+        [_cg_k, _cg_A, _cg_facs, _cg_f, _cg_exparg, _cg_cn, _cg_found, _cg_bad],
+        _cg_k: 1, _cg_A: false, _cg_found: false, _cg_bad: false,
+        _cg_facs: if not atom(e) and is(op(e) = "*") then args(e) else [e],
+        for _cg_f in _cg_facs do (
+            if not atom(_cg_f) and is(op(_cg_f) = "^") and is(part(_cg_f,1) = %e) then (
+                _cg_exparg: part(_cg_f, 2),
+                _cg_cn: errcatch(ratsimp(_cg_exparg / t_var^2)),
+                if _cg_cn # [] and freeof(t_var, first(_cg_cn))
+                   and ratsimp(_cg_exparg - first(_cg_cn)*t_var^2) = 0 then (
+                    _cg_A: -first(_cg_cn),
+                    _cg_found: true
+                ) else _cg_bad: true
+            ) else if freeof(t_var, _cg_f) then _cg_k: _cg_k * _cg_f
+            else _cg_bad: true
+        ),
+        /* Require A to genuinely involve %i (otherwise this is the plain real
+           gaussian, already handled correctly by the next block) and Re(A) > 0
+           for convergence. */
+        if _cg_found and not _cg_bad and freeof(t_var, _cg_k)
+           and not freeof(%i, _cg_A) then (
+            /* Divide by %pi before comparing: Maxima's `is()` can prove
+               alpha^2 > beta^2 from an assumption but often can't scale
+               that through an extra symbolic %pi factor on its own.
+               When multiple free params are involved (e.g. plain alpha,beta
+               with only alpha>0 and beta>0 declared, no cross-relation), `is()`
+               returns 'unknown' rather than true/false — accept the match in
+               that case too (under the pair's documented domain promise,
+               alpha>=|beta|) rather than falling through to FT_raw's generic
+               integrate() fallback, which has no assumption on alpha-beta and
+               hangs asking Maxima's interactive sign question. Only reject
+               outright when is() can actually DISPROVE convergence (false). */
+            block([_cg_reA: errcatch(ratsimp(realpart(_cg_A) / %pi)), _cg_test],
+                if _cg_reA # [] and freeof(t_var, first(_cg_reA)) then (
+                    _cg_test: is(first(_cg_reA) > 0),
+                    if not is(_cg_test = false) then
+                        res: [_cg_k * sqrt(%pi/_cg_A) * exp(-w_var^2/(4*_cg_A)),
+                              concat("k*exp(-pi*(alpha+i*beta)^2*t^2) -> k/(alpha+ib)*exp(-w^2/(4*pi*(alpha+ib)^2)), A=",
+                                     string(_cg_A))]
+                )
+            )
+        )
+    ),
+
     /* ── k*exp(-a*t^2)*trig(b*t+theta) — familia gaussiana ──────────────────
        FT[e^{-at²}] = √(π/a) · e^{-ω²/(4a)}                (par #G0)
        FT[e^{-at²}·cos(bt+θ)] = √(π/a)·e^{-(ω-b)²/(4a)/2 ...}
@@ -2293,6 +2636,56 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                         )
                     )
                 )
+            )
+        )
+    ),
+
+    /* ── k*t^p*exp(-at)*u(t) -> k*Gamma(p+1)/(iw+a)^{p+1}  (a>0, p>-1, p symbolic
+       or non-integer — the entire-n matcher above only fires for a literal
+       integer hipow(), so this covers the Gamma/Erlang-density family
+       t^(nu-1)*exp(-a*t)*u(t)/Gamma(nu) -> (a/(iw+a))^nu once k absorbs
+       alpha^nu/Gamma(nu). No time-shift variant: (t-t0)^p is not a monomial
+       for non-integer p, so there is no binomial expansion to fall back on. ── */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "*") then block(
+            [_u_part, _exp_part, _const_k, _t_pow, _u_arg, _exp_arg, _aa, _pp],
+            _u_part: false,
+            _exp_part: false,
+            _const_k: 1,
+            _t_pow: false,
+            for _s in args(e) do (
+                if not atom(_s) and is(op(_s) = 'u)
+                then _u_part: _s
+                else if not atom(_s) and is(op(_s) = "^")
+                     and is(part(_s, 1) = %e)
+                     and not freeof(t_var, _s)
+                then _exp_part: _s
+                else if not atom(_s) and is(op(_s) = "^")
+                     and is(part(_s, 1) = t_var)
+                then _t_pow: _s
+                /* Maxima represents t^(1/2) with op='sqrt (a distinct node
+                   with a single argument, not "^"), so p=1/2 needs its own
+                   case — flagged with the sentinel exponent 1/2 directly,
+                   since part(sqrt(t), 2) doesn't exist. */
+                else if not atom(_s) and is(op(_s) = 'sqrt)
+                     and is(part(_s, 1) = t_var)
+                then _t_pow: 'sqrt_sentinel
+                else if is(_s = t_var)
+                then _t_pow: _s
+                else _const_k: _const_k * _s
+            ),
+            if is(_u_part # false) and is(_exp_part # false) and is(_t_pow # false) then (
+                _u_arg: part(_u_part, 1),
+                _exp_arg: part(_exp_part, 2),
+                _aa: ratsimp(_exp_arg / (-t_var)),
+                _pp: if is(_t_pow = t_var) then 1
+                     elseif is(_t_pow = 'sqrt_sentinel) then 1/2
+                     else part(_t_pow, 2),
+                if ratsimp(t_var - _u_arg) = 0 and freeof(t_var, _aa) and is(_aa > 0)
+                   and freeof(t_var, _pp) and not integerp(_pp) then
+                    res: [_const_k * gamma(_pp + 1) / (%i*w_var + _aa)^(_pp + 1),
+                          concat("k*t^p*exp(-at)*u(t) -> k*Gamma(p+1)/(iw+a)^(p+1), p=",
+                                 string(_pp), " a=", string(_aa))]
             )
         )
     ),
@@ -4248,6 +4641,121 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                                                    * exp(-_np_aa*t_var) * u(t_var),
                                               concat("k/(iw+a)^n -> k*t^(n-1)/(n-1)!*e^{-at}*u(t), n=",
                                                      string(_np_n), ", a=", string(_np_aa))]
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── k/(a+iw)^p -> k*t^(p-1)/Gamma(p)*e^{-at}*u(t)  (a>0, p>-1, p symbolic/non-integer)
+       IFT counterpart of the FT_pattern_lookup k*t^p*exp(-at)*u(t) handler.
+       The n>=1-integer handler above needs an expandable polynomial
+       denominator (hipow/coeff), which doesn't work for a symbolic
+       exponent, so this matches the "^" node directly instead: denominator
+       must be (base)^p with base = i*w + a (coefficient of w_var is %i
+       exactly, constant term a real positive), and p not a literal
+       integer. Covers the Gamma/Erlang-density family in reverse:
+       (alpha/(a+iw))^nu -> alpha^nu*t^(nu-1)*e^{-a*t}*u(t)/Gamma(nu). ── */
+    if is(res = false) then (
+        if not atom(e) and is(op(e) = "/") then block(
+            [_gp_num, _gp_den, _gp_base, _gp_pp, _gp_aa, _gp_pow, _gp_extra],
+            _gp_num: part(e, 1),
+            _gp_den: part(e, 2),
+            /* Denominator may be a bare (base)^p, or a constant times it —
+               e.g. gamma(3/2) simplifies to sqrt(%pi)/2, and expand() folds
+               that /2 into the denominator alongside (iw+a)^(3/2), giving
+               op="*" instead of the bare op="^" this used to require. */
+            _gp_pow: false, _gp_extra: 1,
+            if not atom(_gp_den) and is(op(_gp_den) = "^") then
+                _gp_pow: _gp_den
+            else if not atom(_gp_den) and is(op(_gp_den) = "*") then (
+                for _s in args(_gp_den) do (
+                    if not atom(_s) and is(op(_s) = "^") and not freeof(w_var, _s)
+                    then _gp_pow: _s
+                    else _gp_extra: _gp_extra * _s
+                )
+            ),
+            if freeof(w_var, _gp_num) and is(_gp_pow # false) then (
+                _gp_base: part(_gp_pow, 1),
+                _gp_pp: part(_gp_pow, 2),
+                if freeof(w_var, _gp_pp) and not integerp(_gp_pp) and is(_gp_pp > 0)
+                   and freeof(w_var, _gp_extra) then (
+                    _gp_aa: errcatch(ratsimp(subst(w_var=0, _gp_base))),
+                    if _gp_aa # [] and freeof(w_var, first(_gp_aa)) and is(first(_gp_aa) > 0)
+                       and ratsimp(diff(_gp_base, w_var) - %i) = 0 then (
+                        _gp_aa: first(_gp_aa),
+                        res: [_gp_num / _gp_extra * t_var^(_gp_pp-1) / gamma(_gp_pp)
+                                   * exp(-_gp_aa*t_var) * u(t_var),
+                              concat("k/(a+iw)^p -> k*t^(p-1)/Gamma(p)*e^{-at}*u(t), p=",
+                                     string(_gp_pp), ", a=", string(_gp_aa))]
+                    )
+                )
+            )
+        )
+    ),
+
+    /* ── Gumbel / double-exponential, inverse: Gamma(1+iw/b) times an optional
+       constant/exponential prefactor -> e^{-bt}*e^{-c*e^{-bt}}  (b,c > 0)
+       IFT counterpart of the FT_pattern_lookup Gumbel handler; recovers the
+       time-reversed form since FT[e^{bt}e^{-ce^{bt}}](w) has Gamma(1-iw/b),
+       so Gamma(1+iw/b) inverts to the b -> -b reflection.
+       Detection: find a bare gamma(1+i*w/b) or gamma(1-i*w/b) factor, divide
+       it out to get the "rest" (should be c^(∓iw/b)/(b*c) — this may already
+       come pre-combined into a single power by Maxima's simplifier), probe
+       rest at w=b to solve for c algebraically, then verify the reconstructed
+       formula matches the original expression exactly before accepting. ── */
+    if is(res = false) then block(
+        [_gi_gam, _gi_arg, _gi_sign, _gi_b, _gi_rest, _gi_probe, _gi_c, _gi_check],
+        _gi_gam: false,
+        if not atom(e) and is(op(e) = 'gamma) then (_gi_gam: e)
+        else if not atom(e) and is(op(e) = "*") then (
+            for _s in args(e) do (
+                if not atom(_s) and is(op(_s) = 'gamma) then _gi_gam: _s
+            )
+        )
+        else if not atom(e) and is(op(e) = "/") then (
+            block([_num: part(e,1)],
+                if not atom(_num) and is(op(_num) = 'gamma) then (_gi_gam: _num)
+                else if not atom(_num) and is(op(_num) = "*") then (
+                    for _s in args(_num) do (
+                        if not atom(_s) and is(op(_s) = 'gamma) then _gi_gam: _s
+                    )
+                )
+            )
+        ),
+        if is(_gi_gam # false) then (
+            _gi_arg: part(_gi_gam, 1),
+            /* _gi_arg should be 1 + sign*i*w/b for sign = +1 or -1 */
+            block([_lin: ratsimp(_gi_arg - 1)],
+                if not freeof(w_var, _lin) and freeof(%i, ratsimp(_lin/(%i*w_var))) then (
+                    block([_coef: ratsimp(_lin / (%i * w_var))],
+                        /* _coef = sign/b; sign must be +1 (this handler only
+                           covers Gamma(1+iw/b) — the 1-iw/b case already has
+                           its own closed form via the direct FT handler and
+                           would need b<0 here to reuse this reflection) */
+                        if freeof(w_var, _coef) and is(_coef > 0) then (
+                            _gi_b: 1/_coef,
+                            _gi_rest: errcatch(ratsimp(e / _gi_gam)),
+                            if _gi_rest # [] then (
+                                _gi_rest: first(_gi_rest),
+                                _gi_probe: errcatch(ratsimp(subst(w_var = _gi_b, _gi_rest))),
+                                if _gi_probe # [] then (
+                                    _gi_probe: first(_gi_probe),
+                                    _gi_c: errcatch(ratsimp(rectform(
+                                        (_gi_b * _gi_probe)^(1/(-%i-1))))),
+                                    if _gi_c # [] and freeof(%i, first(_gi_c))
+                                       and is(first(_gi_c) > 0) then (
+                                        _gi_c: first(_gi_c),
+                                        _gi_check: errcatch(ratsimp(e -
+                                            _gi_c^(-%i*w_var/_gi_b) / (_gi_b*_gi_c) * _gi_gam)),
+                                        if _gi_check # [] and first(_gi_check) = 0 then
+                                            res: [exp(-_gi_b*t_var) * exp(-_gi_c*exp(-_gi_b*t_var)),
+                                                  concat("Gamma(1+iw/b) -> e^{-bt}e^{-c*e^{-bt}}, b=",
+                                                         string(_gi_b), ", c=", string(_gi_c))]
                                     )
                                 )
                             )
@@ -6235,6 +6743,74 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                     res: [_ig_result,
                           concat("IFT k*e^{-pw^2}*sin(bw)->gaussian*sinh, p=",
                                  string(_ig_p), ", b=", string(_ig_b))]
+                )
+            )
+        )
+    ),
+
+    /* ── CHIRPGAUSS inverse: k*exp(-w^2/(4*pi*(alpha+i*beta)^2)) -> k*(alpha+i*beta)*exp(-pi*(alpha+i*beta)^2*t^2)
+       IFT counterpart of the FT_pattern_lookup CHIRPGAUSS handler; the complex
+       gaussian pair is self-dual (same functional form both directions, only
+       the overall 1/(alpha+i*beta) prefactor moves to the other side), just
+       like the plain real gaussian is. Detection: denominator's t^2-analog
+       coefficient in the exponent is -1/(4*pi*A) for some complex A with
+       Re(A) > 0; same "divide by %pi before comparing" fix as the FT direction. ── */
+    if is(res = false) then block(
+        [_ci_k, _ci_A, _ci_facs, _ci_f, _ci_exparg, _ci_cn, _ci_found, _ci_bad, _ci_src],
+        _ci_k: 1, _ci_A: false, _ci_found: false, _ci_bad: false,
+        /* Use F_expr (unexpanded) rather than the shared `e` (already
+           expand()'d earlier in IFT_pattern_lookup): with symbolic alpha,beta
+           in the 1/(alpha+i*beta) prefactor, expand() merges that prefactor
+           into the exponential's denominator (turning 1/(a+ib)*exp(...) into
+           1/(i*beta*exp(...)+alpha*exp(...))), destroying the "*" structure
+           this matcher needs — expand() only does this when the prefactor's
+           denominator involves free variables, so the earlier numeric-alpha
+           test cases (which use `e`) never hit it. */
+        /* With symbolic alpha,beta, Maxima represents F_expr as a bare "/"
+           node (1/(alpha+i*beta)) / exp(...)^-1-ish, not a flat "*" product —
+           split numerator/denominator into the factor list explicitly. */
+        _ci_src: F_expr,
+        _ci_facs: if not atom(_ci_src) and is(op(_ci_src) = "*") then args(_ci_src)
+                  elseif not atom(_ci_src) and is(op(_ci_src) = "/") then
+                      block([_ci_num: part(_ci_src,1), _ci_den: part(_ci_src,2)],
+                          append(
+                              if not atom(_ci_num) and is(op(_ci_num) = "*")
+                                  then args(_ci_num) else [_ci_num],
+                              [1/_ci_den]
+                          ))
+                  else [_ci_src],
+        for _ci_f in _ci_facs do (
+            if not atom(_ci_f) and is(op(_ci_f) = "^") and is(part(_ci_f,1) = %e) then (
+                _ci_exparg: part(_ci_f, 2),
+                _ci_cn: errcatch(ratsimp(_ci_exparg / w_var^2)),
+                if _ci_cn # [] and freeof(w_var, first(_ci_cn))
+                   and ratsimp(_ci_exparg - first(_ci_cn)*w_var^2) = 0 then (
+                    /* _ci_exparg = _ci_cn * w_var^2 = -w_var^2/(4*pi*A) => A = -1/(4*pi*_ci_cn) */
+                    _ci_A: errcatch(ratsimp(-1/(4*%pi*first(_ci_cn)))),
+                    if _ci_A # [] then (_ci_A: first(_ci_A), _ci_found: true)
+                    else _ci_bad: true
+                ) else _ci_bad: true
+            ) else if freeof(w_var, _ci_f) then _ci_k: _ci_k * _ci_f
+            else _ci_bad: true
+        ),
+        if _ci_found and not _ci_bad and freeof(w_var, _ci_k)
+           and not freeof(%i, _ci_A) then (
+            /* _ci_A here is B^2 where B=alpha+i*beta (the exponent's full
+               coefficient pi*B^2); the closed form uses sqrt(_ci_A)=B, not
+               _ci_A itself — verified numerically before implementing. */
+            /* See the FT-direction CHIRPGAUSS comment: accept whenever is()
+               can't actively DISPROVE Re(A)>0 (i.e. treat 'unknown same as
+               true), since with independent alpha>0/beta>0 assumptions
+               Maxima can't derive the cross-relation alpha>=|beta| the pair
+               requires, and forcing the proof would fall through to a
+               generic integrate() that hangs on an interactive sign prompt. */
+            block([_ci_reA: errcatch(ratsimp(realpart(_ci_A) / %pi)), _ci_test],
+                if _ci_reA # [] and freeof(w_var, first(_ci_reA)) then (
+                    _ci_test: is(first(_ci_reA) > 0),
+                    if not is(_ci_test = false) then
+                        res: [_ci_k * sqrt(_ci_A) * exp(-%pi*_ci_A*t_var^2),
+                              concat("IFT k*exp(-w^2/(4*pi*A)) -> k*sqrt(A)*exp(-pi*A*t^2), A=",
+                                     string(_ci_A))]
                 )
             )
         )
