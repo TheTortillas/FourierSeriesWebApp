@@ -1624,6 +1624,162 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
         )
     ),
 
+    /* ── ABSPOW: k*|t|^alpha -> -2k*sin(alpha*pi/2)*Gamma(alpha+1)/|w|^(alpha+1)
+       (bilateral, even function — alpha > -1, alpha not a nonneg even integer
+       where |t|^alpha degenerates to the plain polynomial t^alpha, which other
+       matchers already handle correctly without needing this formula).
+       Verified numerically (causal pair + time-reversal derivation, matches
+       independent closed-form cross-check) before implementing.
+       Structural cases for the |t|^alpha factor: bare abs(t)^p (op="^"), or
+       1/abs(t)^p in a "/" node, or the p=-1/2 special case where Maxima
+       rewrites abs(t)^(-1/2) as 1/sqrt(abs(t)) (denominator op='sqrt). ── */
+    if is(res = false) then block(
+        [_ap_k, _ap_p, _ap_facs, _ap_f, _ap_bad, _ap_num, _ap_den, _ap_a],
+        _ap_k: 1, _ap_p: false, _ap_bad: false,
+        /* Returns exponent p such that f = abs(t_var)^p, or false. */
+        _ap_get_exp: lambda([_f],
+            if not atom(_f) and is(op(_f) = "^") and is(part(_f,1) = abs(t_var))
+            then part(_f,2)
+            elseif not atom(_f) and is(op(_f) = 'sqrt) and is(part(_f,1) = abs(t_var))
+            then 1/2
+            else false
+        ),
+        if not atom(e) and is(op(e) = "*") then _ap_facs: args(e)
+        else if not atom(e) and is(op(e) = "/") then block([],
+            _ap_num: part(e,1),
+            _ap_den: part(e,2),
+            _ap_p: _ap_get_exp(_ap_den),
+            if is(_ap_p # false) then (
+                _ap_p: -_ap_p,
+                _ap_facs: if not atom(_ap_num) and is(op(_ap_num) = "*")
+                          then args(_ap_num) else [_ap_num]
+            ) else _ap_bad: true
+        )
+        else _ap_facs: [e],
+        if not _ap_bad then
+            for _ap_f in _ap_facs do (
+                _ap_a: _ap_get_exp(_ap_f),
+                if is(_ap_a # false) then
+                    _ap_p: if _ap_p = false then _ap_a else _ap_p + _ap_a
+                else if freeof(t_var, _ap_f) then
+                    _ap_k: _ap_k * _ap_f
+                else
+                    _ap_bad: true
+            ),
+        if not _ap_bad and is(_ap_p # false) and freeof(t_var, _ap_k)
+           and is(_ap_p > -1) then
+            res: [-2 * _ap_k * sin(%pi*_ap_p/2) * gamma(_ap_p+1) / abs(w_var)^(_ap_p+1),
+                  concat("k*|t|^alpha -> -2k*sin(alpha*pi/2)*Gamma(alpha+1)/|w|^(alpha+1), alpha=",
+                         string(_ap_p))]
+    ),
+
+    /* ── ABSPOW·sgn: k*|t|^alpha*sgn(t) -> -2ik*cos(alpha*pi/2)*Gamma(alpha+1)*sgn(w)/|w|^(alpha+1)
+       (bilateral, odd function — same alpha domain and verification approach as ABSPOW above).
+       Same structural detection as ABSPOW, but requires an extra sgn(t_var) factor. ── */
+    if is(res = false) then block(
+        [_as_k, _as_p, _as_facs, _as_f, _as_bad, _as_num, _as_den, _as_a, _as_sgn],
+        _as_k: 1, _as_p: false, _as_bad: false, _as_sgn: false,
+        _as_get_exp: lambda([_f],
+            if not atom(_f) and is(op(_f) = "^") and is(part(_f,1) = abs(t_var))
+            then part(_f,2)
+            elseif not atom(_f) and is(op(_f) = 'sqrt) and is(part(_f,1) = abs(t_var))
+            then 1/2
+            else false
+        ),
+        if not atom(e) and is(op(e) = "*") then _as_facs: args(e)
+        else if not atom(e) and is(op(e) = "/") then block([],
+            _as_num: part(e,1),
+            _as_den: part(e,2),
+            _as_p: _as_get_exp(_as_den),
+            if is(_as_p # false) then (
+                _as_p: -_as_p,
+                _as_facs: if not atom(_as_num) and is(op(_as_num) = "*")
+                          then args(_as_num) else [_as_num]
+            ) else _as_bad: true
+        )
+        else _as_bad: true,
+        if not _as_bad then
+            for _as_f in _as_facs do (
+                _as_a: _as_get_exp(_as_f),
+                if is(_as_a # false) then
+                    _as_p: if _as_p = false then _as_a else _as_p + _as_a
+                else if not atom(_as_f) and is(op(_as_f) = 'sgn)
+                     and ratsimp(part(_as_f,1) - t_var) = 0 then
+                    _as_sgn: true
+                else if freeof(t_var, _as_f) then
+                    _as_k: _as_k * _as_f
+                else
+                    _as_bad: true
+            ),
+        if not _as_bad and is(_as_sgn = true) and is(_as_p # false)
+           and freeof(t_var, _as_k) and is(_as_p > -1) then
+            res: [-2 * %i * _as_k * cos(%pi*_as_p/2) * gamma(_as_p+1) * sgn(w_var)
+                     / abs(w_var)^(_as_p+1),
+                  concat("k*|t|^alpha*sgn(t) -> -2ik*cos(alpha*pi/2)*Gamma(alpha+1)*sgn(w)/|w|^(alpha+1), alpha=",
+                         string(_as_p))]
+    ),
+
+    /* ── SININT: k*Si(a*t) -> k*pi*sgn(a)/(i*w) * [u(w+a)-u(w-a)]  (a real, a≠0)
+       Derived via the time-differentiation property: d/dt Si(a*t) = a*sinc(a*t)
+       (our sinc(x)=sin(x)/x), and FT[sinc(a*t)] = (pi/|a|)*rect(w/(2a)) is already
+       an existing pair (Section 11). So FT[a*sinc(a*t)] = pi*sgn(a)*rect(w/(2a)),
+       and FT[f'(t)]=iw*F(w) gives F(w) = pi*sgn(a)*rect(w/(2a))/(iw). rect is
+       expressed here as u(w+a)-u(w-a) directly (equivalent, avoids depending on
+       the rect() helper's own argument convention). Si doesn't decay (Si(±∞)=±π/2)
+       but this still holds pointwise for w≠0, verified by splitting Si(t) into
+       (pi/2)*sgn(t) [whose own FT is the plain 2/(iw) term, no extra delta] plus a
+       decaying remainder whose FT vanishes inside the passband — checked numerically
+       via truncated quadrature before implementing. ── */
+    if is(res = false) then block(
+        [_si_k, _si_a, _si_arg],
+        _si_k: 1, _si_a: false,
+        if not atom(e) and is(op(e) = 'expintegral_si) then (
+            _si_arg: part(e, 1),
+            _si_a: ratsimp(_si_arg / t_var)
+        )
+        else if not atom(e) and is(op(e) = "*") then (
+            for _s in args(e) do (
+                if not atom(_s) and is(op(_s) = 'expintegral_si) then (
+                    _si_arg: part(_s, 1),
+                    _si_a: ratsimp(_si_arg / t_var)
+                ) else _si_k: _si_k * _s
+            )
+        ),
+        if is(_si_a # false) and freeof(t_var, _si_a) and is(_si_a # 0)
+           and freeof(t_var, _si_k) then
+            res: [_si_k * %piexact * signum(_si_a) / (%i*w_var)
+                       * (u(w_var + _si_a) - u(w_var - _si_a)),
+                  concat("k*Si(a*t) -> k*pi*sgn(a)/(iw)*[u(w+a)-u(w-a)], a=", string(_si_a))]
+    ),
+
+    /* ── SGNSINC: k*sgn(t)*sinc(a*t) -> -i*k/a * ln|(w+a)/(w-a)|  (a>0)
+       Derived via frequency-domain convolution: FT[sgn(t)*sinc(a*t)] =
+       (1/(2*pi)) * (FT[sgn(t)] * FT[sinc(a*t)]), i.e. 2/(i*u) convolved with
+       (pi/a)*rect(u/(2a)) evaluated at w. The rect confines the convolution to a
+       principal-value integral of 1/u over (w-a, w+a), which has the closed form
+       ln|(w+a)/(w-a)| (verified both by direct PV computation and by cross-checking
+       the resulting closed form numerically against the convolution derivation). ── */
+    if is(res = false) then block(
+        [_ss_k, _ss_a, _ss_sinc, _ss_sgn, _ss_arg],
+        _ss_k: 1, _ss_a: false, _ss_sinc: false, _ss_sgn: false,
+        if not atom(e) and is(op(e) = "*") then (
+            for _s in args(e) do (
+                if not atom(_s) and is(op(_s) = 'sinc) then (
+                    _ss_arg: part(_s, 1),
+                    _ss_a: ratsimp(_ss_arg / t_var),
+                    _ss_sinc: true
+                ) else if not atom(_s) and is(op(_s) = 'sgn)
+                     and ratsimp(part(_s,1) - t_var) = 0 then
+                    _ss_sgn: true
+                else _ss_k: _ss_k * _s
+            )
+        ),
+        if is(_ss_sinc = true) and is(_ss_sgn = true) and is(_ss_a # false)
+           and freeof(t_var, _ss_a) and is(_ss_a > 0) and freeof(t_var, _ss_k) then
+            res: [-%i * _ss_k / _ss_a * log(abs((w_var + _ss_a)/(w_var - _ss_a))),
+                  concat("k*sgn(t)*sinc(a*t) -> -i*k/a*ln|(w+a)/(w-a)|, a=", string(_ss_a))]
+    ),
+
     /* ── u(t) con coeficiente constante ── */
     if is(res = false) then (
         um: FT_match_u(e, t_var),
