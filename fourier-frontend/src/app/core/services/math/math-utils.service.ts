@@ -837,30 +837,52 @@ export class MathUtilsService {
 
     // ── Fresnel integrals ──────────────────────────────────────────────────────
     // C(x) = ∫₀ˣ cos(πt²/2) dt,  S(x) = ∫₀ˣ sin(πt²/2) dt
-    // Series de Taylor: C(x) = Σ (-1)ⁿ (π/2)²ⁿ x^(4n+1) / ((4n+1)(2n)!)
-    //                   S(x) = Σ (-1)ⁿ (π/2)²ⁿ⁺¹ x^(4n+3) / ((4n+3)(2n+1)!)
-    function _fresnelC(x) {
-      const p2 = Math.PI / 2, x2 = x * x;
-      let s = x, t = x, p2n = 1;
-      for (let n = 1; n <= 40; n++) {
-        p2n *= -p2 * p2 * x2 * x2;
-        t = p2n * x / ((4*n+1) * _factorial(2*n));
-        s += t;
-        if (Math.abs(t) < 1e-14 * Math.abs(s) && n > 2) break;
+    //
+    // Two-region strategy, error < 1e-7 everywhere:
+    //   |x| ≤ 4.5 — Taylor series via term recurrence (no explicit factorial).
+    //   |x| >  4.5 — A&S 7.3.27 asymptotic with optimal truncation.
+    //
+    // Taylor recurrence (C):  tc[n] = tc[n-1] * -(π/2·x²)² * (4n-3) / [(2n)(2n-1)(4n+1)]
+    // Taylor recurrence (S):  ts[n] = ts[n-1] * -(π/2·x²)² * (4n-1) / [(2n+1)(2n)(4n+3)]
+    //
+    // Asymptotic:  C = 0.5 + f·sin θ − g·cos θ,  S = 0.5 − f·cos θ − g·sin θ  (θ = πx²/2)
+    //   f = fsum / (π x),      tf[n] = tf[n-1] * (4n-3)(4n-1) / (πx²)²
+    //   g = gsum / (π²x³),     tg[n] = tg[n-1] * (4n-1)(4n+1) / (πx²)²
+    function _fresnelCS(x) {
+      const ax = Math.abs(x), sign = x < 0 ? -1 : 1;
+      if (ax === 0) return { C: 0, S: 0 };
+      const r = Math.PI * 0.5 * ax * ax;   // π/2·x²
+      let C, S;
+      if (ax <= 4.5) {
+        let tc = ax, ts = r * ax / 3, cv = tc, sv = ts;
+        for (let n = 1; n <= 100; n++) {
+          tc *= -r * r * (4*n - 3) / ((2*n) * (2*n - 1) * (4*n + 1));
+          ts *= -r * r * (4*n - 1) / ((2*n + 1) * (2*n) * (4*n + 3));
+          cv += tc; sv += ts;
+          if (Math.abs(tc) + Math.abs(ts) < 1e-15 * (Math.abs(cv) + Math.abs(sv))) break;
+        }
+        C = cv; S = sv;
+      } else {
+        const px2 = Math.PI * ax * ax, px4 = px2 * px2;
+        let tf = 1, tg = 1, fsum = 1, gsum = 1, sgn = -1;
+        for (let n = 1; n <= 50; n++) {
+          const ntf = tf * (4*n - 3) * (4*n - 1) / px4;
+          const ntg = tg * (4*n - 1) * (4*n + 1) / px4;
+          if (ntf >= tf || !isFinite(ntf)) break;
+          tf = ntf; tg = ntg;
+          fsum += sgn * tf; gsum += sgn * tg; sgn = -sgn;
+        }
+        const f = fsum / (Math.PI * ax);
+        const g = gsum / (Math.PI * Math.PI * ax * ax * ax);
+        const theta = Math.PI * 0.5 * ax * ax;
+        const sinT = Math.sin(theta), cosT = Math.cos(theta);
+        C = 0.5 + f * sinT - g * cosT;
+        S = 0.5 - f * cosT - g * sinT;
       }
-      return s;
+      return { C: sign * C, S: sign * S };
     }
-    function _fresnelS(x) {
-      const p2 = Math.PI / 2, x2 = x * x;
-      let s = p2 * x * x * x / 3, t = s, p2n = p2;
-      for (let n = 1; n <= 40; n++) {
-        p2n *= -p2 * p2 * x2 * x2;
-        t = p2n * x * x * x / ((4*n+3) * _factorial(2*n+1));
-        s += t;
-        if (Math.abs(t) < 1e-14 * Math.abs(s) && n > 2) break;
-      }
-      return s;
-    }
+    function _fresnelC(x) { return _fresnelCS(x).C; }
+    function _fresnelS(x) { return _fresnelCS(x).S; }
     // K(x) = C(x) en el eje real (parte real de la integral compleja de Fresnel)
     function _fresnelK(x) { return _fresnelC(x); }
   `;
