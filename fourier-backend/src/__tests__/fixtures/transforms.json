@@ -12277,5 +12277,211 @@
         "alpha"
       ]
     }
+  },
+  {
+    "id": "UAB01",
+    "type": "ft",
+    "description": "FT de u(|t|-2)/|t| — función par con hueco central, caso base numérico",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(abs(t)-2)/abs(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*expintegral_ci(2*abs(w))"
+    }
+  },
+  {
+    "id": "UAB02",
+    "type": "ft",
+    "description": "FT de 4*u(|t|-2)/|t| con coeficiente",
+    "input": {
+      "segments": [
+        {
+          "expression": "4*u(abs(t)-2)/abs(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-8*expintegral_ci(2*abs(w))"
+    }
+  },
+  {
+    "id": "UAB03",
+    "type": "ft",
+    "description": "FT de u(|t|-5)/|t| — hueco más ancho",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(abs(t)-5)/abs(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*expintegral_ci(5*abs(w))"
+    }
+  },
+  {
+    "id": "UAB04",
+    "type": "ft",
+    "description": "FT de u(|t|-a)/|t| con desplazamiento simbólico",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(abs(t)-a)/abs(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-2*expintegral_ci(a*abs(w))",
+      "params": [
+        "a"
+      ]
+    }
+  },
+  {
+    "id": "UAB05",
+    "type": "ft",
+    "description": "FT de -3*u(|t|-1)/|t| con coeficiente negativo",
+    "input": {
+      "segments": [
+        {
+          "expression": "-3*u(abs(t)-1)/abs(t)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "6*expintegral_ci(abs(w))"
+    }
+  },
+  {
+    "id": "UAB06",
+    "type": "ift",
+    "description": "IFT round-trip de UAB01: -2*Ci(2|w|) → u(|t|-2)/|t|",
+    "input": {
+      "segments": [
+        {
+          "expression": "-2*expintegral_ci(2*abs(w))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "u(abs(t)-2)/abs(t)"
+    }
+  },
+  {
+    "id": "UAB07",
+    "type": "ift",
+    "description": "IFT round-trip de UAB02 con coeficiente",
+    "input": {
+      "segments": [
+        {
+          "expression": "-8*expintegral_ci(2*abs(w))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "4*u(abs(t)-2)/abs(t)"
+    }
+  },
+  {
+    "id": "UAB08",
+    "type": "ift",
+    "description": "IFT round-trip de UAB03 con hueco más ancho",
+    "input": {
+      "segments": [
+        {
+          "expression": "-2*expintegral_ci(5*abs(w))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "u(abs(t)-5)/abs(t)"
+    }
+  },
+  {
+    "id": "UAB09",
+    "type": "ift",
+    "description": "IFT round-trip de UAB04 con desplazamiento simbólico",
+    "input": {
+      "segments": [
+        {
+          "expression": "-2*expintegral_ci(a*abs(w))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "u(abs(t)-a)/abs(t)",
+      "params": [
+        "a"
+      ]
+    }
+  },
+  {
+    "id": "UAB10",
+    "type": "ift",
+    "description": "IFT round-trip de UAB05 con coeficiente negativo",
+    "input": {
+      "segments": [
+        {
+          "expression": "6*expintegral_ci(abs(w))",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "w",
+      "transVar": "t"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-3*u(abs(t)-1)/abs(t)"
+    }
   }
 ]
