@@ -1719,6 +1719,48 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                          string(_as_p))]
     ),
 
+    /* ── USTEP_OVER_T: k*u(t-a)/t -> k*(-Ci(a*|w|) - i*sgn(w)*(pi/2 - Si(a*|w|)))  (a>0)
+       Derived from the classical real identities (definitions of Ci/Si as
+       tail integrals): int_a^inf cos(w*t)/t dt = -Ci(a*w) and
+       int_a^inf sin(w*t)/t dt = pi/2 - Si(a*w), both for w>0; combining via
+       FT[f](w) = int f(t)*e^{-iwt}dt = int cos(wt)f(t)dt - i*int sin(wt)f(t)dt
+       and extending to w<0 by parity (cos even, sin odd in w) gives the
+       sgn(w) form. a<0 is excluded: u(t-a)/t would then include t=0 in its
+       support, where 1/t is non-integrable (a different, principal-value
+       case, not handled here). Verified both against Maxima's own Ci/Si
+       definitions and via quad_qawo (oscillatory-integral quadrature; plain
+       quad_qagi does not converge reliably on this conditionally-convergent
+       integral and was ruled out during verification). ── */
+    if is(res = false) then block(
+        [_ut_k, _ut_a, _ut_u, _ut_denom, _ut_bad],
+        _ut_k: 1, _ut_a: false, _ut_u: false, _ut_bad: false,
+        block([_ut_facs, _ut_f, _ut_num, _ut_den],
+            if not atom(e) and is(op(e) = "/") then (
+                _ut_num: part(e, 1),
+                _ut_den: part(e, 2),
+                if ratsimp(_ut_den - t_var) = 0 then (
+                    _ut_facs: if not atom(_ut_num) and is(op(_ut_num) = "*")
+                              then args(_ut_num) else [_ut_num],
+                    for _ut_f in _ut_facs do (
+                        if not atom(_ut_f) and is(op(_ut_f) = 'u) then (
+                            _ut_a: ratsimp(t_var - part(_ut_f, 1)),
+                            _ut_u: true
+                        ) else if freeof(t_var, _ut_f) then
+                            _ut_k: _ut_k * _ut_f
+                        else _ut_bad: true
+                    )
+                ) else _ut_bad: true
+            ) else _ut_bad: true
+        ),
+        if _ut_u and not _ut_bad and is(_ut_a # false)
+           and freeof(t_var, _ut_a) and freeof(t_var, _ut_k)
+           and is(_ut_a > 0) then
+            res: [_ut_k * (-expintegral_ci(_ut_a*abs(w_var))
+                     - %i*sgn(w_var)*(%piexact/2 - expintegral_si(_ut_a*abs(w_var)))),
+                  concat("k*u(t-a)/t -> k*(-Ci(a|w|) - i*sgn(w)*(pi/2-Si(a|w|))), a=",
+                         string(_ut_a))]
+    ),
+
     /* ── SININT: k*Si(a*t) -> k*pi*sgn(a)/(i*w) * [u(w+a)-u(w-a)]  (a real, a≠0)
        Derived via the time-differentiation property: d/dt Si(a*t) = a*sinc(a*t)
        (our sinc(x)=sin(x)/x), and FT[sinc(a*t)] = (pi/|a|)*rect(w/(2a)) is already
