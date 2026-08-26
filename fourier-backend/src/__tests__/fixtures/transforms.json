@@ -12152,5 +12152,107 @@
       "exists": true,
       "F": "(%e^(-((21*%pi*t^2)/25))*(41*%i*sin((4*%pi*t^2)/5)-840*sin((4*%pi*t^2)/5)+840*%i*cos((4*%pi*t^2)/5)+41*cos((4*%pi*t^2)/5)))/841"
     }
+  },
+  {
+    "id": "UTT01",
+    "type": "ft",
+    "description": "FT de u(t-2)/t — escalón desplazado dividido por t, caso base numérico",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(t-2)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-expintegral_ci(2*abs(w)) - %i*sgn(w)*(%pi/2 - expintegral_si(2*abs(w)))"
+    }
+  },
+  {
+    "id": "UTT02",
+    "type": "ft",
+    "description": "FT de 3*u(t-2)/t con coeficiente",
+    "input": {
+      "segments": [
+        {
+          "expression": "3*u(t-2)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "3*(-expintegral_ci(2*abs(w)) - %i*sgn(w)*(%pi/2 - expintegral_si(2*abs(w))))"
+    }
+  },
+  {
+    "id": "UTT03",
+    "type": "ft",
+    "description": "FT de u(t-a)/t con desplazamiento simbólico",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(t-a)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-expintegral_ci(a*abs(w)) - %i*sgn(w)*(%pi/2 - expintegral_si(a*abs(w)))",
+      "params": [
+        "a"
+      ]
+    }
+  },
+  {
+    "id": "UTT04",
+    "type": "ft",
+    "description": "FT de u(t-5)/t — desplazamiento numérico mayor",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(t-5)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "-expintegral_ci(5*abs(w)) - %i*sgn(w)*(%pi/2 - expintegral_si(5*abs(w)))"
+    }
+  },
+  {
+    "id": "UTT05",
+    "type": "ft",
+    "description": "FT de u(t)/t (a=0) — degenera en singularidad no integrable, no debe existir",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(t)/t",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": false
+    }
   }
 ]
