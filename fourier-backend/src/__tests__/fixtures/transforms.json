@@ -12254,5 +12254,28 @@
     "expected": {
       "exists": false
     }
+  },
+  {
+    "id": "TPS01",
+    "type": "ft",
+    "description": "FT de u(t)/t^(alpha-1) con alpha simbólico (solo alpha>0 asumido) — no debe colgarse pidiendo signo interactivo",
+    "input": {
+      "segments": [
+        {
+          "expression": "u(t)/t^(alpha-1)",
+          "from": "minf",
+          "to": "inf"
+        }
+      ],
+      "intVar": "t",
+      "transVar": "w"
+    },
+    "expected": {
+      "exists": true,
+      "F": "gamma(2-alpha)*abs(w)^(alpha-2)*(cos(%pi*(2-alpha)/2) - %i*sgn(w)*sin(%pi*(2-alpha)/2))",
+      "params": [
+        "alpha"
+      ]
+    }
   }
 ]
