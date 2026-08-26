@@ -1,0 +1,126 @@
+<div class="flex overflow-hidden bg-gray-950 text-white" style="height: calc(100vh - 48px); margin: -1.5rem">
+
+  <!-- ── Sidebar izquierdo: biblioteca de funciones ──────────────────────── -->
+  <aside class="flex w-56 shrink-0 flex-col overflow-y-auto border-r border-white/10 bg-gray-900/60">
+
+    <div class="sticky top-0 z-10 bg-gray-900 px-3 py-2.5 border-b border-white/10">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500">Biblioteca f(x)</p>
+    </div>
+
+    @for (group of groups; track group.id) {
+      <div class="border-b border-white/5">
+        <button
+          type="button"
+          (click)="toggleGroup(group.id)"
+          class="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-semibold text-gray-300 hover:bg-white/5 transition-colors"
+        >
+          <span>{{ group.label }}</span>
+          <svg
+            [class]="isCollapsed(group.id) ? 'w-3 h-3 text-gray-500 rotate-0 transition-transform' : 'w-3 h-3 text-gray-500 -rotate-90 transition-transform'"
+            viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"
+          >
+            <path d="M2 4l4 4 4-4"/>
+          </svg>
+        </button>
+
+        @if (!isCollapsed(group.id)) {
+          <div class="px-2 pb-2 flex flex-col gap-0.5">
+            @for (entry of group.entries; track entry.expr) {
+              <button
+                type="button"
+                (click)="loadExample(entry.expr)"
+                [title]="entry.desc ?? entry.expr"
+                [class]="expr() === entry.expr
+                  ? 'flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-[11px] font-mono bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                  : 'flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-[11px] font-mono text-gray-400 hover:bg-white/5 hover:text-white transition-colors'"
+              >
+                <span class="flex-1 truncate">{{ entry.label }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </aside>
+
+  <!-- ── Canvas ─────────────────────────────────────────────────────────── -->
+  <app-function-plot
+    class="flex-1 min-w-0"
+    [layers]="layers()"
+    [initialUnit]="75"
+    [xAxisFormat]="xAxisFormat()"
+  />
+
+  <!-- ── Sidebar derecho: settings ─────────────────────────────────────── -->
+  <aside class="flex w-60 shrink-0 flex-col overflow-y-auto border-l border-white/10 bg-gray-900/60 text-sm">
+
+    <!-- f(x) input -->
+    <section class="px-3 pt-3 pb-2 border-b border-white/10">
+      <label class="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-1.5 block">f(x) =</label>
+      <div class="flex gap-1.5">
+        <input
+          type="text"
+          [ngModel]="inputExpr()"
+          (ngModelChange)="inputExpr.set($event)"
+          (keydown.enter)="plot()"
+          autocomplete="off" spellcheck="false"
+          class="min-w-0 flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 font-mono text-xs outline-none focus:border-indigo-400"
+        />
+        <button (click)="plot()"
+          class="rounded bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold hover:bg-indigo-500 shrink-0 cursor-pointer">
+          Plot
+        </button>
+      </div>
+      @if (error()) {
+        <p class="mt-1 text-[10px] text-red-400 font-mono leading-tight">{{ error() }}</p>
+      }
+    </section>
+
+    <!-- Eje X formato -->
+    <section class="px-3 py-2.5 border-b border-white/10">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-1.5">Eje X</p>
+      <div class="grid grid-cols-2 gap-1 text-[10px]">
+        @for (fmt of [['integer','Entero'],['pi','π'],['e','e']] ; track fmt[0]) {
+          <button
+            type="button"
+            (click)="xAxisFormat.set($any(fmt[0]))"
+            [class]="xAxisFormat() === fmt[0]
+              ? 'py-0.5 rounded border bg-indigo-600 border-indigo-500 cursor-pointer font-mono'
+              : 'py-0.5 rounded border border-white/15 text-gray-400 hover:text-white cursor-pointer transition-colors font-mono'"
+          >{{ fmt[1] }}</button>
+        }
+      </div>
+    </section>
+
+    <!-- Reset -->
+    <section class="px-3 py-2.5 border-b border-white/10">
+      <button (click)="resetView()"
+        class="w-full py-1 rounded border border-white/15 text-[11px] text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer transition-colors">
+        Reset vista
+      </button>
+    </section>
+
+    <!-- Sintaxis -->
+    <section class="px-3 py-3 flex flex-col gap-2">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500">Sintaxis</p>
+      <div class="rounded bg-black/30 border border-white/8 px-2.5 py-2 font-mono text-[10px] text-gray-400 flex flex-col gap-1 leading-relaxed">
+        <div><span class="text-gray-300">^</span> potencia</div>
+        <div><span class="text-gray-300">*</span> multiplicar</div>
+        <div><span class="text-gray-300">log(x)</span> logaritmo natural</div>
+        <div><span class="text-gray-300">sqrt(x)</span> raíz cuadrada</div>
+        <div><span class="text-gray-300">abs(x)</span> valor absoluto</div>
+        <div><span class="text-gray-300">gamma(x)</span> función Gamma</div>
+        <div><span class="text-gray-300">erf / erfc</span> función error</div>
+        <div><span class="text-gray-300">expintegral_si/ci/shi/chi</span></div>
+        <div><span class="text-gray-300">expintegral_ei/e1/li</span></div>
+        <div><span class="text-gray-300">u(x)</span> escalón Heaviside</div>
+        <div><span class="text-gray-300">rect / tri / sinc</span></div>
+        <div><span class="text-gray-300">factorial(x)</span></div>
+        <div><span class="text-gray-300">beta(a,b)</span></div>
+        <div><span class="text-gray-300">gamma_incomplete(a,x)</span></div>
+      </div>
+    </section>
+
+  </aside>
+
+</div>

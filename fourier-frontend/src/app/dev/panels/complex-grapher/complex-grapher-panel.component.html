@@ -1,170 +1,58 @@
 <div class="flex overflow-hidden bg-gray-950 text-white" style="height: calc(100vh - 48px); margin: -1.5rem">
 
-  <!-- ── Sidebar ─────────────────────────────────────────────── -->
-  <aside class="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-white/10 p-4 text-sm">
+  <!-- ── Sidebar izquierdo: biblioteca de funciones ──────────────────────── -->
+  <aside class="flex w-56 shrink-0 flex-col overflow-y-auto border-r border-white/10 bg-gray-900/60">
 
-    <!-- Function input -->
-    <section class="flex flex-col gap-2">
-      <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">f(z) =</label>
-      <div class="flex gap-2">
-        <input
-          type="text"
-          [ngModel]="expr()"
-          (ngModelChange)="expr.set($event)"
-          (keydown.enter)="plotRef()?.redraw()"
-          autocomplete="off" spellcheck="false"
-          class="min-w-0 flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 font-mono text-sm outline-none focus:border-indigo-400"
-        />
-        <button (click)="plotRef()?.redraw()"
-          class="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold hover:bg-indigo-500">
-          Plot
+    <!-- Header -->
+    <div class="sticky top-0 z-10 bg-gray-900 px-3 py-2.5 border-b border-white/10">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500">Biblioteca f(z)</p>
+    </div>
+
+    <!-- Groups -->
+    @for (group of groups; track group.id) {
+      <div class="border-b border-white/5">
+        <!-- Group header -->
+        <button
+          type="button"
+          (click)="toggleGroup(group.id)"
+          class="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-semibold text-gray-300 hover:bg-white/5 transition-colors"
+        >
+          <span>{{ group.label }}</span>
+          <svg
+            [class]="isCollapsed(group.id) ? 'w-3 h-3 text-gray-500 rotate-0 transition-transform' : 'w-3 h-3 text-gray-500 -rotate-90 transition-transform'"
+            viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"
+          >
+            <path d="M2 4l4 4 4-4"/>
+          </svg>
         </button>
-      </div>
-      @if (compileError()) {
-        <p class="text-xs text-red-400">{{ compileError() }}</p>
-      }
-    </section>
 
-    <!-- Mode tabs -->
-    <section class="flex rounded-lg border border-white/10 p-0.5">
-      <button (click)="mode.set('2d')"
-        [class]="mode() === '2d' ? 'flex-1 rounded-md bg-indigo-600 py-1 text-xs font-semibold' : 'flex-1 rounded-md py-1 text-xs text-gray-400 hover:text-white'">
-        2D Domain
-      </button>
-      <button (click)="mode.set('3d')"
-        [class]="mode() === '3d' ? 'flex-1 rounded-md bg-indigo-600 py-1 text-xs font-semibold' : 'flex-1 rounded-md py-1 text-xs text-gray-400 hover:text-white'">
-        3D Surface
-      </button>
-    </section>
-
-    <!-- 2D settings -->
-    @if (mode() === '2d') {
-      <section class="flex flex-col gap-3">
-        <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">Esquema de color</label>
-        <select [ngModel]="colorScheme()" (ngModelChange)="colorScheme.set($event)"
-          class="w-full rounded border border-white/15 bg-white/5 px-2 py-1 text-sm outline-none">
-          <option value="classic">Clásico (HSV + módulo)</option>
-          <option value="phase">Solo fase</option>
-          <option value="magnitude">Solo módulo</option>
-        </select>
-        <label class="flex items-center justify-between">
-          <span class="text-gray-300">Líneas iso-módulo</span>
-          <input type="checkbox" [ngModel]="showModLines()" (ngModelChange)="showModLines.set($event)" class="accent-indigo-500" />
-        </label>
-        <label class="flex items-center justify-between">
-          <span class="text-gray-300">Ejes</span>
-          <input type="checkbox" [ngModel]="showAxes()" (ngModelChange)="showAxes.set($event)" class="accent-indigo-500" />
-        </label>
-        <label class="flex items-center justify-between">
-          <span class="text-gray-300">Grid</span>
-          <input type="checkbox" [ngModel]="showGrid2d()" (ngModelChange)="showGrid2d.set($event)" class="accent-indigo-500" />
-        </label>
-        <div class="flex items-center justify-between">
-          <span class="text-gray-300">Leyenda</span>
-          <div class="flex rounded overflow-hidden border border-white/15 text-xs">
-            <button
-              type="button"
-              (click)="legendStyle.set('strip')"
-              [class]="legendStyle() === 'strip' ? 'px-2 py-0.5 bg-indigo-600 text-white' : 'px-2 py-0.5 text-gray-400 hover:text-white'"
-            >Tira</button>
-            <button
-              type="button"
-              (click)="legendStyle.set('circle')"
-              [class]="legendStyle() === 'circle' ? 'px-2 py-0.5 bg-indigo-600 text-white' : 'px-2 py-0.5 text-gray-400 hover:text-white'"
-            >Círculo</button>
+        <!-- Entries -->
+        @if (!isCollapsed(group.id)) {
+          <div class="px-2 pb-2 flex flex-col gap-0.5">
+            @for (entry of group.entries; track entry.fn) {
+              <button
+                type="button"
+                (click)="loadExample(entry.fn)"
+                [title]="entry.desc ?? entry.fn"
+                [class]="expr() === entry.fn
+                  ? 'flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-[11px] font-mono bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                  : 'flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-[11px] font-mono text-gray-400 hover:bg-white/5 hover:text-white transition-colors'"
+              >
+                <span class="flex-1 truncate">{{ entry.label }}</span>
+                @if (entry.desc) {
+                  <span class="shrink-0 text-[9px] text-gray-600 hidden group-hover:block">{{ entry.desc }}</span>
+                }
+              </button>
+            }
           </div>
-        </div>
-      </section>
-    }
-
-    <!-- 3D settings -->
-    @if (mode() === '3d') {
-      <section class="flex flex-col gap-3">
-        <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">Rango: ±{{ range3d() }}</label>
-        <input type="range" min="1" max="12" step="0.5"
-          [ngModel]="range3d()" (ngModelChange)="range3d.set(+$event)"
-          class="w-full accent-indigo-500" />
-
-        <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">Resolución: {{ resolution() }}×{{ resolution() }}</label>
-        <input type="range" min="20" max="250" step="5"
-          [ngModel]="resolution()" (ngModelChange)="resolution.set(+$event)"
-          class="w-full accent-indigo-500" />
-
-        <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">Escala Z: {{ heightScale().toFixed(2) }}×</label>
-        <input type="range" min="0.05" max="5" step="0.05"
-          [ngModel]="heightScale()" (ngModelChange)="heightScale.set(+$event)"
-          class="w-full accent-indigo-500" />
-
-        <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">Corte Z: {{ zClip().toFixed(1) }}</label>
-        <input type="range" min="0.5" max="20" step="0.5"
-          [ngModel]="zClip()" (ngModelChange)="zClip.set(+$event)"
-          class="w-full accent-indigo-500" />
-
-        <label class="flex items-center justify-between">
-          <span class="text-gray-300">Grid en superficie</span>
-          <input type="checkbox" [ngModel]="showGrid3d()" (ngModelChange)="showGrid3d.set($event)" class="accent-indigo-500" />
-        </label>
-
-        <div class="flex gap-2">
-          <button (click)="resetView()"
-            class="flex-1 rounded border border-white/15 py-1 text-xs hover:bg-white/10">Reset vista</button>
-          <button (click)="wireframe.update(v => !v)"
-            class="flex-1 rounded border border-white/15 py-1 text-xs hover:bg-white/10">
-            {{ wireframe() ? 'Sólido' : 'Wireframe' }}
-          </button>
-        </div>
-      </section>
-    }
-
-    <!-- Examples -->
-    <section class="flex flex-col gap-2">
-      <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">Ejemplos</label>
-      <div class="grid grid-cols-3 gap-1">
-        @for (ex of examples; track ex.fn) {
-          <button (click)="loadExample(ex.fn)"
-            class="rounded border border-white/10 px-1 py-0.5 text-xs font-mono hover:border-indigo-400 hover:bg-white/5">
-            {{ ex.label }}
-          </button>
         }
       </div>
-      <p class="text-[10px] leading-relaxed text-gray-600">
-        Parámetros libres: escribe letras distintas a <code class="text-gray-400">z</code>,
-        p.ej. <code class="text-gray-400">(a + b*i)*z</code>
-      </p>
-    </section>
-
-    <!-- Free parameter sliders (solo si hay parámetros detectados) -->
-    @if (detectedParams().length > 0) {
-      <section class="flex flex-col gap-1">
-        <label class="text-xs font-semibold uppercase tracking-wider text-gray-400">
-          Parámetros libres
-        </label>
-        <app-param-sliders
-          [params]="detectedParams()"
-          [defaultValue]="1"
-          [min]="-5"
-          [max]="5"
-          [step]="0.05"
-          (valuesChange)="onParamChange($event)"
-        />
-      </section>
     }
-
-    <!-- Coordinates -->
-    <section class="rounded-lg border border-white/10 bg-white/5 p-3 font-mono text-xs">
-      <div class="text-gray-400">z &nbsp;= <span class="text-white">{{ coordRe() }}</span> <span class="text-white">{{ coordIm() }}</span>i</div>
-      <div class="mt-1 text-gray-400">f(z) = <span class="text-white">{{ coordFz() }}</span></div>
-    </section>
-
-    <p class="text-xs leading-relaxed text-gray-500">
-      Usar <code class="text-gray-300">*</code> para multiplicar, <code class="text-gray-300">^</code> para potencia,
-      <code class="text-gray-300">z</code> como variable.
-    </p>
   </aside>
 
-  <!-- ── Canvas area ──────────────────────────────────────────── -->
+  <!-- ── Canvas ────────────────────────────────────────────────────────────── -->
   <app-complex-plot
-    class="flex-1"
+    class="flex-1 min-w-0"
     [expr]="expr()"
     [mode]="mode()"
     [colorScheme]="colorScheme()"
@@ -183,5 +71,208 @@
     (compileError)="onCompileError($event)"
     (mathPointerMove)="onPointerMove($event)"
   />
+
+  <!-- ── Sidebar derecho: settings + info ──────────────────────────────────── -->
+  <aside class="flex w-60 shrink-0 flex-col overflow-y-auto border-l border-white/10 bg-gray-900/60 text-sm">
+
+    <!-- f(z) input -->
+    <section class="px-3 pt-3 pb-2 border-b border-white/10">
+      <label class="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-1.5 block">f(z) =</label>
+      <div class="flex gap-1.5">
+        <input
+          type="text"
+          [ngModel]="expr()"
+          (ngModelChange)="expr.set($event)"
+          (keydown.enter)="plotRef()?.redraw()"
+          autocomplete="off" spellcheck="false"
+          class="min-w-0 flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 font-mono text-xs outline-none focus:border-indigo-400"
+        />
+        <button (click)="plotRef()?.redraw()"
+          class="rounded bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold hover:bg-indigo-500 shrink-0 cursor-pointer">
+          Plot
+        </button>
+      </div>
+      @if (compileError()) {
+        <p class="mt-1 text-[10px] text-red-400 font-mono leading-tight">{{ compileError() }}</p>
+      }
+    </section>
+
+    <!-- 2D / 3D mode -->
+    <section class="px-3 py-2.5 border-b border-white/10">
+      <div class="flex rounded border border-white/15 overflow-hidden text-[11px]">
+        <button (click)="mode.set('2d')"
+          [class]="mode() === '2d' ? 'flex-1 py-1 bg-indigo-600 font-semibold cursor-pointer' : 'flex-1 py-1 text-gray-400 hover:text-white cursor-pointer transition-colors'">
+          2D Domain
+        </button>
+        <button (click)="mode.set('3d')"
+          [class]="mode() === '3d' ? 'flex-1 py-1 bg-indigo-600 font-semibold cursor-pointer' : 'flex-1 py-1 text-gray-400 hover:text-white cursor-pointer transition-colors'">
+          3D Surface
+        </button>
+      </div>
+    </section>
+
+    <!-- Leyenda -->
+    <section class="px-3 py-2.5 border-b border-white/10">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-1.5">Leyenda</p>
+      <div class="flex rounded border border-white/15 overflow-hidden text-[11px]">
+        <button (click)="legendStyle.set('strip')"
+          [class]="legendStyle() === 'strip' ? 'flex-1 py-1 bg-indigo-600 font-semibold cursor-pointer' : 'flex-1 py-1 text-gray-400 hover:text-white cursor-pointer transition-colors'">
+          Tira
+        </button>
+        <button (click)="legendStyle.set('circle')"
+          [class]="legendStyle() === 'circle' ? 'flex-1 py-1 bg-indigo-600 font-semibold cursor-pointer' : 'flex-1 py-1 text-gray-400 hover:text-white cursor-pointer transition-colors'">
+          Círculo
+        </button>
+      </div>
+    </section>
+
+    <!-- 2D settings -->
+    @if (mode() === '2d') {
+      <section class="px-3 py-2.5 border-b border-white/10 flex flex-col gap-2.5">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500">Color</p>
+        <div class="flex rounded border border-white/15 overflow-hidden text-[11px]">
+          @for (s of [['classic','Clásico'],['phase','Fase'],['magnitude','Módulo']]; track s[0]) {
+            <button (click)="colorScheme.set($any(s[0]))"
+              [class]="colorScheme() === s[0] ? 'flex-1 py-1 bg-indigo-600 font-semibold cursor-pointer text-[10px]' : 'flex-1 py-1 text-gray-400 hover:text-white cursor-pointer transition-colors text-[10px]'">
+              {{ s[1] }}
+            </button>
+          }
+        </div>
+        <label class="flex items-center justify-between text-[11px]">
+          <span class="text-gray-300">Iso-módulo</span>
+          <input type="checkbox" [ngModel]="showModLines()" (ngModelChange)="showModLines.set($event)" class="accent-indigo-500" />
+        </label>
+        <label class="flex items-center justify-between text-[11px]">
+          <span class="text-gray-300">Ejes</span>
+          <input type="checkbox" [ngModel]="showAxes()" (ngModelChange)="showAxes.set($event)" class="accent-indigo-500" />
+        </label>
+        <label class="flex items-center justify-between text-[11px]">
+          <span class="text-gray-300">Grid</span>
+          <input type="checkbox" [ngModel]="showGrid2d()" (ngModelChange)="showGrid2d.set($event)" class="accent-indigo-500" />
+        </label>
+      </section>
+    }
+
+    <!-- 3D settings -->
+    @if (mode() === '3d') {
+      <section class="px-3 py-2.5 border-b border-white/10 flex flex-col gap-2.5">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500">Superficie 3D</p>
+
+        <!-- Wireframe / Grid / Reset -->
+        <div class="flex gap-1 flex-wrap text-[10px]">
+          <button (click)="wireframe.update(v => !v)"
+            [class]="wireframe() ? 'px-2 py-0.5 rounded border bg-indigo-600 border-indigo-500 cursor-pointer' : 'px-2 py-0.5 rounded border border-white/15 text-gray-400 hover:text-white cursor-pointer transition-colors'">
+            Wireframe
+          </button>
+          <button (click)="showGrid3d.update(v => !v)"
+            [class]="showGrid3d() ? 'px-2 py-0.5 rounded border bg-indigo-600 border-indigo-500 cursor-pointer' : 'px-2 py-0.5 rounded border border-white/15 text-gray-400 hover:text-white cursor-pointer transition-colors'">
+            Grid
+          </button>
+          <button (click)="resetView()"
+            class="px-2 py-0.5 rounded border border-white/15 text-gray-400 hover:text-white cursor-pointer transition-colors">
+            Reset
+          </button>
+        </div>
+
+        <!-- Rango -->
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[10px]">
+            <span class="text-gray-400">Rango</span>
+            <span class="font-mono text-indigo-400">±{{ range3d() }}</span>
+          </div>
+          <input type="range" min="1" max="12" step="0.5"
+            [ngModel]="range3d()" (ngModelChange)="range3d.set(+$event)"
+            class="w-full accent-indigo-500 h-1" />
+        </div>
+
+        <!-- Resolución -->
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[10px]">
+            <span class="text-gray-400">Resolución</span>
+            <span class="font-mono text-indigo-400">{{ resolution() }}×{{ resolution() }}</span>
+          </div>
+          <input type="range" min="20" max="300" step="10"
+            [ngModel]="resolution()" (ngModelChange)="resolution.set(+$event)"
+            class="w-full accent-indigo-500 h-1" />
+          @if (resolution() > 180) {
+            <p class="text-[9px] text-amber-500">Resolución alta — puede ser lento</p>
+          }
+        </div>
+
+        <!-- Escala Z -->
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[10px]">
+            <span class="text-gray-400">Escala Z</span>
+            <span class="font-mono text-indigo-400">{{ heightScale().toFixed(2) }}×</span>
+          </div>
+          <input type="range" min="0.05" max="5" step="0.05"
+            [ngModel]="heightScale()" (ngModelChange)="heightScale.set(+$event)"
+            class="w-full accent-indigo-500 h-1" />
+        </div>
+
+        <!-- Corte Z -->
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[10px]">
+            <span class="text-gray-400">Corte Z</span>
+            <span class="font-mono text-indigo-400">{{ zClip().toFixed(1) }}</span>
+          </div>
+          <input type="range" min="0.5" max="20" step="0.5"
+            [ngModel]="zClip()" (ngModelChange)="zClip.set(+$event)"
+            class="w-full accent-indigo-500 h-1" />
+        </div>
+      </section>
+    }
+
+    <!-- Free parameter sliders -->
+    @if (detectedParams().length > 0) {
+      <section class="px-3 py-2.5 border-b border-white/10 flex flex-col gap-1.5">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+          Parámetros libres
+        </p>
+        <app-param-sliders
+          [params]="detectedParams()"
+          [defaultValue]="1"
+          [min]="-5"
+          [max]="5"
+          [step]="0.05"
+          (valuesChange)="onParamChange($event)"
+        />
+      </section>
+    }
+
+    <!-- Coordenadas hover -->
+    <section class="px-3 py-2.5 border-b border-white/10">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500 mb-1.5">Cursor</p>
+      <div class="rounded bg-black/30 border border-white/8 px-2.5 py-2 font-mono text-[11px] flex flex-col gap-1">
+        <div class="flex justify-between">
+          <span class="text-gray-500">z</span>
+          <span class="text-gray-200">{{ coordRe() }} <span class="text-gray-400">{{ coordIm() }}i</span></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">f(z)</span>
+          <span class="text-gray-200">{{ coordFz() }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">|f|</span>
+          <span class="text-indigo-300">{{ coordAbs() }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">arg f</span>
+          <span class="text-indigo-300">{{ coordArg() }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sintaxis hint -->
+    <section class="px-3 py-3 mt-auto">
+      <p class="text-[10px] leading-relaxed text-gray-600">
+        Usa <code class="text-gray-400">*</code> para multiplicar,
+        <code class="text-gray-400">^</code> para potencia,
+        <code class="text-gray-400">z</code> como variable.<br>
+        Letras distintas a <code class="text-gray-400">z</code> se vuelven parámetros libres —
+        p.ej. <code class="text-gray-400">(a+b*i)*z</code>
+      </p>
+    </section>
+  </aside>
 
 </div>

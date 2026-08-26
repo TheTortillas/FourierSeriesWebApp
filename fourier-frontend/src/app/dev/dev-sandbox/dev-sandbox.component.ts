@@ -34,7 +34,8 @@ export class DevSandboxComponent {
       phase: 'F4',
       ready: true,
     },
-    // Plano complejo
+    // Graficadores
+    { label: 'ℝ Real Grapher (Canvas 2D)', route: 'real-grapher', phase: 'ℝ', ready: true },
     { label: 'ℂ Complex Grapher (WebGL)', route: 'complex-grapher', phase: 'ℂ', ready: true },
   ];
 }

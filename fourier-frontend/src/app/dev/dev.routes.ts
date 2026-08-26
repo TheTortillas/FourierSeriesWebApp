@@ -85,7 +85,14 @@ export const devRoutes: Routes = [
             (m) => m.DftSignalLabPanelComponent,
           ),
       },
-      // ── Plano complejo ──────────────────────────────────────────────────
+      // ── Graficadores ────────────────────────────────────────────────────
+      {
+        path: 'real-grapher',
+        loadComponent: () =>
+          import('./panels/real-grapher/real-grapher-panel.component').then(
+            (m) => m.RealGrapherPanelComponent,
+          ),
+      },
       {
         path: 'complex-grapher',
         loadComponent: () =>
