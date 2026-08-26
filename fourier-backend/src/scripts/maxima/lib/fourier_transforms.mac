@@ -1612,10 +1612,17 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                 )
             ),
         /* Valid only for non-integer p > -1.
-           Integer p≥0: FT has delta-derivative terms not captured here (fall through). */
+           Integer p≥0: FT has delta-derivative terms not captured here (fall through).
+           When p is symbolic (e.g. p=1-alpha with only alpha>0 assumed), is(p>-1)
+           returns 'unknown rather than true/false — the service's per-parameter
+           assume(x>0) loop can't derive an upper-bound relation like alpha<2.
+           Accept the match whenever is() can't actively DISPROVE convergence
+           (same rationale as the CHIRPGAUSS matchers below), rather than falling
+           through to a generic integrate() that hangs on an interactive sign
+           prompt. Only reject outright when p>-1 is known false. */
         if is(_tp_u = true) and is(_tp_p # false) and not _tp_bad
-           and freeof(t_var, _tp_k) and is(_tp_p > -1)
-           and not integerp(_tp_p) then (
+           and freeof(t_var, _tp_k) and not integerp(_tp_p)
+           and not is(is(_tp_p > -1) = false) then (
             _a: _tp_p + 1,
             res: [_tp_k * gamma(_a) * abs(w_var)^(-_a) *
                   (cos(%pi*_a/2) - %i*sgn(w_var)*sin(%pi*_a/2)),
