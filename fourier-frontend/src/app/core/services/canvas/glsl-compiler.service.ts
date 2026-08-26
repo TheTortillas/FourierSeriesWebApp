@@ -163,6 +163,41 @@ vec2 cgamma(vec2 z){
   return _gcore(z);
 }
 
+// Shi(z) = -i · Si(iz)   [A&S 5.2.21]
+vec2 cshi(vec2 z){
+  vec2 iz=vec2(-z.y,z.x);
+  vec2 siiz=csi(iz);
+  return vec2(siiz.y,-siiz.x); // multiply by -i: (a+bi)*(-i) = (b,-a)
+}
+
+// Chi(z) = Ci(iz) - iπ/2   [A&S 5.2.22, valid for Re(z)>0]
+vec2 cchi(vec2 z){
+  vec2 iz=vec2(-z.y,z.x);
+  return cci(iz)-vec2(0.0,PI*0.5);
+}
+
+// beta(a,b) = Γ(a)·Γ(b) / Γ(a+b)
+vec2 cbeta(vec2 a,vec2 b){
+  return cdiv(cmul(cgamma(a),cgamma(b)),cgamma(a+b));
+}
+
+// factorial(z) = Γ(z+1)
+vec2 cfactorial(vec2 z){ return cgamma(z+vec2(1.0,0.0)); }
+
+// Fresnel K(z) = ∫₀ᶻ exp(-iξ²) dξ  via erf:
+// K(z) = (√π/2) · erf( (1-i)/√2 · z )   [Apéndice E, relación con cerf]
+vec2 cfresnelK(vec2 z){
+  // (1-i)/sqrt(2) = vec2(1/sqrt(2), -1/sqrt(2))
+  float s=0.7071067811865476; // 1/√2
+  vec2 w=cmul(vec2(s,-s),z);
+  // (√π/2) ≈ 0.8862269254527580
+  return cmul(vec2(0.8862269254527580,0.0),cerf(w));
+}
+
+// FresnelC(z) = Re(K(z)), FresnelS(z) = Im(K(z))
+vec2 cfresnelC(vec2 z){ return vec2(cfresnelK(z).x,0.0); }
+vec2 cfresnelS(vec2 z){ return vec2(cfresnelK(z).y,0.0); }
+
 vec3 hsv2rgb(float h,float s,float v){
   float hh=mod(h,1.0)*6.0;
   float i=floor(hh),f=hh-i;
@@ -189,6 +224,13 @@ const FN_MAP: Record<string, GlslFn> = {
   erf: 'cerf',   Erf: 'cerf',
   erfc: 'cerfc', Erfc: 'cerfc',
   erfi: 'cerfi', Erfi: 'cerfi',
+  Shi: 'cshi', shi: 'cshi',
+  Chi: 'cchi', chi: 'cchi',
+  beta: 'cbeta', Beta: 'cbeta',
+  factorial: 'cfactorial',
+  fresnelK: 'cfresnelK', FresnelK: 'cfresnelK',
+  fresnelC: 'cfresnelC', FresnelC: 'cfresnelC',
+  fresnelS: 'cfresnelS', FresnelS: 'cfresnelS',
   re:   (a) => `vec2((${a}).x,0.0)`,
   im:   (a) => `vec2((${a}).y,0.0)`,
   sign: (a) => `(length(${a})<1e-20?vec2(0.0):cdiv(${a},vec2(length(${a}),0.0)))`,

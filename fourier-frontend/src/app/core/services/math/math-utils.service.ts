@@ -834,5 +834,34 @@ export class MathUtilsService {
       if (a <= 0 || b <= 0) return NaN;
       return _gamma(a) * _gamma(b) / _gamma(a + b);
     }
+
+    // ── Fresnel integrals ──────────────────────────────────────────────────────
+    // C(x) = ∫₀ˣ cos(πt²/2) dt,  S(x) = ∫₀ˣ sin(πt²/2) dt
+    // Series de Taylor: C(x) = Σ (-1)ⁿ (π/2)²ⁿ x^(4n+1) / ((4n+1)(2n)!)
+    //                   S(x) = Σ (-1)ⁿ (π/2)²ⁿ⁺¹ x^(4n+3) / ((4n+3)(2n+1)!)
+    function _fresnelC(x) {
+      const p2 = Math.PI / 2, x2 = x * x;
+      let s = x, t = x, p2n = 1;
+      for (let n = 1; n <= 40; n++) {
+        p2n *= -p2 * p2 * x2 * x2;
+        t = p2n * x / ((4*n+1) * _factorial(2*n));
+        s += t;
+        if (Math.abs(t) < 1e-14 * Math.abs(s) && n > 2) break;
+      }
+      return s;
+    }
+    function _fresnelS(x) {
+      const p2 = Math.PI / 2, x2 = x * x;
+      let s = p2 * x * x * x / 3, t = s, p2n = p2;
+      for (let n = 1; n <= 40; n++) {
+        p2n *= -p2 * p2 * x2 * x2;
+        t = p2n * x * x * x / ((4*n+3) * _factorial(2*n+1));
+        s += t;
+        if (Math.abs(t) < 1e-14 * Math.abs(s) && n > 2) break;
+      }
+      return s;
+    }
+    // K(x) = C(x) en el eje real (parte real de la integral compleja de Fresnel)
+    function _fresnelK(x) { return _fresnelC(x); }
   `;
 }

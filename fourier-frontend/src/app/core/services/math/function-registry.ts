@@ -156,6 +156,9 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   { maxima: 'expintegral_ei',  latexNames: ['Ei'],  js: { kind: 'helper', name: '_Ei'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Ei'] },
   { maxima: 'expintegral_e1',  latexNames: ['E1'],  js: { kind: 'helper', name: '_E1'  }, category: 'exponential-integral', clientSideOnly: true },
   { maxima: 'expintegral_li',  latexNames: ['li'],  js: { kind: 'helper', name: '_li'  }, category: 'exponential-integral', clientSideOnly: true },
+  { maxima: 'fresnelC', latexNames: ['fresnelC', 'FresnelC'], js: { kind: 'helper', name: '_fresnelC' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelC', 'FresnelC'] },
+  { maxima: 'fresnelS', latexNames: ['fresnelS', 'FresnelS'], js: { kind: 'helper', name: '_fresnelS' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelS', 'FresnelS'] },
+  { maxima: 'fresnelK', latexNames: ['fresnelK', 'FresnelK'], js: { kind: 'helper', name: '_fresnelK' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelK', 'FresnelK'] },
 
   // ── Signal / distribution functions ───────────────────────────────────────
   // 'u' is a single letter — excluded from autoOperatorNames to allow variable use.
