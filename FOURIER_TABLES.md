@@ -506,6 +506,8 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 13b | $k\,\operatorname{sgn}(t-t_0)$            | $\dfrac{2k\,e^{-i\omega t_0}}{i\omega}$                                                                                           | $k$ cte., $t_0\neq0$                          |
 | 14  | $\dfrac{\sin(at)}{\pi t}$                 | $u(\omega+a)-u(\omega-a)$                                                                                                         | rect en frecuencia                            |
 | 14b | $k\,u(\omega+a)-k\,u(\omega-a)$           | $\dfrac{k\sin(at)}{\pi t}$                                                                                                        | rect en frecuencia                            |
+| 14c | $k\,\operatorname{Si}(at)$                | $\dfrac{k\pi\,\operatorname{sgn}(a)}{i\omega}\bigl[u(\omega+a)-u(\omega-a)\bigr]$                                                 | $a\neq0$; vía diferenciación temporal sobre #14 ($\tfrac{d}{dt}\operatorname{Si}(at)=a\cdot\text{sinc}(at)$) |
+| 14d | $k\,\operatorname{sgn}(t)\cdot\text{sinc}(at)$ | $\dfrac{-ik}{a}\ln\left\lvert\dfrac{\omega+a}{\omega-a}\right\rvert$                                                         | $a>0$; vía convolución en frecuencia de $\operatorname{sgn}(t)$ y $\text{sinc}(at)$ |
 | 15  | $\dfrac{k}{t}$                            | $-ik\pi\,\operatorname{sgn}(\omega)$                                                                                              | V.P. de Cauchy, $n=1$                         |
 | 15b | $\dfrac{k}{ct}$                           | $-\dfrac{ik\pi}{c}\,\operatorname{sgn}(\omega)$                                                                                   | $c\neq0$ cte.; equiv. a #15 con $k\to k/c$    |
 | 16  | $\dfrac{k}{t^n}$                          | $\dfrac{k(-i\omega)^{n-1}}{(n-1)!}\left(-i\pi\,\operatorname{sgn}(\omega)\right)$                                                 | V.P., $n\geq1$ entero                         |
@@ -553,6 +555,9 @@ $$f(t) = \mathcal{F}^{-1}\{F(\omega)\} = \frac{1}{2\pi} \int_{-\infty}^{\infty} 
 | 31  | $e^{-t^2/(2\sigma^2)}$ (gaussiana)          | $\sigma\sqrt{2\pi}\,e^{-\sigma^2\omega^2/2}$                                              | $\sigma > 0$                                                                        |
 | 32  | $e^{i\omega_0 t}\,g(t)$                     | $G(\omega - \omega_0)$                                                                    | desplazamiento en $\omega$                                                          |
 | 32b | $e^{bt}\,e^{-c\,e^{bt}}$ (Gumbel / doble-exponencial) | $\dfrac{c^{\,i\omega/b}}{bc}\,\Gamma\!\left(1-\dfrac{i\omega}{b}\right)$        | $b,c>0$; definida en todo $\mathbb{R}$ (no causal); sustitución $u=c\,e^{bt}$ reduce la integral a la de Euler para $\Gamma$; caso base $b=c=1$: $e^{t}e^{-e^{t}}\to\Gamma(1-i\omega)$ |
+| 32c | $k\,\lvert t\rvert^\alpha$ (par, exponente no entero)   | $\dfrac{-2k\sin(\alpha\pi/2)\,\Gamma(\alpha+1)}{\lvert\omega\rvert^{\alpha+1}}$ | $\alpha>-1$; caso base $\alpha=-1/2$: $\lvert t\rvert^{-1/2}\to\sqrt{2\pi/\lvert\omega\rvert}$ |
+| 32d | $k\,\lvert t\rvert^\alpha\operatorname{sgn}(t)$ (impar) | $\dfrac{-2ik\cos(\alpha\pi/2)\,\Gamma(\alpha+1)\,\operatorname{sgn}(\omega)}{\lvert\omega\rvert^{\alpha+1}}$ | $\alpha>-1$ |
+| 32e | $e^{-\pi(\alpha+i\beta)^2 t^2}$ (gaussiana compleja generalizada) | $\dfrac{e^{-\omega^2/(4\pi(\alpha+i\beta)^2)}}{\alpha+i\beta}$ | $\alpha\geq\lvert\beta\rvert$, $\alpha+i\beta\neq0$; generaliza #31 a exponente cuadrático complejo, par auto-dual (misma forma en IFT) |
 
 ---
 
@@ -596,6 +601,7 @@ Pares adicionales expresados desde el dominio de frecuencia, útiles al aplicar 
 | 63  | $\dfrac{k}{(a+i\omega)^{p}}$ (exponente real/no entero)              | $\dfrac{k\,t^{p-1}}{\Gamma(p)}\,e^{-at}u(t)$                                            | $a>0,\;p>-1$; generaliza #42 vía la función Gamma                                     |
 | 64  | $\left(\dfrac{\alpha}{a+i\omega}\right)^{\nu}$                       | $\dfrac{\alpha^{\nu}\,t^{\nu-1}\,e^{-\alpha t}\,u(t)}{\Gamma(\nu)}$                     | $\alpha>0,\;\nu>0$; par IFT de la densidad Erlang/Gamma (#24c)                        |
 | 65  | $\Gamma\!\left(1+\dfrac{i\omega}{b}\right)$                          | $e^{-bt}\,e^{-c\,e^{-bt}}$                                                              | $b,c>0$ (caso base $b=c=1$: $\Gamma(1+i\omega)\to e^{-t}e^{-e^{-t}}$); par IFT del Gumbel (#32b) vía reflexión $b\to-b$ |
+| 66  | $\dfrac{e^{-\omega^2/(4\pi A)}}{}$, $A=(\alpha+i\beta)^2$            | $\sqrt{A}\,e^{-\pi A t^2}$                                                              | $\alpha\geq\lvert\beta\rvert$, $\alpha+i\beta\neq0$; par IFT de la gaussiana compleja generalizada (#32e), auto-dual |
 
 ---
 
