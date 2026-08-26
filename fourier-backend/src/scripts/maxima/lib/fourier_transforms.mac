@@ -1726,6 +1726,52 @@ FT_pattern_lookup(f_expr, t_var, w_var) := block(
                          string(_as_p))]
     ),
 
+    /* ── UABST_OVER_ABST: k*u(|t|-a)/|t| -> -2*k*Ci(a*|w|)  (a>0)
+       f(t) = u(|t|-a)/|t| is even (both |t|-a and |t| are even in t), real,
+       and has NO singularity at t=0 (excluded from the support since |t|-a<0
+       there). Support is |t|>a, i.e. t>a or t<-a. By evenness the FT is
+       real and even too:
+         F(w) = int_{-inf}^{-a} e^{-iwt}/(-t) dt + int_a^{inf} e^{-iwt}/t dt
+       Both tails reduce (via the classical tail-integral identity used in
+       USTEP_OVER_T above) to -Ci(a*w) each for w>0, summing to -2*Ci(a*w);
+       extending by evenness gives -2*Ci(a*|w|). Verified both via this
+       two-tail derivation and numerically via quad_qawo (the Ci(0) endpoint
+       is singular, so the near-zero part of the integration range needs
+       quad_qags with a small positive lower bound rather than quad_qawo
+       directly from 0). This is a genuinely different function from
+       u(t-a)/t (previous handler): for a>0, u(t-a)/t already equals
+       u(t-a)/|t| pointwise (t>a>0 means |t|=t there) — the DISTINCT case
+       here is u(|t|-a)/|t|, which mirrors that same tail onto t<-a too and
+       removes the odd Si/sgn component that a single one-sided tail has,
+       leaving a purely even, purely real transform. ── */
+    if is(res = false) then block(
+        [_ua_k, _ua_a, _ua_u, _ua_bad],
+        _ua_k: 1, _ua_a: false, _ua_u: false, _ua_bad: false,
+        block([_ua_facs, _ua_f, _ua_num, _ua_den],
+            if not atom(e) and is(op(e) = "/") then (
+                _ua_num: part(e, 1),
+                _ua_den: part(e, 2),
+                if ratsimp(_ua_den - abs(t_var)) = 0 then (
+                    _ua_facs: if not atom(_ua_num) and is(op(_ua_num) = "*")
+                              then args(_ua_num) else [_ua_num],
+                    for _ua_f in _ua_facs do (
+                        if not atom(_ua_f) and is(op(_ua_f) = 'u) then (
+                            _ua_a: ratsimp(abs(t_var) - part(_ua_f, 1)),
+                            _ua_u: true
+                        ) else if freeof(t_var, _ua_f) then
+                            _ua_k: _ua_k * _ua_f
+                        else _ua_bad: true
+                    )
+                ) else _ua_bad: true
+            ) else _ua_bad: true
+        ),
+        if _ua_u and not _ua_bad and is(_ua_a # false)
+           and freeof(t_var, _ua_a) and freeof(t_var, _ua_k)
+           and is(_ua_a > 0) then
+            res: [-2 * _ua_k * expintegral_ci(_ua_a*abs(w_var)),
+                  concat("k*u(|t|-a)/|t| -> -2k*Ci(a|w|), a=", string(_ua_a))]
+    ),
+
     /* ── USTEP_OVER_T: k*u(t-a)/t -> k*(-Ci(a*|w|) - i*sgn(w)*(pi/2 - Si(a*|w|)))  (a>0)
        Derived from the classical real identities (definitions of Ci/Si as
        tail integrals): int_a^inf cos(w*t)/t dt = -Ci(a*w) and
@@ -6863,6 +6909,37 @@ IFT_pattern_lookup(F_expr, w_var, t_var) := block(
                 )
             )
         )
+    ),
+
+    /* ── UABST_OVER_ABST inverse: k*Ci(a*|w|) -> -(k/2)*u(|t|-a)/|t|  (a>0)
+       IFT counterpart of the FT_pattern_lookup UABST_OVER_ABST handler; -2*Ci
+       collapses the two symmetric tails of an even real function, so the
+       inverse just runs that in reverse (divide the Ci coefficient by -2).
+       Handles both the plain "-2*Ci(...)" shape (op="-" wrapping a "*") and
+       any other real coefficient k*Ci(a*|w|) generally. Verified numerically
+       (via quad_qags near the Ci(0) singularity + quad_qawo for the tail,
+       same technique as the forward direction) before implementing. ── */
+    if is(res = false) then block(
+        [_uai_k, _uai_a, _uai_found, _uai_bad, _uai_src, _uai_facs, _uai_f, _uai_arg],
+        _uai_k: 1, _uai_a: false, _uai_found: false, _uai_bad: false,
+        _uai_src: if not atom(e) and is(op(e) = "-") then (_uai_k: -1, first(args(e))) else e,
+        _uai_facs: if not atom(_uai_src) and is(op(_uai_src) = "*") then args(_uai_src)
+                   else [_uai_src],
+        for _uai_f in _uai_facs do (
+            if not atom(_uai_f) and is(op(_uai_f) = 'expintegral_ci) then (
+                _uai_arg: part(_uai_f, 1),
+                _uai_a: errcatch(ratsimp(_uai_arg / abs(w_var))),
+                if _uai_a # [] and freeof(w_var, first(_uai_a))
+                   and ratsimp(_uai_arg - first(_uai_a)*abs(w_var)) = 0 then (
+                    _uai_a: first(_uai_a), _uai_found: true
+                ) else _uai_bad: true
+            ) else if freeof(w_var, _uai_f) then _uai_k: _uai_k * _uai_f
+            else _uai_bad: true
+        ),
+        if _uai_found and not _uai_bad and freeof(w_var, _uai_a)
+           and freeof(w_var, _uai_k) and is(_uai_a > 0) then
+            res: [-(_uai_k/2) * u(abs(t_var) - _uai_a) / abs(t_var),
+                  concat("IFT k*Ci(a|w|) -> -(k/2)*u(|t|-a)/|t|, a=", string(_uai_a))]
     ),
 
     /* ── linearity: IFT(F+G+...) = IFT(F)+IFT(G)+... ──
