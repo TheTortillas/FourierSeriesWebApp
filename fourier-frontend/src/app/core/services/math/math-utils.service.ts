@@ -721,63 +721,75 @@ export class MathUtilsService {
       for (let n = 1; n <= 25; n++) { const tn = t * (-n / x); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
       return Math.exp(-x) / x * s;
     }
+    // Auxiliary functions for Si/Ci asymptotic (A&S 5.2.8, optimal truncation):
+    //   f(x) = (1/x) Σ (-1)^n (2n)!/x^{2n},   tf[n] = tf[n-1]·(2n)(2n-1)/x²
+    //   g(x) = (1/x²) Σ (-1)^n (2n+1)!/x^{2n}, tg[n] = tg[n-1]·(2n+1)(2n)/x²
     function _fAux(x) {
       let s = 1, t = 1, x2 = x * x;
-      for (let n = 1; n <= 25; n++) { const tn = t * (-(2*n) * (2*n-1) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
+      for (let n = 1; n <= 50; n++) { const tn = t * (-(2*n) * (2*n-1) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
       return s / x;
     }
     function _gAux(x) {
       let s = 1, t = 1, x2 = x * x;
-      for (let n = 1; n <= 25; n++) { const tn = t * (-(2*n+1) * (2*n) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
+      for (let n = 1; n <= 50; n++) { const tn = t * (-(2*n+1) * (2*n) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
       return s / (x * x);
     }
+    // Si(x) = ∫₀ˣ sin(t)/t dt.
+    // Taylor for |x|≤20 (200 terms, error <1e-10); asymptotic A&S 5.2.8 for |x|>20.
     function _Si(x) {
       const a = Math.abs(x);
-      if (a < 4) {
+      if (a <= 20) {
         let s = 0, t = x, x2 = x * x;
-        for (let n = 0; n < 30; n++) { s += t; t *= -x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3)); }
+        for (let n = 0; n < 200; n++) {
+          s += t;
+          t *= -x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3));
+          if (!isFinite(t)) break;
+          if (Math.abs(t) < 1e-15 * Math.abs(s) && n > 3) break;
+        }
         return s;
       }
-      // Si is odd: Si(-x) = -Si(x), so sign wraps the entire asymptotic expression
       return Math.sign(x) * (Math.PI / 2 - _fAux(a) * Math.cos(a) - _gAux(a) * Math.sin(a));
     }
+    // Ci(x) = γ + ln x + ∫₀ˣ (cos t − 1)/t dt.
+    // Taylor for x≤20 (200 terms, error <1e-9); asymptotic for x>20.
     function _Ci(x) {
       if (x <= 0) return NaN;
-      if (x < 4) {
+      if (x <= 20) {
         let s = 0, t = -x * x / 4, x2 = x * x;
-        for (let n = 1; n <= 30; n++) { s += t; t *= -x2 * 2*n / ((2*n+2) * (2*n+2) * (2*n+1)); }
+        for (let n = 1; n <= 200; n++) {
+          s += t;
+          t *= -x2 * (2*n) / ((2*n+2) * (2*n+2) * (2*n+1));
+          if (!isFinite(t)) break;
+          if (Math.abs(t) < 1e-15 * Math.abs(s) && n > 3) break;
+        }
         return _EG + Math.log(x) + s;
       }
       return _fAux(x) * Math.sin(x) - _gAux(x) * Math.cos(x);
     }
+    // Shi(x) = ∫₀ˣ sinh(t)/t dt.  Taylor series converges for all x (infinite radius);
+    // use up to 300 terms so x≤20 is accurate to 1e-9 relative.
     function _Shi(x) {
       if (x === 0) return 0;
-      const a = Math.abs(x);
-      if (a < 10) {
-        let s = 0, t = x, x2 = x * x;
-        for (let n = 0; n < 50; n++) {
-          s += t;
-          const tn = t * x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3));
-          if (Math.abs(tn) < 1e-13 * Math.abs(s) && n > 3) break;
-          t = tn;
-        }
-        return s;
+      let s = 0, t = x, x2 = x * x;
+      for (let n = 0; n < 300; n++) {
+        s += t;
+        t *= x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3));
+        if (!isFinite(t)) break;
+        if (Math.abs(t) < 1e-15 * Math.abs(s) && n > 3) break;
       }
-      return x > 0 ? (_Ei(x) + _E1(x)) / 2 : -(_Ei(a) + _E1(a)) / 2;
+      return s;
     }
+    // Chi(x) = γ + ln x + ∫₀ˣ (cosh t − 1)/t dt.  Same Taylor strategy as Shi.
     function _Chi(x) {
       if (x <= 0) return NaN;
-      if (x < 10) {
-        let s = 0, t = x * x / 4, x2 = x * x;
-        for (let n = 1; n <= 50; n++) {
-          s += t;
-          const tn = t * x2 * 2*n / ((2*n+2) * (2*n+2) * (2*n+1));
-          if (Math.abs(tn) < 1e-13 * Math.abs(s) && n > 3) break;
-          t = tn;
-        }
-        return _EG + Math.log(x) + s;
+      let s = 0, t = x * x / 4, x2 = x * x;
+      for (let n = 1; n <= 300; n++) {
+        s += t;
+        t *= x2 * (2*n) / ((2*n+2) * (2*n+2) * (2*n+1));
+        if (!isFinite(t)) break;
+        if (Math.abs(t) < 1e-15 * Math.abs(s) && n > 3) break;
       }
-      return (_Ei(x) - _E1(x)) / 2;
+      return _EG + Math.log(x) + s;
     }
     function _li(x) { return x <= 0 ? NaN : _Ei(Math.log(x)); }
 
