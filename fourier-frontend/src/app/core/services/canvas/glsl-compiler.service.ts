@@ -69,12 +69,16 @@ void _sfg(vec2 z, out vec2 fv, out vec2 gv){
   gv=cdiv(sg,zz);
 }
 
-// Si(z) = integral_0^z sin(t)/t dt
-// Taylor: s += (-1)^k * u/(2k+1),  u_{k+1} = u_k * z^2/((2k+2)(2k+3))
-// Used for |z|<=14; asymptotic for |z|>14.
+// Si(z) = integral_0^z sin(t)/t dt  [entire function, Si(-z) = -Si(z)]
+// Taylor for |z|<=14; asymptotic (A&S 5.2.6) for |z|>14.
+// For Re(z)<0 we fold: Si(z) = -Si(-z), reducing to Re>0 half-plane and
+// avoiding float32 cancellation in the alternating Taylor on the negative axis.
 vec2 csi(vec2 z){
-  if(dot(z,z)<196.0){
-    vec2 zz=cmul(z,z),u=z,s=vec2(0.0);
+  float negRe=step(z.x,0.0);          // 1.0 if Re(z)<=0
+  vec2 zp=z*(1.0-2.0*negRe);          // zp = z if Re>=0, -z if Re<0
+  vec2 result;
+  if(dot(zp,zp)<196.0){
+    vec2 zz=cmul(zp,zp),u=zp,s=vec2(0.0);
     float sg=1.0;
     for(int i=0;i<80;i++){
       float k=float(i);
@@ -82,10 +86,13 @@ vec2 csi(vec2 z){
       u=cmul(u,cdiv(zz,vec2((2.0*k+2.0)*(2.0*k+3.0),0.0)));
       sg=-sg;
     }
-    return s;
+    result=s;
+  } else {
+    vec2 fv,gv; _sfg(zp,fv,gv);
+    // Asymptotic constant is +π/2 for Re(z)>0 (A&S 5.2.6); we always use Re(zp)>=0 here.
+    result=vec2(PI*0.5,0.0)-cmul(fv,ccos(zp))-cmul(gv,csin(zp));
   }
-  vec2 fv,gv; _sfg(z,fv,gv);
-  return vec2(PI*0.5,0.0)-cmul(fv,ccos(z))-cmul(gv,csin(z));
+  return result*(1.0-2.0*negRe);      // negate back if original Re(z)<0
 }
 vec2 cssi(vec2 z){ return csi(z)-vec2(PI*0.5,0.0); }
 
