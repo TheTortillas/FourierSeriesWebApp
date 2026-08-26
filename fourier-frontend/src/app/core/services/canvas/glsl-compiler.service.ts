@@ -49,25 +49,34 @@ vec2 cabs_f(vec2 z){ return vec2(length(z),0.0); }
 vec2 carg_f(vec2 z){ return vec2(atan(z.y,z.x),0.0); }
 vec2 cconj(vec2 z) { return vec2(z.x,-z.y); }
 
+// Asymptotic auxiliary functions for Si/Ci (A&S 5.2.8), optimal truncation.
+// Accurate for |z| > 14; for smaller |z| the Taylor below is used instead.
+// tf[k] = tf[k-1] * (-1/z^2) * 2k(2k-1),  tg[k] = tg[k-1] * (-1/z^2) * (2k+1)(2k)
 void _sfg(vec2 z, out vec2 fv, out vec2 gv){
   vec2 zz=cmul(z,z);
   vec2 iz2=cdiv(vec2(-1.0,0.0),zz);
   vec2 tf=vec2(1.0,0.0),sf=vec2(1.0,0.0);
   vec2 tg=vec2(1.0,0.0),sg=vec2(1.0,0.0);
-  for(int k=1;k<=8;k++){
+  for(int k=1;k<=12;k++){
     float fk=float(k);
-    tf=cmul(tf,iz2*(2.0*fk*(2.0*fk-1.0)));   sf+=tf;
-    tg=cmul(tg,iz2*((2.0*fk+1.0)*(2.0*fk))); sg+=tg;
+    vec2 ntf=cmul(tf,iz2*(2.0*fk*(2.0*fk-1.0)));
+    vec2 ntg=cmul(tg,iz2*((2.0*fk+1.0)*(2.0*fk)));
+    // Stop when terms grow (optimal asymptotic truncation)
+    if(dot(ntf,ntf)>=dot(tf,tf)) break;
+    tf=ntf; tg=ntg; sf+=tf; sg+=tg;
   }
   fv=cdiv(sf,z);
   gv=cdiv(sg,zz);
 }
 
+// Si(z) = integral_0^z sin(t)/t dt
+// Taylor: s += (-1)^k * u/(2k+1),  u_{k+1} = u_k * z^2/((2k+2)(2k+3))
+// Used for |z|<=14; asymptotic for |z|>14.
 vec2 csi(vec2 z){
-  if(dot(z,z)<64.0){
+  if(dot(z,z)<196.0){
     vec2 zz=cmul(z,z),u=z,s=vec2(0.0);
     float sg=1.0;
-    for(int i=0;i<50;i++){
+    for(int i=0;i<80;i++){
       float k=float(i);
       s+=sg*cdiv(u,vec2(2.0*k+1.0,0.0));
       u=cmul(u,cdiv(zz,vec2((2.0*k+2.0)*(2.0*k+3.0),0.0)));
@@ -80,12 +89,15 @@ vec2 csi(vec2 z){
 }
 vec2 cssi(vec2 z){ return csi(z)-vec2(PI*0.5,0.0); }
 
+// Ci(z) = gamma + ln z + integral_0^z (cos t - 1)/t dt
+// Taylor: w = z^2/2, s += (-1)^n * w/(2n),  w_{n+1} = w_n * z^2/((2n+1)(2n+2))
+// Used for |z|<=14; asymptotic for |z|>14.
 vec2 cci(vec2 z){
-  if(dot(z,z)<64.0){
+  if(dot(z,z)<196.0){
     const float EG=0.5772156649015329;
     vec2 zz=cmul(z,z),w=cdiv(zz,vec2(2.0,0.0)),s=vec2(0.0);
     float sg=-1.0;
-    for(int i=0;i<50;i++){
+    for(int i=0;i<80;i++){
       float n=float(i)+1.0;
       s+=sg*cdiv(w,vec2(2.0*n,0.0));
       w=cmul(w,cdiv(zz,vec2((2.0*n+1.0)*(2.0*n+2.0),0.0)));
