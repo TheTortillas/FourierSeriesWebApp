@@ -97,8 +97,10 @@ vec2 csi(vec2 z){
 vec2 cssi(vec2 z){ return csi(z)-vec2(PI*0.5,0.0); }
 
 // Ci(z) = gamma + ln z + integral_0^z (cos t - 1)/t dt
-// Taylor: w = z^2/2, s += (-1)^n * w/(2n),  w_{n+1} = w_n * z^2/((2n+1)(2n+2))
-// Used for |z|<=14; asymptotic for |z|>14.
+// Taylor for |z|<=14; asymptotic (A&S 5.2.6) for |z|>14.
+// Asymptotic is valid only for |arg z| < π. For Re(z)<0 in the large branch,
+// fold via Ci(-z) = Ci(z) ∓ iπ  (−iπ if Im z ≥ 0, +iπ if Im z < 0).
+// Branch cut of Ci is on (−∞, 0); Taylor handles it via clog's principal branch.
 vec2 cci(vec2 z){
   if(dot(z,z)<196.0){
     const float EG=0.5772156649015329;
@@ -112,6 +114,15 @@ vec2 cci(vec2 z){
     }
     return vec2(EG,0.0)+clog(z)+s;
   }
+  // Large |z|: asymptotic only valid for Re(z)>0; fold negative side.
+  if(z.x<0.0){
+    // Ci(-z) = Ci(z) - iπ·sign(Im z), so Ci(z) = Ci(-z) + iπ·sign(Im z)
+    float sgn=z.y>=0.0?1.0:-1.0;
+    vec2 zn=vec2(-z.x,-z.y);
+    vec2 fv,gv; _sfg(zn,fv,gv);
+    vec2 cin=cmul(fv,csin(zn))-cmul(gv,ccos(zn));
+    return cin+vec2(0.0,PI*sgn);
+  }
   vec2 fv,gv; _sfg(z,fv,gv);
   return cmul(fv,csin(z))-cmul(gv,ccos(z));
 }
@@ -121,7 +132,7 @@ vec2 ccin(vec2 z){
   vec2 w=cdiv(zz,vec2(2.0,0.0));
   vec2 s=vec2(0.0);
   float sg=1.0;
-  for(int i=0;i<50;i++){
+  for(int i=0;i<80;i++){
     float n=float(i)+1.0;
     s+=sg*cdiv(w,vec2(2.0*n,0.0));
     w=cmul(w,cdiv(zz,vec2((2.0*n+1.0)*(2.0*n+2.0),0.0)));
@@ -132,22 +143,26 @@ vec2 ccin(vec2 z){
 
 vec2 cerf(vec2 z){
   float r2=dot(z,z);
-  if(r2<9.0){
+  if(r2<16.0){
+    // Taylor: erf(z) = (2/√π)·z·Σ_{n=0}^∞ (-1)^n z^{2n} / (n!(2n+1))
     vec2 zz=cmul(z,z),t=z,s=vec2(0.0);
     float sg=1.0,fac=1.0;
-    for(int n=0;n<30;n++){
+    for(int n=0;n<40;n++){
       float k=float(n);
       s+=sg*cdiv(t,vec2(fac*(2.0*k+1.0),0.0));
       t=cmul(t,zz); fac*=k+1.0; sg=-sg;
     }
     return s*1.1283791670955126;
   }else{
+    // Asymptotic erfc(z) ~ exp(-z²)/√π · (1/z) Σ (-(2k-1)!!)/(2z²)^k
+    // Optimal truncation: stop when |tk| starts growing.
     vec2 zz=cmul(z,z);
     vec2 tk=vec2(1.0,0.0),s=vec2(1.0,0.0);
-    for(int k=1;k<=12;k++){
+    for(int k=1;k<=20;k++){
       float fk=float(k);
-      tk=cmul(tk,cdiv(vec2(-(2.0*fk-1.0),0.0),cmul(vec2(2.0,0.0),zz)));
-      s+=tk;
+      vec2 ntk=cmul(tk,cdiv(vec2(-(2.0*fk-1.0),0.0),cmul(vec2(2.0,0.0),zz)));
+      if(dot(ntk,ntk)>=dot(tk,tk)) break;
+      tk=ntk; s+=tk;
     }
     vec2 erfc_z=cdiv(cmul(cexp(-zz),s),z*1.7724538509055159);
     return vec2(1.0,0.0)-erfc_z;
