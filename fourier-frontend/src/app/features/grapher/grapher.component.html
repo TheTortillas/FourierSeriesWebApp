@@ -226,7 +226,7 @@
           (click)="toggleGroup(group.id)"
           class="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-semibold text-ink/80 dark:text-dark-ink/80 hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
         >
-          <span>{{ group.label }}</span>
+          <span>{{ group.label | transloco }}</span>
           <svg
             [class]="isCollapsed(group.id)
               ? 'w-3 h-3 text-muted dark:text-dark-muted transition-transform'

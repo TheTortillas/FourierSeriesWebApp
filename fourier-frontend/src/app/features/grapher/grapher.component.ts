@@ -66,7 +66,7 @@ export const FN_GROUPS: FnGroup[] = [
     ],
   },
   {
-    label: 'Hiperbólicas',
+    label: 'grapher.groups.hyp',
     keys: [
       { label: 'sinh', write: '\\sinh' },
       { label: 'cosh', write: '\\cosh' },
@@ -165,7 +165,7 @@ function e(label: string, latex: string, maxima: string, desc?: string): LibEntr
 export const LIBRARY_GROUPS: LibGroup[] = [
   {
     id: 'basic',
-    label: 'Básicas',
+    label: 'grapher.groups.basic',
     entries: [
       e('x', 'x', 'x'),
       e('x²', 'x^{2}', 'x^2'),
@@ -182,7 +182,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'explog',
-    label: 'Exponencial y logaritmo',
+    label: 'grapher.groups.explog',
     entries: [
       e('exp(x)', 'e^{x}', 'exp(x)'),
       e('exp(−x)', 'e^{-x}', 'exp(-x)'),
@@ -200,7 +200,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'trig',
-    label: 'Trigonométricas',
+    label: 'grapher.groups.trig',
     entries: [
       e('sin(x)', '\\sin\\left(x\\right)', 'sin(x)'),
       e('cos(x)', '\\cos\\left(x\\right)', 'cos(x)'),
@@ -219,7 +219,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'hyp',
-    label: 'Hiperbólicas',
+    label: 'grapher.groups.hyp',
     entries: [
       e('sinh(x)', '\\sinh\\left(x\\right)', 'sinh(x)'),
       e('cosh(x)', '\\cosh\\left(x\\right)', 'cosh(x)'),
@@ -236,7 +236,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'gamma',
-    label: 'Función Gamma',
+    label: 'grapher.groups.gamma',
     entries: [
       e('Γ(x)', '\\Gamma\\left(x\\right)', 'gamma(x)', 'Función Gamma de Euler'),
       e('1/Γ(x)', '\\frac{1}{\\Gamma\\left(x\\right)}', '1/gamma(x)', 'Función entera'),
@@ -264,7 +264,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'error',
-    label: 'Función error',
+    label: 'grapher.groups.error',
     entries: [
       e('erf(x)', '\\operatorname{erf}\\left(x\\right)', 'erf(x)', 'Error function'),
       e('erfc(x)', '\\operatorname{erfc}\\left(x\\right)', 'erfc(x)', '1 − erf(x)'),
@@ -282,7 +282,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'integral',
-    label: 'Integrales seno/coseno',
+    label: 'grapher.groups.integral',
     entries: [
       e('Si(x)', '\\operatorname{Si}\\left(x\\right)', 'expintegral_si(x)', 'Seno integral'),
       e('Ci(x)', '\\operatorname{Ci}\\left(x\\right)', 'expintegral_ci(x)', 'Coseno integral'),
@@ -315,7 +315,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'fresnel',
-    label: 'Integrales de Fresnel',
+    label: 'grapher.groups.fresnel',
     entries: [
       e('C(x)', 'C\\left(x\\right)', 'fresnelC(x)', 'Fresnel C(x)'),
       e('S(x)', 'S\\left(x\\right)', 'fresnelS(x)', 'Fresnel S(x)'),
@@ -330,7 +330,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'expint',
-    label: 'Integrales exponenciales',
+    label: 'grapher.groups.expint',
     entries: [
       e('Ei(x)', '\\operatorname{Ei}\\left(x\\right)', 'expintegral_ei(x)', 'Integral exponencial'),
       e('E₁(x)', 'E_{1}\\left(x\\right)', 'expintegral_e1(x)', 'E₁ = −Ei(−x) para x>0'),
@@ -347,7 +347,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'sgnal',
-    label: 'Señales',
+    label: 'grapher.groups.sgnal',
     entries: [
       e('u(x)', '\\operatorname{u}\\left(x\\right)', 'u(x)', 'Escalón Heaviside'),
       e('rect(x)', '\\operatorname{rect}\\left(x\\right)', 'rect(x)', 'Pulso rectangular'),
@@ -370,7 +370,7 @@ export const LIBRARY_GROUPS: LibGroup[] = [
   },
   {
     id: 'composed',
-    label: 'Compuestas',
+    label: 'grapher.groups.composed',
     entries: [
       e(
         'sin(x)·erf(x)',
@@ -496,9 +496,11 @@ export class GrapherComponent {
   readonly canvasMounted = signal(true);
   readonly fnGroups = FN_GROUPS;
   readonly libraryGroups = LIBRARY_GROUPS;
-  readonly collapsed = signal<Record<string, boolean>>({});
+  readonly collapsed = signal<Record<string, boolean>>(
+    Object.fromEntries(LIBRARY_GROUPS.map((g) => [g.id, true])),
+  );
   /** Maps expression id → latex string to sync into its MathQuill field. Cleared after one render. */
-  readonly syncMap = signal<Record<string, string>>({});
+  readonly syncMap = signal<Record<string, string | null>>({});
 
   /** The expression currently active in the MathQuill field (last non-empty visible one). */
   readonly activeExprLatex = computed<string | null>(() => {

@@ -103,7 +103,20 @@
       "hide": "Ocultar",
       "remove": "Remover"
     },
-    "library": "Biblioteca f(x)"
+    "library": "Biblioteca f(x)",
+    "groups": {
+      "basic": "Básicas",
+      "explog": "Exponencial e logaritmo",
+      "trig": "Trigonométricas",
+      "hyp": "Hiperbólicas",
+      "gamma": "Função Gama",
+      "error": "Função erro",
+      "integral": "Integrais seno/cosseno",
+      "fresnel": "Integrais de Fresnel",
+      "expint": "Integrais exponenciais",
+      "sgnal": "Sinais",
+      "composed": "Compostas"
+    }
   },
   "home": {
     "subtitle": "Calcule e plote séries de Fourier, integrais, transformadas contínuas e DFT/FFT. Resolva transformadas de Laplace com análise de polos, zeros e ROC no plano complexo. Resolva equações diferenciais ordinárias, PVI e PVC. Resultados simbólicos exatos com exportação para LaTeX.",

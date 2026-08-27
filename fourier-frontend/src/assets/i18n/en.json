@@ -103,6 +103,19 @@
       "show": "Show",
       "hide": "Hide",
       "remove": "Remove"
+    },
+    "groups": {
+      "basic": "Basic",
+      "explog": "Exponential & logarithm",
+      "trig": "Trigonometric",
+      "hyp": "Hyperbolic",
+      "gamma": "Gamma function",
+      "error": "Error function",
+      "integral": "Sine/cosine integrals",
+      "fresnel": "Fresnel integrals",
+      "expint": "Exponential integrals",
+      "sgnal": "Signals",
+      "composed": "Composed"
     }
   },
   "home": {

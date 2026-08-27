@@ -103,7 +103,20 @@
       "hide": "Ausblenden",
       "remove": "Entfernen"
     },
-    "library": "Bibliothek f(x)"
+    "library": "Bibliothek f(x)",
+    "groups": {
+      "basic": "Grundfunktionen",
+      "explog": "Exponential & Logarithmus",
+      "trig": "Trigonometrisch",
+      "hyp": "Hyperbolisch",
+      "gamma": "Gammafunktion",
+      "error": "Fehlerfunktion",
+      "integral": "Sinus-/Kosinus-Integrale",
+      "fresnel": "Fresnel-Integrale",
+      "expint": "Exponentialintegrale",
+      "sgnal": "Signale",
+      "composed": "Zusammengesetzt"
+    }
   },
   "home": {
     "subtitle": "Berechnen und visualisieren Sie Fourier-Reihen, Integrale, kontinuierliche Transformationen und DFT/FFT. Lösen Sie Laplace-Transformationen mit Pol-Nullstellen- und ROC-Analyse in der komplexen Ebene. Lösen Sie gewöhnliche Differentialgleichungen, Anfangswert- und Randwertprobleme. Exakte symbolische Ergebnisse mit LaTeX-Export.",

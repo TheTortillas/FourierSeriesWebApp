@@ -103,6 +103,19 @@
       "show": "Mostrar",
       "hide": "Ocultar",
       "remove": "Eliminar"
+    },
+    "groups": {
+      "basic": "Básicas",
+      "explog": "Exponencial y logaritmo",
+      "trig": "Trigonométricas",
+      "hyp": "Hiperbólicas",
+      "gamma": "Función Gamma",
+      "error": "Función error",
+      "integral": "Integrales seno/coseno",
+      "fresnel": "Integrales de Fresnel",
+      "expint": "Integrales exponenciales",
+      "sgnal": "Señales",
+      "composed": "Compuestas"
     }
   },
   "home": {
