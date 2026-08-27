@@ -1582,9 +1582,12 @@
     "library": "Libreria f(z)",
     "groups": {
       "poly": "Polinomi e razionali",
+      "pow": "Potenze e funzioni di z",
       "explog": "Esponenziale e logaritmo",
       "trig": "Trigonometriche",
+      "hyp": "Iperboliche",
       "gamma": "Gamma e Zeta",
+      "gammaExtra": "Beta e fattoriale",
       "mobius": "Möbius e razionali",
       "composed": "Composte",
       "error": "Funzione errore",

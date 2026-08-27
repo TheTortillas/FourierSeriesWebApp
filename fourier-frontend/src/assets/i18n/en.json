@@ -1583,9 +1583,12 @@
     "library": "Library f(z)",
     "groups": {
       "poly": "Polynomials & rational",
+      "pow": "Powers & z-functions",
       "explog": "Exponential & logarithm",
       "trig": "Trigonometric",
+      "hyp": "Hyperbolic",
       "gamma": "Gamma & Zeta",
+      "gammaExtra": "Beta & factorial",
       "mobius": "Möbius & rational",
       "composed": "Composed",
       "error": "Error function",
