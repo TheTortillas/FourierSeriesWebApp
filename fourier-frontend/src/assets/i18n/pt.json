@@ -86,7 +86,9 @@
       "showRoots": "Raízes (função-eixo)",
       "showIntersections": "Interseções (função-função)",
       "xAxis": "Formato do eixo X",
-      "zoom": "Zoom inicial"
+      "zoom": "Zoom inicial",
+      "title": "Configurações",
+      "params": "Parâmetros livres"
     },
     "style": {
       "lineStyle": "Estilo da linha",
@@ -100,7 +102,8 @@
       "show": "Mostrar",
       "hide": "Ocultar",
       "remove": "Remover"
-    }
+    },
+    "library": "Biblioteca f(x)"
   },
   "home": {
     "subtitle": "Calcule e plote séries de Fourier, integrais, transformadas contínuas e DFT/FFT. Resolva transformadas de Laplace com análise de polos, zeros e ROC no plano complexo. Resolva equações diferenciais ordinárias, PVI e PVC. Resultados simbólicos exatos com exportação para LaTeX.",
@@ -873,6 +876,10 @@
     },
     "ode": {
       "description": "Resolva equações diferenciais ordinárias lineares até 3ª ordem. Obtenha a solução geral com constantes de integração, aplique condições iniciais (PVI) ou condições de contorno (PVC) e visualize a solução com um gráfico interativo. Motor CAS simbólico exato com tecnologia Maxima."
+    },
+    "grapher": {
+      "title": "Gráfico de funções reais — AEM-Lab",
+      "description": "Represente funções matemáticas reais: trigonométricas, especiais, gama, Fresnel, Si/Ci e mais. Detecte raízes e interseções de forma interativa."
     }
   },
   "dev": {

@@ -86,7 +86,9 @@
       "showRoots": "Nullstellen (Funktion-Achse)",
       "showIntersections": "Schnittpunkte (Funktion-Funktion)",
       "xAxis": "Format der X-Achse",
-      "zoom": "Anfangszoom"
+      "zoom": "Anfangszoom",
+      "title": "Einstellungen",
+      "params": "Freie Parameter"
     },
     "style": {
       "lineStyle": "Linienstil",
@@ -100,7 +102,8 @@
       "show": "Anzeigen",
       "hide": "Ausblenden",
       "remove": "Entfernen"
-    }
+    },
+    "library": "Bibliothek f(x)"
   },
   "home": {
     "subtitle": "Berechnen und visualisieren Sie Fourier-Reihen, Integrale, kontinuierliche Transformationen und DFT/FFT. Lösen Sie Laplace-Transformationen mit Pol-Nullstellen- und ROC-Analyse in der komplexen Ebene. Lösen Sie gewöhnliche Differentialgleichungen, Anfangswert- und Randwertprobleme. Exakte symbolische Ergebnisse mit LaTeX-Export.",
@@ -873,6 +876,10 @@
     },
     "ode": {
       "description": "Lösen Sie lineare gewöhnliche Differentialgleichungen bis zur 3. Ordnung. Erhalten Sie die allgemeine Lösung mit Integrationskonstanten, wenden Sie Anfangsbedingungen (AWP) oder Randbedingungen (RWP) an und visualisieren Sie die Lösung mit einer interaktiven Grafik. Exakte symbolische CAS-Engine auf Basis von Maxima."
+    },
+    "grapher": {
+      "title": "Grafik reeller Funktionen — AEM-Lab",
+      "description": "Zeichnen Sie reelle mathematische Funktionen: trigonometrische, spezielle, Gamma, Fresnel, Si/Ci und mehr. Nullstellen und Schnittpunkte interaktiv erkennen."
     }
   },
   "dev": {

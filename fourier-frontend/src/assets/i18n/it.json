@@ -86,7 +86,9 @@
       "showRoots": "Radici (funzione-asse)",
       "showIntersections": "Intersezioni (funzione-funzione)",
       "xAxis": "Formato asse X",
-      "zoom": "Zoom iniziale"
+      "zoom": "Zoom iniziale",
+      "title": "Impostazioni",
+      "params": "Parametri liberi"
     },
     "style": {
       "lineStyle": "Stile linea",
@@ -100,7 +102,8 @@
       "show": "Mostra",
       "hide": "Nascondi",
       "remove": "Rimuovi"
-    }
+    },
+    "library": "Libreria f(x)"
   },
   "home": {
     "subtitle": "Calcola e visualizza serie di Fourier, integrali, trasformate continue e DFT/FFT. Risolvi trasformate di Laplace con analisi di poli, zeri e ROC nel piano complesso. Risolvi equazioni differenziali ordinarie, PVI e PVC. Risultati simbolici esatti con esportazione in LaTeX.",
@@ -873,6 +876,10 @@
     },
     "ode": {
       "description": "Risolvi equazioni differenziali ordinarie lineari fino al 3° ordine. Ottieni la soluzione generale con costanti di integrazione, applica condizioni iniziali (PVI) o condizioni al contorno (PVC) e visualizza la soluzione con un grafico interattivo. Motore CAS simbolico esatto basato su Maxima."
+    },
+    "grapher": {
+      "title": "Grafico di funzioni reali — AEM-Lab",
+      "description": "Rappresenta funzioni matematiche reali: trigonometriche, speciali, gamma, Fresnel, Si/Ci e altro. Rileva radici e intersezioni in modo interattivo."
     }
   },
   "dev": {

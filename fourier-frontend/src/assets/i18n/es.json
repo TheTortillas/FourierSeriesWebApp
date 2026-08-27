@@ -74,6 +74,7 @@
   },
   "grapher": {
     "addExpression": "+ Agregar expresión",
+    "library": "Biblioteca f(x)",
     "changeColor": "Cambiar color",
     "show": "Mostrar",
     "hide": "Ocultar",
@@ -82,11 +83,13 @@
     "xLabel": "x",
     "yLabel": "y",
     "settings": {
+      "title": "Configuración",
       "markers": "Marcadores",
       "showRoots": "Raíces (función-eje)",
       "showIntersections": "Intersecciones (función-función)",
       "xAxis": "Formato eje X",
-      "zoom": "Zoom inicial"
+      "zoom": "Zoom inicial",
+      "params": "Parámetros libres"
     },
     "style": {
       "lineStyle": "Estilo de línea",
@@ -873,6 +876,10 @@
     },
     "ode": {
       "description": "Resuelve ecuaciones diferenciales ordinarias lineales hasta 3er orden. Obtén la solución general con constantes de integración, aplica condiciones iniciales (PVI) o condiciones de frontera (BVP) y visualiza la solución con gráfica interactiva. Motor CAS simbólico exacto basado en Maxima."
+    },
+    "grapher": {
+      "title": "Graficador de funciones reales — AEM-Lab",
+      "description": "Grafica funciones matemáticas reales: trigonométricas, especiales, gamma, Fresnel, Si/Ci y más. Detecta raíces e intersecciones de forma interactiva."
     }
   },
   "dev": {

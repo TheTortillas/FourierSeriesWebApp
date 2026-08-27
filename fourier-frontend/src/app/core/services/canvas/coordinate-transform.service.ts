@@ -54,6 +54,20 @@ export class CoordinateTransformService {
     };
   }
 
+  // ── Math → CSS (for onDraw callbacks — ctx has dpr scale applied) ─────────
+
+  mathToCssX(mathX: number, vp: CanvasViewport): number {
+    return this.mathToScreenX(mathX, vp) / vp.dpr;
+  }
+
+  mathToCssY(mathY: number, vp: CanvasViewport): number {
+    return this.mathToScreenY(mathY, vp) / vp.dpr;
+  }
+
+  mathToCss(p: MathPoint, vp: CanvasViewport): ScreenPoint {
+    return { x: this.mathToCssX(p.x, vp), y: this.mathToCssY(p.y, vp) };
+  }
+
   // ── CSS → Math (for event coordinates) ───────────────────────────────────
 
   cssToMathX(cssX: number, vp: CanvasViewport): number {

@@ -74,6 +74,7 @@
   },
   "grapher": {
     "addExpression": "+ Add expression",
+    "library": "Library f(x)",
     "changeColor": "Change color",
     "show": "Show",
     "hide": "Hide",
@@ -82,11 +83,13 @@
     "xLabel": "x",
     "yLabel": "y",
     "settings": {
+      "title": "Settings",
       "markers": "Markers",
       "showRoots": "Roots (function-axis)",
       "showIntersections": "Intersections (function-function)",
       "xAxis": "X-axis format",
-      "zoom": "Initial zoom"
+      "zoom": "Initial zoom",
+      "params": "Free parameters"
     },
     "style": {
       "lineStyle": "Line style",
@@ -873,6 +876,10 @@
     },
     "ode": {
       "description": "Solve linear ordinary differential equations up to 3rd order. Obtain the general solution with integration constants, apply initial conditions (IVP) or boundary conditions (BVP), and visualise the solution with an interactive graph. Exact symbolic CAS engine powered by Maxima."
+    },
+    "grapher": {
+      "title": "Real Function Grapher — AEM-Lab",
+      "description": "Graph real mathematical functions: trigonometric, special, gamma, Fresnel, Si/Ci and more. Detect roots and intersections interactively."
     }
   },
   "dev": {

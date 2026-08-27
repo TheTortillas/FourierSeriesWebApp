@@ -4,6 +4,7 @@ import {
   ElementRef,
   OnDestroy,
   ViewChild,
+  effect,
   inject,
   input,
   output,
@@ -48,6 +49,8 @@ export class GrapherExpressionComponent implements AfterViewInit, OnDestroy {
 
   readonly expr = input.required<GraphExpression>();
   readonly isOnly = input<boolean>(false);
+  /** When set to a non-empty string, forces the MathQuill field to that LaTeX value. */
+  readonly syncLatex = input<string | null>(null);
 
   readonly changed = output<GraphExpression>();
   readonly removed = output<string>();
@@ -56,6 +59,17 @@ export class GrapherExpressionComponent implements AfterViewInit, OnDestroy {
 
   field: MathField | null = null;
   private _syncing = false;
+
+  constructor() {
+    effect(() => {
+      const lat = this.syncLatex();
+      if (lat && this.field && !this._syncing) {
+        this._syncing = true;
+        this.field.latex(lat);
+        this._syncing = false;
+      }
+    });
+  }
   conversionError: string | null = null;
   readonly styleOpen = signal(false);
 
