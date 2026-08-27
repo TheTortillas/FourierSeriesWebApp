@@ -39,6 +39,24 @@
           }
         </div>
 
+        <!-- Equation preview box -->
+        @if (previewLatex()) {
+          <div class="relative rounded border border-border dark:border-dark-border bg-paper dark:bg-dark-surface px-4 py-3 overflow-x-auto flex items-center justify-center min-h-12">
+            <span
+              #laplacePreviewEl
+              class="text-ink dark:text-dark-ink text-base block"
+              [mathjax]="'\\[' + previewLatex() + '\\]'"
+            ></span>
+            <div class="absolute top-1.5 right-1.5">
+              <app-export-button
+                [tex]="previewLatex() ?? ''"
+                [mathEl]="laplacePreviewEl"
+                filename="laplace-function"
+              />
+            </div>
+          </div>
+        }
+
         <!-- ── Inputs (locked when result exists) ───────────────────────── -->
         <div
           class="flex flex-col gap-5"
@@ -304,6 +322,7 @@
               varAlias="s"
               [mode]="complexPlaneMode()"
               [colorScheme]="complexColorScheme()"
+              [invertMod]="complexInvertMod()"
               [wireframe]="complexWireframe()"
               [showGrid3d]="complexShowGrid3d()"
               [resolution]="complexResolution()"
@@ -395,6 +414,12 @@
                       </button>
                     }
                   </div>
+                  @if (complexColorScheme() === 'classic') {
+                    <label class="flex items-center justify-between text-[11px] font-mono mt-1">
+                      <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneInvertMod' | transloco }}</span>
+                      <input type="checkbox" [ngModel]="complexInvertMod()" (ngModelChange)="complexInvertMod.set($event)" class="accent-accent" />
+                    </label>
+                  }
                 </section>
               }
 

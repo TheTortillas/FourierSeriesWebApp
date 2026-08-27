@@ -1447,6 +1447,7 @@
     "complexPlaneColorClassic": "Clásico",
     "complexPlaneColorPhase": "Fase",
     "complexPlaneColorMagnitude": "Módulo",
+    "complexPlaneInvertMod": "Invertir módulo",
     "complexPlaneLegend": "Leyenda",
     "complexPlaneLegendStrip": "Tira",
     "complexPlaneLegendCircle": "Círculo",

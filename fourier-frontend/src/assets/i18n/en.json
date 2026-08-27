@@ -1447,6 +1447,7 @@
     "complexPlaneColorClassic": "Classic",
     "complexPlaneColorPhase": "Phase",
     "complexPlaneColorMagnitude": "Magnitude",
+    "complexPlaneInvertMod": "Invert modulus",
     "complexPlaneLegend": "Legend",
     "complexPlaneLegendStrip": "Strip",
     "complexPlaneLegendCircle": "Circle",
