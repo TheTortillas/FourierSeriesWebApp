@@ -134,7 +134,7 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   // ── Combinatorial / Gamma family ───────────────────────────────────────────
   // gamma_incomplete_* and beta are too long to type freely — no autoOperatorNames.
   // They are inserted via the function keyboard only.
-  { maxima: 'gamma',                        latexNames: ['gamma', 'Gamma'],                                 js: { kind: 'helper', name: '_gamma'                        }, category: 'combinatorial', autoOperatorNames: ['gamma'] },
+  { maxima: 'gamma',                        latexNames: ['gamma', 'Gamma'],                                 js: { kind: 'helper', name: '_gamma'                        }, category: 'combinatorial', autoOperatorNames: ['gamma', 'Gamma'] },
   // Incomplete gamma & beta: typed as GammaU/GammaL/GammaQ/Beta (no underscores — MathQuill treats _ as subscript)
   // clientSideOnly: tex2max can't handle multi-argument functions with commas
   { maxima: 'gamma_incomplete',             latexNames: ['GammaU', 'GammaInc'],                            js: { kind: 'helper', name: '_gamma_incomplete'             }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['GammaU', 'GammaInc'] },
@@ -158,7 +158,7 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   // ── Exponential integral functions ─────────────────────────────────────────
   // E1 and li conflict with variable names — omitted from autoOperatorNames.
   { maxima: 'expintegral_si',  latexNames: ['Si'],  js: { kind: 'helper', name: '_Si'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Si'] },
-  { maxima: 'si',              latexNames: ['si'],  js: { kind: 'stub'                 }, category: 'exponential-integral', clientSideOnly: true },
+  { maxima: 'si',              latexNames: ['si'],  js: { kind: 'stub'                 }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['si'] },
   { maxima: 'expintegral_ci',  latexNames: ['Ci'],  js: { kind: 'helper', name: '_Ci'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Ci'] },
   { maxima: 'Cin',             latexNames: ['Cin'], js: { kind: 'stub'                 }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Cin'] },
   { maxima: 'expintegral_shi', latexNames: ['Shi'], js: { kind: 'helper', name: '_Shi' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Shi'] },
