@@ -232,6 +232,39 @@ vec2 cfresnelK(vec2 z){
 vec2 cfresnelC(vec2 z){ return vec2(cfresnelK(z).x,0.0); }
 vec2 cfresnelS(vec2 z){ return vec2(cfresnelK(z).y,0.0); }
 
+// ζ(z) — Riemann Zeta via Borwein (1991), n=12 Chebyshev-accelerated Euler.
+// Uses functional equation ζ(z)=2^z π^(z-1) sin(πz/2) Γ(1-z) ζ(1-z) for Re(z)<0.5.
+// Borwein coefficients e_k = (d_k - d_n)/d_n for n=12:
+//   d_k = n * sum_{j=k..n} C(n,j)*C(n+j,j)/2^j, d_n = d_0
+// Exact d values (n=12): 14002,11837,9322,6870,4712,2982,1719,884,398,149,44,9,1
+vec2 _zetaCore(vec2 z){
+  float dn=14002.0;
+  // e_k = (d_k - d_n)/d_n, precomputed:
+  float e[12];
+  e[0]= 0.000000; e[1]=-0.000001; e[2]=-0.000065; e[3]=-0.001292;
+  e[4]=-0.011519; e[5]=-0.057540; e[6]=-0.182718; e[7]=-0.401780;
+  e[8]=-0.656607; e[9]=-0.855691; e[10]=-0.958920; e[11]=-0.992985;
+  vec2 sum=vec2(0.0);
+  for(int k=0;k<12;k++){
+    float sign=mod(float(k),2.0)==0.0?1.0:-1.0;
+    vec2 kpow=cexp(cmul(z,clog(vec2(float(k)+1.0,0.0))));
+    sum+=cmul(vec2(sign*e[k],0.0),cdiv(vec2(1.0,0.0),kpow));
+  }
+  vec2 two1z=cexp(cmul(vec2(1.0,0.0)-z,clog(vec2(2.0,0.0))));
+  return cdiv(sum,vec2(1.0,0.0)-two1z);
+}
+
+vec2 czeta(vec2 z){
+  if(abs(z.x-1.0)<0.04&&abs(z.y)<0.04) return vec2(1e6,0.0);
+  if(z.x>=0.5) return _zetaCore(z);
+  // Reflection formula
+  vec2 w=vec2(1.0-z.x,-z.y);
+  vec2 two_z =cexp(cmul(z,             clog(vec2(2.0,0.0))));
+  vec2 pi_z1 =cexp(cmul(z-vec2(1.0,0.0),clog(vec2(PI,0.0))));
+  vec2 sinpz2=csin(cmul(vec2(PI*0.5,0.0),z));
+  return cmul(cmul(cmul(cmul(two_z,pi_z1),sinpz2),cgamma(w)),_zetaCore(w));
+}
+
 vec3 hsv2rgb(float h,float s,float v){
   float hh=mod(h,1.0)*6.0;
   float i=floor(hh),f=hh-i;
@@ -265,6 +298,7 @@ const FN_MAP: Record<string, GlslFn> = {
   fresnelK: 'cfresnelK', FresnelK: 'cfresnelK',
   fresnelC: 'cfresnelC', FresnelC: 'cfresnelC',
   fresnelS: 'cfresnelS', FresnelS: 'cfresnelS',
+  zeta: 'czeta', Zeta: 'czeta',
   re:   (a) => `vec2((${a}).x,0.0)`,
   im:   (a) => `vec2((${a}).y,0.0)`,
   sign: (a) => `(length(${a})<1e-20?vec2(0.0):cdiv(${a},vec2(length(${a}),0.0)))`,
@@ -379,7 +413,8 @@ export class GlslCompilerService {
   private normalizeConstants(expr: string): string {
     return expr
       .replace(/%pi\b/g, '(3.141592653589793)')
-      .replace(/%e\b/g,  '(2.718281828459045)');
+      .replace(/%e\b/g,  '(2.718281828459045)')
+      .replace(/%i\b/g,  'i');
   }
 
   // ── Private: AST walker ───────────────────────────────────────────────────

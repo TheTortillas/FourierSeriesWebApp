@@ -187,7 +187,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    cancelAnimationFrame(this.raf);
+    if (this.isBrowser) cancelAnimationFrame(this.raf);
     this.resizeObs?.disconnect();
   }
 
