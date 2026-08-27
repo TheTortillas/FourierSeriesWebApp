@@ -167,7 +167,7 @@ export type FourierSeriesType = 'trigonometric' | 'complex' | 'halfRange';
 // ── Complex plane (WebGL) types ────────────────────────────────────────────────
 
 /** Domain-coloring color scheme for 2D complex plots */
-export type ColorScheme = 'classic' | 'phase' | 'magnitude';
+export type ColorScheme = 'classic' | 'phase' | 'magnitude' | 'enhanced';
 
 /** A point in the complex plane with evaluated f(z) */
 export interface ComplexPoint {

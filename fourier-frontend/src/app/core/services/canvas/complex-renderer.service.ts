@@ -29,6 +29,14 @@ void main(){
   vec3 color;
   if(u_scheme==2){
     float v=atan(aW*1.2)/(PI*0.5); color=vec3(v);
+  } else if(u_scheme==3){
+    // Enhanced (Wegert-style): hue=arg, value=|f|/(1+|f|) — zeros→black, poles→white
+    float v=aW/(1.0+aW);
+    float logA=log2(max(aW,1.0e-12));
+    float mf=logA-floor(logA);
+    float iso=0.5+0.5*cos(2.0*PI*mf);
+    if(u_modlines!=0) v*=0.80+0.20*iso;
+    color=hsv2rgb(h,0.95,v);
   } else if(u_scheme==1){
     color=hsv2rgb(h,1.0,0.88);
   } else {
@@ -251,7 +259,7 @@ export class ComplexRendererService implements OnDestroy {
     const gl = this.gl;
     if (!gl || !this.prog2D) return;
     const W = canvas.width, H = canvas.height;
-    const si = ({ classic: 0, phase: 1, magnitude: 2 } as const)[scheme];
+    const si = ({ classic: 0, phase: 1, magnitude: 2, enhanced: 3 } as const)[scheme];
 
     gl.disable(gl.DEPTH_TEST);
     gl.viewport(0, 0, W, H);

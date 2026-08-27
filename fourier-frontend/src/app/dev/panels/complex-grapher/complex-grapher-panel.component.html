@@ -130,10 +130,12 @@
     @if (mode() === '2d') {
       <section class="px-3 py-2.5 border-b border-white/10 flex flex-col gap-2.5">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-500">Color</p>
-        <div class="flex rounded border border-white/15 overflow-hidden text-[11px]">
-          @for (s of [['classic','Clásico'],['phase','Fase'],['magnitude','Módulo']]; track s[0]) {
+        <div class="grid grid-cols-2 gap-1 text-[10px]">
+          @for (s of [['classic','Clásico'],['enhanced','Mejorada'],['phase','Fase'],['magnitude','Módulo']]; track s[0]) {
             <button (click)="colorScheme.set($any(s[0]))"
-              [class]="colorScheme() === s[0] ? 'flex-1 py-1 bg-indigo-600 font-semibold cursor-pointer text-[10px]' : 'flex-1 py-1 text-gray-400 hover:text-white cursor-pointer transition-colors text-[10px]'">
+              [class]="colorScheme() === s[0]
+                ? 'py-1 rounded border bg-indigo-600 border-indigo-500 font-semibold cursor-pointer'
+                : 'py-1 rounded border border-white/15 text-gray-400 hover:text-white cursor-pointer transition-colors'">
               {{ s[1] }}
             </button>
           }

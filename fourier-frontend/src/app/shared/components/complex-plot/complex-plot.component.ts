@@ -42,6 +42,13 @@ function phaseColorJS(argW: number, absW: number, scheme: ColorScheme, modLines:
   const h = ((argW / (2 * Math.PI)) + 1) % 1;
   if (scheme === 'magnitude') { const g = Math.atan(absW * 1.2) / (Math.PI * 0.5) * 255 | 0; return [g, g, g]; }
   if (scheme === 'phase') return hsvToRgb(h, 1, 0.88);
+  if (scheme === 'enhanced') {
+    const logA = Math.log2(Math.max(absW, 1e-12));
+    const iso = 0.5 + 0.5 * Math.cos(2 * Math.PI * (logA - Math.floor(logA)));
+    let vv = absW / (1 + absW);
+    if (modLines) vv *= 0.80 + 0.20 * iso;
+    return hsvToRgb(h, 0.95, vv);
+  }
   const logA = Math.log2(Math.max(absW, 1e-12));
   const iso = 0.5 + 0.5 * Math.cos(2 * Math.PI * (logA - Math.floor(logA)));
   let vv = Math.atan(absW * 1.5) / (Math.PI * 0.5);
@@ -328,6 +335,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     const bh = 160, bw = 14, bx = W - 66, by = Math.round(H / 2 - bh / 2);
     const scheme = this.colorScheme();
     const modLines = this.showModLines();
+    const c2 = this.complexColors();
     ctx.save();
     ctx.globalAlpha = 0.9;
     for (let py = 0; py < bh; py++) {
@@ -335,7 +343,6 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
       const [r, g, b] = phaseColorJS(argV, 1.5, scheme, modLines);
       ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(bx, by + py, bw, 1);
     }
-    const c2 = this.complexColors();
     ctx.globalAlpha = 1;
     ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
     ctx.strokeRect(bx, by, bw, bh);
@@ -349,6 +356,29 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     }
     ctx.font = '9px monospace'; ctx.fillStyle = c2.legendMuted;
     ctx.textAlign = 'center'; ctx.fillText('arg', bx + bw / 2, by - 6);
+
+    // Second strip: |f| gradient for enhanced scheme
+    if (scheme === 'enhanced') {
+      const mx = bx - 22;
+      ctx.globalAlpha = 0.9;
+      for (let py = 0; py < bh; py++) {
+        // map py: bottom=0(zero) → top=∞(pole); use |f|=tan(t·π/2)
+        const t = 1 - py / bh;
+        const absV = Math.tan(t * Math.PI * 0.48); // avoid tan(π/2)
+        const v = absV / (1 + absV);
+        const lv = Math.round(v * 255);
+        ctx.fillStyle = `rgb(${lv},${lv},${lv})`; ctx.fillRect(mx, by + py, 10, 1);
+      }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
+      ctx.strokeRect(mx, by, 10, bh);
+      ctx.font = '9px monospace'; ctx.fillStyle = c2.legendMuted;
+      ctx.textAlign = 'center'; ctx.fillText('|f|', mx + 5, by - 6);
+      ctx.font = '9px monospace'; ctx.textAlign = 'right';
+      ctx.fillStyle = c2.legendMuted;
+      ctx.fillText('∞', mx - 3, by + 4);
+      ctx.fillText('0', mx - 3, by + bh + 3);
+    }
     ctx.restore();
   }
 
@@ -356,17 +386,38 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     const R = 50, cx = W - 76, cy = H - 76;
     const scheme = this.colorScheme();
     const modLines = this.showModLines();
+    const c2 = this.complexColors();
     ctx.save();
     ctx.globalAlpha = 0.9;
-    for (let a = 0; a < 360; a++) {
-      const argW = (a / 360) * 2 * Math.PI - Math.PI;
-      const [r, g, b] = phaseColorJS(argW, 1.5, scheme, modLines);
-      const a1 = (a / 360) * 2 * Math.PI;
-      ctx.beginPath(); ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, R, a1, a1 + Math.PI / 180 + 0.02);
-      ctx.closePath(); ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fill();
+
+    if (scheme === 'enhanced') {
+      // Rasterize pixel-by-pixel so we can vary both hue (angle) and value (radius→|f|)
+      const D = R * 2 + 2;
+      const imgData = ctx.createImageData(D, D);
+      for (let py = 0; py < D; py++) {
+        for (let px = 0; px < D; px++) {
+          const dx = px - R, dy = py - R;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > R) continue;
+          const argW = Math.atan2(-dy, dx);  // math convention: +y up
+          const absV = dist / (R - dist + 0.5); // 0 at center, ∞ at edge
+          const [r, g, b] = phaseColorJS(argW, absV, scheme, modLines);
+          const i = (py * D + px) * 4;
+          imgData.data[i] = r; imgData.data[i+1] = g; imgData.data[i+2] = b; imgData.data[i+3] = 230;
+        }
+      }
+      ctx.putImageData(imgData, cx - R - 1, cy - R - 1);
+    } else {
+      for (let a = 0; a < 360; a++) {
+        const argW = (a / 360) * 2 * Math.PI - Math.PI;
+        const [r, g, b] = phaseColorJS(argW, 1.5, scheme, modLines);
+        const a1 = (a / 360) * 2 * Math.PI;
+        ctx.beginPath(); ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, R, a1, a1 + Math.PI / 180 + 0.02);
+        ctx.closePath(); ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fill();
+      }
     }
-    const c2 = this.complexColors();
+
     ctx.globalAlpha = 1;
     ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
@@ -376,6 +427,10 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     ctx.fillText('π',   cx - R - 9,  cy);
     ctx.fillText('π/2',  cx,          cy - R - 10);
     ctx.fillText('−π/2', cx,          cy + R + 10);
+    if (scheme === 'enhanced') {
+      ctx.font = '9px monospace'; ctx.fillStyle = c2.legendMuted;
+      ctx.fillText('0', cx, cy + 4);
+    }
     ctx.restore();
   }
 
