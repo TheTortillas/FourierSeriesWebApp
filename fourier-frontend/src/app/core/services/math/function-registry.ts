@@ -135,18 +135,19 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   // gamma_incomplete_* and beta are too long to type freely — no autoOperatorNames.
   // They are inserted via the function keyboard only.
   { maxima: 'gamma',                        latexNames: ['gamma', 'Gamma'],                                 js: { kind: 'helper', name: '_gamma'                        }, category: 'combinatorial', autoOperatorNames: ['gamma', 'Gamma'] },
-  // Incomplete gamma & beta: typed as GammaU/GammaL/GammaQ/Beta (no underscores — MathQuill treats _ as subscript)
-  // clientSideOnly: tex2max can't handle multi-argument functions with commas
-  { maxima: 'gamma_incomplete',             latexNames: ['GammaU', 'GammaInc'],                            js: { kind: 'helper', name: '_gamma_incomplete'             }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['GammaU', 'GammaInc'] },
-  { maxima: 'gamma_incomplete_lower',       latexNames: ['GammaL', 'GammaIncLower'],                       js: { kind: 'helper', name: '_gamma_incomplete_lower'       }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['GammaL', 'GammaIncLower'] },
-  { maxima: 'gamma_incomplete_regularized', latexNames: ['GammaQ', 'GammaReg', 'GammaIncReg'],             js: { kind: 'helper', name: '_gamma_incomplete_regularized' }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['GammaQ', 'GammaReg'] },
-  { maxima: 'beta',                         latexNames: ['Beta'],                                           js: { kind: 'helper', name: '_beta'                         }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['Beta'] },
+  // Incomplete gamma & beta: parser reconstitutes via ident accumulator; not in autoOperatorNames (mixed case)
+  { maxima: 'gamma_incomplete',             latexNames: ['GammaU', 'GammaInc'],                            js: { kind: 'helper', name: '_gamma_incomplete'             }, category: 'combinatorial', clientSideOnly: true },
+  { maxima: 'gamma_incomplete_lower',       latexNames: ['GammaL', 'GammaIncLower'],                       js: { kind: 'helper', name: '_gamma_incomplete_lower'       }, category: 'combinatorial', clientSideOnly: true },
+  { maxima: 'gamma_incomplete_regularized', latexNames: ['GammaQ', 'GammaReg', 'GammaIncReg'],             js: { kind: 'helper', name: '_gamma_incomplete_regularized' }, category: 'combinatorial', clientSideOnly: true },
+  { maxima: 'beta',                         latexNames: ['Beta'],                                           js: { kind: 'helper', name: '_beta'                         }, category: 'combinatorial', clientSideOnly: true },
   { maxima: 'factorial', latexNames: ['factorial'], js: { kind: 'helper', name: '_factorial' }, category: 'combinatorial', autoOperatorNames: ['factorial'] },
 
   // ── Complex-domain functions (clientSideOnly — the GLSL compiler handles them) ─
   { maxima: 'arg',   latexNames: ['arg'],  js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['arg'] },
-  { maxima: 're',    latexNames: ['re'],   js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['re'] },
-  { maxima: 'im',    latexNames: ['im'],   js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['im'] },
+  // 're' and 'im' omitted from autoOperatorNames: MathQuill would intercept them mid-word
+  // (e.g. typing "fresnelC" becomes "f\operatorname{re}snelC"). Parser handles them via accumulator.
+  { maxima: 're',    latexNames: ['re'],   js: { kind: 'stub' }, category: 'misc', clientSideOnly: true },
+  { maxima: 'im',    latexNames: ['im'],   js: { kind: 'stub' }, category: 'misc', clientSideOnly: true },
   { maxima: 'conj',  latexNames: ['conj'], js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['conj'] },
   { maxima: 'zeta',  latexNames: ['zeta'], js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['zeta'] },
 
@@ -157,6 +158,11 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
 
   // ── Exponential integral functions ─────────────────────────────────────────
   // E1 and li conflict with variable names — omitted from autoOperatorNames.
+  // autoOperatorNames only accepts pure-letter strings — no digits, no mixed-case multi-word.
+  // Single-capital names (Si, Ci, Shi, Chi, Ei) and digit names (E1) are handled by the
+  // ident accumulator in the parser; they don't need autoOperatorNames to be parsed correctly.
+  // Single-capital names (Si, Ci, Shi, Chi, Ei) are pure letters — valid in autoOperatorNames.
+  // E1 contains a digit — excluded; parser handles it via ident accumulator.
   { maxima: 'expintegral_si',  latexNames: ['Si'],  js: { kind: 'helper', name: '_Si'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Si'] },
   { maxima: 'si',              latexNames: ['si'],  js: { kind: 'stub'                 }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['si'] },
   { maxima: 'expintegral_ci',  latexNames: ['Ci'],  js: { kind: 'helper', name: '_Ci'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Ci'] },
@@ -164,11 +170,13 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   { maxima: 'expintegral_shi', latexNames: ['Shi'], js: { kind: 'helper', name: '_Shi' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Shi'] },
   { maxima: 'expintegral_chi', latexNames: ['Chi'], js: { kind: 'helper', name: '_Chi' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Chi'] },
   { maxima: 'expintegral_ei',  latexNames: ['Ei'],  js: { kind: 'helper', name: '_Ei'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Ei'] },
-  { maxima: 'expintegral_e1',  latexNames: ['E1'],  js: { kind: 'helper', name: '_E1'  }, category: 'exponential-integral', clientSideOnly: true },
+  { maxima: 'expintegral_e1',  latexNames: ['E1', 'expintegral_e1'],  js: { kind: 'helper', name: '_E1'  }, category: 'exponential-integral', clientSideOnly: true },
   { maxima: 'expintegral_li',  latexNames: ['li'],  js: { kind: 'helper', name: '_li'  }, category: 'exponential-integral', clientSideOnly: true },
-  { maxima: 'fresnelC', latexNames: ['fresnelC', 'FresnelC'], js: { kind: 'helper', name: '_fresnelC' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelC', 'FresnelC'] },
-  { maxima: 'fresnelS', latexNames: ['fresnelS', 'FresnelS'], js: { kind: 'helper', name: '_fresnelS' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelS', 'FresnelS'] },
-  { maxima: 'fresnelK', latexNames: ['fresnelK', 'FresnelK'], js: { kind: 'helper', name: '_fresnelK' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelK', 'FresnelK'] },
+  // fresnelC/S/K are pure letters — valid in autoOperatorNames now that 're' is removed.
+  // 're' was intercepting mid-word (f·RE·snelC), so it was removed from autoOperatorNames.
+  { maxima: 'fresnelC', latexNames: ['fresnelC', 'FresnelC'], js: { kind: 'helper', name: '_fresnelC' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelC'] },
+  { maxima: 'fresnelS', latexNames: ['fresnelS', 'FresnelS'], js: { kind: 'helper', name: '_fresnelS' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelS'] },
+  { maxima: 'fresnelK', latexNames: ['fresnelK', 'FresnelK'], js: { kind: 'helper', name: '_fresnelK' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelK'] },
 
   // ── Signal / distribution functions ───────────────────────────────────────
   // 'u' is a single letter — excluded from autoOperatorNames to allow variable use.

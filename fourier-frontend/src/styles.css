@@ -163,6 +163,28 @@ html.dark .mq-editable-field .mq-cursor {
   border-color: var(--color-dark-accent) !important;
 }
 
+/* ── Complex-plotter standalone field (.mq-field) ───────────────────────────
+   The complex-plotter marks its MathQuill element with .mq-field so we can
+   override background/border here (same stylesheet, higher specificity,
+   later in the cascade — wins over the transparent !important above).       */
+.mq-field.mq-editable-field {
+  background: var(--color-paper2) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 0.25rem !important;
+  min-height: 2.5rem;
+  transition: border-color 150ms ease;
+}
+.mq-field.mq-editable-field.mq-focused {
+  border-color: var(--color-accent) !important;
+}
+html.dark .mq-field.mq-editable-field {
+  background: var(--color-dark-surface2) !important;
+  border-color: var(--color-dark-border) !important;
+}
+html.dark .mq-field.mq-editable-field.mq-focused {
+  border-color: var(--color-dark-accent) !important;
+}
+
 /* ─── MathJax preview container ─────────────────────────────────────────────
    ALIGNMENT: controls how the rendered formula is positioned in the preview box.
    To change, edit text-align on mjx-container[display="true"].

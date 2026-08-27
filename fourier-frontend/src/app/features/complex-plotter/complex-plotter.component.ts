@@ -24,7 +24,8 @@ import type { ColorScheme } from '../../core/services/canvas/canvas.types';
 
 export interface CLibEntry {
   label: string;
-  latex: string;
+  latex: string;      // Used for MathJax render in the sidebar
+  mqLatex?: string;   // Used when writing into MathQuill (if different from latex)
   maxima: string;
   desc?: string;
 }
@@ -35,8 +36,8 @@ export interface CLibGroup {
   entries: CLibEntry[];
 }
 
-function e(label: string, latex: string, maxima: string, desc?: string): CLibEntry {
-  return { label, latex, maxima, desc };
+function e(label: string, latex: string, maxima: string, desc?: string, mqLatex?: string): CLibEntry {
+  return { label, latex, mqLatex, maxima, desc };
 }
 
 export const COMPLEX_LIBRARY_GROUPS: CLibGroup[] = [
@@ -151,13 +152,13 @@ export const COMPLEX_LIBRARY_GROUPS: CLibGroup[] = [
     id: 'gamma-extra',
     label: 'complex.groups.gammaExtra',
     entries: [
-      e('z!', 'z!', 'factorial(z)', 'Factorial complejo = Γ(z+1)'),
-      e('B(z,2)', 'B\\left(z,2\\right)', 'beta(z,2)', 'Beta compleja, b=2'),
-      e('B(z,½)', 'B\\left(z,\\frac{1}{2}\\right)', 'beta(z,0.5)', 'B(z,½) = √π·Γ(z)/Γ(z+½)'),
-      e('B(z,z)', 'B\\left(z,z\\right)', 'beta(z,z)'),
-      e('B(z,1−z)', 'B\\left(z,1-z\\right)', 'beta(z,1-z)', 'Fórmula de reflexión'),
-      e('1/z!', '\\frac{1}{z!}', '1/factorial(z)'),
-      e('z!·sin(πz)', 'z!\\sin\\left(\\pi z\\right)', 'factorial(z)*sin(%pi*z)', 'Relacionada con Γ'),
+      e('z!', 'z!', 'factorial(z)', 'Factorial complejo = Γ(z+1)', '\\operatorname{factorial}\\left(z\\right)'),
+      e('B(z,2)', 'B\\left(z,2\\right)', 'beta(z,2)', 'Beta compleja, b=2', '\\operatorname{Beta}\\left(z,2\\right)'),
+      e('B(z,½)', 'B\\left(z,\\frac{1}{2}\\right)', 'beta(z,0.5)', 'B(z,½) = √π·Γ(z)/Γ(z+½)', '\\operatorname{Beta}\\left(z,\\frac{1}{2}\\right)'),
+      e('B(z,z)', 'B\\left(z,z\\right)', 'beta(z,z)', undefined, '\\operatorname{Beta}\\left(z,z\\right)'),
+      e('B(z,1−z)', 'B\\left(z,1-z\\right)', 'beta(z,1-z)', 'Fórmula de reflexión', '\\operatorname{Beta}\\left(z,1-z\\right)'),
+      e('1/z!', '\\frac{1}{z!}', '1/factorial(z)', undefined, '\\frac{1}{\\operatorname{factorial}\\left(z\\right)}'),
+      e('z!·sin(πz)', 'z!\\sin\\left(\\pi z\\right)', 'factorial(z)*sin(%pi*z)', 'Relacionada con Γ', '\\operatorname{factorial}\\left(z\\right)\\sin\\left(\\pi z\\right)'),
     ],
   },
   {
@@ -223,11 +224,11 @@ export const COMPLEX_LIBRARY_GROUPS: CLibGroup[] = [
     label: 'complex.groups.expint',
     entries: [
       e('Ei(z)', '\\operatorname{Ei}\\left(z\\right)', 'expintegral_ei(z)', 'Integral exponencial'),
-      e('E₁(z)', 'E_{1}\\left(z\\right)', 'expintegral_e1(z)', 'Función E₁'),
-      e('exp(z)·E₁(z)', 'e^{z}E_{1}\\left(z\\right)', 'exp(z)*expintegral_e1(z)'),
+      e('E₁(z)', 'E_{1}\\left(z\\right)', 'expintegral_e1(z)', 'Función E₁', '\\operatorname{E1}\\left(z\\right)'),
+      e('exp(z)·E₁(z)', 'e^{z}E_{1}\\left(z\\right)', 'exp(z)*expintegral_e1(z)', undefined, 'e^{z}\\operatorname{E1}\\left(z\\right)'),
       e('Ei(z)/z', '\\frac{\\operatorname{Ei}\\left(z\\right)}{z}', 'expintegral_ei(z)/z'),
       e('Ei(z²)', '\\operatorname{Ei}\\left(z^{2}\\right)', 'expintegral_ei(z^2)'),
-      e('E₁(z²)', 'E_{1}\\left(z^{2}\\right)', 'expintegral_e1(z^2)'),
+      e('E₁(z²)', 'E_{1}\\left(z^{2}\\right)', 'expintegral_e1(z^2)', undefined, '\\operatorname{E1}\\left(z^{2}\\right)'),
     ],
   },
   {
@@ -383,10 +384,11 @@ export class ComplexPlotterComponent implements AfterViewInit, OnDestroy {
   }
 
   loadExample(entry: CLibEntry): void {
-    this.exprLatex.set(entry.latex);
+    const mqLat = entry.mqLatex ?? entry.latex;
+    this.exprLatex.set(mqLat);
     this.exprMaxima.set(entry.maxima);
     this.conversionError.set(null);
-    this.syncLatex.set(entry.latex);
+    this.syncLatex.set(mqLat);
     requestAnimationFrame(() => requestAnimationFrame(() => this.syncLatex.set(null)));
   }
 

@@ -159,7 +159,28 @@ class Parser {
 
     if (tok.t === 'ident') {
       this.eat();
-      const name = tok.v;
+      let name = tok.v;
+
+      // Greedily accumulate consecutive ident tokens to form multi-letter names.
+      // The tokeniser emits one letter per ident token (e.g. "Si" → ['S','i']).
+      // Here we re-join consecutive letters, stopping as soon as the candidate
+      // is no longer a prefix of any registry key. We commit the longest valid
+      // registry match found along the way.
+      {
+        const allKeys = [...LATEX_TO_MAXIMA.keys()];
+        let best: string | null = LATEX_TO_MAXIMA.has(name) ? name : null;
+        let acc = name;
+        while (this.is('ident')) {
+          const next = (this.peek() as { t: 'ident'; v: string }).v;
+          const candidate = acc + next;
+          if (!allKeys.some((k) => k.startsWith(candidate))) break;
+          this.eat();
+          acc = candidate;
+          if (LATEX_TO_MAXIMA.has(acc)) best = acc;
+        }
+        // Use the longest registry match if it's multi-letter; else keep what we have.
+        name = (best && best.length > 1) ? best : acc;
+      }
 
       // ODE prime notation: if this ident is the unknown function, count trailing primes
       if (this.ode && name === this.ode.fn) {

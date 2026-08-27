@@ -317,32 +317,31 @@ vec3 hsv2rgb(float h,float s,float v){
 
 type GlslFn = string | ((arg: string) => string);
 
+// Keys are Maxima canonical names (what the LaTeX→Maxima parser outputs).
+// Dead aliases (arcsin, ln, Si, Erf, Beta, Zeta, FresnelC, shi, ci…) removed.
 const FN_MAP: Record<string, GlslFn> = {
+  // ── Basic ─────────────────────────────────────────────────────────────────
   sin: 'csin', cos: 'ccos', tan: 'ctan',
   sinh: 'csinh', cosh: 'ccosh', tanh: 'ctanh',
   asin: 'casin', acos: 'cacos', atan: 'catan',
-  arcsin: 'casin', arccos: 'cacos', arctan: 'catan',
-  exp: 'cexp', log: 'clog', ln: 'clog',
+  exp: 'cexp', log: 'clog',
   sqrt: 'csqrt', gamma: 'cgamma',
   abs: 'cabs_f', arg: 'carg_f', conj: 'cconj',
-  Si: 'csi',  si: 'cssi',
-  Ci: 'cci',  ci: 'cci',  Cin: 'ccin', cin: 'ccin',
-  erf: 'cerf',   Erf: 'cerf',
-  erfc: 'cerfc', Erfc: 'cerfc',
-  erfi: 'cerfi', Erfi: 'cerfi',
-  Shi: 'cshi', shi: 'cshi',
-  Chi: 'cchi', chi: 'cchi',
-  beta: 'cbeta', Beta: 'cbeta',
-  factorial: 'cfactorial',
-  fresnelK: 'cfresnelK', FresnelK: 'cfresnelK',
-  fresnelC: 'cfresnelC', FresnelC: 'cfresnelC',
-  fresnelS: 'cfresnelS', FresnelS: 'cfresnelS',
-  zeta: 'czeta', Zeta: 'czeta',
-  Ei: 'cEi', expintegral_ei: 'cEi',
-  E1: 'cE1', expintegral_e1: 'cE1',
+  // ── Inline lambdas ────────────────────────────────────────────────────────
   re:   (a) => `vec2((${a}).x,0.0)`,
   im:   (a) => `vec2((${a}).y,0.0)`,
   sign: (a) => `(length(${a})<1e-20?vec2(0.0):cdiv(${a},vec2(length(${a}),0.0)))`,
+  // ── Error / Fresnel / special ─────────────────────────────────────────────
+  erf: 'cerf', erfc: 'cerfc', erfi: 'cerfi',
+  fresnelC: 'cfresnelC', fresnelS: 'cfresnelS', fresnelK: 'cfresnelK',
+  beta: 'cbeta', factorial: 'cfactorial', zeta: 'czeta',
+  // ── Exponential integrals (Maxima canonical names) ────────────────────────
+  expintegral_si: 'csi',   si: 'cssi',        // Si(z)→expintegral_si, si(z)→si
+  expintegral_ci: 'cci',   Cin: 'ccin',       // Ci(z)→expintegral_ci, Cin→Cin
+  expintegral_shi: 'cshi',                    // Shi(z)→expintegral_shi
+  expintegral_chi: 'cchi',                    // Chi(z)→expintegral_chi
+  expintegral_ei: 'cEi',                      // Ei(z)→expintegral_ei
+  expintegral_e1: 'cE1',                      // E1(z)→expintegral_e1
 };
 
 const SYMS: Record<string, string> = {
