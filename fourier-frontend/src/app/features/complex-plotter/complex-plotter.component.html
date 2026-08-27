@@ -77,67 +77,62 @@
       @if (settingsOpen()) {
         <div class="px-3 pb-3 space-y-3 border-t border-border dark:border-dark-border">
 
-          <!-- Color scheme -->
-          <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-2">
-            {{ 'laplace.complexPlaneColor' | transloco }}
-          </p>
-          <div class="flex flex-col gap-1">
-            @for (scheme of [['classic','laplace.complexPlaneColorClassic'],['phase','laplace.complexPlaneColorPhase'],['magnitude','laplace.complexPlaneColorMagnitude']]; track scheme[0]) {
-              <button
-                type="button"
-                (click)="colorScheme.set($any(scheme[0]))"
-                class="flex-1 py-1 px-2 text-xs font-mono rounded border text-left transition-colors focus:outline-none"
-                [class.border-accent]="colorScheme() === scheme[0]"
-                [class.text-accent]="colorScheme() === scheme[0]"
-                [class.bg-accent/5]="colorScheme() === scheme[0]"
-                [class.border-border]="colorScheme() !== scheme[0]"
-                [class.dark:border-dark-border]="colorScheme() !== scheme[0]"
-                [class.text-muted]="colorScheme() !== scheme[0]"
-                [class.dark:text-dark-muted]="colorScheme() !== scheme[0]"
-              >{{ scheme[1] | transloco }}</button>
-            }
-          </div>
+          @if (plotMode() === '2d') {
+            <!-- ── 2D: color scheme + modlines + legend ─────────────────── -->
+            <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-2">
+              {{ 'laplace.complexPlaneColor' | transloco }}
+            </p>
+            <div class="flex flex-col gap-1">
+              @for (scheme of [['classic','laplace.complexPlaneColorClassic'],['phase','laplace.complexPlaneColorPhase'],['magnitude','laplace.complexPlaneColorMagnitude']]; track scheme[0]) {
+                <button
+                  type="button"
+                  (click)="colorScheme.set($any(scheme[0]))"
+                  class="flex-1 py-1 px-2 text-xs font-mono rounded border text-left transition-colors focus:outline-none"
+                  [class.border-accent]="colorScheme() === scheme[0]"
+                  [class.text-accent]="colorScheme() === scheme[0]"
+                  [class.bg-accent/5]="colorScheme() === scheme[0]"
+                  [class.border-border]="colorScheme() !== scheme[0]"
+                  [class.dark:border-dark-border]="colorScheme() !== scheme[0]"
+                  [class.text-muted]="colorScheme() !== scheme[0]"
+                  [class.dark:text-dark-muted]="colorScheme() !== scheme[0]"
+                >{{ scheme[1] | transloco }}</button>
+              }
+            </div>
 
-          <!-- InvertMod (solo classic) -->
-          @if (colorScheme() === 'classic') {
+            @if (colorScheme() === 'classic') {
+              <label class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneInvertMod' | transloco }}</span>
+                <input type="checkbox" [checked]="invertMod()" (change)="invertMod.set($any($event.target).checked)" class="accent-accent" />
+              </label>
+            }
+
             <label class="flex items-center justify-between text-[11px] font-mono">
-              <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneInvertMod' | transloco }}</span>
-              <input type="checkbox" [checked]="invertMod()" (change)="invertMod.set($any($event.target).checked)" class="accent-accent" />
+              <span class="text-ink/80 dark:text-dark-ink/80">{{ 'complex.modLines' | transloco }}</span>
+              <input type="checkbox" [checked]="showModLines()" (change)="showModLines.set($any($event.target).checked)" class="accent-accent" />
             </label>
-          }
 
-          <!-- Mod lines -->
-          <label class="flex items-center justify-between text-[11px] font-mono">
-            <span class="text-ink/80 dark:text-dark-ink/80">{{ 'complex.modLines' | transloco }}</span>
-            <input type="checkbox" [checked]="showModLines()" (change)="showModLines.set($any($event.target).checked)" class="accent-accent" />
-          </label>
-
-          <!-- Legend -->
-          <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-1">
-            {{ 'laplace.complexPlaneLegend' | transloco }}
-          </p>
-          <div class="flex gap-1">
-            @for (ls of [['strip','laplace.complexPlaneLegendStrip'],['circle','laplace.complexPlaneLegendCircle']]; track ls[0]) {
-              <button
-                type="button"
-                (click)="legendStyle.set($any(ls[0]))"
-                class="flex-1 py-1 text-xs font-mono rounded border transition-colors"
-                [class.border-accent]="legendStyle() === ls[0]"
-                [class.text-accent]="legendStyle() === ls[0]"
-                [class.bg-accent/5]="legendStyle() === ls[0]"
-                [class.border-border]="legendStyle() !== ls[0]"
-                [class.dark:border-dark-border]="legendStyle() !== ls[0]"
-                [class.text-muted]="legendStyle() !== ls[0]"
-                [class.dark:text-dark-muted]="legendStyle() !== ls[0]"
-              >{{ ls[1] | transloco }}</button>
-            }
-          </div>
-
-          <!-- 3D options -->
-          @if (plotMode() === '3d') {
-            <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-1">3D</p>
-
-            <label class="flex items-center justify-between text-[11px] font-mono">
+            <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-1">
+              {{ 'laplace.complexPlaneLegend' | transloco }}
+            </p>
+            <div class="flex gap-1">
+              @for (ls of [['strip','laplace.complexPlaneLegendStrip'],['circle','laplace.complexPlaneLegendCircle']]; track ls[0]) {
+                <button
+                  type="button"
+                  (click)="legendStyle.set($any(ls[0]))"
+                  class="flex-1 py-1 text-xs font-mono rounded border transition-colors"
+                  [class.border-accent]="legendStyle() === ls[0]"
+                  [class.text-accent]="legendStyle() === ls[0]"
+                  [class.bg-accent/5]="legendStyle() === ls[0]"
+                  [class.border-border]="legendStyle() !== ls[0]"
+                  [class.dark:border-dark-border]="legendStyle() !== ls[0]"
+                  [class.text-muted]="legendStyle() !== ls[0]"
+                  [class.dark:text-dark-muted]="legendStyle() !== ls[0]"
+                >{{ ls[1] | transloco }}</button>
+              }
+            </div>
+          } @else {
+            <!-- ── 3D: wireframe + grid + sliders ────────────────────────── -->
+            <label class="flex items-center justify-between text-[11px] font-mono pt-2">
               <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneWireframe' | transloco }}</span>
               <input type="checkbox" [checked]="wireframe()" (change)="wireframe.set($any($event.target).checked)" class="accent-accent" />
             </label>

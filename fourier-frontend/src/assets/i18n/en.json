@@ -1587,7 +1587,11 @@
       "trig": "Trigonometric",
       "gamma": "Gamma & Zeta",
       "mobius": "Möbius & rational",
-      "composed": "Composed"
+      "composed": "Composed",
+      "error": "Error function",
+      "integral": "Si/Ci/Shi/Chi integrals",
+      "fresnel": "Fresnel integrals",
+      "expint": "Exponential integrals"
     },
     "modLines": "Iso-modulus lines"
   }

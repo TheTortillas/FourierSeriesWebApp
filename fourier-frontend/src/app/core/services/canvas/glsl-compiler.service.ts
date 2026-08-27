@@ -265,6 +265,45 @@ vec2 czeta(vec2 z){
   return cmul(cmul(cmul(cmul(two_z,pi_z1),sinpz2),cgamma(w)),_zetaCore(w));
 }
 
+// E₁(z) — exponential integral. Series for |z|≤12, asymptotic for |z|>12.
+// E₁(z) = -γ - ln(z) - Σ_{n=1}^∞ (-z)^n/(n·n!)  (|z| small)
+// E₁(z) ~ e^{-z}/z · Σ_{n=0}^N (-1)^n n!/z^n      (|z| large)
+vec2 cE1(vec2 z){
+  float r=length(z);
+  if(r<1e-6) return vec2(1e6,0.0);
+  if(r<12.0){
+    // Series: -γ - ln(z) - Σ_{n=1}^24 (-z)^n/(n·n!)
+    vec2 ln_z=clog(z);
+    vec2 sum=vec2(0.0);
+    vec2 zpow=vec2(-z.x,-z.y); // (-z)^1 at n=1
+    float nfact=1.0;
+    for(int n=1;n<=24;n++){
+      nfact*=float(n);
+      sum+=cdiv(zpow,vec2(float(n)*nfact,0.0));
+      zpow=cmul(zpow,-z);
+    }
+    return -vec2(0.5772156649,0.0)-ln_z-sum;
+  } else {
+    // Asymptotic: e^{-z}/z * Σ_{n=0}^14 (-1)^n n!/z^n
+    vec2 invz=cdiv(vec2(1.0,0.0),z);
+    vec2 term=vec2(1.0,0.0);
+    vec2 sum=vec2(1.0,0.0);
+    for(int n=1;n<=14;n++){
+      term=cmul(term,cmul(vec2(-float(n),0.0),invz));
+      sum+=term;
+    }
+    return cmul(cexp(-z),cmul(invz,sum));
+  }
+}
+
+// Ei(z) = -E₁(-z) - iπ for Im(z)>0; -E₁(-z) + iπ for Im(z)<0; principal value for real z>0
+vec2 cEi(vec2 z){
+  vec2 negz=vec2(-z.x,-z.y);
+  vec2 e1=cE1(negz);
+  float branch=(z.y>0.0)?-PI:(z.y<0.0)?PI:0.0;
+  return vec2(-e1.x,-e1.y+branch);
+}
+
 vec3 hsv2rgb(float h,float s,float v){
   float hh=mod(h,1.0)*6.0;
   float i=floor(hh),f=hh-i;
@@ -299,6 +338,8 @@ const FN_MAP: Record<string, GlslFn> = {
   fresnelC: 'cfresnelC', FresnelC: 'cfresnelC',
   fresnelS: 'cfresnelS', FresnelS: 'cfresnelS',
   zeta: 'czeta', Zeta: 'czeta',
+  Ei: 'cEi', expintegral_ei: 'cEi',
+  E1: 'cE1', expintegral_e1: 'cE1',
   re:   (a) => `vec2((${a}).x,0.0)`,
   im:   (a) => `vec2((${a}).y,0.0)`,
   sign: (a) => `(length(${a})<1e-20?vec2(0.0):cdiv(${a},vec2(length(${a}),0.0)))`,

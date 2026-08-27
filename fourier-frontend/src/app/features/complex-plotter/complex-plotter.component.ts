@@ -117,6 +117,56 @@ export const COMPLEX_LIBRARY_GROUPS: CLibGroup[] = [
     ],
   },
   {
+    id: 'error',
+    label: 'complex.groups.error',
+    entries: [
+      e('erf(z)', '\\operatorname{erf}\\left(z\\right)', 'erf(z)', 'Función error compleja'),
+      e('erfc(z)', '\\operatorname{erfc}\\left(z\\right)', 'erfc(z)', '1 − erf(z)'),
+      e('erfi(z)', '\\operatorname{erfi}\\left(z\\right)', 'erfi(z)', '−i·erf(iz)'),
+      e('erf(z²)', '\\operatorname{erf}\\left(z^{2}\\right)', 'erf(z^2)'),
+      e('erf(z)/z', '\\frac{\\operatorname{erf}\\left(z\\right)}{z}', 'erf(z)/z'),
+      e('exp(z²)·erfc(z)', 'e^{z^{2}}\\operatorname{erfc}\\left(z\\right)', 'exp(z^2)*erfc(z)', 'Función de Mills'),
+      e('1/erf(z)', '\\frac{1}{\\operatorname{erf}\\left(z\\right)}', '1/erf(z)'),
+    ],
+  },
+  {
+    id: 'integral',
+    label: 'complex.groups.integral',
+    entries: [
+      e('Si(z)', '\\operatorname{Si}\\left(z\\right)', 'Si(z)', 'Seno integral'),
+      e('Ci(z)', '\\operatorname{Ci}\\left(z\\right)', 'Ci(z)', 'Coseno integral'),
+      e('Shi(z)', '\\operatorname{Shi}\\left(z\\right)', 'Shi(z)', 'Seno hiperbólico integral'),
+      e('Chi(z)', '\\operatorname{Chi}\\left(z\\right)', 'Chi(z)', 'Coseno hiperbólico integral'),
+      e('Si(z)/z', '\\frac{\\operatorname{Si}\\left(z\\right)}{z}', 'Si(z)/z'),
+      e('Si(z²)', '\\operatorname{Si}\\left(z^{2}\\right)', 'Si(z^2)'),
+      e('Si(z)·Ci(z)', '\\operatorname{Si}\\left(z\\right)\\operatorname{Ci}\\left(z\\right)', 'Si(z)*Ci(z)'),
+    ],
+  },
+  {
+    id: 'fresnel',
+    label: 'complex.groups.fresnel',
+    entries: [
+      e('C(z)', 'C\\left(z\\right)', 'fresnelC(z)', 'Fresnel C'),
+      e('S(z)', 'S\\left(z\\right)', 'fresnelS(z)', 'Fresnel S'),
+      e('K(z)', 'K\\left(z\\right)', 'fresnelK(z)', 'Fresnel K'),
+      e('C(z)+iS(z)', 'C\\left(z\\right)+iS\\left(z\\right)', 'fresnelC(z)+%i*fresnelS(z)', 'Espiral de Cornu'),
+      e('K(z)/z', '\\frac{K\\left(z\\right)}{z}', 'fresnelK(z)/z'),
+      e('C(z²)', 'C\\left(z^{2}\\right)', 'fresnelC(z^2)'),
+    ],
+  },
+  {
+    id: 'expint',
+    label: 'complex.groups.expint',
+    entries: [
+      e('Ei(z)', '\\operatorname{Ei}\\left(z\\right)', 'expintegral_ei(z)', 'Integral exponencial'),
+      e('E₁(z)', 'E_{1}\\left(z\\right)', 'expintegral_e1(z)', 'Función E₁'),
+      e('exp(z)·E₁(z)', 'e^{z}E_{1}\\left(z\\right)', 'exp(z)*expintegral_e1(z)'),
+      e('Ei(z)/z', '\\frac{\\operatorname{Ei}\\left(z\\right)}{z}', 'expintegral_ei(z)/z'),
+      e('Ei(z²)', '\\operatorname{Ei}\\left(z^{2}\\right)', 'expintegral_ei(z^2)'),
+      e('E₁(z²)', 'E_{1}\\left(z^{2}\\right)', 'expintegral_e1(z^2)'),
+    ],
+  },
+  {
     id: 'composed',
     label: 'complex.groups.composed',
     entries: [
