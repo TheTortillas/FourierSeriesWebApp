@@ -88,6 +88,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'complex-plotter',
+        loadComponent: () =>
+          import('./features/complex-plotter/complex-plotter.component').then(
+            (m) => m.ComplexPlotterComponent,
+          ),
+      },
+      {
         path: 'results',
         loadChildren: () =>
           import('./features/results/results.routes').then((m) => m.resultsRoutes),

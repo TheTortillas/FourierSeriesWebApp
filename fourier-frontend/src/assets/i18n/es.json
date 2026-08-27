@@ -70,7 +70,9 @@
     "rebrandBanner": {
       "message": "Fourier Web Calculator ahora es AEM-Lab (Advanced Engineering Mathematics Lab) — la misma herramienta, nuevo nombre.",
       "dismiss": "Cerrar"
-    }
+    },
+    "realPlotter": "Graficador real",
+    "complexPlotter": "Graficador complejo"
   },
   "grapher": {
     "addExpression": "+ Agregar expresión",
@@ -893,6 +895,10 @@
     "grapher": {
       "title": "Graficador de funciones reales — AEM-Lab",
       "description": "Grafica funciones matemáticas reales: trigonométricas, especiales, gamma, Fresnel, Si/Ci y más. Detecta raíces e intersecciones de forma interactiva."
+    },
+    "complexPlotter": {
+      "title": "Graficador de funciones complejas — AEM-Lab",
+      "description": "Visualiza funciones complejas con coloración de dominio de Wegert: Γ(z), ζ(z), exp, transformaciones de Möbius y más."
     }
   },
   "dev": {
@@ -1572,5 +1578,17 @@
     "exLapImpulse": "Respuesta al impulso (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
     "exLap3rdForce": "3er orden — forzamiento exponencial: y'''+ y''= eᵗ",
     "exLap3rdRepeat": "3er orden — raíz triple: y'''- 3y'' + 3y' - y = 0"
+  },
+  "complex": {
+    "library": "Biblioteca f(z)",
+    "groups": {
+      "poly": "Polinomios y racionales",
+      "explog": "Exponencial y logaritmo",
+      "trig": "Trigonométricas",
+      "gamma": "Gamma y Zeta",
+      "mobius": "Möbius y racionales",
+      "composed": "Compuestas"
+    },
+    "modLines": "Líneas isomódulo"
   }
 }

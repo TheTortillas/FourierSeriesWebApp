@@ -98,7 +98,7 @@ export class NavComponent {
     const url = this.currentUrl();
     return url.includes('/calculator') || url.includes('/transforms') ||
            url.includes('/fourier-integral') || url.includes('/laplace') ||
-           url.includes('/ode') || url.includes('/real-plotter');
+           url.includes('/ode') || url.includes('/real-plotter') || url.includes('/complex-plotter');
   });
 
   switchToLang(code: string): void {

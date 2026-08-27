@@ -107,7 +107,15 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent opacity-70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
-            {{ 'nav.grapher' | transloco }}
+            {{ 'nav.realPlotter' | transloco }}
+          </a>
+          <a [routerLink]="'/' + lang() + '/complex-plotter'" routerLinkActive="!text-accent bg-accent/5"
+            (click)="toolsMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent opacity-70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3 12h18M12 3c-2.5 2.5-4 5.7-4 9s1.5 6.5 4 9"/>
+            </svg>
+            {{ 'nav.complexPlotter' | transloco }}
           </a>
         </div>
       }
@@ -175,7 +183,14 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent opacity-70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
-            {{ 'nav.grapher' | transloco }}
+            {{ 'nav.realPlotter' | transloco }}
+          </a>
+          <a [routerLink]="'/' + lang() + '/complex-plotter'" (click)="mobileMenuOpen.set(false)"
+            class="flex items-center gap-2 w-full px-3 py-2 text-[11px] font-mono text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent opacity-70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3 12h18M12 3c-2.5 2.5-4 5.7-4 9s1.5 6.5 4 9"/>
+            </svg>
+            {{ 'nav.complexPlotter' | transloco }}
           </a>
 
           <div class="mx-3 my-1.5 border-t border-border dark:border-dark-border"></div>

@@ -70,7 +70,9 @@
       "message": "Fourier Web Calculator heißt jetzt AEM-Lab (Advanced Engineering Mathematics Lab) — dasselbe Werkzeug, neuer Name.",
       "dismiss": "Schließen"
     },
-    "grapher": "Graphen-Tool"
+    "grapher": "Graphen-Tool",
+    "realPlotter": "Reeller Grapher",
+    "complexPlotter": "Komplexer Grapher"
   },
   "grapher": {
     "addExpression": "+ Ausdruck hinzufügen",
@@ -893,6 +895,10 @@
     "grapher": {
       "title": "Grafik reeller Funktionen — AEM-Lab",
       "description": "Zeichnen Sie reelle mathematische Funktionen: trigonometrische, spezielle, Gamma, Fresnel, Si/Ci und mehr. Nullstellen und Schnittpunkte interaktiv erkennen."
+    },
+    "complexPlotter": {
+      "title": "Komplexer Funktionsgrapher — AEM-Lab",
+      "description": "Visualisieren Sie komplexe Funktionen mit Wegert-Domänenfärbung: Γ(z), ζ(z), exp, Möbius-Transformationen und mehr."
     }
   },
   "dev": {
@@ -1571,5 +1577,17 @@
     "exLapImpulse": "Impulsantwort (Anfangsbed. ≠ 0): y'' + 2y' + 5y = δ(t)",
     "exLap3rdForce": "3. Ordnung — exponentielle Erregung: y'''+ y'' = eᵗ",
     "exLap3rdRepeat": "3. Ordnung — dreifache Nullstelle: y'''- 3y'' + 3y' - y = 0"
+  },
+  "complex": {
+    "library": "Bibliothek f(z)",
+    "groups": {
+      "poly": "Polynome & Rationale",
+      "explog": "Exponential & Logarithmus",
+      "trig": "Trigonometrisch",
+      "gamma": "Gamma & Zeta",
+      "mobius": "Möbius & Rationale",
+      "composed": "Zusammengesetzt"
+    },
+    "modLines": "Isomodulus-Linien"
   }
 }
