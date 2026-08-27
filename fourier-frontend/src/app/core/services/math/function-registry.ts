@@ -134,7 +134,7 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   // ── Combinatorial / Gamma family ───────────────────────────────────────────
   // gamma_incomplete_* and beta are too long to type freely — no autoOperatorNames.
   // They are inserted via the function keyboard only.
-  { maxima: 'gamma',                        latexNames: ['gamma'],                                          js: { kind: 'helper', name: '_gamma'                        }, category: 'combinatorial', autoOperatorNames: ['gamma'] },
+  { maxima: 'gamma',                        latexNames: ['gamma', 'Gamma'],                                 js: { kind: 'helper', name: '_gamma'                        }, category: 'combinatorial', autoOperatorNames: ['gamma'] },
   // Incomplete gamma & beta: typed as GammaU/GammaL/GammaQ/Beta (no underscores — MathQuill treats _ as subscript)
   // clientSideOnly: tex2max can't handle multi-argument functions with commas
   { maxima: 'gamma_incomplete',             latexNames: ['GammaU', 'GammaInc'],                            js: { kind: 'helper', name: '_gamma_incomplete'             }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['GammaU', 'GammaInc'] },
@@ -143,14 +143,24 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   { maxima: 'beta',                         latexNames: ['Beta'],                                           js: { kind: 'helper', name: '_beta'                         }, category: 'combinatorial', clientSideOnly: true, autoOperatorNames: ['Beta'] },
   { maxima: 'factorial', latexNames: ['factorial'], js: { kind: 'helper', name: '_factorial' }, category: 'combinatorial', autoOperatorNames: ['factorial'] },
 
+  // ── Complex-domain functions (clientSideOnly — the GLSL compiler handles them) ─
+  { maxima: 'arg',   latexNames: ['arg'],  js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['arg'] },
+  { maxima: 're',    latexNames: ['re'],   js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['re'] },
+  { maxima: 'im',    latexNames: ['im'],   js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['im'] },
+  { maxima: 'conj',  latexNames: ['conj'], js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['conj'] },
+  { maxima: 'zeta',  latexNames: ['zeta'], js: { kind: 'stub' }, category: 'misc', clientSideOnly: true, autoOperatorNames: ['zeta'] },
+
   // ── Error functions ────────────────────────────────────────────────────────
   { maxima: 'erf',  latexNames: ['erf'],  js: { kind: 'helper', name: '_erf'  }, category: 'error', clientSideOnly: true, autoOperatorNames: ['erf'] },
   { maxima: 'erfc', latexNames: ['erfc'], js: { kind: 'helper', name: '_erfc' }, category: 'error', clientSideOnly: true, autoOperatorNames: ['erfc'] },
+  { maxima: 'erfi', latexNames: ['erfi'], js: { kind: 'stub'                  }, category: 'error', clientSideOnly: true, autoOperatorNames: ['erfi'] },
 
   // ── Exponential integral functions ─────────────────────────────────────────
   // E1 and li conflict with variable names — omitted from autoOperatorNames.
   { maxima: 'expintegral_si',  latexNames: ['Si'],  js: { kind: 'helper', name: '_Si'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Si'] },
+  { maxima: 'si',              latexNames: ['si'],  js: { kind: 'stub'                 }, category: 'exponential-integral', clientSideOnly: true },
   { maxima: 'expintegral_ci',  latexNames: ['Ci'],  js: { kind: 'helper', name: '_Ci'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Ci'] },
+  { maxima: 'Cin',             latexNames: ['Cin'], js: { kind: 'stub'                 }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Cin'] },
   { maxima: 'expintegral_shi', latexNames: ['Shi'], js: { kind: 'helper', name: '_Shi' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Shi'] },
   { maxima: 'expintegral_chi', latexNames: ['Chi'], js: { kind: 'helper', name: '_Chi' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Chi'] },
   { maxima: 'expintegral_ei',  latexNames: ['Ei'],  js: { kind: 'helper', name: '_Ei'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Ei'] },

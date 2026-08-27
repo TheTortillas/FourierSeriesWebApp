@@ -352,7 +352,7 @@ export class ComplexPlotterComponent implements AfterViewInit, OnDestroy {
     this._subs.add(
       this._editSubject.pipe(
         debounceTime(350),
-        switchMap((latex) => this.tex2max.convertWithSpecialFns(latex)),
+        switchMap((latex) => this.tex2max.convertClientSide(latex)),
       ).subscribe((result) => {
         if (result.ok) {
           this.conversionError.set(null);
