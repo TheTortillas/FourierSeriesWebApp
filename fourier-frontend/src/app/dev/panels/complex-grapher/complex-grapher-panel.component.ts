@@ -20,6 +20,7 @@ export class ComplexGrapherPanelComponent {
   readonly mode         = signal<'2d' | '3d'>('2d');
   readonly colorScheme  = signal<ColorScheme>('classic');
   readonly showModLines = signal(true);
+  readonly invertMod    = signal(false);
   readonly showAxes     = signal(true);
   readonly showGrid2d   = signal(true);
   readonly range3d      = signal(4);

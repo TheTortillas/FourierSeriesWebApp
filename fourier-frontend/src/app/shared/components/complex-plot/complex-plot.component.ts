@@ -38,22 +38,16 @@ function hsvToRgb(h: number, s: number, v: number): [number, number, number] {
     .map(c => c * 255 | 0) as [number, number, number];
 }
 
-function phaseColorJS(argW: number, absW: number, scheme: ColorScheme, modLines: boolean): [number, number, number] {
+function phaseColorJS(argW: number, absW: number, scheme: ColorScheme, modLines: boolean, invertMod = false): [number, number, number] {
   const h = ((argW / (2 * Math.PI)) + 1) % 1;
   if (scheme === 'magnitude') { const g = Math.atan(absW * 1.2) / (Math.PI * 0.5) * 255 | 0; return [g, g, g]; }
   if (scheme === 'phase') return hsvToRgb(h, 1, 0.88);
-  if (scheme === 'enhanced') {
-    const logA = Math.log2(Math.max(absW, 1e-12));
-    const iso = 0.5 + 0.5 * Math.cos(2 * Math.PI * (logA - Math.floor(logA)));
-    let vv = absW / (1 + absW);
-    if (modLines) vv *= 0.80 + 0.20 * iso;
-    return hsvToRgb(h, 0.95, vv);
-  }
+  // classic: Wegert-style, value encodes |f|
   const logA = Math.log2(Math.max(absW, 1e-12));
   const iso = 0.5 + 0.5 * Math.cos(2 * Math.PI * (logA - Math.floor(logA)));
-  let vv = Math.atan(absW * 1.5) / (Math.PI * 0.5);
-  if (modLines) vv *= 0.70 + 0.30 * iso;
-  return hsvToRgb(h, 0.96, Math.min(1, vv));
+  let vv = invertMod ? 1 / (1 + absW) : absW / (1 + absW);
+  if (modLines) vv *= 0.80 + 0.20 * iso;
+  return hsvToRgb(h, 0.95, vv);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,6 +79,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   readonly mode         = input<'2d' | '3d'>('2d');
   readonly colorScheme  = input<ColorScheme>('classic');
   readonly showModLines = input<boolean>(true);
+  readonly invertMod    = input<boolean>(false);
   readonly showAxes     = input<boolean>(true);
   readonly showGrid2d   = input<boolean>(true);
   readonly range3d      = input<number>(4);
@@ -146,7 +141,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
 
     // Redraw on any visual input change
     effect(() => {
-      void this.mode(); void this.colorScheme(); void this.showModLines();
+      void this.mode(); void this.colorScheme(); void this.showModLines(); void this.invertMod();
       void this.showAxes(); void this.showGrid2d();
       void this.range3d(); void this.heightScale(); void this.zClip();
       void this.showGrid3d(); void this.wireframe(); void this.legendStyle();
@@ -259,7 +254,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
 
     const vp = this.vp2d();
     this.webgl.setParams(this.paramValues());
-    this.webgl.render2D(canvas, vp, this.colorScheme(), this.showModLines());
+    this.webgl.render2D(canvas, vp, this.colorScheme(), this.showModLines(), this.invertMod());
 
     const ctx = overlay.getContext('2d')!;
     ctx.clearRect(0, 0, overlay.width, overlay.height);
@@ -290,7 +285,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     if (this.legendStyle() === 'strip') {
       this.drawLegend3D(ctx, w, h);
     } else {
-      this.drawLegendCircle2D(ctx, w, h);
+      this.drawLegendCircle3D(ctx, w, h);
     }
   }
 
@@ -331,53 +326,87 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  private backdropRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, pad = 14): void {
+    ctx.save();
+    ctx.globalAlpha = 0.60;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.roundRect(x - pad, y - pad, w + pad * 2, h + pad * 2, 8);
+    ctx.fill();
+    ctx.restore();
+  }
+
   private drawLegendStrip2D(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const bh = 160, bw = 14, bx = W - 66, by = Math.round(H / 2 - bh / 2);
+    const bh = 160, bw = 14, by = Math.round(H / 2 - bh / 2);
     const scheme = this.colorScheme();
     const modLines = this.showModLines();
+    const invertMod = this.invertMod();
     const c2 = this.complexColors();
+    const hasModStrip = scheme === 'classic';
+    // Layout: [|f| strip bw] [gap 6px] [arg strip bw] [tick labels]
+    // Both strips are the same width (bw). Anchor arg strip at fixed right position.
+    const argX   = W - 50;
+    const gap    = 6;
+    const modX   = argX - gap - bw;
+    const backdropLeft = hasModStrip ? modX : argX;
+    // backdrop width covers strips + labels to the right; top extends to cover headers
+    const backdropW = W - 6 - backdropLeft;
+
     ctx.save();
-    ctx.globalAlpha = 0.9;
+    // pad=20 so headers above and last tick below are well inside the backdrop
+    this.backdropRect(ctx, backdropLeft, by, backdropW, bh, 20);
+
+    // arg strip
+    ctx.globalAlpha = 0.92;
     for (let py = 0; py < bh; py++) {
       const argV = Math.PI * (1 - 2 * py / bh);
-      const [r, g, b] = phaseColorJS(argV, 1.5, scheme, modLines);
-      ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(bx, by + py, bw, 1);
+      const [r, g, b] = phaseColorJS(argV, 1.5, scheme, modLines, invertMod);
+      ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(argX, by + py, bw, 1);
     }
     ctx.globalAlpha = 1;
     ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
-    ctx.strokeRect(bx, by, bw, bh);
+    ctx.strokeRect(argX, by, bw, bh);
+
+    // tick labels (right of arg strip)
     const ticks: [number, string][] = [[0, 'π'], [0.25, 'π/2'], [0.5, '0'], [0.75, '−π/2'], [1, '−π']];
-    ctx.font = '10px monospace'; ctx.textAlign = 'left';
+    ctx.font = '11px monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     for (const [t, lbl] of ticks) {
       const ty = by + t * bh;
       ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 0.75;
-      ctx.beginPath(); ctx.moveTo(bx, ty); ctx.lineTo(bx - 3, ty); ctx.stroke();
-      ctx.fillStyle = c2.legendText; ctx.fillText(lbl, bx + bw + 4, ty + 3.5);
+      ctx.beginPath(); ctx.moveTo(argX, ty); ctx.lineTo(argX - 3, ty); ctx.stroke();
+      ctx.fillStyle = c2.legendText; ctx.fillText(lbl, argX + bw + 5, ty);
     }
-    ctx.font = '9px monospace'; ctx.fillStyle = c2.legendMuted;
-    ctx.textAlign = 'center'; ctx.fillText('arg', bx + bw / 2, by - 6);
+    ctx.font = '10px monospace'; ctx.fillStyle = c2.legendMuted;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('arg', argX + bw / 2, by - 9);
 
-    // Second strip: |f| gradient for enhanced scheme
-    if (scheme === 'enhanced') {
-      const mx = bx - 22;
-      ctx.globalAlpha = 0.9;
+    // |f| strip (classic only) — same width as arg strip, labels on the left
+    if (hasModStrip) {
+      ctx.globalAlpha = 0.92;
       for (let py = 0; py < bh; py++) {
-        // map py: bottom=0(zero) → top=∞(pole); use |f|=tan(t·π/2)
         const t = 1 - py / bh;
-        const absV = Math.tan(t * Math.PI * 0.48); // avoid tan(π/2)
-        const v = absV / (1 + absV);
+        const absV = Math.tan(t * Math.PI * 0.48);
+        const v = invertMod ? 1 / (1 + absV) : absV / (1 + absV);
         const lv = Math.round(v * 255);
-        ctx.fillStyle = `rgb(${lv},${lv},${lv})`; ctx.fillRect(mx, by + py, 10, 1);
+        ctx.fillStyle = `rgb(${lv},${lv},${lv})`; ctx.fillRect(modX, by + py, bw, 1);
       }
       ctx.globalAlpha = 1;
       ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
-      ctx.strokeRect(mx, by, 10, bh);
-      ctx.font = '9px monospace'; ctx.fillStyle = c2.legendMuted;
-      ctx.textAlign = 'center'; ctx.fillText('|f|', mx + 5, by - 6);
-      ctx.font = '9px monospace'; ctx.textAlign = 'right';
-      ctx.fillStyle = c2.legendMuted;
-      ctx.fillText('∞', mx - 3, by + 4);
-      ctx.fillText('0', mx - 3, by + bh + 3);
+      ctx.strokeRect(modX, by, bw, bh);
+      // header centered on strip
+      ctx.font = '10px monospace'; ctx.fillStyle = c2.legendMuted;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('|f|', modX + bw / 2, by - 9);
+      // ∞/0 labels to the left of the strip (mirroring ticks on the right of arg)
+      ctx.font = '11px monospace'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 0.75;
+      // top tick
+      ctx.beginPath(); ctx.moveTo(modX + bw, by); ctx.lineTo(modX + bw + 3, by); ctx.stroke();
+      ctx.fillStyle = c2.legendText;
+      ctx.fillText(invertMod ? '0' : '∞', modX - 4, by);
+      // bottom tick
+      ctx.beginPath(); ctx.moveTo(modX + bw, by + bh); ctx.lineTo(modX + bw + 3, by + bh); ctx.stroke();
+      ctx.fillText(invertMod ? '∞' : '0', modX - 4, by + bh);
     }
     ctx.restore();
   }
@@ -386,31 +415,42 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     const R = 50, cx = W - 76, cy = H - 76;
     const scheme = this.colorScheme();
     const modLines = this.showModLines();
+    const invertMod = this.invertMod();
     const c2 = this.complexColors();
     ctx.save();
-    ctx.globalAlpha = 0.9;
 
-    if (scheme === 'enhanced') {
-      // Rasterize pixel-by-pixel so we can vary both hue (angle) and value (radius→|f|)
-      const D = R * 2 + 2;
-      const imgData = ctx.createImageData(D, D);
+    // Uniform backdrop: square with generous padding, drawn once
+    this.backdropRect(ctx, cx - R, cy - R, R * 2, R * 2, 18);
+
+    // Clip to circle so all drawing is cleanly circular
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.clip();
+    ctx.globalAlpha = 0.92;
+
+    if (scheme === 'classic') {
+      // Offscreen canvas so we can clip+drawImage (putImageData ignores clip)
+      const D = R * 2;
+      const off = document.createElement('canvas');
+      off.width = off.height = D;
+      const octx = off.getContext('2d')!;
+      const img = octx.createImageData(D, D);
       for (let py = 0; py < D; py++) {
         for (let px = 0; px < D; px++) {
           const dx = px - R, dy = py - R;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist > R) continue;
-          const argW = Math.atan2(-dy, dx);  // math convention: +y up
-          const absV = dist / (R - dist + 0.5); // 0 at center, ∞ at edge
-          const [r, g, b] = phaseColorJS(argW, absV, scheme, modLines);
+          if (dist >= R) continue;
+          const argW = Math.atan2(-dy, dx);
+          const absV = dist / (R - dist + 0.5);
+          const [r, g, b] = phaseColorJS(argW, absV, scheme, modLines, invertMod);
           const i = (py * D + px) * 4;
-          imgData.data[i] = r; imgData.data[i+1] = g; imgData.data[i+2] = b; imgData.data[i+3] = 230;
+          img.data[i] = r; img.data[i+1] = g; img.data[i+2] = b; img.data[i+3] = 255;
         }
       }
-      ctx.putImageData(imgData, cx - R - 1, cy - R - 1);
+      octx.putImageData(img, 0, 0);
+      ctx.drawImage(off, cx - R, cy - R);
     } else {
       for (let a = 0; a < 360; a++) {
         const argW = (a / 360) * 2 * Math.PI - Math.PI;
-        const [r, g, b] = phaseColorJS(argW, 1.5, scheme, modLines);
+        const [r, g, b] = phaseColorJS(argW, 1.5, scheme, modLines, invertMod);
         const a1 = (a / 360) * 2 * Math.PI;
         ctx.beginPath(); ctx.moveTo(cx, cy);
         ctx.arc(cx, cy, R, a1, a1 + Math.PI / 180 + 0.02);
@@ -418,17 +458,20 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
       }
     }
 
+    // Remove clip for border and labels
+    ctx.restore(); ctx.save();
     ctx.globalAlpha = 1;
-    ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
+    ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+
     ctx.fillStyle = c2.legendText;
-    ctx.font = '10px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('0',    cx + R + 9,  cy);
-    ctx.fillText('π',   cx - R - 9,  cy);
-    ctx.fillText('π/2',  cx,          cy - R - 10);
-    ctx.fillText('−π/2', cx,          cy + R + 10);
-    if (scheme === 'enhanced') {
-      ctx.font = '9px monospace'; ctx.fillStyle = c2.legendMuted;
+    ctx.font = '11px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('0',     cx + R + 11, cy);
+    ctx.fillText('π',    cx - R - 11, cy);
+    ctx.fillText('π/2',   cx,          cy - R - 12);
+    ctx.fillText('−π/2',  cx,          cy + R + 12);
+    if (scheme === 'classic') {
+      ctx.font = '10px monospace'; ctx.fillStyle = c2.legendMuted;
       ctx.fillText('0', cx, cy + 4);
     }
     ctx.restore();
@@ -477,27 +520,65 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
   }
 
   private drawLegend3D(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const bh = 160, bw = 14, bx = W - 66, by = Math.round(H / 2 - bh / 2);
+    this.drawPhaseStrip(ctx, W, H, this.complexColors());
+  }
+
+  private drawLegendCircle3D(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    // 3D: circle shows only phase (hue), no module dimension
+    const R = 50, cx = W - 76, cy = H - 76;
+    const c3 = this.complexColors();
     ctx.save();
+    this.backdropRect(ctx, cx - R, cy - R, R * 2, R * 2, 18);
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.clip();
+    ctx.globalAlpha = 0.92;
+    for (let a = 0; a < 360; a++) {
+      const argW = (a / 360) * 2 * Math.PI - Math.PI;
+      const h = ((argW / (2 * Math.PI)) + 1) % 1;
+      const [r, g, b] = hsvToRgb(h, 0.92, 0.88);
+      const a1 = (a / 360) * 2 * Math.PI;
+      ctx.beginPath(); ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, R, a1, a1 + Math.PI / 180 + 0.02);
+      ctx.closePath(); ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fill();
+    }
+    ctx.restore(); ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = c3.legendStroke; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+    ctx.fillStyle = c3.legendText;
+    ctx.font = '11px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('0',     cx + R + 11, cy);
+    ctx.fillText('π',    cx - R - 11, cy);
+    ctx.fillText('π/2',   cx,          cy - R - 12);
+    ctx.fillText('−π/2',  cx,          cy + R + 12);
+    ctx.restore();
+  }
+
+  private drawPhaseStrip(ctx: CanvasRenderingContext2D, W: number, H: number, c: ReturnType<ComplexPlotComponent['complexColors']>): void {
+    const bh = 160, bw = 14, bx = W - 50, by = Math.round(H / 2 - bh / 2);
+    ctx.save();
+    // pad=20 so header 'arg' above and last tick below are well inside the backdrop
+    this.backdropRect(ctx, bx, by, bw + 34, bh, 20);
+    ctx.globalAlpha = 0.92;
     for (let py = 0; py < bh; py++) {
       const argV = Math.PI * (1 - 2 * py / bh);
       const h = ((argV / (2 * Math.PI)) + 1) % 1;
       const [r, g, b] = hsvToRgb(h, 0.92, 0.88);
       ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(bx, by + py, bw, 1);
     }
-    const c3 = this.complexColors();
-    ctx.strokeStyle = c3.legendStroke; ctx.lineWidth = 1;
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = c.legendStroke; ctx.lineWidth = 1;
     ctx.strokeRect(bx, by, bw, bh);
     const ticks: [number, string][] = [[0, 'π'], [0.25, 'π/2'], [0.5, '0'], [0.75, '−π/2'], [1, '−π']];
-    ctx.font = '10px monospace'; ctx.textAlign = 'left';
+    ctx.font = '11px monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     for (const [t, lbl] of ticks) {
       const ty = by + t * bh;
-      ctx.strokeStyle = c3.legendStroke; ctx.lineWidth = 0.75;
+      ctx.strokeStyle = c.legendStroke; ctx.lineWidth = 0.75;
       ctx.beginPath(); ctx.moveTo(bx, ty); ctx.lineTo(bx - 3, ty); ctx.stroke();
-      ctx.fillStyle = c3.legendText; ctx.fillText(lbl, bx + bw + 4, ty + 3.5);
+      ctx.fillStyle = c.legendText; ctx.fillText(lbl, bx + bw + 5, ty);
     }
-    ctx.font = '9px monospace'; ctx.fillStyle = c3.legendMuted;
-    ctx.textAlign = 'center'; ctx.fillText('arg', bx + bw / 2, by - 6);
+    ctx.font = '10px monospace'; ctx.fillStyle = c.legendMuted;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('arg', bx + bw / 2, by - 8);
     ctx.restore();
   }
 
