@@ -35,7 +35,11 @@ ${script}
 kill(all)$
 `.trim();
 
-    const { raw } = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
+    const result = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
+    if (!result.success) {
+      throw new Error(`Maxima error: ${result.error}`);
+    }
+    const { raw } = result;
 
     const exists   = this.extractBetween(raw, "__EXISTS__", "__F_MAXIMA__").trim().includes("true");
     const fMaxima  = this.extractBetween(raw, "__F_MAXIMA__", "__F_TEX__").trim();
@@ -69,14 +73,18 @@ ${script}
 kill(all)$
 `.trim();
 
-    const { raw } = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
+    const result = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
+    if (!result.success) {
+      throw new Error(`Maxima error: ${result.error}`);
+    }
+    const { raw } = result;
 
     const exists     = this.extractBetween(raw, "__EXISTS__", "__F_MAXIMA__").trim().includes("true");
     const fMaxima    = this.extractBetween(raw, "__F_MAXIMA__", "__F_TEX__").trim();
     const fTex       = this.extractTex(this.extractBetween(raw, "__F_TEX__", "__PARAMS__"));
     const paramsRaw  = this.extractBetween(raw, "__PARAMS__", "__INVERSE_METHOD__").trim();
     const params     = this.parseParams(paramsRaw);
-    const method     = this.extractBetween(raw, "__INVERSE_METHOD__", null).trim() as "ilt" | "pwilt" | "failed";
+    const method     = this.extractBetween(raw, "__INVERSE_METHOD__", null).trim() as "ilt" | "time-shift" | "failed";
 
     return {
       input,
@@ -109,7 +117,11 @@ ${script}
 kill(all)$
 `.trim();
 
-    const { raw } = await this.runner.run({ script: fullScript, timeoutMs: 90000 });
+    const result = await this.runner.run({ script: fullScript, timeoutMs: 90000 });
+    if (!result.success) {
+      throw new Error(`Maxima error: ${result.error}`);
+    }
+    const { raw } = result;
 
     const exists     = this.extractBetween(raw, "__EXISTS__", "__SOL_MAXIMA__").trim().includes("true");
     const solMaxima  = this.extractBetween(raw, "__SOL_MAXIMA__", "__SOL_TEX__").trim();
@@ -142,7 +154,11 @@ ${script}
 kill(all)$
 `.trim();
 
-    const { raw } = await this.runner.run({ script: fullScript, timeoutMs: 30000 });
+    const result = await this.runner.run({ script: fullScript, timeoutMs: 30000 });
+    if (!result.success) {
+      throw new Error(`Maxima error: ${result.error}`);
+    }
+    const { raw } = result;
 
     const isRationalRaw = this.extractBetween(raw, "__IS_RATIONAL__", "__POLES__").trim();
     const polesRaw      = this.extractBetween(raw, "__POLES__", "__ZEROS__").trim();

@@ -495,7 +495,7 @@ export interface LaplaceInverseResult {
   exists: boolean;
   f?: SymbolicExpression;   // f(t) = L⁻¹{F(s)}
   params?: string[];
-  inverseMethod?: "ilt" | "pwilt" | "failed";
+  inverseMethod?: "ilt" | "time-shift" | "failed";
   executionTimeMs: number;
 }
 

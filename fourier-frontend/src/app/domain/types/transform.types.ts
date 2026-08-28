@@ -228,7 +228,7 @@ export interface LaplaceInverseResponse {
   exists: boolean;
   f?: SymbolicExpression;
   params?: string[];
-  inverseMethod: 'ilt' | 'pwilt' | 'failed';
+  inverseMethod: 'ilt' | 'time-shift' | 'failed';
   executionTimeMs: number;
 }
 
