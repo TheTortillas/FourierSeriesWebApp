@@ -342,18 +342,45 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     const modLines = this.showModLines();
     const invertMod = this.invertMod();
     const c2 = this.complexColors();
+
+    // magnitude mode: show only a |f| grayscale strip (arg is not encoded in color)
+    if (scheme === 'magnitude') {
+      const argX = W - 50;
+      const backdropW = W - 6 - argX;
+      ctx.save();
+      this.backdropRect(ctx, argX, by, backdropW, bh, 20);
+      ctx.globalAlpha = 0.92;
+      for (let py = 0; py < bh; py++) {
+        const t = 1 - py / bh;
+        const absV = Math.tan(t * Math.PI * 0.48);
+        const v = invertMod ? 1 / (1 + absV) : absV / (1 + absV);
+        const lv = Math.round(v * 255);
+        ctx.fillStyle = `rgb(${lv},${lv},${lv})`; ctx.fillRect(argX, by + py, bw, 1);
+      }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
+      ctx.strokeRect(argX, by, bw, bh);
+      ctx.font = '10px monospace'; ctx.fillStyle = c2.legendMuted;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('|f|', argX + bw / 2, by - 9);
+      ctx.font = '11px monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = c2.legendText;
+      ctx.fillText(invertMod ? '0' : '∞', argX + bw + 5, by);
+      ctx.fillText(invertMod ? '∞' : '0', argX + bw + 5, by + bh);
+      ctx.restore();
+      return;
+    }
+
+    // phase and classic: show arg strip. classic also shows |f| strip to the left.
     const hasModStrip = scheme === 'classic';
     // Layout: [|f| strip bw] [gap 6px] [arg strip bw] [tick labels]
-    // Both strips are the same width (bw). Anchor arg strip at fixed right position.
     const argX   = W - 50;
     const gap    = 6;
     const modX   = argX - gap - bw;
     const backdropLeft = hasModStrip ? modX : argX;
-    // backdrop width covers strips + labels to the right; top extends to cover headers
     const backdropW = W - 6 - backdropLeft;
 
     ctx.save();
-    // pad=20 so headers above and last tick below are well inside the backdrop
     this.backdropRect(ctx, backdropLeft, by, backdropW, bh, 20);
 
     // arg strip
@@ -367,7 +394,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
     ctx.strokeRect(argX, by, bw, bh);
 
-    // tick labels (right of arg strip)
+    // tick labels
     const ticks: [number, string][] = [[0, 'π'], [0.25, 'π/2'], [0.5, '0'], [0.75, '−π/2'], [1, '−π']];
     ctx.font = '11px monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     for (const [t, lbl] of ticks) {
@@ -380,7 +407,7 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     ctx.fillText('arg', argX + bw / 2, by - 9);
 
-    // |f| strip (classic only) — same width as arg strip, labels on the left
+    // |f| strip (classic only)
     if (hasModStrip) {
       ctx.globalAlpha = 0.92;
       for (let py = 0; py < bh; py++) {
@@ -393,18 +420,14 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
       ctx.globalAlpha = 1;
       ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 1;
       ctx.strokeRect(modX, by, bw, bh);
-      // header centered on strip
       ctx.font = '10px monospace'; ctx.fillStyle = c2.legendMuted;
       ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
       ctx.fillText('|f|', modX + bw / 2, by - 9);
-      // ∞/0 labels to the left of the strip (mirroring ticks on the right of arg)
       ctx.font = '11px monospace'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
       ctx.strokeStyle = c2.legendStroke; ctx.lineWidth = 0.75;
-      // top tick
       ctx.beginPath(); ctx.moveTo(modX + bw, by); ctx.lineTo(modX + bw + 3, by); ctx.stroke();
       ctx.fillStyle = c2.legendText;
       ctx.fillText(invertMod ? '0' : '∞', modX - 4, by);
-      // bottom tick
       ctx.beginPath(); ctx.moveTo(modX + bw, by + bh); ctx.lineTo(modX + bw + 3, by + bh); ctx.stroke();
       ctx.fillText(invertMod ? '∞' : '0', modX - 4, by + bh);
     }
@@ -447,7 +470,29 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
       }
       octx.putImageData(img, 0, 0);
       ctx.drawImage(off, cx - R, cy - R);
+    } else if (scheme === 'magnitude') {
+      // Radial grayscale: center=0 (or ∞ if inverted), edge=∞ (or 0)
+      const D = R * 2;
+      const off = document.createElement('canvas');
+      off.width = off.height = D;
+      const octx = off.getContext('2d')!;
+      const img = octx.createImageData(D, D);
+      for (let py = 0; py < D; py++) {
+        for (let px = 0; px < D; px++) {
+          const dx = px - R, dy = py - R;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist >= R) continue;
+          const absV = dist / (R - dist + 0.5);
+          const v = invertMod ? 1 / (1 + absV) : absV / (1 + absV);
+          const lv = Math.round(v * 255);
+          const i = (py * D + px) * 4;
+          img.data[i] = lv; img.data[i+1] = lv; img.data[i+2] = lv; img.data[i+3] = 255;
+        }
+      }
+      octx.putImageData(img, 0, 0);
+      ctx.drawImage(off, cx - R, cy - R);
     } else {
+      // phase: pure hue wheel
       for (let a = 0; a < 360; a++) {
         const argW = (a / 360) * 2 * Math.PI - Math.PI;
         const [r, g, b] = phaseColorJS(argW, 1.5, scheme, modLines, invertMod);
@@ -466,13 +511,22 @@ export class ComplexPlotComponent implements AfterViewInit, OnDestroy {
 
     ctx.fillStyle = c2.legendText;
     ctx.font = '11px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('0',     cx + R + 11, cy);
-    ctx.fillText('π',    cx - R - 11, cy);
-    ctx.fillText('π/2',   cx,          cy - R - 12);
-    ctx.fillText('−π/2',  cx,          cy + R + 12);
-    if (scheme === 'classic') {
+    if (scheme === 'magnitude') {
+      // radial legend: center=0, edge=∞ (inverted: center=∞, edge=0)
+      ctx.fillText(invertMod ? '∞' : '0',  cx,          cy + 4);
+      ctx.fillText(invertMod ? '0' : '∞',  cx + R + 11, cy);
       ctx.font = '10px monospace'; ctx.fillStyle = c2.legendMuted;
-      ctx.fillText('0', cx, cy + 4);
+      ctx.fillText('|f|', cx, cy - R - 12);
+    } else {
+      // arg labels for classic and phase
+      ctx.fillText('0',     cx + R + 11, cy);
+      ctx.fillText('π',    cx - R - 11, cy);
+      ctx.fillText('π/2',   cx,          cy - R - 12);
+      ctx.fillText('−π/2',  cx,          cy + R + 12);
+      if (scheme === 'classic') {
+        ctx.font = '10px monospace'; ctx.fillStyle = c2.legendMuted;
+        ctx.fillText('0', cx, cy + 4);
+      }
     }
     ctx.restore();
   }

@@ -99,7 +99,7 @@
               }
             </div>
 
-            @if (colorScheme() === 'classic') {
+            @if (colorScheme() === 'classic' || colorScheme() === 'magnitude') {
               <label class="flex items-center justify-between text-[11px] font-mono">
                 <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneInvertMod' | transloco }}</span>
                 <input type="checkbox" [checked]="invertMod()" (change)="invertMod.set($any($event.target).checked)" class="accent-accent" />
