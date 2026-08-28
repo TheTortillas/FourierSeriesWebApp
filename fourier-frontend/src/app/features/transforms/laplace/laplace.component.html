@@ -331,7 +331,7 @@
               [zClip]="complexZClip()"
               [paramValues]="complexParamValues()"
               [legendStyle]="complexLegendStyle()"
-              [showModLines]="true"
+              [showModLines]="complexShowModLines()"
               [showAxes]="true"
               [showGrid2d]="true"
               (paramsDetected)="complexDetectedParams.set($event)"
@@ -414,10 +414,16 @@
                       </button>
                     }
                   </div>
-                  @if (complexColorScheme() === 'classic') {
+                  @if (complexColorScheme() === 'classic' || complexColorScheme() === 'magnitude') {
                     <label class="flex items-center justify-between text-[11px] font-mono mt-1">
                       <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneInvertMod' | transloco }}</span>
                       <input type="checkbox" [ngModel]="complexInvertMod()" (ngModelChange)="complexInvertMod.set($event)" class="accent-accent" />
+                    </label>
+                  }
+                  @if (complexColorScheme() === 'classic') {
+                    <label class="flex items-center justify-between text-[11px] font-mono">
+                      <span class="text-ink/80 dark:text-dark-ink/80">{{ 'complex.modLines' | transloco }}</span>
+                      <input type="checkbox" [ngModel]="complexShowModLines()" (ngModelChange)="complexShowModLines.set($event)" class="accent-accent" />
                     </label>
                   }
                 </section>
