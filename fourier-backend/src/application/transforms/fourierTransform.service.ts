@@ -260,7 +260,6 @@ kill(all)$
 
     const result = await this.runner.run({
       script: fullScript,
-      timeoutMs: 60000,
     });
     // console.log("IFT RAW:", JSON.stringify(result.raw.slice(0, 500)));
     // console.log("SUCCESS:", result.success);

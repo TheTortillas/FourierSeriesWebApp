@@ -122,6 +122,14 @@ for _i: 1 thru length(FUNC_INPUT) do block(
 F_raw: errcatch(ratsimp(F_acc))$
 F_raw: if F_raw = [] then false else first(F_raw)$
 
+/* laplace() can give up on a transcendental-in-transcendental expression
+   (e.g. cos(cos(t))-type FM signals) and return the operator unevaluated
+   ('laplace(expr,t,s)) instead of failing outright. That is not a usable
+   result, so treat it the same as "no closed form found". */
+F_raw: if F_raw # false and not freeof('laplace, F_raw)
+       then false
+       else F_raw$
+
 exists: is(F_raw # false)$
 
 /* Extract free parameters (symbols other than INTVAR and TRANSVAR) */

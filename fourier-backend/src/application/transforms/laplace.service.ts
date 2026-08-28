@@ -35,7 +35,7 @@ ${script}
 kill(all)$
 `.trim();
 
-    const result = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
+    const result = await this.runner.run({ script: fullScript });
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
     }
@@ -73,7 +73,7 @@ ${script}
 kill(all)$
 `.trim();
 
-    const result = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
+    const result = await this.runner.run({ script: fullScript });
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
     }
@@ -117,7 +117,7 @@ ${script}
 kill(all)$
 `.trim();
 
-    const result = await this.runner.run({ script: fullScript, timeoutMs: 90000 });
+    const result = await this.runner.run({ script: fullScript });
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
     }
@@ -154,7 +154,7 @@ ${script}
 kill(all)$
 `.trim();
 
-    const result = await this.runner.run({ script: fullScript, timeoutMs: 30000 });
+    const result = await this.runner.run({ script: fullScript });
     if (!result.success) {
       throw new Error(`Maxima error: ${result.error}`);
     }

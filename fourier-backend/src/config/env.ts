@@ -27,10 +27,7 @@ export const config = {
     level: optionalEnv("LOG_LEVEL", isDevelopment ? "debug" : "info"),
   },
   maxima: {
-    timeoutMs: parseInt(optionalEnv("MAXIMA_TIMEOUT_MS", "15000")),
-    transformsTimeoutMs: parseInt(
-      optionalEnv("MAXIMA_TRANSFORMS_TIMEOUT_MS", "60000"),
-    ),
+    timeoutMs: parseInt(optionalEnv("MAXIMA_TIMEOUT_MS", "20000")),
     scriptsPath: optionalEnv("MAXIMA_SCRIPTS_PATH", "src/scripts/maxima"),
   },
   cache: {

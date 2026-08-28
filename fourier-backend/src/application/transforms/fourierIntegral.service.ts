@@ -77,7 +77,7 @@ ${script}
 kill(all)$
 `;
 
-    const result = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
+    const result = await this.runner.run({ script: fullScript });
     if (!result.success) throw new Error(`Maxima error: ${result.error}`);
 
     const raw = result.raw;
@@ -148,7 +148,7 @@ ${script}
 kill(all)$
 `;
 
-    const result = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
+    const result = await this.runner.run({ script: fullScript });
     if (!result.success) throw new Error(`Maxima error: ${result.error}`);
 
     const raw = result.raw;

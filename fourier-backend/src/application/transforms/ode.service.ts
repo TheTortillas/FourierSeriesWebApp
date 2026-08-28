@@ -31,7 +31,7 @@ ${script}
 kill(all)$
 `.trim();
 
-    const { raw } = await this.runner.run({ script: fullScript, timeoutMs: 60000 });
+    const { raw } = await this.runner.run({ script: fullScript });
 
     const exists    = this.extractBetween(raw, "__EXISTS__",    "__SOL_MAXIMA__").trim().includes("true");
     const solMaxima = this.extractBetween(raw, "__SOL_MAXIMA__","__SOL_TEX__").trim();
