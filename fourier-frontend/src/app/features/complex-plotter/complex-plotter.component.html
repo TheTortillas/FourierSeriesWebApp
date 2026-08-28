@@ -1,0 +1,259 @@
+<app-nav />
+
+<div class="flex" style="height: calc(100vh - 3rem)">
+
+  <!-- ── Sidebar izquierdo: expresión + parámetros ───────────────────────── -->
+  <aside class="flex w-64 shrink-0 flex-col border-r border-border dark:border-dark-border bg-paper dark:bg-dark-bg overflow-y-auto">
+
+    <!-- MathQuill field -->
+    <div class="px-3 pt-3 pb-2">
+      <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted mb-1.5">
+        f(z) =
+      </p>
+      <div
+        #mqExpr
+        (focus)="onFocus()"
+        class="mq-field w-full min-h-10 rounded px-2 py-1.5 text-sm transition-colors cursor-text"
+      ></div>
+      @if (conversionError()) {
+        <p class="mt-1 text-[10px] font-mono text-red-500 dark:text-red-400 break-all">{{ conversionError() }}</p>
+      }
+    </div>
+
+    <!-- 2D / 3D toggle -->
+    <div class="px-3 py-2 border-t border-border dark:border-dark-border">
+      <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-1.5">
+        {{ 'laplace.complexPlaneView' | transloco }}
+      </p>
+      <div class="flex gap-1">
+        @for (m of ['2d', '3d']; track m) {
+          <button
+            type="button"
+            (click)="plotMode.set($any(m))"
+            class="flex-1 py-1 text-xs font-mono rounded border transition-colors focus:outline-none uppercase"
+            [class.border-accent]="plotMode() === m"
+            [class.text-accent]="plotMode() === m"
+            [class.bg-accent/5]="plotMode() === m"
+            [class.border-border]="plotMode() !== m"
+            [class.dark:border-dark-border]="plotMode() !== m"
+            [class.text-muted]="plotMode() !== m"
+            [class.dark:text-dark-muted]="plotMode() !== m"
+          >{{ m }}</button>
+        }
+      </div>
+    </div>
+
+    <!-- Parameter sliders (detected from expression) -->
+    @if (detectedParams().length > 0) {
+      <div class="px-3 py-3 border-t border-border dark:border-dark-border">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">
+          {{ 'grapher.settings.params' | transloco }}
+        </p>
+        <app-param-sliders
+          [params]="detectedParams()"
+          (valuesChange)="onParamChange($event)"
+        />
+      </div>
+    }
+
+    <!-- Render settings -->
+    <div class="border-t border-border dark:border-dark-border">
+      <button
+        type="button"
+        (click)="toggleSettings()"
+        class="flex w-full items-center justify-between px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors"
+      >
+        <span>{{ 'grapher.settings.title' | transloco }}</span>
+        <svg
+          [class]="settingsOpen()
+            ? 'w-3 h-3 -rotate-90 transition-transform'
+            : 'w-3 h-3 transition-transform'"
+          viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"
+        >
+          <path d="M2 4l4 4 4-4"/>
+        </svg>
+      </button>
+
+      @if (settingsOpen()) {
+        <div class="px-3 pb-3 space-y-3 border-t border-border dark:border-dark-border">
+
+          @if (plotMode() === '2d') {
+            <!-- ── 2D: color scheme + modlines + legend ─────────────────── -->
+            <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-2">
+              {{ 'laplace.complexPlaneColor' | transloco }}
+            </p>
+            <div class="flex flex-col gap-1">
+              @for (scheme of [['classic','laplace.complexPlaneColorClassic'],['phase','laplace.complexPlaneColorPhase'],['magnitude','laplace.complexPlaneColorMagnitude']]; track scheme[0]) {
+                <button
+                  type="button"
+                  (click)="colorScheme.set($any(scheme[0]))"
+                  class="flex-1 py-1 px-2 text-xs font-mono rounded border text-left transition-colors focus:outline-none"
+                  [class.border-accent]="colorScheme() === scheme[0]"
+                  [class.text-accent]="colorScheme() === scheme[0]"
+                  [class.bg-accent/5]="colorScheme() === scheme[0]"
+                  [class.border-border]="colorScheme() !== scheme[0]"
+                  [class.dark:border-dark-border]="colorScheme() !== scheme[0]"
+                  [class.text-muted]="colorScheme() !== scheme[0]"
+                  [class.dark:text-dark-muted]="colorScheme() !== scheme[0]"
+                >{{ scheme[1] | transloco }}</button>
+              }
+            </div>
+
+            @if (colorScheme() === 'classic' || colorScheme() === 'magnitude') {
+              <label class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneInvertMod' | transloco }}</span>
+                <input type="checkbox" [checked]="invertMod()" (change)="invertMod.set($any($event.target).checked)" class="accent-accent" />
+              </label>
+            }
+
+            @if (colorScheme() === 'classic') {
+              <label class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-ink/80 dark:text-dark-ink/80">{{ 'complex.modLines' | transloco }}</span>
+                <input type="checkbox" [checked]="showModLines()" (change)="showModLines.set($any($event.target).checked)" class="accent-accent" />
+              </label>
+            }
+
+            <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-1">
+              {{ 'laplace.complexPlaneLegend' | transloco }}
+            </p>
+            <div class="flex gap-1">
+              @for (ls of [['strip','laplace.complexPlaneLegendStrip'],['circle','laplace.complexPlaneLegendCircle']]; track ls[0]) {
+                <button
+                  type="button"
+                  (click)="legendStyle.set($any(ls[0]))"
+                  class="flex-1 py-1 text-xs font-mono rounded border transition-colors"
+                  [class.border-accent]="legendStyle() === ls[0]"
+                  [class.text-accent]="legendStyle() === ls[0]"
+                  [class.bg-accent/5]="legendStyle() === ls[0]"
+                  [class.border-border]="legendStyle() !== ls[0]"
+                  [class.dark:border-dark-border]="legendStyle() !== ls[0]"
+                  [class.text-muted]="legendStyle() !== ls[0]"
+                  [class.dark:text-dark-muted]="legendStyle() !== ls[0]"
+                >{{ ls[1] | transloco }}</button>
+              }
+            </div>
+          } @else {
+            <!-- ── 3D: wireframe + grid + sliders ────────────────────────── -->
+            <label class="flex items-center justify-between text-[11px] font-mono pt-2">
+              <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneWireframe' | transloco }}</span>
+              <input type="checkbox" [checked]="wireframe()" (change)="wireframe.set($any($event.target).checked)" class="accent-accent" />
+            </label>
+
+            <label class="flex items-center justify-between text-[11px] font-mono">
+              <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneGrid' | transloco }}</span>
+              <input type="checkbox" [checked]="showGrid3d()" (change)="showGrid3d.set($any($event.target).checked)" class="accent-accent" />
+            </label>
+
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneResolution' | transloco }}</span>
+                <span class="text-muted dark:text-dark-muted w-7 text-right">{{ resolution() }}</span>
+              </div>
+              <input type="range" min="20" max="160" step="10" class="w-full accent-accent h-1.5 cursor-pointer"
+                [value]="resolution()" (input)="resolution.set(+$any($event.target).value)" />
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneRange' | transloco }}</span>
+                <span class="text-muted dark:text-dark-muted w-7 text-right">{{ range3d() }}</span>
+              </div>
+              <input type="range" min="1" max="10" step="0.5" class="w-full accent-accent h-1.5 cursor-pointer"
+                [value]="range3d()" (input)="range3d.set(+$any($event.target).value)" />
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneScaleZ' | transloco }}</span>
+                <span class="text-muted dark:text-dark-muted w-7 text-right">{{ heightScale() }}</span>
+              </div>
+              <input type="range" min="0.1" max="3" step="0.1" class="w-full accent-accent h-1.5 cursor-pointer"
+                [value]="heightScale()" (input)="heightScale.set(+$any($event.target).value)" />
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-ink/80 dark:text-dark-ink/80">{{ 'laplace.complexPlaneClipZ' | transloco }}</span>
+                <span class="text-muted dark:text-dark-muted w-7 text-right">{{ zClip() }}</span>
+              </div>
+              <input type="range" min="1" max="20" step="0.5" class="w-full accent-accent h-1.5 cursor-pointer"
+                [value]="zClip()" (input)="zClip.set(+$any($event.target).value)" />
+            </div>
+          }
+
+        </div>
+      }
+    </div>
+
+  </aside>
+
+  <!-- ── Canvas ─────────────────────────────────────────────────────────────── -->
+  <main class="relative flex-1 min-w-0">
+    <app-complex-plot
+      class="block w-full h-full"
+      [expr]="exprMaxima()"
+      [mode]="plotMode()"
+      [colorScheme]="colorScheme()"
+      [showModLines]="showModLines()"
+      [invertMod]="invertMod()"
+      [legendStyle]="legendStyle()"
+      [wireframe]="wireframe()"
+      [showGrid3d]="showGrid3d()"
+      [resolution]="resolution()"
+      [range3d]="range3d()"
+      [heightScale]="heightScale()"
+      [zClip]="zClip()"
+      [paramValues]="paramValues()"
+      (paramsDetected)="onParamsDetected($event)"
+    />
+  </main>
+
+  <!-- ── Sidebar derecho: biblioteca de funciones complejas ────────────────── -->
+  <aside class="flex w-56 shrink-0 flex-col overflow-y-auto border-l border-border dark:border-dark-border bg-paper dark:bg-dark-bg">
+
+    <div class="sticky top-0 z-10 bg-paper dark:bg-dark-bg px-3 py-2.5 border-b border-border dark:border-dark-border">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-muted dark:text-dark-muted">
+        {{ 'complex.library' | transloco }}
+      </p>
+    </div>
+
+    @for (group of libraryGroups; track group.id) {
+      <div class="border-b border-border dark:border-dark-border">
+        <button
+          type="button"
+          (click)="toggleGroup(group.id)"
+          class="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-semibold text-ink/80 dark:text-dark-ink/80 hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+        >
+          <span>{{ group.label | transloco }}</span>
+          <svg
+            [class]="isCollapsed(group.id)
+              ? 'w-3 h-3 text-muted dark:text-dark-muted transition-transform'
+              : 'w-3 h-3 text-muted dark:text-dark-muted -rotate-90 transition-transform'"
+            viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"
+          >
+            <path d="M2 4l4 4 4-4"/>
+          </svg>
+        </button>
+
+        @if (!isCollapsed(group.id)) {
+          <div class="px-2 pb-2 flex flex-col gap-0.5">
+            @for (entry of group.entries; track entry.maxima) {
+              <button
+                type="button"
+                (click)="loadExample(entry)"
+                [title]="entry.desc ?? entry.label"
+                class="group flex w-full items-center gap-1 rounded px-2 py-1.5 text-left hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+              >
+                <span
+                  class="flex-1 min-w-0 text-[13px] leading-none text-ink dark:text-dark-ink"
+                  [mathjax]="'\\(' + entry.latex + '\\)'"
+                ></span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </aside>
+
+</div>

@@ -1,119 +1,9 @@
 <app-nav />
 
-<div class="flex h-[calc(100vh-3rem)]">
+<div class="flex" style="height: calc(100vh - 3rem)">
 
-  <!-- Sidebar -->
-  <aside class="flex flex-col w-72 shrink-0 border-r border-border dark:border-dark-border bg-paper dark:bg-dark-bg overflow-y-auto">
-
-    <!-- Sidebar header -->
-    <div class="flex items-center justify-between px-3 py-2 border-b border-border dark:border-dark-border">
-      <span class="text-xs font-mono font-semibold text-muted dark:text-dark-muted uppercase tracking-wider">
-        {{ 'nav.grapher' | transloco }}
-      </span>
-      <button
-        type="button"
-        (click)="toggleSettings()"
-        class="p-1 rounded text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink hover:bg-paper2 dark:hover:bg-dark-surface transition-colors focus:outline-none"
-        [class.text-accent]="settingsOpen()"
-        title="Settings"
-      >
-        <!-- gear icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
-      </button>
-    </div>
-
-    <!-- Settings panel (collapsible) -->
-    @if (settingsOpen()) {
-      <div class="border-b border-border dark:border-dark-border px-3 py-3 space-y-3">
-
-        <!-- Markers -->
-        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted">
-          {{ 'grapher.settings.markers' | transloco }}
-        </p>
-
-        <label class="flex items-center justify-between gap-2 cursor-pointer">
-          <span class="text-xs text-ink dark:text-dark-ink">{{ 'grapher.settings.showRoots' | transloco }}</span>
-          <button
-            type="button"
-            role="switch"
-            [attr.aria-checked]="settings().showRoots"
-            (click)="setSetting('showRoots', !settings().showRoots)"
-            class="relative w-8 h-4 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
-            [class.bg-accent]="settings().showRoots"
-            [class.bg-border]="!settings().showRoots"
-            [class.dark:bg-dark-border]="!settings().showRoots"
-          >
-            <span
-              class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform"
-              [class.translate-x-4]="settings().showRoots"
-            ></span>
-          </button>
-        </label>
-
-        <label class="flex items-center justify-between gap-2 cursor-pointer">
-          <span class="text-xs text-ink dark:text-dark-ink">{{ 'grapher.settings.showIntersections' | transloco }}</span>
-          <button
-            type="button"
-            role="switch"
-            [attr.aria-checked]="settings().showIntersections"
-            (click)="setSetting('showIntersections', !settings().showIntersections)"
-            class="relative w-8 h-4 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
-            [class.bg-accent]="settings().showIntersections"
-            [class.bg-border]="!settings().showIntersections"
-            [class.dark:bg-dark-border]="!settings().showIntersections"
-          >
-            <span
-              class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform"
-              [class.translate-x-4]="settings().showIntersections"
-            ></span>
-          </button>
-        </label>
-
-        <!-- X-axis format -->
-        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-1">
-          {{ 'grapher.settings.xAxis' | transloco }}
-        </p>
-
-        <div class="flex gap-1">
-          @for (fmt of ['integer', 'pi', 'e']; track fmt) {
-            <button
-              type="button"
-              (click)="setSetting('xAxisFormat', $any(fmt))"
-              class="flex-1 py-1 text-xs font-mono rounded border transition-colors focus:outline-none"
-              [class.border-accent]="settings().xAxisFormat === fmt"
-              [class.text-accent]="settings().xAxisFormat === fmt"
-              [class.bg-accent/5]="settings().xAxisFormat === fmt"
-              [class.border-border]="settings().xAxisFormat !== fmt"
-              [class.dark:border-dark-border]="settings().xAxisFormat !== fmt"
-              [class.text-muted]="settings().xAxisFormat !== fmt"
-              [class.dark:text-dark-muted]="settings().xAxisFormat !== fmt"
-            >{{ fmt === 'integer' ? '1' : fmt === 'pi' ? 'π' : 'e' }}</button>
-          }
-        </div>
-
-        <!-- Initial zoom -->
-        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-1">
-          {{ 'grapher.settings.zoom' | transloco }}
-        </p>
-
-        <div class="flex items-center gap-2">
-          <input
-            type="range"
-            min="20" max="200" step="10"
-            class="flex-1 accent-accent cursor-pointer h-1.5"
-            [value]="settings().initialUnit"
-            (input)="setSetting('initialUnit', +$any($event.target).value)"
-          />
-          <span class="w-8 text-right text-xs font-mono text-muted dark:text-dark-muted">
-            {{ settings().initialUnit }}
-          </span>
-        </div>
-
-      </div>
-    }
+  <!-- ── Sidebar izquierdo: expresiones + controles ──────────────────────── -->
+  <aside class="flex w-64 shrink-0 flex-col border-r border-border dark:border-dark-border bg-paper dark:bg-dark-bg overflow-y-auto">
 
     <!-- Expression list -->
     <div class="flex-1">
@@ -121,6 +11,7 @@
         <app-grapher-expression
           [expr]="expr"
           [isOnly]="expressions().length === 1"
+          [syncLatex]="syncMap()[expr.id] ?? null"
           (changed)="updateExpression($event)"
           (removed)="removeExpression($event)"
         />
@@ -128,7 +19,7 @@
     </div>
 
     <!-- Add expression + keyboard toggle -->
-    <div class="p-3 border-t border-border dark:border-dark-border flex gap-2">
+    <div class="px-3 py-2.5 border-t border-border dark:border-dark-border flex gap-2">
       <button
         type="button"
         (click)="addExpression()"
@@ -176,7 +67,10 @@
 
     <!-- Parameter sliders -->
     @if (detectedParams().length > 0) {
-      <div class="p-3 border-t border-border dark:border-dark-border">
+      <div class="px-3 py-3 border-t border-border dark:border-dark-border">
+        <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted mb-2">
+          {{ 'grapher.settings.params' | transloco }}
+        </p>
         <app-param-sliders
           [params]="detectedParams()"
           (valuesChange)="onParamChange($event)"
@@ -184,9 +78,117 @@
       </div>
     }
 
+    <!-- Settings section -->
+    <div class="border-t border-border dark:border-dark-border">
+      <button
+        type="button"
+        (click)="toggleSettings()"
+        class="flex w-full items-center justify-between px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted dark:text-dark-muted hover:text-ink dark:hover:text-dark-ink transition-colors"
+      >
+        <span>{{ 'grapher.settings.title' | transloco }}</span>
+        <svg
+          [class]="settingsOpen()
+            ? 'w-3 h-3 -rotate-90 transition-transform'
+            : 'w-3 h-3 transition-transform'"
+          viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"
+        >
+          <path d="M2 4l4 4 4-4"/>
+        </svg>
+      </button>
+
+      @if (settingsOpen()) {
+        <div class="px-3 pb-3 space-y-3 border-t border-border dark:border-dark-border">
+
+          <!-- Markers -->
+          <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-2">
+            {{ 'grapher.settings.markers' | transloco }}
+          </p>
+
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span class="text-xs text-ink dark:text-dark-ink">{{ 'grapher.settings.showRoots' | transloco }}</span>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="settings().showRoots"
+              (click)="setSetting('showRoots', !settings().showRoots)"
+              class="relative w-8 h-4 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+              [class.bg-accent]="settings().showRoots"
+              [class.bg-border]="!settings().showRoots"
+              [class.dark:bg-dark-border]="!settings().showRoots"
+            >
+              <span
+                class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform"
+                [class.translate-x-4]="settings().showRoots"
+              ></span>
+            </button>
+          </label>
+
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span class="text-xs text-ink dark:text-dark-ink">{{ 'grapher.settings.showIntersections' | transloco }}</span>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="settings().showIntersections"
+              (click)="setSetting('showIntersections', !settings().showIntersections)"
+              class="relative w-8 h-4 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+              [class.bg-accent]="settings().showIntersections"
+              [class.bg-border]="!settings().showIntersections"
+              [class.dark:bg-dark-border]="!settings().showIntersections"
+            >
+              <span
+                class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform"
+                [class.translate-x-4]="settings().showIntersections"
+              ></span>
+            </button>
+          </label>
+
+          <!-- X-axis format -->
+          <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-1">
+            {{ 'grapher.settings.xAxis' | transloco }}
+          </p>
+
+          <div class="flex gap-1">
+            @for (fmt of ['integer', 'pi', 'e']; track fmt) {
+              <button
+                type="button"
+                (click)="setSetting('xAxisFormat', $any(fmt))"
+                class="flex-1 py-1 text-xs font-mono rounded border transition-colors focus:outline-none"
+                [class.border-accent]="settings().xAxisFormat === fmt"
+                [class.text-accent]="settings().xAxisFormat === fmt"
+                [class.bg-accent/5]="settings().xAxisFormat === fmt"
+                [class.border-border]="settings().xAxisFormat !== fmt"
+                [class.dark:border-dark-border]="settings().xAxisFormat !== fmt"
+                [class.text-muted]="settings().xAxisFormat !== fmt"
+                [class.dark:text-dark-muted]="settings().xAxisFormat !== fmt"
+              >{{ fmt === 'integer' ? '1' : fmt === 'pi' ? 'π' : 'e' }}</button>
+            }
+          </div>
+
+          <!-- Initial zoom -->
+          <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-1">
+            {{ 'grapher.settings.zoom' | transloco }}
+          </p>
+
+          <div class="flex items-center gap-2">
+            <input
+              type="range"
+              min="20" max="200" step="10"
+              class="flex-1 accent-accent cursor-pointer h-1.5"
+              [value]="settings().initialUnit"
+              (input)="setSetting('initialUnit', +$any($event.target).value)"
+            />
+            <span class="w-8 text-right text-xs font-mono text-muted dark:text-dark-muted">
+              {{ settings().initialUnit }}
+            </span>
+          </div>
+
+        </div>
+      }
+    </div>
+
   </aside>
 
-  <!-- Canvas area -->
+  <!-- ── Canvas ────────────────────────────────────────────────────────────── -->
   <main class="relative flex-1 min-w-0">
 
     @if (canvasMounted()) {
@@ -207,6 +209,54 @@
     }
 
   </main>
+
+  <!-- ── Sidebar derecho: biblioteca de funciones ───────────────────────── -->
+  <aside class="flex w-56 shrink-0 flex-col overflow-y-auto border-l border-border dark:border-dark-border bg-paper dark:bg-dark-bg">
+
+    <div class="sticky top-0 z-10 bg-paper dark:bg-dark-bg px-3 py-2.5 border-b border-border dark:border-dark-border">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-muted dark:text-dark-muted">
+        {{ 'grapher.library' | transloco }}
+      </p>
+    </div>
+
+    @for (group of libraryGroups; track group.id) {
+      <div class="border-b border-border dark:border-dark-border">
+        <button
+          type="button"
+          (click)="toggleGroup(group.id)"
+          class="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-semibold text-ink/80 dark:text-dark-ink/80 hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+        >
+          <span>{{ group.label | transloco }}</span>
+          <svg
+            [class]="isCollapsed(group.id)
+              ? 'w-3 h-3 text-muted dark:text-dark-muted transition-transform'
+              : 'w-3 h-3 text-muted dark:text-dark-muted -rotate-90 transition-transform'"
+            viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"
+          >
+            <path d="M2 4l4 4 4-4"/>
+          </svg>
+        </button>
+
+        @if (!isCollapsed(group.id)) {
+          <div class="px-2 pb-2 flex flex-col gap-0.5">
+            @for (entry of group.entries; track entry.maxima) {
+              <button
+                type="button"
+                (click)="loadExample(entry)"
+                [title]="entry.desc ?? entry.label"
+                class="group flex w-full items-center gap-1 rounded px-2 py-1.5 text-left hover:bg-paper2 dark:hover:bg-dark-surface transition-colors"
+              >
+                <span
+                  class="flex-1 min-w-0 text-[13px] leading-none text-ink dark:text-dark-ink"
+                  [mathjax]="'\\(' + entry.latex + '\\)'"
+                ></span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </aside>
 
 </div>
 

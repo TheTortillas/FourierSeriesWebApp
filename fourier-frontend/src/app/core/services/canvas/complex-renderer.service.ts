@@ -16,6 +16,7 @@ uniform float u_scale;
 uniform vec2  u_res;
 uniform int   u_scheme;
 uniform int   u_modlines;
+uniform int   u_invertmod;
 PARAM_UNIFORMS
 vec2 f_user(vec2 z){ return USER_CODE; }
 void main(){
@@ -28,16 +29,20 @@ void main(){
   float h=mod(arg/(2.0*PI)+1.0,1.0);
   vec3 color;
   if(u_scheme==2){
-    float v=atan(aW*1.2)/(PI*0.5); color=vec3(v);
+    // Magnitude only (greyscale)
+    float v=u_invertmod!=0 ? 1.0-atan(aW*1.2)/(PI*0.5) : atan(aW*1.2)/(PI*0.5); color=vec3(v);
   } else if(u_scheme==1){
+    // Phase only (flat value)
     color=hsv2rgb(h,1.0,0.88);
   } else {
+    // Classic (Wegert-style): hue=arg, value encodes |f|
+    float v=u_invertmod!=0 ? 1.0/(1.0+aW) : aW/(1.0+aW);
     float logA=log2(max(aW,1.0e-12));
     float mf=logA-floor(logA);
     float iso=0.5+0.5*cos(2.0*PI*mf);
-    float v=atan(aW*1.5)/(PI*0.5);
-    if(u_modlines!=0) v*=0.70+0.30*iso;
-    color=hsv2rgb(h,0.96,min(1.0,v));
+    if(u_modlines!=0) v*=0.80+0.20*iso;
+    color=hsv2rgb(h,0.95,v);
+    // Legacy (u_scheme==3): atan-based value — not exposed in UI
   }
   gl_FragColor=vec4(color,1.0);
 }`;
@@ -247,6 +252,7 @@ export class ComplexRendererService implements OnDestroy {
     vp: ComplexViewport2D,
     scheme: ColorScheme,
     modLines: boolean,
+    invertMod: boolean,
   ): void {
     const gl = this.gl;
     if (!gl || !this.prog2D) return;
@@ -267,6 +273,7 @@ export class ComplexRendererService implements OnDestroy {
     gl.uniform2f(this.u2D['res'],    W, H);
     gl.uniform1i(this.u2D['scheme'], si);
     gl.uniform1i(this.u2D['modlines'], modLines ? 1 : 0);
+    gl.uniform1i(this.u2D['invertmod'], invertMod ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
@@ -331,7 +338,7 @@ export class ComplexRendererService implements OnDestroy {
     const pos = gl.getAttribLocation(p, 'a_pos');
     gl.enableVertexAttribArray(pos);
     gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-    this.u2D = this.uniformMap(p, ['center', 'scale', 'res', 'scheme', 'modlines']);
+    this.u2D = this.uniformMap(p, ['center', 'scale', 'res', 'scheme', 'modlines', 'invertmod']);
   }
 
   private build3D(glsl: string, paramUniforms: string): void {

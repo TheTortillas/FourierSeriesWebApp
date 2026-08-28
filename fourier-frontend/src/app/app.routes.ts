@@ -81,10 +81,17 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'grapher',
+        path: 'real-plotter',
         loadComponent: () =>
           import('./features/grapher/grapher.component').then(
             (m) => m.GrapherComponent,
+          ),
+      },
+      {
+        path: 'complex-plotter',
+        loadComponent: () =>
+          import('./features/complex-plotter/complex-plotter.component').then(
+            (m) => m.ComplexPlotterComponent,
           ),
       },
       {

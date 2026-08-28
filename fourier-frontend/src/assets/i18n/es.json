@@ -70,10 +70,13 @@
     "rebrandBanner": {
       "message": "Fourier Web Calculator ahora es AEM-Lab (Advanced Engineering Mathematics Lab) — la misma herramienta, nuevo nombre.",
       "dismiss": "Cerrar"
-    }
+    },
+    "realPlotter": "Graficador real",
+    "complexPlotter": "Graficador complejo"
   },
   "grapher": {
     "addExpression": "+ Agregar expresión",
+    "library": "Biblioteca f(x)",
     "changeColor": "Cambiar color",
     "show": "Mostrar",
     "hide": "Ocultar",
@@ -82,11 +85,13 @@
     "xLabel": "x",
     "yLabel": "y",
     "settings": {
+      "title": "Configuración",
       "markers": "Marcadores",
       "showRoots": "Raíces (función-eje)",
       "showIntersections": "Intersecciones (función-función)",
       "xAxis": "Formato eje X",
-      "zoom": "Zoom inicial"
+      "zoom": "Zoom inicial",
+      "params": "Parámetros libres"
     },
     "style": {
       "lineStyle": "Estilo de línea",
@@ -100,6 +105,19 @@
       "show": "Mostrar",
       "hide": "Ocultar",
       "remove": "Eliminar"
+    },
+    "groups": {
+      "basic": "Básicas",
+      "explog": "Exponencial y logaritmo",
+      "trig": "Trigonométricas",
+      "hyp": "Hiperbólicas",
+      "gamma": "Función Gamma",
+      "error": "Función error",
+      "integral": "Integrales seno/coseno",
+      "fresnel": "Integrales de Fresnel",
+      "expint": "Integrales exponenciales",
+      "sgnal": "Señales",
+      "composed": "Compuestas"
     }
   },
   "home": {
@@ -117,8 +135,8 @@
     "laplaceSectionDesc": "Herramienta fundamental para análisis de circuitos, sistemas de control y señales. Transformada directa, inversa y resolución de EDOs con condiciones iniciales.",
     "odeSectionTitle": "Ecuaciones Diferenciales",
     "odeSectionDesc": "Resuelve EDOs ordinarias simbólicamente: solución general con constantes libres, problemas de valor inicial (PVI) y de frontera (BVP).",
-    "grapherSectionTitle": "Graficador",
-    "grapherSectionDesc": "Visualiza funciones matemáticas de forma interactiva con soporte de múltiples expresiones simultáneas.",
+    "grapherSectionTitle": "Graficadores",
+    "grapherSectionDesc": "Visualiza funciones matemáticas en el plano real o en el plano complejo con coloración de dominio.",
     "series": {
       "title": "Series de Fourier",
       "shortDesc": "Trigonométrica, compleja y semirango. Coeficientes simbólicos, Parseval y gráfica animada.",
@@ -162,7 +180,7 @@
       ]
     },
     "grapher": {
-      "title": "Graficador",
+      "title": "Graficador real",
       "shortDesc": "Múltiples funciones simultáneas con funciones especiales (erf, Γ, Si, Ci…), zoom y colores por expresión.",
       "description": "Grafica múltiples funciones simultáneamente con soporte de funciones especiales (erf, Γ, Si, Ci…), zoom y colores por expresión.",
       "features": [
@@ -170,6 +188,16 @@
         "Funciones especiales (erf, Γ, Si…)",
         "Raíces e intersecciones",
         "Zoom y colores por curva"
+      ]
+    },
+    "complexGrapher": {
+      "title": "Plano complejo",
+      "shortDesc": "Coloración de dominio de Wegert: Γ(z), ζ(z), erf(z), Si(z), Fresnel y más. Vistas 2D y 3D.",
+      "features": [
+        "Coloración de dominio (arg → color)",
+        "Γ(z), ζ(z), erf, Si, Ci, Fresnel",
+        "Vista 3D de módulo",
+        "Transformaciones de Möbius"
       ]
     }
   },
@@ -873,6 +901,14 @@
     },
     "ode": {
       "description": "Resuelve ecuaciones diferenciales ordinarias lineales hasta 3er orden. Obtén la solución general con constantes de integración, aplica condiciones iniciales (PVI) o condiciones de frontera (BVP) y visualiza la solución con gráfica interactiva. Motor CAS simbólico exacto basado en Maxima."
+    },
+    "grapher": {
+      "title": "Graficador de funciones reales — AEM-Lab",
+      "description": "Grafica funciones matemáticas reales: trigonométricas, especiales, gamma, Fresnel, Si/Ci y más. Detecta raíces e intersecciones de forma interactiva."
+    },
+    "complexPlotter": {
+      "title": "Graficador de funciones complejas — AEM-Lab",
+      "description": "Visualiza funciones complejas con coloración de dominio de Wegert: Γ(z), ζ(z), exp, transformaciones de Möbius y más."
     }
   },
   "dev": {
@@ -1305,7 +1341,38 @@
       }
     },
     "sectionOde": "Ecuaciones Diferenciales",
-    "sectionGrapher": "Graficador Interactivo"
+    "sectionGrapher": "Graficador Interactivo",
+    "sectionComplexGrapher": "Plano Complejo",
+    "complexGrapher": {
+      "title": "Graficador de plano complejo",
+      "desc": "Visualiza funciones de variable compleja mediante coloración de dominio: el argumento de f(z) se codifica como color y el módulo como brillo. Incluye vista 3D de la superficie |f(z)|.",
+      "features": {
+        "f1": "Coloración de dominio de Wegert (arg → tono HSV)",
+        "f2": "Funciones especiales: Γ(z), ζ(z), erf(z), Si(z), Ci(z), Fresnel",
+        "f3": "Vista 3D interactiva de la superficie de módulo",
+        "f4": "Transformaciones de Möbius y composiciones",
+        "f5": "Biblioteca de funciones con grupos temáticos"
+      },
+      "complexFns": {
+        "label": "Funciones complejas disponibles",
+        "analytic": {
+          "label": "Analíticas",
+          "gamma": "Función Gamma Γ(z)",
+          "zeta": "Zeta de Riemann ζ(z)",
+          "erf": "Función de error erf(z)",
+          "beta": "Función Beta B(z,w)"
+        },
+        "integrals": {
+          "label": "Integrales especiales",
+          "Si": "Integral seno Si(z)",
+          "Ci": "Integral coseno Ci(z)",
+          "Ei": "Integral exponencial Ei(z)",
+          "E1": "Integral E₁(z)",
+          "fresnelC": "Fresnel C(z)",
+          "fresnelS": "Fresnel S(z)"
+        }
+      }
+    }
   },
   "fourier-integral": {
     "title": "Integral de Fourier",
@@ -1447,6 +1514,7 @@
     "complexPlaneColorClassic": "Clásico",
     "complexPlaneColorPhase": "Fase",
     "complexPlaneColorMagnitude": "Módulo",
+    "complexPlaneInvertMod": "Invertir módulo",
     "complexPlaneLegend": "Leyenda",
     "complexPlaneLegendStrip": "Tira",
     "complexPlaneLegendCircle": "Círculo",
@@ -1551,5 +1619,24 @@
     "exLapImpulse": "Respuesta al impulso (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
     "exLap3rdForce": "3er orden — forzamiento exponencial: y'''+ y''= eᵗ",
     "exLap3rdRepeat": "3er orden — raíz triple: y'''- 3y'' + 3y' - y = 0"
+  },
+  "complex": {
+    "library": "Biblioteca f(z)",
+    "groups": {
+      "poly": "Polinomios y racionales",
+      "pow": "Potencias y funciones de z",
+      "explog": "Exponencial y logaritmo",
+      "trig": "Trigonométricas",
+      "hyp": "Hiperbólicas",
+      "gamma": "Gamma y Zeta",
+      "gammaExtra": "Beta y factorial",
+      "mobius": "Möbius y racionales",
+      "composed": "Compuestas",
+      "error": "Función error",
+      "integral": "Integrales Si/Ci/Shi/Chi",
+      "fresnel": "Integrales de Fresnel",
+      "expint": "Integrales exponenciales"
+    },
+    "modLines": "Líneas isomódulo"
   }
 }

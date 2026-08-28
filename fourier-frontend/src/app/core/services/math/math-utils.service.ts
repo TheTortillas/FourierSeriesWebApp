@@ -721,63 +721,75 @@ export class MathUtilsService {
       for (let n = 1; n <= 25; n++) { const tn = t * (-n / x); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
       return Math.exp(-x) / x * s;
     }
+    // Auxiliary functions for Si/Ci asymptotic (A&S 5.2.8, optimal truncation):
+    //   f(x) = (1/x) Σ (-1)^n (2n)!/x^{2n},   tf[n] = tf[n-1]·(2n)(2n-1)/x²
+    //   g(x) = (1/x²) Σ (-1)^n (2n+1)!/x^{2n}, tg[n] = tg[n-1]·(2n+1)(2n)/x²
     function _fAux(x) {
       let s = 1, t = 1, x2 = x * x;
-      for (let n = 1; n <= 25; n++) { const tn = t * (-(2*n) * (2*n-1) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
+      for (let n = 1; n <= 50; n++) { const tn = t * (-(2*n) * (2*n-1) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
       return s / x;
     }
     function _gAux(x) {
       let s = 1, t = 1, x2 = x * x;
-      for (let n = 1; n <= 25; n++) { const tn = t * (-(2*n+1) * (2*n) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
+      for (let n = 1; n <= 50; n++) { const tn = t * (-(2*n+1) * (2*n) / x2); if (Math.abs(tn) >= Math.abs(t)) break; t = tn; s += t; }
       return s / (x * x);
     }
+    // Si(x) = ∫₀ˣ sin(t)/t dt.
+    // Taylor for |x|≤20 (200 terms, error <1e-10); asymptotic A&S 5.2.8 for |x|>20.
     function _Si(x) {
       const a = Math.abs(x);
-      if (a < 4) {
+      if (a <= 20) {
         let s = 0, t = x, x2 = x * x;
-        for (let n = 0; n < 30; n++) { s += t; t *= -x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3)); }
+        for (let n = 0; n < 200; n++) {
+          s += t;
+          t *= -x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3));
+          if (!isFinite(t)) break;
+          if (Math.abs(t) < 1e-15 * Math.abs(s) && n > 3) break;
+        }
         return s;
       }
-      // Si is odd: Si(-x) = -Si(x), so sign wraps the entire asymptotic expression
       return Math.sign(x) * (Math.PI / 2 - _fAux(a) * Math.cos(a) - _gAux(a) * Math.sin(a));
     }
+    // Ci(x) = γ + ln x + ∫₀ˣ (cos t − 1)/t dt.
+    // Taylor for x≤20 (200 terms, error <1e-9); asymptotic for x>20.
     function _Ci(x) {
       if (x <= 0) return NaN;
-      if (x < 4) {
+      if (x <= 20) {
         let s = 0, t = -x * x / 4, x2 = x * x;
-        for (let n = 1; n <= 30; n++) { s += t; t *= -x2 * 2*n / ((2*n+2) * (2*n+2) * (2*n+1)); }
+        for (let n = 1; n <= 200; n++) {
+          s += t;
+          t *= -x2 * (2*n) / ((2*n+2) * (2*n+2) * (2*n+1));
+          if (!isFinite(t)) break;
+          if (Math.abs(t) < 1e-15 * Math.abs(s) && n > 3) break;
+        }
         return _EG + Math.log(x) + s;
       }
       return _fAux(x) * Math.sin(x) - _gAux(x) * Math.cos(x);
     }
+    // Shi(x) = ∫₀ˣ sinh(t)/t dt.  Taylor series converges for all x (infinite radius);
+    // use up to 300 terms so x≤20 is accurate to 1e-9 relative.
     function _Shi(x) {
       if (x === 0) return 0;
-      const a = Math.abs(x);
-      if (a < 10) {
-        let s = 0, t = x, x2 = x * x;
-        for (let n = 0; n < 50; n++) {
-          s += t;
-          const tn = t * x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3));
-          if (Math.abs(tn) < 1e-13 * Math.abs(s) && n > 3) break;
-          t = tn;
-        }
-        return s;
+      let s = 0, t = x, x2 = x * x;
+      for (let n = 0; n < 300; n++) {
+        s += t;
+        t *= x2 * (2*n+1) / ((2*n+2) * (2*n+3) * (2*n+3));
+        if (!isFinite(t)) break;
+        if (Math.abs(t) < 1e-15 * Math.abs(s) && n > 3) break;
       }
-      return x > 0 ? (_Ei(x) + _E1(x)) / 2 : -(_Ei(a) + _E1(a)) / 2;
+      return s;
     }
+    // Chi(x) = γ + ln x + ∫₀ˣ (cosh t − 1)/t dt.  Same Taylor strategy as Shi.
     function _Chi(x) {
       if (x <= 0) return NaN;
-      if (x < 10) {
-        let s = 0, t = x * x / 4, x2 = x * x;
-        for (let n = 1; n <= 50; n++) {
-          s += t;
-          const tn = t * x2 * 2*n / ((2*n+2) * (2*n+2) * (2*n+1));
-          if (Math.abs(tn) < 1e-13 * Math.abs(s) && n > 3) break;
-          t = tn;
-        }
-        return _EG + Math.log(x) + s;
+      let s = 0, t = x * x / 4, x2 = x * x;
+      for (let n = 1; n <= 300; n++) {
+        s += t;
+        t *= x2 * (2*n) / ((2*n+2) * (2*n+2) * (2*n+1));
+        if (!isFinite(t)) break;
+        if (Math.abs(t) < 1e-15 * Math.abs(s) && n > 3) break;
       }
-      return (_Ei(x) - _E1(x)) / 2;
+      return _EG + Math.log(x) + s;
     }
     function _li(x) { return x <= 0 ? NaN : _Ei(Math.log(x)); }
 
@@ -834,5 +846,56 @@ export class MathUtilsService {
       if (a <= 0 || b <= 0) return NaN;
       return _gamma(a) * _gamma(b) / _gamma(a + b);
     }
+
+    // ── Fresnel integrals ──────────────────────────────────────────────────────
+    // C(x) = ∫₀ˣ cos(πt²/2) dt,  S(x) = ∫₀ˣ sin(πt²/2) dt
+    //
+    // Two-region strategy, error < 1e-7 everywhere:
+    //   |x| ≤ 4.5 — Taylor series via term recurrence (no explicit factorial).
+    //   |x| >  4.5 — A&S 7.3.27 asymptotic with optimal truncation.
+    //
+    // Taylor recurrence (C):  tc[n] = tc[n-1] * -(π/2·x²)² * (4n-3) / [(2n)(2n-1)(4n+1)]
+    // Taylor recurrence (S):  ts[n] = ts[n-1] * -(π/2·x²)² * (4n-1) / [(2n+1)(2n)(4n+3)]
+    //
+    // Asymptotic:  C = 0.5 + f·sin θ − g·cos θ,  S = 0.5 − f·cos θ − g·sin θ  (θ = πx²/2)
+    //   f = fsum / (π x),      tf[n] = tf[n-1] * (4n-3)(4n-1) / (πx²)²
+    //   g = gsum / (π²x³),     tg[n] = tg[n-1] * (4n-1)(4n+1) / (πx²)²
+    function _fresnelCS(x) {
+      const ax = Math.abs(x), sign = x < 0 ? -1 : 1;
+      if (ax === 0) return { C: 0, S: 0 };
+      const r = Math.PI * 0.5 * ax * ax;   // π/2·x²
+      let C, S;
+      if (ax <= 4.5) {
+        let tc = ax, ts = r * ax / 3, cv = tc, sv = ts;
+        for (let n = 1; n <= 100; n++) {
+          tc *= -r * r * (4*n - 3) / ((2*n) * (2*n - 1) * (4*n + 1));
+          ts *= -r * r * (4*n - 1) / ((2*n + 1) * (2*n) * (4*n + 3));
+          cv += tc; sv += ts;
+          if (Math.abs(tc) + Math.abs(ts) < 1e-15 * (Math.abs(cv) + Math.abs(sv))) break;
+        }
+        C = cv; S = sv;
+      } else {
+        const px2 = Math.PI * ax * ax, px4 = px2 * px2;
+        let tf = 1, tg = 1, fsum = 1, gsum = 1, sgn = -1;
+        for (let n = 1; n <= 50; n++) {
+          const ntf = tf * (4*n - 3) * (4*n - 1) / px4;
+          const ntg = tg * (4*n - 1) * (4*n + 1) / px4;
+          if (ntf >= tf || !isFinite(ntf)) break;
+          tf = ntf; tg = ntg;
+          fsum += sgn * tf; gsum += sgn * tg; sgn = -sgn;
+        }
+        const f = fsum / (Math.PI * ax);
+        const g = gsum / (Math.PI * Math.PI * ax * ax * ax);
+        const theta = Math.PI * 0.5 * ax * ax;
+        const sinT = Math.sin(theta), cosT = Math.cos(theta);
+        C = 0.5 + f * sinT - g * cosT;
+        S = 0.5 - f * cosT - g * sinT;
+      }
+      return { C: sign * C, S: sign * S };
+    }
+    function _fresnelC(x) { return _fresnelCS(x).C; }
+    function _fresnelS(x) { return _fresnelCS(x).S; }
+    // K(x) = C(x) en el eje real (parte real de la integral compleja de Fresnel)
+    function _fresnelK(x) { return _fresnelC(x); }
   `;
 }

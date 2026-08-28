@@ -45,7 +45,12 @@ export const serverRoutes: ServerRoute[] = [
     getPrerenderParams: langParams,
   },
   {
-    path: ':lang/grapher',
+    path: ':lang/real-plotter',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: langParams,
+  },
+  {
+    path: ':lang/complex-plotter',
     renderMode: RenderMode.Prerender,
     getPrerenderParams: langParams,
   },

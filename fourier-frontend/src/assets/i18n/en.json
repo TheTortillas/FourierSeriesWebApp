@@ -70,10 +70,13 @@
       "message": "Fourier Web Calculator is now AEM-Lab (Advanced Engineering Mathematics Lab) — same tool, new name.",
       "dismiss": "Dismiss"
     },
-    "grapher": "Grapher"
+    "grapher": "Grapher",
+    "realPlotter": "Real grapher",
+    "complexPlotter": "Complex grapher"
   },
   "grapher": {
     "addExpression": "+ Add expression",
+    "library": "Library f(x)",
     "changeColor": "Change color",
     "show": "Show",
     "hide": "Hide",
@@ -82,11 +85,13 @@
     "xLabel": "x",
     "yLabel": "y",
     "settings": {
+      "title": "Settings",
       "markers": "Markers",
       "showRoots": "Roots (function-axis)",
       "showIntersections": "Intersections (function-function)",
       "xAxis": "X-axis format",
-      "zoom": "Initial zoom"
+      "zoom": "Initial zoom",
+      "params": "Free parameters"
     },
     "style": {
       "lineStyle": "Line style",
@@ -100,6 +105,19 @@
       "show": "Show",
       "hide": "Hide",
       "remove": "Remove"
+    },
+    "groups": {
+      "basic": "Basic",
+      "explog": "Exponential & logarithm",
+      "trig": "Trigonometric",
+      "hyp": "Hyperbolic",
+      "gamma": "Gamma function",
+      "error": "Error function",
+      "integral": "Sine/cosine integrals",
+      "fresnel": "Fresnel integrals",
+      "expint": "Exponential integrals",
+      "sgnal": "Signals",
+      "composed": "Composed"
     }
   },
   "home": {
@@ -117,8 +135,8 @@
     "laplaceSectionDesc": "Essential tool for circuit analysis, control systems and signals. Direct and inverse transform, plus ODE solving with initial conditions.",
     "odeSectionTitle": "Differential Equations",
     "odeSectionDesc": "Symbolically solve ordinary differential equations: general solution with free constants, initial value problems (IVP) and boundary value problems (BVP).",
-    "grapherSectionTitle": "Grapher",
-    "grapherSectionDesc": "Visualize mathematical functions interactively with support for multiple simultaneous expressions.",
+    "grapherSectionTitle": "Graphers",
+    "grapherSectionDesc": "Visualize mathematical functions on the real line or in the complex plane with domain coloring.",
     "series": {
       "title": "Fourier Series",
       "shortDesc": "Trigonometric, complex and half-range. Symbolic coefficients, Parseval and animated graph.",
@@ -162,7 +180,7 @@
       ]
     },
     "grapher": {
-      "title": "Grapher",
+      "title": "Real grapher",
       "shortDesc": "Multiple simultaneous functions with special functions (erf, Γ, Si, Ci…), zoom and per-expression colors.",
       "description": "Plot multiple functions simultaneously with support for special functions (erf, Γ, Si, Ci…), zoom and per-expression colors.",
       "features": [
@@ -170,6 +188,16 @@
         "Special functions (erf, Γ, Si…)",
         "Roots and intersections",
         "Zoom and per-curve colors"
+      ]
+    },
+    "complexGrapher": {
+      "title": "Complex plane",
+      "shortDesc": "Wegert domain coloring: Γ(z), ζ(z), erf(z), Si(z), Fresnel and more. 2D and 3D views.",
+      "features": [
+        "Domain coloring (arg → color)",
+        "Γ(z), ζ(z), erf, Si, Ci, Fresnel",
+        "3D module surface view",
+        "Möbius transformations"
       ]
     }
   },
@@ -873,6 +901,14 @@
     },
     "ode": {
       "description": "Solve linear ordinary differential equations up to 3rd order. Obtain the general solution with integration constants, apply initial conditions (IVP) or boundary conditions (BVP), and visualise the solution with an interactive graph. Exact symbolic CAS engine powered by Maxima."
+    },
+    "grapher": {
+      "title": "Real Function Grapher — AEM-Lab",
+      "description": "Graph real mathematical functions: trigonometric, special, gamma, Fresnel, Si/Ci and more. Detect roots and intersections interactively."
+    },
+    "complexPlotter": {
+      "title": "Complex Function Grapher — AEM-Lab",
+      "description": "Visualize complex functions with Wegert domain coloring: Γ(z), ζ(z), exp, Möbius transformations and more."
     }
   },
   "dev": {
@@ -1305,7 +1341,38 @@
       }
     },
     "sectionOde": "Differential Equations",
-    "sectionGrapher": "Interactive Grapher"
+    "sectionGrapher": "Interactive Grapher",
+    "sectionComplexGrapher": "Complex Plane",
+    "complexGrapher": {
+      "title": "Complex plane grapher",
+      "desc": "Visualize complex-valued functions via domain coloring: the argument of f(z) is encoded as hue and the modulus as brightness. Includes an interactive 3D view of the |f(z)| surface.",
+      "features": {
+        "f1": "Wegert domain coloring (arg → HSV hue)",
+        "f2": "Special functions: Γ(z), ζ(z), erf(z), Si(z), Ci(z), Fresnel",
+        "f3": "Interactive 3D surface of the modulus",
+        "f4": "Möbius transformations and compositions",
+        "f5": "Function library with thematic groups"
+      },
+      "complexFns": {
+        "label": "Available complex functions",
+        "analytic": {
+          "label": "Analytic",
+          "gamma": "Gamma function Γ(z)",
+          "zeta": "Riemann zeta ζ(z)",
+          "erf": "Error function erf(z)",
+          "beta": "Beta function B(z,w)"
+        },
+        "integrals": {
+          "label": "Special integrals",
+          "Si": "Sine integral Si(z)",
+          "Ci": "Cosine integral Ci(z)",
+          "Ei": "Exponential integral Ei(z)",
+          "E1": "Integral E₁(z)",
+          "fresnelC": "Fresnel C(z)",
+          "fresnelS": "Fresnel S(z)"
+        }
+      }
+    }
   },
   "fourier-integral": {
     "title": "Fourier Integral",
@@ -1447,6 +1514,7 @@
     "complexPlaneColorClassic": "Classic",
     "complexPlaneColorPhase": "Phase",
     "complexPlaneColorMagnitude": "Magnitude",
+    "complexPlaneInvertMod": "Invert modulus",
     "complexPlaneLegend": "Legend",
     "complexPlaneLegendStrip": "Strip",
     "complexPlaneLegendCircle": "Circle",
@@ -1551,5 +1619,24 @@
     "exLapImpulse": "Impulse response (ICs ≠ 0): y'' + 2y' + 5y = δ(t)",
     "exLap3rdForce": "3rd order — exponential forcing: y'''+ y'' = eᵗ",
     "exLap3rdRepeat": "3rd order — triple root: y'''- 3y'' + 3y' - y = 0"
+  },
+  "complex": {
+    "library": "Library f(z)",
+    "groups": {
+      "poly": "Polynomials & rational",
+      "pow": "Powers & z-functions",
+      "explog": "Exponential & logarithm",
+      "trig": "Trigonometric",
+      "hyp": "Hyperbolic",
+      "gamma": "Gamma & Zeta",
+      "gammaExtra": "Beta & factorial",
+      "mobius": "Möbius & rational",
+      "composed": "Composed",
+      "error": "Error function",
+      "integral": "Si/Ci/Shi/Chi integrals",
+      "fresnel": "Fresnel integrals",
+      "expint": "Exponential integrals"
+    },
+    "modLines": "Iso-modulus lines"
   }
 }

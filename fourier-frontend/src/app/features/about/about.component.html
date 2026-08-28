@@ -30,9 +30,13 @@
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
           <span class="font-display">y′</span>{{ 'about.ode.title' | transloco }}
         </a>
-        <a [routerLink]="'/' + lang() + '/grapher'"
+        <a [routerLink]="'/' + lang() + '/real-plotter'"
           class="inline-flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
           <span class="font-display">ƒ</span>{{ 'about.grapher.title' | transloco }}
+        </a>
+        <a [routerLink]="'/' + lang() + '/complex-plotter'"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
+          <span class="font-display">ℂ</span>{{ 'about.complexGrapher.title' | transloco }}
         </a>
       </div>
     </section>
@@ -543,7 +547,7 @@
               </li>
             }
           </ul>
-          <a [routerLink]="'/' + lang() + '/grapher'"
+          <a [routerLink]="'/' + lang() + '/real-plotter'"
             class="mt-auto pt-3 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
             {{ 'common.explore' | transloco }}
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
@@ -614,12 +618,110 @@
       </div>
     </section>
 
-    <!-- ── 06 · Plataforma ────────────────────────────────────────────────────── -->
+    <!-- ── 06 · Plano Complejo ───────────────────────────────────────────────── -->
     <section class="flex flex-col gap-8">
 
       <div class="flex flex-col gap-1">
         <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
-          <span class="text-accent">06</span> · {{ 'about.sectionPlatform' | transloco }}
+          <span class="text-accent">06</span> · {{ 'about.sectionComplexGrapher' | transloco }}
+        </p>
+        <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
+          {{ 'about.complexGrapher.title' | transloco }}
+        </h2>
+        <p class="font-body text-sm text-muted dark:text-dark-muted max-w-2xl leading-relaxed">
+          {{ 'about.complexGrapher.desc' | transloco }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        <!-- Features list -->
+        <div class="flex flex-col gap-4 p-5 rounded-xl border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-paper dark:bg-dark-bg border border-border dark:border-dark-border flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M3 12h18M12 3c-2.5 2.5-4 5.7-4 9s1.5 6.5 4 9"/>
+              </svg>
+            </div>
+            <h3 class="font-display text-base text-ink dark:text-dark-ink leading-tight">
+              {{ 'about.complexGrapher.title' | transloco }}
+            </h3>
+          </div>
+          <ul class="flex flex-col gap-2">
+            @for (key of complexGrapherFeatures; track key) {
+              <li class="flex items-start gap-2 text-xs font-mono text-muted dark:text-dark-muted">
+                <span class="text-accent mt-px shrink-0">✓</span>
+                {{ key | transloco }}
+              </li>
+            }
+          </ul>
+          <a [routerLink]="'/' + lang() + '/complex-plotter'"
+            class="mt-auto pt-3 inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline underline-offset-2 transition-colors">
+            {{ 'common.explore' | transloco }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Complex functions grid -->
+        <div class="flex flex-col gap-5">
+          <p class="text-xs font-mono text-muted dark:text-dark-muted uppercase tracking-widest">
+            {{ 'about.complexGrapher.complexFns.label' | transloco }}
+          </p>
+
+          <!-- Analíticas -->
+          <div class="flex flex-col gap-2">
+            <p class="text-[10px] font-mono text-accent uppercase tracking-widest">
+              {{ 'about.complexGrapher.complexFns.analytic.label' | transloco }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              @for (fn of [
+                {key:'gamma', display:'Γ(z)'}, {key:'zeta', display:'ζ(z)'},
+                {key:'erf', display:'erf(z)'}, {key:'beta', display:'B(z,w)'}
+              ]; track fn.key) {
+                <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface min-w-0">
+                  <span class="font-mono text-sm text-ink dark:text-dark-ink">{{ fn.display }}</span>
+                  <span class="text-[10px] font-mono text-muted dark:text-dark-muted leading-tight">
+                    {{ ('about.complexGrapher.complexFns.analytic.' + fn.key) | transloco }}
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Integrales -->
+          <div class="flex flex-col gap-2">
+            <p class="text-[10px] font-mono text-accent uppercase tracking-widest">
+              {{ 'about.complexGrapher.complexFns.integrals.label' | transloco }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              @for (fn of [
+                {key:'Si', display:'Si(z)'}, {key:'Ci', display:'Ci(z)'},
+                {key:'Ei', display:'Ei(z)'}, {key:'E1', display:'E₁(z)'},
+                {key:'fresnelC', display:'C(z)'}, {key:'fresnelS', display:'S(z)'}
+              ]; track fn.key) {
+                <div class="flex flex-col gap-0.5 px-3 py-2 rounded-lg border border-border dark:border-dark-border bg-paper2 dark:bg-dark-surface min-w-0">
+                  <span class="font-mono text-sm text-ink dark:text-dark-ink">{{ fn.display }}</span>
+                  <span class="text-[10px] font-mono text-muted dark:text-dark-muted leading-tight">
+                    {{ ('about.complexGrapher.complexFns.integrals.' + fn.key) | transloco }}
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 07 · Plataforma ────────────────────────────────────────────────────── -->
+    <section class="flex flex-col gap-8">
+
+      <div class="flex flex-col gap-1">
+        <p class="text-[10px] font-mono uppercase tracking-widest text-muted dark:text-dark-muted">
+          <span class="text-accent">07</span> · {{ 'about.sectionPlatform' | transloco }}
         </p>
         <h2 class="font-display text-2xl text-ink dark:text-dark-ink">
           {{ 'about.sectionPlatformTitle' | transloco }}
@@ -743,9 +845,13 @@
           class="flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
           <span class="font-display">y′</span>{{ 'about.ode.title' | transloco }}
         </a>
-        <a [routerLink]="'/' + lang() + '/grapher'"
+        <a [routerLink]="'/' + lang() + '/real-plotter'"
           class="flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
           <span class="font-display">ƒ</span>{{ 'about.grapher.title' | transloco }}
+        </a>
+        <a [routerLink]="'/' + lang() + '/complex-plotter'"
+          class="flex items-center gap-2 px-5 py-2.5 rounded border border-border dark:border-dark-border text-sm font-mono text-muted dark:text-dark-muted hover:border-accent hover:text-ink dark:hover:text-dark-ink transition-colors">
+          <span class="font-display">ℂ</span>{{ 'about.complexGrapher.title' | transloco }}
         </a>
       </div>
     </section>

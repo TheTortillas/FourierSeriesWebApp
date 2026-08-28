@@ -1254,12 +1254,37 @@ export class LaplaceComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.hasDirectResult() || this.hasInverseResult() || this.hasOdeResult()
   );
 
+  /** LaTeX to display in the sidebar equation preview box. */
+  readonly previewLatex = computed<string | null>(() => {
+    const m = this.mode();
+    if (m === 'inverse') {
+      const tex = this.inverseExprTex();
+      return tex ? `F(s) = ${tex}` : null;
+    }
+    if (m === 'direct') {
+      const segs = this.segments();
+      const parts = segs.map(s => s.expressionTex?.trim()).filter(Boolean);
+      if (!parts.length) return null;
+      const pair = this.activePair();
+      return parts.length === 1
+        ? `f(${pair.timeDisplay}) = ${parts[0]}`
+        : `f(${pair.timeDisplay}) = \\begin{cases} ${parts.join(' \\\\ ')} \\end{cases}`;
+    }
+    if (m === 'ode') {
+      const tex = this.odeEquationTex();
+      return tex || null;
+    }
+    return null;
+  });
+
   // ── Complex plane panel ───────────────────────────────────────────────────
 
   readonly showComplexPlane       = signal(false);
   readonly complexPlaneBtnPulse   = signal(false);
   readonly complexPlaneMode    = signal<'2d' | '3d'>('2d');
   readonly complexColorScheme  = signal<'classic' | 'phase' | 'magnitude'>('classic');
+  readonly complexInvertMod    = signal(false);
+  readonly complexShowModLines = signal(true);
   readonly complexLegendStyle  = signal<'strip' | 'circle'>('strip');
   readonly complexWireframe    = signal(false);
   readonly complexShowGrid3d   = signal(true);

@@ -2,6 +2,11 @@ import { inject, Injectable, signal } from '@angular/core';
 import { PlatformService } from '../platform/platform.service';
 import { AUTO_OPERATOR_NAMES } from './function-registry';
 
+// MathQuill requires autoOperatorNames to be space-separated pure-letter strings.
+const SAFE_AUTO_OPERATOR_NAMES = AUTO_OPERATOR_NAMES.split(' ')
+  .filter((n) => /^[a-zA-Z]+$/.test(n))
+  .join(' ');
+
 export interface KeyBtn {
   label: string;
   typedText?: string;
@@ -125,7 +130,7 @@ export class MathquillService {
   defaultConfig(): MathQuillConfig {
     const config: MathQuillConfig = {
       autoCommands: 'pi theta sqrt sum int',
-      autoOperatorNames: AUTO_OPERATOR_NAMES,
+      autoOperatorNames: SAFE_AUTO_OPERATOR_NAMES,
     };
     // On mobile viewports, replace MathQuill's hidden textarea with a non-editable
     // span so the native OS keyboard never appears. Input is handled exclusively
