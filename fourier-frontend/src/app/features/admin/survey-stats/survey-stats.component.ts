@@ -59,6 +59,8 @@ const FEATURE_LABEL: Record<string, string> = {
   ode_general:               'EDO general',
   ode_ivp:                   'EDO PVI',
   ode_bvp:                   'EDO Frontera',
+  grapher:                   'Graficador real',
+  complex_plotter:           'Graficador complejo',
   none:                      'Ninguna',
 };
 const ACADEMIC_LABEL: Record<string, string> = {
@@ -135,6 +137,11 @@ export class SurveyStatsComponent implements OnInit, OnDestroy {
   readonly Math = Math;
 
   readonly otherFieldLabel = (f: string) => OTHER_FIELD_LABEL[f] ?? f;
+
+  featureChartHeight(): string {
+    const n = this.stats?.byFeature?.length ?? 8;
+    return Math.max(200, n * 28 + 24) + 'px';
+  }
 
   // Group otherTexts by field for display
   get otherByField(): { field: string; label: string; entries: { value: string; count: number }[] }[] {

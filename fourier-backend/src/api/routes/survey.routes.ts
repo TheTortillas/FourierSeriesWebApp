@@ -20,6 +20,7 @@ const VALID_FEATURES     = [
   "laplace_direct", "laplace_inverse", "laplace_ode",
   "ode_general", "ode_ivp", "ode_bvp",
   "grapher",
+  "complex_plotter",
   "none",
 ];
 const VALID_DEVICES      = ["phone", "computer"];

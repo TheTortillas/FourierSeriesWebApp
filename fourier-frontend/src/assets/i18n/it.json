@@ -1017,7 +1017,8 @@
         "ode_general": "EDO — soluzione generale",
         "ode_ivp": "EDO — problema ai valori iniziali (PVI)",
         "ode_bvp": "EDO — problema ai valori al contorno (PVC)",
-        "grapher": "Grafico di funzioni",
+        "grapher": "Grafico di funzioni reali",
+        "complex_plotter": "Grafico del piano complesso",
         "none": "Nessuna ancora"
       },
       "deviceLabel": "Quale dispositivo hai usato?",

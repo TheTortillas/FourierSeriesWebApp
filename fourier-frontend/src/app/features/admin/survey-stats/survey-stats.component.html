@@ -380,28 +380,25 @@
         class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
       >
         <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-            >Propósito de uso</span
-          >
+          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Propósito de uso</span>
         </div>
         <div class="p-4" style="height: 220px; position: relative">
           <canvas id="svPurpose"></canvas>
         </div>
       </section>
-
-      <section
-        class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
-      >
-        <div class="px-4 py-3 border-b border-border dark:border-dark-border">
-          <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink"
-            >Funcionalidades usadas</span
-          >
-        </div>
-        <div class="p-4" style="height: 220px; position: relative">
-          <canvas id="svFeature"></canvas>
-        </div>
-      </section>
     </div>
+
+    <section
+      class="bg-paper2 dark:bg-dark-surface border border-border dark:border-dark-border rounded-xl overflow-hidden"
+    >
+      <div class="px-4 py-3 border-b border-border dark:border-dark-border flex items-center justify-between">
+        <span class="text-sm font-mono font-medium text-ink dark:text-dark-ink">Funcionalidades usadas</span>
+        <span class="text-[11px] font-mono text-muted dark:text-dark-muted">{{ stats.byFeature.length }} herramientas · ordenado por uso</span>
+      </div>
+      <div class="p-4" style="position: relative" [style.height]="featureChartHeight()">
+        <canvas id="svFeature"></canvas>
+      </div>
+    </section>
 
     <!-- ════════════════════════════════════════════════════════════════════════
          DISPOSITIVO Y VERSIÓN ANTERIOR

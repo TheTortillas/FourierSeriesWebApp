@@ -1017,7 +1017,8 @@
         "ode_general": "ODE — general solution",
         "ode_ivp": "ODE — initial value problem (IVP)",
         "ode_bvp": "ODE — boundary value problem (BVP)",
-        "grapher": "Function grapher",
+        "grapher": "Real function grapher",
+        "complex_plotter": "Complex plane grapher",
         "none": "None yet"
       },
       "deviceLabel": "Which device did you use?",

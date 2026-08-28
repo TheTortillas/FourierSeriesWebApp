@@ -19,6 +19,7 @@ export type SurveyFeature =
   | 'ode_ivp'
   | 'ode_bvp'
   | 'grapher'
+  | 'complex_plotter'
   | 'none';
 export type SurveyDevice = 'phone' | 'computer';
 export type HowFound = 'search' | 'recommendation_peer' | 'recommendation_teacher' | 'social' | 'other';

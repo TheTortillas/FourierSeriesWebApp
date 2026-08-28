@@ -195,7 +195,7 @@ export class SurveyComponent {
   readonly featuresDft: SurveyFeature[]        = ['dft_signal', 'dft_function', 'dft_epicycles'];
   readonly featuresLaplace: SurveyFeature[]    = ['laplace_direct', 'laplace_inverse', 'laplace_ode'];
   readonly featuresOde: SurveyFeature[]        = ['ode_general', 'ode_ivp', 'ode_bvp'];
-  readonly featuresTools: SurveyFeature[]      = ['grapher'];
+  readonly featuresTools: SurveyFeature[]      = ['grapher', 'complex_plotter'];
   readonly featuresNone: SurveyFeature[]       = ['none'];
 
   readonly devices: SurveyDevice[] = ['phone', 'computer'];

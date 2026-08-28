@@ -1017,7 +1017,8 @@
         "ode_general": "GDGL — allgemeine Lösung",
         "ode_ivp": "GDGL — Anfangswertproblem (AWP)",
         "ode_bvp": "GDGL — Randwertproblem (RWP)",
-        "grapher": "Funktionsgrapher",
+        "grapher": "Reeller Funktionsgrapher",
+        "complex_plotter": "Komplexer Ebenengrapher",
         "none": "Noch keine"
       },
       "deviceLabel": "Welches Gerät haben Sie verwendet?",
