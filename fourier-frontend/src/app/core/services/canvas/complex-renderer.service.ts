@@ -30,7 +30,7 @@ void main(){
   vec3 color;
   if(u_scheme==2){
     // Magnitude only (greyscale)
-    float v=atan(aW*1.2)/(PI*0.5); color=vec3(v);
+    float v=u_invertmod!=0 ? 1.0-atan(aW*1.2)/(PI*0.5) : atan(aW*1.2)/(PI*0.5); color=vec3(v);
   } else if(u_scheme==1){
     // Phase only (flat value)
     color=hsv2rgb(h,1.0,0.88);

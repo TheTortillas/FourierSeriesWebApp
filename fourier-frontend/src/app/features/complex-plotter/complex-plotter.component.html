@@ -106,10 +106,12 @@
               </label>
             }
 
-            <label class="flex items-center justify-between text-[11px] font-mono">
-              <span class="text-ink/80 dark:text-dark-ink/80">{{ 'complex.modLines' | transloco }}</span>
-              <input type="checkbox" [checked]="showModLines()" (change)="showModLines.set($any($event.target).checked)" class="accent-accent" />
-            </label>
+            @if (colorScheme() === 'classic') {
+              <label class="flex items-center justify-between text-[11px] font-mono">
+                <span class="text-ink/80 dark:text-dark-ink/80">{{ 'complex.modLines' | transloco }}</span>
+                <input type="checkbox" [checked]="showModLines()" (change)="showModLines.set($any($event.target).checked)" class="accent-accent" />
+              </label>
+            }
 
             <p class="text-[10px] font-mono uppercase tracking-wider text-muted dark:text-dark-muted pt-1">
               {{ 'laplace.complexPlaneLegend' | transloco }}

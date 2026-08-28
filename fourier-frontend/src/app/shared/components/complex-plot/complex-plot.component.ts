@@ -40,7 +40,7 @@ function hsvToRgb(h: number, s: number, v: number): [number, number, number] {
 
 function phaseColorJS(argW: number, absW: number, scheme: ColorScheme, modLines: boolean, invertMod = false): [number, number, number] {
   const h = ((argW / (2 * Math.PI)) + 1) % 1;
-  if (scheme === 'magnitude') { const g = Math.atan(absW * 1.2) / (Math.PI * 0.5) * 255 | 0; return [g, g, g]; }
+  if (scheme === 'magnitude') { let v = Math.atan(absW * 1.2) / (Math.PI * 0.5); if (invertMod) v = 1 - v; const g = v * 255 | 0; return [g, g, g]; }
   if (scheme === 'phase') return hsvToRgb(h, 1, 0.88);
   // classic: Wegert-style, value encodes |f|
   const logA = Math.log2(Math.max(absW, 1e-12));
