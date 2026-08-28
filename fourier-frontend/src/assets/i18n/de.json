@@ -135,8 +135,8 @@
     "laplaceSectionDesc": "Unverzichtbares Werkzeug für Schaltungsanalyse, Regelungstechnik und Signalverarbeitung. Direkte und inverse Transformation sowie Lösung von Differentialgleichungen mit Anfangsbedingungen.",
     "odeSectionTitle": "Differentialgleichungen",
     "odeSectionDesc": "Lösen Sie gewöhnliche Differentialgleichungen symbolisch: allgemeine Lösung mit freien Konstanten, Anfangswertprobleme (AWP) und Randwertprobleme (RWP).",
-    "grapherSectionTitle": "Graphen-Tool",
-    "grapherSectionDesc": "Visualisieren Sie mathematische Funktionen interaktiv mit Unterstützung für mehrere gleichzeitige Ausdrücke.",
+    "grapherSectionTitle": "Graphen-Tools",
+    "grapherSectionDesc": "Visualisieren Sie mathematische Funktionen auf der reellen Achse oder in der komplexen Ebene mit Domänenfärbung.",
     "series": {
       "title": "Fourier-Reihen",
       "shortDesc": "Trigonometrisch, komplex und Halbbereich. Symbolische Koeffizienten, Parseval und animierte Grafik.",
@@ -180,7 +180,7 @@
       ]
     },
     "grapher": {
-      "title": "Graphen-Tool",
+      "title": "Reeller Grapher",
       "shortDesc": "Mehrere gleichzeitige Funktionen mit Spezialfunktionen (erf, Γ, Si, Ci…), Zoom und Farben pro Ausdruck.",
       "description": "Stellen Sie mehrere Funktionen gleichzeitig grafisch dar, mit Unterstützung für Spezialfunktionen (erf, Γ, Si, Ci…), Zoom und Farben pro Ausdruck.",
       "features": [
@@ -188,6 +188,16 @@
         "Spezialfunktionen (erf, Γ, Si…)",
         "Nullstellen und Schnittpunkte",
         "Zoom und Farben pro Kurve"
+      ]
+    },
+    "complexGrapher": {
+      "title": "Komplexe Ebene",
+      "shortDesc": "Wegert-Domänenfärbung: Γ(z), ζ(z), erf(z), Si(z), Fresnel und mehr. 2D- und 3D-Ansichten.",
+      "features": [
+        "Domänenfärbung (arg → Farbe)",
+        "Γ(z), ζ(z), erf, Si, Ci, Fresnel",
+        "3D-Moduloberfläche",
+        "Möbius-Transformationen"
       ]
     }
   },
@@ -1331,7 +1341,38 @@
       }
     },
     "sectionOde": "Differentialgleichungen",
-    "sectionGrapher": "Interaktives Graphen-Tool"
+    "sectionGrapher": "Interaktives Graphen-Tool",
+    "sectionComplexGrapher": "Komplexe Ebene",
+    "complexGrapher": {
+      "title": "Grapher für komplexe Ebene",
+      "desc": "Visualisieren Sie komplexwertige Funktionen per Domänenfärbung: das Argument von f(z) wird als Farbton und der Betrag als Helligkeit kodiert. Enthält eine interaktive 3D-Ansicht der |f(z)|-Oberfläche.",
+      "features": {
+        "f1": "Wegert-Domänenfärbung (arg → HSV-Farbton)",
+        "f2": "Spezialfunktionen: Γ(z), ζ(z), erf(z), Si(z), Ci(z), Fresnel",
+        "f3": "Interaktive 3D-Moduloberfläche",
+        "f4": "Möbius-Transformationen und Kompositionen",
+        "f5": "Funktionsbibliothek mit thematischen Gruppen"
+      },
+      "complexFns": {
+        "label": "Verfügbare komplexe Funktionen",
+        "analytic": {
+          "label": "Analytisch",
+          "gamma": "Gammafunktion Γ(z)",
+          "zeta": "Riemann-Zeta ζ(z)",
+          "erf": "Fehlerfunktion erf(z)",
+          "beta": "Betafunktion B(z,w)"
+        },
+        "integrals": {
+          "label": "Spezielle Integrale",
+          "Si": "Sinusintegral Si(z)",
+          "Ci": "Kosinusintegral Ci(z)",
+          "Ei": "Exponentialintegral Ei(z)",
+          "E1": "Integral E₁(z)",
+          "fresnelC": "Fresnel C(z)",
+          "fresnelS": "Fresnel S(z)"
+        }
+      }
+    }
   },
   "fourier-integral": {
     "title": "Fourier-Integral",

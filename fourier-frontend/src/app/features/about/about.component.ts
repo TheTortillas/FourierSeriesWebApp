@@ -40,7 +40,8 @@ export class AboutComponent implements OnInit {
   readonly odeGeneralItems    = ['f1','f2','f3','f4'].map(k => `about.ode.general.${k}`);
   readonly odeIvpItems        = ['f1','f2','f3','f4'].map(k => `about.ode.ivp.${k}`);
   readonly odeBvpItems        = ['f1','f2','f3','f4'].map(k => `about.ode.bvp.${k}`);
-  readonly grapherFeatures    = ['f1','f2','f3','f4','f5'].map(k => `about.grapher.features.${k}`);
+  readonly grapherFeatures         = ['f1','f2','f3','f4','f5'].map(k => `about.grapher.features.${k}`);
+  readonly complexGrapherFeatures  = ['f1','f2','f3','f4','f5'].map(k => `about.complexGrapher.features.${k}`);
   readonly inputItems         = ['f1','f2','f3','f4'].map(k => `about.input.${k}`);
   readonly accountItems       = ['f1','f2','f3','f4'].map(k => `about.account.${k}`);
   readonly uxItems            = ['f1','f2','f3','f4'].map(k => `about.ux.${k}`);

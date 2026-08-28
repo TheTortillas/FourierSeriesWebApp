@@ -135,8 +135,8 @@
     "laplaceSectionDesc": "Ferramenta essencial para análise de circuitos, sistemas de controle e sinais. Transformada direta, inversa e resolução de EDOs com condições iniciais.",
     "odeSectionTitle": "Equações Diferenciais",
     "odeSectionDesc": "Resolva equações diferenciais ordinárias simbolicamente: solução geral com constantes livres, problemas de valor inicial (PVI) e problemas de valor de contorno (PVC).",
-    "grapherSectionTitle": "Gráfico",
-    "grapherSectionDesc": "Visualize funções matemáticas de forma interativa com suporte a múltiplas expressões simultâneas.",
+    "grapherSectionTitle": "Gráficos",
+    "grapherSectionDesc": "Visualize funções matemáticas na reta real ou no plano complexo com coloração de domínio.",
     "series": {
       "title": "Série de Fourier",
       "shortDesc": "Trigonométrica, complexa e de meio período. Coeficientes simbólicos, Parseval e gráfico animado.",
@@ -180,7 +180,7 @@
       ]
     },
     "grapher": {
-      "title": "Gráfico",
+      "title": "Gráfico real",
       "shortDesc": "Múltiplas funções simultâneas com funções especiais (erf, Γ, Si, Ci…), zoom e cores por expressão.",
       "description": "Plote múltiplas funções simultaneamente com suporte a funções especiais (erf, Γ, Si, Ci…), zoom e cores por expressão.",
       "features": [
@@ -188,6 +188,16 @@
         "Funções especiais (erf, Γ, Si…)",
         "Raízes e interseções",
         "Zoom e cores por curva"
+      ]
+    },
+    "complexGrapher": {
+      "title": "Plano complexo",
+      "shortDesc": "Coloração de domínio de Wegert: Γ(z), ζ(z), erf(z), Si(z), Fresnel e mais. Vistas 2D e 3D.",
+      "features": [
+        "Coloração de domínio (arg → cor)",
+        "Γ(z), ζ(z), erf, Si, Ci, Fresnel",
+        "Vista 3D do módulo",
+        "Transformações de Möbius"
       ]
     }
   },
@@ -1331,7 +1341,38 @@
       }
     },
     "sectionOde": "Equações Diferenciais",
-    "sectionGrapher": "Gráfico Interativo"
+    "sectionGrapher": "Gráfico Interativo",
+    "sectionComplexGrapher": "Plano Complexo",
+    "complexGrapher": {
+      "title": "Gráfico do plano complexo",
+      "desc": "Visualize funções de variável complexa por coloração de domínio: o argumento de f(z) é codificado como cor e o módulo como brilho. Inclui vista 3D da superfície |f(z)|.",
+      "features": {
+        "f1": "Coloração de domínio de Wegert (arg → matiz HSV)",
+        "f2": "Funções especiais: Γ(z), ζ(z), erf(z), Si(z), Ci(z), Fresnel",
+        "f3": "Superfície 3D interativa do módulo",
+        "f4": "Transformações de Möbius e composições",
+        "f5": "Biblioteca de funções com grupos temáticos"
+      },
+      "complexFns": {
+        "label": "Funções complexas disponíveis",
+        "analytic": {
+          "label": "Analíticas",
+          "gamma": "Função Gama Γ(z)",
+          "zeta": "Zeta de Riemann ζ(z)",
+          "erf": "Função de erro erf(z)",
+          "beta": "Função Beta B(z,w)"
+        },
+        "integrals": {
+          "label": "Integrais especiais",
+          "Si": "Integral seno Si(z)",
+          "Ci": "Integral cosseno Ci(z)",
+          "Ei": "Integral exponencial Ei(z)",
+          "E1": "Integral E₁(z)",
+          "fresnelC": "Fresnel C(z)",
+          "fresnelS": "Fresnel S(z)"
+        }
+      }
+    }
   },
   "fourier-integral": {
     "title": "Integral de Fourier",
