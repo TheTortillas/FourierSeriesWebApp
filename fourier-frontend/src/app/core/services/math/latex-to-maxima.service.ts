@@ -17,9 +17,8 @@ export interface ConversionResult {
 
 // Regex that matches any latexName marked clientSideOnly in the registry.
 // Longer names are listed first so alternation matches 'Shi' before 'Si', etc.
-// E_{1} variant is added explicitly because MathQuill emits subscript notation.
 const CLIENT_SIDE_RE = new RegExp(
-  `E_\\{1\\}|\\b(${[...CLIENT_SIDE_LATEX_NAMES]
+  `\\b(${[...CLIENT_SIDE_LATEX_NAMES]
     .sort((a, b) => b.length - a.length || a.localeCompare(b))
     .join('|')})\\b`,
 );
@@ -200,21 +199,11 @@ class Parser {
       if (name === 'e' && !this.is('lp')) return '%e';
       if (name === 'i' && !this.is('lp')) return '%i';
 
-      // If followed by subscript, try name+subscript as a registry key (e.g. E_{1} → E1)
-      if (this.is('op', '_')) {
-        this.eat();
-        const sub = this.braceOrAtom();
-        const withSub = name + sub;
-        const mxSub = LATEX_TO_MAXIMA.get(withSub);
-        if (mxSub) return `${mxSub}(${this.funcArg()})`;
-        // Not a registry key — treat as variable with discarded subscript
-        if (this.is('lp')) return `${withSub}(${this.funcArg()})`;
-        return withSub;
-      }
       // Look up in registry (covers both clientSideOnly and standard functions)
       const mx = LATEX_TO_MAXIMA.get(name);
       if (mx) return `${mx}(${this.funcArg()})`;
       if (this.is('lp')) return `${name}(${this.funcArg()})`;
+      if (this.is('op', '_')) { this.eat(); this.braceOrAtom(); }
       return name;
     }
 
