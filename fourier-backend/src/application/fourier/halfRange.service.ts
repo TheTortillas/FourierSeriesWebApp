@@ -212,6 +212,7 @@ kill(all)$
 FUNC_INPUT: ${funcInput};
 INTVAR: ${intVar};
 ${script}
+load("${process.cwd()}/src/scripts/maxima/lib/texput_special.mac")$
 load("${process.cwd()}/src/scripts/maxima/auxiliary/clean_integral.mac")$
 Coeff_An: if not freeof(gamma_incomplete, Coeff_An)
   then block([cleaned: errcatch(simplify_expint(clean_integral(Coeff_An, ${intVar})))],

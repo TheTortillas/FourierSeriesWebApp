@@ -170,8 +170,8 @@ class Parser {
         const allKeys = [...LATEX_TO_MAXIMA.keys()];
         let best: string | null = LATEX_TO_MAXIMA.has(name) ? name : null;
         let acc = name;
-        while (this.is('ident')) {
-          const next = (this.peek() as { t: 'ident'; v: string }).v;
+        while (this.is('ident') || this.is('num')) {
+          const next = (this.peek() as { v: string }).v;
           const candidate = acc + next;
           if (!allKeys.some((k) => k.startsWith(candidate))) break;
           this.eat();

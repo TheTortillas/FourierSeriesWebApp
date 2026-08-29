@@ -333,16 +333,16 @@ export const LIBRARY_GROUPS: LibGroup[] = [
     label: 'grapher.groups.expint',
     entries: [
       e('Ei(x)', '\\operatorname{Ei}\\left(x\\right)', 'expintegral_ei(x)', 'Integral exponencial'),
-      e('E₁(x)', 'E_{1}\\left(x\\right)', 'expintegral_e1(x)', 'E₁ = −Ei(−x) para x>0'),
+      e('E1(x)', 'E1\\left(x\\right)', 'expintegral_e1(x)', 'E1 = −Ei(−x) para x>0'),
       e('li(x)', '\\operatorname{li}\\left(x\\right)', 'expintegral_li(x)', 'Integral logarítmica'),
       e('Ei(−x)', '\\operatorname{Ei}\\left(-x\\right)', 'expintegral_ei(-x)'),
-      e('exp(x)·E₁(x)', 'e^{x}E_{1}\\left(x\\right)', 'exp(x)*expintegral_e1(x)'),
+      e('exp(x)·E1(x)', 'e^{x}\\operatorname{E_1}\\left(x\\right)', 'exp(x)*expintegral_e1(x)'),
       e(
         'Ei(x)−ln|x|',
         '\\operatorname{Ei}\\left(x\\right)-\\ln\\left|x\\right|',
         'expintegral_ei(x)-log(abs(x))',
       ),
-      e('x·E₁(x)', 'xE_{1}\\left(x\\right)', 'x*expintegral_e1(x)'),
+      e('x·E1(x)', 'x\\operatorname{E_1}\\left(x\\right)', 'x*expintegral_e1(x)'),
     ],
   },
   {

@@ -5,6 +5,7 @@
 texput(expintegral_e1,  "\\operatorname{E_1}")$
 texput(expintegral_ei,  "\\operatorname{Ei}")$
 texput(expintegral_li,  "\\operatorname{li}")$
+texput(sgn,             "\\operatorname{sgn}")$
 texput(expintegral_si,  "\\operatorname{Si}")$
 texput(expintegral_ci,  "\\operatorname{Ci}")$
 texput(expintegral_shi, "\\operatorname{Shi}")$
@@ -33,6 +34,11 @@ texput(gamma_incomplete_generalized,
 
 /* log-gamma */
 texput(log_gamma, "\\ln\\!\\Gamma")$
+
+/* Fresnel — fresnel_c/fresnel_s son los nombres nativos de Maxima */
+texput(fresnel_c, "\\operatorname{fresnelC}")$
+texput(fresnel_s, "\\operatorname{fresnelS}")$
+texput(fresnelK,  "\\operatorname{fresnelK}")$
 
 /* sech: Maxima has no built-in sech, but we use it as a display symbol.
    Results are rewritten from 1/cosh(...) to sech(...) by FT_to_sech()

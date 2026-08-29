@@ -224,11 +224,11 @@ export const COMPLEX_LIBRARY_GROUPS: CLibGroup[] = [
     label: 'complex.groups.expint',
     entries: [
       e('Ei(z)', '\\operatorname{Ei}\\left(z\\right)', 'expintegral_ei(z)', 'Integral exponencial'),
-      e('E₁(z)', 'E_{1}\\left(z\\right)', 'expintegral_e1(z)', 'Función E₁', '\\operatorname{E1}\\left(z\\right)'),
-      e('exp(z)·E₁(z)', 'e^{z}E_{1}\\left(z\\right)', 'exp(z)*expintegral_e1(z)', undefined, 'e^{z}\\operatorname{E1}\\left(z\\right)'),
+      e('E1(z)', 'E1\\left(z\\right)', 'expintegral_e1(z)', 'Función E1', 'E1\\left(z\\right)'),
+      e('exp(z)·E1(z)', 'e^{z}E1\\left(z\\right)', 'exp(z)*expintegral_e1(z)', undefined, 'e^{z}E1\\left(z\\right)'),
       e('Ei(z)/z', '\\frac{\\operatorname{Ei}\\left(z\\right)}{z}', 'expintegral_ei(z)/z'),
       e('Ei(z²)', '\\operatorname{Ei}\\left(z^{2}\\right)', 'expintegral_ei(z^2)'),
-      e('E₁(z²)', 'E_{1}\\left(z^{2}\\right)', 'expintegral_e1(z^2)', undefined, '\\operatorname{E1}\\left(z^{2}\\right)'),
+      e('E1(z²)', '\\operatorname{E_1}\\left(z^{2}\\right)', 'expintegral_e1(z^2)', undefined, '\\operatorname{E_1}\\left(z^{2}\\right)'),
     ],
   },
   {
