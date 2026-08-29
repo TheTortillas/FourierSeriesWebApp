@@ -171,7 +171,7 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   { maxima: 'expintegral_chi', latexNames: ['Chi'], js: { kind: 'helper', name: '_Chi' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Chi'] },
   { maxima: 'expintegral_ei',  latexNames: ['Ei'],  js: { kind: 'helper', name: '_Ei'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['Ei'] },
   { maxima: 'expintegral_e1',  latexNames: ['E1', 'expintegral_e1'],  js: { kind: 'helper', name: '_E1'  }, category: 'exponential-integral', clientSideOnly: true },
-  { maxima: 'expintegral_li',  latexNames: ['li'],  js: { kind: 'helper', name: '_li'  }, category: 'exponential-integral', clientSideOnly: true },
+  { maxima: 'expintegral_li',  latexNames: ['li'],  js: { kind: 'helper', name: '_li'  }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['li'] },
   // fresnelC/S/K are pure letters — valid in autoOperatorNames now that 're' is removed.
   // 're' was intercepting mid-word (f·RE·snelC), so it was removed from autoOperatorNames.
   { maxima: 'fresnel_c', latexNames: ['fresnelC', 'FresnelC'], js: { kind: 'helper', name: '_fresnelC' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelC'] },

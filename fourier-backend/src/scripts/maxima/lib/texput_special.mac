@@ -5,6 +5,7 @@
 texput(expintegral_e1,  "\\operatorname{E_1}")$
 texput(expintegral_ei,  "\\operatorname{Ei}")$
 texput(expintegral_li,  "\\operatorname{li}")$
+texput(sgn,             "\\operatorname{sgn}")$
 texput(expintegral_si,  "\\operatorname{Si}")$
 texput(expintegral_ci,  "\\operatorname{Ci}")$
 texput(expintegral_shi, "\\operatorname{Shi}")$
