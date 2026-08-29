@@ -174,8 +174,8 @@ export const FUNCTION_REGISTRY: FunctionDef[] = [
   { maxima: 'expintegral_li',  latexNames: ['li'],  js: { kind: 'helper', name: '_li'  }, category: 'exponential-integral', clientSideOnly: true },
   // fresnelC/S/K are pure letters — valid in autoOperatorNames now that 're' is removed.
   // 're' was intercepting mid-word (f·RE·snelC), so it was removed from autoOperatorNames.
-  { maxima: 'fresnelC', latexNames: ['fresnelC', 'FresnelC'], js: { kind: 'helper', name: '_fresnelC' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelC'] },
-  { maxima: 'fresnelS', latexNames: ['fresnelS', 'FresnelS'], js: { kind: 'helper', name: '_fresnelS' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelS'] },
+  { maxima: 'fresnel_c', latexNames: ['fresnelC', 'FresnelC'], js: { kind: 'helper', name: '_fresnelC' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelC'] },
+  { maxima: 'fresnel_s', latexNames: ['fresnelS', 'FresnelS'], js: { kind: 'helper', name: '_fresnelS' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelS'] },
   { maxima: 'fresnelK', latexNames: ['fresnelK', 'FresnelK'], js: { kind: 'helper', name: '_fresnelK' }, category: 'exponential-integral', clientSideOnly: true, autoOperatorNames: ['fresnelK'] },
 
   // ── Signal / distribution functions ───────────────────────────────────────

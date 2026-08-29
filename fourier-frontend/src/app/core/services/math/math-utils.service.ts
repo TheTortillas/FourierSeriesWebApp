@@ -895,7 +895,6 @@ export class MathUtilsService {
     }
     function _fresnelC(x) { return _fresnelCS(x).C; }
     function _fresnelS(x) { return _fresnelCS(x).S; }
-    // K(x) = C(x) en el eje real (parte real de la integral compleja de Fresnel)
-    function _fresnelK(x) { return _fresnelC(x); }
+    function _fresnelK(x) { const cs = _fresnelCS(x); return Math.sqrt(cs.C*cs.C + cs.S*cs.S); }
   `;
 }
